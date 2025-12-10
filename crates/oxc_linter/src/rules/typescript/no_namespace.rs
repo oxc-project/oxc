@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{TSModuleDeclarationKind, TSModuleDeclarationName},
-};
+use oxc_ast::{AstKind, ast::TSModuleDeclarationName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -137,14 +134,12 @@ impl Rule for NoNamespace {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
         };
-        let TSModuleDeclarationName::Identifier(ident) = &declaration.id else {
-            return;
-        };
-
-        if ident.name == "global" {
+        if !matches!(&declaration.id, TSModuleDeclarationName::Identifier(_)) {
             return;
         }
 
+        // Ignore nested `TSModuleDeclaration`s
+        // e.g. the 2 inner `TSModuleDeclaration`s in `module A.B.C {}`
         if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
             return;
         }
@@ -155,18 +150,12 @@ impl Rule for NoNamespace {
             return;
         }
 
-        let span = match declaration.kind {
-            TSModuleDeclarationKind::Global => None, // handled above
-            TSModuleDeclarationKind::Module => ctx
-                .find_next_token_from(declaration.span.start, "module")
-                .map(|i| Span::sized(declaration.span.start + i, 6)),
-            TSModuleDeclarationKind::Namespace => ctx
-                .find_next_token_from(declaration.span.start, "namespace")
-                .map(|i| Span::sized(declaration.span.start + i, 9)),
-        };
-        if let Some(span) = span {
-            ctx.diagnostic(no_namespace_diagnostic(span));
-        }
+        let keyword = declaration.kind.as_str();
+        let mut span_start = declaration.span.start;
+        span_start += ctx.find_next_token_from(span_start, keyword).unwrap();
+        #[expect(clippy::cast_possible_truncation)]
+        let span = Span::sized(span_start, keyword.len() as u32);
+        ctx.diagnostic(no_namespace_diagnostic(span));
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -178,9 +167,12 @@ impl Rule for NoNamespace {
 }
 
 fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes()
-        .ancestors(node.id())
-        .any(|node| node.kind().as_ts_module_declaration().is_some_and(|decl| decl.declare))
+    ctx.nodes().ancestors(node.id()).any(|node| match node.kind() {
+        AstKind::TSModuleDeclaration(decl) => decl.declare,
+        // No need to check `declare` field, as `global` is only valid in ambient context
+        AstKind::TSGlobalDeclaration(_) => true,
+        _ => false,
+    })
 }
 
 #[test]

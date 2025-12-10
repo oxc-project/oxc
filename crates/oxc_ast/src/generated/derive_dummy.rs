@@ -2545,7 +2545,7 @@ impl<'a> Dummy<'a> for TSModuleDeclarationKind {
     /// Does not allocate any data into arena.
     #[inline(always)]
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Global
+        Self::Module
     }
 }
 
@@ -2564,6 +2564,21 @@ impl<'a> Dummy<'a> for TSModuleDeclarationBody<'a> {
     /// Has cost of making 1 allocation (56 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::TSModuleBlock(Dummy::dummy(allocator))
+    }
+}
+
+impl<'a> Dummy<'a> for TSGlobalDeclaration<'a> {
+    /// Create a dummy [`TSGlobalDeclaration`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            span: Dummy::dummy(allocator),
+            global_span: Dummy::dummy(allocator),
+            body: Dummy::dummy(allocator),
+            declare: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
+        }
     }
 }
 
@@ -2623,11 +2638,11 @@ impl<'a> Dummy<'a> for TSTypeQueryExprName<'a> {
 impl<'a> Dummy<'a> for TSImportType<'a> {
     /// Create a dummy [`TSImportType`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            argument: Dummy::dummy(allocator),
+            source: Dummy::dummy(allocator),
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),

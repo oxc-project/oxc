@@ -296,7 +296,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function expression.
-   ╭─[func_style.tsx:4:7]
+   ╭─[func_style.tsx:4:25]
  3 │                             function test2(a: number): number;
  4 │ ╭─▶                         function test3(a: unknown) {
  5 │ │                             return a;
@@ -305,7 +305,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function expression.
-   ╭─[func_style.tsx:4:14]
+   ╭─[func_style.tsx:4:32]
  3 │                             export function test2(a: number): number;
  4 │ ╭─▶                         export function test3(a: unknown) {
  5 │ │                             return a;
@@ -314,7 +314,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function expression.
-   ╭─[func_style.tsx:4:17]
+   ╭─[func_style.tsx:4:32]
  3 │                             export function test2(a: number): number;
  4 │ ╭─▶                         export function test3(a: unknown) {
  5 │ │                             return a;
@@ -324,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function expression.
-   ╭─[func_style.tsx:6:8]
+   ╭─[func_style.tsx:6:29]
  5 │                                 function test2(a: number): number;
  6 │ ╭─▶                             function test3(a: unknown) {
  7 │ │                                   return a;
@@ -334,7 +334,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function expression.
-    ╭─[func_style.tsx:7:8]
+    ╭─[func_style.tsx:7:29]
   6 │                                 case $2:
   7 │ ╭─▶                             function test2(a: unknown) {
   8 │ │                               return a;

@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.17.0] - 2025-12-08
+
+### 🚀 Features
+
+- 3184f17 oxfmt: Pass filepath field to prettier formatting (#16591) (Yuji Sugiura)
+- 7bb3304 oxfmt: Pass populated config to prettier formatting (#16584) (leaysgur)
+- 69f84d2 oxfmt: Pass raw config to prettier formatting (#16582) (leaysgur)
+- a83a2ec oxfmt: Expose `setupConfig(configJSON: string)` napi callback (#16579) (leaysgur)
+- af76b0e oxfmt: Support formatting HTML, YAML, GraphQL, Handlerbars, Markdown, CSS files (#16524) (leaysgur)
+- 66b64ef oxfmt: Support formatting JSON files (#16523) (leaysgur)
+- 4767926 oxfmt: Prepare non-js/ts file support with prettier (#16480) (leaysgur)
+- 2b4ce5d oxfmt: Use dedicated `format_by_xxx_formatter` method by `SourceType` (#16417) (leaysgur)
+- 0867d2f oxfmt: Set up JS `formatFile()` function for Rust via napi (#16415) (leaysgur)
+- b6feb66 oxfmt: Rename `embedded.ts` with preparing `formatFile()` function (#16414) (leaysgur)
+- dd2cb62 oxfmt: Not error on explicit `--write` flag used (#16376) (leaysgur)
+
+## [0.16.0] - 2025-12-01
+
+### 🚀 Features
+
+- 116e0d1 website: Auto generate oxfmt docs (#15985) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0faa978 oxfmt: JsFormatEmbeddedCb types (#16324) (Brooooooklyn)
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 38b7bc4 oxfmt: Make no-napi build work (#16134) (leaysgur)
+- 14b0a6a oxfmt: Fix JS-ish file detection (#16092) (leaysgur)
+
+## [0.15.0] - 2025-11-24
+
+### 🚀 Features
+
+- f9a502c oxfmt: `oxfmt --lsp` support (#15765) (leaysgur)
+
+## [0.14.0] - 2025-11-17
+
+### 🚀 Features
+
+- 99823ad oxfmt: Print nothing for default(write) mode (#15583) (leaysgur)
+
+### ⚡ Performance
+
+- d99a83f oxfmt: Use simdutf8 based read_to_string (#15614) (leaysgur)
+
+### 📚 Documentation
+
+- 3d15805 linter: Reformat doc comments (#15670) (overlookmotel)
+
 ## [0.12.0] - 2025-11-10
 
 ### 🚀 Features

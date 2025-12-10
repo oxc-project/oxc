@@ -4,6 +4,174 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 5c62c16 linter/plugins: Allow JS plugins to access `globals` (#16512) (Arsh)
+- 7584938 linter/plugins: Add ESLint compat mode to `RuleTester` (#16538) (overlookmotel)
+- b38c2d0 linter/plugins: Add `SourceCode#lineStartIndices` getter (#16510) (overlookmotel)
+- ba93ffc linter/plugins: Add `SourceCode#tokensAndComments` getter (#16503) (overlookmotel)
+- d2ca540 linter/plugins: Add `SourceCode#isESTree` property (#16499) (overlookmotel)
+- 9001234 linter: Add fix support for tsgolint diagnostics (#16344) (camc314)
+- 0ec454c linter/plugins: Merge default options into options (#16358) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a806d74 linter: Use import type for ESTree in visitor.d.ts (#16472) (camc314)
+- 1a69b06 linter: Junit support for multiple files/errors/diagnostics (#16568) (Shrey Sudhir)
+- fd84dcc linter/plugins: `RuleTester` parser catch fatal errors (#16558) (overlookmotel)
+- ab4deb0 linter/plugins: Improve safety of options merging (#16549) (overlookmotel)
+- f7751cc linter/plugins: Fix TS types for `RuleTester` (#16546) (overlookmotel)
+- 6d33320 linter/plugins: Prevent user modifying the default config (#16545) (overlookmotel)
+- b4483c5 linter/plugins: Add config support skeleton to `RuleTester` (#16537) (overlookmotel)
+- 3a49158 linter/plugins: Improve TS types for tokens (#16502) (overlookmotel)
+- 2d3217e linter/plugins: Remove panics from `lint_file` and `setup_configs` (#16453) (overlookmotel)
+
+### ⚡ Performance
+
+- 793b989 linter/plugins: Move result-processing work off main JS thread (#16456) (overlookmotel)
+- 44dff7b linter/plugins: Skip serialization overhead when no errors (#16443) (overlookmotel)
+- 1aa2409 linter/plugins: Do not remove `messageId` field from `DiagnosticReport` before sending to Rust (#16442) (overlookmotel)
+
+### 📚 Documentation
+
+- e24aabd linter/plugins: Correct comment (#16559) (overlookmotel)
+- 8c85e08 linter/plugins: Add TODO comment (#16511) (overlookmotel)
+- a9b9298 linter/plugins: Add JSDoc comments to `SourceCode` properties (#16497) (overlookmotel)
+- 467cc1a linter/plugins: Improve comment on error branch (#16464) (overlookmotel)
+
+## [1.31.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+
+### 🚀 Features
+
+- 5da1a63 linter/plugins: Introduce `RuleTester` (#16206) (overlookmotel)
+- 41129ab linter/plugins: Implement `languageOptions.parser` (#16292) (overlookmotel)
+- 7150209 linter/plugins: Implement `SourceCode#getNodeByRangeIndex` (#16256) (overlookmotel)
+- 3226864 linter/plugins: Implement options merging (#16217) (overlookmotel)
+- cbb108a linter/plugins: Support default options (#16170) (overlookmotel)
+- 04a3a66 linter/plugins: Implement `SourceCode#getTokenOrCommentAfter()` (#16045) (Arsh)
+- 68b63d9 linter/plugins: Implement `SourceCode#getTokenOrCommentBefore()` (#16044) (Arsh)
+- 04d9454 linter/plugins: Implement `SourceCode#getTokenByRangeStart()` (#16043) (Arsh)
+- 7b8d578 linter/plugins: Implement `SourceCode#getTokensBetween()` (#16034) (Arsh)
+- 79c242f linter/plugins: Implement `SourceCode#getLastTokensBetween()` (#16033) (Arsh)
+- 1772078 linter/plugins: Implement `SourceCode#getFirstTokenBetween()` (#16032) (Arsh)
+- 21bb86d linter/plugins: Implement `SourceCode#getFirstTokensBetween()` (#16019) (Arsh)
+- 78f74b1 linter/plugins: Implement `SourceCode#getLastTokenBetween()` (#16008) (Arsh)
+- df0b948 linter/plugins: Implement `SourceCode#getLastToken()` (#16003) (Arsh)
+
+### 🐛 Bug Fixes
+
+- cf249f5 linter/plugins: Fix message interpolation (#16300) (overlookmotel)
+- 9149a26 linter/plugins, napi/parser: Deep freeze visitor keys (#16293) (overlookmotel)
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 0df1901 linter/plugins: Reset state after error during AST visitation (#16246) (overlookmotel)
+- 78aa294 linter/plugins: Deep freeze options (#16218) (overlookmotel)
+- 123bffe linter/plugins: Handle zero-token files in `SourceCode#getLastToken()` (#16184) (Arsh)
+- 55fcfba linter: Add considerDefaultExhaustiveForUnions option to switch-exhaustiveness-check (#16204) (camc314)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+- 75249e0 linter/plugins: Handle non-UTF8 file paths (#16157) (overlookmotel)
+- 86fa667 linter/plugins: Improve type def for `RuleMeta` `defaultOptions` property (#16159) (overlookmotel)
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+- f5cb601 linter/plugins: Perform length checks before continuing loops (#16025) (Arsh)
+
+### ⚡ Performance
+
+- 02bdf90 linter/plugins, napi/parser: Reuse arrays in visitor keys (#16294) (overlookmotel)
+- d3a34f8 linter/plugins: Optimize `getTokens()` and other methods (#16188) (Arsh)
+- c05db06 linter/plugins: Speed up `initTokensWithComments` (#16117) (overlookmotel)
+- 4846886 linter/plugins: Optimize merging of `tokens` and `comments` (#16071) (Arsh)
+- e232d35 linter/plugins: Recycle objects in token methods (#16068) (overlookmotel)
+
+### 📚 Documentation
+
+- e928732 linter/plugins: Fix JSDoc comment (#16295) (overlookmotel)
+- be36e36 linter/plugins: Fix JSDoc comment for `loadPluginImpl` (#16211) (overlookmotel)
+- 0e1d38a linter/plugins: Clarify JSDoc comment for `getTokensBetween` (#16070) (overlookmotel)
+- 3ee22b2 linter/plugins: Fix JSDoc comments for tokens methods (#16063) (overlookmotel)
+- f257b5c linter/plugins: Clarify JSDoc comments for tokens methods (#16062) (overlookmotel)
+
+## [1.30.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 0c1f82b linter/plugins: Add `tokens` property to `Program` (#16020) (overlookmotel)
+- 9e61beb linter/plugins: Implement `SourceCode#getFirstToken()` (#16002) (Arsh)
+- 9a548dd linter/plugins: Implement `SourceCode#getLastTokens()` (#16000) (Arsh)
+- 0b6cb11 linter/plugins: Implement `SourceCode#getFirstTokens()` (#15976) (Arsh)
+- 166781e linter/plugins: Implement `SourceCode#getTokenAfter()` (#15973) (Arsh)
+- 6ae232b linter: Expose type errors via tsgolint (#15917) (camc314)
+- 2bfdd26 linter/plugins: Implement `SourceCode#getTokensAfter()` (#15971) (Arsh)
+- 45fffc1 linter/plugins: Implement `SourceCode#getTokenBefore()` (#15956) (Arsh)
+- 776e473 linter/plugins: Implement `SourceCode#getTokensBefore()` (#15955) (Arsh)
+- 986cac1 linter/plugins: Token-related `SourceCode` APIs (TS ESLint implementation) (#15861) (Arsh)
+- 4b9d8d2 linter/type-aware: Include range with tsconfig diagnostics (#15916) (camc314)
+
+### 🐛 Bug Fixes
+
+- 2bd3cb6 apps, editors, napi: Fix `oxlint-disable` comments (#16014) (overlookmotel)
+- a8a2032 linter: Support missing `range` for internal diagnostics (#15964) (camc314)
+- 9fa9ef2 linter: Gracefully fail when using import plugin, large file counf and JS plugins (#15864) (camc314)
+- c027398 linter/plugins: Correct bindings package names glob in TSDown config (#15871) (overlookmotel)
+- 46bd6bd linter/plugins: Pin `@typescript-eslint/scope-manager` dependency (#15807) (overlookmotel)
+- fba31fa linter: Patch `@typescript-eslint/scope manager` (#15214) (Arsh)
+
+### ⚡ Performance
+
+- 024b48a linter/plugins: Lazy-load tokens parsing code (#16011) (overlookmotel)
+- 15365c9 linter/plugins: Reduce var assignments (#15953) (overlookmotel)
+- 84d1f4f linter/plugins: Downgrade some checks to debug-only (#15922) (overlookmotel)
+
+### 📚 Documentation
+
+- 6c72e84 linter: Use backticks for code elements across more rule diagnostics (#15958) (connorshea)
+- a63dad7 linter/plugins: Add comment (#15952) (overlookmotel)
+- db6a110 linter/plugins: Fix JSDoc comment (#15884) (overlookmotel)
+- fbf0fd4 linter/plugins: Add JSDoc comments to `Plugin` and `Rule` types (#15815) (overlookmotel)
+- ac5e4b5 linter/plugins: Add JSDoc comments and improve comments (#15814) (overlookmotel)
+
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- e01c551 oxlint: Add `--lsp` flag to run the language server (#15611) (Sysix)
+- f5d9abb oxlint: Add enabled? column to --rules cli output (#15213) (Wren)
+- 6b5205c linter/plugins: Implement deprecated `SourceCode#getJSDocComment` method (#15653) (overlookmotel)
+- 5eccff1 linter/plugins: Implement deprecated `SourceCode` tokens methods (#15645) (overlookmotel)
+- 0d52a5e linter/plugins: Implement `Context#parserOptions` getter (#15632) (overlookmotel)
+- 287a538 linter/plugins: Implement `Context#get*` deprecated methods (#15606) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7c4a916 linter: Restores `oxlint --rules -f=json` functionality. (#15689) (Wren)
+- 24d00f4 linter/plugins: Add types for suggested fixes (#15636) (overlookmotel)
+- 257360f linter/plugins: Fill in TS type def for `RuleMeta` (#15629) (overlookmotel)
+- bb5f8ca oxlint: Fix type annotation for big-endian (#15561) (Sysix)
+
+### ⚡ Performance
+
+- e2a0997 linter/plugins: Recycle empty visitor object in ESLint compat mode (#15693) (overlookmotel)
+- 54061e9 linter/plugins: Avoid implicit boolean coercion in `initLines` (#15641) (overlookmotel)
+
+### 📚 Documentation
+
+- a5feebc linter: `oxlint-disable` not `eslint-disable` (#15672) (overlookmotel)
+- 3d15805 linter: Reformat doc comments (#15670) (overlookmotel)
+- 16fcba6 linter: Remove "experimental" from description of stable features (#15669) (overlookmotel)
+- e62fd98 linter: Correct comment on what `EnablePlugins` does (#15668) (overlookmotel)
+- a25d31e linter: Fix grammar (#15666) (overlookmotel)
+- f5f452f linter: Add missing `perf` category (#15667) (overlookmotel)
+- a210b12 linter/plugins: Improve JSDoc comment for `RuleOptionsSchema` (#15642) (overlookmotel)
+- 3aabfac linter/plugins: Alter comments on `FILE_CONTEXT` used in ESLint-compat `Context` shim (#15605) (overlookmotel)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🚀 Features

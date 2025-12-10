@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                       }
  9 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:26]
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                       })
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:26]
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:26]
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -61,7 +61,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                       }
  9 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -70,7 +70,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                       }
  7 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:27]
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ────────────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:27]
@@ -88,7 +88,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ──────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:15]
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                       }
  7 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:6:20]
@@ -116,7 +116,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                     }
  9 │                       }
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -125,7 +125,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                       }
  7 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Duplicate `@returns` tags.
    ╭─[require_returns.tsx:4:17]
@@ -134,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────
  5 │                        */
    ╰────
-  help: Remove redundant `@returns` tag.
+  help: Remove the redundant `@returns` tag.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                       }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:10]
@@ -154,7 +154,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                   }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:10]
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                   }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:4:19]
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                     }
  7 │                       }
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:6:25]
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                       }
  9 │                         }
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:6:20]
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                     }
  9 │                       }
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                       }
  11 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -222,7 +222,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -235,7 +235,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                       }
  11 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -249,7 +249,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -264,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -279,7 +279,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -294,7 +294,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -321,7 +321,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                       }
  11 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -336,7 +336,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -351,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -367,7 +367,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │ ╰─▶                       }
  14 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -384,7 +384,7 @@ source: crates/oxc_linter/src/tester.rs
  14 │ ╰─▶                       }
  15 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -400,7 +400,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │ ╰─▶                       }
  14 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -416,7 +416,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │ ╰─▶                       }
  14 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -430,7 +430,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -444,7 +444,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -458,7 +458,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -474,7 +474,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │ ╰─▶                       }
  14 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -489,7 +489,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -504,7 +504,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -516,7 +516,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -528,7 +528,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -552,7 +552,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -566,7 +566,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -578,7 +578,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -590,7 +590,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -604,7 +604,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -619,7 +619,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -633,7 +633,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                       }
  12 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -645,7 +645,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -657,7 +657,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -669,7 +669,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -681,7 +681,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -693,7 +693,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -705,7 +705,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -717,7 +717,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -739,7 +739,7 @@ source: crates/oxc_linter/src/tester.rs
  19 │ ╰─▶                       }
  20 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -759,7 +759,7 @@ source: crates/oxc_linter/src/tester.rs
  17 │ ╰─▶                       }
  18 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -779,7 +779,7 @@ source: crates/oxc_linter/src/tester.rs
  17 │ ╰─▶                       }
  18 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
@@ -795,7 +795,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │ ╰─▶                       }
  14 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:21]
@@ -807,7 +807,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                       }
  10 │                       
     ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -817,7 +817,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                       }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -827,7 +827,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                       }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -837,7 +837,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                       }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:17]
@@ -846,7 +846,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────────────────────────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:17]
@@ -855,7 +855,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────────────────────────────────
  6 │                   
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:10]
@@ -865,7 +865,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                   }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:25]
@@ -875,4 +875,4 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                   }
  8 │                       
    ╰────
-  help: Add `@returns` tag to the JSDoc comment.
+  help: Add a `@returns` tag to the JSDoc comment.

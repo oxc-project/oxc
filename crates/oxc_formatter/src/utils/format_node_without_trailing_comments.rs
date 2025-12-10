@@ -1,6 +1,6 @@
 use oxc_span::GetSpan;
 
-use crate::{Format, FormatResult, formatter::Formatter};
+use crate::{Format, formatter::Formatter};
 
 /// Generic wrapper for formatting a node without its trailing comments.
 ///
@@ -13,7 +13,7 @@ impl<'a, T> Format<'a> for FormatNodeWithoutTrailingComments<'_, T>
 where
     T: Format<'a> + GetSpan,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let node_end = self.0.span().end;
 
         // Save the current comment view limit and temporarily restrict it
@@ -23,11 +23,9 @@ where
         // Format the node with the restricted comment view
         // This allows all comments within the node's span to be formatted normally,
         // but hides any trailing comments that come after it
-        let result = self.0.fmt(f);
+        self.0.fmt(f);
 
         // Restore the previous comment view limit
         f.context_mut().comments_mut().restore_view_limit(previous_limit);
-
-        result
     }
 }

@@ -4,9 +4,9 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Comments, Format, FormatResult, Formatter,
+        Buffer, Format, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
-        trivia::{DanglingIndentMode, format_dangling_comments},
+        trivia::format_dangling_comments,
     },
     write,
 };
@@ -38,7 +38,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent {
                 AstNodes::FormalParameter(_) => true,
@@ -47,37 +47,30 @@ impl<'a> ObjectPatternLike<'a, '_> {
                 }
                 _ => false,
             },
-            Self::ObjectAssignmentTarget(node) => false,
+            Self::ObjectAssignmentTarget(_) => false,
         }
     }
 
+    /// Based on <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L77-L103>
     fn should_break_properties(&self) -> bool {
-        // Check parent node type
-        let parent_is_catch_or_parameter = match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
-            }
-            Self::ObjectAssignmentTarget(node) => false,
-        };
-
-        if parent_is_catch_or_parameter {
-            return false;
-        }
-
         match self {
             Self::ObjectPattern(node) => {
-                node.properties.iter().any(|property| match &property.value.kind {
-                    BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => {
-                        true
-                    }
-                    BindingPatternKind::AssignmentPattern(assignment) => {
-                        matches!(
-                            assignment.left.kind,
-                            BindingPatternKind::ObjectPattern(_)
-                                | BindingPatternKind::ArrayPattern(_)
-                        )
-                    }
-                    BindingPatternKind::BindingIdentifier(_) => false,
+                let parent_is_parameter_or_assignment_pattern = matches!(
+                    node.parent,
+                    AstNodes::CatchParameter(_)
+                        | AstNodes::FormalParameter(_)
+                        | AstNodes::AssignmentPattern(_)
+                );
+
+                if parent_is_parameter_or_assignment_pattern {
+                    return false;
+                }
+
+                node.properties.iter().any(|property| {
+                    matches!(
+                        property.value.kind,
+                        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
+                    )
                 })
             }
             Self::ObjectAssignmentTarget(node) => {
@@ -125,18 +118,18 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn write_properties(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write_properties(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
-                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f)
+                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f);
             }
         }
     }
 }
 
 impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_properties = format_with(|f| {
             write!(
@@ -145,24 +138,24 @@ impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
                     &format_with(|f| self.write_properties(f)),
                     should_insert_space_around_brackets
                 )
-            )
+            );
         });
 
-        write!(f, ["{"])?;
+        write!(f, ["{"]);
 
         match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_block_indent())?;
+                write!(f, format_dangling_comments(self.span()).with_block_indent());
             }
             ObjectPatternLayout::Inline => {
-                write!(f, format_properties)?;
+                write!(f, format_properties);
             }
             ObjectPatternLayout::Group { expand } => {
-                write!(f, group(&format_properties).should_expand(expand))?;
+                write!(f, group(&format_properties).should_expand(expand));
             }
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 

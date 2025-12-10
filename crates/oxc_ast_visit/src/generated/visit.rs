@@ -1065,6 +1065,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
+        walk_ts_global_declaration(self, it);
+    }
+
+    #[inline]
     fn visit_ts_module_block(&mut self, it: &TSModuleBlock<'a>) {
         walk_ts_module_block(self, it);
     }
@@ -2063,6 +2068,7 @@ pub mod walk {
             Declaration::TSInterfaceDeclaration(it) => visitor.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => visitor.visit_ts_enum_declaration(it),
             Declaration::TSModuleDeclaration(it) => visitor.visit_ts_module_declaration(it),
+            Declaration::TSGlobalDeclaration(it) => visitor.visit_ts_global_declaration(it),
             Declaration::TSImportEqualsDeclaration(it) => {
                 visitor.visit_ts_import_equals_declaration(it)
             }
@@ -3876,6 +3882,21 @@ pub mod walk {
     }
 
     #[inline]
+    pub fn walk_ts_global_declaration<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &TSGlobalDeclaration<'a>,
+    ) {
+        let kind = AstKind::TSGlobalDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::TsModuleBlock, &it.scope_id);
+        visitor.visit_span(&it.span);
+        visitor.visit_span(&it.global_span);
+        visitor.visit_ts_module_block(&it.body);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
     pub fn walk_ts_module_block<'a, V: Visit<'a>>(visitor: &mut V, it: &TSModuleBlock<'a>) {
         let kind = AstKind::TSModuleBlock(visitor.alloc(it));
         visitor.enter_node(kind);
@@ -3934,7 +3955,7 @@ pub mod walk {
         let kind = AstKind::TSImportType(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_type(&it.argument);
+        visitor.visit_string_literal(&it.source);
         if let Some(options) = &it.options {
             visitor.visit_object_expression(options);
         }

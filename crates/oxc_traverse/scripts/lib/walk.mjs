@@ -1,5 +1,5 @@
-import assert from 'assert';
-import { camelToSnake, snakeToCamel } from './utils.mjs';
+import assert from "assert";
+import { camelToSnake, snakeToCamel } from "./utils.mjs";
 
 /**
  * @typedef {import('./parse.mjs').Types} Types
@@ -12,9 +12,9 @@ import { camelToSnake, snakeToCamel } from './utils.mjs';
  * @param {Types} types
  */
 export default function generateWalkFunctionsCode(types) {
-  let walkMethods = '';
+  let walkMethods = "";
   for (const type of Object.values(types)) {
-    if (type.kind === 'struct') {
+    if (type.kind === "struct") {
       walkMethods += generateWalkForStruct(type, types);
     } else {
       walkMethods += generateWalkForEnum(type, types);
@@ -79,7 +79,7 @@ function generateWalkForStruct(type, types) {
   /** @type {Field | undefined} */
   let scopeIdField;
   const visitedFields = type.fields.filter((field) => {
-    if (field.name === 'scope_id' && field.typeName === `Cell<Option<ScopeId>>`) {
+    if (field.name === "scope_id" && field.typeName === `Cell<Option<ScopeId>>`) {
       scopeIdField = field;
     }
     return field.innerTypeName in types;
@@ -90,8 +90,8 @@ function generateWalkForStruct(type, types) {
   let scopeEnterField,
     /** @type {Field | undefined} */
     scopeExitField;
-  let enterScopeCode = '',
-    exitScopeCode = '';
+  let enterScopeCode = "",
+    exitScopeCode = "";
 
   if (scopeArgs && scopeIdField) {
     // Get field to enter scope before
@@ -130,46 +130,50 @@ function generateWalkForStruct(type, types) {
       ctx.set_current_scope_id(current_scope_id);
     `;
 
-    exitScopeCode = 'ctx.set_current_scope_id(previous_scope_id);';
+    exitScopeCode = "ctx.set_current_scope_id(previous_scope_id);";
 
     // const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     // `Function` type is a special case as its flags are set dynamically depending on the parent.
-    let isVarHoistingScope =
-      type.name == 'Function' ||
-      ['Top', 'Function', 'ClassStaticBlock', 'TsModuleBlock'].some((flag) => scopeArgs.flags.includes(flag));
+    const isVarHoistingScope =
+      type.name == "Function" ||
+      ["Top", "Function", "ClassStaticBlock", "TsModuleBlock"].some((flag) =>
+        scopeArgs.flags.includes(flag),
+      );
     if (isVarHoistingScope) {
       enterScopeCode += `
         let previous_hoist_scope_id = ctx.current_hoist_scope_id();
         ctx.set_current_hoist_scope_id(current_scope_id);
       `;
-      exitScopeCode += 'ctx.set_current_hoist_scope_id(previous_hoist_scope_id);';
+      exitScopeCode += "ctx.set_current_hoist_scope_id(previous_hoist_scope_id);";
     }
 
     // TODO: Type names shouldn't be hard-coded here. Block scopes should be signalled by attrs in AST.
-    let isBlockScope = [
-      'Program',
-      'BlockStatement',
-      'Function',
-      'ArrowFunctionExpression',
-      'StaticBlock',
-      'TSModuleDeclaration',
+    const isBlockScope = [
+      "Program",
+      "BlockStatement",
+      "Function",
+      "ArrowFunctionExpression",
+      "StaticBlock",
+      "TSModuleDeclaration",
+      "TSGlobalDeclaration",
     ].includes(type.name);
     if (isBlockScope) {
       enterScopeCode += `
         let previous_block_scope_id = ctx.current_block_scope_id();
         ctx.set_current_block_scope_id(current_scope_id);
       `;
-      exitScopeCode += 'ctx.set_current_block_scope_id(previous_block_scope_id);';
+      exitScopeCode += "ctx.set_current_block_scope_id(previous_block_scope_id);";
     }
   }
 
   const fieldsCodes = visitedFields.map((field, index) => {
     const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`,
       fieldCamelName = snakeToCamel(field.name);
-    const scopeCode = field === scopeEnterField ? enterScopeCode : field === scopeExitField ? exitScopeCode : '';
+    const scopeCode =
+      field === scopeEnterField ? enterScopeCode : field === scopeExitField ? exitScopeCode : "";
 
-    let tagCode = '',
-      retagCode = '';
+    let tagCode = "",
+      retagCode = "";
     if (index === 0) {
       tagCode = `
         let pop_token = ctx.push_stack(
@@ -184,10 +188,10 @@ function generateWalkForStruct(type, types) {
 
     const fieldCode = makeFieldCode(field);
 
-    if (field.wrappers[0] === 'Option') {
+    if (field.wrappers[0] === "Option") {
       let walkCode;
-      if (field.wrappers.length === 2 && field.wrappers[1] === 'Vec') {
-        if (field.typeNameInner === 'Statement') {
+      if (field.wrappers.length === 2 && field.wrappers[1] === "Vec") {
+        if (field.typeNameInner === "Statement") {
           // Special case for `Option<Vec<Statement>>`
           walkCode = `walk_statements(traverser, field as *mut _, ctx);`;
         } else {
@@ -197,10 +201,13 @@ function generateWalkForStruct(type, types) {
             }
           `.trim();
         }
-      } else if (field.wrappers.length === 2 && field.wrappers[1] === 'Box') {
+      } else if (field.wrappers.length === 2 && field.wrappers[1] === "Box") {
         walkCode = `${fieldWalkName}(traverser, (&mut **field) as *mut _, ctx);`;
       } else {
-        assert(field.wrappers.length === 1, `Cannot handle struct field with type ${field.typeName}`);
+        assert(
+          field.wrappers.length === 1,
+          `Cannot handle struct field with type ${field.typeName}`,
+        );
         walkCode = `${fieldWalkName}(traverser, field as *mut _, ctx);`;
       }
 
@@ -214,15 +221,15 @@ function generateWalkForStruct(type, types) {
       `;
     }
 
-    if (field.wrappers[0] === 'Vec') {
+    if (field.wrappers[0] === "Vec") {
       let walkVecCode;
-      if (field.wrappers.length === 1 && field.innerTypeName === 'Statement') {
+      if (field.wrappers.length === 1 && field.innerTypeName === "Statement") {
         // Special case for `Vec<Statement>`
         walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
       } else {
-        let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
-          iteratorCode = '';
-        if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
+        const walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`;
+        let iteratorCode;
+        if (field.wrappers.length === 2 && field.wrappers[1] === "Option") {
           iteratorCode = `(*(${fieldCode})).iter_mut().flatten()`;
         } else {
           assert(field.wrappers.length === 1, `Cannot handle struct field with type ${field.type}`);
@@ -242,7 +249,7 @@ function generateWalkForStruct(type, types) {
       `;
     }
 
-    if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {
+    if (field.wrappers.length === 1 && field.wrappers[0] === "Box") {
       return `
         ${scopeCode}
         ${tagCode || retagCode}
@@ -259,7 +266,7 @@ function generateWalkForStruct(type, types) {
     `;
   });
 
-  if (visitedFields.length > 0) fieldsCodes.push('ctx.pop_stack(pop_token);');
+  if (visitedFields.length > 0) fieldsCodes.push("ctx.pop_stack(pop_token);");
 
   const typeSnakeName = camelToSnake(type.name);
   return `
@@ -269,11 +276,11 @@ function generateWalkForStruct(type, types) {
       ctx: &mut TraverseCtx<'a, State>
     ) {
       traverser.enter_${typeSnakeName}(&mut *node, ctx);
-      ${fieldsCodes.join('\n')}
-      ${scopeExitField ? '' : exitScopeCode}
+      ${fieldsCodes.join("\n")}
+      ${scopeExitField ? "" : exitScopeCode}
       traverser.exit_${typeSnakeName}(&mut *node, ctx);
     }
-  `.replace(/\n\s*\n+/g, '\n');
+  `.replace(/\n\s*\n+/g, "\n");
 }
 
 function makeFieldCode(field) {
@@ -289,11 +296,14 @@ function generateWalkForEnum(type, types) {
     const variantType = types[variant.innerTypeName];
     assert(variantType, `Cannot handle enum variant with type: ${variant.type}`);
 
-    let nodeCode = 'node';
-    if (variant.wrappers.length === 1 && variant.wrappers[0] === 'Box') {
-      nodeCode = '(&mut **node)';
+    let nodeCode = "node";
+    if (variant.wrappers.length === 1 && variant.wrappers[0] === "Box") {
+      nodeCode = "(&mut **node)";
     } else {
-      assert(variant.wrappers.length === 0, `Cannot handle enum variant with type: ${variant.type}`);
+      assert(
+        variant.wrappers.length === 0,
+        `Cannot handle enum variant with type: ${variant.type}`,
+      );
     }
 
     return (
@@ -310,20 +320,23 @@ function generateWalkForEnum(type, types) {
     for (let i = 0; i < inheritedFrom.length; i++) {
       const inheritedTypeName = inheritedFrom[i],
         inheritedType = types[inheritedTypeName];
-      if (!inheritedType || inheritedType.kind !== 'enum') {
+      if (!inheritedType || inheritedType.kind !== "enum") {
         missingVariants.push(inheritedTypeName);
       } else {
-        variantMatches.push(...inheritedType.variants.map((variant) => `${type.name}::${variant.name}(_)`));
+        variantMatches.push(
+          ...inheritedType.variants.map((variant) => `${type.name}::${variant.name}(_)`),
+        );
         inheritedFrom.push(...inheritedType.inherits);
       }
     }
 
     variantCodes.push(
-      `${variantMatches.join(' | ')} => ` + `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`,
+      `${variantMatches.join(" | ")} => ` +
+        `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`,
     );
   }
 
-  assert(missingVariants.length === 0, `Missing enum variants: ${missingVariants.join(', ')}`);
+  assert(missingVariants.length === 0, `Missing enum variants: ${missingVariants.join(", ")}`);
 
   const typeSnakeName = camelToSnake(type.name);
   return `
@@ -334,7 +347,7 @@ function generateWalkForEnum(type, types) {
     ) {
       traverser.enter_${typeSnakeName}(&mut *node, ctx);
       match &mut *node {
-        ${variantCodes.join('\n')}
+        ${variantCodes.join("\n")}
       }
       traverser.exit_${typeSnakeName}(&mut *node, ctx);
     }

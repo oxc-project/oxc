@@ -1,32 +1,25 @@
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::*};
-use oxc_span::GetSpan;
+use oxc_ast::ast::*;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, FormatResult, Formatter,
-        prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments},
-    },
+    formatter::{Buffer, Formatter, prelude::*},
     write,
 };
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join_nodes_with_hardline()
-            .entries(
-                self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
-            )
-            .finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join_nodes_with_hardline().entries(
+            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
+        );
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "{")?;
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, "{");
 
         let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent {
             f.context().get_cached_element(&catch.span)
@@ -38,13 +31,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
         // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
         let formatted_comments_before_catch_clause = format_once(|f| {
             if let Some(comments) = comments_before_catch_clause {
-                f.write_element(comments)
-            } else {
-                Ok(())
+                f.write_element(comments);
             }
         });
 
-        if is_empty_block(&self.body, f) {
+        if is_empty_block(&self.body) {
             // `if (a) /* comment */ {}`
             // should be formatted like:
             // `if (a) { /* comment */ }`
@@ -59,21 +50,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
                         &formatted_comments_before_catch_clause,
                         format_dangling_comments(self.span)
                     ))
-                )?;
+                );
             } else if is_non_collapsible(self.parent) {
-                write!(f, hard_line_break())?;
+                write!(f, hard_line_break());
             }
         } else {
             write!(
                 f,
                 block_indent(&format_args!(&formatted_comments_before_catch_clause, self.body()))
-            )?;
+            );
         }
-        write!(f, "}")
+        write!(f, "}");
     }
 }
 
-pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
+pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
     block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
 }
 
@@ -88,7 +79,8 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::ForStatement(_)
         | AstNodes::WhileStatement(_)
         | AstNodes::DoWhileStatement(_)
-        | AstNodes::TSModuleDeclaration(_) => false,
+        | AstNodes::TSModuleDeclaration(_)
+        | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`
             matches!(catch.parent, AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())

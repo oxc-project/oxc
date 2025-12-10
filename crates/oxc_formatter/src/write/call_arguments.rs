@@ -1,22 +1,20 @@
-use std::mem;
-
-use oxc_allocator::{Address, Vec as ArenaVec};
-use oxc_ast::{ast::*, match_expression};
+use oxc_allocator::Vec as ArenaVec;
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator,
+    Buffer, Format, FormatTrailingCommas, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        BufferExtensions, Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer,
+        Comments, FormatElement, Formatter, SourceText, VecBuffer,
+        buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
-            FormatElements, FormatOnce, FormatWith, MemoizeFormat, Tag, empty_line, expand_parent,
-            format_once, format_with, group, soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
+            soft_block_indent, soft_line_break_or_space, space,
         },
-        separated::FormatSeparatedIter,
-        trivia::{DanglingIndentMode, format_dangling_comments},
+        trivia::format_dangling_comments,
     },
     utils::{
         call_expression::is_test_call_expression, is_long_curried_call,
@@ -30,19 +28,21 @@ use crate::{
 };
 
 use super::{
+    FormatJsArrowFunctionExpression,
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
-        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions, FunctionCacheMode,
-        GroupedCallArgumentLayout,
+        FormatJsArrowFunctionExpressionOptions, FunctionCacheMode, GroupedCallArgumentLayout,
     },
-    function,
+    function::FormatFunction,
     parameters::has_only_simple_parameters,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
+
+        let arguments = self.as_ref();
 
         if self.is_empty() {
             return write!(
@@ -65,287 +65,82 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 None
             };
 
-        let new_expression =
-            if let AstNodes::NewExpression(new_expr) = self.parent { Some(new_expr) } else { None };
-
-        let (is_commonjs_or_amd_call, is_test_call) = call_expression
-            .map(|call| (is_commonjs_or_amd_call(self, call, f), is_test_call_expression(call)))
-            .unwrap_or_default();
-
-        // For test calls: use compact formatting (space-separated, no breaks)
-        // EXCEPT when there are exactly 2 args and the first is NOT a string/template.
-        // This handles patterns like:
-        // - it("name", () => {}) - compact
-        // - it("name", async(() => {})) - compact
-        // - beforeEach(async(() => {})) - compact
-        // - it(() => {}, () => {}) - NOT compact (2 args, first not string)
-        let should_use_compact_test_formatting = is_test_call
-            && (self.len() != 2
-                || matches!(
-                    self.as_ref().first(),
-                    Some(
-                        Argument::StringLiteral(_)
-                            | Argument::TemplateLiteral(_)
-                            | Argument::TaggedTemplateExpression(_)
-                    )
-                ));
-
         if is_simple_module_import
-            || is_commonjs_or_amd_call
+            || call_expression.is_some_and(|call| {
+                is_commonjs_or_amd_call(self, call, f)
+                    || ((self.len() != 2
+                        || matches!(
+                            arguments.first(),
+                            Some(
+                                Argument::StringLiteral(_)
+                                    | Argument::TemplateLiteral(_)
+                                    | Argument::TaggedTemplateExpression(_)
+                            )
+                        ))
+                        && is_test_call_expression(call))
+            })
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || should_use_compact_test_formatting
         {
             return write!(
                 f,
                 [
                     l_paren_token,
                     format_with(|f| {
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Omit,
-                            )
-                            .finish()
+                        f.join_with(space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            TrailingSeparator::Omit,
+                        );
                     }),
                     r_paren_token
                 ]
             );
         }
 
-        let has_empty_line =
-            self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
+        // Check if there's an empty line (2+ newlines) between any consecutive arguments.
+        // This is used to preserve intentional blank lines in the original source.
+        let has_empty_line = arguments.windows(2).any(|window| {
+            let (cur_arg, next_arg) = (&window[0], &window[1]);
+
+            // Count newlines between arguments, short-circuiting at 2 for performance
+            // Check if there are at least two newlines between arguments
+            f.source_text()
+                .bytes_range(cur_arg.span().end, next_arg.span().start)
+                .iter()
+                .filter(|&&b| b == b'\n')
+                .nth(1)
+                .is_some()
+        });
+
         if has_empty_line
-            || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
+            || (!matches!(self.grand_parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))
-            || has_long_arrow_chain_arg(self)
         {
             return format_all_args_broken_out(self, true, f);
         }
 
-        // Check if this is a simple nested call that should stay compact
-        if call_expression.is_some_and(|call| should_keep_nested_call_compact(call, self, f)) {
-            return format_compact_call_arguments(self, f);
-        }
-
-        // Check if this is a simple nested new expression that should stay compact
-        if new_expression.is_some_and(|new_expr| should_keep_nested_new_compact(new_expr, self, f))
-        {
-            return format_compact_call_arguments(self, f);
-        }
-
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
-            write_grouped_arguments(self, group_layout, f)
+            write_grouped_arguments(self, group_layout, f);
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
             write!(
                 f,
                 [
                     l_paren_token,
-                    soft_block_indent(&format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
-                            .finish()
+                    soft_block_indent(&format_with(|f| {
+                        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            trailing_operator,
+                        );
                     })),
                     r_paren_token,
                 ]
-            )
+            );
         } else {
-            format_all_args_broken_out(self, false, f)
+            format_all_args_broken_out(self, false, f);
         }
-    }
-}
-
-/// Checks if this call should keep its arguments compact because it's a
-/// simple nested call used as an argument.
-///
-/// Returns `true` for patterns like:
-/// - `require(path.join(arg1, arg2))`
-/// - `logger.error(pipe(call1(), call2()))`
-///
-/// After removing AstKind::Argument, these calls are direct children of
-/// their parent CallExpression, so we check if our span is within the
-/// parent's argument spans.
-fn should_keep_nested_call_compact(
-    call: &AstNode<'_, CallExpression<'_>>,
-    args: &[Argument<'_>],
-    f: &Formatter<'_, '_>,
-) -> bool {
-    // Only applies to calls with 2-4 simple arguments
-    if args.len() < 2 || args.len() > 4 {
-        return false;
-    }
-
-    // Don't use compact formatting if there are any comments in the arguments
-    // Check before first argument and between all arguments
-    let call_span = call.span;
-    for (i, arg) in args.iter().enumerate() {
-        let previous_end = if i == 0 {
-            call.callee.span().end // Check from after callee to first arg
-        } else {
-            args[i - 1].span().end // Check between args
-        };
-
-        let current_span = arg.span();
-        if f.comments().has_comment_in_range(previous_end, current_span.start) {
-            return false;
-        }
-    }
-
-    // Also check after last argument (trailing comments)
-    if let Some(last_arg) = args.last()
-        && f.comments().has_comment_in_range(last_arg.span().end, call_span.end)
-    {
-        return false;
-    }
-
-    // Estimate total argument length to avoid keeping very long calls compact
-    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
-    // If arguments are too long (> 60 chars), let the normal formatting handle it
-    if total_length > 60 {
-        return false;
-    }
-
-    // Check if arguments are relatively simple
-    // Allow some complex expressions like conditionals and simple calls if they're short
-    let all_args_acceptable = args.iter().all(|arg| {
-        match arg.as_expression() {
-            Some(expr) => match expr {
-                // Exclude objects and arrays - they often break across lines during formatting
-                // even when marked as "simple", which defeats the purpose of compact formatting
-                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
-                // Allow conditionals, binary/logical expressions, and simple calls
-                Expression::ConditionalExpression(_)
-                | Expression::LogicalExpression(_)
-                | Expression::BinaryExpression(_)
-                | Expression::CallExpression(_) => true,
-                // For other expressions, use the simple check
-                _ => is_relatively_short_argument(expr),
-            },
-            None => false, // SpreadElement is not acceptable
-        }
-    });
-
-    if !all_args_acceptable {
-        return false;
-    }
-
-    // Check if this call is itself an argument to another call
-    // After AstKind::Argument removal, parent is directly the CallExpression
-    match call.parent {
-        AstNodes::CallExpression(parent_call) => {
-            // Verify our span is within parent's arguments (not the callee)
-            if parent_call.callee.span().contains_inclusive(call.span) {
-                return false; // We're the callee, not an argument
-            }
-
-            // Check if our span is within any of parent's arguments
-            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
-        }
-        AstNodes::NewExpression(parent_new) => {
-            // Same check for new expressions
-            if parent_new.callee.span().contains_inclusive(call.span) {
-                return false;
-            }
-
-            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
-        }
-        _ => false,
-    }
-}
-
-/// Checks if this new expression should keep its arguments compact because it's a
-/// simple nested new expression used as an argument.
-///
-/// Returns `true` for patterns like:
-/// - `assert.sameValue(Temporal.Instant.compare(new Temporal.Instant(-1000n), new Temporal.Instant(1000n)), -1)`
-/// - `compareArray(new TA([0, 1, 2, 3]).copyWithin(0, 1, -1), [1, 2, 2, 3])`
-///
-/// Similar to `should_keep_nested_call_compact` but for NewExpression.
-fn should_keep_nested_new_compact(
-    new_expr: &AstNode<'_, NewExpression<'_>>,
-    args: &[Argument<'_>],
-    f: &Formatter<'_, '_>,
-) -> bool {
-    // Only applies to new expressions with 1-4 simple arguments
-    if args.is_empty() || args.len() > 4 {
-        return false;
-    }
-
-    // Don't use compact formatting if there are any comments in the arguments
-    let new_span = new_expr.span;
-    for (i, arg) in args.iter().enumerate() {
-        let previous_end = if i == 0 {
-            new_expr.callee.span().end // Check from after callee to first arg
-        } else {
-            args[i - 1].span().end // Check between args
-        };
-
-        let current_span = arg.span();
-        if f.comments().has_comment_in_range(previous_end, current_span.start) {
-            return false;
-        }
-    }
-
-    // Also check after last argument (trailing comments)
-    if let Some(last_arg) = args.last()
-        && f.comments().has_comment_in_range(last_arg.span().end, new_span.end)
-    {
-        return false;
-    }
-
-    // Estimate total argument length to avoid keeping very long calls compact
-    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
-    // If arguments are too long (> 60 chars), let the normal formatting handle it
-    if total_length > 60 {
-        return false;
-    }
-
-    // Check if arguments are relatively simple
-    let all_args_acceptable = args.iter().all(|arg| {
-        match arg.as_expression() {
-            Some(expr) => match expr {
-                // Exclude objects and arrays - they often break across lines during formatting
-                // even when marked as "simple", which defeats the purpose of compact formatting
-                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
-                // Allow conditionals, binary/logical expressions, and simple calls/new
-                Expression::ConditionalExpression(_)
-                | Expression::LogicalExpression(_)
-                | Expression::BinaryExpression(_)
-                | Expression::CallExpression(_)
-                | Expression::NewExpression(_) => true,
-                // For other expressions, use the simple check
-                _ => is_relatively_short_argument(expr),
-            },
-            None => false, // SpreadElement is not acceptable
-        }
-    });
-
-    if !all_args_acceptable {
-        return false;
-    }
-
-    // Check if this new expression is itself an argument to another call/new
-    match new_expr.parent {
-        AstNodes::CallExpression(parent_call) => {
-            // Verify our span is within parent's arguments (not the callee)
-            if parent_call.callee.span().contains_inclusive(new_expr.span) {
-                return false; // We're the callee, not an argument
-            }
-
-            // Check if our span is within any of parent's arguments
-            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
-        }
-        AstNodes::NewExpression(parent_new) => {
-            // Same check for parent new expressions
-            if parent_new.callee.span().contains_inclusive(new_expr.span) {
-                return false;
-            }
-
-            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
-        }
-        _ => false,
     }
 }
 
@@ -395,76 +190,27 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     false
 }
 
-/// Tests if a call has any long arrow chain argument (3+ arrows) that should force expansion.
-///
-/// Expands chains with:
-/// - Block bodies: `head => body => { console.log(); }`
-/// - Object/array expression bodies: `a => b => ({ foo: bar })`
-///
-/// Does NOT expand chains with simple expression bodies:
-/// - Literals: `a => b => c => 1`
-/// - Sequence expressions: `a => b => c => (1, 2, 3)`
-/// - Conditionals: `a => b => c => (x ? y : z)`
-fn has_long_arrow_chain_arg(args: &[Argument<'_>]) -> bool {
-    args.iter().any(|arg| {
-        if let Argument::ArrowFunctionExpression(arrow) = arg {
-            let mut current = arrow;
-            let mut chain_length = 1;
-
-            while current.expression
-                && let Some(Statement::ExpressionStatement(expr_stmt)) =
-                    current.body.statements.first()
-                && let Expression::ArrowFunctionExpression(next) = &expr_stmt.expression
-            {
-                chain_length += 1;
-                current = next;
-            }
-
-            if chain_length < 3 {
-                return false;
-            }
-
-            // Check if tail should force expansion
-            if !current.expression {
-                // Block body always forces expansion
-                return true;
-            }
-
-            // For expression bodies, only expand for object/array expressions
-            if let Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) =
-                current.get_expression()
-            {
-                return true;
-            }
-
-            false
-        } else {
-            false
-        }
-    })
-}
-
 fn format_all_elements_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-    elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
+    elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
-) -> FormatResult<()> {
+) {
     write!(
         buffer,
         [group(&format_args!(
             "(",
             soft_block_indent(&format_once(move |f| {
                 for (index, (element, lines_before)) in elements.into_iter().enumerate() {
-                    if let Ok(Some(element)) = element {
+                    if let Some(element) = element {
                         if index > 0 {
                             match lines_before {
-                                0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                                _ => write!(f, [empty_line()])?,
+                                0 | 1 => write!(f, [soft_line_break_or_space()]),
+                                _ => write!(f, [empty_line()]),
                             }
                         }
 
-                        f.write_element(element)?;
+                        f.write_element(element);
                     }
                 }
 
@@ -472,73 +218,46 @@ fn format_all_elements_broken_out<'a, 'b>(
                     f,
                     [(!matches!(node.parent, AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
-                )
+                );
             })),
             ")",
         ))
         .should_expand(expand)]
-    )
+    );
 }
 
 fn format_all_args_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
-) -> FormatResult<()> {
+) {
     let last_index = node.len() - 1;
     write!(
         buffer,
         [group(&format_args!(
             "(",
-            soft_block_indent(&format_once(move |f| {
+            soft_block_indent(&format_with(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
                         match f.source_text().get_lines_before(argument.span(), f.comments()) {
-                            0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                            _ => write!(f, [empty_line()])?,
+                            0 | 1 => write!(f, [soft_line_break_or_space()]),
+                            _ => write!(f, [empty_line()]),
                         }
                     }
 
-                    write!(f, [argument, (index != last_index).then_some(",")])?;
+                    write!(f, [argument, (index != last_index).then_some(",")]);
                 }
 
                 write!(
                     f,
                     [(!matches!(node.parent, AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
-                )
+                );
             })),
             ")",
         ))
         .should_expand(expand)]
-    )
-}
-
-/// Formats call arguments in a compact style that resists breaking.
-/// Used for simple nested calls that should stay on one line when possible.
-///
-/// Uses a simple group without soft_block_indent to avoid breaking when
-/// the outer call adds indentation.
-fn format_compact_call_arguments<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    write!(
-        f,
-        [group(&format_args!(
-            "(",
-            format_with(|f| {
-                for (index, argument) in node.iter().enumerate() {
-                    if index > 0 {
-                        write!(f, [",", space()])?;
-                    }
-                    write!(f, [argument])?;
-                }
-                Ok(())
-            }),
-            ")",
-        ))]
-    )
+    );
 }
 
 pub fn arguments_grouped_layout(
@@ -557,7 +276,7 @@ pub fn arguments_grouped_layout(
         let second_can_group_fn = || second_can_group;
 
         // Check if we should group the last argument (second)
-        if should_group_last_argument_impl(Some(first), second, second_can_group_fn, f) {
+        if should_group_last_argument_impl(2, Some(first), second, second_can_group_fn, f) {
             return Some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
 
@@ -613,7 +332,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| f.comments().is_end_of_line_comment(c))
+            .any(|c| c.followed_by_newline())
     {
         return false;
     }
@@ -625,6 +344,7 @@ fn should_group_first_argument(
 /// Takes the penultimate argument as an Expression for the 2-argument case,
 /// or extracts it from the arguments array for other cases.
 fn should_group_last_argument_impl(
+    args_len: usize,
     penultimate: Option<&Expression>,
     last: &Expression,
     last_can_group_fn: impl FnOnce() -> bool,
@@ -654,7 +374,7 @@ fn should_group_last_argument_impl(
             |c| {
                 // Exclude end-of-line comments (treated as previous node's comment)
                 // and comments followed by a comma
-                !f.comments().is_end_of_line_comment(c)
+                !c.followed_by_newline()
                     && !f.source_text().next_non_whitespace_byte_is(c.span.end, b',')
             },
         )
@@ -677,7 +397,8 @@ fn should_group_last_argument_impl(
     match last {
         Expression::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if matches!(penultimate, Some(Expression::ArrowFunctionExpression(_))) {
+            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
+            {
                 return false;
             }
 
@@ -696,7 +417,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 
     let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
     let last_can_group_fn = || can_group_expression_argument(last, f);
-    should_group_last_argument_impl(penultimate, last, last_can_group_fn, f)
+    should_group_last_argument_impl(args.len(), penultimate, last, last_can_group_fn, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few
@@ -729,7 +450,6 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
         TSType::TSArrayType(array) => match &array.element_type {
             TSType::TSArrayType(inner_array) => Some(&inner_array.element_type),
             element_type => Some(element_type),
-            _ => None,
         },
         _ => None,
     };
@@ -755,7 +475,7 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
         // Any keyword or literal types
         TSType::TSLiteralType(_)
         | TSType::TSTemplateLiteralType(_)
-        | TSType::TSThisType(_ | _)
+        | TSType::TSThisType(_)
         | TSType::TSBigIntKeyword(_)
         | TSType::TSBooleanKeyword(_)
         | TSType::TSObjectKeyword(_)
@@ -860,7 +580,8 @@ fn can_group_arrow_function_expression_argument(
                     return false;
                 }
                 body.statements.iter().any(|statement| match statement {
-                    Statement::EmptyStatement(s) => {
+                    #[expect(clippy::match_same_arms)]
+                    Statement::EmptyStatement(_) => {
                         // When the body contains an empty statement, comments in
                         // the body will get attached to that statement rather than
                         // the body itself, so they need to be checked for comments
@@ -902,7 +623,7 @@ fn write_grouped_arguments<'a>(
     node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
+) {
     let last_index = node.len() - 1;
     let only_one_argument = last_index == 0;
     let mut non_grouped_breaks = false;
@@ -910,14 +631,20 @@ fn write_grouped_arguments<'a>(
     let mut has_cached = false;
 
     // Pre-format the arguments to determine if they can be grouped.
-    let mut elements = node
+    let elements = node
         .iter()
         .enumerate()
         .map(|(index, argument)| {
             let is_grouped_argument = (group_layout.is_grouped_first() && index == 0)
                 || (group_layout.is_grouped_last() && index == last_index);
 
-            let format_argument = format_once(|f| {
+            // We have to get the lines before the argument has been formatted, because it relies on
+            // the comments before the argument. After formatting, the comments might marked as printed,
+            // which would lead to a wrong line count.
+            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
+            let comma = (last_index != index).then_some(",");
+
+            let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
                     match argument.as_ast_nodes() {
                         AstNodes::Function(function)
@@ -926,47 +653,46 @@ fn write_grouped_arguments<'a>(
                                     || function_has_only_simple_parameters(&function.params)) =>
                         {
                             has_cached = true;
-                            return function.fmt_with_options(
-                                FormatFunctionOptions {
-                                    cache_mode: FunctionCacheMode::Cache,
-                                    ..Default::default()
-                                },
+                            return write!(
                                 f,
+                                [
+                                    FormatFunction::new_with_options(
+                                        function,
+                                        FormatFunctionOptions {
+                                            cache_mode: FunctionCacheMode::Cache,
+                                            ..FormatFunctionOptions::default()
+                                        },
+                                    ),
+                                    comma
+                                ]
                             );
                         }
                         AstNodes::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
-                            return arrow.fmt_with_options(
-                                FormatJsArrowFunctionExpressionOptions {
-                                    cache_mode: FunctionCacheMode::Cache,
-                                    ..FormatJsArrowFunctionExpressionOptions::default()
-                                },
+                            return write!(
                                 f,
+                                [
+                                    FormatJsArrowFunctionExpression::new_with_options(
+                                        arrow,
+                                        FormatJsArrowFunctionExpressionOptions {
+                                            cache_mode: FunctionCacheMode::Cache,
+                                            ..FormatJsArrowFunctionExpressionOptions::default()
+                                        },
+                                    ),
+                                    comma
+                                ]
                             );
                         }
                         _ => {}
                     }
                 }
-                argument.fmt(f)
-            });
-
-            // We have to get the lines before the argument has been formatted, because it relies on
-            // the comments before the argument. After formatting, the comments might marked as printed,
-            // which would lead to a wrong line count.
-            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
-
-            let interned = f.intern(&format_once(|f| {
-                format_argument.fmt(f)?;
-                write!(f, (last_index != index).then_some(","))
+                write!(f, [argument, comma]);
             }));
 
             let break_type =
                 if is_grouped_argument { &mut grouped_breaks } else { &mut non_grouped_breaks };
 
-            *break_type = *break_type
-                || interned
-                    .as_ref()
-                    .is_ok_and(|i| i.as_ref().is_some_and(FormatElement::will_break));
+            *break_type = *break_type || interned.as_ref().is_some_and(FormatElement::will_break);
 
             (interned, lines_before)
         })
@@ -981,13 +707,13 @@ fn write_grouped_arguments<'a>(
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer)?;
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec()
+        buffer.into_vec().into_bump_slice()
     };
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
@@ -999,45 +725,60 @@ fn write_grouped_arguments<'a>(
     // as first or last argument.
     let mut grouped = elements;
     if has_cached {
-        match group_layout {
+        let (argument, grouped_element) = match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
-                let argument = node.first().unwrap();
-                let interned = f.intern(&format_once(|f| {
-                    FormatGroupedFirstArgument { argument }.fmt(f)?;
-                    write!(f, (last_index != 0).then_some(","))
-                }));
-
-                // Turns out, using the grouped layout isn't a good fit because some parameters of the
-                // grouped function or arrow expression break. In that case, fall back to the all args expanded
-                // formatting.
-                // This back tracking is required because testing if the grouped argument breaks would also return `true`
-                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
-                // any content in the signature breaks.
-                if matches!(interned, Err(FormatError::PoorLayout)) {
-                    return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
-                }
-
-                grouped.first_mut().unwrap().0 = interned;
+                (node.first().unwrap(), &mut grouped.first_mut().unwrap().0)
             }
             GroupedCallArgumentLayout::GroupedLastArgument => {
-                let argument = node.last().unwrap();
-                let interned = f.intern(&format_once(|f| {
-                    FormatGroupedLastArgument { argument, is_only: only_one_argument }.fmt(f)
-                }));
+                (node.last().unwrap(), &mut grouped.last_mut().unwrap().0)
+            }
+        };
 
-                // Turns out, using the grouped layout isn't a good fit because some parameters of the
-                // grouped function or arrow expression break. In that case, fall back to the all args expanded
-                // formatting.
-                // This back tracking is required because testing if the grouped argument breaks would also return `true`
-                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
-                // any content in the signature breaks.
-                if matches!(interned, Err(FormatError::PoorLayout)) {
+        let function_params = match argument.as_ast_nodes() {
+            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
+            AstNodes::Function(function) => Some(&function.params),
+            _ => None,
+        };
+
+        // Turns out, using the grouped layout isn't a good fit because some parameters of the
+        // grouped function or arrow expression break. In that case, fall back to the all args expanded
+        // formatting.
+        // This back tracking is required because testing if the grouped argument breaks would also return `true`
+        // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
+        // any content in the signature breaks.
+        //
+        // <https://github.com/biomejs/biome/blob/98ca2ae9f3b9b25a14d63b243223583aba6e4907/crates/biome_js_formatter/src/js/expressions/call_arguments.rs#L466-L482>
+        if let Some(params) = function_params {
+            let Some(cached_element) = f.context().get_cached_element(params.as_ref()) else {
+                unreachable!(
+                    "The parameters should have already been formatted and cached in the `FormatFunction` or `FormatJsArrowFunctionExpression`"
+                );
+            };
+
+            // Remove soft lines from the cached parameters and check if they would break.
+            // If they break even without soft lines, we need to use the expanded layout.
+            let interned = f.intern(&format_once(|f| {
+                RemoveSoftLinesBuffer::new(f).write_element(cached_element);
+            }));
+
+            if let Some(interned) = interned {
+                if interned.will_break() {
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
-                let mut last = grouped.last_mut().unwrap();
-                grouped.last_mut().unwrap().0 = interned;
+                // No break; it should print the element without soft lines.
+                // It would be used in the `FormatFunction` or `FormatJsArrowFunctionExpression`.
+                f.context_mut().cache_element(params.as_ref(), interned);
             }
+        }
+
+        *grouped_element = if group_layout.is_grouped_first() {
+            f.intern(&format_with(|f| {
+                FormatGroupedFirstArgument { argument }.fmt(f);
+                write!(f, (last_index != 0).then_some(","));
+            }))
+        } else {
+            f.intern(&FormatGroupedLastArgument { argument, is_only: only_one_argument })
         }
     }
 
@@ -1045,13 +786,13 @@ fn write_grouped_arguments<'a>(
     let middle_variant = {
         let mut buffer = VecBuffer::new(f.state_mut());
 
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
         write!(
             buffer,
             [
                 "(",
-                format_once(|f| {
+                format_with(|f| {
                     let mut joiner = f.join_with(soft_line_break_or_space());
 
                     for (i, (element, _)) in grouped.iter().enumerate() {
@@ -1059,75 +800,67 @@ fn write_grouped_arguments<'a>(
                             || (group_layout.is_grouped_last() && i == last_index)
                         {
                             joiner.entry(
-                                &group(&format_once(|f| {
-                                    if let Some(arg_element) = element.clone()? {
-                                        f.write_element(arg_element)
-                                    } else {
-                                        Ok(())
+                                &group(&format_with(|f| {
+                                    if let Some(arg_element) = element.clone() {
+                                        f.write_element(arg_element);
                                     }
                                 }))
                                 .should_expand(true),
                             );
                         } else {
-                            joiner.entry(&format_once(|f| {
-                                if let Some(arg_element) = element.clone()? {
-                                    f.write_element(arg_element)
-                                } else {
-                                    Ok(())
+                            joiner.entry(&format_with(|f| {
+                                if let Some(arg_element) = element.clone() {
+                                    f.write_element(arg_element);
                                 }
                             }));
                         }
                     }
-
-                    joiner.finish()
                 }),
                 ")"
             ]
-        )?;
+        );
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec().into_boxed_slice()
+        buffer.into_vec().into_bump_slice()
     };
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
-        write!(f, [expand_parent()])?;
-        vec![middle_variant, most_expanded.into_boxed_slice()]
+        write!(f, [expand_parent()]);
+        ArenaVec::from_array_in([middle_variant, most_expanded], f.context().allocator())
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
             let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
-            let result = write!(
+            write!(
                 buffer,
                 [
                     "(",
                     format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries(grouped.into_iter().map(|(element, _)| {
+                        f.join_with(soft_line_break_or_space()).entries(grouped.into_iter().map(
+                            |(element, _)| {
                                 format_once(move |f| {
-                                    if let Some(element) = element? {
-                                        f.write_element(element)
-                                    } else {
-                                        Ok(())
+                                    if let Some(element) = element {
+                                        f.write_element(element);
                                     }
                                 })
-                            }))
-                            .finish()
+                            },
+                        ));
                     }),
                     ")",
                 ]
             );
 
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-            buffer.into_vec().into_boxed_slice()
+            buffer.into_vec().into_bump_slice()
         };
 
-        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
+        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.context().allocator())
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
@@ -1138,7 +871,7 @@ fn write_grouped_arguments<'a>(
     unsafe {
         f.write_element(FormatElement::BestFitting(
             format_element::BestFittingElement::from_vec_unchecked(variants),
-        ))
+        ));
     }
 }
 
@@ -1148,18 +881,21 @@ struct FormatGroupedFirstArgument<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f);
+            }
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -1176,7 +912,7 @@ struct FormatGroupedLastArgument<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
@@ -1184,23 +920,26 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                function.fmt_with_options(
+                FormatFunction::new_with_options(
+                    function,
                     FormatFunctionOptions {
                         cache_mode: FunctionCacheMode::Cache,
                         call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                     },
-                    f,
                 )
+                .fmt(f);
             }
-
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f);
+            }
             _ => self.argument.fmt(f),
         }
     }

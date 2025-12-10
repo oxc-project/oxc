@@ -366,10 +366,6 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        // do not bind `global` for `declare global { ... }`
-        if self.kind.is_global() {
-            return;
-        }
         let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
         let instantiated =
             get_module_instance_state(builder, self, builder.current_node_id).is_instantiated();
@@ -433,9 +429,10 @@ fn get_module_instance_state_impl<'a, 'b>(
     // A module is uninstantiated if it contains only specific declarations
     let state = match body {
         TSModuleDeclarationBody::TSModuleBlock(block) => {
+            module_declaration_stmts.extend(block.body.iter());
+
             let mut child_state = ModuleInstanceState::NonInstantiated;
             for stmt in &block.body {
-                module_declaration_stmts.extend(block.body.iter());
                 child_state = get_module_instance_state_for_statement(
                     builder,
                     stmt,

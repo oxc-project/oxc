@@ -35,9 +35,15 @@ teardown(async () => {
 });
 
 suite('code actions', () => {
+  // Skip tests if linter tests are disabled
+  if (process.env.SKIP_LINTER_TEST === 'true') {
+    return;
+  }
+
   // flaky test for multi workspace mode
   testSingleFolderMode('listed code actions', async () => {
     await loadFixture('debugger');
+    await sleep(500);
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     // await window.showTextDocument(fileUri); -- should also work without opening the file
 
@@ -78,8 +84,8 @@ suite('code actions', () => {
 
   // https://github.com/oxc-project/oxc/issues/10422
   test('code action `source.fixAll.oxc` on editor.codeActionsOnSave', async () => {
-    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file.js');
-    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+    const file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file.js');
+    const expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
 
     await workspace.getConfiguration('editor').update('codeActionsOnSave', {
       'source.fixAll.oxc': 'always',
@@ -107,8 +113,8 @@ suite('code actions', () => {
 
   // https://discord.com/channels/1079625926024900739/1080723403595591700/1422191300395929620
    test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
-    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
-    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+    const file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
+    const expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
 
     await workspace.getConfiguration('editor').update('codeActionsOnSave', {
       'source.fixAll.oxc': 'always',

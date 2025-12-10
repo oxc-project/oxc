@@ -7,3 +7,5 @@ function handleStatus(status: Status) {
       return 'Request approved';
   }
 }
+
+export {};

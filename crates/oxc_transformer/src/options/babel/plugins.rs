@@ -77,6 +77,7 @@ pub struct BabelPlugins {
     pub legacy_decorator: Option<DecoratorOptions>,
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
+    pub tagged_template_escape: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -171,6 +172,9 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         .value::<StyledComponentsOptions>()
                         .map_err(|err| p.errors.push(err))
                         .ok();
+                }
+                "tagged-template-transform" => {
+                    p.tagged_template_escape = true;
                 }
                 s => p.unsupported.push(s.to_string()),
             }

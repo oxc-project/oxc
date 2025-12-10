@@ -45,7 +45,7 @@ foo;bar;
 /*! KEEP */
 
 ########## 5
-function () {
+function test() {
     /*
     * @license
     * Copyright notice 2
@@ -53,16 +53,16 @@ function () {
     bar;
 }
 ----------
-function(){bar}
+function test(){bar}
 /*
 * @license
 * Copyright notice 2
 */
 
 ########## 6
-function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
+function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function baz() { } }
 ----------
-function bar(){var foo;function(){}}
+function bar(){var foo;function baz(){}}
 /*! #__NO_SIDE_EFFECTS__ */
 
 ########## 7

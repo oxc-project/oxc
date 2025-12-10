@@ -1,23 +1,36 @@
-import * as path from 'node:path';
-import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
-import { validateSafeBinaryPath } from './PathValidator';
-import { IDisposable } from './types';
-import { VSCodeConfig } from './VSCodeConfig';
-import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
+import * as path from "node:path";
+import { ConfigurationChangeEvent, RelativePattern, Uri, workspace, WorkspaceFolder } from "vscode";
+import { validateSafeBinaryPath } from "./PathValidator";
+import { IDisposable } from "./types";
+import { VSCodeConfig } from "./VSCodeConfig";
+import {
+  OxfmtWorkspaceConfigInterface,
+  OxlintWorkspaceConfigInterface,
+  WorkspaceConfig,
+  WorkspaceConfigInterface,
+} from "./WorkspaceConfig";
 
 export class ConfigService implements IDisposable {
-  public static readonly namespace = 'oxc';
+  public static readonly namespace = "oxc";
   private readonly _disposables: IDisposable[] = [];
+
+  /**
+   * Indicates whether the `oxc_language_server` is being used as the formatter.
+   * If true, the formatter functionality is handled by the language server itself.
+   */
+  public useOxcLanguageServerForFormatting: boolean = false;
 
   public vsCodeConfig: VSCodeConfig;
 
   private workspaceConfigs: Map<string, WorkspaceConfig> = new Map();
 
-  public onConfigChange: ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>) | undefined;
+  public onConfigChange:
+    | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
+    | undefined;
 
   constructor() {
     this.vsCodeConfig = new VSCodeConfig();
-    const workspaceFolders = workspace.workspaceFolders;
+    const { workspaceFolders } = workspace;
     if (workspaceFolders) {
       for (const folder of workspaceFolders) {
         this.addWorkspaceConfig(folder);
@@ -25,14 +38,35 @@ export class ConfigService implements IDisposable {
     }
     this.onConfigChange = undefined;
 
-    const disposeChangeListener = workspace.onDidChangeConfiguration(this.onVscodeConfigChange.bind(this));
+    const disposeChangeListener = workspace.onDidChangeConfiguration(
+      this.onVscodeConfigChange.bind(this),
+    );
     this._disposables.push(disposeChangeListener);
   }
 
-  public get languageServerConfig(): { workspaceUri: string; options: WorkspaceConfigInterface }[] {
+  public get languageServerConfig(): {
+    workspaceUri: string;
+    options: WorkspaceConfigInterface | OxlintWorkspaceConfigInterface;
+  }[] {
+    return [...this.workspaceConfigs.entries()].map(([path, config]) => {
+      const options = this.useOxcLanguageServerForFormatting
+        ? config.toLanguageServerConfig()
+        : config.toOxlintConfig();
+
+      return {
+        workspaceUri: Uri.file(path).toString(),
+        options,
+      };
+    });
+  }
+
+  public get formatterServerConfig(): {
+    workspaceUri: string;
+    options: OxfmtWorkspaceConfigInterface;
+  }[] {
     return [...this.workspaceConfigs.entries()].map(([path, config]) => ({
       workspaceUri: Uri.file(path).toString(),
-      options: config.toLanguageServerConfig(),
+      options: config.toOxfmtConfig(),
     }));
   }
 
@@ -58,7 +92,7 @@ export class ConfigService implements IDisposable {
   }
 
   public getUserServerBinPath(): string | undefined {
-    let bin = this.vsCodeConfig.binPath;
+    let bin = this.vsCodeConfig.binPathOxlint;
     if (!bin) {
       return;
     }
@@ -70,13 +104,49 @@ export class ConfigService implements IDisposable {
 
     if (!path.isAbsolute(bin)) {
       // if the path is not absolute, resolve it to the first workspace folder
-      let cwd = this.workspaceConfigs.keys().next().value;
+      const cwd = this.workspaceConfigs.keys().next().value;
       if (!cwd) {
         return;
       }
       bin = path.normalize(path.join(cwd, bin));
       // strip the leading slash on Windows
-      if (process.platform === 'win32' && bin.startsWith('\\')) {
+      if (process.platform === "win32" && bin.startsWith("\\")) {
+        bin = bin.slice(1);
+      }
+    }
+
+    return bin;
+  }
+
+  public async getOxfmtServerBinPath(): Promise<string | undefined> {
+    let bin = this.vsCodeConfig.binPathOxfmt;
+
+    const cwd = this.workspaceConfigs.keys().next().value;
+    if (!cwd) {
+      return undefined;
+    }
+
+    if (!bin) {
+      // try to find oxfmt in node_modules/.bin, resolve to the first workspace folder
+      const files = await workspace.findFiles(
+        new RelativePattern(cwd, "**/node_modules/.bin/oxfmt"),
+        null,
+        1,
+      );
+
+      return files.length > 0 ? files[0].fsPath : undefined;
+    }
+
+    // validates the given path is safe to use
+    if (validateSafeBinaryPath(bin) === false) {
+      return undefined;
+    }
+
+    if (!path.isAbsolute(bin)) {
+      // if the path is not absolute, resolve it to the first workspace folder
+      bin = path.normalize(path.join(cwd, bin));
+      // strip the leading slash on Windows
+      if (process.platform === "win32" && bin.startsWith("\\")) {
         bin = bin.slice(1);
       }
     }

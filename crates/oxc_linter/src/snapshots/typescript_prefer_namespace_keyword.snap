@@ -49,9 +49,3 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Replace `module` with `namespace`.
-
-  × Unexpected token
-   ╭─[prefer_namespace_keyword.tsx:1:12]
- 1 │ module foo.'a'
-   ·            ───
-   ╰────

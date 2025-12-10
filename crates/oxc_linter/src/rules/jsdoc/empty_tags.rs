@@ -4,7 +4,11 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::should_ignore_as_private,
+};
 
 fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
@@ -12,7 +16,7 @@ fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct EmptyTags(Box<EmptyTagsConfig>);
 
 declare_oxc_lint!(
@@ -93,11 +97,9 @@ struct EmptyTagsConfig {
 
 impl Rule for EmptyTags {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+        serde_json::from_value::<DefaultRuleConfig<EmptyTags>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -7,9 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentStyle, IndentWidth,
-    LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, FormatOptions,
+    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
+    Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -43,6 +43,7 @@ impl SpecParser {
         }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
+        assert!(ret.errors.is_empty());
         self.visit_program(&mut ret.program);
     }
 }
@@ -82,7 +83,11 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = FormatOptions::default();
+        let mut options = FormatOptions {
+            // Use Prettier's default printWidth(80) instead of our default(100)
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {
@@ -149,6 +154,14 @@ impl VisitMut<'_> for SpecParser {
                                     IndentStyle::Tab
                                 } else {
                                     IndentStyle::Space
+                                };
+                            } else if name == "experimentalTernaries" {
+                                options.experimental_ternaries = literal.value;
+                            } else if name == "singleAttributePerLine" {
+                                options.attribute_position = if literal.value {
+                                    AttributePosition::Multiline
+                                } else {
+                                    AttributePosition::Auto
                                 };
                             }
                         }

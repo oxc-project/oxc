@@ -19,13 +19,17 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn always_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Each then() should return a value or throw").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AlwaysReturn(Box<AlwaysReturnConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
@@ -186,13 +190,9 @@ const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];
 
 impl Rule for AlwaysReturn {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            value
-                .as_array()
-                .and_then(|arr| arr.first())
-                .and_then(|value| serde_json::from_value(value.clone()).ok())
-                .unwrap_or_default(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<AlwaysReturn>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

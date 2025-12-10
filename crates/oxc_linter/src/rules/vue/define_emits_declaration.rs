@@ -5,12 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn has_arg_diagnostic(span: Span) -> OxcDiagnostic {
@@ -30,11 +32,18 @@ fn has_type_call_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum DeclarationStyle {
+    /// Enforces the use of a named TypeScript type or interface as the
+    /// argument to `defineEmits`, e.g. `defineEmits<MyEmits>()`.
     #[default]
     TypeBased,
+    /// Enforces the use of an inline type literal as the argument to
+    /// `defineEmits`, e.g. `defineEmits<{ (event: string): void }>()`.
     TypeLiteral,
+    /// Enforces the use of runtime declaration, where emits are declared
+    /// using an array or object, e.g. `defineEmits(['event1', 'event2'])`.
     Runtime,
 }
 
@@ -111,31 +120,22 @@ declare_oxc_lint!(
     /// });
     /// </script>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```
-    /// "vue/define-emits-declaration": ["error", "type-based" | "type-literal" | "runtime"]
-    /// ```
-    ///
-    /// - `type-based` (default): Enforce type-based declaration
-    /// - `type-literal`: Enforce type-literal declaration
-    /// - `runtime`: Enforce runtime declaration
     DefineEmitsDeclaration,
     vue,
     style,
-    pending  // TODO: transform it to the other declaration (if possible)
+    pending, // TODO: transform it to the other declaration (if possible)
+    config = DeclarationStyle,
 );
 
 impl Rule for DefineEmitsDeclaration {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let val = value.get(0).and_then(|v| v.as_str());
-        Self(match val {
-            Some("type-literal") => DeclarationStyle::TypeLiteral,
-            Some("runtime") => DeclarationStyle::Runtime,
-            _ => DeclarationStyle::TypeBased,
-        })
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<DeclarationStyle>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 

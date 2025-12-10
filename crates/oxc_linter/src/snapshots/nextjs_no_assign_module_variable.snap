@@ -6,6 +6,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │                   let module = {};
    ·                       ──────
- 3 │             
+ 3 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-assign-module-variable

@@ -86,10 +86,6 @@ const VITEST_TEST_PATH: &str =
 const VITEST_RULES_PATH: &str =
     "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/src/rules";
 
-const REGEXP_TEST_PATH: &str = "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/tests/lib/rules";
-const REGEXP_RULES_PATH: &str =
-    "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/lib/rules";
-
 const VUE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";
 const VUE_RULES_PATH: &str =
@@ -1335,7 +1331,6 @@ pub enum RuleKind {
     Node,
     Promise,
     Vitest,
-    Regexp,
     Vue,
 }
 
@@ -1358,7 +1353,6 @@ impl TryFrom<&str> for RuleKind {
             "n" => Ok(Self::Node),
             "promise" => Ok(Self::Promise),
             "vitest" => Ok(Self::Vitest),
-            "regexp" => Ok(Self::Regexp),
             "vue" => Ok(Self::Vue),
             _ => Err(format!("Invalid `RuleKind`, got `{value}`")),
         }
@@ -1382,7 +1376,6 @@ impl Display for RuleKind {
             Self::Node => "eslint-plugin-n",
             Self::Promise => "eslint-plugin-promise",
             Self::Vitest => "eslint-plugin-vitest",
-            Self::Regexp => "eslint-plugin-regexp",
             Self::Vue => "eslint-plugin-vue",
         };
         f.write_str(kind_name)
@@ -1414,7 +1407,6 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Regexp => format!("{REGEXP_TEST_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
@@ -1432,7 +1424,6 @@ fn main() {
         RuleKind::Node => format!("{NODE_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_RULES_PATH}/{kebab_rule_name}.ts"),
-        RuleKind::Regexp => format!("{REGEXP_RULES_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Vue => format!("{VUE_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
@@ -1454,6 +1445,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
+            assert!(ret.errors.is_empty());
 
             let mut state = State::new(&body);
             state.visit_program(&ret.program);
@@ -1540,6 +1532,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
+            assert!(ret.errors.is_empty());
             let debug_mode = false;
             let mut config = RuleConfig::new(&body, debug_mode);
             // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript
@@ -1636,7 +1629,6 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Promise => "promise".into(),
         RuleKind::Vitest => "vitest".into(),
         RuleKind::Node => "node".into(),
-        RuleKind::Regexp => "regexp".into(),
         RuleKind::Vue => "vue".into(),
     }
 }

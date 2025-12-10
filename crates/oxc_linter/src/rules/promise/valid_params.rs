@@ -11,7 +11,7 @@ fn zero_or_one_argument_required_diagnostic(
     args_len: usize,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Promise.{prop_name}() requires 0 or 1 arguments, but received {args_len}"
+        "`Promise.{prop_name}()` requires 0 or 1 arguments, but received {args_len}."
     ))
     .with_label(span)
 }
@@ -22,20 +22,16 @@ fn one_or_two_argument_required_diagnostic(
     args_len: usize,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Promise.{prop_name}() requires 1 or 2 arguments, but received {args_len}"
+        "`Promise.{prop_name}()` requires 1 or 2 arguments, but received {args_len}."
     ))
     .with_label(span)
 }
 
 fn one_argument_required_diagnostic(span: Span, prop_name: &str, args_len: usize) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Promise.{prop_name}() requires 1 argument, but received {args_len}"
+        "`Promise.{prop_name}()` requires 1 argument, but received {args_len}."
     ))
     .with_label(span)
-}
-
-fn valid_params_diagnostic(span: Span, x0: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(x0.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -45,6 +41,8 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforces the proper number of arguments are passed to Promise functions.
+    ///
+    /// This rule is generally unnecessary if using TypeScript.
     ///
     /// ### Why is this bad?
     ///
@@ -96,7 +94,6 @@ impl Rule for ValidParams {
                         &prop_name,
                         args_len,
                     ));
-                    ctx.diagnostic(valid_params_diagnostic(call_expr.span, &format!("Promise.{prop_name}() requires 1 or 2 arguments, but received {args_len}")));
                 }
             }
             "race" | "all" | "allSettled" | "any" | "catch" | "finally" => {

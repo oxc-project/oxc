@@ -339,7 +339,9 @@ impl RuleFixMeta {
     pub fn description(self) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed("No auto-fix is available for this rule."),
-            Self::FixPending => Cow::Borrowed("An auto-fix is still under development."),
+            Self::FixPending => Cow::Borrowed(
+                "An auto-fix is planned for this rule, but not implemented at this time.",
+            ),
             Self::Fixable(kind) | Self::Conditional(kind) => {
                 // e.g. an auto-fix is available for this rule
                 // e.g. a suggestion is available for this rule

@@ -1,38 +1,38 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.
+  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property foo
    ·                          ─────────
  5 │                        */
    ╰────
-  help: Add a description to this @property tag.
+  help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.
+  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property {string}
    ·                          ─────────
  5 │                        */
    ╰────
-  help: Add a description to this @property tag.
+  help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.
+  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property {string} foo
    ·                          ─────────
  5 │                        */
    ╰────
-  help: Add a description to this @property tag.
+  help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.
+  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @prop foo
    ·                          ─────
  5 │                        */
    ╰────
-  help: Add a description to this @property tag.
+  help: Add a description to this `@property` tag.

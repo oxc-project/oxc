@@ -54,6 +54,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
+    /// Enable experimental type checking (includes TypeScript compiler diagnostics)
+    #[bpaf(switch, hide_usage)]
+    pub type_check: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -313,10 +317,6 @@ pub struct EnablePlugins {
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub node_plugin: OverrideToggle,
 
-    /// Enable the regex plugin and detect regex usage problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub regex_plugin: OverrideToggle,
-
     /// Enable the vue plugin and detect vue usage problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub vue_plugin: OverrideToggle,
@@ -394,7 +394,6 @@ impl EnablePlugins {
         self.react_perf_plugin.inspect(|yes| plugins.set(LintPlugins::REACT_PERF, yes));
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
-        self.regex_plugin.inspect(|yes| plugins.set(LintPlugins::REGEX, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
@@ -617,6 +616,14 @@ mod lint_options {
         assert!(options.type_aware);
         let options = get_lint_options(".");
         assert!(!options.type_aware);
+    }
+
+    #[test]
+    fn type_check() {
+        let options = get_lint_options("--type-check");
+        assert!(options.type_check);
+        let options = get_lint_options(".");
+        assert!(!options.type_check);
     }
 }
 

@@ -1,9 +1,9 @@
-import { createRequire } from 'node:module';
-import { parse as parseBinding, parseSync as parseSyncBinding } from './bindings.js';
-import { wrap } from './wrap.js';
+import { createRequire } from "node:module";
+import { parse as parseBinding, parseSync as parseSyncBinding } from "./bindings.js";
+import { wrap } from "./wrap.js";
 
-export { default as visitorKeys } from '../generated/visit/keys.js';
-export { Visitor } from './visit/index.js';
+export { default as visitorKeys } from "../generated/visit/keys.js";
+export { Visitor } from "./visit/index.js";
 
 export {
   ExportExportNameKind,
@@ -12,8 +12,8 @@ export {
   ImportNameKind,
   ParseResult,
   Severity,
-} from './bindings.js';
-export { rawTransferSupported } from './raw-transfer/supported.js';
+} from "./bindings.js";
+export { rawTransferSupported } from "./raw-transfer/supported.js";
 
 const require = createRequire(import.meta.url);
 
@@ -30,7 +30,7 @@ let parseSyncRaw = null,
  */
 function loadRawTransfer() {
   if (parseSyncRaw === null) {
-    ({ parseSyncRaw, parse: parseRaw } = require('./raw-transfer/eager.js'));
+    ({ parseSyncRaw, parse: parseRaw } = require("./raw-transfer/eager.js"));
   }
 }
 
@@ -40,7 +40,7 @@ function loadRawTransfer() {
  */
 function loadRawTransferLazy() {
   if (parseSyncLazy === null) {
-    ({ parseSyncLazy, parse: parseLazy, Visitor: LazyVisitor } = require('./raw-transfer/lazy.js'));
+    ({ parseSyncLazy, parse: parseLazy, Visitor: LazyVisitor } = require("./raw-transfer/lazy.js"));
   }
 }
 

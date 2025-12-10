@@ -3,14 +3,10 @@ use std::ops::Deref;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Format, FormatResult, Formatter,
-        prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
-    },
+    formatter::{Format, Formatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 #[derive(Copy, Clone, Debug)]
@@ -60,46 +56,24 @@ impl ChainMember<'_, '_> {
         matches!(self, Self::ComputedMember { .. })
     }
 
-    /// Check if this member has a trailing line comment on the same line
-    pub fn has_same_line_trailing_comment(&self, f: &Formatter<'_, '_>) -> bool {
-        // Only check for trailing comments on static members for now
-        // to avoid breaking up other constructs
+    pub fn span(&self) -> oxc_span::Span {
         match self {
-            Self::StaticMember(e) => {
-                let member_end = e.property().span.end;
-                let source = f.source_text();
-
-                // Look for the rest of the line after this member
-                let rest_of_line = &source[member_end as usize..];
-
-                // Find the end of the current line
-                let line_end_pos = rest_of_line.find('\n').unwrap_or(rest_of_line.len());
-                let line_content = &rest_of_line[..line_end_pos];
-
-                // Check if there's a line comment on this line
-                // Also check that it's not just whitespace before the comment
-                if let Some(comment_pos) = line_content.find("//") {
-                    let before_comment = &line_content[..comment_pos];
-
-                    before_comment.chars().all(char::is_whitespace) && !before_comment.is_empty()
-                } else {
-                    false
-                }
-            }
-            // Don't break groups for other member types for now
-            _ => false,
+            Self::StaticMember(member) => member.span(),
+            Self::TSNonNullExpression(e) => e.span(),
+            Self::CallExpression { expression, .. } => expression.span(),
+            Self::ComputedMember(member) => member.span(),
+            Self::Node(node) => node.span(),
         }
     }
 }
 
 impl<'a> Format<'a> for ChainMember<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::StaticMember(member) => {
                 write!(
                     f,
                     [
-                        line_suffix_boundary(),
                         FormatLeadingComments::Comments(
                             f.context().comments().comments_before(member.property().span().start)
                         ),
@@ -107,20 +81,18 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                         ".",
                         member.property()
                     ]
-                )?;
+                );
 
                 // `A.b /* comment */ (c)` -> `A.b(/* comment */ c)`
                 if !matches!(member.parent, AstNodes::CallExpression(call) if call.type_arguments.is_none())
                 {
-                    member.format_trailing_comments(f)?;
+                    member.format_trailing_comments(f);
                 }
-
-                Ok(())
             }
             Self::TSNonNullExpression(e) => {
-                e.format_leading_comments(f)?;
-                write!(f, ["!"])?;
-                e.format_trailing_comments(f)
+                e.format_leading_comments(f);
+                write!(f, ["!"]);
+                e.format_trailing_comments(f);
             }
             Self::CallExpression { expression, position } => match *position {
                 CallExpressionPosition::Start => write!(f, expression),
@@ -134,7 +106,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                             expression.arguments()
                         ]
                     );
-                    expression.format_trailing_comments(f)
+                    expression.format_trailing_comments(f);
                 }
                 CallExpressionPosition::End => {
                     write!(
@@ -144,14 +116,14 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                             expression.type_arguments(),
                             expression.arguments(),
                         ]
-                    )
+                    );
                 }
             },
             Self::ComputedMember(member) => {
-                write!(f, line_suffix_boundary())?;
-                member.format_leading_comments(f)?;
+                write!(f, line_suffix_boundary());
+                member.format_leading_comments(f);
                 FormatComputedMemberExpressionWithoutObject(member).fmt(f);
-                member.format_trailing_comments(f)
+                member.format_trailing_comments(f);
             }
             Self::Node(node) => write!(f, node),
         }
@@ -171,16 +143,16 @@ impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
 }
 
 impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before_character(self.span.start, b'[');
         if !comments.is_empty() {
-            write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)])?;
+            write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)]);
         }
 
         if matches!(self.expression, Expression::NumericLiteral(_))
             && !f.comments().has_comment_before(self.span.end)
         {
-            write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"])
+            write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"]);
         } else {
             write!(
                 f,
@@ -190,7 +162,7 @@ impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
                     soft_block_indent(self.expression()),
                     "]"
                 ))
-            )
+            );
         }
     }
 }

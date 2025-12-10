@@ -49,7 +49,7 @@ impl<'a> ClassProperties<'a, '_> {
         let mut function = value.take_in_box(ctx.ast);
 
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
-            self.classes_stack.find_writeable_private_prop(ident)
+            self.classes_stack.find_writable_private_prop(ident)
         } else {
             self.classes_stack.find_readable_private_prop(ident)
         };

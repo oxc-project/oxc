@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.13.0"
+version = "0.17.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -30,23 +30,30 @@ doctest = false
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
+oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
+json-strip-comments = { workspace = true }
 miette = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+serde_json = { workspace = true }
 simdutf8 = { workspace = true }
+sort-package-json = "0.0.2"
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
+tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)
-napi = { version = "3", features = ["napi9", "async", "serde-json"], optional = true }
-napi-derive = { version = "3", optional = true }
+napi = { workspace = true, features = ["async"], optional = true }
+napi-derive = { workspace = true, optional = true }
 
 [build-dependencies]
-napi-build = "2.3.1"
+napi-build = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
@@ -56,8 +63,6 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
-
-[dev-dependencies]
 
 [features]
 default = ["napi"]

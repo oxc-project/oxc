@@ -234,7 +234,9 @@ impl Default for StyledComponentsOptions {
 struct StyledComponentsBinding {
     /// `import * as styled from 'styled-components'`
     namespace: Option<SymbolId>,
-    /// `import styled from 'styled-components'` or `import { default as styled } from 'styled-components'`
+    /// `import styled from 'styled-components';`
+    /// `import { default as styled } from 'styled-components';`
+    /// `import { styled } from 'styled-components';`
     styled: Option<SymbolId>,
     /// Named imports like `import { createGlobalStyle, css, keyframes } from 'styled-components'`
     helpers: [Option<SymbolId>; 6],
@@ -478,7 +480,8 @@ impl<'a> StyledComponents<'a, '_> {
                         let symbol_id = specifier.local.symbol_id();
                         let imported_name = specifier.imported.name();
                         match imported_name.as_str() {
-                            "default" => {
+                            // Handle `import { default as styled }` and `import { styled }`
+                            "default" | "styled" => {
                                 self.styled_bindings.styled = Some(symbol_id);
                             }
                             name => {

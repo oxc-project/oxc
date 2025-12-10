@@ -14,9 +14,11 @@ use serde_json::Value;
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
-        .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Missing `<track>` element with captions inside `<audio>` or `<video>` element",
+    )
+    .with_help("Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

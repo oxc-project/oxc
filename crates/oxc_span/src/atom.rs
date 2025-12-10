@@ -16,12 +16,14 @@ use crate::{CompactStr, ContentEq};
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
+#[repr(transparent)]
 #[derive(Clone, Copy, Eq)]
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
     /// Get an [`Atom`] containing a static string.
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     pub const fn new_const(s: &'static str) -> Self {
         Atom(s)
     }
@@ -35,7 +37,8 @@ impl Atom<'static> {
 
 impl<'a> Atom<'a> {
     /// Borrow a string slice.
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     pub fn as_str(&self) -> &'a str {
         self.0
     }
@@ -107,6 +110,7 @@ impl<'a> Atom<'a> {
 impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
     type Cloned = Atom<'new_alloc>;
 
+    #[inline]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Atom::from_in(self.as_str(), allocator)
     }
@@ -122,48 +126,59 @@ impl<'a> Dummy<'a> for Atom<'a> {
 }
 
 impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
         *s
     }
 }
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
+    #[inline]
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
         Self::from(allocator.alloc_str(s))
     }
 }
 
 impl<'alloc> FromIn<'alloc, String> for Atom<'alloc> {
+    #[inline]
     fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
         Self::from_in(s.as_str(), allocator)
     }
 }
 
 impl<'alloc> FromIn<'alloc, &String> for Atom<'alloc> {
+    #[inline]
     fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
         Self::from_in(s.as_str(), allocator)
     }
 }
 
 impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Atom<'alloc> {
+    #[inline]
     fn from_in(s: Cow<'_, str>, allocator: &'alloc Allocator) -> Self {
         Self::from_in(&*s, allocator)
     }
 }
 
 impl<'a> From<&'a str> for Atom<'a> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn from(s: &'a str) -> Self {
         Self(s)
     }
 }
 
 impl<'alloc> From<ArenaStringBuilder<'alloc>> for Atom<'alloc> {
+    #[inline]
     fn from(s: ArenaStringBuilder<'alloc>) -> Self {
         Self::from(s.into_str())
     }
 }
 
 impl<'a> From<Atom<'a>> for &'a str {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn from(s: Atom<'a>) -> Self {
         s.as_str()
     }
@@ -193,54 +208,66 @@ impl<'a> From<Atom<'a>> for Cow<'a, str> {
 impl Deref for Atom<'_> {
     type Target = str;
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
 }
 
 impl AsRef<str> for Atom<'_> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl Borrow<str> for Atom<'_> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<T: AsRef<str>> PartialEq<T> for Atom<'_> {
+    #[inline]
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }
 }
 
 impl PartialEq<Atom<'_>> for &str {
+    #[inline]
     fn eq(&self, other: &Atom<'_>) -> bool {
         *self == other.as_str()
     }
 }
 
 impl PartialEq<str> for Atom<'_> {
+    #[inline]
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
     }
 }
 
 impl PartialEq<Atom<'_>> for Cow<'_, str> {
+    #[inline]
     fn eq(&self, other: &Atom<'_>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
 
 impl ContentEq for Atom<'_> {
+    #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
 }
 
 impl hash::Hash for Atom<'_> {
+    #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
     }
@@ -260,6 +287,7 @@ impl fmt::Display for Atom<'_> {
 
 #[cfg(feature = "serialize")]
 impl Serialize for Atom<'_> {
+    #[inline] // Because it just delegates
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         Serialize::serialize(self.as_str(), serializer)
     }
@@ -267,6 +295,7 @@ impl Serialize for Atom<'_> {
 
 #[cfg(feature = "serialize")]
 impl ESTree for Atom<'_> {
+    #[inline] // Because it just delegates
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         ESTree::serialize(self.as_str(), serializer);
     }

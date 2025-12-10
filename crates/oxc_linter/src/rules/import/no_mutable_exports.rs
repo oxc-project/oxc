@@ -17,7 +17,7 @@ fn no_mutable_exports_diagnostic(span: Span, kind: VariableDeclarationKind) -> O
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoMutableExports;
 

@@ -70,9 +70,9 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
-    /// let arena = Allocator::default();
+    /// let allocator = Allocator::default();
     ///
-    /// let mut vec: Vec<i32> = Vec::new_in(&arena);
+    /// let mut vec: Vec<i32> = Vec::new_in(&allocator);
     /// assert!(vec.is_empty());
     /// ```
     #[inline(always)]
@@ -103,9 +103,9 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
-    /// let arena = Allocator::default();
+    /// let allocator = Allocator::default();
     ///
-    /// let mut vec = Vec::with_capacity_in(10, &arena);
+    /// let mut vec = Vec::with_capacity_in(10, &allocator);
     ///
     /// // The vector contains no items, even though it has capacity for more
     /// assert_eq!(vec.len(), 0);
@@ -125,7 +125,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// // A vector of a zero-sized type will always over-allocate, since no
     /// // allocation is necessary
-    /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
+    /// let vec_units = Vec::<()>::with_capacity_in(10, &allocator);
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
     #[inline(always)]
@@ -194,6 +194,24 @@ impl<'alloc, T> Vec<'alloc, T> {
         // The returned `Box` has same lifetime as the `Vec`.
         // `Vec` is not `Drop`, so we don't need to free any unused capacity in the `Vec`.
         unsafe { Box::from_non_null(ptr) }
+    }
+
+    /// Converts [`Vec<T>`] into [`&'alloc [T]`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let slice = vec.into_bump_slice();
+    /// assert_eq!(slice, [1, 2, 3]);
+    /// ```
+    #[inline]
+    pub fn into_bump_slice(self) -> &'alloc [T] {
+        self.0.into_bump_slice()
     }
 }
 

@@ -6,12 +6,12 @@ import {
   analyze,
   type AnalyzeOptions,
   type ScopeManager as TSESLintScopeManager,
-} from '@typescript-eslint/scope-manager';
-import { ast, initAst } from './source_code.js';
-import { assertIs } from './utils.js';
+} from "@typescript-eslint/scope-manager";
+import { ast, initAst } from "./source_code.ts";
+import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type * as ESTree from '../generated/types.d.ts';
-import type { SetNullable } from './utils.ts';
+import type * as ESTree from "../generated/types.d.ts";
+import type { SetNullable } from "../utils/types.ts";
 
 export interface Scope {
   type: ScopeType;
@@ -32,18 +32,18 @@ export interface Scope {
 }
 
 export type ScopeType =
-  | 'block'
-  | 'catch'
-  | 'class'
-  | 'class-field-initializer'
-  | 'class-static-block'
-  | 'for'
-  | 'function'
-  | 'function-expression-name'
-  | 'global'
-  | 'module'
-  | 'switch'
-  | 'with';
+  | "block"
+  | "catch"
+  | "class"
+  | "class-field-initializer"
+  | "class-static-block"
+  | "for"
+  | "function"
+  | "function-expression-name"
+  | "global"
+  | "module"
+  | "switch"
+  | "with";
 
 export interface Variable {
   name: string;
@@ -74,13 +74,13 @@ export interface Definition {
 }
 
 export type DefinitionType =
-  | 'CatchClause'
-  | 'ClassName'
-  | 'FunctionName'
-  | 'ImplicitGlobalVariable'
-  | 'ImportBinding'
-  | 'Parameter'
-  | 'Variable';
+  | "CatchClause"
+  | "ClassName"
+  | "FunctionName"
+  | "ImplicitGlobalVariable"
+  | "ImportBinding"
+  | "Parameter"
+  | "Variable";
 
 type Identifier =
   | ESTree.IdentifierName
@@ -96,11 +96,11 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
+const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
   globalReturn: false,
   jsxFragmentName: null,
-  jsxPragma: 'React',
-  lib: ['esnext'],
+  jsxPragma: "React",
+  lib: ["esnext"],
   sourceType: null,
 };
 
@@ -109,9 +109,10 @@ const analyzeOptions: SetNullable<AnalyzeOptions, 'sourceType'> = {
  */
 function initTsScopeManager() {
   if (ast === null) initAst();
+  debugAssertIsNonNull(ast);
 
   analyzeOptions.sourceType = ast.sourceType;
-  assertIs<AnalyzeOptions>(analyzeOptions);
+  typeAssertIs<AnalyzeOptions>(analyzeOptions);
   // The effectiveness of this assertion depends on our alignment with ESTree.
   // It could eventually be removed as we align the remaining corner cases and the typegen.
   // @ts-expect-error // TODO: Our types don't quite align yet
@@ -195,21 +196,18 @@ export type ScopeManager = typeof SCOPE_MANAGER;
  */
 export function isGlobalReference(node: ESTree.Node): boolean {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
-  if (!node) throw new TypeError('Missing required argument: node.');
-  if (node.type !== 'Identifier') return false;
-
-  const { name } = node;
-  // TODO: Is this check required? Isn't an `Identifier`'s `name` property always a string?
-  if (typeof name !== 'string') return false;
+  if (!node) throw new TypeError("Missing required argument: `node`");
+  if (node.type !== "Identifier") return false;
 
   if (tsScopeManager === null) initTsScopeManager();
+  debugAssertIsNonNull(tsScopeManager);
 
   const { scopes } = tsScopeManager;
   if (scopes.length === 0) return false;
   const globalScope = scopes[0];
 
   // If the identifier is a reference to a global variable, the global scope should have a variable with the name
-  const variable = globalScope.set.get(name);
+  const variable = globalScope.set.get(node.name);
 
   // Global variables are not defined by any node, so they should have no definitions
   if (variable === undefined || variable.defs.length > 0) return false;
@@ -233,6 +231,8 @@ export function isGlobalReference(node: ESTree.Node): boolean {
 export function getDeclaredVariables(node: ESTree.Node): Variable[] {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L904
   if (tsScopeManager === null) initTsScopeManager();
+  debugAssertIsNonNull(tsScopeManager);
+
   // @ts-expect-error // TODO: Our types don't quite align yet
   return tsScopeManager.getDeclaredVariables(node);
 }
@@ -244,20 +244,22 @@ export function getDeclaredVariables(node: ESTree.Node): Variable[] {
  */
 export function getScope(node: ESTree.Node): Scope {
   // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L862-L892
-  if (!node) throw new TypeError('Missing required argument: `node`');
+  if (!node) throw new TypeError("Missing required argument: `node`");
 
   if (tsScopeManager === null) initTsScopeManager();
+  debugAssertIsNonNull(tsScopeManager);
 
-  const inner = node.type !== 'Program';
+  const inner = node.type !== "Program";
 
   // Traverse up the AST to find a `Node` whose scope can be acquired.
   do {
     // @ts-expect-error // TODO: Our types don't quite align yet
     const scope = tsScopeManager.acquire(node, inner) as Scope;
     if (scope !== null) {
-      return scope.type === 'function-expression-name' ? scope.childScopes[0] : scope;
+      return scope.type === "function-expression-name" ? scope.childScopes[0] : scope;
     }
 
+    // @ts-expect-error - Don't want to create a new variable just to make it nullable
     node = node.parent;
   } while (node !== null);
 
@@ -276,6 +278,6 @@ export function getScope(node: ESTree.Node): Scope {
 /* oxlint-disable no-unused-vars */
 export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean {
   // TODO: Implement
-  throw new Error('`context.markVariableAsUsed` not implemented yet');
+  throw new Error("`context.markVariableAsUsed` not implemented yet");
 }
 /* oxlint-enable no-unused-vars */

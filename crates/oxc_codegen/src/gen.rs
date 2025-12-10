@@ -160,6 +160,12 @@ impl Gen for Statement<'_> {
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
+            Self::TSGlobalDeclaration(decl) => {
+                p.print_comments_at(decl.span.start);
+                p.print_indent();
+                decl.print(p, ctx);
+                p.print_soft_newline();
+            }
             Self::TSTypeAliasDeclaration(decl) => {
                 p.print_indent();
                 p.print_comments_at(decl.span.start);
@@ -601,6 +607,12 @@ impl Gen for CatchClause<'_> {
             p.print_str(")");
         }
         p.print_soft_space();
+        p.print_comments_at(self.body.span.start);
+        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
+        if !p.options.minify && p.print_next_indent_as_space {
+            p.print_hard_space();
+            p.print_next_indent_as_space = false;
+        }
         p.print_block_statement(&self.body, ctx);
     }
 }
@@ -744,9 +756,9 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end.as_ref().is_none_or(|comments| {
-                comments.iter().all(|c| !c.preceded_by_newline() && !c.followed_by_newline())
-            })
+            comments_at_end
+                .as_ref()
+                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };
@@ -965,6 +977,7 @@ impl Gen for ExportNamedDeclaration<'_> {
                 Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
                 Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
                 Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSGlobalDeclaration(decl) => decl.print(p, ctx),
                 Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
                 Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
                 Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
@@ -2195,6 +2208,9 @@ impl GenExpr for NewExpression<'_> {
             p.print_str("new");
             p.print_soft_space();
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
+            if let Some(type_parameters) = &self.type_arguments {
+                type_parameters.print(p, ctx);
+            }
 
             // Omit the "()" when minifying, but only when safe to do so
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
@@ -3505,7 +3521,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import(");
-        self.argument.print(p, ctx);
+        p.print_string_literal(&self.source, false);
         if let Some(options) = &self.options {
             p.print_str(", ");
             options.print_expr(p, Precedence::Lowest, ctx);
@@ -3607,11 +3623,8 @@ impl Gen for TSModuleDeclaration<'_> {
             p.print_str("declare ");
         }
         p.print_str(self.kind.as_str());
-        // If the kind is global, then the id is also `global`, so we don't need to print it
-        if !self.kind.is_global() {
-            p.print_space_before_identifier();
-            self.id.print(p, ctx);
-        }
+        p.print_space_before_identifier();
+        self.id.print(p, ctx);
 
         if let Some(body) = &self.body {
             let mut body = body;
@@ -3646,6 +3659,18 @@ impl Gen for TSModuleDeclarationName<'_> {
             Self::Identifier(ident) => ident.print(p, ctx),
             Self::StringLiteral(s) => p.print_string_literal(s, false),
         }
+    }
+}
+
+impl Gen for TSGlobalDeclaration<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.declare {
+            p.print_str("declare ");
+        }
+        p.print_str("global");
+        p.print_soft_space();
+        self.body.print(p, ctx);
+        p.needs_semicolon = false;
     }
 }
 

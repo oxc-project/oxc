@@ -6,10 +6,9 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        FormatResult, Formatter,
+        Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
-        write,
     },
     parentheses::NeedsParentheses,
     utils::{suppressed::FormatSuppressedNode, typescript::should_hug_type},
@@ -18,7 +17,7 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let types = self.types();
 
         // ```ts
@@ -53,42 +52,46 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             union_type_at_top = parent;
         }
 
-        let should_indent = {
+        let should_indent = !has_leading_comments && {
             let parent = union_type_at_top.parent;
 
             // These parents have indent for their content, so we don't need to indent here
-            !match parent {
-                AstNodes::TSTypeAliasDeclaration(_) => has_leading_comments,
+            match parent {
+                AstNodes::TSTypeAliasDeclaration(alias) => {
+                    !f.comments().printed_comments().last().is_some_and(|comment| {
+                        comment.span.start
+                            > alias.type_parameters().map_or(alias.id.span.end, |tp| tp.span.end)
+                            && comment.followed_by_newline()
+                    })
+                }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
-                | AstNodes::TSTypeParameterInstantiation(_) => true,
-                _ => false,
+                | AstNodes::TSTypeParameterInstantiation(_) => false,
+                _ => true,
             }
         };
 
         let types = format_with(|f| {
-            let suppressed_node_span = if f.comments().is_suppressed(self.span.start) {
-                self.types.first().unwrap().span()
-            } else {
-                Span::default()
-            };
+            let is_suppressed = leading_comments
+                .iter()
+                .rev()
+                .any(|comment| f.comments().is_suppression_comment(comment));
 
-            if has_leading_comments {
-                write!(f, FormatLeadingComments::Comments(leading_comments))?;
-            }
+            let suppressed_node_span =
+                if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
 
             let leading_soft_line_break_or_space = should_indent && !has_leading_comments;
 
             let separator = format_with(|f| {
                 if leading_soft_line_break_or_space {
-                    write!(f, [soft_line_break_or_space()])?;
+                    write!(f, [soft_line_break_or_space()]);
                 }
-                write!(f, [token("|"), space()])
+                write!(f, [token("|"), space()]);
             });
 
-            write!(f, [if_group_breaks(&separator)])?;
+            write!(f, [if_group_breaks(&separator)]);
 
-            format_union_types(types, suppressed_node_span, false, f)
+            format_union_types(types, suppressed_node_span, false, f);
         });
 
         let content = format_with(|f| {
@@ -116,15 +119,39 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                         soft_line_break(),
                         if_group_breaks(&token(")"))
                     ]
-                )
+                );
             } else if should_indent {
-                write!(f, [indent(&types)])
+                write!(f, [indent(&types)]);
             } else {
-                write!(f, [types])
+                write!(f, [types]);
             }
         });
 
-        write!(f, [group(&content)])
+        if has_leading_comments {
+            let only_type = union_type_at_top.types.len() == 1;
+            let (has_own_line_comment, has_end_of_line_comment) =
+                leading_comments.iter().fold((false, false), |(own_line, end_of_line), comment| {
+                    (
+                        own_line || comment.preceded_by_newline(),
+                        end_of_line || comment.followed_by_newline(),
+                    )
+                });
+
+            write!(
+                f,
+                [group(&indent(&format_args!(
+                    ((has_own_line_comment && !only_type)
+                        || (has_end_of_line_comment && only_type))
+                        .then(soft_line_break),
+                    FormatLeadingComments::Comments(leading_comments),
+                    (!has_end_of_line_comment && has_own_line_comment && only_type)
+                        .then(soft_line_break),
+                    group(&content)
+                )))]
+            );
+        } else {
+            write!(f, [group(&content)]);
+        }
     }
 }
 
@@ -133,26 +160,26 @@ fn format_union_types<'a>(
     mut suppressed_node_span: Span,
     should_hug: bool,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
+) {
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {
         let element_span = element.span();
 
         if suppressed_node_span == element_span {
             let comments = f.context().comments().comments_before(suppressed_node_span.start);
-            FormatLeadingComments::Comments(comments).fmt(f)?;
+            FormatLeadingComments::Comments(comments).fmt(f);
             let needs_parentheses = element.needs_parentheses(f);
             if needs_parentheses {
-                write!(f, "(")?;
+                write!(f, "(");
             }
-            write!(f, [FormatSuppressedNode(element_span)])?;
+            write!(f, [FormatSuppressedNode(element_span)]);
             if needs_parentheses {
-                write!(f, ")")?;
+                write!(f, ")");
             }
         } else if should_hug {
-            write!(f, [element])?;
+            write!(f, [element]);
         } else {
-            write!(f, [align(2, &element)])?;
+            write!(f, [align(2, &element)]);
         }
 
         if let Some(next_node_span) = node_iter.peek().map(GetSpan::span) {
@@ -162,7 +189,7 @@ fn format_union_types<'a>(
 
             let comments_before_separator =
                 f.context().comments().comments_before_character(element_span.end, b'|');
-            FormatTrailingComments::Comments(comments_before_separator).fmt(f)?;
+            FormatTrailingComments::Comments(comments_before_separator).fmt(f);
 
             // ```ts
             // type Some = A |
@@ -180,15 +207,15 @@ fn format_union_types<'a>(
             // before `|` instead of after it.
             if f.comments().has_leading_own_line_comment(next_node_span.start) {
                 let comments = f.context().comments().comments_before(next_node_span.start);
-                FormatTrailingComments::Comments(comments).fmt(f)?;
+                FormatTrailingComments::Comments(comments).fmt(f);
             }
 
             if should_hug {
-                write!(f, [space()])?;
+                write!(f, [space()]);
             } else {
-                write!(f, [soft_line_break_or_space()])?;
+                write!(f, [soft_line_break_or_space()]);
             }
-            write!(f, ["|"])?;
+            write!(f, ["|"]);
         } else if let AstNodes::TSUnionType(parent) = element.parent
             && parent.needs_parentheses(f)
         {
@@ -201,13 +228,11 @@ fn format_union_types<'a>(
             //```
             // TODO: We may need to tweak `AstNode<'a, Vec<'a, T>>` iterator as some of Vec's last elements should have the following span.
             let comments = f.context().comments().end_of_line_comments_after(element_span.end);
-            write!(f, FormatTrailingComments::Comments(comments))?;
+            write!(f, FormatTrailingComments::Comments(comments));
         }
 
         if node_iter.peek().is_some() {
-            write!(f, space())?;
+            write!(f, space());
         }
     }
-
-    Ok(())
 }

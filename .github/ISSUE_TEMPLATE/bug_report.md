@@ -6,7 +6,16 @@ type: Bug
 ---
 
 <!--
-!!IMPORTANT!! If you are reporting a bug for Oxlint or the Oxc VSCode extension,
-please use the "Linter bug report" template instead. You can find it here:
-https://github.com/oxc-project/oxc/issues/new?labels=C-bug,A-linter&projects=&template=linter_bug_report.yaml&title=linter:+
+⚠️ IMPORTANT ⚠️
+Please use the appropriate template for each!
+
+- If you are reporting a bug for Oxlint or the Oxc VS Code extension:
+  - https://github.com/oxc-project/oxc/issues/new?template=linter_bug_report.yaml
+- If you are reporting a bug for Oxfmt, especially difference with Prettier:
+  - https://github.com/oxc-project/oxc/issues/new?template=formatter_diff_report.yaml
+
+Other than that, feel free to enter whatever information you like.
+
+Please include as much detail as possible, such as version information.
+Also, if you have steps to reproduce the issue, that would be very helpful.
 -->

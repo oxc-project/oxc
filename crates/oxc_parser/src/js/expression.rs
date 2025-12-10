@@ -987,7 +987,7 @@ impl<'a> ParserImpl<'a> {
 
             if let Some(span) = question_dot_span {
                 // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
-                let error = diagnostics::unexpected_token(span);
+                let error = diagnostics::identifier_expected_after_question_dot(span);
                 return self.fatal_error(error);
             }
 

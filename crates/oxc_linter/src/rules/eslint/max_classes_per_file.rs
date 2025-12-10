@@ -140,28 +140,26 @@ fn test() {
         ("class Foo {}", Some(serde_json::json!([1]))),
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             Some(serde_json::json!([2])),
         ),
         ("class Foo {}", Some(serde_json::json!([{ "max": 1 }]))),
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
         (
             "
-			                class Foo {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 1 }])),
         ),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 2 }])),
         ),
     ];
@@ -169,41 +167,39 @@ fn test() {
     let fail = vec![
         (
             "class Foo {}
-			class Bar {}",
+            class Bar {}",
             None,
         ),
         (
             "class Foo {}
-			const myExpression = class {}",
+            const myExpression = class {}",
             None,
         ),
         (
             "var x = class {};
-			var y = class {};",
+            var y = class {};",
             None,
         ),
         (
             "class Foo {}
-			var x = class {};",
+            var x = class {};",
             None,
         ),
         ("class Foo {} class Bar {}", Some(serde_json::json!([1]))),
         ("class Foo {} class Bar {} class Baz {}", Some(serde_json::json!([2]))),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 1 }])),
         ),
         (
             "
-			                class Foo {}
-			                class Bar {}
-			                class Baz {}
-			                const myExpression = class {}
-			            ",
+                class Foo {}
+                class Bar {}
+                class Baz {}
+                const myExpression = class {}",
             Some(serde_json::json!([{ "ignoreExpressions": true, "max": 2 }])),
         ),
     ];

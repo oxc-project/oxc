@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -9,7 +10,10 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
+use oxc_syntax::{
+    identifier::is_irregular_whitespace,
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+};
 
 use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
 
@@ -582,6 +586,7 @@ fn could_be_error_impl(
                 AstKind::Function(_)
                 | AstKind::Class(_)
                 | AstKind::TSModuleDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_)
                 | AstKind::TSEnumDeclaration(_) => false,
                 AstKind::FormalParameter(param) => !param
                     .pattern
@@ -933,26 +938,25 @@ pub fn get_outer_member_expression<'a, 'b>(
         _ => None,
     }
 }
-/// Check if a node's span is exactly equal to any argument span in a call or new expression
-#[inline]
-pub fn is_node_exact_call_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+/// Check if a node is an argument (not callee) of a call or new expression
+pub fn is_node_call_like_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // foo.bar<string>(arg0, arg1)
+    // ^^^^^^^
+    //        ^^^^^^^^
+    //                ^^^^^^^^^^^
+    // A call/new expression has 3 parts, callee, type arguments, and arguments.
+    // This function checks if the given node is within the arguments part.
+    // The type parameter part **must** be `TSTypeParameterInstantiation` if present,
+    // so we can early return false in that case.
     let parent = ctx.nodes().parent_node(node.id());
 
+    if matches!(node.kind(), AstKind::TSTypeParameterInstantiation(_)) {
+        return false;
+    }
+
     match parent.kind() {
-        AstKind::CallExpression(call) => {
-            if call.arguments.is_empty() {
-                return false;
-            }
-            let node_span = node.span(); // Only compute span when needed
-            call.arguments.iter().any(|arg| arg.span() == node_span)
-        }
-        AstKind::NewExpression(new_expr) => {
-            if new_expr.arguments.is_empty() {
-                return false;
-            }
-            let node_span = node.span(); // Only compute span when needed
-            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
-        }
+        AstKind::CallExpression(call) => node.address() != call.callee.address(),
+        AstKind::NewExpression(new_expr) => node.address() != new_expr.callee.address(),
         _ => false,
     }
 }
@@ -973,4 +977,160 @@ pub fn is_node_within_call_argument<'a>(
     let node_span = node.span();
     let arg_span = target_arg.span();
     node_span.start >= arg_span.start && node_span.end <= arg_span.end
+}
+
+/// Determines if a semicolon is needed before inserting code that starts with
+/// certain characters (`[`, `(`, `/`, `+`, `-`, `` ` ``) that could be misinterpreted
+/// due to Automatic Semicolon Insertion (ASI) rules.
+///
+/// Returns `true` if the node is at the start of an `ExpressionStatement` and the
+/// character before it could cause the replacement to be parsed as a continuation
+/// of the previous expression.
+pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
+    let node_span = node.span();
+
+    // Find the enclosing ExpressionStatement, bailing early for nodes that can't
+    // be at statement start position
+    let mut expr_stmt_span = None;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ExpressionStatement(expr_stmt) => {
+                expr_stmt_span = Some(expr_stmt.span);
+                break;
+            }
+            // Expression types that can have our node at their start position
+            AstKind::CallExpression(_)
+            | AstKind::ComputedMemberExpression(_)
+            | AstKind::StaticMemberExpression(_)
+            | AstKind::PrivateFieldExpression(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::TaggedTemplateExpression(_)
+            | AstKind::SequenceExpression(_)
+            | AstKind::AssignmentExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::AwaitExpression(_)
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSInstantiationExpression(_) => {}
+            _ => return false,
+        }
+    }
+
+    let Some(expr_stmt_span) = expr_stmt_span else {
+        return false;
+    };
+
+    // Node must be at the start of the statement for ASI hazard to apply
+    if node_span.start != expr_stmt_span.start {
+        return false;
+    }
+
+    if expr_stmt_span.start == 0 {
+        return false;
+    }
+
+    let source_text = ctx.source_text();
+    let last_char = find_last_meaningful_char(source_text, expr_stmt_span.start, ctx);
+
+    let Some(last_char) = last_char else {
+        return false;
+    };
+
+    // Characters that could cause ASI issues when followed by `[`, `(`, `/`, etc.
+    matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-' | '/' | '.')
+        || last_char.is_alphanumeric()
+        || last_char == '_'
+        || last_char == '$'
+}
+
+#[inline]
+#[expect(clippy::cast_possible_wrap)]
+fn is_utf8_char_boundary(b: u8) -> bool {
+    (b as i8) >= -0x40
+}
+
+/// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
+fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+    let bytes = source_text.as_bytes();
+    let comments = ctx.semantic().comments();
+
+    let mut comment_idx = comments.partition_point(|c| c.span.start < end_pos);
+    let mut current_comment_end: u32 = 0;
+    let mut i = end_pos;
+
+    // Handle case where end_pos is inside a comment
+    if comment_idx > 0 {
+        let prev_comment = &comments[comment_idx - 1];
+        if end_pos <= prev_comment.span.end {
+            i = prev_comment.span.start;
+            comment_idx -= 1;
+            if comment_idx > 0 {
+                current_comment_end = comments[comment_idx - 1].span.end;
+            }
+        }
+    }
+
+    while i > 0 {
+        if i <= current_comment_end && comment_idx > 0 {
+            comment_idx -= 1;
+            current_comment_end = comments[comment_idx].span.start;
+            i = current_comment_end;
+            continue;
+        }
+
+        i -= 1;
+
+        let byte = bytes[i as usize];
+
+        if byte.is_ascii_whitespace() {
+            continue;
+        }
+
+        // Check if we're entering a comment from the end
+        if comment_idx > 0 {
+            let comment = &comments[comment_idx - 1];
+            if i >= comment.span.start && i < comment.span.end {
+                i = comment.span.start;
+                comment_idx -= 1;
+                if comment_idx > 0 {
+                    current_comment_end = comments[comment_idx - 1].span.end;
+                }
+                continue;
+            }
+        }
+
+        if byte.is_ascii() {
+            return Some(byte as char);
+        }
+
+        // Multi-byte UTF-8: find the start byte (max 4 bytes per char)
+        let i_usize = i as usize;
+        let char_start = if is_utf8_char_boundary(bytes[i_usize.saturating_sub(1)]) {
+            i_usize - 1
+        } else if is_utf8_char_boundary(bytes[i_usize.saturating_sub(2)]) {
+            i_usize - 2
+        } else {
+            i_usize - 3
+        };
+
+        let c = source_text[char_start..].chars().next().unwrap();
+
+        // Skip irregular whitespace (NBSP, ZWNBSP, etc.)
+        if is_irregular_whitespace(c) {
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                i = char_start as u32;
+            }
+            continue;
+        }
+
+        return Some(c);
+    }
+
+    None
 }

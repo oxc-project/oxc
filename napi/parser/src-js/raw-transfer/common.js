@@ -1,7 +1,11 @@
-import os from 'node:os';
-import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from '../../generated/constants.js';
-import { getBufferOffset, parseRaw as parseRawBinding, parseRawSync as parseRawSyncBinding } from '../bindings.js';
-import { rawTransferSupported } from './supported.js';
+import os from "node:os";
+import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../../generated/constants.js";
+import {
+  getBufferOffset,
+  parseRaw as parseRawBinding,
+  parseRawSync as parseRawSyncBinding,
+} from "../bindings.js";
+import { rawTransferSupported } from "./supported.js";
 
 // Throw an error if running on a platform which raw transfer doesn't support.
 //
@@ -9,9 +13,9 @@ import { rawTransferSupported } from './supported.js';
 // `experimentalRawTransfer` or `experimentalLazy` options, or calls `experimentalGetLazyVisitor`.
 if (!rawTransferSupported()) {
   throw new Error(
-    '`experimentalRawTransfer` and `experimentalLazy` options are not supported ' +
-      'on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, ' +
-      'versions of Deno prior to v2.0.0, or other runtimes',
+    "`experimentalRawTransfer` and `experimentalLazy` options are not supported " +
+      "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, " +
+      "versions of Deno prior to v2.0.0, or other runtimes",
   );
 }
 
@@ -201,7 +205,7 @@ export function prepareRaw(sourceText) {
   // so create a view into buffer of this size to write into.
   const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
   const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
-  if (read !== sourceText.length) throw new Error('Failed to write source text into buffer');
+  if (read !== sourceText.length) throw new Error("Failed to write source text into buffer");
 
   return { buffer, sourceByteLen };
 }

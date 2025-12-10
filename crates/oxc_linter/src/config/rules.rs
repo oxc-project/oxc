@@ -8,12 +8,13 @@ use serde::{
     de::{self, Deserializer, Visitor},
     ser::SerializeMap,
 };
+use smallvec::SmallVec;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintPlugins,
-    external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
@@ -56,16 +57,20 @@ pub struct ESLintRule {
     /// Severity of the rule: `off`, `warn`, `error`, etc.
     pub severity: AllowWarnDeny,
     /// JSON configuration for the rule, if any.
-    pub config: Option<serde_json::Value>,
+    /// `SmallVec` with inline capacity 1, because most rules have only one options object.
+    pub config: SmallVec<[serde_json::Value; 1]>,
 }
 
 impl OxlintRules {
     pub(crate) fn override_rules(
         &self,
         rules_for_override: &mut RuleSet,
-        external_rules_for_override: &mut FxHashMap<ExternalRuleId, AllowWarnDeny>,
+        external_rules_for_override: &mut FxHashMap<
+            ExternalRuleId,
+            (ExternalOptionsId, AllowWarnDeny),
+        >,
         all_rules: &[RuleEnum],
-        external_plugin_store: &ExternalPluginStore,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ExternalRuleLookupError> {
         let mut rules_to_replace = vec![];
 
@@ -83,7 +88,6 @@ impl OxlintRules {
                     &rule_config.rule_name,
                     &rule_config.plugin_name,
                 );
-                let config = rule_config.config.clone().unwrap_or_default();
                 let severity = rule_config.severity;
 
                 if LintPlugins::try_from(plugin_name).is_ok() {
@@ -93,7 +97,14 @@ impl OxlintRules {
                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                     });
                     if let Some(rule) = rule {
-                        rules_to_replace.push((rule.read_json(config), severity));
+                        // Configs are stored as `SmallVec<[Value; 1]>`, but `from_configuration` expects
+                        // a single `Value` with `Value::Null` being the equivalent of empty config
+                        let config = if rule_config.config.is_empty() {
+                            serde_json::Value::Null
+                        } else {
+                            serde_json::Value::Array(rule_config.config.to_vec())
+                        };
+                        rules_to_replace.push((rule.from_configuration(config), severity));
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
@@ -106,10 +117,18 @@ impl OxlintRules {
                     if external_plugin_store.is_enabled() {
                         let external_rule_id =
                             external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
+
+                        // Add options to store and get options ID
+                        let options_id = external_plugin_store
+                            .add_options(external_rule_id, &rule_config.config);
+
                         external_rules_for_override
                             .entry(external_rule_id)
-                            .and_modify(|sev| *sev = severity)
-                            .or_insert(severity);
+                            .and_modify(|(opts_id, sev)| {
+                                *opts_id = options_id;
+                                *sev = severity;
+                            })
+                            .or_insert((options_id, severity));
                     }
                 }
             }
@@ -173,16 +192,13 @@ impl Serialize for OxlintRules {
 
         for rule in &self.rules {
             let key = rule.full_name();
-            match rule.config.as_ref() {
-                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                Some(config) if !config.is_null() => {
-                    let value = (rule.severity.as_str(), config);
-                    rules.serialize_entry(&key, &value)?;
-                }
+            if rule.config.is_empty() {
                 // e.g. unicorn/some-rule: "warn"
-                _ => {
-                    rules.serialize_entry(&key, rule.severity.as_str())?;
-                }
+                rules.serialize_entry(&key, rule.severity.as_str())?;
+            } else {
+                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
+                let value = (rule.severity.as_str(), &rule.config);
+                rules.serialize_entry(&key, &value)?;
             }
         }
 
@@ -215,7 +231,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
                 let mut rules = vec![];
                 while let Some((key, value)) = map.next_entry::<String, serde_json::Value>()? {
                     let (plugin_name, rule_name) = parse_rule_key(&key);
-                    let (severity, config) = parse_rule_value(&value).map_err(de::Error::custom)?;
+                    let (severity, config) = parse_rule_value(value).map_err(de::Error::custom)?;
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
@@ -267,18 +283,18 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
 }
 
 fn parse_rule_value(
-    value: &serde_json::Value,
-) -> Result<(AllowWarnDeny, Option<serde_json::Value>), Error> {
+    value: serde_json::Value,
+) -> Result<(AllowWarnDeny, SmallVec<[serde_json::Value; 1]>), Error> {
     match value {
         serde_json::Value::String(_) | serde_json::Value::Number(_) => {
-            let severity = AllowWarnDeny::try_from(value)?;
-            Ok((severity, None))
+            let severity = AllowWarnDeny::try_from(&value)?;
+            Ok((severity, SmallVec::new()))
         }
 
-        serde_json::Value::Array(v) => {
+        serde_json::Value::Array(mut v) => {
             if v.is_empty() {
                 return Err(failed_to_parse_rule_value(
-                    &value.to_string(),
+                    &serde_json::Value::Array(v).to_string(),
                     "Type should be `[SeverityConf, ...any[]`",
                 )
                 .into());
@@ -286,12 +302,19 @@ fn parse_rule_value(
 
             // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            // e.g. ["warn"], [0]
-            let config = if v.len() == 1 {
-                None
-            // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
-            } else {
-                Some(serde_json::Value::Array(v.iter().skip(1).cloned().collect::<Vec<_>>()))
+            let config = match v.len() {
+                0 => unreachable!(),
+                // e.g. ["warn"], [0]
+                1 => SmallVec::new(),
+                // e.g. ["error", { type: "whatever" }]
+                // Separate branch for this common case which uses the faster `SmallVec::from_buf`,
+                // and avoids shifting the first element off the vector.
+                2 => SmallVec::from_buf([v.pop().unwrap()]),
+                // e.g. ["error", { type: "whatever" }, ["len", "also"]]
+                _ => {
+                    v.remove(0);
+                    SmallVec::from_vec(v)
+                }
             };
 
             Ok((severity, config))
@@ -325,12 +348,15 @@ impl ESLintRule {
 #[cfg(test)]
 #[expect(clippy::default_trait_access)]
 mod test {
+    use std::path::PathBuf;
+
     use rustc_hash::FxHashMap;
     use serde::Deserialize;
     use serde_json::{Value, json};
 
     use crate::{
         AllowWarnDeny, ExternalPluginStore,
+        external_plugin_store::ExternalOptionsId,
         rules::{RULES, RuleEnum},
     };
 
@@ -351,25 +377,25 @@ mod test {
         assert_eq!(r1.rule_name, "no-console");
         assert_eq!(r1.plugin_name, "eslint");
         assert!(r1.severity.is_allow());
-        assert!(r1.config.is_none());
+        assert!(r1.config.is_empty());
 
         let r2 = rules.next().unwrap();
         assert_eq!(r2.rule_name, "no-unused-vars");
         assert_eq!(r2.plugin_name, "foo");
         assert!(r2.severity.is_warn_deny());
-        assert!(r2.config.is_none());
+        assert!(r2.config.is_empty());
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
         assert_eq!(r3.plugin_name, "eslint");
         assert!(r3.severity.is_warn_deny());
-        assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
+        assert_eq!(r3.config.as_slice(), &[serde_json::json!("arg1"), serde_json::json!("args2")]);
 
         let r4 = rules.next().unwrap();
         assert_eq!(r4.rule_name, "noop");
         assert_eq!(r4.plugin_name, "nextjs");
         assert!(r4.severity.is_warn_deny());
-        assert!(r4.config.is_none());
+        assert!(r4.config.is_empty());
     }
 
     #[test]
@@ -381,9 +407,14 @@ mod test {
     fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
         let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
         let mut external_rules_for_override = FxHashMap::default();
-        let external_linter_store = ExternalPluginStore::default();
+        let mut external_linter_store = ExternalPluginStore::default();
         rules_config
-            .override_rules(rules, &mut external_rules_for_override, &RULES, &external_linter_store)
+            .override_rules(
+                rules,
+                &mut external_rules_for_override,
+                &RULES,
+                &mut external_linter_store,
+            )
             .unwrap();
     }
 
@@ -516,5 +547,51 @@ mod test {
         assert_eq!(r2.rule_name, "no-null");
         assert_eq!(r2.plugin_name, "unicorn");
         assert!(r2.severity.is_warn_deny());
+    }
+
+    #[test]
+    fn test_external_rule_options_are_recorded() {
+        // Register a fake external plugin and rule
+        let mut store = ExternalPluginStore::new(true);
+        store.register_plugin(
+            PathBuf::from("path/to/custom-plugin"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string()],
+        );
+
+        // Configure rule with options array (non-empty) and ensure options id != 0
+        let rules = OxlintRules::deserialize(&json!({
+            "custom/my-rule": ["warn", {"foo": 1}]
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        rules.override_rules(&mut builtin_rules, &mut external_rules, &RULES, &mut store).unwrap();
+
+        assert_eq!(builtin_rules.len(), 0);
+        assert_eq!(external_rules.len(), 1);
+        let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
+        assert_ne!(
+            options_id,
+            ExternalOptionsId::NONE,
+            "non-empty options should allocate a new id"
+        );
+        assert_eq!(severity, AllowWarnDeny::Warn);
+
+        // Now configure with no options which should map to reserved index 0
+        let rules_no_opts = OxlintRules::deserialize(&json!({
+            "custom/my-rule": "error"
+        }))
+        .unwrap();
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        rules_no_opts
+            .override_rules(&mut builtin_rules, &mut external_rules, &RULES, &mut store)
+            .unwrap();
+        let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
+        assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
+        assert_eq!(severity, AllowWarnDeny::Deny);
     }
 }

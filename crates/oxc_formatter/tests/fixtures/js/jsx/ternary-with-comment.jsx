@@ -1,0 +1,51 @@
+{isVideo ? (
+  <Video {...props} />
+) : (
+  <Image {...props} /> // eslint-disable-line
+)}
+
+<>
+{isVideo ? (
+  <Video {...props} />
+) : (
+  <Image {...props} /> // eslint-disable-line
+)}
+</>
+
+// https://github.com/oxc-project/oxc/issues/16180
+{
+  const x = (
+    <>
+      {xxxxxxxxxxxxxx ? (
+        <div /> /** xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx */
+      ) : (
+        <div />
+      )}
+    </>
+  );
+}
+
+// https://github.com/oxc-project/oxc/issues/16179
+{
+  const x = (
+    <>
+      {xxxxxxxxxxxx ? null /** xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx */ : xxxxxxx ? (
+        <div />
+      ) : (
+        <div />
+      )}
+    </>
+  );
+}
+
+// https://github.com/oxc-project/oxc/issues/16258
+const x = (
+  <>
+    {x ? (
+      <div />
+    ) : // xxx
+    x ? null : (
+      <div />
+    )}
+  </>
+);

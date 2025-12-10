@@ -3,8 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected empty block statements")
@@ -12,7 +17,7 @@ fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoEmpty {
     /// If set to `true`, allows an empty `catch` block without triggering the linter.
@@ -53,13 +58,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmpty {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_empty_catch: obj
-                .and_then(|v| v.get("allowEmptyCatch"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoEmpty>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

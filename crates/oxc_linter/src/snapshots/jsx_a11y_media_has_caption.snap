@@ -1,233 +1,233 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><track /></audio>
    · ────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><track kind='subtitles' /></audio>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video><track /></video>
    · ────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video><track kind='subtitles' /></video>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
    · ─────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
    · ─────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video muted={false}></Video>
    · ─────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video muted={false}></Video>
    · ─────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
    · ─────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
    · ─────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video muted={false}></Video>
    · ─────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video muted={false}></Video>
    · ─────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio>Foo</audio>
    · ──────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video>Foo</video>
    · ──────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video />
    · ─────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><Track /></audio>
    · ────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <video><Track /></video>
    · ────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio><Track kind='subtitles' /></Audio>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video><Track kind='subtitles' /></Video>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio><Track kind='subtitles' /></Audio>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video><Track kind='subtitles' /></Video>
    · ─────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
-  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
+  ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Box as='audio'><Track kind='subtitles' /></Box>
    · ────────────────────────────────────────────────
    ╰────
-  help: Media elements such as <audio> and <video> must have a <track> for captions.
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.

@@ -1,10 +1,14 @@
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-
-use crate::{AstNode, context::LintContext, rule::Rule};
+use serde::Deserialize;
 
 fn no_rest_spread_properties_diagnostic(
     span: Span,
@@ -14,10 +18,10 @@ fn no_rest_spread_properties_diagnostic(
     OxcDiagnostic::warn(format!("{spread_kind} are not allowed. {message_suffix}")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRestSpreadProperties(Box<NoRestSpreadPropertiesOptions>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRestSpreadPropertiesOptions {
     /// A message to display when object spread properties are found.
@@ -62,20 +66,9 @@ declare_oxc_lint!(
 
 impl Rule for NoRestSpreadProperties {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let object_spread_message = config
-            .and_then(|v| v.get("objectSpreadMessage"))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or_default();
-        let object_rest_message = config
-            .and_then(|v| v.get("objectRestMessage"))
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or_default();
-
-        Self(Box::new(NoRestSpreadPropertiesOptions {
-            object_spread_message: object_spread_message.to_string(),
-            object_rest_message: object_rest_message.to_string(),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<NoRestSpreadProperties>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

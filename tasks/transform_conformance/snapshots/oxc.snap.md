@@ -1,6 +1,6 @@
-commit: 777ded79
+commit: 3591b24e
 
-Passed: 188/319
+Passed: 201/332
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -18,6 +18,7 @@ Passed: 188/319
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 * regexp
+* plugin-tagged-template-transform
 
 
 # babel-plugin-transform-explicit-resource-management (2/4)
@@ -1769,7 +1770,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (24/39)
+# plugin-styled-components (25/40)
 * minify-comments/input.js
 Unresolved references mismatch:
 after transform: ["x", "y", "z"]

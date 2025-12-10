@@ -61,10 +61,15 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let Some(offset) = ctx.find_next_token_from(module.span.start, "module") else { return };
+        // Ignore nested `TSModuleDeclaration`s
+        // e.g. the 2 inner `TSModuleDeclaration`s in `module A.B.C {}`
+        if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
+            return;
+        }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start + offset;
+            let mut span_start = module.span.start;
+            span_start += ctx.find_next_token_from(span_start, "module").unwrap();
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }
@@ -100,7 +105,6 @@ fn test() {
             module foo {}
         }
         ",
-        "module foo.'a'",
     ];
 
     let fix = vec![
@@ -134,6 +138,11 @@ fn test() {
             None,
         ),
         ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
+        (
+            "declare module X.Y.module { x = 'module'; }",
+            "declare namespace X.Y.module { x = 'module'; }",
+            None,
+        ),
     ];
 
     Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::PLUGIN, pass, fail)

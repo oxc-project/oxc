@@ -33,7 +33,9 @@ pub fn convert_utf8_to_utf16(
             Comment {
                 r#type: match comment.kind {
                     CommentKind::Line => String::from("Line"),
-                    CommentKind::Block => String::from("Block"),
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                        String::from("Block")
+                    }
                 },
                 value,
                 start: span.start,

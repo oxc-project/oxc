@@ -1,16 +1,16 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer_lazy.rs`.
 
-import { constructorError, TOKEN } from '../../src-js/raw-transfer/lazy-common.js';
-import { NodeArray } from '../../src-js/raw-transfer/node-array.js';
+import { constructorError, TOKEN } from "../../src-js/raw-transfer/lazy-common.js";
+import { NodeArray } from "../../src-js/raw-transfer/node-array.js";
 
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String,
-  inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
+  inspectSymbol = Symbol.for("nodejs.util.inspect.custom");
 
 export class Program {
-  type = 'Program';
+  type = "Program";
   #internal;
 
   constructor(pos, ast) {
@@ -53,7 +53,7 @@ export class Program {
 
   toJSON() {
     return {
-      type: 'Program',
+      type: "Program",
       start: this.start,
       end: this.end,
       sourceType: this.sourceType,
@@ -163,7 +163,7 @@ function constructExpression(pos, ast) {
 }
 
 export class IdentifierName {
-  type = 'IdentifierName';
+  type = "IdentifierName";
   #internal;
 
   constructor(pos, ast) {
@@ -196,7 +196,7 @@ export class IdentifierName {
 
   toJSON() {
     return {
-      type: 'IdentifierName',
+      type: "IdentifierName",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -211,7 +211,7 @@ export class IdentifierName {
 const DebugIdentifierName = class IdentifierName {};
 
 export class IdentifierReference {
-  type = 'IdentifierReference';
+  type = "IdentifierReference";
   #internal;
 
   constructor(pos, ast) {
@@ -244,7 +244,7 @@ export class IdentifierReference {
 
   toJSON() {
     return {
-      type: 'IdentifierReference',
+      type: "IdentifierReference",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -259,7 +259,7 @@ export class IdentifierReference {
 const DebugIdentifierReference = class IdentifierReference {};
 
 export class BindingIdentifier {
-  type = 'BindingIdentifier';
+  type = "BindingIdentifier";
   #internal;
 
   constructor(pos, ast) {
@@ -292,7 +292,7 @@ export class BindingIdentifier {
 
   toJSON() {
     return {
-      type: 'BindingIdentifier',
+      type: "BindingIdentifier",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -307,7 +307,7 @@ export class BindingIdentifier {
 const DebugBindingIdentifier = class BindingIdentifier {};
 
 export class LabelIdentifier {
-  type = 'LabelIdentifier';
+  type = "LabelIdentifier";
   #internal;
 
   constructor(pos, ast) {
@@ -340,7 +340,7 @@ export class LabelIdentifier {
 
   toJSON() {
     return {
-      type: 'LabelIdentifier',
+      type: "LabelIdentifier",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -355,7 +355,7 @@ export class LabelIdentifier {
 const DebugLabelIdentifier = class LabelIdentifier {};
 
 export class ThisExpression {
-  type = 'ThisExpression';
+  type = "ThisExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -381,7 +381,7 @@ export class ThisExpression {
 
   toJSON() {
     return {
-      type: 'ThisExpression',
+      type: "ThisExpression",
       start: this.start,
       end: this.end,
     };
@@ -395,7 +395,7 @@ export class ThisExpression {
 const DebugThisExpression = class ThisExpression {};
 
 export class ArrayExpression {
-  type = 'ArrayExpression';
+  type = "ArrayExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -423,12 +423,15 @@ export class ArrayExpression {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return (internal.$elements = constructVecArrayExpressionElement(internal.pos + 8, internal.ast));
+    return (internal.$elements = constructVecArrayExpressionElement(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   toJSON() {
     return {
-      type: 'ArrayExpression',
+      type: "ArrayExpression",
       start: this.start,
       end: this.end,
       elements: this.elements,
@@ -540,7 +543,7 @@ function constructArrayExpressionElement(pos, ast) {
 }
 
 export class Elision {
-  type = 'Elision';
+  type = "Elision";
   #internal;
 
   constructor(pos, ast) {
@@ -566,7 +569,7 @@ export class Elision {
 
   toJSON() {
     return {
-      type: 'Elision',
+      type: "Elision",
       start: this.start,
       end: this.end,
     };
@@ -580,7 +583,7 @@ export class Elision {
 const DebugElision = class Elision {};
 
 export class ObjectExpression {
-  type = 'ObjectExpression';
+  type = "ObjectExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -613,7 +616,7 @@ export class ObjectExpression {
 
   toJSON() {
     return {
-      type: 'ObjectExpression',
+      type: "ObjectExpression",
       start: this.start,
       end: this.end,
       properties: this.properties,
@@ -639,7 +642,7 @@ function constructObjectPropertyKind(pos, ast) {
 }
 
 export class ObjectProperty {
-  type = 'ObjectProperty';
+  type = "ObjectProperty";
   #internal;
 
   constructor(pos, ast) {
@@ -695,7 +698,7 @@ export class ObjectProperty {
 
   toJSON() {
     return {
-      type: 'ObjectProperty',
+      type: "ObjectProperty",
       start: this.start,
       end: this.end,
       kind: this.kind,
@@ -814,18 +817,18 @@ function constructPropertyKey(pos, ast) {
 function constructPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'init';
+      return "init";
     case 1:
-      return 'get';
+      return "get";
     case 2:
-      return 'set';
+      return "set";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKind`);
   }
 }
 
 export class TemplateLiteral {
-  type = 'TemplateLiteral';
+  type = "TemplateLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -865,7 +868,7 @@ export class TemplateLiteral {
 
   toJSON() {
     return {
-      type: 'TemplateLiteral',
+      type: "TemplateLiteral",
       start: this.start,
       end: this.end,
       quasis: this.quasis,
@@ -881,7 +884,7 @@ export class TemplateLiteral {
 const DebugTemplateLiteral = class TemplateLiteral {};
 
 export class TaggedTemplateExpression {
-  type = 'TaggedTemplateExpression';
+  type = "TaggedTemplateExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -922,7 +925,7 @@ export class TaggedTemplateExpression {
 
   toJSON() {
     return {
-      type: 'TaggedTemplateExpression',
+      type: "TaggedTemplateExpression",
       start: this.start,
       end: this.end,
       tag: this.tag,
@@ -939,7 +942,7 @@ export class TaggedTemplateExpression {
 const DebugTaggedTemplateExpression = class TaggedTemplateExpression {};
 
 export class TemplateElement {
-  type = 'TemplateElement';
+  type = "TemplateElement";
   #internal;
 
   constructor(pos, ast) {
@@ -975,7 +978,7 @@ export class TemplateElement {
 
   toJSON() {
     return {
-      type: 'TemplateElement',
+      type: "TemplateElement",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -1046,7 +1049,7 @@ function constructMemberExpression(pos, ast) {
 }
 
 export class ComputedMemberExpression {
-  type = 'ComputedMemberExpression';
+  type = "ComputedMemberExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1087,7 +1090,7 @@ export class ComputedMemberExpression {
 
   toJSON() {
     return {
-      type: 'ComputedMemberExpression',
+      type: "ComputedMemberExpression",
       start: this.start,
       end: this.end,
       object: this.object,
@@ -1104,7 +1107,7 @@ export class ComputedMemberExpression {
 const DebugComputedMemberExpression = class ComputedMemberExpression {};
 
 export class StaticMemberExpression {
-  type = 'StaticMemberExpression';
+  type = "StaticMemberExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1145,7 +1148,7 @@ export class StaticMemberExpression {
 
   toJSON() {
     return {
-      type: 'StaticMemberExpression',
+      type: "StaticMemberExpression",
       start: this.start,
       end: this.end,
       object: this.object,
@@ -1162,7 +1165,7 @@ export class StaticMemberExpression {
 const DebugStaticMemberExpression = class StaticMemberExpression {};
 
 export class PrivateFieldExpression {
-  type = 'PrivateFieldExpression';
+  type = "PrivateFieldExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1203,7 +1206,7 @@ export class PrivateFieldExpression {
 
   toJSON() {
     return {
-      type: 'PrivateFieldExpression',
+      type: "PrivateFieldExpression",
       start: this.start,
       end: this.end,
       object: this.object,
@@ -1220,7 +1223,7 @@ export class PrivateFieldExpression {
 const DebugPrivateFieldExpression = class PrivateFieldExpression {};
 
 export class CallExpression {
-  type = 'CallExpression';
+  type = "CallExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1268,7 +1271,7 @@ export class CallExpression {
 
   toJSON() {
     return {
-      type: 'CallExpression',
+      type: "CallExpression",
       start: this.start,
       end: this.end,
       callee: this.callee,
@@ -1286,7 +1289,7 @@ export class CallExpression {
 const DebugCallExpression = class CallExpression {};
 
 export class NewExpression {
-  type = 'NewExpression';
+  type = "NewExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1329,7 +1332,7 @@ export class NewExpression {
 
   toJSON() {
     return {
-      type: 'NewExpression',
+      type: "NewExpression",
       start: this.start,
       end: this.end,
       callee: this.callee,
@@ -1346,7 +1349,7 @@ export class NewExpression {
 const DebugNewExpression = class NewExpression {};
 
 export class MetaProperty {
-  type = 'MetaProperty';
+  type = "MetaProperty";
   #internal;
 
   constructor(pos, ast) {
@@ -1382,7 +1385,7 @@ export class MetaProperty {
 
   toJSON() {
     return {
-      type: 'MetaProperty',
+      type: "MetaProperty",
       start: this.start,
       end: this.end,
       meta: this.meta,
@@ -1398,7 +1401,7 @@ export class MetaProperty {
 const DebugMetaProperty = class MetaProperty {};
 
 export class SpreadElement {
-  type = 'SpreadElement';
+  type = "SpreadElement";
   #internal;
 
   constructor(pos, ast) {
@@ -1429,7 +1432,7 @@ export class SpreadElement {
 
   toJSON() {
     return {
-      type: 'SpreadElement',
+      type: "SpreadElement",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -1539,7 +1542,7 @@ function constructArgument(pos, ast) {
 }
 
 export class UpdateExpression {
-  type = 'UpdateExpression';
+  type = "UpdateExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1580,7 +1583,7 @@ export class UpdateExpression {
 
   toJSON() {
     return {
-      type: 'UpdateExpression',
+      type: "UpdateExpression",
       start: this.start,
       end: this.end,
       operator: this.operator,
@@ -1597,7 +1600,7 @@ export class UpdateExpression {
 const DebugUpdateExpression = class UpdateExpression {};
 
 export class UnaryExpression {
-  type = 'UnaryExpression';
+  type = "UnaryExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1633,7 +1636,7 @@ export class UnaryExpression {
 
   toJSON() {
     return {
-      type: 'UnaryExpression',
+      type: "UnaryExpression",
       start: this.start,
       end: this.end,
       operator: this.operator,
@@ -1649,7 +1652,7 @@ export class UnaryExpression {
 const DebugUnaryExpression = class UnaryExpression {};
 
 export class BinaryExpression {
-  type = 'BinaryExpression';
+  type = "BinaryExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1690,7 +1693,7 @@ export class BinaryExpression {
 
   toJSON() {
     return {
-      type: 'BinaryExpression',
+      type: "BinaryExpression",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -1707,7 +1710,7 @@ export class BinaryExpression {
 const DebugBinaryExpression = class BinaryExpression {};
 
 export class PrivateInExpression {
-  type = 'PrivateInExpression';
+  type = "PrivateInExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1743,7 +1746,7 @@ export class PrivateInExpression {
 
   toJSON() {
     return {
-      type: 'PrivateInExpression',
+      type: "PrivateInExpression",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -1759,7 +1762,7 @@ export class PrivateInExpression {
 const DebugPrivateInExpression = class PrivateInExpression {};
 
 export class LogicalExpression {
-  type = 'LogicalExpression';
+  type = "LogicalExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1800,7 +1803,7 @@ export class LogicalExpression {
 
   toJSON() {
     return {
-      type: 'LogicalExpression',
+      type: "LogicalExpression",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -1817,7 +1820,7 @@ export class LogicalExpression {
 const DebugLogicalExpression = class LogicalExpression {};
 
 export class ConditionalExpression {
-  type = 'ConditionalExpression';
+  type = "ConditionalExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1858,7 +1861,7 @@ export class ConditionalExpression {
 
   toJSON() {
     return {
-      type: 'ConditionalExpression',
+      type: "ConditionalExpression",
       start: this.start,
       end: this.end,
       test: this.test,
@@ -1875,7 +1878,7 @@ export class ConditionalExpression {
 const DebugConditionalExpression = class ConditionalExpression {};
 
 export class AssignmentExpression {
-  type = 'AssignmentExpression';
+  type = "AssignmentExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -1916,7 +1919,7 @@ export class AssignmentExpression {
 
   toJSON() {
     return {
-      type: 'AssignmentExpression',
+      type: "AssignmentExpression",
       start: this.start,
       end: this.end,
       operator: this.operator,
@@ -1994,7 +1997,7 @@ function constructAssignmentTargetPattern(pos, ast) {
 }
 
 export class ArrayAssignmentTarget {
-  type = 'ArrayAssignmentTarget';
+  type = "ArrayAssignmentTarget";
   #internal;
 
   constructor(pos, ast) {
@@ -2022,12 +2025,15 @@ export class ArrayAssignmentTarget {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return (internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(internal.pos + 8, internal.ast));
+    return (internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   toJSON() {
     return {
-      type: 'ArrayAssignmentTarget',
+      type: "ArrayAssignmentTarget",
       start: this.start,
       end: this.end,
       elements: this.elements,
@@ -2042,7 +2048,7 @@ export class ArrayAssignmentTarget {
 const DebugArrayAssignmentTarget = class ArrayAssignmentTarget {};
 
 export class ObjectAssignmentTarget {
-  type = 'ObjectAssignmentTarget';
+  type = "ObjectAssignmentTarget";
   #internal;
 
   constructor(pos, ast) {
@@ -2070,12 +2076,15 @@ export class ObjectAssignmentTarget {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return (internal.$properties = constructVecAssignmentTargetProperty(internal.pos + 8, internal.ast));
+    return (internal.$properties = constructVecAssignmentTargetProperty(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   toJSON() {
     return {
-      type: 'ObjectAssignmentTarget',
+      type: "ObjectAssignmentTarget",
       start: this.start,
       end: this.end,
       properties: this.properties,
@@ -2090,7 +2099,7 @@ export class ObjectAssignmentTarget {
 const DebugObjectAssignmentTarget = class ObjectAssignmentTarget {};
 
 export class AssignmentTargetRest {
-  type = 'AssignmentTargetRest';
+  type = "AssignmentTargetRest";
   #internal;
 
   constructor(pos, ast) {
@@ -2121,7 +2130,7 @@ export class AssignmentTargetRest {
 
   toJSON() {
     return {
-      type: 'AssignmentTargetRest',
+      type: "AssignmentTargetRest",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -2160,12 +2169,14 @@ function constructAssignmentTargetMaybeDefault(pos, ast) {
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`,
+      );
   }
 }
 
 export class AssignmentTargetWithDefault {
-  type = 'AssignmentTargetWithDefault';
+  type = "AssignmentTargetWithDefault";
   #internal;
 
   constructor(pos, ast) {
@@ -2201,7 +2212,7 @@ export class AssignmentTargetWithDefault {
 
   toJSON() {
     return {
-      type: 'AssignmentTargetWithDefault',
+      type: "AssignmentTargetWithDefault",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -2228,7 +2239,7 @@ function constructAssignmentTargetProperty(pos, ast) {
 }
 
 export class AssignmentTargetPropertyIdentifier {
-  type = 'AssignmentTargetPropertyIdentifier';
+  type = "AssignmentTargetPropertyIdentifier";
   #internal;
 
   constructor(pos, ast) {
@@ -2264,7 +2275,7 @@ export class AssignmentTargetPropertyIdentifier {
 
   toJSON() {
     return {
-      type: 'AssignmentTargetPropertyIdentifier',
+      type: "AssignmentTargetPropertyIdentifier",
       start: this.start,
       end: this.end,
       key: this.key,
@@ -2280,7 +2291,7 @@ export class AssignmentTargetPropertyIdentifier {
 const DebugAssignmentTargetPropertyIdentifier = class AssignmentTargetPropertyIdentifier {};
 
 export class AssignmentTargetPropertyProperty {
-  type = 'AssignmentTargetPropertyProperty';
+  type = "AssignmentTargetPropertyProperty";
   #internal;
 
   constructor(pos, ast) {
@@ -2321,7 +2332,7 @@ export class AssignmentTargetPropertyProperty {
 
   toJSON() {
     return {
-      type: 'AssignmentTargetPropertyProperty',
+      type: "AssignmentTargetPropertyProperty",
       start: this.start,
       end: this.end,
       key: this.key,
@@ -2338,7 +2349,7 @@ export class AssignmentTargetPropertyProperty {
 const DebugAssignmentTargetPropertyProperty = class AssignmentTargetPropertyProperty {};
 
 export class SequenceExpression {
-  type = 'SequenceExpression';
+  type = "SequenceExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -2371,7 +2382,7 @@ export class SequenceExpression {
 
   toJSON() {
     return {
-      type: 'SequenceExpression',
+      type: "SequenceExpression",
       start: this.start,
       end: this.end,
       expressions: this.expressions,
@@ -2386,7 +2397,7 @@ export class SequenceExpression {
 const DebugSequenceExpression = class SequenceExpression {};
 
 export class Super {
-  type = 'Super';
+  type = "Super";
   #internal;
 
   constructor(pos, ast) {
@@ -2412,7 +2423,7 @@ export class Super {
 
   toJSON() {
     return {
-      type: 'Super',
+      type: "Super",
       start: this.start,
       end: this.end,
     };
@@ -2426,7 +2437,7 @@ export class Super {
 const DebugSuper = class Super {};
 
 export class AwaitExpression {
-  type = 'AwaitExpression';
+  type = "AwaitExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -2457,7 +2468,7 @@ export class AwaitExpression {
 
   toJSON() {
     return {
-      type: 'AwaitExpression',
+      type: "AwaitExpression",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -2472,7 +2483,7 @@ export class AwaitExpression {
 const DebugAwaitExpression = class AwaitExpression {};
 
 export class ChainExpression {
-  type = 'ChainExpression';
+  type = "ChainExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -2503,7 +2514,7 @@ export class ChainExpression {
 
   toJSON() {
     return {
-      type: 'ChainExpression',
+      type: "ChainExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -2535,7 +2546,7 @@ function constructChainElement(pos, ast) {
 }
 
 export class ParenthesizedExpression {
-  type = 'ParenthesizedExpression';
+  type = "ParenthesizedExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -2566,7 +2577,7 @@ export class ParenthesizedExpression {
 
   toJSON() {
     return {
-      type: 'ParenthesizedExpression',
+      type: "ParenthesizedExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -2633,6 +2644,8 @@ function constructStatement(pos, ast) {
     case 38:
       return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 40:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     case 64:
       return constructBoxImportDeclaration(pos + 8, ast);
@@ -2652,7 +2665,7 @@ function constructStatement(pos, ast) {
 }
 
 export class Directive {
-  type = 'Directive';
+  type = "Directive";
   #internal;
 
   constructor(pos, ast) {
@@ -2690,7 +2703,7 @@ export class Directive {
 
   toJSON() {
     return {
-      type: 'Directive',
+      type: "Directive",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -2706,7 +2719,7 @@ export class Directive {
 const DebugDirective = class Directive {};
 
 export class Hashbang {
-  type = 'Hashbang';
+  type = "Hashbang";
   #internal;
 
   constructor(pos, ast) {
@@ -2739,7 +2752,7 @@ export class Hashbang {
 
   toJSON() {
     return {
-      type: 'Hashbang',
+      type: "Hashbang",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -2754,7 +2767,7 @@ export class Hashbang {
 const DebugHashbang = class Hashbang {};
 
 export class BlockStatement {
-  type = 'BlockStatement';
+  type = "BlockStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -2787,7 +2800,7 @@ export class BlockStatement {
 
   toJSON() {
     return {
-      type: 'BlockStatement',
+      type: "BlockStatement",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -2818,6 +2831,8 @@ function constructDeclaration(pos, ast) {
     case 38:
       return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 40:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
@@ -2825,7 +2840,7 @@ function constructDeclaration(pos, ast) {
 }
 
 export class VariableDeclaration {
-  type = 'VariableDeclaration';
+  type = "VariableDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -2858,7 +2873,10 @@ export class VariableDeclaration {
     const internal = this.#internal,
       cached = internal.$declarations;
     if (cached !== void 0) return cached;
-    return (internal.$declarations = constructVecVariableDeclarator(internal.pos + 8, internal.ast));
+    return (internal.$declarations = constructVecVariableDeclarator(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   get declare() {
@@ -2868,7 +2886,7 @@ export class VariableDeclaration {
 
   toJSON() {
     return {
-      type: 'VariableDeclaration',
+      type: "VariableDeclaration",
       start: this.start,
       end: this.end,
       kind: this.kind,
@@ -2887,22 +2905,22 @@ const DebugVariableDeclaration = class VariableDeclaration {};
 function constructVariableDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'var';
+      return "var";
     case 1:
-      return 'let';
+      return "let";
     case 2:
-      return 'const';
+      return "const";
     case 3:
-      return 'using';
+      return "using";
     case 4:
-      return 'await using';
+      return "await using";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for VariableDeclarationKind`);
   }
 }
 
 export class VariableDeclarator {
-  type = 'VariableDeclarator';
+  type = "VariableDeclarator";
   #internal;
 
   constructor(pos, ast) {
@@ -2943,7 +2961,7 @@ export class VariableDeclarator {
 
   toJSON() {
     return {
-      type: 'VariableDeclarator',
+      type: "VariableDeclarator",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -2960,7 +2978,7 @@ export class VariableDeclarator {
 const DebugVariableDeclarator = class VariableDeclarator {};
 
 export class EmptyStatement {
-  type = 'EmptyStatement';
+  type = "EmptyStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -2986,7 +3004,7 @@ export class EmptyStatement {
 
   toJSON() {
     return {
-      type: 'EmptyStatement',
+      type: "EmptyStatement",
       start: this.start,
       end: this.end,
     };
@@ -3000,7 +3018,7 @@ export class EmptyStatement {
 const DebugEmptyStatement = class EmptyStatement {};
 
 export class ExpressionStatement {
-  type = 'ExpressionStatement';
+  type = "ExpressionStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3031,7 +3049,7 @@ export class ExpressionStatement {
 
   toJSON() {
     return {
-      type: 'ExpressionStatement',
+      type: "ExpressionStatement",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -3046,7 +3064,7 @@ export class ExpressionStatement {
 const DebugExpressionStatement = class ExpressionStatement {};
 
 export class IfStatement {
-  type = 'IfStatement';
+  type = "IfStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3087,7 +3105,7 @@ export class IfStatement {
 
   toJSON() {
     return {
-      type: 'IfStatement',
+      type: "IfStatement",
       start: this.start,
       end: this.end,
       test: this.test,
@@ -3104,7 +3122,7 @@ export class IfStatement {
 const DebugIfStatement = class IfStatement {};
 
 export class DoWhileStatement {
-  type = 'DoWhileStatement';
+  type = "DoWhileStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3140,7 +3158,7 @@ export class DoWhileStatement {
 
   toJSON() {
     return {
-      type: 'DoWhileStatement',
+      type: "DoWhileStatement",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -3156,7 +3174,7 @@ export class DoWhileStatement {
 const DebugDoWhileStatement = class DoWhileStatement {};
 
 export class WhileStatement {
-  type = 'WhileStatement';
+  type = "WhileStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3192,7 +3210,7 @@ export class WhileStatement {
 
   toJSON() {
     return {
-      type: 'WhileStatement',
+      type: "WhileStatement",
       start: this.start,
       end: this.end,
       test: this.test,
@@ -3208,7 +3226,7 @@ export class WhileStatement {
 const DebugWhileStatement = class WhileStatement {};
 
 export class ForStatement {
-  type = 'ForStatement';
+  type = "ForStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3254,7 +3272,7 @@ export class ForStatement {
 
   toJSON() {
     return {
-      type: 'ForStatement',
+      type: "ForStatement",
       start: this.start,
       end: this.end,
       init: this.init,
@@ -3367,7 +3385,7 @@ function constructForStatementInit(pos, ast) {
 }
 
 export class ForInStatement {
-  type = 'ForInStatement';
+  type = "ForInStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3408,7 +3426,7 @@ export class ForInStatement {
 
   toJSON() {
     return {
-      type: 'ForInStatement',
+      type: "ForInStatement",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -3454,7 +3472,7 @@ function constructForStatementLeft(pos, ast) {
 }
 
 export class ForOfStatement {
-  type = 'ForOfStatement';
+  type = "ForOfStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3500,7 +3518,7 @@ export class ForOfStatement {
 
   toJSON() {
     return {
-      type: 'ForOfStatement',
+      type: "ForOfStatement",
       start: this.start,
       end: this.end,
       await: this.await,
@@ -3518,7 +3536,7 @@ export class ForOfStatement {
 const DebugForOfStatement = class ForOfStatement {};
 
 export class ContinueStatement {
-  type = 'ContinueStatement';
+  type = "ContinueStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3549,7 +3567,7 @@ export class ContinueStatement {
 
   toJSON() {
     return {
-      type: 'ContinueStatement',
+      type: "ContinueStatement",
       start: this.start,
       end: this.end,
       label: this.label,
@@ -3564,7 +3582,7 @@ export class ContinueStatement {
 const DebugContinueStatement = class ContinueStatement {};
 
 export class BreakStatement {
-  type = 'BreakStatement';
+  type = "BreakStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3595,7 +3613,7 @@ export class BreakStatement {
 
   toJSON() {
     return {
-      type: 'BreakStatement',
+      type: "BreakStatement",
       start: this.start,
       end: this.end,
       label: this.label,
@@ -3610,7 +3628,7 @@ export class BreakStatement {
 const DebugBreakStatement = class BreakStatement {};
 
 export class ReturnStatement {
-  type = 'ReturnStatement';
+  type = "ReturnStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3641,7 +3659,7 @@ export class ReturnStatement {
 
   toJSON() {
     return {
-      type: 'ReturnStatement',
+      type: "ReturnStatement",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -3656,7 +3674,7 @@ export class ReturnStatement {
 const DebugReturnStatement = class ReturnStatement {};
 
 export class WithStatement {
-  type = 'WithStatement';
+  type = "WithStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3692,7 +3710,7 @@ export class WithStatement {
 
   toJSON() {
     return {
-      type: 'WithStatement',
+      type: "WithStatement",
       start: this.start,
       end: this.end,
       object: this.object,
@@ -3708,7 +3726,7 @@ export class WithStatement {
 const DebugWithStatement = class WithStatement {};
 
 export class SwitchStatement {
-  type = 'SwitchStatement';
+  type = "SwitchStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3746,7 +3764,7 @@ export class SwitchStatement {
 
   toJSON() {
     return {
-      type: 'SwitchStatement',
+      type: "SwitchStatement",
       start: this.start,
       end: this.end,
       discriminant: this.discriminant,
@@ -3762,7 +3780,7 @@ export class SwitchStatement {
 const DebugSwitchStatement = class SwitchStatement {};
 
 export class SwitchCase {
-  type = 'SwitchCase';
+  type = "SwitchCase";
   #internal;
 
   constructor(pos, ast) {
@@ -3800,7 +3818,7 @@ export class SwitchCase {
 
   toJSON() {
     return {
-      type: 'SwitchCase',
+      type: "SwitchCase",
       start: this.start,
       end: this.end,
       test: this.test,
@@ -3816,7 +3834,7 @@ export class SwitchCase {
 const DebugSwitchCase = class SwitchCase {};
 
 export class LabeledStatement {
-  type = 'LabeledStatement';
+  type = "LabeledStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3852,7 +3870,7 @@ export class LabeledStatement {
 
   toJSON() {
     return {
-      type: 'LabeledStatement',
+      type: "LabeledStatement",
       start: this.start,
       end: this.end,
       label: this.label,
@@ -3868,7 +3886,7 @@ export class LabeledStatement {
 const DebugLabeledStatement = class LabeledStatement {};
 
 export class ThrowStatement {
-  type = 'ThrowStatement';
+  type = "ThrowStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3899,7 +3917,7 @@ export class ThrowStatement {
 
   toJSON() {
     return {
-      type: 'ThrowStatement',
+      type: "ThrowStatement",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -3914,7 +3932,7 @@ export class ThrowStatement {
 const DebugThrowStatement = class ThrowStatement {};
 
 export class TryStatement {
-  type = 'TryStatement';
+  type = "TryStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -3955,7 +3973,7 @@ export class TryStatement {
 
   toJSON() {
     return {
-      type: 'TryStatement',
+      type: "TryStatement",
       start: this.start,
       end: this.end,
       block: this.block,
@@ -3972,7 +3990,7 @@ export class TryStatement {
 const DebugTryStatement = class TryStatement {};
 
 export class CatchClause {
-  type = 'CatchClause';
+  type = "CatchClause";
   #internal;
 
   constructor(pos, ast) {
@@ -4008,7 +4026,7 @@ export class CatchClause {
 
   toJSON() {
     return {
-      type: 'CatchClause',
+      type: "CatchClause",
       start: this.start,
       end: this.end,
       param: this.param,
@@ -4056,7 +4074,7 @@ export class CatchParameter {
 const DebugCatchParameter = class CatchParameter {};
 
 export class DebuggerStatement {
-  type = 'DebuggerStatement';
+  type = "DebuggerStatement";
   #internal;
 
   constructor(pos, ast) {
@@ -4082,7 +4100,7 @@ export class DebuggerStatement {
 
   toJSON() {
     return {
-      type: 'DebuggerStatement',
+      type: "DebuggerStatement",
       start: this.start,
       end: this.end,
     };
@@ -4155,7 +4173,7 @@ function constructBindingPatternKind(pos, ast) {
 }
 
 export class AssignmentPattern {
-  type = 'AssignmentPattern';
+  type = "AssignmentPattern";
   #internal;
 
   constructor(pos, ast) {
@@ -4191,7 +4209,7 @@ export class AssignmentPattern {
 
   toJSON() {
     return {
-      type: 'AssignmentPattern',
+      type: "AssignmentPattern",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -4207,7 +4225,7 @@ export class AssignmentPattern {
 const DebugAssignmentPattern = class AssignmentPattern {};
 
 export class ObjectPattern {
-  type = 'ObjectPattern';
+  type = "ObjectPattern";
   #internal;
 
   constructor(pos, ast) {
@@ -4240,7 +4258,7 @@ export class ObjectPattern {
 
   toJSON() {
     return {
-      type: 'ObjectPattern',
+      type: "ObjectPattern",
       start: this.start,
       end: this.end,
       properties: this.properties,
@@ -4255,7 +4273,7 @@ export class ObjectPattern {
 const DebugObjectPattern = class ObjectPattern {};
 
 export class BindingProperty {
-  type = 'BindingProperty';
+  type = "BindingProperty";
   #internal;
 
   constructor(pos, ast) {
@@ -4301,7 +4319,7 @@ export class BindingProperty {
 
   toJSON() {
     return {
-      type: 'BindingProperty',
+      type: "BindingProperty",
       start: this.start,
       end: this.end,
       key: this.key,
@@ -4319,7 +4337,7 @@ export class BindingProperty {
 const DebugBindingProperty = class BindingProperty {};
 
 export class ArrayPattern {
-  type = 'ArrayPattern';
+  type = "ArrayPattern";
   #internal;
 
   constructor(pos, ast) {
@@ -4352,7 +4370,7 @@ export class ArrayPattern {
 
   toJSON() {
     return {
-      type: 'ArrayPattern',
+      type: "ArrayPattern",
       start: this.start,
       end: this.end,
       elements: this.elements,
@@ -4367,7 +4385,7 @@ export class ArrayPattern {
 const DebugArrayPattern = class ArrayPattern {};
 
 export class BindingRestElement {
-  type = 'BindingRestElement';
+  type = "BindingRestElement";
   #internal;
 
   constructor(pos, ast) {
@@ -4398,7 +4416,7 @@ export class BindingRestElement {
 
   toJSON() {
     return {
-      type: 'BindingRestElement',
+      type: "BindingRestElement",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -4507,20 +4525,20 @@ const DebugFunction = class Function {};
 function constructFunctionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'FunctionDeclaration';
+      return "FunctionDeclaration";
     case 1:
-      return 'FunctionExpression';
+      return "FunctionExpression";
     case 2:
-      return 'TSDeclareFunction';
+      return "TSDeclareFunction";
     case 3:
-      return 'TSEmptyBodyFunctionExpression';
+      return "TSEmptyBodyFunctionExpression";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for FunctionType`);
   }
 }
 
 export class FormalParameters {
-  type = 'FormalParameters';
+  type = "FormalParameters";
   #internal;
 
   constructor(pos, ast) {
@@ -4558,7 +4576,7 @@ export class FormalParameters {
 
   toJSON() {
     return {
-      type: 'FormalParameters',
+      type: "FormalParameters",
       start: this.start,
       end: this.end,
       kind: this.kind,
@@ -4616,20 +4634,20 @@ const DebugFormalParameter = class FormalParameter {};
 function constructFormalParameterKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'FormalParameter';
+      return "FormalParameter";
     case 1:
-      return 'UniqueFormalParameters';
+      return "UniqueFormalParameters";
     case 2:
-      return 'ArrowFormalParameters';
+      return "ArrowFormalParameters";
     case 3:
-      return 'Signature';
+      return "Signature";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for FormalParameterKind`);
   }
 }
 
 export class FunctionBody {
-  type = 'FunctionBody';
+  type = "FunctionBody";
   #internal;
 
   constructor(pos, ast) {
@@ -4662,7 +4680,7 @@ export class FunctionBody {
 
   toJSON() {
     return {
-      type: 'FunctionBody',
+      type: "FunctionBody",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -4677,7 +4695,7 @@ export class FunctionBody {
 const DebugFunctionBody = class FunctionBody {};
 
 export class ArrowFunctionExpression {
-  type = 'ArrowFunctionExpression';
+  type = "ArrowFunctionExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -4733,7 +4751,7 @@ export class ArrowFunctionExpression {
 
   toJSON() {
     return {
-      type: 'ArrowFunctionExpression',
+      type: "ArrowFunctionExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -4753,7 +4771,7 @@ export class ArrowFunctionExpression {
 const DebugArrowFunctionExpression = class ArrowFunctionExpression {};
 
 export class YieldExpression {
-  type = 'YieldExpression';
+  type = "YieldExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -4789,7 +4807,7 @@ export class YieldExpression {
 
   toJSON() {
     return {
-      type: 'YieldExpression',
+      type: "YieldExpression",
       start: this.start,
       end: this.end,
       delegate: this.delegate,
@@ -4909,16 +4927,16 @@ const DebugClass = class Class {};
 function constructClassType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'ClassDeclaration';
+      return "ClassDeclaration";
     case 1:
-      return 'ClassExpression';
+      return "ClassExpression";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassType`);
   }
 }
 
 export class ClassBody {
-  type = 'ClassBody';
+  type = "ClassBody";
   #internal;
 
   constructor(pos, ast) {
@@ -4951,7 +4969,7 @@ export class ClassBody {
 
   toJSON() {
     return {
-      type: 'ClassBody',
+      type: "ClassBody",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -5085,9 +5103,9 @@ const DebugMethodDefinition = class MethodDefinition {};
 function constructMethodDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'MethodDefinition';
+      return "MethodDefinition";
     case 1:
-      return 'TSAbstractMethodDefinition';
+      return "TSAbstractMethodDefinition";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for MethodDefinitionType`);
   }
@@ -5214,9 +5232,9 @@ const DebugPropertyDefinition = class PropertyDefinition {};
 function constructPropertyDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'PropertyDefinition';
+      return "PropertyDefinition";
     case 1:
-      return 'TSAbstractPropertyDefinition';
+      return "TSAbstractPropertyDefinition";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyDefinitionType`);
   }
@@ -5225,20 +5243,20 @@ function constructPropertyDefinitionType(pos, ast) {
 function constructMethodDefinitionKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'constructor';
+      return "constructor";
     case 1:
-      return 'method';
+      return "method";
     case 2:
-      return 'get';
+      return "get";
     case 3:
-      return 'set';
+      return "set";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for MethodDefinitionKind`);
   }
 }
 
 export class PrivateIdentifier {
-  type = 'PrivateIdentifier';
+  type = "PrivateIdentifier";
   #internal;
 
   constructor(pos, ast) {
@@ -5271,7 +5289,7 @@ export class PrivateIdentifier {
 
   toJSON() {
     return {
-      type: 'PrivateIdentifier',
+      type: "PrivateIdentifier",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -5286,7 +5304,7 @@ export class PrivateIdentifier {
 const DebugPrivateIdentifier = class PrivateIdentifier {};
 
 export class StaticBlock {
-  type = 'StaticBlock';
+  type = "StaticBlock";
   #internal;
 
   constructor(pos, ast) {
@@ -5319,7 +5337,7 @@ export class StaticBlock {
 
   toJSON() {
     return {
-      type: 'StaticBlock',
+      type: "StaticBlock",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -5355,9 +5373,9 @@ function constructModuleDeclaration(pos, ast) {
 function constructAccessorPropertyType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'AccessorProperty';
+      return "AccessorProperty";
     case 1:
-      return 'TSAbstractAccessorProperty';
+      return "TSAbstractAccessorProperty";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AccessorPropertyType`);
   }
@@ -5464,7 +5482,7 @@ export class AccessorProperty {
 const DebugAccessorProperty = class AccessorProperty {};
 
 export class ImportExpression {
-  type = 'ImportExpression';
+  type = "ImportExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -5505,7 +5523,7 @@ export class ImportExpression {
 
   toJSON() {
     return {
-      type: 'ImportExpression',
+      type: "ImportExpression",
       start: this.start,
       end: this.end,
       source: this.source,
@@ -5522,7 +5540,7 @@ export class ImportExpression {
 const DebugImportExpression = class ImportExpression {};
 
 export class ImportDeclaration {
-  type = 'ImportDeclaration';
+  type = "ImportDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -5550,7 +5568,10 @@ export class ImportDeclaration {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return (internal.$specifiers = constructOptionVecImportDeclarationSpecifier(internal.pos + 8, internal.ast));
+    return (internal.$specifiers = constructOptionVecImportDeclarationSpecifier(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   get source() {
@@ -5575,7 +5596,7 @@ export class ImportDeclaration {
 
   toJSON() {
     return {
-      type: 'ImportDeclaration',
+      type: "ImportDeclaration",
       start: this.start,
       end: this.end,
       specifiers: this.specifiers,
@@ -5596,9 +5617,9 @@ const DebugImportDeclaration = class ImportDeclaration {};
 function constructImportPhase(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'source';
+      return "source";
     case 1:
-      return 'defer';
+      return "defer";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportPhase`);
   }
@@ -5618,7 +5639,7 @@ function constructImportDeclarationSpecifier(pos, ast) {
 }
 
 export class ImportSpecifier {
-  type = 'ImportSpecifier';
+  type = "ImportSpecifier";
   #internal;
 
   constructor(pos, ast) {
@@ -5659,7 +5680,7 @@ export class ImportSpecifier {
 
   toJSON() {
     return {
-      type: 'ImportSpecifier',
+      type: "ImportSpecifier",
       start: this.start,
       end: this.end,
       imported: this.imported,
@@ -5676,7 +5697,7 @@ export class ImportSpecifier {
 const DebugImportSpecifier = class ImportSpecifier {};
 
 export class ImportDefaultSpecifier {
-  type = 'ImportDefaultSpecifier';
+  type = "ImportDefaultSpecifier";
   #internal;
 
   constructor(pos, ast) {
@@ -5707,7 +5728,7 @@ export class ImportDefaultSpecifier {
 
   toJSON() {
     return {
-      type: 'ImportDefaultSpecifier',
+      type: "ImportDefaultSpecifier",
       start: this.start,
       end: this.end,
       local: this.local,
@@ -5722,7 +5743,7 @@ export class ImportDefaultSpecifier {
 const DebugImportDefaultSpecifier = class ImportDefaultSpecifier {};
 
 export class ImportNamespaceSpecifier {
-  type = 'ImportNamespaceSpecifier';
+  type = "ImportNamespaceSpecifier";
   #internal;
 
   constructor(pos, ast) {
@@ -5753,7 +5774,7 @@ export class ImportNamespaceSpecifier {
 
   toJSON() {
     return {
-      type: 'ImportNamespaceSpecifier',
+      type: "ImportNamespaceSpecifier",
       start: this.start,
       end: this.end,
       local: this.local,
@@ -5802,7 +5823,7 @@ export class WithClause {
 const DebugWithClause = class WithClause {};
 
 export class ImportAttribute {
-  type = 'ImportAttribute';
+  type = "ImportAttribute";
   #internal;
 
   constructor(pos, ast) {
@@ -5838,7 +5859,7 @@ export class ImportAttribute {
 
   toJSON() {
     return {
-      type: 'ImportAttribute',
+      type: "ImportAttribute",
       start: this.start,
       end: this.end,
       key: this.key,
@@ -5865,7 +5886,7 @@ function constructImportAttributeKey(pos, ast) {
 }
 
 export class ExportNamedDeclaration {
-  type = 'ExportNamedDeclaration';
+  type = "ExportNamedDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -5918,7 +5939,7 @@ export class ExportNamedDeclaration {
 
   toJSON() {
     return {
-      type: 'ExportNamedDeclaration',
+      type: "ExportNamedDeclaration",
       start: this.start,
       end: this.end,
       declaration: this.declaration,
@@ -5937,7 +5958,7 @@ export class ExportNamedDeclaration {
 const DebugExportNamedDeclaration = class ExportNamedDeclaration {};
 
 export class ExportDefaultDeclaration {
-  type = 'ExportDefaultDeclaration';
+  type = "ExportDefaultDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -5968,7 +5989,7 @@ export class ExportDefaultDeclaration {
 
   toJSON() {
     return {
-      type: 'ExportDefaultDeclaration',
+      type: "ExportDefaultDeclaration",
       start: this.start,
       end: this.end,
       declaration: this.declaration,
@@ -5983,7 +6004,7 @@ export class ExportDefaultDeclaration {
 const DebugExportDefaultDeclaration = class ExportDefaultDeclaration {};
 
 export class ExportAllDeclaration {
-  type = 'ExportAllDeclaration';
+  type = "ExportAllDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -6029,7 +6050,7 @@ export class ExportAllDeclaration {
 
   toJSON() {
     return {
-      type: 'ExportAllDeclaration',
+      type: "ExportAllDeclaration",
       start: this.start,
       end: this.end,
       exported: this.exported,
@@ -6047,7 +6068,7 @@ export class ExportAllDeclaration {
 const DebugExportAllDeclaration = class ExportAllDeclaration {};
 
 export class ExportSpecifier {
-  type = 'ExportSpecifier';
+  type = "ExportSpecifier";
   #internal;
 
   constructor(pos, ast) {
@@ -6088,7 +6109,7 @@ export class ExportSpecifier {
 
   toJSON() {
     return {
-      type: 'ExportSpecifier',
+      type: "ExportSpecifier",
       start: this.start,
       end: this.end,
       local: this.local,
@@ -6199,7 +6220,9 @@ function constructExportDefaultDeclarationKind(pos, ast) {
     case 66:
       return constructBoxTSInterfaceDeclaration(pos + 8, ast);
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`,
+      );
   }
 }
 
@@ -6217,7 +6240,7 @@ function constructModuleExportName(pos, ast) {
 }
 
 export class V8IntrinsicExpression {
-  type = 'V8IntrinsicExpression';
+  type = "V8IntrinsicExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -6255,7 +6278,7 @@ export class V8IntrinsicExpression {
 
   toJSON() {
     return {
-      type: 'V8IntrinsicExpression',
+      type: "V8IntrinsicExpression",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -6271,7 +6294,7 @@ export class V8IntrinsicExpression {
 const DebugV8IntrinsicExpression = class V8IntrinsicExpression {};
 
 export class BooleanLiteral {
-  type = 'BooleanLiteral';
+  type = "BooleanLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6302,7 +6325,7 @@ export class BooleanLiteral {
 
   toJSON() {
     return {
-      type: 'BooleanLiteral',
+      type: "BooleanLiteral",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -6317,7 +6340,7 @@ export class BooleanLiteral {
 const DebugBooleanLiteral = class BooleanLiteral {};
 
 export class NullLiteral {
-  type = 'NullLiteral';
+  type = "NullLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6343,7 +6366,7 @@ export class NullLiteral {
 
   toJSON() {
     return {
-      type: 'NullLiteral',
+      type: "NullLiteral",
       start: this.start,
       end: this.end,
     };
@@ -6357,7 +6380,7 @@ export class NullLiteral {
 const DebugNullLiteral = class NullLiteral {};
 
 export class NumericLiteral {
-  type = 'NumericLiteral';
+  type = "NumericLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6395,7 +6418,7 @@ export class NumericLiteral {
 
   toJSON() {
     return {
-      type: 'NumericLiteral',
+      type: "NumericLiteral",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -6411,7 +6434,7 @@ export class NumericLiteral {
 const DebugNumericLiteral = class NumericLiteral {};
 
 export class StringLiteral {
-  type = 'StringLiteral';
+  type = "StringLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6451,7 +6474,7 @@ export class StringLiteral {
 
   toJSON() {
     return {
-      type: 'StringLiteral',
+      type: "StringLiteral",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -6467,7 +6490,7 @@ export class StringLiteral {
 const DebugStringLiteral = class StringLiteral {};
 
 export class BigIntLiteral {
-  type = 'BigIntLiteral';
+  type = "BigIntLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6507,7 +6530,7 @@ export class BigIntLiteral {
 
   toJSON() {
     return {
-      type: 'BigIntLiteral',
+      type: "BigIntLiteral",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -6523,7 +6546,7 @@ export class BigIntLiteral {
 const DebugBigIntLiteral = class BigIntLiteral {};
 
 export class RegExpLiteral {
-  type = 'RegExpLiteral';
+  type = "RegExpLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -6561,7 +6584,7 @@ export class RegExpLiteral {
 
   toJSON() {
     return {
-      type: 'RegExpLiteral',
+      type: "RegExpLiteral",
       start: this.start,
       end: this.end,
       regex: this.regex,
@@ -6675,7 +6698,7 @@ export class RegExpFlags {
 const DebugRegExpFlags = class RegExpFlags {};
 
 export class JSXElement {
-  type = 'JSXElement';
+  type = "JSXElement";
   #internal;
 
   constructor(pos, ast) {
@@ -6718,7 +6741,7 @@ export class JSXElement {
 
   toJSON() {
     return {
-      type: 'JSXElement',
+      type: "JSXElement",
       start: this.start,
       end: this.end,
       openingElement: this.openingElement,
@@ -6735,7 +6758,7 @@ export class JSXElement {
 const DebugJSXElement = class JSXElement {};
 
 export class JSXOpeningElement {
-  type = 'JSXOpeningElement';
+  type = "JSXOpeningElement";
   #internal;
 
   constructor(pos, ast) {
@@ -6778,7 +6801,7 @@ export class JSXOpeningElement {
 
   toJSON() {
     return {
-      type: 'JSXOpeningElement',
+      type: "JSXOpeningElement",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -6795,7 +6818,7 @@ export class JSXOpeningElement {
 const DebugJSXOpeningElement = class JSXOpeningElement {};
 
 export class JSXClosingElement {
-  type = 'JSXClosingElement';
+  type = "JSXClosingElement";
   #internal;
 
   constructor(pos, ast) {
@@ -6826,7 +6849,7 @@ export class JSXClosingElement {
 
   toJSON() {
     return {
-      type: 'JSXClosingElement',
+      type: "JSXClosingElement",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -6841,7 +6864,7 @@ export class JSXClosingElement {
 const DebugJSXClosingElement = class JSXClosingElement {};
 
 export class JSXFragment {
-  type = 'JSXFragment';
+  type = "JSXFragment";
   #internal;
 
   constructor(pos, ast) {
@@ -6884,7 +6907,7 @@ export class JSXFragment {
 
   toJSON() {
     return {
-      type: 'JSXFragment',
+      type: "JSXFragment",
       start: this.start,
       end: this.end,
       openingFragment: this.openingFragment,
@@ -6901,7 +6924,7 @@ export class JSXFragment {
 const DebugJSXFragment = class JSXFragment {};
 
 export class JSXOpeningFragment {
-  type = 'JSXOpeningFragment';
+  type = "JSXOpeningFragment";
   #internal;
 
   constructor(pos, ast) {
@@ -6927,7 +6950,7 @@ export class JSXOpeningFragment {
 
   toJSON() {
     return {
-      type: 'JSXOpeningFragment',
+      type: "JSXOpeningFragment",
       start: this.start,
       end: this.end,
     };
@@ -6941,7 +6964,7 @@ export class JSXOpeningFragment {
 const DebugJSXOpeningFragment = class JSXOpeningFragment {};
 
 export class JSXClosingFragment {
-  type = 'JSXClosingFragment';
+  type = "JSXClosingFragment";
   #internal;
 
   constructor(pos, ast) {
@@ -6967,7 +6990,7 @@ export class JSXClosingFragment {
 
   toJSON() {
     return {
-      type: 'JSXClosingFragment',
+      type: "JSXClosingFragment",
       start: this.start,
       end: this.end,
     };
@@ -6998,7 +7021,7 @@ function constructJSXElementName(pos, ast) {
 }
 
 export class JSXNamespacedName {
-  type = 'JSXNamespacedName';
+  type = "JSXNamespacedName";
   #internal;
 
   constructor(pos, ast) {
@@ -7034,7 +7057,7 @@ export class JSXNamespacedName {
 
   toJSON() {
     return {
-      type: 'JSXNamespacedName',
+      type: "JSXNamespacedName",
       start: this.start,
       end: this.end,
       namespace: this.namespace,
@@ -7050,7 +7073,7 @@ export class JSXNamespacedName {
 const DebugJSXNamespacedName = class JSXNamespacedName {};
 
 export class JSXMemberExpression {
-  type = 'JSXMemberExpression';
+  type = "JSXMemberExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -7086,7 +7109,7 @@ export class JSXMemberExpression {
 
   toJSON() {
     return {
-      type: 'JSXMemberExpression',
+      type: "JSXMemberExpression",
       start: this.start,
       end: this.end,
       object: this.object,
@@ -7115,7 +7138,7 @@ function constructJSXMemberExpressionObject(pos, ast) {
 }
 
 export class JSXExpressionContainer {
-  type = 'JSXExpressionContainer';
+  type = "JSXExpressionContainer";
   #internal;
 
   constructor(pos, ast) {
@@ -7146,7 +7169,7 @@ export class JSXExpressionContainer {
 
   toJSON() {
     return {
-      type: 'JSXExpressionContainer',
+      type: "JSXExpressionContainer",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -7256,7 +7279,7 @@ function constructJSXExpression(pos, ast) {
 }
 
 export class JSXEmptyExpression {
-  type = 'JSXEmptyExpression';
+  type = "JSXEmptyExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -7282,7 +7305,7 @@ export class JSXEmptyExpression {
 
   toJSON() {
     return {
-      type: 'JSXEmptyExpression',
+      type: "JSXEmptyExpression",
       start: this.start,
       end: this.end,
     };
@@ -7307,7 +7330,7 @@ function constructJSXAttributeItem(pos, ast) {
 }
 
 export class JSXAttribute {
-  type = 'JSXAttribute';
+  type = "JSXAttribute";
   #internal;
 
   constructor(pos, ast) {
@@ -7343,7 +7366,7 @@ export class JSXAttribute {
 
   toJSON() {
     return {
-      type: 'JSXAttribute',
+      type: "JSXAttribute",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -7359,7 +7382,7 @@ export class JSXAttribute {
 const DebugJSXAttribute = class JSXAttribute {};
 
 export class JSXSpreadAttribute {
-  type = 'JSXSpreadAttribute';
+  type = "JSXSpreadAttribute";
   #internal;
 
   constructor(pos, ast) {
@@ -7390,7 +7413,7 @@ export class JSXSpreadAttribute {
 
   toJSON() {
     return {
-      type: 'JSXSpreadAttribute',
+      type: "JSXSpreadAttribute",
       start: this.start,
       end: this.end,
       argument: this.argument,
@@ -7431,7 +7454,7 @@ function constructJSXAttributeValue(pos, ast) {
 }
 
 export class JSXIdentifier {
-  type = 'JSXIdentifier';
+  type = "JSXIdentifier";
   #internal;
 
   constructor(pos, ast) {
@@ -7464,7 +7487,7 @@ export class JSXIdentifier {
 
   toJSON() {
     return {
-      type: 'JSXIdentifier',
+      type: "JSXIdentifier",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -7496,7 +7519,7 @@ function constructJSXChild(pos, ast) {
 }
 
 export class JSXSpreadChild {
-  type = 'JSXSpreadChild';
+  type = "JSXSpreadChild";
   #internal;
 
   constructor(pos, ast) {
@@ -7527,7 +7550,7 @@ export class JSXSpreadChild {
 
   toJSON() {
     return {
-      type: 'JSXSpreadChild',
+      type: "JSXSpreadChild",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -7542,7 +7565,7 @@ export class JSXSpreadChild {
 const DebugJSXSpreadChild = class JSXSpreadChild {};
 
 export class JSXText {
-  type = 'JSXText';
+  type = "JSXText";
   #internal;
 
   constructor(pos, ast) {
@@ -7582,7 +7605,7 @@ export class JSXText {
 
   toJSON() {
     return {
-      type: 'JSXText',
+      type: "JSXText",
       start: this.start,
       end: this.end,
       value: this.value,
@@ -7598,7 +7621,7 @@ export class JSXText {
 const DebugJSXText = class JSXText {};
 
 export class TSThisParameter {
-  type = 'TSThisParameter';
+  type = "TSThisParameter";
   #internal;
 
   constructor(pos, ast) {
@@ -7629,7 +7652,7 @@ export class TSThisParameter {
 
   toJSON() {
     return {
-      type: 'TSThisParameter',
+      type: "TSThisParameter",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -7644,7 +7667,7 @@ export class TSThisParameter {
 const DebugTSThisParameter = class TSThisParameter {};
 
 export class TSEnumDeclaration {
-  type = 'TSEnumDeclaration';
+  type = "TSEnumDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -7690,7 +7713,7 @@ export class TSEnumDeclaration {
 
   toJSON() {
     return {
-      type: 'TSEnumDeclaration',
+      type: "TSEnumDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -7708,7 +7731,7 @@ export class TSEnumDeclaration {
 const DebugTSEnumDeclaration = class TSEnumDeclaration {};
 
 export class TSEnumBody {
-  type = 'TSEnumBody';
+  type = "TSEnumBody";
   #internal;
 
   constructor(pos, ast) {
@@ -7741,7 +7764,7 @@ export class TSEnumBody {
 
   toJSON() {
     return {
-      type: 'TSEnumBody',
+      type: "TSEnumBody",
       start: this.start,
       end: this.end,
       members: this.members,
@@ -7756,7 +7779,7 @@ export class TSEnumBody {
 const DebugTSEnumBody = class TSEnumBody {};
 
 export class TSEnumMember {
-  type = 'TSEnumMember';
+  type = "TSEnumMember";
   #internal;
 
   constructor(pos, ast) {
@@ -7792,7 +7815,7 @@ export class TSEnumMember {
 
   toJSON() {
     return {
-      type: 'TSEnumMember',
+      type: "TSEnumMember",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -7823,7 +7846,7 @@ function constructTSEnumMemberName(pos, ast) {
 }
 
 export class TSTypeAnnotation {
-  type = 'TSTypeAnnotation';
+  type = "TSTypeAnnotation";
   #internal;
 
   constructor(pos, ast) {
@@ -7854,7 +7877,7 @@ export class TSTypeAnnotation {
 
   toJSON() {
     return {
-      type: 'TSTypeAnnotation',
+      type: "TSTypeAnnotation",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -7869,7 +7892,7 @@ export class TSTypeAnnotation {
 const DebugTSTypeAnnotation = class TSTypeAnnotation {};
 
 export class TSLiteralType {
-  type = 'TSLiteralType';
+  type = "TSLiteralType";
   #internal;
 
   constructor(pos, ast) {
@@ -7900,7 +7923,7 @@ export class TSLiteralType {
 
   toJSON() {
     return {
-      type: 'TSLiteralType',
+      type: "TSLiteralType",
       start: this.start,
       end: this.end,
       literal: this.literal,
@@ -8015,7 +8038,7 @@ function constructTSType(pos, ast) {
 }
 
 export class TSConditionalType {
-  type = 'TSConditionalType';
+  type = "TSConditionalType";
   #internal;
 
   constructor(pos, ast) {
@@ -8061,7 +8084,7 @@ export class TSConditionalType {
 
   toJSON() {
     return {
-      type: 'TSConditionalType',
+      type: "TSConditionalType",
       start: this.start,
       end: this.end,
       checkType: this.checkType,
@@ -8079,7 +8102,7 @@ export class TSConditionalType {
 const DebugTSConditionalType = class TSConditionalType {};
 
 export class TSUnionType {
-  type = 'TSUnionType';
+  type = "TSUnionType";
   #internal;
 
   constructor(pos, ast) {
@@ -8112,7 +8135,7 @@ export class TSUnionType {
 
   toJSON() {
     return {
-      type: 'TSUnionType',
+      type: "TSUnionType",
       start: this.start,
       end: this.end,
       types: this.types,
@@ -8127,7 +8150,7 @@ export class TSUnionType {
 const DebugTSUnionType = class TSUnionType {};
 
 export class TSIntersectionType {
-  type = 'TSIntersectionType';
+  type = "TSIntersectionType";
   #internal;
 
   constructor(pos, ast) {
@@ -8160,7 +8183,7 @@ export class TSIntersectionType {
 
   toJSON() {
     return {
-      type: 'TSIntersectionType',
+      type: "TSIntersectionType",
       start: this.start,
       end: this.end,
       types: this.types,
@@ -8175,7 +8198,7 @@ export class TSIntersectionType {
 const DebugTSIntersectionType = class TSIntersectionType {};
 
 export class TSParenthesizedType {
-  type = 'TSParenthesizedType';
+  type = "TSParenthesizedType";
   #internal;
 
   constructor(pos, ast) {
@@ -8206,7 +8229,7 @@ export class TSParenthesizedType {
 
   toJSON() {
     return {
-      type: 'TSParenthesizedType',
+      type: "TSParenthesizedType",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -8221,7 +8244,7 @@ export class TSParenthesizedType {
 const DebugTSParenthesizedType = class TSParenthesizedType {};
 
 export class TSTypeOperator {
-  type = 'TSTypeOperator';
+  type = "TSTypeOperator";
   #internal;
 
   constructor(pos, ast) {
@@ -8257,7 +8280,7 @@ export class TSTypeOperator {
 
   toJSON() {
     return {
-      type: 'TSTypeOperator',
+      type: "TSTypeOperator",
       start: this.start,
       end: this.end,
       operator: this.operator,
@@ -8275,18 +8298,18 @@ const DebugTSTypeOperator = class TSTypeOperator {};
 function constructTSTypeOperatorOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'keyof';
+      return "keyof";
     case 1:
-      return 'unique';
+      return "unique";
     case 2:
-      return 'readonly';
+      return "readonly";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeOperatorOperator`);
   }
 }
 
 export class TSArrayType {
-  type = 'TSArrayType';
+  type = "TSArrayType";
   #internal;
 
   constructor(pos, ast) {
@@ -8317,7 +8340,7 @@ export class TSArrayType {
 
   toJSON() {
     return {
-      type: 'TSArrayType',
+      type: "TSArrayType",
       start: this.start,
       end: this.end,
       elementType: this.elementType,
@@ -8332,7 +8355,7 @@ export class TSArrayType {
 const DebugTSArrayType = class TSArrayType {};
 
 export class TSIndexedAccessType {
-  type = 'TSIndexedAccessType';
+  type = "TSIndexedAccessType";
   #internal;
 
   constructor(pos, ast) {
@@ -8368,7 +8391,7 @@ export class TSIndexedAccessType {
 
   toJSON() {
     return {
-      type: 'TSIndexedAccessType',
+      type: "TSIndexedAccessType",
       start: this.start,
       end: this.end,
       objectType: this.objectType,
@@ -8384,7 +8407,7 @@ export class TSIndexedAccessType {
 const DebugTSIndexedAccessType = class TSIndexedAccessType {};
 
 export class TSTupleType {
-  type = 'TSTupleType';
+  type = "TSTupleType";
   #internal;
 
   constructor(pos, ast) {
@@ -8417,7 +8440,7 @@ export class TSTupleType {
 
   toJSON() {
     return {
-      type: 'TSTupleType',
+      type: "TSTupleType",
       start: this.start,
       end: this.end,
       elementTypes: this.elementTypes,
@@ -8432,7 +8455,7 @@ export class TSTupleType {
 const DebugTSTupleType = class TSTupleType {};
 
 export class TSNamedTupleMember {
-  type = 'TSNamedTupleMember';
+  type = "TSNamedTupleMember";
   #internal;
 
   constructor(pos, ast) {
@@ -8473,7 +8496,7 @@ export class TSNamedTupleMember {
 
   toJSON() {
     return {
-      type: 'TSNamedTupleMember',
+      type: "TSNamedTupleMember",
       start: this.start,
       end: this.end,
       label: this.label,
@@ -8490,7 +8513,7 @@ export class TSNamedTupleMember {
 const DebugTSNamedTupleMember = class TSNamedTupleMember {};
 
 export class TSOptionalType {
-  type = 'TSOptionalType';
+  type = "TSOptionalType";
   #internal;
 
   constructor(pos, ast) {
@@ -8521,7 +8544,7 @@ export class TSOptionalType {
 
   toJSON() {
     return {
-      type: 'TSOptionalType',
+      type: "TSOptionalType",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -8536,7 +8559,7 @@ export class TSOptionalType {
 const DebugTSOptionalType = class TSOptionalType {};
 
 export class TSRestType {
-  type = 'TSRestType';
+  type = "TSRestType";
   #internal;
 
   constructor(pos, ast) {
@@ -8567,7 +8590,7 @@ export class TSRestType {
 
   toJSON() {
     return {
-      type: 'TSRestType',
+      type: "TSRestType",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -8667,7 +8690,7 @@ function constructTSTupleElement(pos, ast) {
 }
 
 export class TSAnyKeyword {
-  type = 'TSAnyKeyword';
+  type = "TSAnyKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8693,7 +8716,7 @@ export class TSAnyKeyword {
 
   toJSON() {
     return {
-      type: 'TSAnyKeyword',
+      type: "TSAnyKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8707,7 +8730,7 @@ export class TSAnyKeyword {
 const DebugTSAnyKeyword = class TSAnyKeyword {};
 
 export class TSStringKeyword {
-  type = 'TSStringKeyword';
+  type = "TSStringKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8733,7 +8756,7 @@ export class TSStringKeyword {
 
   toJSON() {
     return {
-      type: 'TSStringKeyword',
+      type: "TSStringKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8747,7 +8770,7 @@ export class TSStringKeyword {
 const DebugTSStringKeyword = class TSStringKeyword {};
 
 export class TSBooleanKeyword {
-  type = 'TSBooleanKeyword';
+  type = "TSBooleanKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8773,7 +8796,7 @@ export class TSBooleanKeyword {
 
   toJSON() {
     return {
-      type: 'TSBooleanKeyword',
+      type: "TSBooleanKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8787,7 +8810,7 @@ export class TSBooleanKeyword {
 const DebugTSBooleanKeyword = class TSBooleanKeyword {};
 
 export class TSNumberKeyword {
-  type = 'TSNumberKeyword';
+  type = "TSNumberKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8813,7 +8836,7 @@ export class TSNumberKeyword {
 
   toJSON() {
     return {
-      type: 'TSNumberKeyword',
+      type: "TSNumberKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8827,7 +8850,7 @@ export class TSNumberKeyword {
 const DebugTSNumberKeyword = class TSNumberKeyword {};
 
 export class TSNeverKeyword {
-  type = 'TSNeverKeyword';
+  type = "TSNeverKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8853,7 +8876,7 @@ export class TSNeverKeyword {
 
   toJSON() {
     return {
-      type: 'TSNeverKeyword',
+      type: "TSNeverKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8867,7 +8890,7 @@ export class TSNeverKeyword {
 const DebugTSNeverKeyword = class TSNeverKeyword {};
 
 export class TSIntrinsicKeyword {
-  type = 'TSIntrinsicKeyword';
+  type = "TSIntrinsicKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8893,7 +8916,7 @@ export class TSIntrinsicKeyword {
 
   toJSON() {
     return {
-      type: 'TSIntrinsicKeyword',
+      type: "TSIntrinsicKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8907,7 +8930,7 @@ export class TSIntrinsicKeyword {
 const DebugTSIntrinsicKeyword = class TSIntrinsicKeyword {};
 
 export class TSUnknownKeyword {
-  type = 'TSUnknownKeyword';
+  type = "TSUnknownKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8933,7 +8956,7 @@ export class TSUnknownKeyword {
 
   toJSON() {
     return {
-      type: 'TSUnknownKeyword',
+      type: "TSUnknownKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8947,7 +8970,7 @@ export class TSUnknownKeyword {
 const DebugTSUnknownKeyword = class TSUnknownKeyword {};
 
 export class TSNullKeyword {
-  type = 'TSNullKeyword';
+  type = "TSNullKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -8973,7 +8996,7 @@ export class TSNullKeyword {
 
   toJSON() {
     return {
-      type: 'TSNullKeyword',
+      type: "TSNullKeyword",
       start: this.start,
       end: this.end,
     };
@@ -8987,7 +9010,7 @@ export class TSNullKeyword {
 const DebugTSNullKeyword = class TSNullKeyword {};
 
 export class TSUndefinedKeyword {
-  type = 'TSUndefinedKeyword';
+  type = "TSUndefinedKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -9013,7 +9036,7 @@ export class TSUndefinedKeyword {
 
   toJSON() {
     return {
-      type: 'TSUndefinedKeyword',
+      type: "TSUndefinedKeyword",
       start: this.start,
       end: this.end,
     };
@@ -9027,7 +9050,7 @@ export class TSUndefinedKeyword {
 const DebugTSUndefinedKeyword = class TSUndefinedKeyword {};
 
 export class TSVoidKeyword {
-  type = 'TSVoidKeyword';
+  type = "TSVoidKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -9053,7 +9076,7 @@ export class TSVoidKeyword {
 
   toJSON() {
     return {
-      type: 'TSVoidKeyword',
+      type: "TSVoidKeyword",
       start: this.start,
       end: this.end,
     };
@@ -9067,7 +9090,7 @@ export class TSVoidKeyword {
 const DebugTSVoidKeyword = class TSVoidKeyword {};
 
 export class TSSymbolKeyword {
-  type = 'TSSymbolKeyword';
+  type = "TSSymbolKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -9093,7 +9116,7 @@ export class TSSymbolKeyword {
 
   toJSON() {
     return {
-      type: 'TSSymbolKeyword',
+      type: "TSSymbolKeyword",
       start: this.start,
       end: this.end,
     };
@@ -9107,7 +9130,7 @@ export class TSSymbolKeyword {
 const DebugTSSymbolKeyword = class TSSymbolKeyword {};
 
 export class TSThisType {
-  type = 'TSThisType';
+  type = "TSThisType";
   #internal;
 
   constructor(pos, ast) {
@@ -9133,7 +9156,7 @@ export class TSThisType {
 
   toJSON() {
     return {
-      type: 'TSThisType',
+      type: "TSThisType",
       start: this.start,
       end: this.end,
     };
@@ -9147,7 +9170,7 @@ export class TSThisType {
 const DebugTSThisType = class TSThisType {};
 
 export class TSObjectKeyword {
-  type = 'TSObjectKeyword';
+  type = "TSObjectKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -9173,7 +9196,7 @@ export class TSObjectKeyword {
 
   toJSON() {
     return {
-      type: 'TSObjectKeyword',
+      type: "TSObjectKeyword",
       start: this.start,
       end: this.end,
     };
@@ -9187,7 +9210,7 @@ export class TSObjectKeyword {
 const DebugTSObjectKeyword = class TSObjectKeyword {};
 
 export class TSBigIntKeyword {
-  type = 'TSBigIntKeyword';
+  type = "TSBigIntKeyword";
   #internal;
 
   constructor(pos, ast) {
@@ -9213,7 +9236,7 @@ export class TSBigIntKeyword {
 
   toJSON() {
     return {
-      type: 'TSBigIntKeyword',
+      type: "TSBigIntKeyword",
       start: this.start,
       end: this.end,
     };
@@ -9227,7 +9250,7 @@ export class TSBigIntKeyword {
 const DebugTSBigIntKeyword = class TSBigIntKeyword {};
 
 export class TSTypeReference {
-  type = 'TSTypeReference';
+  type = "TSTypeReference";
   #internal;
 
   constructor(pos, ast) {
@@ -9263,7 +9286,7 @@ export class TSTypeReference {
 
   toJSON() {
     return {
-      type: 'TSTypeReference',
+      type: "TSTypeReference",
       start: this.start,
       end: this.end,
       typeName: this.typeName,
@@ -9292,7 +9315,7 @@ function constructTSTypeName(pos, ast) {
 }
 
 export class TSQualifiedName {
-  type = 'TSQualifiedName';
+  type = "TSQualifiedName";
   #internal;
 
   constructor(pos, ast) {
@@ -9328,7 +9351,7 @@ export class TSQualifiedName {
 
   toJSON() {
     return {
-      type: 'TSQualifiedName',
+      type: "TSQualifiedName",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -9344,7 +9367,7 @@ export class TSQualifiedName {
 const DebugTSQualifiedName = class TSQualifiedName {};
 
 export class TSTypeParameterInstantiation {
-  type = 'TSTypeParameterInstantiation';
+  type = "TSTypeParameterInstantiation";
   #internal;
 
   constructor(pos, ast) {
@@ -9377,7 +9400,7 @@ export class TSTypeParameterInstantiation {
 
   toJSON() {
     return {
-      type: 'TSTypeParameterInstantiation',
+      type: "TSTypeParameterInstantiation",
       start: this.start,
       end: this.end,
       params: this.params,
@@ -9392,7 +9415,7 @@ export class TSTypeParameterInstantiation {
 const DebugTSTypeParameterInstantiation = class TSTypeParameterInstantiation {};
 
 export class TSTypeParameter {
-  type = 'TSTypeParameter';
+  type = "TSTypeParameter";
   #internal;
 
   constructor(pos, ast) {
@@ -9448,7 +9471,7 @@ export class TSTypeParameter {
 
   toJSON() {
     return {
-      type: 'TSTypeParameter',
+      type: "TSTypeParameter",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -9468,7 +9491,7 @@ export class TSTypeParameter {
 const DebugTSTypeParameter = class TSTypeParameter {};
 
 export class TSTypeParameterDeclaration {
-  type = 'TSTypeParameterDeclaration';
+  type = "TSTypeParameterDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -9501,7 +9524,7 @@ export class TSTypeParameterDeclaration {
 
   toJSON() {
     return {
-      type: 'TSTypeParameterDeclaration',
+      type: "TSTypeParameterDeclaration",
       start: this.start,
       end: this.end,
       params: this.params,
@@ -9516,7 +9539,7 @@ export class TSTypeParameterDeclaration {
 const DebugTSTypeParameterDeclaration = class TSTypeParameterDeclaration {};
 
 export class TSTypeAliasDeclaration {
-  type = 'TSTypeAliasDeclaration';
+  type = "TSTypeAliasDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -9562,7 +9585,7 @@ export class TSTypeAliasDeclaration {
 
   toJSON() {
     return {
-      type: 'TSTypeAliasDeclaration',
+      type: "TSTypeAliasDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -9582,18 +9605,18 @@ const DebugTSTypeAliasDeclaration = class TSTypeAliasDeclaration {};
 function constructTSAccessibility(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'private';
+      return "private";
     case 1:
-      return 'protected';
+      return "protected";
     case 2:
-      return 'public';
+      return "public";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSAccessibility`);
   }
 }
 
 export class TSClassImplements {
-  type = 'TSClassImplements';
+  type = "TSClassImplements";
   #internal;
 
   constructor(pos, ast) {
@@ -9629,7 +9652,7 @@ export class TSClassImplements {
 
   toJSON() {
     return {
-      type: 'TSClassImplements',
+      type: "TSClassImplements",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -9645,7 +9668,7 @@ export class TSClassImplements {
 const DebugTSClassImplements = class TSClassImplements {};
 
 export class TSInterfaceDeclaration {
-  type = 'TSInterfaceDeclaration';
+  type = "TSInterfaceDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -9698,7 +9721,7 @@ export class TSInterfaceDeclaration {
 
   toJSON() {
     return {
-      type: 'TSInterfaceDeclaration',
+      type: "TSInterfaceDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -9717,7 +9740,7 @@ export class TSInterfaceDeclaration {
 const DebugTSInterfaceDeclaration = class TSInterfaceDeclaration {};
 
 export class TSInterfaceBody {
-  type = 'TSInterfaceBody';
+  type = "TSInterfaceBody";
   #internal;
 
   constructor(pos, ast) {
@@ -9750,7 +9773,7 @@ export class TSInterfaceBody {
 
   toJSON() {
     return {
-      type: 'TSInterfaceBody',
+      type: "TSInterfaceBody",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -9765,7 +9788,7 @@ export class TSInterfaceBody {
 const DebugTSInterfaceBody = class TSInterfaceBody {};
 
 export class TSPropertySignature {
-  type = 'TSPropertySignature';
+  type = "TSPropertySignature";
   #internal;
 
   constructor(pos, ast) {
@@ -9816,7 +9839,7 @@ export class TSPropertySignature {
 
   toJSON() {
     return {
-      type: 'TSPropertySignature',
+      type: "TSPropertySignature",
       start: this.start,
       end: this.end,
       computed: this.computed,
@@ -9852,7 +9875,7 @@ function constructTSSignature(pos, ast) {
 }
 
 export class TSIndexSignature {
-  type = 'TSIndexSignature';
+  type = "TSIndexSignature";
   #internal;
 
   constructor(pos, ast) {
@@ -9880,7 +9903,10 @@ export class TSIndexSignature {
     const internal = this.#internal,
       cached = internal.$parameters;
     if (cached !== void 0) return cached;
-    return (internal.$parameters = constructVecTSIndexSignatureName(internal.pos + 8, internal.ast));
+    return (internal.$parameters = constructVecTSIndexSignatureName(
+      internal.pos + 8,
+      internal.ast,
+    ));
   }
 
   get typeAnnotation() {
@@ -9900,7 +9926,7 @@ export class TSIndexSignature {
 
   toJSON() {
     return {
-      type: 'TSIndexSignature',
+      type: "TSIndexSignature",
       start: this.start,
       end: this.end,
       parameters: this.parameters,
@@ -9918,7 +9944,7 @@ export class TSIndexSignature {
 const DebugTSIndexSignature = class TSIndexSignature {};
 
 export class TSCallSignatureDeclaration {
-  type = 'TSCallSignatureDeclaration';
+  type = "TSCallSignatureDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -9959,7 +9985,7 @@ export class TSCallSignatureDeclaration {
 
   toJSON() {
     return {
-      type: 'TSCallSignatureDeclaration',
+      type: "TSCallSignatureDeclaration",
       start: this.start,
       end: this.end,
       typeParameters: this.typeParameters,
@@ -9978,18 +10004,18 @@ const DebugTSCallSignatureDeclaration = class TSCallSignatureDeclaration {};
 function constructTSMethodSignatureKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'method';
+      return "method";
     case 1:
-      return 'get';
+      return "get";
     case 2:
-      return 'set';
+      return "set";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSMethodSignatureKind`);
   }
 }
 
 export class TSMethodSignature {
-  type = 'TSMethodSignature';
+  type = "TSMethodSignature";
   #internal;
 
   constructor(pos, ast) {
@@ -10050,7 +10076,7 @@ export class TSMethodSignature {
 
   toJSON() {
     return {
-      type: 'TSMethodSignature',
+      type: "TSMethodSignature",
       start: this.start,
       end: this.end,
       key: this.key,
@@ -10071,7 +10097,7 @@ export class TSMethodSignature {
 const DebugTSMethodSignature = class TSMethodSignature {};
 
 export class TSConstructSignatureDeclaration {
-  type = 'TSConstructSignatureDeclaration';
+  type = "TSConstructSignatureDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -10112,7 +10138,7 @@ export class TSConstructSignatureDeclaration {
 
   toJSON() {
     return {
-      type: 'TSConstructSignatureDeclaration',
+      type: "TSConstructSignatureDeclaration",
       start: this.start,
       end: this.end,
       typeParameters: this.typeParameters,
@@ -10129,7 +10155,7 @@ export class TSConstructSignatureDeclaration {
 const DebugTSConstructSignatureDeclaration = class TSConstructSignatureDeclaration {};
 
 export class TSIndexSignatureName {
-  type = 'TSIndexSignatureName';
+  type = "TSIndexSignatureName";
   #internal;
 
   constructor(pos, ast) {
@@ -10167,7 +10193,7 @@ export class TSIndexSignatureName {
 
   toJSON() {
     return {
-      type: 'TSIndexSignatureName',
+      type: "TSIndexSignatureName",
       start: this.start,
       end: this.end,
       name: this.name,
@@ -10183,7 +10209,7 @@ export class TSIndexSignatureName {
 const DebugTSIndexSignatureName = class TSIndexSignatureName {};
 
 export class TSInterfaceHeritage {
-  type = 'TSInterfaceHeritage';
+  type = "TSInterfaceHeritage";
   #internal;
 
   constructor(pos, ast) {
@@ -10219,7 +10245,7 @@ export class TSInterfaceHeritage {
 
   toJSON() {
     return {
-      type: 'TSInterfaceHeritage',
+      type: "TSInterfaceHeritage",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -10235,7 +10261,7 @@ export class TSInterfaceHeritage {
 const DebugTSInterfaceHeritage = class TSInterfaceHeritage {};
 
 export class TSTypePredicate {
-  type = 'TSTypePredicate';
+  type = "TSTypePredicate";
   #internal;
 
   constructor(pos, ast) {
@@ -10276,7 +10302,7 @@ export class TSTypePredicate {
 
   toJSON() {
     return {
-      type: 'TSTypePredicate',
+      type: "TSTypePredicate",
       start: this.start,
       end: this.end,
       parameterName: this.parameterName,
@@ -10304,7 +10330,7 @@ function constructTSTypePredicateName(pos, ast) {
 }
 
 export class TSModuleDeclaration {
-  type = 'TSModuleDeclaration';
+  type = "TSModuleDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -10350,7 +10376,7 @@ export class TSModuleDeclaration {
 
   toJSON() {
     return {
-      type: 'TSModuleDeclaration',
+      type: "TSModuleDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -10370,11 +10396,9 @@ const DebugTSModuleDeclaration = class TSModuleDeclaration {};
 function constructTSModuleDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'global';
+      return "module";
     case 1:
-      return 'module';
-    case 2:
-      return 'namespace';
+      return "namespace";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationKind`);
   }
@@ -10402,8 +10426,60 @@ function constructTSModuleDeclarationBody(pos, ast) {
   }
 }
 
+export class TSGlobalDeclaration {
+  type = "TSGlobalDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get body() {
+    const internal = this.#internal;
+    return new TSModuleBlock(internal.pos + 16, internal.ast);
+  }
+
+  get declare() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 76, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "TSGlobalDeclaration",
+      start: this.start,
+      end: this.end,
+      body: this.body,
+      declare: this.declare,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSGlobalDeclaration.prototype);
+  }
+}
+
+const DebugTSGlobalDeclaration = class TSGlobalDeclaration {};
+
 export class TSModuleBlock {
-  type = 'TSModuleBlock';
+  type = "TSModuleBlock";
   #internal;
 
   constructor(pos, ast) {
@@ -10436,7 +10512,7 @@ export class TSModuleBlock {
 
   toJSON() {
     return {
-      type: 'TSModuleBlock',
+      type: "TSModuleBlock",
       start: this.start,
       end: this.end,
       body: this.body,
@@ -10451,7 +10527,7 @@ export class TSModuleBlock {
 const DebugTSModuleBlock = class TSModuleBlock {};
 
 export class TSTypeLiteral {
-  type = 'TSTypeLiteral';
+  type = "TSTypeLiteral";
   #internal;
 
   constructor(pos, ast) {
@@ -10484,7 +10560,7 @@ export class TSTypeLiteral {
 
   toJSON() {
     return {
-      type: 'TSTypeLiteral',
+      type: "TSTypeLiteral",
       start: this.start,
       end: this.end,
       members: this.members,
@@ -10499,7 +10575,7 @@ export class TSTypeLiteral {
 const DebugTSTypeLiteral = class TSTypeLiteral {};
 
 export class TSInferType {
-  type = 'TSInferType';
+  type = "TSInferType";
   #internal;
 
   constructor(pos, ast) {
@@ -10530,7 +10606,7 @@ export class TSInferType {
 
   toJSON() {
     return {
-      type: 'TSInferType',
+      type: "TSInferType",
       start: this.start,
       end: this.end,
       typeParameter: this.typeParameter,
@@ -10545,7 +10621,7 @@ export class TSInferType {
 const DebugTSInferType = class TSInferType {};
 
 export class TSTypeQuery {
-  type = 'TSTypeQuery';
+  type = "TSTypeQuery";
   #internal;
 
   constructor(pos, ast) {
@@ -10581,7 +10657,7 @@ export class TSTypeQuery {
 
   toJSON() {
     return {
-      type: 'TSTypeQuery',
+      type: "TSTypeQuery",
       start: this.start,
       end: this.end,
       exprName: this.exprName,
@@ -10612,7 +10688,7 @@ function constructTSTypeQueryExprName(pos, ast) {
 }
 
 export class TSImportType {
-  type = 'TSImportType';
+  type = "TSImportType";
   #internal;
 
   constructor(pos, ast) {
@@ -10636,32 +10712,32 @@ export class TSImportType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get argument() {
+  get source() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 8, internal.ast);
+    return new StringLiteral(internal.pos + 8, internal.ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return constructOptionBoxObjectExpression(internal.pos + 24, internal.ast);
+    return constructOptionBoxObjectExpression(internal.pos + 56, internal.ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSImportTypeQualifier(internal.pos + 32, internal.ast);
+    return constructOptionTSImportTypeQualifier(internal.pos + 64, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
     return {
-      type: 'TSImportType',
+      type: "TSImportType",
       start: this.start,
       end: this.end,
-      argument: this.argument,
+      source: this.source,
       options: this.options,
       qualifier: this.qualifier,
       typeArguments: this.typeArguments,
@@ -10687,7 +10763,7 @@ function constructTSImportTypeQualifier(pos, ast) {
 }
 
 export class TSImportTypeQualifiedName {
-  type = 'TSImportTypeQualifiedName';
+  type = "TSImportTypeQualifiedName";
   #internal;
 
   constructor(pos, ast) {
@@ -10723,7 +10799,7 @@ export class TSImportTypeQualifiedName {
 
   toJSON() {
     return {
-      type: 'TSImportTypeQualifiedName',
+      type: "TSImportTypeQualifiedName",
       start: this.start,
       end: this.end,
       left: this.left,
@@ -10739,7 +10815,7 @@ export class TSImportTypeQualifiedName {
 const DebugTSImportTypeQualifiedName = class TSImportTypeQualifiedName {};
 
 export class TSFunctionType {
-  type = 'TSFunctionType';
+  type = "TSFunctionType";
   #internal;
 
   constructor(pos, ast) {
@@ -10780,7 +10856,7 @@ export class TSFunctionType {
 
   toJSON() {
     return {
-      type: 'TSFunctionType',
+      type: "TSFunctionType",
       start: this.start,
       end: this.end,
       typeParameters: this.typeParameters,
@@ -10797,7 +10873,7 @@ export class TSFunctionType {
 const DebugTSFunctionType = class TSFunctionType {};
 
 export class TSConstructorType {
-  type = 'TSConstructorType';
+  type = "TSConstructorType";
   #internal;
 
   constructor(pos, ast) {
@@ -10843,7 +10919,7 @@ export class TSConstructorType {
 
   toJSON() {
     return {
-      type: 'TSConstructorType',
+      type: "TSConstructorType",
       start: this.start,
       end: this.end,
       abstract: this.abstract,
@@ -10861,7 +10937,7 @@ export class TSConstructorType {
 const DebugTSConstructorType = class TSConstructorType {};
 
 export class TSMappedType {
-  type = 'TSMappedType';
+  type = "TSMappedType";
   #internal;
 
   constructor(pos, ast) {
@@ -10907,7 +10983,7 @@ export class TSMappedType {
 
   toJSON() {
     return {
-      type: 'TSMappedType',
+      type: "TSMappedType",
       start: this.start,
       end: this.end,
       nameType: this.nameType,
@@ -10927,18 +11003,20 @@ const DebugTSMappedType = class TSMappedType {};
 function constructTSMappedTypeModifierOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'true';
+      return "true";
     case 1:
-      return '+';
+      return "+";
     case 2:
-      return '-';
+      return "-";
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSMappedTypeModifierOperator`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for TSMappedTypeModifierOperator`,
+      );
   }
 }
 
 export class TSTemplateLiteralType {
-  type = 'TSTemplateLiteralType';
+  type = "TSTemplateLiteralType";
   #internal;
 
   constructor(pos, ast) {
@@ -10978,7 +11056,7 @@ export class TSTemplateLiteralType {
 
   toJSON() {
     return {
-      type: 'TSTemplateLiteralType',
+      type: "TSTemplateLiteralType",
       start: this.start,
       end: this.end,
       quasis: this.quasis,
@@ -10994,7 +11072,7 @@ export class TSTemplateLiteralType {
 const DebugTSTemplateLiteralType = class TSTemplateLiteralType {};
 
 export class TSAsExpression {
-  type = 'TSAsExpression';
+  type = "TSAsExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -11030,7 +11108,7 @@ export class TSAsExpression {
 
   toJSON() {
     return {
-      type: 'TSAsExpression',
+      type: "TSAsExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11046,7 +11124,7 @@ export class TSAsExpression {
 const DebugTSAsExpression = class TSAsExpression {};
 
 export class TSSatisfiesExpression {
-  type = 'TSSatisfiesExpression';
+  type = "TSSatisfiesExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -11082,7 +11160,7 @@ export class TSSatisfiesExpression {
 
   toJSON() {
     return {
-      type: 'TSSatisfiesExpression',
+      type: "TSSatisfiesExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11098,7 +11176,7 @@ export class TSSatisfiesExpression {
 const DebugTSSatisfiesExpression = class TSSatisfiesExpression {};
 
 export class TSTypeAssertion {
-  type = 'TSTypeAssertion';
+  type = "TSTypeAssertion";
   #internal;
 
   constructor(pos, ast) {
@@ -11134,7 +11212,7 @@ export class TSTypeAssertion {
 
   toJSON() {
     return {
-      type: 'TSTypeAssertion',
+      type: "TSTypeAssertion",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -11150,7 +11228,7 @@ export class TSTypeAssertion {
 const DebugTSTypeAssertion = class TSTypeAssertion {};
 
 export class TSImportEqualsDeclaration {
-  type = 'TSImportEqualsDeclaration';
+  type = "TSImportEqualsDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -11191,7 +11269,7 @@ export class TSImportEqualsDeclaration {
 
   toJSON() {
     return {
-      type: 'TSImportEqualsDeclaration',
+      type: "TSImportEqualsDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -11223,7 +11301,7 @@ function constructTSModuleReference(pos, ast) {
 }
 
 export class TSExternalModuleReference {
-  type = 'TSExternalModuleReference';
+  type = "TSExternalModuleReference";
   #internal;
 
   constructor(pos, ast) {
@@ -11254,7 +11332,7 @@ export class TSExternalModuleReference {
 
   toJSON() {
     return {
-      type: 'TSExternalModuleReference',
+      type: "TSExternalModuleReference",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11269,7 +11347,7 @@ export class TSExternalModuleReference {
 const DebugTSExternalModuleReference = class TSExternalModuleReference {};
 
 export class TSNonNullExpression {
-  type = 'TSNonNullExpression';
+  type = "TSNonNullExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -11300,7 +11378,7 @@ export class TSNonNullExpression {
 
   toJSON() {
     return {
-      type: 'TSNonNullExpression',
+      type: "TSNonNullExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11315,7 +11393,7 @@ export class TSNonNullExpression {
 const DebugTSNonNullExpression = class TSNonNullExpression {};
 
 export class Decorator {
-  type = 'Decorator';
+  type = "Decorator";
   #internal;
 
   constructor(pos, ast) {
@@ -11346,7 +11424,7 @@ export class Decorator {
 
   toJSON() {
     return {
-      type: 'Decorator',
+      type: "Decorator",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11361,7 +11439,7 @@ export class Decorator {
 const DebugDecorator = class Decorator {};
 
 export class TSExportAssignment {
-  type = 'TSExportAssignment';
+  type = "TSExportAssignment";
   #internal;
 
   constructor(pos, ast) {
@@ -11392,7 +11470,7 @@ export class TSExportAssignment {
 
   toJSON() {
     return {
-      type: 'TSExportAssignment',
+      type: "TSExportAssignment",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11407,7 +11485,7 @@ export class TSExportAssignment {
 const DebugTSExportAssignment = class TSExportAssignment {};
 
 export class TSNamespaceExportDeclaration {
-  type = 'TSNamespaceExportDeclaration';
+  type = "TSNamespaceExportDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -11438,7 +11516,7 @@ export class TSNamespaceExportDeclaration {
 
   toJSON() {
     return {
-      type: 'TSNamespaceExportDeclaration',
+      type: "TSNamespaceExportDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -11453,7 +11531,7 @@ export class TSNamespaceExportDeclaration {
 const DebugTSNamespaceExportDeclaration = class TSNamespaceExportDeclaration {};
 
 export class TSInstantiationExpression {
-  type = 'TSInstantiationExpression';
+  type = "TSInstantiationExpression";
   #internal;
 
   constructor(pos, ast) {
@@ -11489,7 +11567,7 @@ export class TSInstantiationExpression {
 
   toJSON() {
     return {
-      type: 'TSInstantiationExpression',
+      type: "TSInstantiationExpression",
       start: this.start,
       end: this.end,
       expression: this.expression,
@@ -11507,16 +11585,16 @@ const DebugTSInstantiationExpression = class TSInstantiationExpression {};
 function constructImportOrExportKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'value';
+      return "value";
     case 1:
-      return 'type';
+      return "type";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportOrExportKind`);
   }
 }
 
 export class JSDocNullableType {
-  type = 'JSDocNullableType';
+  type = "JSDocNullableType";
   #internal;
 
   constructor(pos, ast) {
@@ -11552,7 +11630,7 @@ export class JSDocNullableType {
 
   toJSON() {
     return {
-      type: 'JSDocNullableType',
+      type: "JSDocNullableType",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -11568,7 +11646,7 @@ export class JSDocNullableType {
 const DebugJSDocNullableType = class JSDocNullableType {};
 
 export class JSDocNonNullableType {
-  type = 'JSDocNonNullableType';
+  type = "JSDocNonNullableType";
   #internal;
 
   constructor(pos, ast) {
@@ -11604,7 +11682,7 @@ export class JSDocNonNullableType {
 
   toJSON() {
     return {
-      type: 'JSDocNonNullableType',
+      type: "JSDocNonNullableType",
       start: this.start,
       end: this.end,
       typeAnnotation: this.typeAnnotation,
@@ -11620,7 +11698,7 @@ export class JSDocNonNullableType {
 const DebugJSDocNonNullableType = class JSDocNonNullableType {};
 
 export class JSDocUnknownType {
-  type = 'JSDocUnknownType';
+  type = "JSDocUnknownType";
   #internal;
 
   constructor(pos, ast) {
@@ -11646,7 +11724,7 @@ export class JSDocUnknownType {
 
   toJSON() {
     return {
-      type: 'JSDocUnknownType',
+      type: "JSDocUnknownType",
       start: this.start,
       end: this.end,
     };
@@ -11662,9 +11740,11 @@ const DebugJSDocUnknownType = class JSDocUnknownType {};
 function constructCommentKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'Line';
+      return "Line";
     case 1:
-      return 'Block';
+      return "Block";
+    case 2:
+      return "Block";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for CommentKind`);
   }
@@ -11809,7 +11889,7 @@ function constructImportImportName(pos, ast) {
     case 0:
       return new NameSpan(pos + 8, ast);
     case 1:
-      return 'namespaceObject';
+      return "namespaceObject";
     case 2:
       return new Span(pos + 8, ast);
     default:
@@ -11890,11 +11970,11 @@ function constructExportImportName(pos, ast) {
     case 0:
       return new NameSpan(pos + 8, ast);
     case 1:
-      return 'all';
+      return "all";
     case 2:
-      return 'allButDefault';
+      return "allButDefault";
     case 3:
-      return 'null';
+      return "null";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportImportName`);
   }
@@ -11907,7 +11987,7 @@ function constructExportExportName(pos, ast) {
     case 1:
       return new Span(pos + 8, ast);
     case 2:
-      return 'null';
+      return "null";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportExportName`);
   }
@@ -11920,7 +12000,7 @@ function constructExportLocalName(pos, ast) {
     case 1:
       return new NameSpan(pos + 8, ast);
     case 2:
-      return 'null';
+      return "null";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportLocalName`);
   }
@@ -11973,37 +12053,37 @@ const DebugDynamicImport = class DynamicImport {};
 function constructAssignmentOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return '=';
+      return "=";
     case 1:
-      return '+=';
+      return "+=";
     case 2:
-      return '-=';
+      return "-=";
     case 3:
-      return '*=';
+      return "*=";
     case 4:
-      return '/=';
+      return "/=";
     case 5:
-      return '%=';
+      return "%=";
     case 6:
-      return '**=';
+      return "**=";
     case 7:
-      return '<<=';
+      return "<<=";
     case 8:
-      return '>>=';
+      return ">>=";
     case 9:
-      return '>>>=';
+      return ">>>=";
     case 10:
-      return '|=';
+      return "|=";
     case 11:
-      return '^=';
+      return "^=";
     case 12:
-      return '&=';
+      return "&=";
     case 13:
-      return '||=';
+      return "||=";
     case 14:
-      return '&&=';
+      return "&&=";
     case 15:
-      return '??=';
+      return "??=";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentOperator`);
   }
@@ -12012,49 +12092,49 @@ function constructAssignmentOperator(pos, ast) {
 function constructBinaryOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return '==';
+      return "==";
     case 1:
-      return '!=';
+      return "!=";
     case 2:
-      return '===';
+      return "===";
     case 3:
-      return '!==';
+      return "!==";
     case 4:
-      return '<';
+      return "<";
     case 5:
-      return '<=';
+      return "<=";
     case 6:
-      return '>';
+      return ">";
     case 7:
-      return '>=';
+      return ">=";
     case 8:
-      return '+';
+      return "+";
     case 9:
-      return '-';
+      return "-";
     case 10:
-      return '*';
+      return "*";
     case 11:
-      return '/';
+      return "/";
     case 12:
-      return '%';
+      return "%";
     case 13:
-      return '**';
+      return "**";
     case 14:
-      return '<<';
+      return "<<";
     case 15:
-      return '>>';
+      return ">>";
     case 16:
-      return '>>>';
+      return ">>>";
     case 17:
-      return '|';
+      return "|";
     case 18:
-      return '^';
+      return "^";
     case 19:
-      return '&';
+      return "&";
     case 20:
-      return 'in';
+      return "in";
     case 21:
-      return 'instanceof';
+      return "instanceof";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BinaryOperator`);
   }
@@ -12063,11 +12143,11 @@ function constructBinaryOperator(pos, ast) {
 function constructLogicalOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return '||';
+      return "||";
     case 1:
-      return '&&';
+      return "&&";
     case 2:
-      return '??';
+      return "??";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for LogicalOperator`);
   }
@@ -12076,19 +12156,19 @@ function constructLogicalOperator(pos, ast) {
 function constructUnaryOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return '+';
+      return "+";
     case 1:
-      return '-';
+      return "-";
     case 2:
-      return '!';
+      return "!";
     case 3:
-      return '~';
+      return "~";
     case 4:
-      return 'typeof';
+      return "typeof";
     case 5:
-      return 'void';
+      return "void";
     case 6:
-      return 'delete';
+      return "delete";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for UnaryOperator`);
   }
@@ -12097,9 +12177,9 @@ function constructUnaryOperator(pos, ast) {
 function constructUpdateOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return '++';
+      return "++";
     case 1:
-      return '--';
+      return "--";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for UpdateOperator`);
   }
@@ -12178,9 +12258,9 @@ const DebugSourceType = class SourceType {};
 function constructModuleKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'script';
+      return "script";
     case 1:
-      return 'module';
+      return "module";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleKind`);
   }
@@ -12251,7 +12331,14 @@ export class Error {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $message: void 0, $labels: void 0, $helpMessage: void 0, $codeframe: void 0 };
+    this.#internal = {
+      pos,
+      ast,
+      $message: void 0,
+      $labels: void 0,
+      $helpMessage: void 0,
+      $codeframe: void 0,
+    };
     nodes.set(pos, this);
   }
 
@@ -12308,11 +12395,11 @@ const DebugError = class Error {};
 function constructErrorSeverity(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return 'Error';
+      return "Error";
     case 1:
-      return 'Warning';
+      return "Warning";
     case 2:
-      return 'Advice';
+      return "Advice";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ErrorSeverity`);
   }
@@ -12546,7 +12633,7 @@ function constructStr(pos, ast) {
     { buffer } = ast,
     { uint32 } = buffer,
     len = uint32[pos32 + 2];
-  if (len === 0) return '';
+  if (len === 0) return "";
 
   pos = uint32[pos32];
   if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
@@ -12557,7 +12644,7 @@ function constructStr(pos, ast) {
   if (len > 50) return decodeStr(buffer.subarray(pos, end));
 
   // Shorter strings decode by hand to avoid native call
-  let out = '',
+  let out = "",
     c;
   do {
     c = buffer[pos++];
@@ -12583,7 +12670,8 @@ function constructComment(pos, ast) {
 }
 
 function constructOptionHashbang(pos, ast) {
-  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
+    return null;
   return new Hashbang(pos, ast);
 }
 
@@ -12859,7 +12947,13 @@ function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
 function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructOptionAssignmentTargetMaybeDefault, ast);
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructOptionAssignmentTargetMaybeDefault,
+    ast,
+  );
 }
 
 function constructBoxAssignmentTargetRest(pos, ast) {
@@ -12874,7 +12968,13 @@ function constructOptionBoxAssignmentTargetRest(pos, ast) {
 function constructVecAssignmentTargetProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructAssignmentTargetProperty, ast);
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructAssignmentTargetProperty,
+    ast,
+  );
 }
 
 function constructBoxAssignmentTargetWithDefault(pos, ast) {
@@ -12986,6 +13086,10 @@ function constructBoxTSModuleDeclaration(pos, ast) {
   return new TSModuleDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
+function constructBoxTSGlobalDeclaration(pos, ast) {
+  return new TSGlobalDeclaration(ast.buffer.uint32[pos >> 2], ast);
+}
+
 function constructBoxTSImportEqualsDeclaration(pos, ast) {
   return new TSImportEqualsDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
@@ -13011,7 +13115,8 @@ function constructOptionForStatementInit(pos, ast) {
 }
 
 function constructOptionLabelIdentifier(pos, ast) {
-  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
+    return null;
   return new LabelIdentifier(pos, ast);
 }
 
@@ -13100,7 +13205,8 @@ function constructVecOptionBindingPattern(pos, ast) {
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
-  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
+    return null;
   return new BindingIdentifier(pos, ast);
 }
 
@@ -13232,7 +13338,13 @@ function constructOptionImportPhase(pos, ast) {
 function constructVecImportDeclarationSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructImportDeclarationSpecifier, ast);
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructImportDeclarationSpecifier,
+    ast,
+  );
 }
 
 function constructOptionVecImportDeclarationSpecifier(pos, ast) {
@@ -13648,7 +13760,8 @@ function constructU64(pos, ast) {
 }
 
 function constructOptionNameSpan(pos, ast) {
-  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
+    return null;
   return new NameSpan(pos, ast);
 }
 

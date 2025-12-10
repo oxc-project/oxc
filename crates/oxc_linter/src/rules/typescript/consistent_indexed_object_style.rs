@@ -6,37 +6,42 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
-fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("A {a} is preferred over an {b}."))
-        .with_help(format!("A {a} is preferred over an {b}."))
-        .with_label(span)
+fn consistent_indexed_object_style_diagnostic(
+    preferred: ConsistentIndexedObjectStyleConfig,
+    span: Span,
+) -> OxcDiagnostic {
+    let (warning_message, help_message) = match preferred {
+        ConsistentIndexedObjectStyleConfig::Record => (
+            "A record is preferred over an index signature.",
+            "Use a record type such as `Record<string, unknown>` instead of an index signature.",
+        ),
+        ConsistentIndexedObjectStyleConfig::IndexSignature => (
+            "An index signature is preferred over a record.",
+            "Use an index signature such as `{ [key: string]: unknown }` instead of a record type.",
+        ),
+    };
+
+    OxcDiagnostic::warn(warning_message).with_help(help_message).with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentIndexedObjectStyle {
-    /// When set to `true`, enforces the use of `Record` type for indexed object types.
-    /// When set to `false`, enforces the use of indexed signature types.
-    is_record_mode: bool,
-}
+#[derive(Debug, Clone, Default)]
+pub struct ConsistentIndexedObjectStyle(ConsistentIndexedObjectStyleConfig);
 
-impl Default for ConsistentIndexedObjectStyle {
-    fn default() -> Self {
-        Self { is_record_mode: true }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum ConsistentIndexedObjectStyleConfig {
+    /// When set to `record`, enforces the use of a `Record` for indexed object types, e.g. `Record<string, unknown>`.
     #[default]
     Record,
+    /// When set to `index-signature`, enforces the use of indexed signature types, e.g. `{ [key: string]: unknown }`.
     IndexSignature,
 }
 
@@ -45,70 +50,76 @@ declare_oxc_lint!(
     ///
     /// Choose between requiring either `Record` type or indexed signature types.
     ///
+    /// These two types are equivalent, this rule enforces consistency in picking one style over the other:
+    ///
+    /// ```ts
+    /// type Foo = Record<string, unknown>;
+    ///
+    /// type Foo = {
+    ///   [key: string]: unknown;
+    /// }
+    /// ```
+    ///
     /// ### Why is this bad?
     ///
     /// Inconsistent style for indexed object types can harm readability in a project.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the default "record":
-    /// ```ts
-    /// /*eslint consistent-indexed-object-style: ["error", "record"]*/
+    /// Examples of **incorrect** code for this rule with
+    /// `consistent-indexed-object-style: ["error", "record"]` (default):
     ///
+    /// ```ts
     /// interface Foo {
-    ///  [key: string]: unknown;
+    ///   [key: string]: unknown;
     /// }
     /// type Foo = {
-    ///  [key: string]: unknown;
+    ///   [key: string]: unknown;
     /// };
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule with
+    /// `consistent-indexed-object-style: ["error", "record"]` (default):
     /// ```ts
-    /// /*eslint consistent-indexed-object-style: ["error", "record"]*/
-    ///
     /// type Foo = Record<string, unknown>;
     /// ```
     ///
-    /// Examples of **incorrect** code for this rule with "index-signature":
+    /// Examples of **incorrect** code for this rule with
+    /// `consistent-indexed-object-style: ["error", "index-signature"]`:
     /// ```ts
-    /// /*eslint consistent-indexed-object-style: ["error", "index-signature"]*/
-    ///
     /// type Foo = Record<string, unknown>;
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule with
+    /// `consistent-indexed-object-style: ["error", "index-signature"]`:
     /// ```ts
-    /// /*eslint consistent-indexed-object-style: ["error", "index-signature"]*/
-    ///
     /// interface Foo {
-    ///  [key: string]: unknown;
+    ///   [key: string]: unknown;
     /// }
     /// type Foo = {
-    ///  [key: string]: unknown;
+    ///   [key: string]: unknown;
     /// };
     /// ```
     ConsistentIndexedObjectStyle,
     typescript,
     style,
     conditional_fix,
-    config = ConsistentIndexedObjectStyle,
+    config = ConsistentIndexedObjectStyleConfig,
 );
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            ConsistentIndexedObjectStyleConfig::default,
-            |value| match value {
-                "record" => ConsistentIndexedObjectStyleConfig::Record,
-                _ => ConsistentIndexedObjectStyleConfig::IndexSignature,
-            },
-        );
-        Self { is_record_mode: config == ConsistentIndexedObjectStyleConfig::Record }
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<ConsistentIndexedObjectStyleConfig>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if self.is_record_mode {
+        let preferred_style = self.0;
+
+        if self.0 == ConsistentIndexedObjectStyleConfig::Record {
             match node.kind() {
                 AstKind::TSInterfaceDeclaration(inf) => {
                     if inf.body.body.len() > 1 {
@@ -126,16 +137,14 @@ impl Rule for ConsistentIndexedObjectStyle {
                             TSTypeName::IdentifierReference(ide) => {
                                 if ide.name != inf.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record",
-                                        "index signature",
+                                        preferred_style,
                                         sig.span,
                                     ));
                                 }
                             }
                             TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record",
-                                    "index signature",
+                                    preferred_style,
                                     sig.span,
                                 ));
                             }
@@ -153,8 +162,7 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                                     if dec.id.name != ide.name {
                                         ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            "record",
-                                            "index signature",
+                                            preferred_style,
                                             sig.span,
                                         ));
                                     }
@@ -163,8 +171,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         }
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "record",
-                                "index signature",
+                                preferred_style,
                                 sig.span,
                             ));
                         }
@@ -190,16 +197,14 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                                 if ide.name != dec.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record",
-                                        "index signature",
+                                        preferred_style,
                                         sig.span,
                                     ));
                                 }
                             }
                             TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record",
-                                    "index signature",
+                                    preferred_style,
                                     sig.span,
                                 ));
                             }
@@ -217,8 +222,7 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                                     if dec.id.name != ide.name {
                                         ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            "record",
-                                            "index signature",
+                                            preferred_style,
                                             sig.span,
                                         ));
                                     }
@@ -227,8 +231,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         }
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "record",
-                                "index signature",
+                                preferred_style,
                                 sig.span,
                             ));
                         }
@@ -252,11 +255,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                 &tref.type_arguments.as_ref().and_then(|params| params.params.first())
             {
                 ctx.diagnostic_with_fix(
-                    consistent_indexed_object_style_diagnostic(
-                        "index signature",
-                        "record",
-                        tref.span,
-                    ),
+                    consistent_indexed_object_style_diagnostic(preferred_style, tref.span),
                     |fixer| {
                         let key = fixer.source_range(first.span);
                         let params_span = Span::new(first.span.end + 1, tref.span.end - 1);
@@ -267,8 +266,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                 );
             } else {
                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                    "index signature",
-                    "record",
+                    preferred_style,
                     tref.span,
                 ));
             }

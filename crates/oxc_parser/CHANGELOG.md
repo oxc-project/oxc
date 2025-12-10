@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- 7a2afee parser: Add TS1174 error for classes extending multiple base classes (#15993) (sapphi-red)
+
+## [0.101.0] - 2025-12-02
+
+### 🚀 Features
+
+- 165f59d parser: Report empty expression in JSX attribute error (#16378) (leaysgur)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+
+### 🚀 Features
+
+- 17a8caa parser: Add diagnostic for JSX identifiers with hyphens (#16133) (camchenry)
+- 0549ae5 parser: Add diagnostic for expected ident after optional chain (#16132) (camchenry)
+- db839ae parser: Improve diagnostic for unexpected optional declarations (#16131) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 1199cee parser: Reject invalid modifiers on parameter properties with binding patterns (#16083) (camc314)
+
+### ⚡ Performance
+
+- 82d784f lexer: Reduce bounds checks in `Lexer::get_string` (#16317) (overlookmotel)
+
+### 📚 Documentation
+
+- 891e0b4 parser: Add note about falling back to parse TSType in TSImportType (#16119) (camc314)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 622cb5e parser: Preserve legal comments with @preserve/@license when preceded by other annotations (#15929) (copilot-swe-agent)
+- d4ff004 parser: Forbid invalid modifiers on `module` and `global` (#15723) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 77efb76 parser: Improve error message for invalid switch clauses (#15728) (sapphi-red)
+- 5691727 parser: Improve `import source` `from` error message (#15727) (sapphi-red)
+- b7404bc parser: Improve error message for missing function body (#15726) (sapphi-red)
+- 71c2fb0 parser: Improve error message when JSX is found while not enabled (#15725) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- d60ca81 parser: Reject `import something 'source'` (#15746) (sapphi-red)
+
+### ⚡ Performance
+
+- 1f09d3c parser: Faster checking for invalid modifiers (#15717) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

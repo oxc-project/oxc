@@ -1,12 +1,12 @@
 use std::borrow::Cow;
 
-use oxc_span::{SourceType, Span};
-use oxc_syntax::identifier::is_identifier_name;
+use oxc_span::SourceType;
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     FormatOptions, QuoteProperties, QuoteStyle,
-    formatter::{Format, FormatResult, Formatter, prelude::*},
+    formatter::{Format, Formatter, prelude::*},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -28,8 +28,6 @@ pub struct FormatLiteralStringToken<'a> {
     /// The current string
     string: &'a str,
 
-    span: Span,
-
     jsx: bool,
 
     /// The parent that holds the token
@@ -37,13 +35,8 @@ pub struct FormatLiteralStringToken<'a> {
 }
 
 impl<'a> FormatLiteralStringToken<'a> {
-    pub fn new(
-        string: &'a str,
-        span: Span,
-        jsx: bool,
-        parent_kind: StringLiteralParentKind,
-    ) -> Self {
-        Self { string, span, jsx, parent_kind }
+    pub fn new(string: &'a str, jsx: bool, parent_kind: StringLiteralParentKind) -> Self {
+        Self { string, jsx, parent_kind }
     }
 
     pub fn clean_text(
@@ -55,21 +48,16 @@ impl<'a> FormatLiteralStringToken<'a> {
             if self.jsx { options.jsx_quote_style } else { options.quote_style };
         let chosen_quote_properties = options.quote_properties;
 
-        let mut string_cleaner =
+        let string_cleaner =
             LiteralStringNormalizer::new(*self, chosen_quote_style, chosen_quote_properties);
 
         let content = string_cleaner.normalize_text(source_type);
 
-        CleanedStringLiteralText { string: self.string, text: content }
-    }
-
-    fn raw_content(&self) -> &'a str {
-        &self.string[1..self.string.len() - 1]
+        CleanedStringLiteralText { text: content }
     }
 }
 
 pub struct CleanedStringLiteralText<'a> {
-    string: &'a str,
     text: Cow<'a, str>,
 }
 
@@ -80,8 +68,8 @@ impl CleanedStringLiteralText<'_> {
 }
 
 impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        text(f.context().allocator().alloc_str(&self.text)).fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        text(f.context().allocator().alloc_str(&self.text)).fmt(f);
     }
 }
 
@@ -195,7 +183,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         Self { token, chosen_quote_style, chosen_quote_properties }
     }
 
-    fn normalize_text(&mut self, source_type: SourceType) -> Cow<'a, str> {
+    fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
         let str_info = self.token.compute_string_information(self.chosen_quote_style);
         match self.token.parent_kind {
             StringLiteralParentKind::Expression => self.normalize_string_literal(str_info),
@@ -205,21 +193,18 @@ impl<'a> LiteralStringNormalizer<'a> {
         }
     }
 
-    fn normalize_import_attribute(
-        &mut self,
-        string_information: StringInformation,
-    ) -> Cow<'a, str> {
+    fn normalize_import_attribute(&self, string_information: StringInformation) -> Cow<'a, str> {
         let quoteless = self.raw_content();
         let can_remove_quotes =
-            !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
+            !self.is_preserve_quote_properties() && Self::is_identifier_name_patched(quoteless);
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
     }
 
-    fn normalize_directive(&mut self, string_information: StringInformation) -> Cow<'a, str> {
+    fn normalize_directive(&self, string_information: StringInformation) -> Cow<'a, str> {
         // In diretcives, unnecessary escapes should be preserved.
         // See https://github.com/prettier/prettier/issues/1555
         // Thus we don't normalize the string.
@@ -261,16 +246,16 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn normalize_type_member(
-        &mut self,
+        &self,
         string_information: StringInformation,
         source_type: SourceType,
     ) -> Cow<'a, str> {
         let quoteless = self.raw_content();
         let can_remove_quotes = !self.is_preserve_quote_properties()
             && (self.can_remove_number_quotes_by_file_type(source_type)
-                || is_identifier_name(quoteless));
+                || Self::is_identifier_name_patched(quoteless));
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalize_string_literal(string_information)
         }
@@ -312,11 +297,21 @@ impl<'a> LiteralStringNormalizer<'a> {
             Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
         }
     }
+
+    /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+    /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+    /// 15.
+    /// <https://github.com/oxc-project/unicode-id-start/pull/3>
+    fn is_identifier_name_patched(content: &str) -> bool {
+        let mut chars = content.chars();
+        chars.next().is_some_and(is_identifier_start)
+            && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
+    }
 }
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f.context().source_type(), f.options()).fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        self.clean_text(f.context().source_type(), f.options()).fmt(f);
     }
 }
 
@@ -324,7 +319,7 @@ impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
 ///
 /// - escaping `preferred_quote`
 /// - unescape alternate quotes of `preferred_quote` if `quotes_will_change`
-/// - normalize the new lines by replacing `\r\n` with `\n`.
+/// - normalize the new lines by replacing `\r\n` and `\r` with `\n`.
 ///
 /// The function allocates a new string only if at least one change is performed.
 ///
@@ -346,31 +341,44 @@ pub fn normalize_string(
     let preferred_quote = preferred_quote.as_byte();
     let mut reduced_string = String::new();
     let mut copy_start = 0;
-    let mut bytes = raw_content.bytes().enumerate();
+    let mut bytes = raw_content.bytes().enumerate().peekable();
     while let Some((byte_index, byte)) = bytes.next() {
         match byte {
             // If the next character is escaped
             b'\\' => {
-                if let Some((escaped_index, escaped)) = bytes.next() {
+                if let Some(&(escaped_index, escaped)) = bytes.peek() {
                     if escaped == b'\r' {
-                        // If we encounter the sequence "\r\n", then skip '\r'
-                        if let Some((next_byte_index, b'\n')) = bytes.next() {
-                            reduced_string.push_str(&raw_content[copy_start..escaped_index]);
-                            copy_start = next_byte_index;
+                        bytes.next(); // consume the \r
+                        // Copy up to (not including) the \r
+                        reduced_string.push_str(&raw_content[copy_start..escaped_index]);
+                        if bytes.next_if(|(_, b)| *b == b'\n').is_some() {
+                            // \\\r\n -> keep \\ and \n, skip \r
+                            // The \n will be included when we copy from copy_start
+                        } else {
+                            // \\\r -> convert \r to \n
+                            reduced_string.push('\n');
                         }
+                        copy_start = escaped_index + 1;
                     } else if quotes_will_change && escaped == alternate_quote {
+                        bytes.next(); // consume the escaped character
                         // Unescape alternate quotes if quotes are changing
                         reduced_string.push_str(&raw_content[copy_start..byte_index]);
                         copy_start = escaped_index;
+                    } else {
+                        bytes.next(); // consume the escaped character
                     }
                 }
             }
-            // If we encounter the sequence "\r\n", then skip '\r'
+            // Normalize \r\n and \r to \n
             b'\r' => {
-                if let Some((next_byte_index, b'\n')) = bytes.next() {
-                    reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                    copy_start = next_byte_index;
+                reduced_string.push_str(&raw_content[copy_start..byte_index]);
+                if bytes.next_if(|(_, b)| *b == b'\n').is_some() {
+                    // \r\n -> skip \r, the \n will be included when we copy from copy_start
+                } else {
+                    // Single \r -> convert to \n
+                    reduced_string.push('\n');
                 }
+                copy_start = byte_index + 1;
             }
             _ => {
                 // If we encounter a preferred quote and it's not escaped, we have to replace it with
@@ -400,9 +408,18 @@ mod tests {
 
     #[test]
     fn normalize_newline() {
+        // \n unchanged
         assert_eq!(normalize_string("a\nb", QuoteStyle::Double, true), "a\nb");
+        // \r\n -> \n
         assert_eq!(normalize_string("a\r\nb", QuoteStyle::Double, true), "a\nb");
+        // \r -> \n (single CR)
+        assert_eq!(normalize_string("a\rb", QuoteStyle::Double, true), "a\nb");
+        assert_eq!(normalize_string("a\r", QuoteStyle::Double, true), "a\n");
+        assert_eq!(normalize_string("\rb", QuoteStyle::Double, true), "\nb");
+        // escaped \r\n -> escaped \n
         assert_eq!(normalize_string("a\\\r\nb", QuoteStyle::Double, true), "a\\\nb");
+        // escaped \r -> escaped \n (single CR)
+        assert_eq!(normalize_string("a\\\rb", QuoteStyle::Double, true), "a\\\nb");
     }
 
     #[test]

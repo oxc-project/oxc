@@ -8,7 +8,7 @@ export interface Comment {
 }
 
 export interface ErrorLabel {
-  message?: string
+  message: string | null
   start: number
   end: number
 }
@@ -17,8 +17,8 @@ export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
+  helpMessage: string | null
+  codeframe: string | null
 }
 
 export declare const enum Severity {
@@ -97,8 +97,6 @@ export interface OxcFormatterOptions {
   objectWrap?: string
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
-  /** Operator position: "start" | "end" (default: "end") */
-  experimentalOperatorPosition?: string
   /** Sort imports configuration (default: None) */
   experimentalSortImports?: OxcSortImportsOptions
 }
@@ -170,6 +168,8 @@ export interface OxcSortImportsOptions {
   ignoreCase?: boolean
   /** Add newlines between import groups (default: true) */
   newlinesBetween?: boolean
+  /** Pattern prefixes for internal imports */
+  internalPattern?: Array<string>
   /** Custom groups of imports */
   groups?: Array<Array<string>>
 }

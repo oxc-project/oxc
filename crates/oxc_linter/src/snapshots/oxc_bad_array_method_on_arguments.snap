@@ -1,233 +1,284 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments['map'](() => {})}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'map()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments[`map`](() => {})}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'map()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.at(0)}
    ·                ────────────
    ╰────
-  help: The 'arguments' object does not have a 'at()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `at()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.concat([])}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'concat()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `concat()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.copyWithin(0)}
    ·                ────────────────────
    ╰────
-  help: The 'arguments' object does not have a 'copyWithin()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `copyWithin()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.entries()}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'entries()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `entries()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.every(() => {})}
    ·                ───────────────
    ╰────
-  help: The 'arguments' object does not have a 'every()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `every()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.fill(() => {})}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'fill()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `fill()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.filter(() => {})}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'filter()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `filter()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.find(() => {})}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'find()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `find()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.findIndex(() => {})}
    ·                ───────────────────
    ╰────
-  help: The 'arguments' object does not have a 'findIndex()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `findIndex()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.findLast(() => {})}
+   ·                ──────────────────
+   ╰────
+  help: The `arguments` object does not have a `findLast()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.findLastIndex(() => {})}
+   ·                ───────────────────────
+   ╰────
+  help: The `arguments` object does not have a `findLastIndex()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.flat(() => {})}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'flat()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `flat()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.flatMap(() => {})}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'flatMap()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `flatMap()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.forEach(() => {})}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'forEach()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `forEach()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.groupBy(() => {})}
+   ·                ─────────────────
+   ╰────
+  help: The `arguments` object does not have a `groupBy()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.includes(() => {})}
    ·                ──────────────────
    ╰────
-  help: The 'arguments' object does not have a 'includes()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `includes()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.indexOf(() => {})}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'indexOf()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `indexOf()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.join()}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'join()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `join()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.keys()}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'keys()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `keys()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.lastIndexOf('')}
    ·                ─────────────────────
    ╰────
-  help: The 'arguments' object does not have a 'lastIndexOf()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `lastIndexOf()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.map(() => {})}
    ·                ─────────────
    ╰────
-  help: The 'arguments' object does not have a 'map()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.pop()}
    ·                ─────────────
    ╰────
-  help: The 'arguments' object does not have a 'pop()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `pop()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.push('')}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'push()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `push()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.reduce(() => {})}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'reduce()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `reduce()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.reduceRight(() => {})}
    ·                ─────────────────────
    ╰────
-  help: The 'arguments' object does not have a 'reduceRight()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `reduceRight()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.reverse()}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'reverse()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `reverse()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.shift()}
    ·                ───────────────
    ╰────
-  help: The 'arguments' object does not have a 'shift()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `shift()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.slice()}
    ·                ───────────────
    ╰────
-  help: The 'arguments' object does not have a 'slice()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `slice()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.some(() => {})}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'some()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `some()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.sort(() => {})}
    ·                ──────────────
    ╰────
-  help: The 'arguments' object does not have a 'sort()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `sort()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.splice(() => {})}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'splice()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `splice()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.toReversed(() => {})}
+   ·                ────────────────────
+   ╰────
+  help: The `arguments` object does not have a `toReversed()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.toSorted(() => {})}
+   ·                ──────────────────
+   ╰────
+  help: The `arguments` object does not have a `toSorted()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:16]
+ 1 │ function fn() {arguments.toSpliced(0)}
+   ·                ───────────────────
+   ╰────
+  help: The `arguments` object does not have a `toSpliced()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.unshift()}
    ·                ─────────────────
    ╰────
-  help: The 'arguments' object does not have a 'unshift()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `unshift()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments.values()}
    ·                ────────────────
    ╰────
-  help: The 'arguments' object does not have a 'values()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `values()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
-  ⚠ oxc(bad-array-method-on-arguments): Bad array method on arguments
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments['@@iterator'](() => {})}
    ·                ───────────────────────
    ╰────
-  help: The 'arguments' object does not have a '@@iterator()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES2015 rest parameter instead.
+  help: The `arguments` object does not have a `@@iterator()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:2:30]
+ 1 │ const arr = [1, 2, 3, 4, 5];
+ 2 │              function fn() { arguments.with(2, 6) }
+   ·                              ──────────────
+ 3 │              fn(arr)
+   ╰────
+  help: The `arguments` object does not have a `with()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.

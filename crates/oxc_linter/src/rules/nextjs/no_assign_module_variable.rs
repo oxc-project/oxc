@@ -85,7 +85,7 @@ fn test() {
     let pass = vec![
         r"
 			      let myModule = {};
-			
+
 			      export default function MyComponent() {
 			        return <></>
 			      }
@@ -95,7 +95,7 @@ fn test() {
     let fail = vec![
         r"
 			      let module = {};
-			
+
 			      export default function MyComponent() {
 			        return <></>
 			      }
@@ -103,6 +103,5 @@ fn test() {
     ];
 
     Tester::new(NoAssignModuleVariable::NAME, NoAssignModuleVariable::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

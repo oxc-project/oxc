@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`external_formatter > should format json by default 1`] = `
+"--- FILE -----------
+foo.json
+--- BEFORE ---------
+{"x":1}
+
+--- AFTER ----------
+{ "x": 1 }
+
+--------------------
+
+--- FILE -----------
+package.json
+--- BEFORE ---------
+{
+  "name": "fixture",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm run build-napi-release && pnpm run build-js",
+
+    "build-napi-release": "pnpm run build-napi --release --features allocator",
+
+    "build-js": "node scripts/build.js",
+
+    "test": "tsc && vitest --dir test run"
+  },
+  "engines": { "node": "^20.19.0 || >=22.12.0" },
+  "dependencies": { "prettier": "3.7.4" },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "execa": "^9.6.0"
+  }
+}
+
+--- AFTER ----------
+{
+  "name": "fixture",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm run build-napi-release && pnpm run build-js",
+    "build-napi-release": "pnpm run build-napi --release --features allocator",
+    "build-js": "node scripts/build.js",
+    "test": "tsc && vitest --dir test run"
+  },
+  "dependencies": {
+    "prettier": "3.7.4"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "execa": "^9.6.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
+
+--------------------
+
+--- FILE -----------
+tsconfig.dummy.json
+--- BEFORE ---------
+{
+  // Allow comments!
+  "compilerOptions": {
+                 "module": "commonjs",
+                                             "strict": true,
+  },
+}
+
+--- AFTER ----------
+{
+  // Allow comments!
+  "compilerOptions": {
+    "module": "commonjs",
+    "strict": true,
+  },
+}
+
+--------------------"
+`;

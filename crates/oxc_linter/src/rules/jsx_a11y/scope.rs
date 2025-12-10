@@ -12,8 +12,8 @@ use crate::{
 };
 
 fn scope_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
-        .with_help("Must use scope prop only on <th> elements")
+    OxcDiagnostic::warn("The `scope` prop can only be used on `<th>` elements")
+        .with_help("Remove the `scope` prop on elements other than `<th>`.")
         .with_label(span)
 }
 
@@ -111,8 +111,5 @@ fn test() {
         (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
     ];
 
-    Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail)
-        .expect_fix(fix)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

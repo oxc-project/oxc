@@ -327,6 +327,14 @@ pub fn extends_clause_must_precede_implements(span: Span, implements_span: Span)
         .with_help("Move the 'extends' clause before the 'implements' clause")
 }
 
+// Classes can only extend a single class. ts(1174)
+#[cold]
+pub fn classes_can_only_extend_single_class(span: Span) -> OxcDiagnostic {
+    ts_error("1174", "Classes can only extend a single class.")
+        .with_label(span)
+        .with_help("Remove the extra base class or use interfaces for multiple inheritance")
+}
+
 // 'implements' clause already seen. ts(1175)
 #[cold]
 pub fn implements_clause_already_seen(span: Span, seen_span: Span) -> OxcDiagnostic {
@@ -572,6 +580,11 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_string_literal_expected(span: Span) -> OxcDiagnostic {
+    ts_error("1141", "String literal expected.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
         .with_help("Replace with `super()` or `super.prop` or `super[prop]`")
@@ -811,6 +824,12 @@ pub fn cannot_appear_on_a_parameter(
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
         .with_label(modifier.span)
         .with_allowed_modifier_help(allowed)
+}
+
+#[cold]
+pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic {
+    ts_error("1187", "A parameter property may not be declared using a binding pattern.")
+        .with_label(span)
 }
 
 pub fn cannot_appear_on_an_index_signature(
@@ -1098,4 +1117,31 @@ pub fn expect_switch_clause(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Expected switch clause")
         .with_label(span.label("`case` or `default` clause expected here"))
         .with_help("If this is intended to be the condition for the switch statement, add `case` before it.")
+}
+
+#[cold]
+pub fn unexpected_optional_declaration(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Optional declaration is not allowed here")
+        .with_label(span)
+        .with_help("Remove the `?`")
+}
+
+#[cold]
+pub fn identifier_expected_after_question_dot(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifier expected after '?.'")
+        .with_label(span)
+        .with_help("Add an identifier after '?.'")
+}
+
+#[cold]
+pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifiers in JSX cannot contain hyphens")
+        .with_label(span)
+        .with_help("Remove the hyphen from the identifier")
+}
+
+#[cold]
+pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
+    ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
+        .with_label(span)
 }

@@ -4,9 +4,8 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Buffer, Format, FormatResult, Formatter, separated::FormatSeparatedIter},
+    formatter::{Format, Formatter},
     options::{FormatTrailingCommas, TrailingSeparator},
-    write,
 };
 
 enum AssignmentTargetPropertyListNode<'a, 'b> {
@@ -24,7 +23,7 @@ impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
 }
 
 impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
             AssignmentTargetPropertyListNode::Rest(rest) => rest.fmt(f),
@@ -64,22 +63,20 @@ impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
 }
 
 impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
             TrailingSeparator::Disallowed
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
-        f.join_nodes_with_soft_line()
-            .entries_with_trailing_separator(
-                AssignmentTargetPropertyListIter {
-                    properties: self.properties.iter(),
-                    rest: self.rest,
-                },
-                ",",
-                trailing_separator,
-            )
-            .finish()
+        f.join_nodes_with_soft_line().entries_with_trailing_separator(
+            AssignmentTargetPropertyListIter {
+                properties: self.properties.iter(),
+                rest: self.rest,
+            },
+            ",",
+            trailing_separator,
+        );
     }
 }

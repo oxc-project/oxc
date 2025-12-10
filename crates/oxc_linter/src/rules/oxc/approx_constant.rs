@@ -11,7 +11,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn approx_constant_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Approximate value of `{method_name}` found."))
-        .with_help(format!("Use `Math.{method_name}` instead"))
+        .with_help(format!("Use `Math.{method_name}` instead."))
         .with_label(span)
 }
 
@@ -27,6 +27,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Approximate constants are not as accurate as the constants in the `Math` object.
+    /// Using the `Math` constants improves code readability and accuracy.
+    /// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+    /// for more information.
     ///
     /// ### Examples
     ///
@@ -41,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     ApproxConstant,
     oxc,
-    suspicious
+    suspicious,
+    pending, // TODO: This should be fixable by simply replacing the given number with the relevant Math constant
 );
 
 impl Rule for ApproxConstant {
@@ -87,7 +91,23 @@ fn is_approx_const(constant: f64, value: &str, min_digits: usize) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["const x = 1234;"];
+    let pass = vec![
+        "const x = 1234;",
+        "const x = /* 3.141592 */ 3.14;",
+        "const x = 3.14 // 3.141592",
+        "let pi = Math.PI;",
+        "let e = Math.E;",
+        "let ln10 = Math.LN10;",
+        "let ln2 = Math.LN2;",
+        "let log10e = Math.LOG10E;",
+        "let log2e = Math.LOG2E;",
+        "let sqrt12 = Math.SQRT1_2;",
+        "let sqrt2 = Math.SQRT2;",
+        "let pi = 3.14;",
+        "let pi = '3.141592';",
+        "let pi = \"3.141592\";",
+        "let e = 2.71;",
+    ];
 
     let fail = vec![
         "const getArea = (radius) => 3.141 * radius * radius;",
@@ -99,6 +119,7 @@ fn test() {
         "let pi = 3.141592",     // PI
         "let sqrt12 = 0.707106", // SQRT1_2
         "let sqrt2 = 1.414213",  // SQRT2
+        "const text = `the value of pi is ${3.141592}`;",
     ];
 
     Tester::new(ApproxConstant::NAME, ApproxConstant::PLUGIN, pass, fail).test_and_snapshot();

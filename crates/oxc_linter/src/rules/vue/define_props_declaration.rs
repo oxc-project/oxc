@@ -2,12 +2,14 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn use_runtime_declaration_diagnostic(span: Span) -> OxcDiagnostic {
@@ -20,10 +22,18 @@ fn use_type_based_declaration_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct DefinePropsDeclaration {
-    runtime: bool,
+#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum DeclarationStyle {
+    /// Enforce type-based declaration.
+    #[default]
+    TypeBased,
+    /// Enforce runtime declaration.
+    Runtime,
 }
+
+#[derive(Debug, Default, Clone)]
+pub struct DefinePropsDeclaration(DeclarationStyle);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -66,24 +76,21 @@ declare_oxc_lint!(
     ///	})
     ///	</script>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```
-    /// "vue/define-props-declaration": ["error", "type-based" | "runtime"]
-    /// ```
-    /// - `type-based` (default) enforces type-based declaration
-    /// - `runtime` enforces runtime declaration
     DefinePropsDeclaration,
     vue,
     style,
+    config = DeclarationStyle,
 );
 
 impl Rule for DefinePropsDeclaration {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let runtime = value.get(0).and_then(|v| v.as_str()) == Some("runtime");
-        Self { runtime }
+        Self(
+            serde_json::from_value::<DefaultRuleConfig<DeclarationStyle>>(value)
+                .unwrap_or_default()
+                .into_inner(),
+        )
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
@@ -96,12 +103,17 @@ impl Rule for DefinePropsDeclaration {
             return;
         }
 
-        if self.runtime {
-            if call_expr.type_arguments.is_some() {
-                ctx.diagnostic(use_runtime_declaration_diagnostic(call_expr.span));
+        match self.0 {
+            DeclarationStyle::TypeBased => {
+                if !call_expr.arguments.is_empty() {
+                    ctx.diagnostic(use_type_based_declaration_diagnostic(call_expr.span));
+                }
             }
-        } else if !call_expr.arguments.is_empty() {
-            ctx.diagnostic(use_type_based_declaration_diagnostic(call_expr.span));
+            DeclarationStyle::Runtime => {
+                if call_expr.type_arguments.is_some() {
+                    ctx.diagnostic(use_runtime_declaration_diagnostic(call_expr.span));
+                }
+            }
         }
     }
 

@@ -1,9 +1,11 @@
-import { join as pathJoin } from 'path';
-import { JsonReporter } from 'vitest/reporters';
+// oxlint-disable no-console
 
-const currentDir = pathJoin(import.meta.dirname, './'),
-  rootDir = pathJoin(currentDir, '../../'),
-  vitestPath = pathJoin(rootDir, 'node_modules/.pnpm/@vitest+runner@');
+import { join as pathJoin } from "path";
+import { JsonReporter } from "vitest/reporters";
+
+const currentDir = pathJoin(import.meta.dirname, "./"),
+  rootDir = pathJoin(currentDir, "../../"),
+  vitestPath = pathJoin(rootDir, "node_modules/.pnpm/@vitest+runner@");
 
 export default class CustomReporter extends JsonReporter {
   async writeReport(report) {
@@ -14,15 +16,17 @@ export default class CustomReporter extends JsonReporter {
 
     if (numPassedTestSuites === numTotalTestSuites) return;
 
-    console.log('\nFailures:');
+    console.log("\nFailures:");
 
     for (const testResult of testResults) {
-      if (testResult.status === 'passed') continue;
+      if (testResult.status === "passed") continue;
 
-      const name = testResult.name.replace(currentDir, './');
+      const name = testResult.name.replace(currentDir, "./");
       const message = testResult.message
-        ? testResult.message.replace(rootDir, './')
-        : testResult.assertionResults.flatMap((result) => result.failureMessages.map(formatMessage)).join('\n');
+        ? testResult.message.replace(rootDir, "./")
+        : testResult.assertionResults
+            .flatMap((result) => result.failureMessages.map(formatMessage))
+            .join("\n");
       console.log();
       console.log(name);
       console.log(message);
@@ -31,8 +35,8 @@ export default class CustomReporter extends JsonReporter {
 }
 
 function formatMessage(message) {
-  const lines = message.split('\n');
+  const lines = message.split("\n");
   const index = lines.findIndex((line) => line.includes(vitestPath));
   if (index !== -1) lines.length = index;
-  return lines.map((line) => line.replace('file://', '').replace(rootDir, './')).join('\n');
+  return lines.map((line) => line.replace("file://", "").replace(rootDir, "./")).join("\n");
 }

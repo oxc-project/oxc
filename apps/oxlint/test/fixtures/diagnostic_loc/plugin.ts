@@ -1,17 +1,17 @@
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'loc-plugin',
+    name: "loc-plugin",
   },
   rules: {
-    'no-bugger': {
+    "no-bugger": {
       create(context) {
         let debuggerCount = 0;
         return {
           Program(_node) {
             context.report({
-              message: 'Bugger debugger debug!',
+              message: "Bugger debugger debug!",
               loc: {
                 start: { line: 1, column: 2 },
                 end: { line: 3, column: 5 },
@@ -21,7 +21,7 @@ const plugin: Plugin = {
           DebuggerStatement(_node) {
             debuggerCount++;
             context.report({
-              message: 'Bugger!',
+              message: "Bugger!",
               loc: {
                 start: { line: debuggerCount, column: 2 },
                 end: { line: debuggerCount, column: 8 },

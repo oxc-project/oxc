@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,9 +20,14 @@ fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ParamNames(Box<ParamNamesConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ParamNamesConfig {
+    /// Regex pattern used to validate the `resolve` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?resolve$` check.
     resolve_pattern: Option<Regex>,
+    /// Regex pattern used to validate the `reject` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?reject$` check.
     reject_pattern: Option<Regex>,
 }
 
@@ -65,6 +71,7 @@ declare_oxc_lint!(
     ParamNames,
     promise,
     style,
+    config = ParamNamesConfig,
 );
 
 impl Rule for ParamNames {

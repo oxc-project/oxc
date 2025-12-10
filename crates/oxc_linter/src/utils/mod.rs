@@ -31,7 +31,9 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
+// When adding a new rule to this list, please ensure oxlint-migrate is also updated.
+// See https://github.com/oxc-project/oxlint-migrate/blob/2c336c67d75adb09a402ae66fb3099f1dedbe516/scripts/constants.ts
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 36] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -46,6 +48,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "no-hooks",
     "no-identical-title",
     "no-interpolation-in-snapshots",
+    "no-mocks-import",
     "no-restricted-jest-methods",
     "no-restricted-matchers",
     "no-standalone-expect",
@@ -69,7 +72,9 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "valid-expect",
 ];
 
-// List of Eslint rules that have Typescript equivalents.
+/// List of Eslint rules that have TypeScript equivalents.
+// When adding a new rule to this list, please ensure oxlint-migrate is also updated.
+// See https://github.com/oxc-project/oxlint-migrate/blob/659b461eaf5b2f8a7283822ae84a5e619c86fca3/src/constants.ts#L24
 const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
     "class-methods-use-this",
     "default-param-last",

@@ -3,8 +3,19 @@
 
 # stdout
 ```
-  x scope-manager-plugin(scope): File has 12 scopes: <GlobalScope>, <ModuleScope>, topLevelFunction, <BlockScope>, TopLevelModule, GenericInterface, TestClass, <ClassStaticBlockScope>,
-  | <FunctionScope>, <FunctionScope>, <BlockScope>, <BlockScope>
+  x scope-manager-plugin(scope): File has 12 scopes:
+  | - global
+  | - module
+  | - function(topLevelFunction)
+  | - block
+  | - tsModule(TopLevelModule)
+  | - type(GenericInterface)
+  | - class(TestClass)
+  | - class-static-block
+  | - function
+  | - function
+  | - block
+  | - block
    ,-[files/index.ts:1:1]
  1 | const { a, b, c } = {};
    : ^
@@ -44,7 +55,7 @@
  22 | |     }
  23 | |     export const x: GenericInterface<string> = {
  24 | |       concreteVar: 42,
- 25 | |       genericVar: 'string',
+ 25 | |       genericVar: "string",
  26 | |     };
  27 | `-> }
  28 |     
@@ -54,7 +65,7 @@
     ,-[files/index.ts:37:3]
  36 |       #privateVar: string;
  37 | ,->   static {
- 38 | |       const privateVar = 'private';
+ 38 | |       const privateVar = "private";
  39 | |       this.prototype.#privateVar = arrowFunc(privateVar);
  40 | |   
  41 | |       const arrowFunc = (param: string) => {
@@ -69,7 +80,7 @@
     ,-[files/index.ts:54:1]
  53 |     
  54 | ,-> label: {
- 55 | |     const blockVar = 'block';
+ 55 | |     const blockVar = "block";
  56 | |     console.log(blockVar);
  57 | `-> }
  58 |     

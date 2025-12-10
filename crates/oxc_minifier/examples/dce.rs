@@ -66,6 +66,7 @@ fn dce(
     max_iterations: Option<u8>,
 ) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let mut program = ret.program;
     Compressor::new(allocator).dead_code_elimination(
         &mut program,

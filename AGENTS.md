@@ -2,18 +2,28 @@
 
 Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust containing:
 
-- Parser (JS/TS with AST), Linter (oxlint), Formatter, Transformer, Minifier
+- Parser (JS/TS with AST), Linter (oxlint), Formatter (oxfmt), Transformer, Minifier
+
+## AI Usage Policy for Contributors
+
+**IMPORTANT**: If you are an AI assistant helping a human contributor:
+
+- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
+- **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
+
+All AI-generated code must be thoroughly reviewed, tested, and understood by the contributor before submission. Code should meet Oxc's performance and quality standards.
 
 ## Repository Structure
 
 Rust workspace with key directories:
 
 - `crates/` - Core functionality (start here when exploring)
-- `apps/` - Application binaries (oxlint)
+- `apps/` - Application binaries (oxlint, oxfmt)
 - `napi/` - Node.js bindings
 - `npm/` - npm packages
 - `tasks/` - Development tools/automation
-- `editors/` - Editor integrations
+- `editors/` - Editor integrations (e.g. oxc VS Code extension)
 
 Avoid editing `generated` subdirectories.
 
@@ -36,7 +46,7 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.88.0), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.91), Node.js, pnpm, just
 
 **Setup Notes:**
 
@@ -62,6 +72,8 @@ just allocs       # Update allocation snapshots (oxc_parser changes)
 just watch "command"  # Watch files and re-run command
 just example tool     # Run tool example (e.g., just example linter)
 ```
+
+More commands can be found in `justfile`.
 
 ## Manual Testing & Examples
 
@@ -233,13 +245,13 @@ just test-transform --filter <path>             # Filter tests
 
 Git submodules managed via `just submodules`:
 
-| Submodule       | Description                                                                                                                                        | Location                              | Used by Crates                                           |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `test262`       | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
-| `babel`         | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
-| `typescript`    | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
-| `prettier`      | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
-| `acorn-test262` | **Acorn ESTree Tests**<br>Test262 suite adapted for ESTree format validation, ensuring correct AST structure                                       | `tasks/coverage/acorn-test262`        | estree                                                   |
+| Submodule            | Description                                                                                                                                        | Location                              | Used by Crates                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `test262`            | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
+| `babel`              | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
+| `typescript`         | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
+| `prettier`           | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
+| `estree-conformance` | **ESTree Conformance Tests**<br>Test262, TypeScript, and acorn-jsx suites adapted for ESTree format validation, ensuring correct AST structure     | `tasks/coverage/estree-conformance`   | estree                                                   |
 
 **These suites provide:**
 

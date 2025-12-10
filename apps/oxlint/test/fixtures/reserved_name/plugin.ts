@@ -1,8 +1,8 @@
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'import', // Reserved name
+    name: "import", // Reserved name
   },
   rules: {},
 };

@@ -21,6 +21,5 @@ newlineAfter
 // prettier-ignore
 nested = 7 + 8;
 
-// We should return `false` for `isSpaceBetween(beforeString, afterString)`, but we currently return `true`
 // prettier-ignore
 beforeString," ",afterString;

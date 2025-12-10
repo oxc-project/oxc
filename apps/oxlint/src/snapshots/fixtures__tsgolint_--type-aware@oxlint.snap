@@ -10,6 +10,7 @@ working directory: fixtures/tsgolint
    ,-[await-thenable.ts:1:1]
  1 | await 12;
    : ^^^^^^^^
+ 2 | 
    `----
 
   x typescript-eslint(no-array-delete): Using the `delete` operator with an array expression is unsafe.
@@ -30,6 +31,7 @@ working directory: fixtures/tsgolint
  1 | declare function bar(): void;
  2 | const foo = () => void bar();
    :                   ^^^^^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
@@ -37,6 +39,7 @@ working directory: fixtures/tsgolint
  1 | declare function bar(): void;
  2 | const foo = () => void bar();
    :                        ^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-deprecated): `getVersion` is deprecated. Use apiV2 instead.
@@ -50,6 +53,7 @@ working directory: fixtures/tsgolint
    ,-[no-duplicate-type-constituents.ts:1:17]
  1 | type T1 = 'A' | 'A';
    :                 ^^^
+ 2 | 
    `----
 
   x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function.
@@ -64,6 +68,7 @@ working directory: fixtures/tsgolint
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
    : ^^^^^^^^
+ 3 | 
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
@@ -76,39 +81,18 @@ working directory: fixtures/tsgolint
  3 |   console.log(arr[i]);
    `----
 
-  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
-   ,-[no-for-in-array.ts:3:3]
- 2 | for (const i in arr) {
- 3 |   console.log(arr[i]);
-   :   ^^^^^^^^^^^
- 4 | }
-   `----
-
-  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
-   ,-[no-for-in-array.ts:3:11]
- 2 | for (const i in arr) {
- 3 |   console.log(arr[i]);
-   :           ^^^
- 4 | }
-   `----
-
-  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
-   ,-[no-implied-eval.ts:1:1]
- 1 | setTimeout('alert("Hi!");', 100);
-   : ^^^^^^^^^^
-   `----
-
   x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
    ,-[no-implied-eval.ts:1:12]
  1 | setTimeout('alert("Hi!");', 100);
    :            ^^^^^^^^^^^^^^^
    `----
 
-  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on void; it should convey that a return value is being ignored
    ,-[no-meaningless-void-operator.ts:4:1]
  3 | }
  4 | void foo();
    : ^^^^^^^^^^
+ 5 | 
    `----
 
   x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
@@ -116,6 +100,7 @@ working directory: fixtures/tsgolint
  3 | }
  4 | void foo();
    :      ^^^^^
+ 5 | 
    `----
 
   x typescript-eslint(no-misused-spread): Using the spread operator on Promise in an object can cause unexpected behavior. Did you forget to await the promise?
@@ -159,6 +144,7 @@ working directory: fixtures/tsgolint
  1 | const str: string = 'hello';
  2 | const redundant = str as string;
    :                   ^^^^^^^^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-argument): Unsafe argument of type any assigned to a parameter of type string.
@@ -166,6 +152,7 @@ working directory: fixtures/tsgolint
  2 | function takesString(str: string): void {}
  3 | takesString(anyValue);
    :             ^^^^^^^^
+ 4 | 
    `----
 
   x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
@@ -173,6 +160,7 @@ working directory: fixtures/tsgolint
  1 | declare const anyValue: any;
  2 | const str: string = anyValue;
    :       ^^^^^^^^^^^^^^^^^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
@@ -180,21 +168,23 @@ working directory: fixtures/tsgolint
  1 | declare const anyValue: any;
  2 | anyValue();
    : ^^^^^^^^
+ 3 | 
    `----
 
-  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
-   ,-[no-unsafe-enum-comparison.ts:2:10]
- 1 | enum Status {
- 2 |   Open = 'open',
-   :          ^^^^^^
- 3 |   Closed = 'closed',
-   `----
+  x typescript-eslint(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
+    ,-[no-unsafe-enum-comparison.ts:9:20]
+  8 | }
+  9 | const comparison = Status.Open === Color.Red;
+    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
 
   x typescript-eslint(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
    ,-[no-unsafe-member-access.ts:2:10]
  1 | declare const anyValue: any;
  2 | anyValue.foo;
    :          ^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
@@ -210,6 +200,7 @@ working directory: fixtures/tsgolint
  1 | declare const value: unknown;
  2 | const str = value as any;
    :       ^^^^^^^^^^^^^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion to `any` detected: consider using a more specific type to ensure safety.
@@ -217,13 +208,7 @@ working directory: fixtures/tsgolint
  1 | declare const value: unknown;
  2 | const str = value as any;
    :             ^^^^^^^^^^^^
-   `----
-
-  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is unknown instead.
-   ,-[no-unsafe-unary-minus.ts:2:17]
- 1 | declare const value: any;
- 2 | const result1 = -value;
-   :                 ^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-type-assertion): Unsafe type assertion: type 'string' is more narrow than the original type.
@@ -231,12 +216,22 @@ working directory: fixtures/tsgolint
  1 | declare const value: string | null;
  2 | const result1 = value as string;
    :                 ^^^^^^^^^^^^^^^
+ 3 | 
+   `----
+
+  x typescript-eslint(non-nullable-type-assertion-style): Use a ! assertion to more succinctly remove null and undefined from the type.
+   ,-[non-nullable-type-assertion-style.ts:2:17]
+ 1 | declare const value: string | null;
+ 2 | const result1 = value as string;
+   :                 ^^^^^^^^^^^^^^^
+ 3 | 
    `----
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[non-tsgolint.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
+ 2 | 
    `----
   help: Remove the debugger statement
 
@@ -244,7 +239,32 @@ working directory: fixtures/tsgolint
    ,-[only-throw-error.ts:1:7]
  1 | throw 'error';
    :       ^^^^^^^
+ 2 | 
    `----
+
+  x typescript-eslint(prefer-includes): Use 'includes()' method instead.
+   ,-[prefer-includes.ts:2:5]
+ 1 | const text = 'hello';
+ 2 | if (text.indexOf('h') !== -1) {
+   :     ^^^^^^^^^^^^^^^^^^^^^^^^
+ 3 | }
+   `----
+
+  x typescript-eslint(prefer-includes): Use 'includes()' method instead.
+   ,-[prefer-includes.ts:6:5]
+ 5 | const items = [1, 2];
+ 6 | if (items.indexOf(1) !== -1) {
+   :     ^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(prefer-includes): Use `String#includes()` method with a string instead.
+    ,-[prefer-includes.ts:9:5]
+  8 | 
+  9 | if (/test/.test(text)) {
+    :     ^^^^^^^^^^^^^^^^^
+ 10 | }
+    `----
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors.ts:1:1]
@@ -264,6 +284,7 @@ working directory: fixtures/tsgolint
  1 | const numbers = [1, 2, 3];
  2 | const sum = numbers.reduce((acc, val) => acc + val, 0) as number;
    :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 3 | 
    `----
 
   x typescript-eslint(prefer-return-this-type): Use `this` type instead.
@@ -280,29 +301,14 @@ working directory: fixtures/tsgolint
  2 | ,-> function fetchData(): Promise<string> {
  3 | |     return fetch('/api/data').then(res => res.text());
  4 | `-> }
+ 5 |     
    `----
 
-  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
-   ,-[promise-function-async.ts:3:41]
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+   ,-[promise-function-async.ts:3:34]
  2 | function fetchData(): Promise<string> {
  3 |   return fetch('/api/data').then(res => res.text());
-   :                                         ^^^^^^^^
- 4 | }
-   `----
-
-  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
-   ,-[promise-function-async.ts:3:41]
- 2 | function fetchData(): Promise<string> {
- 3 |   return fetch('/api/data').then(res => res.text());
-   :                                         ^^^^^^^^^^
- 4 | }
-   `----
-
-  x typescript-eslint(no-unsafe-member-access): Unsafe member access .text on an `error` typed value.
-   ,-[promise-function-async.ts:3:45]
- 2 | function fetchData(): Promise<string> {
- 3 |   return fetch('/api/data').then(res => res.text());
-   :                                             ^^^^
+   :                                  ^^^^^^^^^^^^^^^^^
  4 | }
    `----
 
@@ -319,14 +325,7 @@ working directory: fixtures/tsgolint
  1 | const numbers = [3, 1, 4, 1, 5];
  2 | numbers.sort();
    : ^^^^^^^^^^^^^^
-   `----
-
-  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `Promise<any>`.
-   ,-[require-await.ts:3:3]
- 2 | async function fetchData() {
- 3 |   return fetch('/api/data');
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^
- 4 | }
+ 3 | 
    `----
 
   x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
@@ -346,6 +345,7 @@ working directory: fixtures/tsgolint
  1 | declare const obj: object;
  2 | const str1 = `Value: ${obj}`;
    :                        ^^^
+ 3 | 
    `----
 
   x typescript-eslint(restrict-template-expressions): Invalid type "object" of template literal expression.
@@ -353,6 +353,7 @@ working directory: fixtures/tsgolint
  1 | declare const obj: object;
  2 | const str1 = `Value: ${obj}`;
    :                        ^^^
+ 3 | 
    `----
 
   x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
@@ -361,22 +362,6 @@ working directory: fixtures/tsgolint
  3 |   switch (status) {
    :           ^^^^^^
  4 |     case 'pending':
-   `----
-
-  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
-   ,-[switch-exhaustiveness-check.ts:4:5]
- 3 |       switch (status) {
- 4 | ,->     case 'pending':
- 5 | `->       return 'Waiting for approval';
- 6 |         case 'approved':
-   `----
-
-  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
-   ,-[switch-exhaustiveness-check.ts:6:5]
- 5 |           return 'Waiting for approval';
- 6 | ,->     case 'approved':
- 7 | `->       return 'Request approved';
- 8 |       }
    `----
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
@@ -396,8 +381,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 54 errors.
-Finished in <variable>ms on 43 files using 1 threads.
+Found 0 warnings and 49 errors.
+Finished in <variable>ms on 44 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

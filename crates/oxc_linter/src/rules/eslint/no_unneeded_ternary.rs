@@ -1,4 +1,8 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::{
     AstKind,
     ast::{BinaryOperator, Expression},
@@ -7,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn no_unneeded_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary use of boolean literals in conditional expression")
@@ -20,7 +25,7 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnneededTernary {
     /// Whether to allow the default assignment pattern `x ? x : y`.
@@ -76,13 +81,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnneededTernary {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assignment = value
-            .get(0)
-            .and_then(|v| v.get("defaultAssignment"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-
-        Self { default_assignment }
+        serde_json::from_value::<DefaultRuleConfig<NoUnneededTernary>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

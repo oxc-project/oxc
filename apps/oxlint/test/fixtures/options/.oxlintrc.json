@@ -1,0 +1,52 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "options-plugin/no-options": "error",
+    "options-plugin/options": [
+      "error",
+      false,
+      {
+        "array": [
+          { "deep": true, "str": "hello" },
+          456
+        ],
+        "not": null
+      }
+    ],
+    "options-plugin/default-options": "error",
+    "options-plugin/merge-options": [
+      "error",
+      {
+        "fromConfig": 11,
+        "overrideDefault": 12,
+        "nested": {
+          "fromConfig": 13,
+          "overrideDefault": 14
+        }
+      },
+      15,
+      true,
+      [],
+      16
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["files/nested/**"],
+      "rules": {
+        "options-plugin/options": [
+          "error",
+          { "somethingElse": true }
+        ],
+        "options-plugin/merge-options": [
+          "error",
+          { "fromConfig": 21 },
+          { "fromConfig": 22 },
+        ]
+      }
+    }
+  ]
+}

@@ -10,6 +10,7 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
     let mangler_return = Mangler::new().with_options(options).build(&program);
     Codegen::new()
@@ -47,8 +48,8 @@ fn mangler() {
         "function _() { var x; { var y }}",     // y should not shadow x
         "function _() { var x; { let y }}",     // y can shadow x
         "function _() { let x; { let y }}",     // y can shadow x
-        "function _() { var x; { const y }}",   // y can shadow x
-        "function _() { let x; { const y }}",   // y can shadow x
+        "function _() { var x; { const y = 1 }}", // y can shadow x
+        "function _() { let x; { const y = 1 }}", // y can shadow x
         "function _() { var x; { class Y{} }}", // Y can shadow x
         "function _() { let x; { class Y{} }}", // Y can shadow x
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x

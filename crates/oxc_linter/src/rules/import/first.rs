@@ -1,5 +1,3 @@
-use std::convert::From;
-
 use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -7,7 +5,10 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn first_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Import statements must come first")
@@ -21,9 +22,13 @@ fn absolute_first_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-pub struct First {
-    /// Whether to enforce absolute imports before relative imports.
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct First(AbsoluteFirst);
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum AbsoluteFirst {
+    /// Forces absolute imports to be listed before relative imports.
     ///
     /// Examples of **incorrect** code for this rule with `"absolute-first"`:
     /// ```js
@@ -36,24 +41,11 @@ pub struct First {
     /// import { y } from 'bar';
     /// import { x } from './foo'
     /// ```
-    absolute_first: AbsoluteFirst,
-}
-
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum AbsoluteFirst {
     AbsoluteFirst,
+    /// Disables the absolute-first behavior.
+    /// This is the default behavior.
     #[default]
     DisableAbsoluteFirst,
-}
-
-impl From<&str> for AbsoluteFirst {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "absolute-first" => Self::AbsoluteFirst,
-            _ => Self::DisableAbsoluteFirst,
-        }
-    }
 }
 
 declare_oxc_lint!(
@@ -86,8 +78,8 @@ declare_oxc_lint!(
     First,
     import,
     style,
-    pending,  // TODO: fixer
-    config = First,
+    pending, // TODO: fixer
+    config = AbsoluteFirst,
 );
 
 fn is_relative_path(path: &str) -> bool {
@@ -97,14 +89,7 @@ fn is_relative_path(path: &str) -> bool {
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/first.md>
 impl Rule for First {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            absolute_first: obj
-                .and_then(serde_json::Value::as_str)
-                .map(AbsoluteFirst::from)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<First>>(value).unwrap_or_default().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -117,7 +102,7 @@ impl Rule for First {
             match statement {
                 Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
-                        if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
+                        if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                             if is_relative_path(mod_ref.expression.value.as_str()) {
                                 any_relative = true;
                             } else if any_relative {
@@ -133,7 +118,7 @@ impl Rule for First {
                     | TSModuleReference::ThisExpression(_) => {}
                 },
                 Statement::ImportDeclaration(decl) => {
-                    if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
+                    if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                         if is_relative_path(decl.source.value.as_str()) {
                             any_relative = true;
                         } else if any_relative {

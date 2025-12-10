@@ -93,6 +93,25 @@ impl<'a> ParserImpl<'a> {
             );
         }
         let pattern = self.parse_binding_pattern_with_initializer();
+
+        if modifiers.accessibility().is_some()
+            || modifiers.contains_readonly()
+            || modifiers.contains_override()
+        {
+            let is_valid_pattern = match &pattern.kind {
+                BindingPatternKind::BindingIdentifier(_) => true,
+                BindingPatternKind::AssignmentPattern(assignment) => {
+                    assignment.left.kind.is_binding_identifier()
+                }
+                _ => false,
+            };
+            if !is_valid_pattern {
+                self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
+                    span,
+                    self.prev_token_end,
+                )));
+            }
+        }
         let are_decorators_allowed =
             matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
                 && self.is_ts;

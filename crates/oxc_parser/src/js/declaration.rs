@@ -118,7 +118,7 @@ impl<'a> ParserImpl<'a> {
                 None
             };
             let optional = if self.at(Kind::Question) {
-                self.error(diagnostics::unexpected_token(self.cur_token().span()));
+                self.error(diagnostics::unexpected_optional_declaration(self.cur_token().span()));
                 self.bump_any();
                 true
             } else {

@@ -21,17 +21,17 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "ClassBody",
     "CatchParameter",
     "CatchClause",
-    "Decorator",
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
     "ExportNamedDeclaration",
     "ExportDefaultDeclaration",
-    "TSClassImplements",
     //
     "JSXElement",
     "JSXFragment",
     //
     "TemplateElement",
 ];
+
+const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] = &["TSUnionType"];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
@@ -85,17 +85,12 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{
-                    Buffer, Format, FormatResult, Formatter,
-                    trivia::FormatTrailingComments,
-                },
+                formatter::{Format, Formatter},
                 parentheses::NeedsParentheses,
-                ast_nodes::{AstNode, AstNodes},
+                ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
                 write::{FormatWrite #(#options)*},
             };
-
-            use super::ast_nodes::transmute_self;
 
             #impls
         };
@@ -116,39 +111,27 @@ fn generate_struct_implementation(
 
     let struct_name = struct_def.name();
     let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&struct_name);
+    let do_not_print_leading_comment = do_not_print_comment
+        || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    let leading_comments = (!do_not_print_leading_comment).then(|| {
         quote! {
-            self.format_leading_comments(f)?;
+            self.format_leading_comments(f);
         }
-    };
-
-    let trailing_comments = if do_not_print_comment {
-        quote! {}
-    } else {
+    });
+    let trailing_comments = (!do_not_print_comment).then(|| {
         quote! {
-            self.format_trailing_comments(f)?;
+            self.format_trailing_comments(f);
         }
-    };
+    });
 
     let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
 
     let needs_parentheses_before = if needs_parentheses {
-        if matches!(struct_name, "JSXElement" | "JSXFragment") {
-            quote! {
-                let needs_parentheses = !is_suppressed && self.needs_parentheses(f);
-                if needs_parentheses {
-                    "(".fmt(f)?;
-                }
-            }
-        } else {
-            quote! {
-                let needs_parentheses = self.needs_parentheses(f);
-                if needs_parentheses {
-                    "(".fmt(f)?;
-                }
+        quote! {
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
             }
         }
     } else {
@@ -158,7 +141,7 @@ fn generate_struct_implementation(
     let needs_parentheses_after = if needs_parentheses {
         quote! {
             if needs_parentheses {
-                ")".fmt(f)?;
+                ")".fmt(f);
             }
         }
     } else {
@@ -168,30 +151,31 @@ fn generate_struct_implementation(
     let generate_fmt_implementation = |has_options: bool| {
         let write_call = if has_options {
             quote! {
-                self.write_with_options(options, f)
+                self.write_with_options(options, f);
             }
         } else {
             quote! {
-                self.write(f)
+                self.write(f);
             }
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` need special suppression handling before parentheses
-        let suppressed_check = (!matches!(struct_name, "Program")).then(|| {
-            quote! {
-                let is_suppressed = f.comments().is_suppressed(self.span().start);
-            }
-        });
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
+        let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
+            .then(|| {
+                quote! {
+                    let is_suppressed = f.comments().is_suppressed(self.span().start);
+                }
+            });
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
-        } else if trailing_comments.is_empty() {
+        } else if trailing_comments.is_none() {
             quote! {
                 if is_suppressed {
-                     self.format_leading_comments(f)?;
-                    FormatSuppressedNode(self.span()).fmt(f)?;
-                     self.format_trailing_comments(f)
+                     self.format_leading_comments(f);
+                    FormatSuppressedNode(self.span()).fmt(f);
+                     self.format_trailing_comments(f);
                 } else {
                     #write_call
                 }
@@ -199,7 +183,7 @@ fn generate_struct_implementation(
         } else {
             quote! {
                 if is_suppressed {
-                    FormatSuppressedNode(self.span()).fmt(f)
+                    FormatSuppressedNode(self.span()).fmt(f);
                 } else {
                     #write_call
                 }
@@ -223,13 +207,13 @@ fn generate_struct_implementation(
             });
 
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f)? {
-                    return Ok(());
+                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                    return;
                 }
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting
@@ -241,10 +225,9 @@ fn generate_struct_implementation(
                 #type_cast_comment_formatting
                 #leading_comments
                 #needs_parentheses_before
-                let result = #write_implementation;
+                #write_implementation
                 #needs_parentheses_after
                 #trailing_comments
-                result
             }
         }
     };
@@ -256,7 +239,7 @@ fn generate_struct_implementation(
         let implementation = generate_fmt_implementation(true);
         quote! {
             ///@@line_break
-            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
                 #implementation
             }
         }
@@ -269,7 +252,7 @@ fn generate_struct_implementation(
     quote! {
         ///@@line_break
         impl<'a> Format<'a #option_type> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 #fmt_implementation
             }
 
@@ -295,7 +278,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     parent,
                     allocator,
                     following_span: self.following_span,
-                }).fmt(f)
+                }).fmt(f);
             },
         })
     });
@@ -318,7 +301,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     parent,
                     allocator,
                     following_span: self.following_span,
-                }).fmt(f)
+                }).fmt(f);
             },
         };
 
@@ -338,7 +321,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         ///@@line_break
         impl<'a> Format<'a> for #node_type {
             #[inline]
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 let allocator = self.allocator;
                 #parent;
                 match self.inner {

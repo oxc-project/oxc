@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- 8c10694 semantic: Expose get_comment_at method (#16439) (camc314)
+- 3981e7a ast: Add get_comment_at to lookup a comment by span (#16438) (camc314)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+### 🚀 Features
+
+- 669afe0 ast: Add `Expression::is_jsx` method (#16154) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 0c1f82b linter/plugins: Add `tokens` property to `Program` (#16020) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- b2af6b5 ast: [**BREAKING**] Remove AstKind for Argument (#13902) (taearls)
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e0728fa ast: Exclude comment end position from `is_inside_comment` check (#15753) (camc314)
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
+### ⚡ Performance
+
+- d8d4e31 ast: Use loop instead of recursion in `TSModuleDeclarationBody::as_module_block_mut` (#15713) (overlookmotel)
+
+### 📚 Documentation
+
+- e033d50 ast: Clarify behavior of `TSModuleDeclaration::has_use_strict_directive` (#15730) (overlookmotel)
+
 ## [0.97.0] - 2025-11-11
 
 ### 🚀 Features

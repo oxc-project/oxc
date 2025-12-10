@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.99.0] - 2025-11-24
+
+### 📚 Documentation
+
+- c81a331 data_structures: Doc comments on fields of `Stack` (#15793) (overlookmotel)
+
 
 
 

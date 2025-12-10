@@ -1,7 +1,6 @@
 use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
-    FormatResult,
     ast_nodes::AstNode,
     formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
     utils::suppressed::FormatSuppressedNode,
@@ -12,7 +11,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.type_parameter.span.start) {
             return write!(f, FormatSuppressedNode(self.span));
         }
@@ -20,9 +19,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let type_parameter = self.type_parameter();
         let name_type = self.name_type();
         let should_expand = has_line_break_before_property_name(self, f.source_text());
-
-        let type_annotation_has_leading_comment =
-            f.comments().has_comment_before(type_parameter.span.start);
 
         let format_inner = format_with(|f| {
             if should_expand {
@@ -32,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                     } else {
                         f.context().comments().comments_before_character(self.span.start, b'[')
                     };
-                write!(f, FormatLeadingComments::Comments(comments))?;
+                write!(f, FormatLeadingComments::Comments(comments));
             }
 
             if let Some(readonly) = self.readonly() {
@@ -41,23 +37,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                     TSMappedTypeModifierOperator::Plus => "+",
                     TSMappedTypeModifierOperator::Minus => "-",
                 };
-                write!(f, [prefix, "readonly", space()])?;
+                write!(f, [prefix, "readonly", space()]);
             }
 
             let format_inner_inner = format_with(|f| {
-                write!(f, "[")?;
-                write!(f, type_parameter.name())?;
+                write!(f, "[");
+                write!(f, type_parameter.name());
                 if let Some(constraint) = &type_parameter.constraint() {
-                    write!(f, [space(), "in", space(), constraint])?;
+                    write!(f, [space(), "in", space(), constraint]);
                 }
                 if let Some(default) = &type_parameter.default() {
-                    write!(f, [space(), "=", space(), default])?;
+                    write!(f, [space(), "=", space(), default]);
                 }
                 if let Some(name_type) = &name_type {
-                    write!(f, [space(), "as", space(), name_type])?;
+                    write!(f, [space(), "as", space(), name_type]);
                 }
-                type_parameter.format_trailing_comments(f)?;
-                write!(f, "]")?;
+                type_parameter.format_trailing_comments(f);
+                write!(f, "]");
                 if let Some(optional) = self.optional() {
                     write!(
                         f,
@@ -66,16 +62,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                             TSMappedTypeModifierOperator::Plus => "+?",
                             TSMappedTypeModifierOperator::Minus => "-?",
                         }
-                    )?;
+                    );
                 }
-                Ok(())
             });
 
-            write!(f, [group(&format_inner_inner)])?;
+            write!(f, [group(&format_inner_inner)]);
             if let Some(type_annotation) = &self.type_annotation() {
-                write!(f, [":", space(), type_annotation])?;
+                write!(f, [":", space(), type_annotation]);
             }
-            write!(f, if_group_breaks(&OptionalSemicolon))
+            write!(f, if_group_breaks(&OptionalSemicolon));
         });
 
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
@@ -90,7 +85,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 .should_expand(should_expand),
                 "}",
             ]
-        )
+        );
     }
 }
 

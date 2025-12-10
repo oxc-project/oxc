@@ -52,11 +52,15 @@ impl Rule for PreferSpread {
             return;
         };
 
-        check_unicorn_prefer_spread(call_expr, ctx);
+        check_unicorn_prefer_spread(node, call_expr, ctx);
     }
 }
 
-fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
+fn check_unicorn_prefer_spread<'a>(
+    node: &AstNode<'a>,
+    call_expr: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) {
     let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() else {
         return;
     };
@@ -87,7 +91,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             }
 
-            report_with_spread_fixer(ctx, call_expr.span, "Array.from()", expr);
+            report_with_spread_fixer(node, ctx, call_expr.span, "Array.from()", expr);
         }
         // `array.concat()`
         "concat" => {
@@ -131,7 +135,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 }
             }
 
-            report_with_spread_fixer(ctx, call_expr.span, "array.slice()", member_expr_obj);
+            report_with_spread_fixer(node, ctx, call_expr.span, "array.slice()", member_expr_obj);
         }
         // `array.toSpliced()`
         "toSpliced" => {
@@ -145,6 +149,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
             }
 
             report_with_spread_fixer(
+                node,
                 ctx,
                 call_expr.span,
                 "array.toSpliced()",
@@ -171,10 +176,15 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
             ctx.diagnostic_with_fix(
                 unicorn_prefer_spread_diagnostic(call_expr.span, "string.split()"),
                 |fixer| {
+                    let needs_semi = ast_util::could_be_asi_hazard(node, ctx);
                     let callee_obj = member_expr.object().without_parentheses();
+                    let prefix = if needs_semi { ";" } else { "" };
                     fixer.replace(
                         call_expr.span,
-                        format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
+                        format!(
+                            "{prefix}[...{}]",
+                            callee_obj.span().source_text(ctx.source_text())
+                        ),
                     )
                 },
             );
@@ -241,13 +251,18 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 }
 
 fn report_with_spread_fixer(
+    node: &AstNode,
     ctx: &LintContext,
     span: Span,
     bad_method: &str,
     expr_to_spread: &Expression,
 ) {
     ctx.diagnostic_with_fix(unicorn_prefer_spread_diagnostic(span, bad_method), |fixer| {
+        let needs_semi = ast_util::could_be_asi_hazard(node, ctx);
         let mut codegen = fixer.codegen();
+        if needs_semi {
+            codegen.print_str(";");
+        }
         codegen.print_str("[...");
         codegen.print_expression(expr_to_spread);
         codegen.print_str("]");
@@ -542,22 +557,118 @@ fn test() {
         // `Array.from()`
         ("const x = Array.from(set);", "const x = [...set];", None),
         ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});", None),
+        // `Array.from()` - ASI hazard cases (need semicolon prefix)
+        (
+            "const foo = bar\nArray.from(set).map(() => {})",
+            "const foo = bar\n;[...set].map(() => {})",
+            None,
+        ),
+        (
+            "foo()\nArray.from(set).forEach(doSomething)",
+            "foo()\n;[...set].forEach(doSomething)",
+            None,
+        ),
+        // `Array.from()` - No ASI hazard (semicolon already present)
+        (
+            "const foo = bar;\nArray.from(set).map(() => {})",
+            "const foo = bar;\n[...set].map(() => {})",
+            None,
+        ),
+        // `Array.from()` - ASI hazard with comments before
+        (
+            "foo() /* comment */\nArray.from(set).map(() => {})",
+            "foo() /* comment */\n;[...set].map(() => {})",
+            None,
+        ),
+        (
+            "foo() // comment\nArray.from(set).map(() => {})",
+            "foo() // comment\n;[...set].map(() => {})",
+            None,
+        ),
         // `array.slice()`
         ("array.slice()", "[...array]", None),
         ("array.slice(1).slice()", "[...array.slice(1)]", None),
+        // `array.slice()` - ASI hazard cases
+        ("foo()\narray.slice()", "foo()\n;[...array]", None),
         // `array.toSpliced()`
         ("array.toSpliced()", "[...array]", None),
         ("const copy = array.toSpliced()", "const copy = [...array]", None),
-        // ("", "", None),
-        // ("", "", None),
+        // `array.toSpliced()` - ASI hazard cases
+        ("foo()\narray.toSpliced()", "foo()\n;[...array]", None),
         // `string.split()`
         (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
         (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
+        // `string.split()` - ASI hazard cases
+        ("foo()\nstr.split(\"\")", "foo()\n;[...str]", None),
         (
             r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
             "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
             None,
         ),
+        // Cases where NO semicolon should be added (not an ExpressionStatement)
+        ("return Array.from(set)", "return [...set]", None),
+        ("const x = Array.from(set)", "const x = [...set]", None),
+        ("foo(Array.from(set))", "foo([...set])", None),
+        ("if (Array.from(set).length) {}", "if ([...set].length) {}", None),
+        // `Array.from()` - ASI hazard with multi-byte Unicode identifiers
+        ("日本語\nArray.from(set).map(() => {})", "日本語\n;[...set].map(() => {})", None),
+        (
+            "const foo = 日本語\nArray.from(set).map(() => {})",
+            "const foo = 日本語\n;[...set].map(() => {})",
+            None,
+        ),
+        ("/**/Array.from(set).map(() => {})", "/**/[...set].map(() => {})", None),
+        ("/regex/\nArray.from(set).map(() => {})", "/regex/\n;[...set].map(() => {})", None),
+        ("/regex/g\nArray.from(set).map(() => {})", "/regex/g\n;[...set].map(() => {})", None),
+        ("0.\nArray.from(set).map(() => {})", "0.\n;[...set].map(() => {})", None),
+        (
+            "foo()\u{00A0}\nArray.from(set).map(() => {})",
+            "foo()\u{00A0}\n;[...set].map(() => {})",
+            None,
+        ),
+        (
+            "foo()\u{FEFF}\nArray.from(set).map(() => {})",
+            "foo()\u{FEFF}\n;[...set].map(() => {})",
+            None,
+        ),
+        ("foo() /* a */ /* b */\nArray.from(set)", "foo() /* a */ /* b */\n;[...set]", None),
+        ("x++\narray.slice()", "x++\n;[...array]", None),
+        ("x--\narray.slice()", "x--\n;[...array]", None),
+        ("arr[0]\narray.slice()", "arr[0]\n;[...array]", None),
+        ("obj.prop\narray.slice()", "obj.prop\n;[...array]", None),
+        ("while (array.slice().length) {}", "while ([...array].length) {}", None),
+        ("do {} while (array.slice().length)", "do {} while ([...array].length)", None),
+        ("for (array.slice();;) {}", "for ([...array];;) {}", None),
+        ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}", None),
+        ("`template`\narray.toSpliced()", "`template`\n;[...array]", None),
+        (
+            r#"'string'
+str.split("")"#,
+            "'string'\n;[...str]",
+            None,
+        ),
+        (
+            r#""string"
+str.split("")"#,
+            r#""string"
+;[...str]"#,
+            None,
+        ),
+        (
+            "foo()\nArray.from(set).map(x => x).filter(Boolean).length",
+            "foo()\n;[...set].map(x => x).filter(Boolean).length",
+            None,
+        ),
+        ("const fn = () => Array.from(set)", "const fn = () => [...set]", None),
+        ("foo ? Array.from(a) : b", "foo ? [...a] : b", None),
+        ("foo || Array.from(set)", "foo || [...set]", None),
+        ("foo && Array.from(set)", "foo && [...set]", None),
+        ("foo + Array.from(set).length", "foo + [...set].length", None),
+        ("x = Array.from(set)", "x = [...set]", None),
+        ("const obj = { arr: Array.from(set) }", "const obj = { arr: [...set] }", None),
+        ("(foo, Array.from(set))", "(foo, [...set])", None),
+        ("[Array.from(set)]", "[[...set]]", None),
+        ("async () => await Array.from(set)", "async () => await [...set]", None),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)

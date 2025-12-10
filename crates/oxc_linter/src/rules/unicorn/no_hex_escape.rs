@@ -79,9 +79,10 @@ impl Rule for NoHexEscape {
         match node.kind() {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());
+                let quote = text.chars().next().unwrap_or('\'');
                 if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
                     ctx.diagnostic_with_fix(no_hex_escape_diagnostic(*span), |fixer| {
-                        fixer.replace(*span, format!("'{fixed}'"))
+                        fixer.replace(*span, format!("{quote}{fixed}{quote}"))
                     });
                 }
             }
@@ -211,6 +212,8 @@ fn test() {
             r#"const unicodeMatch = "".toString().match(/[^\u0000-\u00FF]+/gim);"#,
             None,
         ),
+        (r#"const foo = "it'\x80s""#, r#"const foo = "it'\u0080s""#, None),
+        (r#"const foo = 'it"\x80s'"#, r#"const foo = 'it"\u0080s'"#, None),
     ];
 
     Tester::new(NoHexEscape::NAME, NoHexEscape::PLUGIN, pass, fail)

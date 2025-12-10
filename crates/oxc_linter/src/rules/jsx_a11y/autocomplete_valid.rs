@@ -7,23 +7,46 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
+use std::ops::Deref;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, has_jsx_prop_ignore_case},
 };
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{autocomplete}` is not a valid value for autocomplete."))
-        .with_help(format!("Change `{autocomplete}` to a valid value for autocomplete."))
+    OxcDiagnostic::warn(format!("`{autocomplete}` is not a valid value for `autocomplete`."))
+        .with_help(format!("Change `{autocomplete}` to a valid value for `autocomplete`."))
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AutocompleteValid(Box<AutocompleteValidConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AutocompleteValidConfig {
+    /// List of custom component names that should be treated as input elements.
+    input_components: FxHashSet<CompactStr>,
+}
+
+impl Deref for AutocompleteValid {
+    type Target = AutocompleteValidConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for AutocompleteValidConfig {
+    fn default() -> Self {
+        Self { input_components: FxHashSet::from_iter([CompactStr::new("input")]) }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -50,27 +73,6 @@ declare_oxc_lint!(
     correctness,
     config = AutocompleteValidConfig
 );
-
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct AutocompleteValidConfig {
-    /// List of custom component names that should be treated as input elements.
-    input_components: FxHashSet<CompactStr>,
-}
-
-impl std::ops::Deref for AutocompleteValid {
-    type Target = AutocompleteValidConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::default::Default for AutocompleteValidConfig {
-    fn default() -> Self {
-        Self { input_components: FxHashSet::from_iter([CompactStr::new("input")]) }
-    }
-}
 
 static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "address-level1",
@@ -152,20 +154,9 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
 
 impl Rule for AutocompleteValid {
     fn from_configuration(config: Value) -> Self {
-        config
-            .get(0)
-            .and_then(|c| c.get("inputComponents"))
-            .and_then(Value::as_array)
-            .map(|components| {
-                components
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .map(CompactStr::from)
-                    .chain(Some("input".into()))
-                    .collect()
-            })
-            .map(|input_components| Self(Box::new(AutocompleteValidConfig { input_components })))
+        serde_json::from_value::<DefaultRuleConfig<AutocompleteValid>>(config)
             .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

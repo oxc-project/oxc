@@ -1379,6 +1379,7 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         | Statement::TSInterfaceDeclaration(_)
         | Statement::TSEnumDeclaration(_)
         | Statement::TSModuleDeclaration(_)
+        | Statement::TSGlobalDeclaration(_)
         | Statement::TSImportEqualsDeclaration(_) => {
             walk_declaration(traverser, node as *mut _, ctx)
         }
@@ -1474,6 +1475,9 @@ unsafe fn walk_declaration<'a, State, Tr: Traverse<'a, State>>(
         }
         Declaration::TSModuleDeclaration(node) => {
             walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSGlobalDeclaration(node) => {
+            walk_ts_global_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         Declaration::TSImportEqualsDeclaration(node) => {
             walk_ts_import_equals_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -5037,6 +5041,38 @@ unsafe fn walk_ts_module_declaration_body<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_ts_module_declaration_body(&mut *node, ctx);
 }
 
+unsafe fn walk_ts_global_declaration<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSGlobalDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_global_declaration(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id =
+        (*((node as *mut u8).add(ancestor::OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    let pop_token = ctx.push_stack(Ancestor::TSGlobalDeclarationBody(
+        ancestor::TSGlobalDeclarationWithoutBody(node, PhantomData),
+    ));
+    walk_ts_module_block(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_GLOBAL_DECLARATION_BODY) as *mut TSModuleBlock,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_ts_global_declaration(&mut *node, ctx);
+}
+
 unsafe fn walk_ts_module_block<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     node: *mut TSModuleBlock<'a>,
@@ -5147,12 +5183,12 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeArgument(
-        ancestor::TSImportTypeWithoutArgument(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
+        ancestor::TSImportTypeWithoutSource(node, PhantomData),
     ));
-    walk_ts_type(
+    walk_string_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut StringLiteral,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)

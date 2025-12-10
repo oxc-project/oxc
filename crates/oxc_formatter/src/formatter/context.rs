@@ -1,16 +1,10 @@
-use std::cell::RefCell;
-
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    Comment,
-    ast::{FunctionBody, Program},
-};
+use oxc_ast::Comment;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    ast_nodes::AstNode, embedded_formatter::EmbeddedFormatter, formatter::FormatElement,
-    options::FormatOptions,
+    embedded_formatter::EmbeddedFormatter, formatter::FormatElement, options::FormatOptions,
 };
 
 use super::{Comments, SourceText};
@@ -52,6 +46,7 @@ impl<'ast> FormatContext<'ast> {
         comments: &'ast [Comment],
         allocator: &'ast Allocator,
         options: FormatOptions,
+        embedded_formatter: Option<EmbeddedFormatter>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -61,7 +56,7 @@ impl<'ast> FormatContext<'ast> {
             comments: Comments::new(source_text, comments),
             allocator,
             cached_elements: FxHashMap::default(),
-            embedded_formatter: None,
+            embedded_formatter,
         }
     }
 
@@ -75,11 +70,6 @@ impl<'ast> FormatContext<'ast> {
             cached_elements: FxHashMap::default(),
             embedded_formatter: None,
         }
-    }
-
-    /// Set the embedded formatter for handling embedded languages
-    pub fn set_embedded_formatter(&mut self, embedded_formatter: Option<EmbeddedFormatter>) {
-        self.embedded_formatter = embedded_formatter;
     }
 
     /// Get the embedded formatter if one is set

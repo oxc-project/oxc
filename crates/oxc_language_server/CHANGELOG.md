@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.32.0] - 2025-12-08
+
+### 🐛 Bug Fixes
+
+- 0c14531 oxlint/lsp: Revalidate all known files after internal restart (#16407) (Sysix)
+- 5fd3096 lsp: Skip (un)registering file watcher when not dynamic watchers are supported (#16406) (Sysix)
+- 804144f lsp: Respect `null` as invalid settings for `workspace/didChangeConfiguration` (#16361) (Sysix)
+- 114665d lsp: Watch for files when workspace folder is added & `workspace/configuration` is not supported (#16307) (Sysix)
+
+### ⚡ Performance
+
+- 67cfa58 lsp: Avoid some clones (#16519) (Sysix)
+- 2a09665 oxlint/lsp: Store only `LinterCodeAction` instead of the complete `DiagnosticReport` (#16516) (Sysix)
+- 0ca9754 lsp: Avoid `Uri` to `String` and back to `Uri` conversion (#16470) (Sysix)
+- 2736636 lsp: Avoid cloning when revalidating diagnostics (#16469) (Sysix)
+
+### 📚 Documentation
+
+- c0766df linter: Add config option docs for `unicorn/filename-case` rule. (#16280) (connorshea)
+
+## [1.31.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 653fa6c oxlint/oxfmt/lsp: Tell client the real tool name & version (#16212) (Sysix)
+- 135cee6 oxlint/lsp: Run diagnostics after delayed worker initialization (#16244) (Sysix)
+
+## [1.30.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- e4ba07f language_server: Always write to memory file system (#15975) (Sysix)
+- 619a226 oxlint/lsp: Don't register `textDocument/formatting` capability (#15882) (Sysix)
+
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- ac5c2ab lsp/fmt: Support ignore files & patterns (#15647) (Sysix)
+- 4c62ffa language_server: Add `run_server` helper for CLI tools (#15609) (Sysix)
+
+### ⚡ Performance
+
+- 7528db4 language_server: Pass file content as a referenced `String` (#15568) (Sysix)
+- ccfd935 language_server: Avoid `Mutex` in `ServerLinter` (#15516) (Sysix)
+
 ## [1.27.0] - 2025-11-10
 
 ### 🐛 Bug Fixes

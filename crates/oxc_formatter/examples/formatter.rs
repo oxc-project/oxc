@@ -14,7 +14,9 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{BracketSameLine, FormatOptions, Formatter, Semicolons, get_parse_options};
+use oxc_formatter::{
+    BracketSameLine, FormatOptions, Formatter, LineWidth, Semicolons, get_parse_options,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -24,6 +26,7 @@ fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
     let show_ir = args.contains("--ir");
+    let print_width = args.opt_value_from_str::<&'static str, u16>("--print-width").unwrap_or(None);
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     // Read source file
@@ -46,9 +49,14 @@ fn main() -> Result<(), String> {
 
     // Format the parsed code
     let semicolons = if no_semi { Semicolons::AsNeeded } else { Semicolons::Always };
+    let line_width = match print_width {
+        Some(width) => LineWidth::try_from(width).unwrap(),
+        None => LineWidth::try_from(80).unwrap(),
+    };
     let options = FormatOptions {
         bracket_same_line: BracketSameLine::from(true),
         semicolons,
+        line_width,
         ..Default::default()
     };
 

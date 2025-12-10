@@ -15,3 +15,9 @@ ad2835f11b28e28ecec635842c62b407d9149331
 
 # chore(rust): run `cargo fmt --all -- crates/**/*.rs`
 217997bd7c5fec9edc6dabcb668ab664f9c31857
+
+# chore(infra): dogfooding oxfmt (#14979)
+a8e5181ab73e3cee5904af3acc6c5927def9d500
+
+# style(all): apply oxfmt default options (#16091)
+523a30a0164932029e977090d441041fff13c735

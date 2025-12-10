@@ -2731,6 +2731,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_ts_global_declaration(
+        &mut self,
+        node: &mut TSGlobalDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_global_declaration(
+        &mut self,
+        node: &mut TSGlobalDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_module_block(
         &mut self,
         node: &mut TSModuleBlock<'a>,

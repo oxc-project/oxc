@@ -170,7 +170,6 @@ new-react-perf-rule name: (new-rule name "react-perf")
 new-n-rule name: (new-rule name "n")
 new-promise-rule name: (new-rule name "promise")
 new-vitest-rule name: (new-rule name "vitest")
-new-regexp-rule name: (new-rule name "regexp")
 new-vue-rule name: (new-rule name "vue")
 
 # Alias for backward compatibility
@@ -247,13 +246,15 @@ watch-playground:
 # When testing changes to the website documentation, you may also want to run `dprint fmt --staged`
 # in the website directory.
 website path:
-  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
-  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
-  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_linter rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
+  cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
+  cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
+  cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 
 # Generate linter schema json for `npm/oxlint/configuration_schema.json`
 linter-schema-json:
-  cargo run -p website -- linter-schema-json > npm/oxlint/configuration_schema.json
+  cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

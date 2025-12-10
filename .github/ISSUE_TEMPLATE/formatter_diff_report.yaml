@@ -1,0 +1,79 @@
+name: Formatter diff report
+description: Report Oxfmt differences with Prettier
+title: "formatter: Diff with Prettier on ..."
+labels: ["A-formatter-prettier-diff"]
+type: Bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve Oxfmt! Please fill out the sections below to help us understand and reproduce the issue you're experiencing.
+
+  - type: textarea
+    id: input
+    attributes:
+      label: Input
+      description: Paste your minimal reproducible input.
+      value: |
+        ```tsx
+        // ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Config
+      description: Paste your minimal config. Leave empty if using defaults.
+      value: |
+        ```jsonc
+        {}
+        ```
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Oxfmt output
+      description: Paste the actual output from Oxfmt.
+      value: |
+        Oxfmt version: `X.Y.Z`
+        ```tsx
+        // ...
+        ```
+    validations:
+      required: true
+
+  - type: input
+    id: oxfmt_playground
+    attributes:
+      label: Oxfmt playground link
+      description: Optional link to Oxc playground https://playground.oxc.rs
+      placeholder: https://playground.oxc.rs/...
+
+  - type: textarea
+    id: expect
+    attributes:
+      label: Prettier output
+      description: Paste the expected output from Prettier. If possible, please try `npx https://pkg.pr.new/prettier/prettier@864bb7c042d9935344c155ad9292de3213e0085b` (Our tracking Prettier `main` branch)
+      value: |
+        Prettier version: `X.Y.Z`
+        ```tsx
+        // ...
+        ```
+    validations:
+      required: true
+
+  - type: input
+    id: prettier_playground
+    attributes:
+      label: Prettier playground link
+      description: Optional link to Prettier playground https://prettier.io/playground/
+      placeholder: https://prettier.io/playground/...
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Add any additional context or notes here.

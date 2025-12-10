@@ -74,12 +74,12 @@ impl Rule for NoUnassignedVars {
         ) {
             return;
         }
-        if ctx
-            .nodes()
-            .ancestors(node.id())
-            .skip(1)
-            .any(|ancestor| matches!(ancestor.kind(), AstKind::TSModuleDeclaration(_)))
-        {
+        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
+            matches!(
+                ancestor.kind(),
+                AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)
+            )
+        }) {
             return;
         }
         let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind else {

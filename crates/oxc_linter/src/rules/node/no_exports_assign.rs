@@ -124,6 +124,5 @@ fn test() {
 
     Tester::new(NoExportsAssign::NAME, NoExportsAssign::PLUGIN, pass, fail)
         .expect_fix(fix)
-        .with_node_plugin(true)
         .test_and_snapshot();
 }

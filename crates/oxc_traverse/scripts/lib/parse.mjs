@@ -1,11 +1,11 @@
 // oxlint-disable eslint-plugin-jsdoc/require-property-description
 
-import { readFile } from 'fs/promises';
-import { join as pathJoin } from 'path';
-import { fileURLToPath } from 'url';
-import { typeAndWrappers } from './utils.mjs';
+import { readFile } from "fs/promises";
+import { join as pathJoin } from "path";
+import { fileURLToPath } from "url";
+import { typeAndWrappers } from "./utils.mjs";
 
-const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
+const FILENAMES = ["js.rs", "jsx.rs", "literal.rs", "ts.rs"];
 
 /**
  * @typedef {Record<string, StructType | EnumType>} Types
@@ -68,12 +68,12 @@ const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
  * @returns {Promise<Types>}
  */
 export default async function getTypesFromCode() {
-  const codeDirPath = pathJoin(fileURLToPath(import.meta.url), '../../../../oxc_ast/src/ast/');
+  const codeDirPath = pathJoin(fileURLToPath(import.meta.url), "../../../../oxc_ast/src/ast/");
 
   const types = Object.create(null);
   for (const filename of FILENAMES) {
     // oxlint-disable-next-line no-await-in-loop
-    const code = await readFile(`${codeDirPath}${filename}`, 'utf8');
+    const code = await readFile(`${codeDirPath}${filename}`, "utf8");
     parseFile(code, filename, types);
   }
   return types;
@@ -104,7 +104,7 @@ class Position {
    * @param {string} [message]
    */
   throw(message) {
-    throw new Error(`${message || 'Unknown error'} (at ${this.filename}:${this.index + 1})`);
+    throw new Error(`${message || "Unknown error"} (at ${this.filename}:${this.index + 1})`);
   }
 }
 
@@ -137,9 +137,9 @@ class Lines {
   static fromCode(code, filename) {
     const lines = code.split(/\r?\n/).map((line) =>
       line
-        .replace(/\s+/g, ' ')
-        .replace(/ ?\/\/.*$/, '')
-        .replace(/ $/, ''),
+        .replace(/\s+/g, " ")
+        .replace(/ ?\/\/.*$/, "")
+        .replace(/ $/, ""),
     );
     return new Lines(lines, filename, 0);
   }
@@ -196,11 +196,11 @@ function parseFile(code, filename, types) {
     const itemLines = lines.child();
     while (!lines.isEnd()) {
       const line = lines.next();
-      if (line === '}') break;
+      if (line === "}") break;
       itemLines.lines.push(line.trim());
     }
 
-    if (kind === 'struct') {
+    if (kind === "struct") {
       types[name] = parseStruct(name, rawName, itemLines, scopeArgs);
     } else {
       types[name] = parseEnum(name, rawName, itemLines);
@@ -221,13 +221,13 @@ function parseStruct(name, rawName, lines, scopeArgs) {
       line;
     while (!lines.isEnd()) {
       line = lines.next();
-      if (line === '') continue;
-      if (line === '#[scope(enter_before)]') {
+      if (line === "") continue;
+      if (line === "#[scope(enter_before)]") {
         isScopeEntry = true;
-      } else if (line === '#[scope(exit_before)]') {
+      } else if (line === "#[scope(exit_before)]") {
         isScopeExit = true;
-      } else if (line.startsWith('#[')) {
-        while (!line.endsWith(']')) {
+      } else if (line.startsWith("#[")) {
+        while (!line.endsWith("]")) {
           line = lines.next();
         }
       } else {
@@ -238,7 +238,7 @@ function parseStruct(name, rawName, lines, scopeArgs) {
     const match = line.match(/^pub ((?:r#)?([a-z_]+)): (.+),$/);
     lines.positionPrevious().assert(match, `Cannot parse line as struct field: '${line}'`);
     const [, rawName, name, rawTypeName] = match,
-      typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
+      typeName = rawTypeName.replace(/<'a>/g, "").replace(/<'a, ?/g, "<"),
       { name: innerTypeName, wrappers } = typeAndWrappers(typeName);
 
     fields.push({ name, typeName, rawName, rawTypeName, innerTypeName, wrappers });
@@ -246,7 +246,7 @@ function parseStruct(name, rawName, lines, scopeArgs) {
     if (isScopeEntry) scopeArgs.enterScopeBefore = name;
     if (isScopeExit) scopeArgs.exitScopeBefore = name;
   }
-  return { kind: 'struct', name, rawName, fields, scopeArgs };
+  return { kind: "struct", name, rawName, fields, scopeArgs };
 }
 
 /**
@@ -260,9 +260,9 @@ function parseEnum(name, rawName, lines) {
 
   while (!lines.isEnd()) {
     let line = lines.next();
-    if (line === '') continue;
-    if (line.startsWith('#[')) {
-      while (!line.endsWith(']')) {
+    if (line === "") continue;
+    if (line.startsWith("#[")) {
+      while (!line.endsWith("]")) {
         line = lines.next();
       }
       continue;
@@ -271,7 +271,7 @@ function parseEnum(name, rawName, lines) {
     const match = line.match(/^(.+?)\((.+?)\)(?: ?= ?(\d+))?,$/);
     if (match) {
       const [, name, rawTypeName, discriminantStr] = match,
-        typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
+        typeName = rawTypeName.replace(/<'a>/g, "").replace(/<'a, ?/g, "<"),
         { name: innerTypeName, wrappers } = typeAndWrappers(typeName),
         discriminant = discriminantStr ? +discriminantStr : null;
       variants.push({ name, typeName, rawTypeName, innerTypeName, wrappers, discriminant });
@@ -281,30 +281,30 @@ function parseEnum(name, rawName, lines) {
       inherits.push(match2[1]);
     }
   }
-  return { kind: 'enum', name, rawName, variants, inherits };
+  return { kind: "enum", name, rawName, variants, inherits };
 }
 
 function parseScopeArgs(lines, scopeArgs) {
   const position = lines.position();
 
   // Get whole of `#[scope]` attr text as a single line string
-  let scopeArgsStr = '';
+  let scopeArgsStr = "";
   let line = lines.next();
-  if (line !== '#[scope]') {
-    line = line.slice('#[scope('.length);
-    while (!line.endsWith(')]')) {
+  if (line !== "#[scope]") {
+    line = line.slice("#[scope(".length);
+    while (!line.endsWith(")]")) {
       scopeArgsStr += ` ${line}`;
       line = lines.next();
     }
     scopeArgsStr += ` ${line.slice(0, -2)}`;
-    scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ').replace(/,$/, '');
+    scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, " ").replace(/,$/, "");
   }
 
   // Parse attr
   return parseScopeArgsStr(scopeArgsStr, scopeArgs, position);
 }
 
-const SCOPE_ARGS_KEYS = { flags: 'flags', strict_if: 'strictIf' };
+const SCOPE_ARGS_KEYS = { flags: "flags", strict_if: "strictIf" };
 
 /**
  * @param {string} argsStr
@@ -316,7 +316,7 @@ const SCOPE_ARGS_KEYS = { flags: 'flags', strict_if: 'strictIf' };
 function parseScopeArgsStr(argsStr, args, position) {
   if (!args) {
     args = {
-      flags: 'ScopeFlags::empty()',
+      flags: "ScopeFlags::empty()",
       strictIf: null,
       enterScopeBefore: null,
       exitScopeBefore: null,
@@ -343,11 +343,11 @@ function parseScopeArgsStr(argsStr, args, position) {
         index = 0;
       for (; index < argsStr.length; index++) {
         const char = argsStr[index];
-        if (char === '(') {
+        if (char === "(") {
           bracketCount++;
-        } else if (char === ')') {
+        } else if (char === ")") {
           bracketCount--;
-        } else if (char === ',' && bracketCount === 0) {
+        } else if (char === "," && bracketCount === 0) {
           break;
         }
       }
@@ -355,15 +355,13 @@ function parseScopeArgsStr(argsStr, args, position) {
 
       args[key] = argsStr.slice(0, index).trim();
       argsStr = argsStr.slice(index);
-      if (argsStr === '') break;
+      if (argsStr === "") break;
 
       matchAndConsume(/^\s*,\s*/);
     }
   } catch (err) {
-    position.throw(`Cannot parse scope args: '${argsStr}': ${err?.message || 'Unknown error'}`);
+    position.throw(`Cannot parse scope args: '${argsStr}': ${err?.message || "Unknown error"}`);
   }
-
-  console.log(args);
 
   return args;
 }

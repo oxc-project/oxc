@@ -1,7 +1,5 @@
 {
   "$schema": "./npm/oxfmt/configuration_schema.json",
-  "printWidth": 120,
-  "singleQuote": true,
   "ignorePatterns": [
     "**/dist/**",
     "**/tests/**",
@@ -14,6 +12,7 @@
     "tasks/coverage/src/runtime/babelHelpers.js",
     "apps/{oxlint,oxfmt}/src-js/bindings.js",
     "apps/{oxlint,oxfmt}/src-js/bindings.d.ts",
+    "apps/oxlint/conformance/submodules/**",
     "napi/parser/src-js/bindings.js",
     "napi/{transform,minify,playground}/index.js",
     "napi/{transform,minify,playground}/index.d.ts",

@@ -17,6 +17,7 @@ pub enum CliRunResult {
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
     TsGoLintError,
+    TooManyFilesWithImportAndJsPlugins,
 }
 
 impl Termination for CliRunResult {
@@ -37,7 +38,8 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName
-            | Self::TsGoLintError => ExitCode::FAILURE,
+            | Self::TsGoLintError
+            | Self::TooManyFilesWithImportAndJsPlugins => ExitCode::FAILURE,
         }
     }
 }

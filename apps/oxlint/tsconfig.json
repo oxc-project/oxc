@@ -4,12 +4,15 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
+    "allowImportingTsExtensions": true,
     "noImplicitAny": true,
+    "strictNullChecks": true,
     "skipLibCheck": true
   },
   "exclude": [
     "node_modules",
     "fixtures",
-    "test/fixtures/*/files"
+    "test/fixtures/*/files",
+    "conformance/submodules"
   ]
 }

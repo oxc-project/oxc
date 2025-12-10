@@ -15,12 +15,12 @@ use crate::{
 
 fn missing_lang_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing lang attribute.")
-        .with_help("Add a lang attribute to the html element whose value represents the primary language of document.")
+        .with_help("Add a `lang` attribute to the `html` element whose value represents the primary language of document.")
         .with_label(span)
 }
 
 fn missing_lang_value(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing value for lang attribute")
+    OxcDiagnostic::warn("Missing value for `lang` attribute")
         .with_help("Must have meaningful value for `lang` prop.")
         .with_label(span)
 }
@@ -139,7 +139,5 @@ fn test() {
         ("<HTMLTop />", None, Some(settings())),
     ];
 
-    Tester::new(HtmlHasLang::NAME, HtmlHasLang::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(HtmlHasLang::NAME, HtmlHasLang::PLUGIN, pass, fail).test_and_snapshot();
 }
