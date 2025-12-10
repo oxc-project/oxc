@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -101,34 +101,36 @@ impl Rule for NoRedundantShouldComponentUpdate {
             return;
         }
 
-        if has_should_component_update(class_expr) {
-            let component_name = class_expr
-                .name()
-                .or_else(|| {
-                    // e.g. var Foo = class extends PureComponent
-                    let parent = ctx.nodes().parent_node(node.id());
-                    if let AstKind::VariableDeclarator(declarator) = parent.kind() {
-                        declarator.id.get_identifier_name()
-                    } else {
-                        None
-                    }
-                })
-                .map_or("", |name| name.as_str());
+        let Some(component_should_update_method_span) = get_should_component_update(class_expr)
+        else {
+            return;
+        };
 
-            ctx.diagnostic(no_redundant_should_component_update_diagnostic(
-                class_expr.span,
-                component_name,
-            ));
-        }
+        let component_name = class_expr
+            .name()
+            .or_else(|| {
+                // e.g. var Foo = class extends PureComponent
+                let parent = ctx.nodes().parent_node(node.id());
+                if let AstKind::VariableDeclarator(declarator) = parent.kind() {
+                    declarator.id.get_identifier_name()
+                } else {
+                    None
+                }
+            })
+            .map_or("", |name| name.as_str());
+
+        ctx.diagnostic(no_redundant_should_component_update_diagnostic(
+            component_should_update_method_span,
+            component_name,
+        ));
     }
 }
 
-fn has_should_component_update(class: &Class<'_>) -> bool {
-    class
-        .body
-        .body
-        .iter()
-        .any(|prop| prop.static_name().is_some_and(|name| name == "shouldComponentUpdate"))
+fn get_should_component_update(class: &Class<'_>) -> Option<Span> {
+    class.body.body.iter().find_map(|prop| {
+        let key = prop.property_key()?;
+        (key.static_name()? == "shouldComponentUpdate").then_some(key.span())
+    })
 }
 
 /// Checks if class is React.PureComponent and returns this class if true
