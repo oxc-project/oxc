@@ -150,8 +150,6 @@ describe("RuleTester", () => {
   });
 
   describe("config", () => {
-    // TODO: More tests for config
-
     it("can be set globally", () => {
       const config = { eslintCompat: true };
       RuleTester.setDefaultConfig(config);
@@ -1418,9 +1416,7 @@ describe("RuleTester", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {
           valid: [
-            {
-              code: "with (obj) {}",
-            },
+            "with (obj) {}",
             {
               code: "with (obj) {}",
               languageOptions: { sourceType: "script" },
@@ -2466,9 +2462,7 @@ describe("RuleTester", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {
           valid: [
-            {
-              code: "function f(x, x) {}",
-            },
+            "function f(x, x) {}",
             {
               code: "function f(x, x) {}",
               languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
