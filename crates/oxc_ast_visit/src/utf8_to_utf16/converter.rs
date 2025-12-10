@@ -250,8 +250,8 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         const LINEAR_SEARCH_ITERATIONS: usize = 8;
 
         // `utf8_offset` is after current range, so there must be another range after this one.
-        // We don't need to include next range in search because we know it starts before `uft8_offset`,
-        // and we're looking for a range which starts *after* `uft8_offset`.
+        // We don't need to include next range in search because we know it starts before `utf8_offset`,
+        // and we're looking for a range which starts *after* `utf8_offset`.
         let mut next_index = self.index as usize + 1;
         let linear_search_end_index =
             min(next_index + LINEAR_SEARCH_ITERATIONS, self.translations.len());

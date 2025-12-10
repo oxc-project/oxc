@@ -171,9 +171,10 @@ fn build_translations_impl(
             if track_lines && byte == 0xE2 {
                 let full_offset = start_offset + index;
 
-                // Always use full source text for PS/LS detection to simplify logic
-                // source_text is guaranteed valid UTF-8, so if byte is 0xE2, there are always 2 more bytes
-                assert!(full_offset + 2 < source_text.len());
+                // Always use full source text for PS/LS detection to simplify logic.
+                // source_text is guaranteed valid UTF-8, so if byte is 0xE2, there must be 2 more bytes
+                // after it (it's a 3-byte Unicode character). Assert this to catch any bugs.
+                assert!(full_offset + 3 <= source_text.len());
 
                 let source_bytes = source_text.as_bytes();
                 let has_ls_ps = source_bytes[full_offset + 1] == 0x80
