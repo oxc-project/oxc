@@ -15,6 +15,8 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
         actual, expected,
         r"
 💥 First format does not match expected!
+============== input ==============
+{code}
 ============== actual =============
 {actual}
 ============= expected ============
@@ -25,13 +27,15 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     );
 
     // Check idempotency
-    let actual = format_code(&actual, &options);
+    let actual2 = format_code(&actual, &options);
     assert_eq!(
-        actual, expected,
+        actual2, expected,
         r"
 💥 Formatting is not idempotent!
-============== actual =============
+============== input ==============
 {actual}
+============== actual =============
+{actual2}
 ============= expected ============
 {expected}
 ============== config =============
