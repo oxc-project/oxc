@@ -13,7 +13,7 @@ type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
-type TestCase = ValidTestCase | InvalidTestCase;
+export type TestCase = ValidTestCase | InvalidTestCase;
 
 const { isArray } = Array;
 

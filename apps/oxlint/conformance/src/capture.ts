@@ -2,6 +2,8 @@
  * `describe` and `it` functions for capturing test results.
  */
 
+import type { TestCase } from "./rule_tester.ts";
+
 /**
  * Result of running all tests in a rule file.
  */
@@ -20,6 +22,7 @@ export interface TestResult {
   code: string;
   isPassed: boolean;
   error: Error | null;
+  testCase: TestCase | null;
 }
 
 // Tracks what nested `describe` blocks currently in
@@ -70,6 +73,7 @@ export function it(code: string, fn: () => void): void {
     code,
     isPassed: false,
     error: null,
+    testCase: null,
   };
 
   try {
@@ -77,6 +81,7 @@ export function it(code: string, fn: () => void): void {
     testResult.isPassed = true;
   } catch (err) {
     testResult.error = err as Error;
+    testResult.testCase = err?.__testCase ?? null;
   }
 
   currentRule!.tests.push(testResult);
