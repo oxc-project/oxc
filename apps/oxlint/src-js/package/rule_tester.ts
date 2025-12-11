@@ -974,51 +974,51 @@ function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
   const languageOptions = test.languageOptions as LanguageOptionsWithParser | undefined;
-  if (languageOptions != null) {
-    // Throw error if custom parser is provided
-    if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
+  if (languageOptions == null) return parseOptions;
 
-    // Handle `languageOptions.sourceType`
-    let { sourceType } = languageOptions;
-    if (sourceType != null) {
-      if (test.eslintCompat === true) {
-        // ESLint compatibility mode.
-        // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-        if (sourceType === "commonjs") {
-          sourceType = "script";
-        } else if (sourceType === "unambiguous") {
-          throw new Error(
-            "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-              "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-          );
-        }
-      } else {
-        // Not ESLint compatibility mode.
-        // `commonjs` is disallowed.
-        if (sourceType === "commonjs") {
-          throw new Error(
-            "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-              "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-          );
-        }
+  // Throw error if custom parser is provided
+  if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
+
+  // Handle `languageOptions.sourceType`
+  let { sourceType } = languageOptions;
+  if (sourceType != null) {
+    if (test.eslintCompat === true) {
+      // ESLint compatibility mode.
+      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
+      if (sourceType === "commonjs") {
+        sourceType = "script";
+      } else if (sourceType === "unambiguous") {
+        throw new Error(
+          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+        );
       }
-
-      parseOptions.sourceType = sourceType;
+    } else {
+      // Not ESLint compatibility mode.
+      // `commonjs` is disallowed.
+      if (sourceType === "commonjs") {
+        throw new Error(
+          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
+            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
+        );
+      }
     }
 
-    // Handle `languageOptions.parserOptions`
-    const { parserOptions } = languageOptions;
-    if (parserOptions != null) {
-      // Handle `parserOptions.ignoreNonFatalErrors`
-      if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+    parseOptions.sourceType = sourceType;
+  }
 
-      // Handle `parserOptions.lang`
-      const { lang } = parserOptions;
-      if (lang != null) {
-        parseOptions.lang = lang;
-      } else if (parserOptions.ecmaFeatures?.jsx === true) {
-        parseOptions.lang = "jsx";
-      }
+  // Handle `languageOptions.parserOptions`
+  const { parserOptions } = languageOptions;
+  if (parserOptions != null) {
+    // Handle `parserOptions.ignoreNonFatalErrors`
+    if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+
+    // Handle `parserOptions.lang`
+    const { lang } = parserOptions;
+    if (lang != null) {
+      parseOptions.lang = lang;
+    } else if (parserOptions.ecmaFeatures?.jsx === true) {
+      parseOptions.lang = "jsx";
     }
   }
 
