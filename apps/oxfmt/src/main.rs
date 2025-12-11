@@ -1,6 +1,6 @@
-use std::io::BufWriter;
-
-use oxfmt::cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing};
+use oxfmt::cli::{
+    CliRunResult, FormatRunner, format_command, init_miette, init_rayon, init_tracing,
+};
 use oxfmt::init::run_init;
 use oxfmt::lsp::run_lsp;
 
@@ -26,12 +26,7 @@ async fn main() -> CliRunResult {
     // Otherwise, CLI mode
     init_tracing();
     init_miette();
+    init_rayon(command.misc_options.threads);
 
-    command.handle_threads();
-
-    // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-    // See `https://github.com/rust-lang/rust/issues/60673`.
-    let mut stdout = BufWriter::new(std::io::stdout());
-    let mut stderr = BufWriter::new(std::io::stderr());
-    FormatRunner::new(command).run(&mut stdout, &mut stderr)
+    FormatRunner::new(command).run()
 }

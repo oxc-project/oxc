@@ -1,13 +1,12 @@
 use std::{
     ffi::OsString,
-    io::BufWriter,
     process::{ExitCode, Termination},
 };
 
 use napi_derive::napi;
 
 use crate::{
-    cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing},
+    cli::{CliRunResult, FormatRunner, format_command, init_miette, init_rayon, init_tracing},
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     init::run_init,
     lsp::run_lsp,
@@ -80,18 +79,11 @@ async fn format_impl(
     // Otherwise, CLI mode
     init_tracing();
     init_miette();
-
-    command.handle_threads();
+    init_rayon(command.misc_options.threads);
 
     // Create external formatter from JS callback
     let external_formatter =
         ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
 
-    // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-    // See `https://github.com/rust-lang/rust/issues/60673`.
-    let mut stdout = BufWriter::new(std::io::stdout());
-    let mut stderr = BufWriter::new(std::io::stderr());
-    FormatRunner::new(command)
-        .with_external_formatter(Some(external_formatter))
-        .run(&mut stdout, &mut stderr)
+    FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run()
 }

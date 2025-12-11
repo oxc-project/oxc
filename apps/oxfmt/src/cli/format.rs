@@ -1,15 +1,6 @@
-use std::{
-    env,
-    io::Write,
-    path::{Path, PathBuf},
-    sync::mpsc,
-    time::Instant,
-};
-
-use serde_json::Value;
+use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::{FormatOptions, OxfmtOptions, Oxfmtrc};
 
 use super::{
     command::{FormatCommand, OutputOptions},
@@ -18,7 +9,7 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{SourceFormatter, utils};
+use crate::core::{SourceFormatter, load_config, resolve_config_path, utils};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -54,7 +45,12 @@ impl FormatRunner {
 
     /// # Panics
     /// Panics if `napi` feature is enabled but external_formatter is not set.
-    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
+    pub fn run(self) -> CliRunResult {
+        // stdio is blocked by `LineWriter`, use a `BufWriter` to reduce syscalls.
+        // See https://github.com/rust-lang/rust/issues/60673
+        let stdout = &mut BufWriter::new(std::io::stdout());
+        let stderr = &mut BufWriter::new(std::io::stderr());
+
         let start_time = Instant::now();
 
         let cwd = self.cwd;
@@ -66,7 +62,7 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config_path = load_config_path(&cwd, basic_options.config.as_deref());
+        let config_path = resolve_config_path(&cwd, basic_options.config.as_deref());
         // Load and parse config file
         // - `format_options`: Parsed formatting options used by `oxc_formatter`
         // - `external_config`: JSON value used by `external_formatter`, populated with `format_options`
@@ -243,68 +239,4 @@ impl FormatRunner {
             }
         }
     }
-}
-
-// ---
-
-/// Resolve config file path from cwd and optional explicit path.
-fn load_config_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
-    // If `--config` is explicitly specified, use that path
-    if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
-    }
-
-    // If `--config` is not specified, search the nearest config file from cwd upwards
-    // Support both `.json` and `.jsonc`, but prefer `.json` if both exist
-    cwd.ancestors().find_map(|dir| {
-        for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
-            let config_path = dir.join(filename);
-            if config_path.exists() {
-                return Some(config_path);
-            }
-        }
-        None
-    })
-}
-
-/// # Errors
-/// Returns error if:
-/// - Config file is specified but not found or invalid
-/// - Config file parsing fails
-fn load_config(config_path: Option<&Path>) -> Result<(FormatOptions, OxfmtOptions, Value), String> {
-    // Read and parse config file, or use empty JSON if not found
-    let json_string = match config_path {
-        Some(path) => {
-            let mut json_string = utils::read_to_string(path)
-                // Do not include OS error, it differs between platforms
-                .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
-            // Strip comments (JSONC support)
-            json_strip_comments::strip(&mut json_string).map_err(|err| {
-                format!("Failed to strip comments from {}: {err}", path.display())
-            })?;
-            json_string
-        }
-        None => "{}".to_string(),
-    };
-
-    // Parse as raw JSON value (to pass to external formatter)
-    let mut raw_config: Value = serde_json::from_str(&json_string)
-        .map_err(|err| format!("Failed to parse config: {err}"))?;
-
-    // NOTE: Field validation for `enum` are done here
-    let oxfmtrc: Oxfmtrc = serde_json::from_str(&json_string)
-        .map_err(|err| format!("Failed to deserialize config: {err}"))?;
-
-    // NOTE: Other validation based on it's field values are done here
-    let (format_options, oxfmt_options) =
-        oxfmtrc.into_options().map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
-
-    // Populate `raw_config` with resolved options to apply our defaults
-    Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
-
-    Ok((format_options, oxfmt_options, raw_config))
 }
