@@ -76,8 +76,11 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             }
             ts::check_class(class, ctx);
         }
-        AstKind::Function(func) if !ctx.source_type.is_typescript() => {
-            js::check_function_redeclaration(func, ctx);
+        AstKind::Function(func) => {
+            if !ctx.source_type.is_typescript() {
+                js::check_function_redeclaration(func, ctx);
+            }
+            ts::check_function(func, ctx);
         }
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
@@ -100,6 +103,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
+        AstKind::VariableDeclaration(decl) => {
+            ts::check_variable_declaration(decl, ctx);
+        }
         AstKind::VariableDeclarator(decl) => {
             if !ctx.source_type.is_typescript() {
                 js::check_variable_declarator_redeclaration(decl, ctx);

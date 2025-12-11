@@ -320,6 +320,25 @@ impl<'a> SemanticBuilder<'a> {
                 .any(|scope_id| self.scoping.scope_flags(scope_id).is_ts_module_block())
     }
 
+    /// Returns true if we're inside an ambient `declare` block.
+    /// Unlike `in_declare_scope`, this does NOT return true just because the file is a `.d.ts` file.
+    /// This is used for TS1038: "A 'declare' modifier cannot be used in an already ambient context."
+    /// TypeScript allows `declare` at the top level of a `.d.ts` file, but not nested inside
+    /// another `declare` block.
+    ///
+    /// This checks if any ancestor TSModuleDeclaration or TSGlobalDeclaration has `declare: true`.
+    pub(crate) fn in_ambient_declare_block(&self) -> bool {
+        // Walk up ancestors to find if we're inside a declare namespace/module/global
+        for ancestor in self.nodes.ancestors(self.current_node_id).skip(1) {
+            match ancestor.kind() {
+                AstKind::TSModuleDeclaration(decl) if decl.declare => return true,
+                AstKind::TSGlobalDeclaration(decl) if decl.declare => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         #[cfg(not(feature = "linter"))]
         let flags = self.current_node_flags;

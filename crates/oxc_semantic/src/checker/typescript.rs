@@ -100,6 +100,7 @@ pub fn check_ts_type_alias_declaration<'a>(
     decl: &TSTypeAliasDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
+    check_declare_modifier_in_ambient_context(decl.declare, decl.span, ctx);
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
@@ -155,7 +156,38 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
+/// TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+fn declare_modifier_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1038", "A 'declare' modifier cannot be used in an already ambient context.")
+        .with_label(span)
+}
+
+/// Check that a `declare` modifier is not used in an already ambient context.
+/// This applies to: VariableDeclaration, Function, Class, TSEnumDeclaration,
+/// TSTypeAliasDeclaration, TSInterfaceDeclaration, TSModuleDeclaration
+///
+/// Note: TypeScript allows `declare` at the top level of a `.d.ts` file,
+/// but not nested inside another `declare` block (e.g., `declare namespace`).
+fn check_declare_modifier_in_ambient_context(
+    has_declare: bool,
+    span: Span,
+    ctx: &SemanticBuilder<'_>,
+) {
+    if has_declare && ctx.in_ambient_declare_block() {
+        ctx.error(declare_modifier_in_ambient_context(span));
+    }
+}
+
+pub fn check_variable_declaration(decl: &VariableDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
+    check_declare_modifier_in_ambient_context(decl.declare, decl.span, ctx);
+}
+
+pub fn check_function<'a>(func: &Function<'a>, ctx: &SemanticBuilder<'a>) {
+    check_declare_modifier_in_ambient_context(func.declare, func.span, ctx);
+}
+
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_declare_modifier_in_ambient_context(decl.declare, decl.span, ctx);
     check_ts_module_or_global_declaration(decl.span, ctx);
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
@@ -201,6 +233,8 @@ fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_declare_modifier_in_ambient_context(decl.declare, decl.span, ctx);
+
     let mut need_initializer = false;
 
     decl.body.members.iter().for_each(|member| {
@@ -264,6 +298,8 @@ fn function_implementation_missing(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
+    check_declare_modifier_in_ambient_context(class.declare, class.span, ctx);
+
     if !class.r#abstract {
         for elem in &class.body.body {
             if elem.is_abstract() {
@@ -304,6 +340,7 @@ pub fn check_ts_interface_declaration<'a>(
     decl: &TSInterfaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
+    check_declare_modifier_in_ambient_context(decl.declare, decl.span, ctx);
     check_type_name_is_reserved(&decl.id, ctx, "Interface");
 }
 
