@@ -123,6 +123,18 @@ export function generateReport(results: RuleResult[]): string {
   if (failingRules.length === 0) {
     lines.push("No rules with failures");
   } else {
+    // Summary
+    for (const rule of failingRules) {
+      const { testCount } = rule,
+        passedCount = testCount - rule.failingTests.length;
+      lines.push(`- \`${rule.ruleName}\` - ${formatProportion(passedCount, testCount)}`);
+    }
+    lines.push("");
+
+    // Details
+    lines.push("## Rules with Failures Detail");
+    lines.push("");
+
     for (const rule of failingRules) {
       const { testCount, failingTests } = rule,
         failedCount = failingTests.length,
