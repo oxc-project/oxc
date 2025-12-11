@@ -119,3 +119,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
    ╰────
   help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:58]
+ 1 │ export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } }
+   ·                                                          ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:51]
+ 1 │ export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } }
+   ·                                                   ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.

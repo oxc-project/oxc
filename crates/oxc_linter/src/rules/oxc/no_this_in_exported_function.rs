@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName,
-        ThisExpression,
+        PropertyDefinition, StaticBlock, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -128,8 +128,13 @@ impl<'a> Visit<'a> for ThisFinder {
         self.found_this_expressions.push(expr.span);
     }
     // Don't traverse into nested function declarations - they have their own `this` context
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {
-        // noop
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    // Don't traverse into static blocks - `this` refers to the class itself
+    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
+    // For property definitions, only visit the key (for computed properties)
+    // but skip the value since `this` in values refers to the class/instance
+    fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
+        self.visit_property_key(&prop.key);
     }
 }
 
@@ -188,8 +193,8 @@ fn test() {
         "function foo() { console.log(this); } export { foo };",
         "var foo = function foo() { console.log(this); }; export { foo };",
         "var foo = function () { console.log(this); }; export { foo };",
-        "export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } } }",
-        "export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } } }",
+        "export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } }",
+        "export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } }",
     ];
 
     Tester::new(NoThisInExportedFunction::NAME, NoThisInExportedFunction::PLUGIN, pass, fail)
