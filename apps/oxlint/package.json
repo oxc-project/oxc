@@ -10,6 +10,7 @@
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && cross-env DEBUG=true pnpm run build-js",
     "build-test": "pnpm run build-napi-test && cross-env DEBUG=true pnpm run build-js",
+    "build-conformance": "pnpm run build-napi-test && cross-env CONFORMANCE=true pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release --features allocator",

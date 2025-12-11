@@ -427,7 +427,7 @@ export class RuleTester {
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
 
-if (DEBUG) {
+if (CONFORMANCE) {
   (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
     modifyTestCase = alter;
   };
@@ -744,7 +744,7 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
-// In debug builds, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
+// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
 // This is used in conformance tests.
 type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
 
@@ -763,7 +763,7 @@ function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
   };
 }
 
-if (DEBUG) {
+if (CONFORMANCE) {
   // oxlint-disable-next-line no-func-assign
   (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
   // oxlint-disable-next-line no-func-assign
@@ -819,8 +819,8 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
   };
 
   // Call hook to modify test case before it is run.
-  // `modifyTestCase` is only available in debug builds - it's only for conformance testing.
-  if (DEBUG && modifyTestCase !== null) modifyTestCase(merged);
+  // `modifyTestCase` is only available in conformance build - it's only for conformance testing.
+  if (CONFORMANCE && modifyTestCase !== null) modifyTestCase(merged);
 
   return merged;
 }
