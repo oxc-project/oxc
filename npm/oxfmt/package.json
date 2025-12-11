@@ -21,6 +21,9 @@
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
+  "dependencies": {
+    "tinypool": "2.0.0"
+  },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

@@ -3,8 +3,11 @@ use std::borrow::Cow;
 use memchr::memchr;
 
 use oxc_ast::Comment;
+use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 
 use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
+
+use super::diagnostics;
 
 /// Scan through all comments and find the following pragmas:
 ///
@@ -28,7 +31,7 @@ pub fn update_options_with_comments(
 ) {
     let source_text = ctx.source_text;
     for comment in comments {
-        update_options_with_comment(typescript, jsx, comment, source_text);
+        update_options_with_comment(typescript, jsx, comment, source_text, ctx);
     }
 }
 
@@ -37,6 +40,7 @@ fn update_options_with_comment(
     jsx: &mut JsxOptions,
     comment: &Comment,
     source_text: &str,
+    ctx: &TransformCtx,
 ) {
     let mut comment_str = comment.content_span().source_text(source_text);
 
@@ -44,12 +48,16 @@ fn update_options_with_comment(
         match keyword {
             // @jsx
             PragmaType::Jsx => {
-                // Don't set React option unless React transform is enabled
-                // otherwise can cause error in `ReactJsx::new`
-                if jsx.jsx_plugin || jsx.development {
-                    jsx.pragma = Some(value.to_string());
+                if is_valid_pragma_value(value) {
+                    // Don't set React option unless React transform is enabled
+                    // otherwise can cause error in `ReactJsx::new`
+                    if jsx.jsx_plugin || jsx.development {
+                        jsx.pragma = Some(value.to_string());
+                    }
+                    typescript.jsx_pragma = Cow::Owned(value.to_string());
+                } else {
+                    ctx.error(diagnostics::invalid_pragma_value("jsx", value));
                 }
-                typescript.jsx_pragma = Cow::Owned(value.to_string());
             }
             // @jsxRuntime
             PragmaType::JsxRuntime => match value {
@@ -63,18 +71,62 @@ fn update_options_with_comment(
             }
             // @jsxFrag
             PragmaType::JsxFrag => {
-                // Don't set React option unless React transform is enabled
-                // otherwise can cause error in `ReactJsx::new`
-                if jsx.jsx_plugin || jsx.development {
-                    jsx.pragma_frag = Some(value.to_string());
+                if is_valid_pragma_value(value) {
+                    // Don't set React option unless React transform is enabled
+                    // otherwise can cause error in `ReactJsx::new`
+                    if jsx.jsx_plugin || jsx.development {
+                        jsx.pragma_frag = Some(value.to_string());
+                    }
+                    typescript.jsx_pragma_frag = Cow::Owned(value.to_string());
+                } else {
+                    ctx.error(diagnostics::invalid_pragma_value("jsxFrag", value));
                 }
-                typescript.jsx_pragma_frag = Cow::Owned(value.to_string());
             }
         }
 
         // Search again for another pragma
         comment_str = remainder;
     }
+}
+
+/// Check if a pragma value is valid.
+///
+/// A pragma value is invalid if any of the following are true:
+///   - It is an empty string
+///   - The root part is a reserved keyword (except `this`, `null`, `true`, `false`, `import.meta`)
+///   - Any part is not a valid identifier name
+///
+/// Based on <https://github.com/evanw/esbuild/blob/5e0e56d6d62076dfeff47f5227ae5300f91d2b16/internal/js_parser/js_parser.go#L18027-L18060>
+fn is_valid_pragma_value(value: &str) -> bool {
+    if value.is_empty() {
+        return false;
+    }
+
+    let mut parts = value.split('.');
+
+    let Some(root) = parts.next() else {
+        unreachable!();
+    };
+
+    match root {
+        // Allow `this`, `null`, `true`, `false` keywords
+        "this" | "null" | "true" | "false" => {}
+        // Allow `import.meta`
+        "import" => {
+            if !matches!(parts.next(), Some("meta")) {
+                return false;
+            }
+        }
+        // Otherwise, it must be a valid identifier and not a reserved keyword
+        _ => {
+            if is_reserved_keyword(root) || !is_identifier_name(root) {
+                return false;
+            }
+        }
+    }
+
+    // All remaining parts must be valid identifiers
+    parts.all(is_identifier_name)
 }
 
 /// Type of JSX pragma directive.

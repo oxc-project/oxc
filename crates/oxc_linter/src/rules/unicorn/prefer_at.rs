@@ -1,3 +1,8 @@
+use oxc_syntax::precedence::Precedence;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,16 +14,13 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::is_same_expression,
+    utils::{get_precedence, is_same_expression},
 };
 
 fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
@@ -579,7 +581,14 @@ fn check_lodash_last<'a>(
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, &format!("{name}.last()")),
                 |fixer| {
-                    let new_code = format!("{}.at(-1)", fixer.source_range(arg.span()));
+                    let arg_text = fixer.source_range(arg.span());
+                    let new_code = if get_precedence(arg)
+                        .is_some_and(|precedence| precedence < Precedence::Member)
+                    {
+                        format!("({arg_text}).at(-1)")
+                    } else {
+                        format!("{arg_text}.at(-1)")
+                    };
                     fixer.replace(call_expr.span, new_code)
                 },
             );
@@ -756,6 +765,8 @@ fn test() {
         ("lodash.last(array)", "array.at(-1)", None),
         // Edge cases with very large numbers
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
+        ("_.last([] as [])", "([] as []).at(-1)", None),
+        ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

@@ -30,6 +30,24 @@ arguments: --check --ignore-path ignore1 should_format/ok.js
 working directory: fixtures/ignore_and_override
 exit code: 1
 --- STDOUT ---------
+
+--- STDERR ---------
+Expected at least one target file
+--------------------
+--------------------
+arguments: --check --ignore-path ignore1 should_format/ok.js --no-error-on-unmatched-pattern
+working directory: fixtures/ignore_and_override
+exit code: 0
+--- STDOUT ---------
+
+--- STDERR ---------
+No files found matching the given patterns.
+--------------------
+--------------------
+arguments: --check --ignore-path ignore2
+working directory: fixtures/ignore_and_override
+exit code: 1
+--- STDOUT ---------
 Checking formatting...
 
 should_format/ok.js (<variable>ms)
@@ -40,7 +58,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 --------------------
 --------------------
-arguments: --check --ignore-path ignore2
+arguments: --check --ignore-path ignore2 should_format/ok.js
 working directory: fixtures/ignore_and_override
 exit code: 1
 --- STDOUT ---------

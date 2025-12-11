@@ -69,7 +69,7 @@ export function resetFileContext(): void {
 }
 
 // ECMAScript version. This matches ESLint's default.
-const ECMA_VERSION = 2026;
+export const ECMA_VERSION = 2026;
 const ECMA_VERSION_NUMBER = 17;
 
 // Supported ECMAScript versions. This matches ESLint's default.
@@ -151,7 +151,7 @@ const PARSER_OPTIONS = freeze({
 });
 
 // Singleton object for language options.
-const LANGUAGE_OPTIONS = freeze({
+const LANGUAGE_OPTIONS = {
   /**
    * Source type of the file being linted.
    */
@@ -185,22 +185,38 @@ const LANGUAGE_OPTIONS = freeze({
    * Globals defined for the file being linted.
    */
   get globals(): Readonly<Globals> | null {
-    if (filePath === null) {
-      throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
-    }
-
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
 
     // ESLint has `globals` as `null`, not empty object, if no globals are defined
     return globals === EMPTY_GLOBALS ? null : globals;
   },
-});
+};
+
+// In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
+// This is to allow changing the ECMAScript version in conformance tests.
+// Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
+let ecmaVersion = ECMA_VERSION;
+
+export function setEcmaVersion(version: number): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
+  ecmaVersion = version;
+}
+
+if (CONFORMANCE) {
+  Object.defineProperty(LANGUAGE_OPTIONS, "ecmaVersion", {
+    get(): number {
+      return ecmaVersion;
+    },
+  });
+}
+
+freeze(LANGUAGE_OPTIONS);
 
 /**
  * Language options used when parsing a file.
  */
-export type LanguageOptions = typeof LANGUAGE_OPTIONS;
+export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 
 // Singleton object for file-specific properties.
 //
@@ -255,8 +271,9 @@ const FILE_CONTEXT = freeze({
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
     // Note: If we change this implementation, also change `getPhysicalFilename` method below
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot access `context.physicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 
@@ -266,8 +283,9 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.physicalFilename` property instead.
    */
   getPhysicalFilename(): string {
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot call `context.getPhysicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 
@@ -315,8 +333,9 @@ const FILE_CONTEXT = freeze({
    * Language options used when parsing this file.
    */
   get languageOptions(): LanguageOptions {
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot access `context.languageOptions` in `createOnce`");
+    }
     return LANGUAGE_OPTIONS;
   },
 

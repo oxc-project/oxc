@@ -2152,7 +2152,7 @@ function walkTSImportType(node, visitors) {
     enter !== null && enter(node);
   }
   ancestors.unshift(node);
-  walkNode(node.argument, visitors);
+  walkNode(node.source, visitors);
   walkNode(node.options, visitors);
   walkNode(node.qualifier, visitors);
   walkNode(node.typeArguments, visitors);

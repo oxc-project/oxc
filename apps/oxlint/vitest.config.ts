@@ -6,5 +6,6 @@ export default defineConfig({
   },
   define: {
     DEBUG: "true",
+    CONFORMANCE: "false",
   },
 });

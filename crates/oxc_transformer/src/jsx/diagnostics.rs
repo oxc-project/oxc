@@ -30,3 +30,12 @@ pub fn valueless_key(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={true}\" is not allowed.")
         .with_label(span)
 }
+
+pub fn invalid_pragma_value(pragma_name: &str, value: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Invalid @{pragma_name} value \"{value}\". It will be ignored."
+    ))
+    .with_help(format!(
+        "@{pragma_name} must be a valid JavaScript identifier or a dotted sequence of identifiers"
+    ))
+}

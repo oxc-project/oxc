@@ -6,7 +6,7 @@ use std::{
 use log::{debug, warn};
 use oxc_data_structures::rope::Rope;
 use rustc_hash::FxHashSet;
-use tower_lsp_server::{UriExt, lsp_types::Uri};
+use tower_lsp_server::ls_types::Uri;
 
 use oxc_allocator::Allocator;
 use oxc_linter::{

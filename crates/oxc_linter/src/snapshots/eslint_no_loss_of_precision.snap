@@ -75,6 +75,54 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ let x = 9.0_0719925_474099_3e15
+   ·         ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:10]
+ 1 │ let x = -9_00719_9254_740993
+   ·          ───────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ let x = 900_719.92_54740_994
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:10]
+ 1 │ let x = -900_719.92_5474_0994
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 9.0_0719925_474099_3e15
+   ·           ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:12]
+ 1 │ const x = -9_00719_9254_740993
+   ·            ───────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 900_719.92_54740_994
+   ·           ────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:12]
+ 1 │ const x = -900_719.92_5474_0994
+   ·            ────────────────────
+   ╰────
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:9]
  1 │ var x = 5123000000000000000000000000001
    ·         ───────────────────────────────
    ╰────

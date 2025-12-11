@@ -1,4 +1,4 @@
-use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::ls_types::Uri;
 
 use crate::ConcurrentHashMap;
 
