@@ -315,8 +315,9 @@ const FILE_CONTEXT = freeze({
    * Language options used when parsing this file.
    */
   get languageOptions(): LanguageOptions {
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot access `context.languageOptions` in `createOnce`");
+    }
     return LANGUAGE_OPTIONS;
   },
 
