@@ -18,8 +18,8 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        contains_jsx, find_innermost_function_with_jsx, function_contains_jsx, is_hoc_call,
-        is_react_component_name,
+        contains_jsx, expression_contains_jsx, find_innermost_function_with_jsx,
+        function_contains_jsx, is_hoc_call, is_react_component_name, InnermostFunction,
     },
 };
 
@@ -61,18 +61,9 @@ declare_oxc_lint!(
     config = DisplayNameConfig,
 );
 
-#[derive(Debug, Clone)]
-enum ComponentType {
-    Function,
-    Class,
-    CreateReactClass,
-    ObjectProperty,
-}
-
 #[derive(Debug)]
 struct ReactComponentInfo {
     span: Span,
-    _component_type: ComponentType,
     is_context: bool,
     name: Option<CompactStr>,
 }
@@ -363,12 +354,7 @@ fn check_context_assignment_references(
                 && let Some(callee_name) = call.callee_name()
                 && (callee_name == "createContext" || callee_name.ends_with(".createContext"))
             {
-                return Some(ReactComponentInfo {
-                    span: assign.span,
-                    _component_type: ComponentType::Function,
-                    is_context: true,
-                    name,
-                });
+                return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
             }
 
             if matches!(ancestor.kind(), AstKind::AssignmentExpression(_)) {
@@ -405,7 +391,6 @@ fn is_react_component_node<'a>(
                 if check_context_objects {
                     return Some(ReactComponentInfo {
                         span: decl.id.span(),
-                        _component_type: ComponentType::Function,
                         is_context: true,
                         name,
                     });
@@ -445,7 +430,6 @@ fn is_react_component_node<'a>(
                     // Return component info with name only if inner function has a name
                     return Some(ReactComponentInfo {
                         span: decl.id.span(),
-                        _component_type: ComponentType::Function,
                         is_context: false,
                         name: if inner_has_name { name } else { None },
                     });
@@ -472,7 +456,6 @@ fn is_react_component_node<'a>(
                     if !has_display_name {
                         return Some(ReactComponentInfo {
                             span: decl.id.span(),
-                            _component_type: ComponentType::CreateReactClass,
                             is_context: false,
                             name,
                         });
@@ -482,16 +465,34 @@ fn is_react_component_node<'a>(
             }
 
             // Check for function/arrow function components with JSX
-            if let Some(expr) = &decl.init
-                && let Some((component_type, is_hof)) =
-                    check_function_expression_component(expr, ctx)
-            {
-                return Some(ReactComponentInfo {
-                    span: decl.id.span(),
-                    _component_type: component_type,
-                    is_context: false,
-                    name: if is_hof { None } else { name }, // HOFs don't use variable name as displayName
-                });
+            if let Some(expr) = &decl.init {
+                // Check if it's a direct component (has JSX directly)
+                if expression_contains_jsx(expr) {
+                    return Some(ReactComponentInfo {
+                        span: decl.id.span(),
+                        is_context: false,
+                        name, // Direct component uses the variable name
+                    });
+                }
+
+                // Check if it's a HOF pattern
+                if let Some(innermost) = find_innermost_function_with_jsx(expr, ctx) {
+                    let inner_has_name = match innermost {
+                        InnermostFunction::Function(func) => func.id.is_some(),
+                        InnermostFunction::ArrowFunction(_) => false,
+                    };
+
+                    // Only treat as HOF if inner function is unnamed
+                    if !inner_has_name {
+                        return Some(ReactComponentInfo {
+                            span: decl.id.span(),
+                            is_context: false,
+                            name: None, // HOF doesn't use variable name
+                        });
+                    }
+                }
+
+                // Not a component at all - return None
             }
 
             // Check for object expressions with methods
@@ -501,7 +502,6 @@ fn is_react_component_node<'a>(
             {
                 return Some(ReactComponentInfo {
                     span: decl.id.span(),
-                    _component_type: ComponentType::ObjectProperty,
                     is_context: false,
                     name: Some(name.clone()),
                 });
@@ -552,7 +552,6 @@ fn is_react_component_node<'a>(
                 if contains_jsx_in_class {
                     return Some(ReactComponentInfo {
                         span: class.span,
-                        _component_type: ComponentType::Class,
                         is_context: false,
                         name: Some(CompactStr::from(name.as_str())),
                     });
@@ -568,7 +567,6 @@ fn is_react_component_node<'a>(
                 if function_contains_jsx(func) {
                     return Some(ReactComponentInfo {
                         span: func.span,
-                        _component_type: ComponentType::Function,
                         is_context: false,
                         name: Some(CompactStr::from(name.name.as_str())),
                     });
@@ -585,7 +583,6 @@ fn is_react_component_node<'a>(
                             if find_innermost_function_with_jsx(expr, ctx).is_some() {
                                 return Some(ReactComponentInfo {
                                     span: func.span,
-                                    _component_type: ComponentType::Function,
                                     is_context: false,
                                     name: None, // HOFs don't use the outer function name as displayName
                                 });
@@ -619,7 +616,6 @@ fn is_react_component_node<'a>(
                                 if !has_display_name {
                                     return Some(ReactComponentInfo {
                                         span: func.span,
-                                        _component_type: ComponentType::CreateReactClass,
                                         is_context: false,
                                         name: Some(CompactStr::from(name.name.as_str())),
                                     });
@@ -634,59 +630,6 @@ fn is_react_component_node<'a>(
         }
         _ => None,
     }
-}
-
-/// Check if a function expression or arrow function is a component
-/// Returns (ComponentType, is_hof) tuple where is_hof indicates if it's a Higher-Order Function
-fn check_function_expression_component(
-    expr: &Expression,
-    ctx: &LintContext,
-) -> Option<(ComponentType, bool)> {
-    // First check if this function directly contains JSX
-    let direct_jsx = match expr {
-        Expression::FunctionExpression(func) => function_contains_jsx(func),
-        Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if arrow.body.statements.len() == 1 {
-                    if let Statement::ExpressionStatement(expr_stmt) = &arrow.body.statements[0] {
-                        contains_jsx(&expr_stmt.expression)
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-            } else {
-                arrow.body.statements.iter().any(|stmt| {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt
-                        && let Some(expr) = &ret_stmt.argument
-                    {
-                        return contains_jsx(expr);
-                    }
-                    false
-                })
-            }
-        }
-        _ => false,
-    };
-
-    if direct_jsx {
-        return Some((ComponentType::Function, false)); // Not a HOF, directly contains JSX
-    }
-
-    // Check if this is a Higher-Order Function that returns a function with JSX
-    if let Some(innermost) = find_innermost_function_with_jsx(expr, ctx) {
-        // Check if the innermost function has a name
-        let inner_has_name = match innermost {
-            crate::utils::InnermostFunction::Function(func) => func.id.is_some(),
-            crate::utils::InnermostFunction::ArrowFunction(_) => false,
-        };
-
-        // Only treat as HOF (returning name=None) if the inner function doesn't have a name
-        return Some((ComponentType::Function, !inner_has_name));
-    }
-
-    None
 }
 
 /// Check if an object expression has component methods
@@ -724,7 +667,6 @@ fn is_anonymous_export_component<'a>(
                 {
                     return Some(ReactComponentInfo {
                         span: export.span,
-                        _component_type: ComponentType::Function,
                         is_context: false,
                         name: None,
                     });
@@ -737,7 +679,6 @@ fn is_anonymous_export_component<'a>(
                     {
                         return Some(ReactComponentInfo {
                             span: export.span,
-                            _component_type: ComponentType::Function,
                             is_context: false,
                             name: None,
                         });
@@ -756,7 +697,6 @@ fn is_anonymous_export_component<'a>(
                         if func.id.is_none() || ignore_transpiler_name {
                             return Some(ReactComponentInfo {
                                 span: export.span,
-                                _component_type: ComponentType::Function,
                                 is_context: false,
                                 name: None,
                             });
@@ -773,7 +713,6 @@ fn is_anonymous_export_component<'a>(
             {
                 return Some(ReactComponentInfo {
                     span: export.span,
-                    _component_type: ComponentType::Function,
                     is_context: false,
                     name: Some(CompactStr::from(name.name.as_str())),
                 });
@@ -837,7 +776,6 @@ fn check_class_component(
             if ignore_transpiler_name {
                 return Some(ReactComponentInfo {
                     span,
-                    _component_type: ComponentType::Class,
                     is_context: false,
                     name: Some(CompactStr::from(name.name.as_str())),
                 });
@@ -861,23 +799,13 @@ fn check_class_component(
             });
 
             if extends_react_component {
-                return Some(ReactComponentInfo {
-                    span,
-                    _component_type: ComponentType::Class,
-                    is_context: false,
-                    name: None,
-                });
+                return Some(ReactComponentInfo { span, is_context: false, name: None });
             }
         }
     } else {
         // Anonymous class
         if ignore_transpiler_name {
-            return Some(ReactComponentInfo {
-                span,
-                _component_type: ComponentType::Class,
-                is_context: false,
-                name: None,
-            });
+            return Some(ReactComponentInfo { span, is_context: false, name: None });
         }
 
         // Check if extends React.Component
@@ -898,12 +826,7 @@ fn check_class_component(
         });
 
         if extends_react_component {
-            return Some(ReactComponentInfo {
-                span,
-                _component_type: ComponentType::Class,
-                is_context: false,
-                name: None,
-            });
+            return Some(ReactComponentInfo { span, is_context: false, name: None });
         }
     }
 
@@ -932,7 +855,6 @@ fn is_module_exports_component<'a>(
                     {
                         return Some(ReactComponentInfo {
                             span: assign.span,
-                            _component_type: ComponentType::Function,
                             is_context: false,
                             name: None,
                         });
@@ -945,7 +867,6 @@ fn is_module_exports_component<'a>(
                         {
                             return Some(ReactComponentInfo {
                                 span: assign.span,
-                                _component_type: ComponentType::Function,
                                 is_context: false,
                                 name: None,
                             });
@@ -963,7 +884,6 @@ fn is_module_exports_component<'a>(
                         {
                             return Some(ReactComponentInfo {
                                 span: assign.span,
-                                _component_type: ComponentType::Function,
                                 is_context: false,
                                 name: None,
                             });
@@ -994,7 +914,6 @@ fn is_module_exports_component<'a>(
                         if !has_display_name {
                             return Some(ReactComponentInfo {
                                 span: assign.span,
-                                _component_type: ComponentType::CreateReactClass,
                                 is_context: false,
                                 name: None,
                             });
@@ -1005,7 +924,6 @@ fn is_module_exports_component<'a>(
                     {
                         return Some(ReactComponentInfo {
                             span: assign.span,
-                            _component_type: ComponentType::Function,
                             is_context: true,
                             name: None,
                         });
