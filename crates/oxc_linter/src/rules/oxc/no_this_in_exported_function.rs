@@ -180,6 +180,8 @@ fn test() {
         "function foo() { console.log(this); } export { foo };",
         "var foo = function foo() { console.log(this); }; export { foo };",
         "var foo = function () { console.log(this); }; export { foo };",
+        "export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } } }",
+        "export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } } }"
     ];
 
     Tester::new(NoThisInExportedFunction::NAME, NoThisInExportedFunction::PLUGIN, pass, fail)
