@@ -92,17 +92,18 @@ function modifyTestCase(test: TestCase): void {
   // and enables `sourceType: "commonjs"`.
   test.eslintCompat = true;
 
+  // Ignore parsing errors. ESLint's test cases include invalid code.
+  const languageOptions = { ...test.languageOptions } as LanguageOptionsWithParser;
+  test.languageOptions = languageOptions;
+
+  const parserOptions = { ...languageOptions.parserOptions };
+  languageOptions.parserOptions = parserOptions;
+
+  parserOptions.ignoreNonFatalErrors = true;
+
   // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
-  let languageOptions = test.languageOptions as LanguageOptionsWithParser | undefined;
-  if (languageOptions?.parser === tsEslintParser) {
-    languageOptions = { ...languageOptions };
-    test.languageOptions = languageOptions;
-
+  if (languageOptions.parser === tsEslintParser) {
     delete languageOptions.parser;
-
-    const parserOptions = { ...languageOptions.parserOptions };
-    languageOptions.parserOptions = parserOptions;
-
     parserOptions.lang = parserOptions.ecmaFeatures?.jsx === true ? "tsx" : "ts";
   }
 }
