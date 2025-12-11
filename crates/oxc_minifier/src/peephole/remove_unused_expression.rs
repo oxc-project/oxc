@@ -782,18 +782,6 @@ mod test {
     }
 
     #[test]
-    fn test_remove() {
-        test("new class{}", "");
-        test_same("new class{static {foo();}}");
-        test_same("new class extends Error {}");
-        test(
-            "new class{static a = alert('1');}",
-            r#"new class {
-        static a = alert('1');
-}();"#,
-        );
-    }
-    #[test]
     fn test_new_constructor_side_effect() {
         test("new WeakSet()", "");
         test("new WeakSet(null)", "");
@@ -829,6 +817,11 @@ mod test {
         // test_same("new Map([x])");
         test_same("new Map(x)");
         // test("new Map([[a, b], [c, d]])", "");
+
+        test("new class{}", "");
+        test_same("new class{static {foo();}}");
+        test_same("new class{static a = console.log();}");
+        test_same("new class extends Error {}");
     }
 
     #[test]
