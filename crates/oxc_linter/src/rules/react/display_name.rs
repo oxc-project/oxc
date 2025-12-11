@@ -18,8 +18,8 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        contains_jsx, expression_contains_jsx, find_innermost_function_with_jsx,
-        function_contains_jsx, is_hoc_call, is_react_component_name, InnermostFunction,
+        InnermostFunction, contains_jsx, expression_contains_jsx, find_innermost_function_with_jsx,
+        function_contains_jsx, is_hoc_call, is_react_component_name,
     },
 };
 
