@@ -8,8 +8,12 @@ use napi_derive::napi;
 use crate::{
     cli::{
         CliRunResult, FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing,
+        run_migrate_napi,
     },
-    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
+    core::{
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsGetPrettierConfigCb,
+        JsSetupConfigCb,
+    },
     init::run_init,
     lsp::run_lsp,
 };
@@ -24,6 +28,7 @@ use crate::{
 /// 2. `setup_config_cb`: Callback to setup Prettier config
 /// 3. `format_embedded_cb`: Callback to format embedded code in templates
 /// 4. `format_file_cb`: Callback to format files
+/// 5. `get_prettier_config_cb`: Callback to get Prettier config for migration
 ///
 /// Returns `true` if formatting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -39,8 +44,12 @@ pub async fn format(
         ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
+    #[napi(ts_arg_type = "(dirPath: string) => Promise<string | null>")]
+    get_prettier_config_cb: JsGetPrettierConfigCb,
 ) -> bool {
-    format_impl(args, setup_config_cb, format_embedded_cb, format_file_cb).await.report()
+    format_impl(args, setup_config_cb, format_embedded_cb, format_file_cb, get_prettier_config_cb)
+        .await
+        .report()
         == ExitCode::SUCCESS
 }
 
@@ -50,6 +59,7 @@ async fn format_impl(
     setup_config_cb: JsSetupConfigCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_file_cb: JsFormatFileCb,
+    get_prettier_config_cb: JsGetPrettierConfigCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
@@ -66,6 +76,11 @@ async fn format_impl(
             };
         }
     };
+
+    // Handle --migrate mode (check before mode since it's independent)
+    if let Some(source) = &command.runtime_options.migrate {
+        return run_migrate_napi(source, get_prettier_config_cb).await;
+    }
 
     match command.mode {
         Mode::Init => run_init(),

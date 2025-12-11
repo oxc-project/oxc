@@ -99,6 +99,9 @@ function normalizeOutput(output: string, cwd: string): string {
   const repoRoot = join(import.meta.dirname, "..", "..", "..");
   const rootPath = repoRoot.replace(/\\/g, "/");
   normalized = normalized.replace(new RegExp(RegExp.escape(rootPath), "g"), "<cwd>");
+  // Normalize temp directory paths (e.g., oxfmt-migrate-test-XXXXXX -> oxfmt-migrate-test-<random>)
+  normalized = normalized.replace(/oxfmt-migrate-test-[a-zA-Z0-9]{6}/g, "oxfmt-migrate-test-<random>");
+  normalized = normalized.replace(/oxfmt-test-[a-zA-Z0-9]{6}/g, "oxfmt-test-<random>");
 
   return normalized;
 }

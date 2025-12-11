@@ -1,5 +1,6 @@
 use oxfmt::cli::{
     CliRunResult, FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing,
+    run_migrate,
 };
 use oxfmt::init::run_init;
 use oxfmt::lsp::run_lsp;
@@ -11,6 +12,11 @@ use oxfmt::lsp::run_lsp;
 async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = format_command().run();
+
+    // Handle --migrate mode (check before mode since it's independent)
+    if let Some(source) = &command.runtime_options.migrate {
+        return run_migrate(source);
+    }
 
     match command.mode {
         Mode::Init => run_init(),

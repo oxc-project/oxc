@@ -116,6 +116,9 @@ pub struct IgnoreOptions {
 /// Runtime Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct RuntimeOptions {
+    /// Migrate from another formatter's configuration (currently supports: prettier)
+    #[bpaf(long, argument("SOURCE"), hide_usage)]
+    pub migrate: Option<String>,
     /// Do not exit with error when pattern is unmatched
     #[bpaf(switch, hide_usage)]
     pub no_error_on_unmatched_pattern: bool,

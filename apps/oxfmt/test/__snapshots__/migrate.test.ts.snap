@@ -1,0 +1,92 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`migrate > should error for unknown migration source 1`] = `
+"--------------------
+arguments: --migrate eslint
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Error: Unknown migration source 'eslint'
+Supported sources: prettier
+--------------------"
+`;
+
+exports[`migrate > should error when .oxfmtrc.jsonc already exists 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Error: Configuration file already exists.
+Remove .oxfmtrc.json or .oxfmtrc.jsonc manually before migrating.
+--------------------"
+`;
+
+exports[`migrate > should error when no prettier config found 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Error: No Prettier configuration found
+--------------------"
+`;
+
+exports[`migrate > should handle package.json prettier config 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 0
+--- STDOUT ---------
+✓ Created .oxfmtrc.jsonc
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`migrate > should migrate basic prettier config 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 0
+--- STDOUT ---------
+✓ Created .oxfmtrc.jsonc
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`migrate > should migrate prettier config with .prettierignore 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 0
+--- STDOUT ---------
+✓ Created .oxfmtrc.jsonc
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`migrate > should warn about unsupported options 1`] = `
+"--------------------
+arguments: --migrate prettier
+working directory: ../../../../../../../var/folders/nw/h<variable>msptn4x14x943x8vghxd00000gn/T/oxfmt-migrate-test-<random>
+exit code: 0
+--- STDOUT ---------
+✓ Created .oxfmtrc.jsonc
+
+⚠ Warning: The following Prettier options were not migrated:
+  - experimentalTernaries: true (experimental feature not yet supported)
+  - proseWrap: "always" (markdown-specific option)
+  - htmlWhitespaceSensitivity: "css" (HTML-specific option)
+--- STDERR ---------
+
+--------------------"
+`;

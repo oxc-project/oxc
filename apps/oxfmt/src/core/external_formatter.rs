@@ -54,6 +54,21 @@ pub type JsFormatFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// Type alias for the get Prettier config callback function.
+/// Takes (directory_path) and returns Prettier config JSON or None.
+pub type JsGetPrettierConfigCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(String,)>, // (cwd path)
+    // Return type (what JS function returns)
+    Promise<Option<String>>, // config JSON or None
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// Callback function type for formatting files.
 /// Takes (parser_name, file_name, code) and returns formatted code or an error.
 type FormatFileCallback = Arc<dyn Fn(&str, &str, &str) -> Result<String, String> + Send + Sync>;
