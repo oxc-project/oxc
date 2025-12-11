@@ -543,13 +543,13 @@ fn test() {
         ("foo.bar+``", None),
         ("`${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         (
-            r#"`\\
-			${foo}`"#,
+            r"`\\
+			${foo}`",
             Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
         (
-            r#"`${foo}\\
-			`"#,
+            r"`${foo}\\
+			`",
             Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
         (r#"foo += """#, None),
