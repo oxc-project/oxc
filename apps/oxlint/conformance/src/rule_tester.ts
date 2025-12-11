@@ -15,7 +15,10 @@ type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
+type LanguageOptions = RuleTester.LanguageOptions;
 export type TestCase = ValidTestCase | InvalidTestCase;
+
+type LanguageOptionsWithParser = LanguageOptions & { parser?: unknown };
 
 const { isArray } = Array;
 
@@ -85,18 +88,23 @@ class RuleTesterShim extends RuleTester {
 
 function modifyTestCase(test: TestCase): void {
   // Enable ESLint compat mode.
-  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
+  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior,
+  // and enables `sourceType: "commonjs"`.
   test.eslintCompat = true;
 
+  // Ignore parsing errors. ESLint's test cases include invalid code.
+  const languageOptions = { ...test.languageOptions } as LanguageOptionsWithParser;
+  test.languageOptions = languageOptions;
+
+  const parserOptions = { ...languageOptions.parserOptions };
+  languageOptions.parserOptions = parserOptions;
+
+  parserOptions.ignoreNonFatalErrors = true;
+
   // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
-  let { languageOptions } = test;
-  if (languageOptions?.parser === tsEslintParser) {
-    languageOptions = { ...languageOptions };
-    test.languageOptions = languageOptions;
-
+  if (languageOptions.parser === tsEslintParser) {
     delete languageOptions.parser;
-
-    languageOptions.parserOptions = { ...languageOptions.parserOptions, lang: "ts" };
+    parserOptions.lang = parserOptions.ecmaFeatures?.jsx === true ? "tsx" : "ts";
   }
 }
 

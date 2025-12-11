@@ -18,18 +18,18 @@ pub struct NoLossOfPrecision;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow precision loss of number literal
+    /// Disallow precision loss of number literal.
     ///
     /// ### Why is this bad?
     ///
-    /// It can lead to unexpected results in certain situations
-    /// For example, when performing mathematical operations
+    /// It can lead to unexpected results in certain situations.
+    /// For example, when performing mathematical operations.
     ///
-    /// In JS, Numbers are stored as double-precision floating-point numbers
+    /// In JavaScript, Numbers are stored as double-precision floating-point numbers
     /// according to the IEEE 754 standard. Because of this, numbers can only
     /// retain accuracy up to a certain amount of digits. If the programmer
     /// enters additional digits, those digits will be lost in the conversion
-    /// to the Number type and will result in unexpected behavior.
+    /// to the Number type and will result in unexpected/incorrect behavior.
     ///
     /// ### Examples
     ///
@@ -509,6 +509,12 @@ fn test() {
         ("var a = Infinity", None),
         ("var a = 480.00", None),
         ("var a = -30.00", None),
+        ("let a = Infinity", None),
+        ("let a = 480.00", None),
+        ("let a = -30.00", None),
+        ("const a = Infinity", None),
+        ("const a = 480.00", None),
+        ("const a = -30.00", None),
         ("(1000000000000000128).toFixed(0)", None),
     ];
 
@@ -525,6 +531,14 @@ fn test() {
         ("var x = -9_00719_9254_740993", None),
         ("var x = 900_719.92_54740_994", None),
         ("var x = -900_719.92_5474_0994", None),
+        ("let x = 9.0_0719925_474099_3e15", None),
+        ("let x = -9_00719_9254_740993", None),
+        ("let x = 900_719.92_54740_994", None),
+        ("let x = -900_719.92_5474_0994", None),
+        ("const x = 9.0_0719925_474099_3e15", None),
+        ("const x = -9_00719_9254_740993", None),
+        ("const x = 900_719.92_54740_994", None),
+        ("const x = -900_719.92_5474_0994", None),
         ("var x = 5123000000000000000000000000001", None),
         ("var x = -5123000000000000000000000000001", None),
         ("var x = 1230000000000000000000000.0", None),

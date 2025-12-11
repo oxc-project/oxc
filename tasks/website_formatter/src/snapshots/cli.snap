@@ -10,15 +10,25 @@ search: false
 ## Usage
  **`oxfmt`** \[**`-c`**=_`PATH`_\] \[_`PATH`_\]...
 
-## Output Options
+## Mode Options:
+- **`    --init`** &mdash; 
+  Initialize `.oxfmtrc.jsonc` with default values
+- **`    --lsp`** &mdash; 
+  Start language server protocol (LSP) server
+
+
+
+## Output Options:
+- **`    --write`** &mdash; 
+  Format and write files in place (default)
 - **`    --check`** &mdash; 
-  Check mode - check if files are formatted, also show statistics
+  Check if files are formatted, also show statistics
 - **`    --list-different`** &mdash; 
-  List mode - list files that would be changed
+  List files that would be changed
 
 
 
-## Basic Options
+## Config Options
 - **`-c`**, **`--config`**=_`PATH`_ &mdash; 
   Path to the configuration file
 
@@ -32,9 +42,7 @@ search: false
 
 
 
-## Misc Options
-- **`    --lsp`** &mdash; 
-  Start language server protocol (LSP) server
+## Runtime Options
 - **`    --no-error-on-unmatched-pattern`** &mdash; 
   Do not exit with error when pattern is unmatched
 - **`    --threads`**=_`INT`_ &mdash; 

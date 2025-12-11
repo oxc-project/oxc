@@ -217,9 +217,13 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             AssignmentLike::BindingProperty(property) => {
                 if property.shorthand {
-                    // Left-hand side only
-                    if property.value.kind.is_binding_identifier() {
-                        write!(f, property.key());
+                    // Left-hand side only. See the explanation in the `has_only_left_hand_side` method.
+                    if matches!(
+                        property.value.kind,
+                        BindingPatternKind::BindingIdentifier(_)
+                            | BindingPatternKind::AssignmentPattern(_)
+                    ) {
+                        write!(f, property.value());
                     }
                     return false;
                 }
@@ -235,9 +239,6 @@ impl<'a> AssignmentLike<'a, '_> {
                     } else {
                         f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
                     }
-                } else if property.shorthand {
-                    write!(f, property.key());
-                    false
                 } else {
                     let width = write_member_name(property.key(), f);
 
@@ -480,7 +481,17 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
-                property.shorthand && property.value.kind.is_binding_identifier()
+                property.shorthand
+                    && matches!(
+                        property.value.kind,
+                        BindingPatternKind::BindingIdentifier(_)
+                        // Treats binding property has a left-hand side only
+                        // when the value is an assignment pattern,
+                        // because the `value` includes the `key` part.
+                        // e.g., `{ a = 1 }` the `a` is the `key` and `a = 1` is the
+                        // `value`, aka AssignmentPattern itself
+                        | BindingPatternKind::AssignmentPattern(_)
+                    )
             }
             Self::ObjectProperty(property) => property.shorthand,
         }
@@ -976,8 +987,7 @@ fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> 
                 StringLiteralParentKind::Expression,
             );
 
-            formatter.clean_text(f.context().source_type(), f.options()).width()
-                <= threshold as usize
+            formatter.clean_text(f).width() <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.

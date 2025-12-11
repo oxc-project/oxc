@@ -7,7 +7,7 @@ import { join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
 import Module from "node:module";
 import { setCurrentRule, resetCurrentRule } from "./capture.ts";
-import { FILTER_ONLY_RULE } from "./filter.ts";
+import { FILTER_ONLY_RULE, FILTER_EXCLUDE_RULE } from "./filter.ts";
 
 import type { RuleResult } from "./capture.ts";
 
@@ -62,12 +62,16 @@ export function runAllTests(): RuleResult[] {
 function findTestFiles(): string[] {
   const filenames = fs.readdirSync(ESLINT_RULES_TESTS_DIR_PATH);
 
-  const ruleNameMatchesFilter =
-    FILTER_ONLY_RULE === null
-      ? null
-      : isArray(FILTER_ONLY_RULE)
-        ? (ruleName: string) => FILTER_ONLY_RULE!.includes(ruleName)
-        : (ruleName: string) => ruleName === FILTER_ONLY_RULE;
+  let ruleNameMatchesFilter = null;
+  if (FILTER_ONLY_RULE !== null) {
+    ruleNameMatchesFilter = isArray(FILTER_ONLY_RULE)
+      ? (ruleName: string) => FILTER_ONLY_RULE!.includes(ruleName)
+      : (ruleName: string) => ruleName === FILTER_ONLY_RULE;
+  } else if (FILTER_EXCLUDE_RULE !== null) {
+    ruleNameMatchesFilter = isArray(FILTER_EXCLUDE_RULE)
+      ? (ruleName: string) => !FILTER_EXCLUDE_RULE!.includes(ruleName)
+      : (ruleName: string) => ruleName !== FILTER_EXCLUDE_RULE;
+  }
 
   const ruleNames = [];
   for (const filename of filenames) {
