@@ -42,7 +42,7 @@ export default function generateWalkFunctionsCode(types) {
 
     /// Walk AST with \`Traverse\` impl.
     ///
-    /// SAFETY:
+    /// # Safety
     /// * \`program\` must be a pointer to a valid \`Program\` which has lifetime \`'a\`
     ///   (\`Program<'a>\`).
     /// * \`ctx\` must contain a \`TraverseAncestry<'a>\` with single \`Ancestor::None\` on its stack.

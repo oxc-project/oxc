@@ -147,7 +147,7 @@ export default function generateAncestorsCode(types) {
     /// i.e. \`Ancestor\`s can only exist within the body of \`enter_*\` and \`exit_*\` methods
     /// and cannot "escape" from them.
     //
-    // SAFETY:
+    // INVARIANTS:
     // * This type must be \`#[repr(u16)]\`.
     // * Variant discriminants must correspond to those in \`AncestorType\`.
     //
