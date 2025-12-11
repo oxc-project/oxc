@@ -134,10 +134,7 @@ node_modules/
 
   it("should error when .oxfmtrc.jsonc already exists", async () => {
     // Create .prettierrc
-    await fs.writeFile(
-      join(tempDir, ".prettierrc"),
-      JSON.stringify({ semi: false }),
-    );
+    await fs.writeFile(join(tempDir, ".prettierrc"), JSON.stringify({ semi: false }));
 
     // Create .oxfmtrc.jsonc
     await fs.writeFile(join(tempDir, ".oxfmtrc.jsonc"), "{}");
@@ -188,10 +185,7 @@ node_modules/
   });
 
   it("should handle empty .prettierignore", async () => {
-    await fs.writeFile(
-      join(tempDir, ".prettierrc"),
-      JSON.stringify({ semi: false }),
-    );
+    await fs.writeFile(join(tempDir, ".prettierrc"), JSON.stringify({ semi: false }));
 
     // Create empty .prettierignore
     await fs.writeFile(join(tempDir, ".prettierignore"), "");
@@ -203,10 +197,7 @@ node_modules/
   });
 
   it("should handle .prettierignore with only comments", async () => {
-    await fs.writeFile(
-      join(tempDir, ".prettierrc"),
-      JSON.stringify({ semi: false }),
-    );
+    await fs.writeFile(join(tempDir, ".prettierrc"), JSON.stringify({ semi: false }));
 
     await fs.writeFile(
       join(tempDir, ".prettierignore"),
