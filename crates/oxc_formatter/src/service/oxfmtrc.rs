@@ -6,9 +6,9 @@ use serde_json::Value;
 
 use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas, default_groups, default_internal_patterns,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth,
+    InsertFinalNewline, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
 };
 
 /// Configuration options for the Oxfmt.
@@ -84,6 +84,14 @@ pub struct Oxfmtrc {
     /// Experimental: Sort `package.json` keys. (Default: `true`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<bool>,
+
+    /// Ensure files end with a newline. (Default: unset - preserve original)
+    ///
+    /// When unset (or `null`), the formatter will preserve the original file's
+    /// EOF newline behavior. Set to `true` to always add a final newline,
+    /// or `false` to never add one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insert_final_newline: Option<bool>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -395,6 +403,15 @@ impl Oxfmtrc {
 
         // Below are our own extensions
 
+        // [EditorConfig] insertFinalNewline: boolean
+        if let Some(insert_final_newline) = self.insert_final_newline {
+            format_options.insert_final_newline = if insert_final_newline {
+                InsertFinalNewline::Always
+            } else {
+                InsertFinalNewline::Never
+            };
+        }
+
         if let Some(sort_imports_config) = self.experimental_sort_imports {
             // `partition_by_newline: true` and `newlines_between` cannot be used together
             if sort_imports_config.partition_by_newline && sort_imports_config.newlines_between {
@@ -554,6 +571,7 @@ impl Oxfmtrc {
         obj.remove("ignorePatterns");
         obj.remove("experimentalSortImports");
         obj.remove("experimentalSortPackageJson");
+        obj.remove("insertFinalNewline");
 
         // Any other unknown fields are preserved as-is.
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
@@ -821,6 +839,24 @@ mod tests {
     }
 
     #[test]
+    fn test_insert_final_newline_config() {
+        // Test true -> Always
+        let config: Oxfmtrc = serde_json::from_str(r#"{"insertFinalNewline": true}"#).unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        assert!(format_options.insert_final_newline.is_always());
+
+        // Test false -> Never
+        let config: Oxfmtrc = serde_json::from_str(r#"{"insertFinalNewline": false}"#).unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        assert!(format_options.insert_final_newline.is_never());
+
+        // Test unset -> Auto (default)
+        let config: Oxfmtrc = serde_json::from_str(r#"{}"#).unwrap();
+        let (format_options, _) = config.into_options().unwrap();
+        assert!(format_options.insert_final_newline.is_auto());
+    }
+
+    #[test]
     fn test_populate_prettier_config_defaults() {
         let json_string = r"{}";
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
@@ -838,7 +874,8 @@ mod tests {
         let json_string = r#"{
             "printWidth": 80,
             "ignorePatterns": ["*.min.js"],
-            "experimentalSortImports": { "order": "asc" }
+            "experimentalSortImports": { "order": "asc" },
+            "insertFinalNewline": true
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
@@ -852,5 +889,6 @@ mod tests {
         // oxfmt extensions are removed
         assert!(!obj.contains_key("ignorePatterns"));
         assert!(!obj.contains_key("experimentalSortImports"));
+        assert!(!obj.contains_key("insertFinalNewline"));
     }
 }

@@ -11,7 +11,7 @@ use oxc_span::SourceType;
 use super::FormatFileStrategy;
 
 pub enum FormatResult {
-    Success { is_changed: bool, code: String },
+    Success { code: String },
     Error(Vec<OxcDiagnostic>),
 }
 
@@ -34,6 +34,11 @@ impl SourceFormatter {
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
+    }
+
+    /// Get the format options
+    pub fn format_options(&self) -> &FormatOptions {
+        &self.format_options
     }
 
     #[cfg(feature = "napi")]
@@ -70,7 +75,7 @@ impl SourceFormatter {
         };
 
         match result {
-            Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
+            Ok(code) => FormatResult::Success { code },
             Err(err) => FormatResult::Error(vec![err]),
         }
     }

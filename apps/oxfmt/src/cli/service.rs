@@ -1,4 +1,4 @@
-use std::{fs, path::Path, sync::mpsc, time::Instant};
+use std::{path::Path, sync::mpsc, time::Instant};
 
 use cow_utils::CowUtils;
 use rayon::prelude::*;
@@ -6,7 +6,10 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{FormatFileStrategy, FormatResult, SourceFormatter, utils};
+use crate::core::{
+    FormatFileStrategy, FormatResult, SourceFormatter, equals_with_eof_adjustment, utils,
+    write_with_eof_adjustment,
+};
 
 pub enum SuccessResult {
     Changed(String),
@@ -59,7 +62,17 @@ impl FormatService {
 
             tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
             let (code, is_changed) = match self.formatter.format(&entry, &source_text) {
-                FormatResult::Success { code, is_changed } => (code, is_changed),
+                FormatResult::Success { code, .. } => {
+                    // Compute change status considering EOF adjustment (zero allocations)
+                    let format_options = self.formatter.format_options();
+                    let is_changed = !equals_with_eof_adjustment(
+                        &source_text,
+                        &code,
+                        format_options.insert_final_newline,
+                        format_options.line_ending,
+                    );
+                    (code, is_changed)
+                }
                 FormatResult::Error(diagnostics) => {
                     let errors = DiagnosticService::wrap_diagnostics(
                         self.cwd.clone(),
@@ -72,11 +85,28 @@ impl FormatService {
                 }
             };
 
-            // Write back if needed
+            // Write back if needed (EOF adjustment applied during write)
             if matches!(self.format_mode, OutputMode::Write) && is_changed {
-                fs::write(path, code)
-                    .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
-                    .unwrap();
+                let format_options = self.formatter.format_options();
+                if let Err(err) = write_with_eof_adjustment(
+                    path,
+                    &code,
+                    &source_text,
+                    format_options.insert_final_newline,
+                    format_options.line_ending,
+                ) {
+                    // Handle write error
+                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                        self.cwd.clone(),
+                        path,
+                        "",
+                        vec![oxc_diagnostics::OxcDiagnostic::error(format!(
+                            "Failed to write file: {err}"
+                        ))],
+                    );
+                    tx_error.send(diagnostics).unwrap();
+                    return;
+                }
             }
 
             // Report result

@@ -74,6 +74,9 @@ pub struct FormatOptions {
 
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImportsOptions>,
+
+    /// Control whether to insert a final newline at the end of files. Defaults to "auto".
+    pub insert_final_newline: InsertFinalNewline,
 }
 
 impl FormatOptions {
@@ -97,6 +100,7 @@ impl FormatOptions {
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
+            insert_final_newline: InsertFinalNewline::default(),
         }
     }
 
@@ -123,7 +127,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
-        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)
+        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)?;
+        writeln!(f, "Insert final newline: {}", self.insert_final_newline)
     }
 }
 
@@ -981,6 +986,55 @@ impl fmt::Display for EmbeddedLanguageFormatting {
         let s = match self {
             EmbeddedLanguageFormatting::Auto => "Auto",
             EmbeddedLanguageFormatting::Off => "Off",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum InsertFinalNewline {
+    /// Preserve the original file's EOF newline behavior
+    #[default]
+    Auto,
+    /// Always ensure file ends with a newline
+    Always,
+    /// Never add a final newline
+    Never,
+}
+
+impl InsertFinalNewline {
+    pub const fn is_auto(self) -> bool {
+        matches!(self, Self::Auto)
+    }
+
+    pub const fn is_always(self) -> bool {
+        matches!(self, Self::Always)
+    }
+
+    pub const fn is_never(self) -> bool {
+        matches!(self, Self::Never)
+    }
+}
+
+impl FromStr for InsertFinalNewline {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "auto" => Ok(Self::Auto),
+            "always" => Ok(Self::Always),
+            "never" => Ok(Self::Never),
+            _ => Err("Value not supported for InsertFinalNewline"),
+        }
+    }
+}
+
+impl fmt::Display for InsertFinalNewline {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            InsertFinalNewline::Auto => "Auto",
+            InsertFinalNewline::Always => "Always",
+            InsertFinalNewline::Never => "Never",
         };
         f.write_str(s)
     }
