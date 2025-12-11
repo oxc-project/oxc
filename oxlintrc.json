@@ -19,6 +19,7 @@
   },
   "rules": {
     "no-console": "error",
+    "curly": ["error", "multi-line"],
     "prefer-destructuring": ["error", {
       "VariableDeclarator": { "array": false, "object": true }
     }],

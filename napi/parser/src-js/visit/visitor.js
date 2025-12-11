@@ -194,8 +194,9 @@ export function initCompiledVisitor() {
  * @param visitor - Visitor object
  */
 export function addVisitorToCompiled(visitor) {
-  if (visitor === null || typeof visitor !== "object")
+  if (visitor === null || typeof visitor !== "object") {
     throw new TypeError("Visitor must be an object");
+  }
 
   // Exit if is empty visitor
   const keys = Object.keys(visitor),

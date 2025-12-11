@@ -251,8 +251,9 @@ const FILE_CONTEXT = freeze({
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
     // Note: If we change this implementation, also change `getPhysicalFilename` method below
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot access `context.physicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 
@@ -262,8 +263,9 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.physicalFilename` property instead.
    */
   getPhysicalFilename(): string {
-    if (filePath === null)
+    if (filePath === null) {
       throw new Error("Cannot call `context.getPhysicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 

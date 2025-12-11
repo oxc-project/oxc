@@ -300,8 +300,15 @@ function testRangeParent(
     // Walk children
     for (const key in node) {
       if (!hasOwn(node, key)) continue;
-      if (key === "type" || key === "start" || key === "end" || key === "range" || key === "parent")
+      if (
+        key === "type" ||
+        key === "start" ||
+        key === "end" ||
+        key === "range" ||
+        key === "parent"
+      ) {
         continue;
+      }
       walk(node[key]);
     }
 
@@ -427,8 +434,9 @@ function stringifyAcornTest262Style(obj: any): string {
   const json = JSON.stringify(
     obj,
     (_key, value) => {
-      if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp))
+      if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp)) {
         return null;
+      }
       if (value === Infinity) {
         containsInfinity = true;
         return INFINITY_PLACEHOLDER;

@@ -57,8 +57,9 @@ export function getFixtures(): Fixture[] {
       options = DEFAULT_OPTIONS;
     }
 
-    if (typeof options !== "object" || options === null)
+    if (typeof options !== "object" || options === null) {
       throw new TypeError("`options.json` must be an object");
+    }
     options = { ...DEFAULT_OPTIONS, ...options };
     if (
       typeof options.oxlint !== "boolean" ||
