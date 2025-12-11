@@ -5,7 +5,7 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    FormatOptions, QuoteProperties, QuoteStyle,
+    QuoteProperties, QuoteStyle,
     formatter::{Format, Formatter, prelude::*},
 };
 
@@ -23,7 +23,7 @@ pub enum StringLiteralParentKind {
 }
 
 /// Data structure of convenience to format string literals
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct FormatLiteralStringToken<'a> {
     /// The current string
     string: &'a str,
@@ -39,17 +39,21 @@ impl<'a> FormatLiteralStringToken<'a> {
         Self { string, jsx, parent_kind }
     }
 
-    pub fn clean_text(
-        &self,
-        source_type: SourceType,
-        options: &FormatOptions,
-    ) -> CleanedStringLiteralText<'a> {
+    pub fn clean_text(&self, f: &Formatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
+        let options = f.options();
+        let source_type = f.context().source_type();
+
         let chosen_quote_style =
             if self.jsx { options.jsx_quote_style } else { options.quote_style };
-        let chosen_quote_properties = options.quote_properties;
+
+        let is_quote_needed = match options.quote_properties {
+            QuoteProperties::AsNeeded => false,
+            QuoteProperties::Preserve => true,
+            QuoteProperties::Consistent => f.context().is_quote_needed(),
+        };
 
         let string_cleaner =
-            LiteralStringNormalizer::new(*self, chosen_quote_style, chosen_quote_properties);
+            LiteralStringNormalizer::new(*self, chosen_quote_style, is_quote_needed);
 
         let content = string_cleaner.normalize_text(source_type);
 
@@ -170,17 +174,17 @@ struct LiteralStringNormalizer<'a> {
     token: FormatLiteralStringToken<'a>,
     /// The quote that was set inside the configuration
     chosen_quote_style: QuoteStyle,
-    /// When properties in objects are quoted that was set inside the configuration
-    chosen_quote_properties: QuoteProperties,
+    /// State whether we need to print the quotes or not.
+    is_quote_needed: bool,
 }
 
 impl<'a> LiteralStringNormalizer<'a> {
     pub fn new(
         token: FormatLiteralStringToken<'a>,
         chosen_quote_style: QuoteStyle,
-        chosen_quote_properties: QuoteProperties,
+        is_quote_needed: bool,
     ) -> Self {
-        Self { token, chosen_quote_style, chosen_quote_properties }
+        Self { token, chosen_quote_style, is_quote_needed }
     }
 
     fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
@@ -195,8 +199,7 @@ impl<'a> LiteralStringNormalizer<'a> {
 
     fn normalize_import_attribute(&self, string_information: StringInformation) -> Cow<'a, str> {
         let quoteless = self.raw_content();
-        let can_remove_quotes =
-            !self.is_preserve_quote_properties() && Self::is_identifier_name_patched(quoteless);
+        let can_remove_quotes = !self.is_quote_needed && is_identifier_name_patched(quoteless);
         if can_remove_quotes {
             Cow::Borrowed(quoteless)
         } else {
@@ -219,10 +222,6 @@ impl<'a> LiteralStringNormalizer<'a> {
         } else {
             self.swap_quotes(self.raw_content(), string_information)
         }
-    }
-
-    fn is_preserve_quote_properties(&self) -> bool {
-        self.chosen_quote_properties == QuoteProperties::Preserve
     }
 
     fn can_remove_number_quotes_by_file_type(&self, source_type: SourceType) -> bool {
@@ -251,9 +250,9 @@ impl<'a> LiteralStringNormalizer<'a> {
         source_type: SourceType,
     ) -> Cow<'a, str> {
         let quoteless = self.raw_content();
-        let can_remove_quotes = !self.is_preserve_quote_properties()
+        let can_remove_quotes = !self.is_quote_needed
             && (self.can_remove_number_quotes_by_file_type(source_type)
-                || Self::is_identifier_name_patched(quoteless));
+                || is_identifier_name_patched(quoteless));
         if can_remove_quotes {
             Cow::Borrowed(quoteless)
         } else {
@@ -297,21 +296,11 @@ impl<'a> LiteralStringNormalizer<'a> {
             Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
         }
     }
-
-    /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
-    /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
-    /// 15.
-    /// <https://github.com/oxc-project/unicode-id-start/pull/3>
-    fn is_identifier_name_patched(content: &str) -> bool {
-        let mut chars = content.chars();
-        chars.next().is_some_and(is_identifier_start)
-            && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
-    }
 }
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        self.clean_text(f.context().source_type(), f.options()).fmt(f);
+        self.clean_text(f).fmt(f);
     }
 }
 
@@ -400,6 +389,16 @@ pub fn normalize_string(
         reduced_string.push_str(&raw_content[copy_start..]);
         Cow::Owned(reduced_string)
     }
+}
+
+/// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+/// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+/// 15.
+/// <https://github.com/oxc-project/unicode-id-start/pull/3>
+pub fn is_identifier_name_patched(content: &str) -> bool {
+    let mut chars = content.chars();
+    chars.next().is_some_and(is_identifier_start)
+        && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
 }
 
 #[cfg(test)]

@@ -215,7 +215,6 @@ impl TestRunner {
                 // Skip all options that are not supported yet
                 !options.experimental_operator_position.is_start()
                     && !options.experimental_ternaries
-                    && !options.quote_properties.is_consistent()
             })
             .collect::<Vec<_>>();
 

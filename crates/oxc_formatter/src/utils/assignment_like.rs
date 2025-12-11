@@ -976,8 +976,7 @@ fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> 
                 StringLiteralParentKind::Expression,
             );
 
-            formatter.clean_text(f.context().source_type(), f.options()).width()
-                <= threshold as usize
+            formatter.clean_text(f).width() <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
