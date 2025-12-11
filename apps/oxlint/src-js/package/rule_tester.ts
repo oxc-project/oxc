@@ -10,6 +10,7 @@
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
 import stringify from "json-stable-stringify-without-jsonify";
+import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetFile } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
@@ -125,7 +126,6 @@ interface Config {
  * Language options config.
  */
 interface LanguageOptions {
-  ecmaVersion?: number | "latest";
   sourceType?: SourceType;
   globals?: Record<
     string,
@@ -135,10 +135,13 @@ interface LanguageOptions {
 }
 
 /**
- * Language options config, with parser.
+ * Language options config, with `parser` and `ecmaVersion` properties.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
  * For internal use only.
  */
-interface LanguageOptionsWithParser extends LanguageOptions {
+interface LanguageOptionsInternal extends LanguageOptions {
+  ecmaVersion?: number | "latest";
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
@@ -933,6 +936,10 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     // Parse file into buffer
     parse(filename, test.code, parseOptions);
 
+    // In conformance tests, set `context.languageOptions.ecmaVersion`.
+    // This is not supported outside of conformance tests.
+    if (CONFORMANCE) setEcmaVersionContext(test);
+
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
@@ -976,7 +983,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const languageOptions = test.languageOptions as LanguageOptionsWithParser | undefined;
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
   if (languageOptions == null) return parseOptions;
 
   // Throw error if custom parser is provided
@@ -1026,6 +1033,31 @@ function getParseOptions(test: TestCase): ParseOptions {
   }
 
   return parseOptions;
+}
+
+/**
+ * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * This is only supported in conformance tests, where it's necessary to pass some tests.
+ * Oxlint doesn't support any version except latest.
+ * @param test - Test case
+ */
+function setEcmaVersionContext(test: TestCase) {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
+  // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
+  // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
+  // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
+  // in an early step of config parsing.
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  const ecmaVersion = languageOptions?.ecmaVersion;
+
+  let version = ECMA_VERSION;
+  if (typeof ecmaVersion === "number") {
+    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+  }
+
+  setEcmaVersion(version);
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)

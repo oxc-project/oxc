@@ -69,7 +69,7 @@ export function resetFileContext(): void {
 }
 
 // ECMAScript version. This matches ESLint's default.
-const ECMA_VERSION = 2026;
+export const ECMA_VERSION = 2026;
 const ECMA_VERSION_NUMBER = 17;
 
 // Supported ECMAScript versions. This matches ESLint's default.
@@ -151,7 +151,7 @@ const PARSER_OPTIONS = freeze({
 });
 
 // Singleton object for language options.
-const LANGUAGE_OPTIONS = freeze({
+const LANGUAGE_OPTIONS = {
   /**
    * Source type of the file being linted.
    */
@@ -191,12 +191,32 @@ const LANGUAGE_OPTIONS = freeze({
     // ESLint has `globals` as `null`, not empty object, if no globals are defined
     return globals === EMPTY_GLOBALS ? null : globals;
   },
-});
+};
+
+// In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
+// This is to allow changing the ECMAScript version in conformance tests.
+// Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
+let ecmaVersion = ECMA_VERSION;
+
+export function setEcmaVersion(version: number): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
+  ecmaVersion = version;
+}
+
+if (CONFORMANCE) {
+  Object.defineProperty(LANGUAGE_OPTIONS, "ecmaVersion", {
+    get(): number {
+      return ecmaVersion;
+    },
+  });
+}
+
+freeze(LANGUAGE_OPTIONS);
 
 /**
  * Language options used when parsing a file.
  */
-export type LanguageOptions = typeof LANGUAGE_OPTIONS;
+export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 
 // Singleton object for file-specific properties.
 //
