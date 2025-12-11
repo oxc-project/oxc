@@ -218,6 +218,9 @@ function formatError(err: Error | null): string {
   for (; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex];
     if (line.startsWith("    at ")) break;
+    // These "diff" lines appear to be produced by `AssertionError` non-determinatically.
+    // This appears to be a bug in NodeJS's `assert` module. Remove them, to avoid churn in snapshot.
+    if (line.trimStart() === "^") continue;
     out += `${cleanString(line)}\n`;
   }
 
