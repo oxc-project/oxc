@@ -3,7 +3,7 @@ use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 use oxc_diagnostics::DiagnosticService;
 
 use super::{
-    command::{FormatCommand, OutputOptions},
+    command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
@@ -54,15 +54,18 @@ impl FormatRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, output_options, basic_options, ignore_options, misc_options } =
+        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
             self.options;
+        let Mode::Cli(format_mode) = mode else {
+            unreachable!("`FormatRunner` should only be called with Mode::Cli");
+        };
         let num_of_threads = rayon::current_num_threads();
 
         // Find config file
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config_path = resolve_config_path(&cwd, basic_options.config.as_deref());
+        let config_path = resolve_config_path(&cwd, config_options.config.as_deref());
         // Load and parse config file
         // - `format_options`: Parsed formatting options used by `oxc_formatter`
         // - `external_config`: JSON value used by `external_formatter`, populated with `format_options`
@@ -109,7 +112,7 @@ impl FormatRunner {
             Ok(Some(walker)) => walker,
             // All target paths are ignored
             Ok(None) => {
-                if misc_options.no_error_on_unmatched_pattern {
+                if runtime_options.no_error_on_unmatched_pattern {
                     utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
                     return CliRunResult::None;
                 }
@@ -133,7 +136,7 @@ impl FormatRunner {
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
-        if matches!(output_options, OutputOptions::Check) {
+        if matches!(format_mode, OutputMode::Check) {
             utils::print_and_flush(stdout, "Checking formatting...\n");
             utils::print_and_flush(stdout, "\n");
         }
@@ -144,11 +147,11 @@ impl FormatRunner {
         let source_formatter = source_formatter
             .with_external_formatter(self.external_formatter, oxfmt_options.sort_package_json);
 
-        let output_options_clone = output_options.clone();
+        let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service = FormatService::new(cwd, output_options_clone, source_formatter);
+            let format_service = FormatService::new(cwd, format_mode_clone, source_formatter);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
@@ -188,7 +191,7 @@ impl FormatRunner {
 
         // Check if no files were found
         if total_target_files_count == 0 {
-            if misc_options.no_error_on_unmatched_pattern {
+            if runtime_options.no_error_on_unmatched_pattern {
                 utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
                 print_stats(stdout);
                 return CliRunResult::None;
@@ -207,17 +210,17 @@ impl FormatRunner {
             return CliRunResult::FormatFailed;
         }
 
-        match (&output_options, changed_paths.len()) {
+        match (&format_mode, changed_paths.len()) {
             // `--list-different` outputs nothing here, mismatched paths are already printed to stdout
-            (OutputOptions::ListDifferent, 0) => CliRunResult::FormatSucceeded,
-            (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
+            (OutputMode::ListDifferent, 0) => CliRunResult::FormatSucceeded,
+            (OutputMode::ListDifferent, _) => CliRunResult::FormatMismatch,
             // `--check` outputs friendly summary
-            (OutputOptions::Check, 0) => {
+            (OutputMode::Check, 0) => {
                 utils::print_and_flush(stdout, "All matched files use the correct format.\n");
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
-            (OutputOptions::Check, changed_count) => {
+            (OutputMode::Check, changed_count) => {
                 utils::print_and_flush(stdout, "\n\n");
                 utils::print_and_flush(
                     stdout,
@@ -229,7 +232,7 @@ impl FormatRunner {
                 CliRunResult::FormatMismatch
             }
             // Default (write) does not output anything
-            (OutputOptions::Write, changed_count) => {
+            (OutputMode::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,

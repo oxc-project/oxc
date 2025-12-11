@@ -1,5 +1,5 @@
 use oxfmt::cli::{
-    CliRunResult, FormatRunner, format_command, init_miette, init_rayon, init_tracing,
+    CliRunResult, FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing,
 };
 use oxfmt::init::run_init;
 use oxfmt::lsp::run_lsp;
@@ -12,21 +12,17 @@ async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = format_command().run();
 
-    // Handle --init mode
-    if command.misc_options.init {
-        return run_init();
+    match command.mode {
+        Mode::Init => run_init(),
+        Mode::Lsp => {
+            run_lsp().await;
+            CliRunResult::None
+        }
+        Mode::Cli(_) => {
+            init_tracing();
+            init_miette();
+            init_rayon(command.runtime_options.threads);
+            FormatRunner::new(command).run()
+        }
     }
-
-    // Handle LSP mode
-    if command.misc_options.lsp {
-        run_lsp().await;
-        return CliRunResult::None;
-    }
-
-    // Otherwise, CLI mode
-    init_tracing();
-    init_miette();
-    init_rayon(command.misc_options.threads);
-
-    FormatRunner::new(command).run()
 }
