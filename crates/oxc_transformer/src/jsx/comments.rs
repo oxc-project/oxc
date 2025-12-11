@@ -91,9 +91,9 @@ fn update_options_with_comment(
 
 /// Check if a pragma value is valid.
 ///
-/// A valid pragma value is none of the following:
-///   - An empty string
-///   - Root part is a reserved keyword (except `this`, `null`, `true`, `false`, `import.meta`)
+/// A pragma value is invalid if any of the following are true:
+///   - It is an empty string
+///   - The root part is a reserved keyword (except `this`, `null`, `true`, `false`, `import.meta`)
 ///   - Any part is not a valid identifier name
 ///
 /// Based on <https://github.com/evanw/esbuild/blob/5e0e56d6d62076dfeff47f5227ae5300f91d2b16/internal/js_parser/js_parser.go#L18027-L18060>
