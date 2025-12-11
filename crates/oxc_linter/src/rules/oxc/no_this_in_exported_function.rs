@@ -195,6 +195,13 @@ fn test() {
         "var foo = function () { console.log(this); }; export { foo };",
         "export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } }",
         "export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } }",
+        "export async function foo() { console.log(this); }",
+        "export function* foo() { yield this; }",
+        "export async function* foo() { yield this; }",
+        "export default async function() { this.bar(); }",
+        "export default function*() { yield this; }",
+        "async function foo() { this.bar(); } export { foo };",
+        "function* foo() { yield this; } export { foo };",
     ];
 
     Tester::new(NoThisInExportedFunction::NAME, NoThisInExportedFunction::PLUGIN, pass, fail)
