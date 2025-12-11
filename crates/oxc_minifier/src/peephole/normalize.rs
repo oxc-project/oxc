@@ -1,6 +1,9 @@
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
@@ -306,6 +309,90 @@ impl<'a> Normalize {
             return;
         }
         let Some(ident) = new_expr.callee.get_identifier_reference() else {
+            match new_expr.callee.get_inner_expression() {
+                Expression::ClassExpression(class_expr) => {
+                    fn has_side_effect<'a>(
+                        class_expr: &oxc_allocator::Box<'a, Class<'a>>,
+                        ctx: &mut TraverseCtx<'a>,
+                    ) -> bool {
+                        if !class_expr.decorators.is_empty() {
+                            return true;
+                        }
+                        let ctx = Ctx::new(ctx);
+                        let body_have_side_effect = class_expr.body.body.iter().any(|element| {
+                            if element.may_have_side_effects(&ctx) {
+                                return true;
+                            }
+                            if let ClassElement::MethodDefinition(method_def) = element {
+                                if let Some(name) = method_def.key.static_name()
+                                    && name == "constructor"
+                                {
+                                    if let Some(body) = &method_def.value.body {
+                                        // will throw a ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
+                                        if class_expr.super_class.is_some()
+                                            && body.statements.is_empty()
+                                        {
+                                            return true;
+                                        }
+                                        let result = body
+                                            .statements
+                                            .iter()
+                                            .any(|stmt| stmt.may_have_side_effects(&ctx));
+                                        return result;
+                                    }
+                                }
+                            }
+                            return false;
+                        });
+                        if body_have_side_effect {
+                            return true;
+                        }
+                        if let Some(super_class) = &class_expr.super_class {
+                            if let Some(ident) = super_class.get_identifier_reference() {
+                                if ctx.is_global_reference(ident)
+                                    && let name = ident.name.as_str()
+                                    && matches!(
+                                        name,
+                                        "Set"
+                                            | "Map"
+                                            | "WeakSet"
+                                            | "WeakMap"
+                                            | "ArrayBuffer"
+                                            | "Date"
+                                            | "Boolean"
+                                            | "Error"
+                                            | "EvalError"
+                                            | "RangeError"
+                                            | "ReferenceError"
+                                            | "SyntaxError"
+                                            | "TypeError"
+                                            | "URIError"
+                                            | "Number"
+                                            | "Object"
+                                            | "String"
+                                            | "Symbol"
+                                    )
+                                {
+                                    return false;
+                                }
+                                if let Some(symbol_id) =
+                                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                                {
+                                    if ctx.scoping().no_side_effects().contains(&symbol_id) {
+                                        return false;
+                                    }
+                                }
+                            }
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    new_expr.pure = !has_side_effect(class_expr, ctx);
+                    return;
+                }
+                _ => {}
+            }
             return;
         };
         if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
