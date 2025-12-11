@@ -1,7 +1,11 @@
 use std::fmt;
 use std::str::FromStr;
 
+#[cfg(feature = "napi")]
+use napi_derive::napi;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct SortImportsOptions {
     /// Partition imports by newlines.
     /// Default is `false`.
@@ -50,6 +54,7 @@ impl Default for SortImportsOptions {
 // ---
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "napi", napi)]
 pub enum SortOrder {
     /// Sort in ascending order (A-Z).
     #[default]

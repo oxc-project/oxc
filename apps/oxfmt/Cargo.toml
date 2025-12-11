@@ -31,6 +31,7 @@ oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
+oxc_napi = { workspace = true, optional = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -66,6 +67,6 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 
 [features]
 default = ["napi"]
-napi = ["dep:napi", "dep:napi-derive"]
+napi = ["dep:napi", "dep:napi-derive", "dep:oxc_napi", "oxc_formatter/napi"]
 allocator = ["dep:mimalloc-safe"]
 detect_code_removal = ["oxc_formatter/detect_code_removal"]
