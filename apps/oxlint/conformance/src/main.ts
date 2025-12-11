@@ -35,10 +35,19 @@ console.log(`\nResults written to: ${OUTPUT_FILE_PATH}`);
 
 // Print summary
 const totalRuleCount = results.length;
-const fullyPassingCount = results.filter(
-  (r) => !r.isLoadError && r.tests.length > 0 && r.tests.every((t) => t.isPassed),
-).length;
-const loadErrorCount = results.filter((r) => r.isLoadError).length;
+let loadErrorCount = 0,
+  fullyPassingCount = 0;
+
+for (const rule of results) {
+  if (rule.isLoadError) {
+    loadErrorCount++;
+  } else {
+    const { tests } = rule;
+    if (tests.length > 0 && tests.every((test) => test.isPassed)) {
+      fullyPassingCount++;
+    }
+  }
+}
 
 console.log("\n=====================================");
 console.log("Summary:");

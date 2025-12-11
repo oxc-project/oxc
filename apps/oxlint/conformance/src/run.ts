@@ -44,10 +44,11 @@ export function runAllTests(): RuleResult[] {
     if (result.isLoadError) {
       console.log(" LOAD ERROR");
     } else {
-      const passed = result.tests.filter((t) => t.isPassed).length;
-      const total = result.tests.length;
-      const status = passed === total ? "PASS" : "FAIL";
-      console.log(` ${status} (${passed}/${total})`);
+      const { tests } = result,
+        totalCount = tests.length,
+        passedCount = tests.reduce((total, test) => total + (test.isPassed ? 1 : 0), 0),
+        status = passedCount === totalCount ? "PASS" : "FAIL";
+      console.log(` ${status} (${passedCount}/${totalCount})`);
     }
   }
 
