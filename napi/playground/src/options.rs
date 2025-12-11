@@ -128,7 +128,7 @@ pub struct OxcFormatterOptions {
     pub single_quote: Option<bool>,
     /// Use single quotes in JSX (default: false)
     pub jsx_single_quote: Option<bool>,
-    /// When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed")
+    /// When to add quotes around object properties: "as-needed" | "consistent" | "preserve" (default: "as-needed")
     pub quote_props: Option<String>,
     /// Print trailing commas: "all" | "es5" | "none" (default: "all")
     pub trailing_comma: Option<String>,
