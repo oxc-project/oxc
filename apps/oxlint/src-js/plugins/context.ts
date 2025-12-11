@@ -185,10 +185,6 @@ const LANGUAGE_OPTIONS = freeze({
    * Globals defined for the file being linted.
    */
   get globals(): Readonly<Globals> | null {
-    if (filePath === null) {
-      throw new Error("Cannot access `context.languageOptions.globals` in `createOnce`");
-    }
-
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
 
