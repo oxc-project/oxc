@@ -131,11 +131,18 @@ interface LanguageOptions {
     string,
     boolean | "true" | "writable" | "writeable" | "false" | "readonly" | "readable" | "off" | null
   >;
+  parserOptions?: ParserOptions;
+}
+
+/**
+ * Language options config, with parser.
+ * For internal use only.
+ */
+interface LanguageOptionsWithParser extends LanguageOptions {
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
   };
-  parserOptions?: ParserOptions;
 }
 
 /**
@@ -966,8 +973,11 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const { languageOptions } = test;
+  const languageOptions = test.languageOptions as LanguageOptionsWithParser | undefined;
   if (languageOptions != null) {
+    // Throw error if custom parser is provided
+    if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
+
     // Handle `languageOptions.sourceType`
     let { sourceType } = languageOptions;
     if (sourceType != null) {

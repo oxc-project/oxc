@@ -15,7 +15,10 @@ type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
+type LanguageOptions = RuleTester.LanguageOptions;
 export type TestCase = ValidTestCase | InvalidTestCase;
+
+type LanguageOptionsWithParser = LanguageOptions & { parser?: unknown };
 
 const { isArray } = Array;
 
@@ -90,7 +93,7 @@ function modifyTestCase(test: TestCase): void {
   test.eslintCompat = true;
 
   // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
-  let { languageOptions } = test;
+  let languageOptions = test.languageOptions as LanguageOptionsWithParser | undefined;
   if (languageOptions?.parser === tsEslintParser) {
     languageOptions = { ...languageOptions };
     test.languageOptions = languageOptions;
