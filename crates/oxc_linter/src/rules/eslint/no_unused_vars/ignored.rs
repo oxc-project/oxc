@@ -3,8 +3,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, BindingPattern, BindingPatternKind, ClassElement,
-        ObjectAssignmentTarget,
+        AssignmentTargetProperty, BindingPattern, ClassElement, ObjectAssignmentTarget,
     },
 };
 
@@ -92,6 +91,10 @@ impl NoUnusedVars {
                 self.is_ignored_arg(declared_binding)
                     || self.is_ignored_binding_pattern(symbol, &param.pattern)
             }
+            AstKind::FormalParameterRest(param) => {
+                self.is_ignored_arg(declared_binding)
+                    || self.is_ignored_binding_pattern(symbol, &param.rest.argument)
+            }
             s => {
                 // panic when running test cases so we can find unsupported node kinds
                 debug_assert!(
@@ -141,13 +144,11 @@ impl NoUnusedVars {
         target: &Symbol<'_, 'a>,
         binding: &BindingPattern<'a>,
     ) -> FoundStatus {
-        match &binding.kind {
+        match &binding {
             // if found, not ignored. Ignoring only happens in destructuring patterns.
-            BindingPatternKind::BindingIdentifier(id) => FoundStatus::found(target == id.as_ref()),
-            BindingPatternKind::AssignmentPattern(id) => {
-                self.search_binding_pattern(target, &id.left)
-            }
-            BindingPatternKind::ObjectPattern(obj) => {
+            BindingPattern::BindingIdentifier(id) => FoundStatus::found(target == id.as_ref()),
+            BindingPattern::AssignmentPattern(id) => self.search_binding_pattern(target, &id.left),
+            BindingPattern::ObjectPattern(obj) => {
                 for prop in &obj.properties {
                     // check if the prop is a binding identifier (with or
                     // without an assignment) since ignore_rest_siblings does
@@ -182,7 +183,7 @@ impl NoUnusedVars {
                     self.search_binding_pattern(target, &rest.argument)
                 })
             }
-            BindingPatternKind::ArrayPattern(arr) => {
+            BindingPattern::ArrayPattern(arr) => {
                 for el in arr.elements.iter().flatten() {
                     let status = self.search_binding_pattern(target, el);
                     match el.get_binding_identifier() {
@@ -194,7 +195,7 @@ impl NoUnusedVars {
                         // el is a destructuring pattern containing the target
                         // symbol; our search is done, propegate it upwards
                         None if status.is_found() => {
-                            debug_assert!(el.kind.is_destructuring_pattern());
+                            debug_assert!(el.is_destructuring_pattern());
                             return status;
                         }
                         // el is a simple pattern for a different symbol, or is

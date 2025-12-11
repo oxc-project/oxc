@@ -234,9 +234,9 @@ impl<'a> ClassProperties<'a, '_> {
         if has_super_class {
             let args_binding =
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
-            params_rest = Some(
-                ctx.ast.alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
-            );
+            let rest_element =
+                ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
+            params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
             stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
@@ -308,15 +308,17 @@ impl<'a> ClassProperties<'a, '_> {
             true,
             false,
             NONE,
-            ctx.ast.alloc_formal_parameters(
-                SPAN,
-                FormalParameterKind::ArrowFormalParameters,
-                ctx.ast.vec(),
-                Some(
-                    ctx.ast
-                        .alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
-                ),
-            ),
+            {
+                let rest_element =
+                    ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
+                let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
+                ctx.ast.alloc_formal_parameters(
+                    SPAN,
+                    FormalParameterKind::ArrowFormalParameters,
+                    ctx.ast.vec(),
+                    Some(rest),
+                )
+            },
             NONE,
             ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
             super_func_scope_id,
@@ -332,6 +334,7 @@ impl<'a> ClassProperties<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 super_binding.create_binding_pattern(ctx),
+                NONE,
                 Some(super_func),
                 false,
             )),

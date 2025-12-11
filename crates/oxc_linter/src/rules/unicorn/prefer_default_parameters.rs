@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentOperator, AssignmentTarget, BindingPatternKind, Expression, FormalParameter,
+        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
         LogicalOperator, Statement,
     },
 };
@@ -91,7 +91,7 @@ impl Rule for PreferDefaultParameters {
                 let Some(init) = &declarator.init else {
                     return;
                 };
-                if let BindingPatternKind::BindingIdentifier(left_ident) = &declarator.id.kind {
+                if let BindingPattern::BindingIdentifier(left_ident) = &declarator.id {
                     check_expression(ctx, node, &left_ident.name, init, false, var_decl.span);
                 }
             }
@@ -151,7 +151,7 @@ fn check_expression<'a>(
         return;
     }
 
-    if matches!(param.pattern.kind, BindingPatternKind::AssignmentPattern(_)) {
+    if param.initializer.is_some() {
         return;
     }
 
@@ -285,7 +285,7 @@ fn check_no_extra_references<'a>(
     param_ident_span: Span,
     param: &FormalParameter<'a>,
 ) -> bool {
-    let BindingPatternKind::BindingIdentifier(binding_ident) = &param.pattern.kind else {
+    let BindingPattern::BindingIdentifier(binding_ident) = &param.pattern else {
         return false;
     };
 
@@ -308,7 +308,7 @@ fn check_no_extra_references_assignment<'a>(
     param_ident_span: Span,
     param: &FormalParameter<'a>,
 ) -> bool {
-    let BindingPatternKind::BindingIdentifier(binding_ident) = &param.pattern.kind else {
+    let BindingPattern::BindingIdentifier(binding_ident) = &param.pattern else {
         return false;
     };
 

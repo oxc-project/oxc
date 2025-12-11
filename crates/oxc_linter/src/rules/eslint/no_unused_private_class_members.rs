@@ -228,6 +228,9 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_) => true,
+        AstKind::FormalParameter(p) => {
+            p.initializer.as_ref().is_some_and(|init| init.span().contains_inclusive(child.span()))
+        }
         AstKind::AssignmentExpression(assign_expr) => {
             // The right-hand side of an assignment is always in a value context (being read for assignment)
             assign_expr.right.span().contains_inclusive(child.span())

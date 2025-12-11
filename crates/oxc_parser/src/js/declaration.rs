@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
@@ -102,12 +102,12 @@ impl<'a> ParserImpl<'a> {
     ) -> VariableDeclarator<'a> {
         let span = self.start_span();
 
-        let mut binding_kind = self.parse_binding_pattern_kind();
+        let id = self.parse_binding_pattern();
 
-        let (id, definite) = if self.is_ts {
+        let (type_annotation, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
-            let definite = if binding_kind.is_binding_identifier()
+            let definite = if id.is_binding_identifier()
                 && !self.cur_token().is_on_new_line()
                 && self.at(Kind::Bang)
             {
@@ -117,31 +117,31 @@ impl<'a> ParserImpl<'a> {
             } else {
                 None
             };
-            let optional = if self.at(Kind::Question) {
+            if self.at(Kind::Question) {
                 self.error(diagnostics::unexpected_optional_declaration(self.cur_token().span()));
                 self.bump_any();
-                true
-            } else {
-                false
-            };
-            let type_annotation = self.parse_ts_type_annotation();
-            if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
-            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
+            let type_annotation = self.parse_ts_type_annotation();
+            (type_annotation, definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, NONE, false), None)
+            (None, None)
         };
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl =
-            self.ast.variable_declarator(self.end_span(span), kind, id, init, definite.is_some());
+        let decl = self.ast.variable_declarator(
+            self.end_span(span),
+            kind,
+            id,
+            type_annotation,
+            init,
+            definite.is_some(),
+        );
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }
         if let Some(span) = definite {
             if decl.init.is_some() {
                 self.error(diagnostics::variable_declarator_definite(span));
-            } else if decl.id.type_annotation.is_none() {
+            } else if decl.type_annotation.is_none() {
                 self.error(diagnostics::variable_declarator_definite_type_assertion(span));
             }
         }
@@ -150,11 +150,16 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
         if decl.init.is_none() && !self.ctx.has_ambient() {
-            if !matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)) {
+            if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
+                self.error(diagnostics::missing_initializer_in_const(
+                    decl.type_annotation.as_ref().map_or_else(
+                        || decl.id.span(),
+                        |type_annotation| decl.id.span().merge(type_annotation.span()),
+                    ),
+                ));
             }
         }
     }
@@ -183,7 +188,7 @@ impl<'a> ParserImpl<'a> {
             let declaration =
                 self.parse_variable_declarator(VariableDeclarationParent::Statement, kind);
 
-            if !matches!(declaration.id.kind, BindingPatternKind::BindingIdentifier(_)) {
+            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_identifier_in_using_declaration(
                     declaration.id.span(),
                 ));
@@ -192,7 +197,10 @@ impl<'a> ParserImpl<'a> {
             // Excluding `for` loops, an initializer is required in a UsingDeclaration.
             if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
                 self.error(diagnostics::using_declarations_must_be_initialized(
-                    declaration.id.span(),
+                    declaration.type_annotation.as_ref().map_or_else(
+                        || declaration.id.span(),
+                        |type_annotation| declaration.id.span().merge(type_annotation.span()),
+                    ),
                 ));
             }
 

@@ -176,7 +176,7 @@ impl NoUnusedVars {
         // positional arguments after the last used argument will be checked.
 
         // unused non-positional arguments are never allowed
-        if param.pattern.kind.is_destructuring_pattern() {
+        if param.pattern.is_destructuring_pattern() {
             return false;
         }
 

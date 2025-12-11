@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind, MemberExpressionKind,
     ast::{
-        BindingPatternKind, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
+        BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
         PropertyKind, UpdateExpression,
     },
 };
@@ -95,7 +95,7 @@ impl Rule for NoAccessorRecursion {
                 let Some(key_name) = get_property_or_method_def_name(func_parent) else {
                     return;
                 };
-                if let BindingPatternKind::ObjectPattern(obj_pattern) = &decl.id.kind {
+                if let BindingPattern::ObjectPattern(obj_pattern) = &decl.id {
                     let exist = obj_pattern
                         .properties
                         .iter()

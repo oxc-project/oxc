@@ -308,6 +308,12 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
             }
+            AstKind::FormalParameterRest(_) => {
+                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+            }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;

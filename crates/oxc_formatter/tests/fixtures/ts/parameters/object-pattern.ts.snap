@@ -57,7 +57,10 @@ export function useCopyToClipboard({
 } = {}) {}
 
 function callbackUrl(
-  { baseUrl, params }: { baseUrl: string; params?: string } = {
+  {
+    baseUrl,
+    params,
+  }: { baseUrl: string; params?: string } = {
     baseUrl: "",
     params: undefined,
   },
@@ -95,7 +98,10 @@ export function useCopyToClipboard({
 } = {}) {}
 
 function callbackUrl(
-  { baseUrl, params }: { baseUrl: string; params?: string } = {
+  {
+    baseUrl,
+    params,
+  }: { baseUrl: string; params?: string } = {
     baseUrl: "",
     params: undefined,
   },

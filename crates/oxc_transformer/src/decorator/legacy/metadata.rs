@@ -443,7 +443,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
         if let Some(rest) = &params.rest {
             elements.push(ArrayExpressionElement::from(
-                self.serialize_type_annotation(rest.argument.type_annotation.as_ref(), ctx),
+                self.serialize_type_annotation(rest.type_annotation.as_ref(), ctx),
             ));
         }
         ctx.ast.expression_array(SPAN, elements)
@@ -454,10 +454,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         param: &FormalParameter<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let type_annotation = match &param.pattern.kind {
-            BindingPatternKind::AssignmentPattern(pattern) => pattern.left.type_annotation.as_ref(),
-            _ => param.pattern.type_annotation.as_ref(),
-        };
+        let type_annotation = param.type_annotation.as_ref();
         self.serialize_type_annotation(type_annotation, ctx)
     }
 

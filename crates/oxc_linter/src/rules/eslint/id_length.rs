@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPatternKind, BindingProperty, IdentifierName, PrivateIdentifier,
+    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, PrivateIdentifier,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -424,8 +424,8 @@ impl IdLength {
         };
 
         matches!(
-            &binding_property.value.kind,
-            BindingPatternKind::BindingIdentifier(_) | BindingPatternKind::ObjectPattern(_)
+            &binding_property.value,
+            BindingPattern::BindingIdentifier(_) | BindingPattern::ObjectPattern(_)
         )
     }
 

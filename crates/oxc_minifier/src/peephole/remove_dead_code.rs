@@ -368,7 +368,7 @@ impl<'a> PeepholeOptimizations {
             }
             Statement::VariableDeclaration(decl) => {
                 for d in &decl.declarations {
-                    if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
+                    if let BindingPattern::BindingIdentifier(id) = &d.id {
                         match &d.init {
                             Some(Expression::ArrowFunctionExpression(a)) => {
                                 Self::try_save_pure_function(
@@ -413,7 +413,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         // `function foo({}) {} foo(null)` is runtime type error.
-        if !params.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) {
+        if !params.items.iter().all(|pat| pat.pattern.is_binding_identifier()) {
             return;
         }
         if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {

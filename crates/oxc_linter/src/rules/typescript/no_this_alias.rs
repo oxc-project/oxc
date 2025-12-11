@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPatternKind, Expression, match_simple_assignment_target},
+    ast::{AssignmentTarget, BindingPattern, Expression, match_simple_assignment_target},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,19 +108,19 @@ impl Rule for NoThisAlias {
                 }
 
                 if self.allow_destructuring
-                    && !matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_))
+                    && !matches!(decl.id, BindingPattern::BindingIdentifier(_))
                 {
                     return;
                 }
 
-                if let BindingPatternKind::BindingIdentifier(identifier) = &decl.id.kind {
+                if let BindingPattern::BindingIdentifier(identifier) = &decl.id {
                     if !self.is_allowed(&identifier.name) {
                         ctx.diagnostic(no_this_alias_diagnostic(identifier.span));
                     }
 
                     return;
                 }
-                ctx.diagnostic(no_this_destructure_diagnostic(decl.id.kind.span()));
+                ctx.diagnostic(no_this_destructure_diagnostic(decl.id.span()));
             }
             AstKind::AssignmentExpression(assignment) => {
                 if !rhs_is_this_reference(&assignment.right) {

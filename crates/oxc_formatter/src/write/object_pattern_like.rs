@@ -41,7 +41,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
     fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent {
+                // Object pattern directly in a formal parameter should be inline
+                // This allows the parent's group to control the expansion
                 AstNodes::FormalParameter(_) => true,
+                // Object pattern inside AssignmentPattern inside FormalParameter should be inline
+                // e.g., function f({ a } = {}) {}
                 AstNodes::AssignmentPattern(_) => {
                     matches!(node.parent.parent(), AstNodes::FormalParameter(_))
                 }
@@ -52,9 +56,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     /// Based on <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L77-L103>
-    fn should_break_properties(&self) -> bool {
+    fn should_break_properties(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => {
+                // For formal parameters, catch parameters, and assignment patterns,
+                // never break properties (let other formatting rules handle the layout)
                 let parent_is_parameter_or_assignment_pattern = matches!(
                     node.parent,
                     AstNodes::CatchParameter(_)
@@ -66,10 +72,13 @@ impl<'a> ObjectPatternLike<'a, '_> {
                     return false;
                 }
 
+                // For other contexts, break if any property is a nested destructuring pattern
+                // Note: We don't break for AssignmentPattern even if its left side is a pattern,
+                // because the default value provides a natural "ending" that doesn't require breaking.
                 node.properties.iter().any(|property| {
                     matches!(
-                        property.value.kind,
-                        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
+                        &property.value,
+                        BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
                     )
                 })
             }
@@ -107,7 +116,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
             return ObjectPatternLayout::Inline;
         }
 
-        let break_properties = self.should_break_properties();
+        let break_properties = self.should_break_properties(f);
 
         if break_properties {
             ObjectPatternLayout::Group { expand: true }
