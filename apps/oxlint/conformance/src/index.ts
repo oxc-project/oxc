@@ -11,50 +11,11 @@
  * 5. Outputting results to a markdown file.
  */
 
-import Module from "node:module";
-import { join as pathJoin } from "node:path";
-import fs from "node:fs";
-import { runAllTests, CONFORMANCE_DIR_PATH, ESLINT_ROOT_DIR_PATH } from "./run.ts";
-import { generateReport } from "./report.ts";
-import { RuleTester } from "./rule_tester.ts";
+// NodeJS's `assert` produces coloured output unsuitable for logging to file when colors are enabled.
+// Need to set `process.env` before the `assert` module is loaded for it to reliably take effect.
+// So set it here, and use dynamic import to load the rest of the code.
+process.env.NODE_DISABLE_COLORS = "1";
 
-// NodeJS's `assert` seems to produce garbled error messages when colors are enabled in some cases.
-// Stop it using control characters.
-process.env.FORCE_COLOR = "0";
+await import("./main.ts");
 
-// Patch NodeJS's CommonJS loader to substitute ESLint's `RuleTester` with our own
-const RULE_TESTER_PATH = pathJoin(ESLINT_ROOT_DIR_PATH, "lib/rule-tester/rule-tester.js");
-
-const jsLoaderOriginal = (Module as any)._extensions[".js"];
-(Module as any)._extensions[".js"] = function (module: Module, path: string, ...args: any[]) {
-  if (path === RULE_TESTER_PATH) {
-    module.exports = RuleTester;
-  } else {
-    return jsLoaderOriginal.call(this, module, path, ...args);
-  }
-};
-
-// Run tests
-const results = runAllTests();
-
-// Write results to markdown file
-// oxlint-disable no-console
-const OUTPUT_FILE_PATH = pathJoin(CONFORMANCE_DIR_PATH, "snapshot.md");
-
-const report = generateReport(results);
-fs.writeFileSync(OUTPUT_FILE_PATH, report);
-console.log(`\nResults written to: ${OUTPUT_FILE_PATH}`);
-
-// Print summary
-const totalRuleCount = results.length;
-const fullyPassingCount = results.filter(
-  (r) => !r.isLoadError && r.tests.length > 0 && r.tests.every((t) => t.isPassed),
-).length;
-const loadErrorCount = results.filter((r) => r.isLoadError).length;
-
-console.log("\n=====================================");
-console.log("Summary:");
-console.log(`  Total rules: ${totalRuleCount}`);
-console.log(`  Fully passing: ${fullyPassingCount}`);
-console.log(`  Load errors: ${loadErrorCount}`);
-console.log(`  With failures: ${totalRuleCount - fullyPassingCount - loadErrorCount}`);
+export {};
