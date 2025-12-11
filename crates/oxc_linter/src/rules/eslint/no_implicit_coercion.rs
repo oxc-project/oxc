@@ -26,6 +26,26 @@ fn string_coercion_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+/// Type of implicit coercion being detected
+#[derive(Clone, Copy)]
+enum CoercionKind {
+    Boolean,
+    Number,
+    String,
+}
+
+/// Reports an implicit coercion with an auto-fix suggestion
+fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &str) {
+    let (diagnostic, wrapper) = match kind {
+        CoercionKind::Boolean => (boolean_coercion_diagnostic(span), "Boolean"),
+        CoercionKind::Number => (number_coercion_diagnostic(span), "Number"),
+        CoercionKind::String => (string_coercion_diagnostic(span), "String"),
+    };
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        fixer.replace(span, format!("{wrapper}({operand})"))
+    });
+}
+
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoImplicitCoercionConfig {
@@ -123,10 +143,7 @@ impl Rule for NoImplicitCoercion {
                     && inner.operator == UnaryOperator::LogicalNot
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    ctx.diagnostic_with_fix(
-                        boolean_coercion_diagnostic(unary_expr.span),
-                        |fixer| fixer.replace(unary_expr.span, format!("Boolean({operand})")),
-                    );
+                    report_coercion(ctx, unary_expr.span, CoercionKind::Boolean, operand);
                     return;
                 }
 
@@ -135,12 +152,10 @@ impl Rule for NoImplicitCoercion {
                     && unary_expr.operator == UnaryOperator::UnaryPlus
                     && !self.is_allowed("+")
                     && !is_numeric_literal(&unary_expr.argument)
-                    && !is_number_call(&unary_expr.argument)
+                    && !is_already_numeric(&unary_expr.argument)
                 {
                     let operand = get_operand_text(ctx, &unary_expr.argument);
-                    ctx.diagnostic_with_fix(number_coercion_diagnostic(unary_expr.span), |fixer| {
-                        fixer.replace(unary_expr.span, format!("Number({operand})"))
-                    });
+                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -152,13 +167,10 @@ impl Rule for NoImplicitCoercion {
                         unary_expr.argument.without_parentheses()
                     && inner.operator == UnaryOperator::UnaryNegation
                     && !is_numeric_literal(&inner.argument)
-                    && !is_number_call(&inner.argument)
+                    && !is_already_numeric(&inner.argument)
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    ctx.diagnostic_with_fix(
-                        number_coercion_diagnostic(unary_expr.span),
-                        |fixer| fixer.replace(unary_expr.span, format!("Number({operand})")),
-                    );
+                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -180,25 +192,19 @@ impl Rule for NoImplicitCoercion {
                     let left_is_one = is_number_one(&bin_expr.left);
                     let right_is_one = is_number_one(&bin_expr.right);
 
-                    if left_is_one && !is_number_call(&bin_expr.right) {
+                    if left_is_one && !is_already_numeric(&bin_expr.right) {
                         // Check if this is part of a larger expression like `1 * a / 2`
                         // We should still report `1 * a` in such cases
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        ctx.diagnostic_with_fix(
-                            number_coercion_diagnostic(bin_expr.span),
-                            |fixer| fixer.replace(bin_expr.span, format!("Number({operand})")),
-                        );
+                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                     if right_is_one
-                        && !is_number_call(&bin_expr.left)
+                        && !is_already_numeric(&bin_expr.left)
                         && !is_part_of_larger_binary_expression(ctx, node)
                     {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        ctx.diagnostic_with_fix(
-                            number_coercion_diagnostic(bin_expr.span),
-                            |fixer| fixer.replace(bin_expr.span, format!("Number({operand})")),
-                        );
+                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                 }
@@ -208,12 +214,10 @@ impl Rule for NoImplicitCoercion {
                     && bin_expr.operator == BinaryOperator::Subtraction
                     && !self.is_allowed("-")
                     && bin_expr.right.is_number_0()
-                    && !is_number_call(&bin_expr.left)
+                    && !is_already_numeric(&bin_expr.left)
                 {
                     let operand = get_operand_text(ctx, &bin_expr.left);
-                    ctx.diagnostic_with_fix(number_coercion_diagnostic(bin_expr.span), |fixer| {
-                        fixer.replace(bin_expr.span, format!("Number({operand})"))
-                    });
+                    report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -227,18 +231,12 @@ impl Rule for NoImplicitCoercion {
 
                     if left_is_empty_string && !is_string_literal_or_string_call(&bin_expr.right) {
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        ctx.diagnostic_with_fix(
-                            string_coercion_diagnostic(bin_expr.span),
-                            |fixer| fixer.replace(bin_expr.span, format!("String({operand})")),
-                        );
+                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
                         return;
                     }
                     if right_is_empty_string && !is_string_literal_or_string_call(&bin_expr.left) {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        ctx.diagnostic_with_fix(
-                            string_coercion_diagnostic(bin_expr.span),
-                            |fixer| fixer.replace(bin_expr.span, format!("String({operand})")),
-                        );
+                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
                     }
                 }
             }
@@ -264,10 +262,13 @@ impl Rule for NoImplicitCoercion {
                     let first_quasi = &template.quasis[0];
                     let last_quasi = &template.quasis[1];
 
-                    // Check if both quasi parts are empty or whitespace-only
-                    // Use cooked value to handle escape sequences properly
+                    // Check if both quasi parts contain no meaningful content.
+                    // We use the cooked value to handle escape sequences properly.
                     // ESLint considers templates like `\n${foo}` as coercion because
-                    // escape sequences that become whitespace don't add meaningful content
+                    // escape sequences that become whitespace don't add meaningful content.
+                    // We also allow backslash characters in the cooked value because they
+                    // typically come from line continuations (e.g., `\\\n${foo}`) which
+                    // ESLint also treats as implicit coercion.
                     let first_is_empty_or_whitespace = first_quasi
                         .value
                         .cooked
@@ -284,12 +285,7 @@ impl Rule for NoImplicitCoercion {
                         // Don't warn if the expression is already a string literal or String() call
                         if !is_string_literal_or_string_call(expr) {
                             let operand = get_operand_text(ctx, expr);
-                            ctx.diagnostic_with_fix(
-                                string_coercion_diagnostic(template.span()),
-                                |fixer| {
-                                    fixer.replace(template.span(), format!("String({operand})"))
-                                },
-                            );
+                            report_coercion(ctx, template.span(), CoercionKind::String, operand);
                         }
                     }
                 }
@@ -337,7 +333,7 @@ fn is_empty_string(expr: &Expression) -> bool {
 
 /// Checks if an expression already evaluates to a number, meaning
 /// implicit coercion patterns like `* 1` or `- 0` would be redundant.
-fn is_number_call(expr: &Expression) -> bool {
+fn is_already_numeric(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::CallExpression(call) => {
             call.callee.is_specific_id("Number")
