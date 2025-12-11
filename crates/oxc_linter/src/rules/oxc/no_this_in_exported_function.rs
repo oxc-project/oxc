@@ -167,6 +167,9 @@ fn test() {
         "export const obj = { method() { this.bar(); } };",
         "export function foo() { function bar() { this.baz(); } }",
         "export function foo() { const bar = function() { this.baz(); }; }",
+        "export function foo() { class Bar { static { console.log(this) } } }",
+        "export function foo() { class Bar { static baz = (console.log(this), 1) } }",
+        "export function foo() { class Bar { baz = (console.log(this), 1) } }"
     ];
 
     let fail = vec![
