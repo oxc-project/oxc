@@ -66,8 +66,64 @@ pub struct NoImplicitCoercionConfig {
     /// Default: `false`
     disallow_template_shorthand: bool,
     /// List of operators to allow. Valid values: `"!!"`, `"~"`, `"+"`, `"-"`, `"- -"`, `"*"`
-    #[serde(default)]
-    allow: Vec<CompactStr>,
+    #[schemars(with = "Vec<String>")]
+    allow: AllowedOperators,
+}
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+    pub struct AllowedOperators: u8 {
+        const DOUBLE_NOT = 1 << 0;    // !!
+        const TILDE = 1 << 1;         // ~
+        const PLUS = 1 << 2;          // +
+        const DOUBLE_MINUS = 1 << 3;  // - -
+        const MINUS = 1 << 4;         // -
+        const ASTERISK = 1 << 5;      // *
+    }
+}
+
+impl<'de> Deserialize<'de> for AllowedOperators {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{Error, SeqAccess, Visitor};
+
+        struct AllowedOperatorsVisitor;
+
+        impl<'de> Visitor<'de> for AllowedOperatorsVisitor {
+            type Value = AllowedOperators;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a sequence of operator strings")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                let mut flags = AllowedOperators::empty();
+                while let Some(s) = seq.next_element::<CompactStr>()? {
+                    match s.as_str() {
+                        "!!" => flags |= AllowedOperators::DOUBLE_NOT,
+                        "~" => flags |= AllowedOperators::TILDE,
+                        "+" => flags |= AllowedOperators::PLUS,
+                        "- -" => flags |= AllowedOperators::DOUBLE_MINUS,
+                        "-" => flags |= AllowedOperators::MINUS,
+                        "*" => flags |= AllowedOperators::ASTERISK,
+                        other => {
+                            return Err(A::Error::custom(format!(
+                                "Invalid operator '{other}' in allow list. Valid values are: \"!!\", \"~\", \"+\", \"- -\", \"-\", \"*\""
+                            )));
+                        }
+                    }
+                }
+                Ok(flags)
+            }
+        }
+
+        deserializer.deserialize_seq(AllowedOperatorsVisitor)
+    }
 }
 
 impl Default for NoImplicitCoercionConfig {
@@ -77,7 +133,7 @@ impl Default for NoImplicitCoercionConfig {
             number: true,
             string: true,
             disallow_template_shorthand: false,
-            allow: Vec::new(),
+            allow: AllowedOperators::empty(),
         }
     }
 }
@@ -140,7 +196,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for !!foo (boolean coercion)
                 if self.boolean
                     && unary_expr.operator == UnaryOperator::LogicalNot
-                    && !self.is_allowed("!!")
+                    && !self.is_allowed(AllowedOperators::DOUBLE_NOT)
                     && let Expression::UnaryExpression(inner) = &unary_expr.argument
                     && inner.operator == UnaryOperator::LogicalNot
                 {
@@ -152,7 +208,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for +foo (number coercion) - but not for numeric literals
                 if self.number
                     && unary_expr.operator == UnaryOperator::UnaryPlus
-                    && !self.is_allowed("+")
+                    && !self.is_allowed(AllowedOperators::PLUS)
                     && !is_numeric_literal(&unary_expr.argument)
                     && !is_already_numeric(&unary_expr.argument)
                 {
@@ -164,7 +220,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for - -foo (number coercion via double negation)
                 if self.number
                     && unary_expr.operator == UnaryOperator::UnaryNegation
-                    && !self.is_allowed("- -")
+                    && !self.is_allowed(AllowedOperators::DOUBLE_MINUS)
                     && let Expression::UnaryExpression(inner) =
                         unary_expr.argument.without_parentheses()
                     && inner.operator == UnaryOperator::UnaryNegation
@@ -179,7 +235,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for ~foo.indexOf() (boolean coercion)
                 if self.boolean
                     && unary_expr.operator == UnaryOperator::BitwiseNot
-                    && !self.is_allowed("~")
+                    && !self.is_allowed(AllowedOperators::TILDE)
                     && is_indexof_call(&unary_expr.argument)
                 {
                     ctx.diagnostic(boolean_coercion_diagnostic(unary_expr.span));
@@ -189,7 +245,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for foo * 1 or 1 * foo (number coercion)
                 if self.number
                     && bin_expr.operator == BinaryOperator::Multiplication
-                    && !self.is_allowed("*")
+                    && !self.is_allowed(AllowedOperators::ASTERISK)
                 {
                     let left_is_one = bin_expr.left.without_parentheses().is_number_value(1.0);
                     let right_is_one = bin_expr.right.without_parentheses().is_number_value(1.0);
@@ -214,7 +270,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for foo - 0 (number coercion)
                 if self.number
                     && bin_expr.operator == BinaryOperator::Subtraction
-                    && !self.is_allowed("-")
+                    && !self.is_allowed(AllowedOperators::MINUS)
                     && bin_expr.right.is_number_0()
                     && !is_already_numeric(&bin_expr.left)
                 {
@@ -226,7 +282,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for "" + foo or foo + "" (string coercion)
                 if self.string
                     && bin_expr.operator == BinaryOperator::Addition
-                    && !self.is_allowed("+")
+                    && !self.is_allowed(AllowedOperators::PLUS)
                 {
                     let left_is_empty_string = is_empty_string(&bin_expr.left);
                     let right_is_empty_string = is_empty_string(&bin_expr.right);
@@ -246,7 +302,7 @@ impl Rule for NoImplicitCoercion {
                 // Check for foo += "" (string coercion)
                 if self.string
                     && assign_expr.operator == AssignmentOperator::Addition
-                    && !self.is_allowed("+")
+                    && !self.is_allowed(AllowedOperators::PLUS)
                     && is_empty_string(&assign_expr.right)
                 {
                     ctx.diagnostic(string_coercion_diagnostic(assign_expr.span));
@@ -298,8 +354,8 @@ impl Rule for NoImplicitCoercion {
 }
 
 impl NoImplicitCoercion {
-    fn is_allowed(&self, operator: &str) -> bool {
-        self.allow.iter().any(|s| s.as_str() == operator)
+    fn is_allowed(&self, flag: AllowedOperators) -> bool {
+        self.allow.contains(flag)
     }
 }
 
