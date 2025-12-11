@@ -368,13 +368,13 @@ fn is_indexof_call(expr: &Expression) -> bool {
         Expression::CallExpression(call) => {
             let callee = call.callee.without_parentheses();
             if let Expression::StaticMemberExpression(member) = callee {
-                return member.property.name == "indexOf";
+                return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             if let Expression::ChainExpression(chain) = callee
                 && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
                     &chain.expression
             {
-                return member.property.name == "indexOf";
+                return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
@@ -383,7 +383,7 @@ fn is_indexof_call(expr: &Expression) -> bool {
                 && let Expression::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {
-                return member.property.name == "indexOf";
+                return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
@@ -423,6 +423,7 @@ fn test() {
     let pass = vec![
         ("Boolean(foo)", None),
         ("foo.indexOf(1) !== -1", None),
+        ("foo.lastIndexOf(1) !== -1", None),
         ("Number(foo)", None),
         ("parseInt(foo)", None),
         ("parseFloat(foo)", None),
@@ -474,6 +475,7 @@ fn test() {
         ("foo + `${bar}`", None),
         ("!!foo", Some(serde_json::json!([{ "boolean": false }]))),
         ("~foo.indexOf(1)", Some(serde_json::json!([{ "boolean": false }]))),
+        ("~foo.lastIndexOf(1)", Some(serde_json::json!([{ "boolean": false }]))),
         ("+foo", Some(serde_json::json!([{ "number": false }]))),
         ("-(-foo)", Some(serde_json::json!([{ "number": false }]))),
         ("foo - 0", Some(serde_json::json!([{ "number": false }]))),
@@ -482,6 +484,10 @@ fn test() {
         (r#"foo += """#, Some(serde_json::json!([{ "string": false }]))),
         ("var a = !!foo", Some(serde_json::json!([{ "boolean": true, "allow": ["!!"] }]))),
         ("var a = ~foo.indexOf(1)", Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }]))),
+        (
+            "var a = ~foo.lastIndexOf(1)",
+            Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }])),
+        ),
         ("var a = ~foo", Some(serde_json::json!([{ "boolean": true }]))),
         ("var a = 1 * foo", Some(serde_json::json!([{ "boolean": true, "allow": ["*"] }]))),
         ("- -foo", Some(serde_json::json!([{ "number": true, "allow": ["- -"] }]))),
@@ -526,6 +532,9 @@ fn test() {
         ("!!(foo + bar)", None),
         ("~foo.indexOf(1)", None),
         ("~foo.bar.indexOf(2)", None),
+        ("~foo.lastIndexOf(1)", None),
+        ("~foo.bar.lastIndexOf(2)", None),
+        ("~foo?.lastIndexOf(1)", None),
         ("+foo", None),
         ("-(-foo)", None),
         ("+foo.bar", None),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 394
 ---
   ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
    ╭─[no_implicit_coercion.tsx:1:1]
@@ -41,6 +40,27 @@ assertion_line: 394
    ╭─[no_implicit_coercion.tsx:1:1]
  1 │ ~foo.bar.indexOf(2)
    · ───────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.lastIndexOf(1)
+   · ───────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.bar.lastIndexOf(2)
+   · ───────────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo?.lastIndexOf(1)
+   · ────────────────────
    ╰────
   help: Use `Boolean(value)` instead
 
