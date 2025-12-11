@@ -311,19 +311,7 @@ impl<'a> Normalize {
         let Some(ident) = new_expr.callee.get_identifier_reference() else {
             match new_expr.callee.get_inner_expression() {
                 Expression::ClassExpression(class_expr) => {
-                    let body_has_side_effects = class_expr.body.body.iter().any(|v| match v {
-                        ClassElement::StaticBlock(s) => {
-                            s.body.iter().any(|stmt| stmt.may_have_side_effects(&Ctx::new(ctx)))
-                        }
-                        ClassElement::PropertyDefinition(p) => {
-                            p.value.may_have_side_effects(&Ctx::new(ctx))
-                        }
-                        _ => false,
-                    });
-                    if body_has_side_effects || class_expr.super_class.is_some() {
-                        return;
-                    }
-                    new_expr.pure = true;
+                    new_expr.pure = !class_expr.may_have_side_effects(&Ctx::new(ctx));
                     return;
                 }
                 _ => {}
