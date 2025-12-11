@@ -269,6 +269,9 @@ impl<'t> Utf8ToUtf16Converter<'t> {
             // The key insight: translation.utf8_offset is the position AFTER the Unicode character
             // So for the Unicode character, we need to find where it starts
             let prev_end = if next_index > 0 {
+                // SAFETY: `next_index > 0` ensures `next_index - 1` is a valid index.
+                // `next_index` comes from `partition_point` which returns a value in range `0..=len`,
+                // so `next_index - 1` is in range `0..len`, which is valid for `get_unchecked`.
                 let prev_translation = unsafe { self.translations.get_unchecked(next_index - 1) };
                 prev_translation.utf8_offset
             } else {
