@@ -385,7 +385,8 @@ fn is_indexof_call(expr: &Expression) -> bool {
         }
         Expression::ChainExpression(chain) => {
             if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
-                && let Expression::StaticMemberExpression(member) = call.callee.without_parentheses()
+                && let Expression::StaticMemberExpression(member) =
+                    call.callee.without_parentheses()
             {
                 return member.property.name == "indexOf";
             }
