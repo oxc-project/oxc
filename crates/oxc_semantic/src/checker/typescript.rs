@@ -148,7 +148,8 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
 }
 
 fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    ts_error(
+        "1235",
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
     .with_label(span)
