@@ -18,6 +18,7 @@ Ignore Options
         --with-node-modules  Format code in node_modules directory (skipped by default)
 
 Misc Options
+        --init               Initialize `.oxfmtrc.jsonc` with default values
         --lsp                Start language server protocol (LSP) server
         --no-error-on-unmatched-pattern  Do not exit with error when pattern is unmatched
         --threads=INT        Number of threads to use. Set to 1 for using only 1 CPU core.

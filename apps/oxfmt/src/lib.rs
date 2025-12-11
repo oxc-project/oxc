@@ -1,5 +1,6 @@
 pub mod cli;
 mod core;
+pub mod init;
 pub mod lsp;
 
 // Only include code to run formatter when the `napi` feature is enabled.

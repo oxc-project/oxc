@@ -9,6 +9,7 @@ use napi_derive::napi;
 use crate::{
     cli::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing},
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
+    init::run_init,
     lsp::run_lsp,
 };
 
@@ -64,6 +65,11 @@ async fn format_impl(
             };
         }
     };
+
+    // Handle --init mode
+    if command.misc_options.init {
+        return run_init();
+    }
 
     // Handle LSP mode
     if command.misc_options.lsp {

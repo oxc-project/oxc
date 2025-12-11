@@ -33,6 +33,8 @@ search: false
 
 
 ## Misc Options
+- **`    --init`** &mdash; 
+  Initialize `.oxfmtrc.jsonc` with default values
 - **`    --lsp`** &mdash; 
   Start language server protocol (LSP) server
 - **`    --no-error-on-unmatched-pattern`** &mdash; 

@@ -75,6 +75,9 @@ pub struct IgnoreOptions {
 /// Misc Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
+    /// Initialize `.oxfmtrc.jsonc` with default values
+    #[bpaf(switch, hide_usage)]
+    pub init: bool,
     /// Start language server protocol (LSP) server
     #[bpaf(switch, hide_usage)]
     pub lsp: bool,
