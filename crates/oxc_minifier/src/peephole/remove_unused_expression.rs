@@ -822,7 +822,10 @@ mod test {
         test_same("new class{static {foo();}}");
         test_same("new class{static a = console.log();}");
         test_same("new class extends Error {}");
-        test("class Foo { static {console.log();}};new class extends Foo {}();", "class Foo { static {console.log();}}");
+        test(
+            "class Foo { static {console.log();}};new class extends Foo {}();",
+            "class Foo { static {console.log();}}",
+        );
     }
 
     #[test]
