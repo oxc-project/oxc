@@ -435,7 +435,12 @@ impl RuleRunner for crate::rules::eslint::no_global_assign::NoGlobalAssign {
 }
 
 impl RuleRunner for crate::rules::eslint::no_implicit_coercion::NoImplicitCoercion {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::BinaryExpression,
+        AstType::TemplateLiteral,
+        AstType::UnaryExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

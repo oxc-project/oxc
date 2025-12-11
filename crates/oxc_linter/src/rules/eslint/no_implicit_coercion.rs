@@ -6,7 +6,11 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn boolean_coercion_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected implicit coercion to boolean")
@@ -124,11 +128,9 @@ declare_oxc_lint!(
 
 impl Rule for NoImplicitCoercion {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value
-            .get(0)
-            .cloned()
-            .map(|v| serde_json::from_value(v).unwrap_or_default())
-            .unwrap_or_default();
+        let config = serde_json::from_value::<DefaultRuleConfig<NoImplicitCoercionConfig>>(value)
+            .unwrap_or_default()
+            .into_inner();
         Self(Box::new(config))
     }
 
@@ -189,8 +191,8 @@ impl Rule for NoImplicitCoercion {
                     && bin_expr.operator == BinaryOperator::Multiplication
                     && !self.is_allowed("*")
                 {
-                    let left_is_one = is_number_one(&bin_expr.left);
-                    let right_is_one = is_number_one(&bin_expr.right);
+                    let left_is_one = bin_expr.left.without_parentheses().is_number_value(1.0);
+                    let right_is_one = bin_expr.right.without_parentheses().is_number_value(1.0);
 
                     if left_is_one && !is_already_numeric(&bin_expr.right) {
                         // Check if this is part of a larger expression like `1 * a / 2`
@@ -310,13 +312,6 @@ fn is_numeric_literal(expr: &Expression) -> bool {
         expr.without_parentheses(),
         Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
     )
-}
-
-fn is_number_one(expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::NumericLiteral(lit) => (lit.value - 1.0).abs() < f64::EPSILON,
-        _ => false,
-    }
 }
 
 fn is_empty_string(expr: &Expression) -> bool {
