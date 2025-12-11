@@ -70,7 +70,7 @@ declare_oxc_lint!(
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
 const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
-const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
+const COMMON_HELP_TEXT: &str = "prefer using Jest's own API";
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
