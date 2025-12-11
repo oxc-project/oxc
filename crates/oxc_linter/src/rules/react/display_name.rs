@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     DisplayName,
     react,
-    style,
+    pedantic,
     config = DisplayNameConfig,
 );
 
