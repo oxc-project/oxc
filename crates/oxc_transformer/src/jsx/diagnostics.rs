@@ -36,6 +36,6 @@ pub fn invalid_pragma_value(pragma_name: &str, value: &str) -> OxcDiagnostic {
         "Invalid @{pragma_name} value \"{value}\". It will be ignored."
     ))
     .with_help(format!(
-        "@{pragma_name} must be a valid JavaScript identifier or a dotted sequence of identifiers (e.g., \"Fragment\" or \"React.Fragment\")."
+        "@{pragma_name} must be a valid JavaScript identifier or a dotted sequence of identifiers"
     ))
 }
