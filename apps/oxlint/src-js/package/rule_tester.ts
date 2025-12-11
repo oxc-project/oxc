@@ -514,6 +514,9 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
 
+    // Sort diagnostics by line and column before comparing to expected errors. ESLint does the same.
+    diagnostics.sort((diag1, diag2) => diag1.line - diag2.line || diag1.column - diag2.column);
+
     const rule = Object.values(plugin.rules)[0],
       messages = rule.meta?.messages ?? null;
 
