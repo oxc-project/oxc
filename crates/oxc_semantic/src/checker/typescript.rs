@@ -159,8 +159,20 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
+fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "2670",
+        "Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.",
+    )
+    .with_label(span)
+}
+
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ts_module_or_global_declaration(decl.span, ctx);
+
+    if !decl.declare && !ctx.in_declare_scope() {
+        ctx.error(global_scope_augmentation_should_have_declare_modifier(decl.global_span));
+    }
 }
 
 fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {

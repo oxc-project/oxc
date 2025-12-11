@@ -3,7 +3,7 @@ commit: c21f73fd
 parser_typescript Summary:
 AST Parsed     : 9832/9833 (99.99%)
 Positive Passed: 9823/9833 (99.90%)
-Negative Passed: 1485/2547 (58.30%)
+Negative Passed: 1486/2547 (58.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -653,8 +653,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationEnumClassMergeOfReexportIsError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7.ts
 
@@ -8165,6 +8163,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts:1:1]
+ 1 │ global {
+   · ──────
+ 2 │     interface Array<T> { x }
+   ╰────
 
   × Identifier `Kettle` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleDuplicateIdentifiers.ts:20:14]
