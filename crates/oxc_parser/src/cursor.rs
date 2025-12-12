@@ -6,21 +6,21 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig, ParserImpl, diagnostics,
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
 };
 
 #[derive(Clone)]
-pub struct ParserCheckpoint<'a> {
-    lexer: LexerCheckpoint<'a>,
+pub struct ParserCheckpoint<'a, C: ParserConfig> {
+    lexer: LexerCheckpoint<'a, C>,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError>,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn start_span(&self) -> u32 {
         self.token.start()
@@ -300,7 +300,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
@@ -310,7 +310,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint_with_error_recovery(),
             cur_token: self.token,
@@ -320,7 +320,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
+    pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a, C>) {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
             checkpoint;
 
@@ -333,7 +333,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
+        func: impl FnOnce(&mut ParserImpl<'a, C>) -> T,
     ) -> Option<T> {
         let checkpoint = self.checkpoint_with_error_recovery();
         let ctx = self.ctx;
@@ -347,7 +347,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);

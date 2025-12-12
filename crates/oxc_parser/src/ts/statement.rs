@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ParserImpl, diagnostics,
+    ParserConfig, ParserImpl, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
@@ -15,7 +15,7 @@ pub(super) enum CallOrConstructorSignature {
     Constructor,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /* ------------------- Enum ------------------ */
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(

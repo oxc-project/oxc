@@ -1,6 +1,8 @@
+use crate::ParserConfig;
+
 use super::{Kind, Lexer, Token};
 
-impl Lexer<'_> {
+impl<C: ParserConfig> Lexer<'_, C> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek_2_bytes() == Some([b'.', b'.']) {

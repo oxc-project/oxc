@@ -6,13 +6,14 @@
 //!     * [v8](https://v8.dev/blog/scanner)
 
 use rustc_hash::FxHashMap;
+use std::{fmt::Debug, marker::PhantomData};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
-use crate::{UniquePromise, diagnostics};
+use crate::{ParserConfig, StandardParserConfig, UniquePromise, diagnostics};
 
 mod byte_handlers;
 mod comment;
@@ -41,10 +42,11 @@ use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
 #[derive(Debug, Clone)]
-pub struct LexerCheckpoint<'a> {
+pub struct LexerCheckpoint<'a, C: ParserConfig = StandardParserConfig> {
     source_position: SourcePosition<'a>,
     token: Token,
     errors_snapshot: ErrorSnapshot,
+    marker: PhantomData<C>,
 }
 
 #[derive(Debug, Clone)]
@@ -61,7 +63,7 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
-pub struct Lexer<'a> {
+pub struct Lexer<'a, C: ParserConfig = StandardParserConfig> {
     allocator: &'a Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
@@ -86,9 +88,11 @@ pub struct Lexer<'a> {
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    marker: PhantomData<C>,
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: ParserConfig> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
@@ -114,6 +118,7 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
+            marker: PhantomData,
         }
     }
 
@@ -143,7 +148,7 @@ impl<'a> Lexer<'a> {
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
-    pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
+    pub fn checkpoint(&self) -> LexerCheckpoint<'a, C> {
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
@@ -153,12 +158,13 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            marker: PhantomData,
         }
     }
 
     /// Create a checkpoint that can handle error popping.
     /// This is more expensive as it clones the errors vector.
-    pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
+    pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a, C> {
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
@@ -168,11 +174,12 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            marker: PhantomData,
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
-    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a, C>) {
         match checkpoint.errors_snapshot {
             ErrorSnapshot::Empty => self.errors.clear(),
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
