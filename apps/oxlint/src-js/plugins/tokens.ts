@@ -153,11 +153,14 @@ export function initTokens() {
   // Lazy-load TS-ESLint.
   // `./ts_eslint.cjs` is path to the bundle in `dist` directory, as well as relative path in `src-js`,
   // so is valid both in bundled `dist` output, and in unit tests.
+  // In conformance build, use `@typescript-eslint/typescript-estree` package directly.
+  // TODO: Use `ts_eslint.cjs` bundle in conformance build too, once all parse errors are fixed.
   if (tsEslintParse === null) {
     const require = createRequire(import.meta.url);
-    tsEslintParse = (
-      require("./ts_eslint.cjs") as typeof import("@typescript-eslint/typescript-estree")
-    ).parse;
+    const mod = (
+      CONFORMANCE ? require("@typescript-eslint/typescript-estree") : require("./ts_eslint.cjs")
+    ) as typeof import("@typescript-eslint/typescript-estree");
+    tsEslintParse = mod.parse;
   }
 
   // Our types differ a little from TS-ESLint's

@@ -1,25 +1,8 @@
-import type { Options } from "prettier";
+import Tinypool from "tinypool";
+import type { WorkerData, FormatEmbeddedCodeArgs, FormatFileArgs } from "./prettier-worker.ts";
 
-// Import Prettier lazily.
-// This helps to reduce initial load time if not needed.
-//
-// Also, this solves unknown issue described below...
-//
-// XXX: If import `prettier` directly here, it will add line like this to the output JS:
-// ```js
-// import process2 from 'process';
-// ```
-// Yes, this seems completely fine!
-// But actually, this makes `oxfmt --lsp` immediately stop with `Parse error` JSON-RPC error
-let prettierCache: typeof import("prettier");
-
-// Cache for Prettier options.
-// Set by `setupConfig` function once.
-//
-// Read `.oxfmtrc.json(c)` directly does not work,
-// because our brand new defaults are not compatible with Prettier's defaults.
-// So we need to pass the config from Rust side after merging with our defaults.
-let configCache: Options = {};
+// Worker pool for parallel Prettier formatting
+let pool: Tinypool | null = null;
 
 // ---
 
@@ -27,15 +10,25 @@ let configCache: Options = {};
  * Setup Prettier configuration.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param configJSON - Prettier configuration as JSON string
+ * @param numThreads - Number of worker threads to use (same as Rayon thread count)
  * @returns Array of loaded plugin's `languages` info
  * */
-export async function setupConfig(configJSON: string): Promise<string[]> {
-  // NOTE: `napi-rs` has ability to pass `Object` directly.
-  // But since we don't know what options various plugins may specify,
-  // we have to receive it as a JSON string and parse it.
-  //
-  // SAFETY: This is valid JSON string generated in Rust side
-  configCache = JSON.parse(configJSON) as Options;
+export async function setupConfig(configJSON: string, numThreads: number): Promise<string[]> {
+  const workerData: WorkerData = {
+    // SAFETY: Always valid JSON constructed by Rust side
+    prettierConfig: JSON.parse(configJSON),
+  };
+
+  if (pool) throw new Error("`setupConfig()` has already been called");
+
+  // Initialize worker pool for parallel Prettier formatting
+  // Pass config via workerData so all workers get it on initialization
+  pool = new Tinypool({
+    filename: new URL("./prettier-worker.js", import.meta.url).href,
+    minThreads: numThreads,
+    maxThreads: numThreads,
+    workerData,
+  });
 
   // TODO: Plugins support
   // - Read `plugins` field
@@ -51,14 +44,11 @@ const TAG_TO_PARSER: Record<string, string> = {
   // CSS
   css: "css",
   styled: "css",
-
   // GraphQL
   gql: "graphql",
   graphql: "graphql",
-
   // HTML
   html: "html",
-
   // Markdown
   md: "markdown",
   markdown: "markdown",
@@ -74,22 +64,14 @@ const TAG_TO_PARSER: Record<string, string> = {
 export async function formatEmbeddedCode(tagName: string, code: string): Promise<string> {
   const parser = TAG_TO_PARSER[tagName];
 
+  // Unknown tag, return original code
   if (!parser) {
-    // Unknown tag, return original code
     return code;
   }
 
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
-
-  return prettierCache
-    .format(code, {
-      ...configCache,
-      parser,
-    })
-    .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+  return pool!.run({ parser, code } satisfies FormatEmbeddedCodeArgs, {
+    name: "formatEmbeddedCode",
+  });
 }
 
 // ---
@@ -107,13 +89,7 @@ export async function formatFile(
   fileName: string,
   code: string,
 ): Promise<string> {
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
-
-  return prettierCache.format(code, {
-    ...configCache,
-    parser: parserName,
-    filepath: fileName,
+  return pool!.run({ parserName, fileName, code } satisfies FormatFileArgs, {
+    name: "formatFile",
   });
 }

@@ -27,8 +27,9 @@ const plugin: Plugin = {
             };
             context.report(report);
 
-            if (!thisIsReport)
+            if (!thisIsReport) {
               context.report({ message: `this in fix function is not report object`, node });
+            }
           },
           Identifier(node) {
             switch (node.name) {

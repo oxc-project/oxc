@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::ls_types::Uri;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -575,5 +575,5 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { format } = nativeBinding
-export { format }
+const { runCli } = nativeBinding
+export { runCli }

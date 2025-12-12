@@ -31,11 +31,11 @@ impl FormatJsxChildList {
         self
     }
 
-    pub fn fmt_children<'a>(
+    pub fn fmt_children<'a, 'b>(
         &self,
-        children: &AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
-    ) -> FormatChildrenResult<'a> {
+    ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
         let children_meta = Self::children_meta(children, f.context().comments());
         let layout = self.layout(children_meta);
@@ -46,16 +46,22 @@ impl FormatJsxChildList {
             MultilineLayout::NoFill
         };
 
-        let mut flat = FlatBuilder::new(f.context().allocator());
-        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
-
         let mut force_multiline = layout.is_multiline();
+        let mut flat = FlatBuilder::new(force_multiline, f.context().allocator());
+        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
 
         let mut children = jsx_split_children(children, f.context().comments());
 
         // Trim trailing new lines
         if let Some(JsxChild::EmptyLine | JsxChild::Newline) = children.last() {
             children.pop();
+        }
+
+        if children.len() == 1 {
+            return FormatChildrenResult::SingleChild(FormatSingleChild {
+                child: children.pop().unwrap(),
+                force_multiline,
+            });
         }
 
         let mut is_next_child_suppressed = false;
@@ -310,8 +316,11 @@ impl FormatJsxChildList {
                     } else {
                         let memoized = non_text.memoized();
 
-                        force_multiline = memoized.inspect(f).will_break();
-                        flat.write(&format_args!(memoized, format_separator), f);
+                        child_breaks = memoized.inspect(f).will_break();
+
+                        if !child_breaks {
+                            flat.write(&format_args!(memoized, format_separator), f);
+                        }
 
                         if let Some(format_separator) = format_separator {
                             multiline.write_with_separator(&memoized, &format_separator, f);
@@ -388,7 +397,7 @@ impl FormatJsxChildList {
 
 /// The result of formatting the children of a JSX child list.
 #[derive(Debug)]
-pub enum FormatChildrenResult<'a> {
+pub enum FormatChildrenResult<'a, 'b> {
     /// Force the children to be formatted over multiple lines.
     ///
     /// For example:
@@ -407,6 +416,8 @@ pub enum FormatChildrenResult<'a> {
         flat_children: FormatFlatChildren<'a>,
         expanded_children: FormatMultilineChildren<'a>,
     },
+
+    SingleChild(FormatSingleChild<'a, 'b>),
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -669,8 +680,8 @@ struct FlatBuilder<'a> {
 }
 
 impl<'a> FlatBuilder<'a> {
-    fn new(allocator: &'a Allocator) -> Self {
-        Self { result: ArenaVec::new_in(allocator), disabled: false }
+    fn new(disabled: bool, allocator: &'a Allocator) -> Self {
+        Self { result: ArenaVec::new_in(allocator), disabled }
     }
 
     fn write(&mut self, content: &dyn Format<'a>, f: &mut Formatter<'_, 'a>) {
@@ -715,6 +726,45 @@ impl<'a> Format<'a> for FormatFlatChildren<'a> {
             f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
         {
             f.write_element(elements);
+        }
+    }
+}
+
+/// Optimized formatting for a single JSX child.
+///
+/// When there is only a single child, we do not need to write the child into a temporary buffer
+/// and then take it when formatting. Instead, we can directly write the child into the root buffer.
+///
+/// Also, this can avoid calling costly `best_fitting!` formatting in some situations.
+#[derive(Debug)]
+pub struct FormatSingleChild<'a, 'b> {
+    child: JsxChild<'a, 'b>,
+    force_multiline: bool,
+}
+
+impl<'a> Format<'a> for FormatSingleChild<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let format_inner = format_with(|f| match &self.child {
+            JsxChild::Word(word) => {
+                word.fmt(f);
+            }
+            JsxChild::Whitespace => {
+                JsxSpace.fmt(f);
+            }
+            JsxChild::NonText(non_text) => {
+                non_text.fmt(f);
+            }
+            JsxChild::Newline | JsxChild::EmptyLine => {
+                unreachable!(
+                    "`Newline` or `EmptyLine` should have been trimmed for single child formatting"
+                );
+            }
+        });
+
+        if self.force_multiline {
+            write!(f, [block_indent(&format_inner)]);
+        } else {
+            write!(f, [soft_block_indent(&format_inner)]);
         }
     }
 }

@@ -436,7 +436,7 @@ fn test() {
         (r"const a: undefined = undefined", None),
         (r"const a: undefined = void someValue", None),
         (
-            "const fn = (a?: number = 5) => {};",
+            "const fn = (a: number = 5) => {};",
             Some(serde_json::json!([{ "ignoreParameters": false }])),
         ),
         ("class A { a!: number = 1; }", Some(serde_json::json!([{ "ignoreProperties": false }]))),

@@ -121,14 +121,11 @@ export function lintFileImpl(
   }
   typeAssertIs<BufferWithArrays>(buffer);
 
-  if (DEBUG) {
-    if (typeof filePath !== "string" || filePath.length === 0) {
-      throw new Error("Expected filePath to be a non-zero length string");
-    }
-    if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-      throw new Error("Expected `ruleIds` to be a non-zero length array");
-    }
-  }
+  // Debug asserts that input is valid
+  debugAssert(typeof filePath === "string" && filePath.length > 0);
+  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0);
+  debugAssert(Array.isArray(optionsIds));
+  debugAssert(ruleIds.length === optionsIds.length);
 
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);
@@ -151,11 +148,6 @@ export function lintFileImpl(
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
-
-  debugAssert(
-    ruleIds.length === optionsIds.length,
-    "Rule IDs and options IDs arrays must be the same length",
-  );
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];

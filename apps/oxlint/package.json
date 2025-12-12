@@ -10,11 +10,14 @@
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && cross-env DEBUG=true pnpm run build-js",
     "build-test": "pnpm run build-napi-test && cross-env DEBUG=true pnpm run build-js",
+    "build-conformance": "pnpm run build-napi-test && cross-env CONFORMANCE=true pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.ts",
-    "test": "tsc && vitest --dir ./test run"
+    "test": "tsc && vitest --dir ./test run",
+    "init-conformance": "cd conformance; ./init.sh",
+    "conformance": "node ./conformance/src/index.ts"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -23,7 +26,7 @@
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
-    "@typescript-eslint/scope-manager": "8.46.2",
+    "@typescript-eslint/scope-manager": "8.48.1",
     "@typescript-eslint/typescript-estree": "^8.47.0",
     "cross-env": "catalog:",
     "eslint": "^9.36.0",

@@ -5,7 +5,7 @@ use phf::phf_set;
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
-pub enum FormatFileSource {
+pub enum FormatFileStrategy {
     OxcFormatter {
         path: PathBuf,
         source_type: SourceType,
@@ -15,9 +15,15 @@ pub enum FormatFileSource {
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
+    /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
+    ExternalFormatterPackageJson {
+        path: PathBuf,
+        #[cfg_attr(not(feature = "napi"), expect(dead_code))]
+        parser_name: &'static str,
+    },
 }
 
-impl TryFrom<PathBuf> for FormatFileSource {
+impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
@@ -26,131 +32,152 @@ impl TryFrom<PathBuf> for FormatFileSource {
             return Ok(Self::OxcFormatter { path, source_type });
         }
 
-        if let Some(parser_name) = get_external_parser_name(&path) {
-            return Ok(Self::ExternalFormatter { path, parser_name });
+        if let Some(source) = get_external_format_source(path) {
+            return Ok(source);
         }
 
         Err(())
     }
 }
 
-impl FormatFileSource {
+impl FormatFileStrategy {
     pub fn path(&self) -> &Path {
         match self {
-            Self::OxcFormatter { path, .. } | Self::ExternalFormatter { path, .. } => path,
+            Self::OxcFormatter { path, .. }
+            | Self::ExternalFormatter { path, .. }
+            | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
     }
 }
 
 // ---
 
-/// Returns the Prettier parser name for file at `path`, if supported.
+/// Returns `FormatFileSource` for external formatter, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 /// NOTE: The order matters: more specific matches (like `package.json`) must come before generic ones.
-fn get_external_parser_name(path: &Path) -> Option<&'static str> {
+fn get_external_format_source(path: PathBuf) -> Option<FormatFileStrategy> {
     let file_name = path.file_name()?.to_str()?;
     let extension = path.extension().and_then(|ext| ext.to_str());
 
+    // Excluded files like lock files
+    if EXCLUDE_FILENAMES.contains(file_name) {
+        return None;
+    }
+
     // JSON and variants
+    // `package.json` is special case
+    if file_name == "package.json" {
+        return Some(FormatFileStrategy::ExternalFormatterPackageJson {
+            path,
+            parser_name: "json-stringify",
+        });
+    }
     if JSON_STRINGIFY_FILENAMES.contains(file_name) || extension == Some("importmap") {
-        return Some("json-stringify");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json-stringify" });
     }
     if JSON_FILENAMES.contains(file_name) {
-        return Some("json");
-    }
-    // Must be checked before generic JSON/JSONC
-    if (file_name.starts_with("tsconfig.") || file_name.starts_with("jsconfig."))
-        && extension == Some("json")
-    {
-        return Some("jsonc");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json" });
     }
     if let Some(ext) = extension
         && JSON_EXTENSIONS.contains(ext)
     {
-        return Some("json");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json" });
     }
     if let Some(ext) = extension
         && JSONC_EXTENSIONS.contains(ext)
     {
-        return Some("jsonc");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "jsonc" });
     }
     if extension == Some("json5") {
-        return Some("json5");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json5" });
     }
 
     // YAML
     if YAML_FILENAMES.contains(file_name) {
-        return Some("yaml");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "yaml" });
     }
     if let Some(ext) = extension
         && YAML_EXTENSIONS.contains(ext)
     {
-        return Some("yaml");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "yaml" });
     }
 
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
-        return Some("markdown");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "markdown" });
     }
     if let Some(ext) = extension
         && MARKDOWN_EXTENSIONS.contains(ext)
     {
-        return Some("markdown");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "markdown" });
     }
     if extension == Some("mdx") {
-        return Some("mdx");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "mdx" });
     }
 
     // HTML and variants
     // Must be checked before generic HTML
     if file_name.ends_with(".component.html") {
-        return Some("angular");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "angular" });
     }
     if let Some(ext) = extension
         && HTML_EXTENSIONS.contains(ext)
     {
-        return Some("html");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "html" });
     }
     if extension == Some("vue") {
-        return Some("vue");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "vue" });
     }
     if extension == Some("mjml") {
-        return Some("mjml");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "mjml" });
     }
 
     // CSS and variants
     if let Some(ext) = extension
         && CSS_EXTENSIONS.contains(ext)
     {
-        return Some("css");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "css" });
     }
     if extension == Some("less") {
-        return Some("less");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "less" });
     }
     if extension == Some("scss") {
-        return Some("scss");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "scss" });
     }
 
     // GraphQL
     if let Some(ext) = extension
         && GRAPHQL_EXTENSIONS.contains(ext)
     {
-        return Some("graphql");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "graphql" });
     }
 
     // Handlebars
     if let Some(ext) = extension
         && HANDLEBARS_EXTENSIONS.contains(ext)
     {
-        return Some("glimmer");
+        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "glimmer" });
     }
 
     None
 }
 
-static JSON_STRINGIFY_FILENAMES: phf::Set<&'static str> = phf_set! {
-    "package.json",
+static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "MODULE.bazel.lock",
+    "bun.lock",
+    "deno.lock",
+    "composer.lock",
+    "Package.resolved",
+    "Pipfile.lock",
+    "flake.lock",
+    "mcmod.info",
+};
+
+static JSON_STRINGIFY_FILENAMES: phf::Set<&'static str> = phf_set! {
+    // NOTE: `package.json` is handled separately as `ExternalFormatterPackageJson`
     "composer.json",
 };
 
@@ -290,17 +317,23 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
+
+    fn get_parser_name(file_name: &str) -> Option<&'static str> {
+        match get_external_format_source(PathBuf::from(file_name)) {
+            Some(
+                FormatFileStrategy::ExternalFormatter { parser_name, .. }
+                | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. },
+            ) => Some(parser_name),
+            _ => None,
+        }
+    }
 
     #[test]
-    fn test_get_external_parser_name() {
+    fn test_get_external_format_source() {
         let test_cases = vec![
             // JSON
             ("package.json", Some("json-stringify")),
-            ("package-lock.json", Some("json-stringify")),
             ("config.importmap", Some("json-stringify")),
-            ("tsconfig.json", Some("jsonc")),
-            ("jsconfig.dev.json", Some("jsonc")),
             ("data.json", Some("json")),
             ("schema.avsc", Some("json")),
             ("config.code-workspace", Some("jsonc")),
@@ -342,6 +375,10 @@ mod tests {
             ("config.yml", Some("yaml")),
             ("settings.yaml", Some("yaml")),
             ("grammar.sublime-syntax", Some("yaml")),
+            // Excluded lock files
+            ("package-lock.json", None),
+            ("pnpm-lock.yaml", None),
+            ("yarn.lock", None),
             // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
@@ -349,8 +386,17 @@ mod tests {
         ];
 
         for (file_name, expected) in test_cases {
-            let result = get_external_parser_name(Path::new(file_name));
+            let result = get_parser_name(file_name);
             assert_eq!(result, expected, "`{file_name}` should be parsed as {expected:?}");
         }
+    }
+
+    #[test]
+    fn test_package_json_is_special() {
+        let source = get_external_format_source(PathBuf::from("package.json")).unwrap();
+        assert!(matches!(source, FormatFileStrategy::ExternalFormatterPackageJson { .. }));
+
+        let source = get_external_format_source(PathBuf::from("composer.json")).unwrap();
+        assert!(matches!(source, FormatFileStrategy::ExternalFormatter { .. }));
     }
 }

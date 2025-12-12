@@ -15,7 +15,7 @@ description = "A collection of JavaScript tools written in Rust."
 edition = "2024"
 # MSRV Policy N-2 (12 weeks).
 # Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
-rust-version = "1.89.0"
+rust-version = "1.90.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
@@ -227,7 +227,8 @@ smallvec = { version = "1.15.1", features = ["union", "serde"] } # Stack-allocat
 tempfile = "3.23.0" # Temporary files
 tokio = { version = "1.48.0", default-features = false } # Async runtime
 toml = { version = "0.9.8" }
-tower-lsp-server = "0.22.1" # LSP server framework
+tower-lsp-server = "0.23.0" # LSP server framework
+tracing = "0.1.43"
 tracing-subscriber = "0.3.20" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
 url = { version = "2.5.7" } # URL parsing
