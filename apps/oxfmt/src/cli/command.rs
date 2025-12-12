@@ -43,26 +43,35 @@ pub struct FormatCommand {
 pub enum Mode {
     /// Default CLI mode run against files and directories
     Cli(OutputMode),
+    #[cfg(feature = "napi")]
     /// Initialize `.oxfmtrc.jsonc` with default values
     Init,
+    #[cfg(feature = "napi")]
     /// Start language server protocol (LSP) server
     Lsp,
 }
 
 fn mode() -> impl bpaf::Parser<Mode> {
-    let init = bpaf::long("init")
-        .help("Initialize `.oxfmtrc.jsonc` with default values")
-        .req_flag(Mode::Init)
-        .hide_usage();
-    let lsp = bpaf::long("lsp")
-        .help("Start language server protocol (LSP) server")
-        .req_flag(Mode::Lsp)
-        .hide_usage();
-    let mode_options = bpaf::construct!([init, lsp]).group_help("Mode Options:");
-
     let output_mode_options = output_mode().map(Mode::Cli);
 
-    bpaf::construct!([mode_options, output_mode_options]).fallback(Mode::Cli(OutputMode::Write))
+    #[cfg(feature = "napi")]
+    {
+        let init = bpaf::long("init")
+            .help("Initialize `.oxfmtrc.jsonc` with default values")
+            .req_flag(Mode::Init)
+            .hide_usage();
+        let lsp = bpaf::long("lsp")
+            .help("Start language server protocol (LSP) server")
+            .req_flag(Mode::Lsp)
+            .hide_usage();
+        let mode_options = bpaf::construct!([init, lsp]).group_help("Mode Options:");
+
+        bpaf::construct!([mode_options, output_mode_options]).fallback(Mode::Cli(OutputMode::Write))
+    }
+    #[cfg(not(feature = "napi"))]
+    {
+        output_mode_options.fallback(Mode::Cli(OutputMode::Write))
+    }
 }
 
 /// Format output mode

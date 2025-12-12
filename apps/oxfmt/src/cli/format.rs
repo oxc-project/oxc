@@ -56,6 +56,8 @@ impl FormatRunner {
         let cwd = self.cwd;
         let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
             self.options;
+        // If `napi` feature is disabled, there is no other mode.
+        #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
             unreachable!("`FormatRunner` should only be called with Mode::Cli");
         };
