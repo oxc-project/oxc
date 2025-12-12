@@ -7,7 +7,6 @@ import {
   LogOutputChannel,
   Uri,
   window,
-  workspace,
 } from "vscode";
 
 import { ConfigurationParams, ShowMessageNotification } from "vscode-languageclient";
@@ -37,7 +36,7 @@ export default class FormatterTool implements ToolInterface {
     configService: ConfigService,
   ): Promise<string | undefined> {
     const bin = await configService.getOxfmtServerBinPath();
-    if (workspace.isTrusted && bin) {
+    if (bin) {
       try {
         await fsPromises.access(bin);
         return bin;
