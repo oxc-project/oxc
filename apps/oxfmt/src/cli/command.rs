@@ -78,7 +78,7 @@ fn mode() -> impl bpaf::Parser<Mode> {
             .argument::<String>("SOURCE")
             .parse(|s| match s.cow_to_lowercase().as_ref() {
                 "prettier" => Ok(Mode::Migrate(MigrateSource::Prettier)),
-                _ => Err(format!("Unknown migration source: {s}. Supported: prettier")),
+                _ => Err(format!("Unknown migration source: {s}. Supported: prettier.")),
             })
             .hide_usage();
         let mode_options = bpaf::construct!([init, lsp, migrate]).group_help("Mode Options:");
