@@ -2411,7 +2411,14 @@ impl RuleRunner for crate::rules::react::no_danger_with_children::NoDangerWithCh
 }
 
 impl RuleRunner for crate::rules::react::no_deprecated::NoDeprecated {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ImportSpecifier,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::StaticMemberExpression,
+        AstType::VariableDeclarator,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
