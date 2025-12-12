@@ -93,7 +93,14 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+        // Clone format options and add Tailwind callback if available
+        let mut format_options = self.format_options.clone();
+        #[cfg(feature = "napi")]
+        if let Some(ref external_formatter) = self.external_formatter {
+            format_options.tailwind_callback = external_formatter.process_tailwind.clone();
+        }
+
+        let base_formatter = Formatter::new(&allocator, format_options);
 
         #[cfg(feature = "napi")]
         let formatted = {

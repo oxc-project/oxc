@@ -94,6 +94,14 @@ impl<'a> Formatter<'a> {
             formatted.apply_transform(|doc| sort_imports.transform(doc, self.allocator));
         }
 
+        // Process Tailwind classes if callback is provided
+        if let Some(ref callback) = formatted.context().options().tailwind_callback {
+            let classes = formatted.context().take_tailwind_classes();
+            if !classes.is_empty() {
+                callback(classes);
+            }
+        }
+
         formatted
     }
 }

@@ -93,3 +93,21 @@ export async function formatFile(
     name: "formatFile",
   });
 }
+
+// ---
+
+/**
+ * Process Tailwind CSS classes found in JSX attributes.
+ * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
+ * @param classes - Array of class strings found in JSX class/className attributes
+ */
+export async function processTailwindClasses(classes: string[]): Promise<void> {
+  console.log("[oxfmt:tailwind] Found classes in file:");
+  classes.forEach((classStr, idx) => {
+    console.log(`  [${idx}]: "${classStr}"`);
+  });
+  console.log(`  Total: ${classes.length} class/className attributes\n`);
+
+  // TODO: Future enhancement - call prettier-plugin-tailwindcss to sort classes
+  // For POC, just log them to demonstrate collection is working
+}

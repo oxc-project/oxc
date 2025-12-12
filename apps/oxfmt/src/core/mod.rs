@@ -12,5 +12,5 @@ pub use support::FormatFileStrategy;
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{
-    ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb,
+    ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb, JsTailwindCb,
 };

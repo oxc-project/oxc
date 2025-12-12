@@ -8,9 +8,10 @@
  * 2. `setup_config_cb`: Callback to setup Prettier config
  * 3. `format_embedded_cb`: Callback to format embedded code in templates
  * 4. `format_file_cb`: Callback to format files
+ * 5. `tailwind_cb`: Callback to process Tailwind CSS classes
  *
  * Returns a tuple of `[mode, exitCode]`:
  * - `mode`: "cli" | "lsp" | "init"
  * - `exitCode`: exit code (0, 1, 2) for "cli" mode, `undefined` for other modes
  */
-export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>): Promise<[string, number | undefined | null]>
+export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>, tailwindCb: (classes: string[]) => Promise<void>): Promise<[string, number | undefined | null]>

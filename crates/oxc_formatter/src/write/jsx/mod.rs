@@ -319,6 +319,24 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        // Extract attribute name for Tailwind class collection
+        let attr_name = match &**self.name() {
+            JSXAttributeName::Identifier(ident) => Some(ident.name.as_str()),
+            JSXAttributeName::NamespacedName(_) => None,
+        };
+
+        // Collect class/className string literals for Tailwind processing
+        if let Some(name) = attr_name {
+            if name == "class" || name == "className" {
+                if let Some(value_node) = self.value() {
+                    if let JSXAttributeValue::StringLiteral(string_lit) = &**value_node {
+                        f.context().add_tailwind_class(string_lit.value.to_string());
+                    }
+                }
+            }
+        }
+
+        // Continue with normal formatting
         write!(f, self.name());
         if let Some(value) = &self.value() {
             write!(f, ["=", value]);

@@ -1,12 +1,23 @@
 import { runCli } from "./bindings.js";
-import { setupConfig, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
+import {
+  setupConfig,
+  formatEmbeddedCode,
+  formatFile,
+  processTailwindClasses,
+} from "./prettier-proxy.js";
 import { runInit } from "./migration/init.js";
 
 void (async () => {
   const args = process.argv.slice(2);
 
   // Call the Rust CLI to parse args and determine mode
-  const [mode, exitCode] = await runCli(args, setupConfig, formatEmbeddedCode, formatFile);
+  const [mode, exitCode] = await runCli(
+    args,
+    setupConfig,
+    formatEmbeddedCode,
+    formatFile,
+    processTailwindClasses,
+  );
 
   switch (mode) {
     // Handle `--init` command in JS

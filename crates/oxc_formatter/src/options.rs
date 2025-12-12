@@ -1,4 +1,4 @@
-use std::{fmt, num::ParseIntError, str::FromStr};
+use std::{fmt, num::ParseIntError, str::FromStr, sync::Arc};
 
 pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
 use crate::{
@@ -11,7 +11,11 @@ use crate::{
     write,
 };
 
-#[derive(Debug, Default, Clone)]
+/// Callback for processing Tailwind CSS classes found in JSX attributes.
+/// Takes a Vec of class strings found in the file.
+pub type TailwindCallback = Arc<dyn Fn(Vec<String>) + Send + Sync>;
+
+#[derive(Clone)]
 pub struct FormatOptions {
     /// The indent style.
     pub indent_style: IndentStyle,
@@ -74,6 +78,9 @@ pub struct FormatOptions {
 
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImportsOptions>,
+
+    /// Optional callback for processing Tailwind CSS classes (experimental POC)
+    pub tailwind_callback: Option<TailwindCallback>,
 }
 
 impl FormatOptions {
@@ -97,11 +104,44 @@ impl FormatOptions {
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
+            tailwind_callback: None,
         }
     }
 
     pub fn as_print_options(&self) -> PrinterOptions {
         PrinterOptions::from(self)
+    }
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl fmt::Debug for FormatOptions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FormatOptions")
+            .field("indent_style", &self.indent_style)
+            .field("indent_width", &self.indent_width)
+            .field("line_ending", &self.line_ending)
+            .field("line_width", &self.line_width)
+            .field("quote_style", &self.quote_style)
+            .field("jsx_quote_style", &self.jsx_quote_style)
+            .field("quote_properties", &self.quote_properties)
+            .field("trailing_commas", &self.trailing_commas)
+            .field("semicolons", &self.semicolons)
+            .field("arrow_parentheses", &self.arrow_parentheses)
+            .field("bracket_spacing", &self.bracket_spacing)
+            .field("bracket_same_line", &self.bracket_same_line)
+            .field("attribute_position", &self.attribute_position)
+            .field("expand", &self.expand)
+            .field("experimental_operator_position", &self.experimental_operator_position)
+            .field("experimental_ternaries", &self.experimental_ternaries)
+            .field("embedded_language_formatting", &self.embedded_language_formatting)
+            .field("experimental_sort_imports", &self.experimental_sort_imports)
+            .field("tailwind_callback", &self.tailwind_callback.as_ref().map(|_| "<callback>"))
+            .finish()
     }
 }
 
