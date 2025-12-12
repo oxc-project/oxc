@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 414
+---
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'dev-only' should be listed in dependencies, not devDependencies.
+   ╭─[no_extraneous_dependencies/__tests__/example.test.ts:1:21]
+ 1 │ import devOnly from 'dev-only';
+   ·                     ──────────
+   ╰────

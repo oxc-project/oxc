@@ -1,0 +1,69 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 414
+---
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'left-pad' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:21]
+ 1 │ import missing from 'left-pad';
+   ·                     ──────────
+   ╰────
+  help: Run `npm install --save left-pad` (or the equivalent for your package manager).
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'left-pad' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:21]
+ 1 │ const foo = require('left-pad');
+   ·                     ──────────
+   ╰────
+  help: Run `npm install --save left-pad` (or the equivalent for your package manager).
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'left-pad' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:26]
+ 1 │ import type { Foo } from 'left-pad';
+   ·                          ──────────
+   ╰────
+  help: Run `npm install --save left-pad` (or the equivalent for your package manager).
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'left-pad' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:15]
+ 1 │ export * from 'left-pad';
+   ·               ──────────
+   ╰────
+  help: Run `npm install --save left-pad` (or the equivalent for your package manager).
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'dev-only' should be listed in dependencies, not devDependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:21]
+ 1 │ import devOnly from 'dev-only';
+   ·                     ──────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'optional-only' should be listed in dependencies, not optionalDependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:17]
+ 1 │ import opt from 'optional-only';
+   ·                 ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'peer-only' should be listed in dependencies, not peerDependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:18]
+ 1 │ import peer from 'peer-only';
+   ·                  ───────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'bundled-only' should be listed in dependencies, not bundledDependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:21]
+ 1 │ import bundled from 'bundled-only';
+   ·                     ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): '@internal/utils' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:22]
+ 1 │ import internal from '@internal/utils';
+   ·                      ─────────────────
+   ╰────
+  help: Run `npm install --save @internal/utils` (or the equivalent for your package manager).
+
+  ⚠ eslint-plugin-import(no-extraneous-dependencies): 'custom-only' should be listed in the project's dependencies.
+   ╭─[no_extraneous_dependencies/src/index.ts:1:20]
+ 1 │ import custom from 'custom-only';
+   ·                    ─────────────
+   ╰────
+  help: Run `npm install --save custom-only` (or the equivalent for your package manager).
