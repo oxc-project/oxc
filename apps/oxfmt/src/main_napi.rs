@@ -52,6 +52,7 @@ pub async fn run_cli(
 
     match command.mode {
         Mode::Init => ("init".to_string(), None),
+        Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
         Mode::Lsp => {
             run_lsp().await;
             ("lsp".to_string(), None)
