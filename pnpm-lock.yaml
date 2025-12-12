@@ -25,8 +25,8 @@ catalogs:
       specifier: 1.0.0-beta.54
       version: 1.0.0-beta.54
     tsdown:
-      specifier: 0.17.2
-      version: 0.17.2
+      specifier: 0.17.3
+      version: 0.17.3
     typescript:
       specifier: 5.9.3
       version: 5.9.3
@@ -91,7 +91,7 @@ importers:
         version: 9.6.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.17.2(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
+        version: 0.17.3(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -142,7 +142,7 @@ importers:
         version: 1.0.0-beta.54
       tsdown:
         specifier: 'catalog:'
-        version: 0.17.2(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
+        version: 0.17.3(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
       type-fest:
         specifier: ^5.2.0
         version: 5.3.0
@@ -2707,6 +2707,9 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
+  defu@6.1.4:
+    resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
+
   degit@2.8.4:
     resolution: {integrity: sha512-vqYuzmSA5I50J882jd+AbAhQtgK6bdKUJIex1JNfEUPENCgYsxugzKVZlFyMwV4i06MmnV47/Iqi5Io86zf3Ng==}
     engines: {node: '>=8.0.0'}
@@ -3152,8 +3155,8 @@ packages:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
     engines: {node: '>=6'}
 
-  import-without-cache@0.2.2:
-    resolution: {integrity: sha512-4TTuRrZ0jBULXzac3EoX9ZviOs8Wn9iAbNhJEyLhTpAGF9eNmYSruaMMN/Tec/yqaO7H6yS2kALfQDJ5FxfatA==}
+  import-without-cache@0.2.3:
+    resolution: {integrity: sha512-roCvX171VqJ7+7pQt1kSRfwaJvFAC2zhThJWXal1rN8EqzPS3iapkAoNpHh4lM8Na1BDen+n9rVfo73RN+Y87g==}
     engines: {node: '>=20.19.0'}
 
   imurmurhash@0.1.4:
@@ -4130,8 +4133,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.17.2:
-    resolution: {integrity: sha512-SuU+0CWm/95KfXqojHTVuwcouIsdn7HpYcwDyOdKktJi285NxKwysjFUaxYLxpCNqqPvcFvokXLO4dZThRwzkw==}
+  tsdown@0.17.3:
+    resolution: {integrity: sha512-bgLgTog+oyadDTr9SZ57jZtb+A4aglCjo3xgJrkCDxbzcQl2l2iDDr4b06XHSQHwyDNIhYFDgPRhuu1wL3pNsw==}
     engines: {node: '>=20.19.0'}
     hasBin: true
     peerDependencies:
@@ -6609,6 +6612,8 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
+  defu@6.1.4: {}
+
   degit@2.8.4: {}
 
   delayed-stream@1.0.0: {}
@@ -7112,7 +7117,7 @@ snapshots:
       parent-module: 1.0.1
       resolve-from: 4.0.0
 
-  import-without-cache@0.2.2: {}
+  import-without-cache@0.2.3: {}
 
   imurmurhash@0.1.4: {}
 
@@ -8165,13 +8170,14 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tsdown@0.17.2(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3):
+  tsdown@0.17.3(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 6.7.14
+      defu: 6.1.4
       empathic: 2.0.0
       hookable: 5.5.3
-      import-without-cache: 0.2.2
+      import-without-cache: 0.2.3
       obug: 2.1.1
       rolldown: 1.0.0-beta.53
       rolldown-plugin-dts: 0.18.3(rolldown@1.0.0-beta.53)(typescript@5.9.3)
