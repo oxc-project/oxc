@@ -132,6 +132,7 @@ pub(crate) mod eslint {
     pub mod no_object_constructor;
     pub mod no_param_reassign;
     pub mod no_plusplus;
+    pub mod no_promise_executor_return;
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
@@ -776,6 +777,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
     eslint::no_plusplus,
+    eslint::no_promise_executor_return,
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
