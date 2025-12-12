@@ -123,21 +123,27 @@ impl IsolatedLintHandler {
 
         let fs = IsolatedLintHandlerFileSystem::new(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> = self
-            .runner
-            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), &fs)
+        let lint_messages =
+            self.runner.run_source(&Arc::from(path.as_os_str()), source_text.to_string(), &fs);
+
+        let directives = self.runner.directives_coordinator().get(path);
+
+        let mut messages: Vec<DiagnosticReport> = lint_messages
             .into_iter()
-            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+            .map(|message| {
+                message_to_lsp_diagnostic(message, uri, source_text, rope, directives.as_ref())
+            })
             .collect();
 
-        // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
+            && let Some(directives) = &directives
         {
             messages.extend(
-                create_unused_directives_messages(&directives, severity, source_text)
+                create_unused_directives_messages(directives, severity, source_text)
                     .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
+                    .map(|message| {
+                        message_to_lsp_diagnostic(message, uri, source_text, rope, None)
+                    }),
             );
         }
 

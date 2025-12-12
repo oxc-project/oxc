@@ -67,15 +67,15 @@ Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 9,
-            character: 0,
+            line: 8,
+            character: 2,
         },
         end: Position {
-            line: 9,
-            character: 0,
+            line: 8,
+            character: 52,
         },
     },
-    new_text: "// oxlint-disable-next-line no-console\n",
+    new_text: " oxlint-disable-next-line no-debugger, no-for-loop, no-console",
 }
 
 
