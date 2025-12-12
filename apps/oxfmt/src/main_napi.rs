@@ -10,7 +10,6 @@ use crate::{
         CliRunResult, FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing,
     },
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
-    init::run_init,
     lsp::run_lsp,
 };
 
@@ -68,7 +67,7 @@ async fn format_impl(
     };
 
     match command.mode {
-        Mode::Init => run_init(),
+        Mode::Init => unreachable!("`--init` should be handled by JS side"),
         Mode::Lsp => {
             run_lsp().await;
             CliRunResult::None

@@ -44,11 +44,13 @@ pub enum Mode {
     /// Default CLI mode run against files and directories
     Cli(OutputMode),
     #[cfg(feature = "napi")]
-    /// Initialize `.oxfmtrc.jsonc` with default values
-    Init,
-    #[cfg(feature = "napi")]
     /// Start language server protocol (LSP) server
     Lsp,
+    #[cfg(feature = "napi")]
+    /// Initialize `.oxfmtrc.json` with default values
+    // NOTE: This is handled by JS side before reaching Rust.
+    // Just to display help message correctly.
+    Init,
 }
 
 fn mode() -> impl bpaf::Parser<Mode> {
@@ -57,7 +59,7 @@ fn mode() -> impl bpaf::Parser<Mode> {
     #[cfg(feature = "napi")]
     {
         let init = bpaf::long("init")
-            .help("Initialize `.oxfmtrc.jsonc` with default values")
+            .help("Initialize `.oxfmtrc.json` with default values")
             .req_flag(Mode::Init)
             .hide_usage();
         let lsp = bpaf::long("lsp")
