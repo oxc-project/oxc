@@ -78,12 +78,6 @@ fn get_external_format_source(path: PathBuf) -> Option<FormatFileStrategy> {
     if JSON_FILENAMES.contains(file_name) {
         return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json" });
     }
-    // Must be checked before generic JSON/JSONC
-    if (file_name.starts_with("tsconfig.") || file_name.starts_with("jsconfig."))
-        && extension == Some("json")
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "jsonc" });
-    }
     if let Some(ext) = extension
         && JSON_EXTENSIONS.contains(ext)
     {
@@ -340,8 +334,6 @@ mod tests {
             // JSON
             ("package.json", Some("json-stringify")),
             ("config.importmap", Some("json-stringify")),
-            ("tsconfig.json", Some("jsonc")),
-            ("jsconfig.dev.json", Some("jsonc")),
             ("data.json", Some("json")),
             ("schema.avsc", Some("json")),
             ("config.code-workspace", Some("jsonc")),

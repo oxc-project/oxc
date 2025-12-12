@@ -76,8 +76,8 @@ tsconfig.dummy.json
   // Allow comments!
   "compilerOptions": {
     "module": "commonjs",
-    "strict": true,
-  },
+    "strict": true
+  }
 }
 
 --------------------"
