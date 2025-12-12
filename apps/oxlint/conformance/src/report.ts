@@ -69,10 +69,24 @@ export function generateReport(results: RuleResult[]): string {
     });
   }
 
-  // Header
-  const lines: string[] = [];
-  lines.push("# ESLint Rule Tester Conformance Results");
-  lines.push("");
+  let report = "";
+
+  function line(str: string): void {
+    report += str;
+    report += "\n";
+  }
+
+  function lineBreak(): void {
+    report += "\n";
+  }
+
+  function block(str: string): void {
+    report += str
+      .trimStart()
+      .split("\n")
+      .map((line) => line.trimStart())
+      .join("\n");
+  }
 
   // Summary statistics
   const totalRuleCount = results.length,
@@ -82,122 +96,115 @@ export function generateReport(results: RuleResult[]): string {
     passingTestCount = totalTestCount - failingTestCount,
     noTestsRuleCount = noTestRules.length;
 
-  lines.push("## Summary");
-  lines.push("");
-  lines.push("### Rules");
-  lines.push("");
-  lines.push(`| Status            | Count |`);
-  lines.push(`| ----------------- | ----- |`);
-  lines.push(`| Total rules       | ${String(totalRuleCount).padStart(5)} |`);
-  lines.push(`| Fully passing     | ${String(fullyPassingRuleCount).padStart(5)} |`);
-  lines.push(`| Partially passing | ${String(partiallyPassingRuleCount).padStart(5)} |`);
-  lines.push(`| Fully failing     | ${String(fullyFailingRuleCount).padStart(5)} |`);
-  lines.push(`| Load errors       | ${String(loadErrorRuleCount).padStart(5)} |`);
-  lines.push(`| No tests run      | ${String(noTestsRuleCount).padStart(5)} |`);
-  lines.push("");
+  const pad5 = (num: string | number) => String(num).padStart(5);
 
-  lines.push("### Tests");
-  lines.push("");
-  lines.push(`| Status      | Count |`);
-  lines.push(`| ----------- | ----- |`);
-  lines.push(`| Total tests | ${String(totalTestCount).padStart(5)} |`);
-  lines.push(`| Passing     | ${String(passingTestCount).padStart(5)} |`);
-  lines.push(`| Failing     | ${String(failingTestCount).padStart(5)} |`);
-  lines.push("");
+  block(`
+    # ESLint Rule Tester Conformance Results
+
+    ## Summary
+
+    ### Rules
+
+    | Status            | Count |
+    | ----------------- | ----- |
+    | Total rules       | ${pad5(totalRuleCount)} |
+    | Fully passing     | ${pad5(fullyPassingRuleCount)} |
+    | Partially passing | ${pad5(partiallyPassingRuleCount)} |
+    | Fully failing     | ${pad5(fullyFailingRuleCount)} |
+    | Load errors       | ${pad5(loadErrorRuleCount)} |
+    | No tests run      | ${pad5(noTestsRuleCount)} |
+
+    ### Tests
+
+    | Status      | Count |
+    | ----------- | ----- |
+    | Total tests | ${pad5(totalTestCount)} |
+    | Passing     | ${pad5(passingTestCount)} |
+    | Failing     | ${pad5(failingTestCount)} |
+
+  `);
 
   // Fully passing rules
-  lines.push("## Fully Passing Rules");
-  lines.push("");
+  line("## Fully Passing Rules\n");
   if (passingRules.length === 0) {
-    lines.push("No rules fully passing");
+    line("No rules fully passing");
   } else {
     for (const rule of passingRules) {
-      lines.push(`- \`${rule.ruleName}\` (${rule.tests.length} tests)`);
+      line(`- \`${rule.ruleName}\` (${rule.tests.length} tests)`);
     }
   }
-  lines.push("");
+  lineBreak();
 
   // Rules with failures
-  lines.push("## Rules with Failures");
-  lines.push("");
+  report += "## Rules with Failures\n\n";
   if (failingRules.length === 0) {
-    lines.push("No rules with failures");
+    line("No rules with failures\n");
   } else {
     // Summary
     for (const rule of failingRules) {
       const { testCount } = rule,
         passedCount = testCount - rule.failingTests.length;
-      lines.push(`- \`${rule.ruleName}\` - ${formatProportion(passedCount, testCount)}`);
+      line(`- \`${rule.ruleName}\` - ${formatProportion(passedCount, testCount)}`);
     }
-    lines.push("");
+    lineBreak();
 
     // Details
-    lines.push("## Rules with Failures Detail");
-    lines.push("");
+    line("## Rules with Failures Detail\n");
 
     for (const rule of failingRules) {
       const { testCount, failingTests } = rule,
         failedCount = failingTests.length,
         passedCount = testCount - failedCount;
 
-      lines.push(`### \`${rule.ruleName}\``);
-      lines.push("");
-      lines.push(`Pass: ${formatProportion(passedCount, testCount)}`);
-      lines.push(`Fail: ${formatProportion(failedCount, testCount)}`);
-      lines.push("");
+      block(`
+        ### \`${rule.ruleName}\`
+
+        Pass: ${formatProportion(passedCount, testCount)}
+        Fail: ${formatProportion(failedCount, testCount)}
+
+      `);
 
       // List failed tests
       for (const test of failingTests) {
-        lines.push(`#### ${test.groupName}`);
-        lines.push("");
-
-        lines.push("```js");
-        lines.push(test.code);
-        lines.push("```");
-        lines.push("");
+        line(`#### ${test.groupName}\n`);
+        line("```js");
+        line(test.code);
+        line("```\n");
 
         const testCaseStr = formatTestCase(test.testCase, test.code);
         if (testCaseStr !== null) {
-          lines.push("```json");
-          lines.push(testCaseStr);
-          lines.push("```");
-          lines.push("");
+          line("```json");
+          line(testCaseStr);
+          line("```\n");
         }
 
-        lines.push(formatError(test.error));
-        lines.push("");
+        line(formatError(test.error));
+        lineBreak();
       }
     }
   }
 
   // Load errors
   if (loadErrorRules.length > 0) {
-    lines.push("## Load Errors");
-    lines.push("");
-
+    line("## Load Errors\n");
     for (const rule of loadErrorRules) {
-      lines.push(`### \`${rule.ruleName}\``);
-      lines.push("");
-      lines.push(formatError(rule.loadError));
-      lines.push("");
+      line(`### \`${rule.ruleName}\`\n`);
+      line(formatError(rule.loadError));
+      lineBreak();
     }
-
-    lines.push("");
+    lineBreak();
   }
 
   // Rules with no tests
   if (noTestRules.length > 0) {
-    lines.push("## Rules with no tests run");
-    lines.push("");
-
+    line("## Rules with no tests run\n");
     for (const rule of noTestRules) {
-      lines.push(`- \`${rule.ruleName}\``);
+      line(`- \`${rule.ruleName}\``);
     }
-
-    lines.push("");
+    lineBreak();
   }
 
-  return lines.join("\n");
+  return report.slice(0, -1);
 }
 
 // Regex to match ANSI escape sequences (colors, formatting, etc.)
