@@ -115,7 +115,7 @@ declare_oxc_lint!(
     /// ```
     NoPromiseExecutorReturn,
     eslint,
-    correctness,
+    pedantic,
     config = NoPromiseExecutorReturnConfig,
 );
 
