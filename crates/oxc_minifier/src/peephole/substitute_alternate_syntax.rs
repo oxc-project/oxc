@@ -1655,7 +1655,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
-                        // Replace "(() => { return foo() })" with "foo()"
+                        // Replace "(() => { return foo() })()" with "foo()"
                         if is_pure && is_descendant_of_block {
                             *e = ctx.ast.void_0(call_expr.span);
                         } else {
