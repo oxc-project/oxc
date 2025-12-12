@@ -31,31 +31,55 @@ suite('commands', () => {
   testSingleFolderMode('listed commands', async () => {
     const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
 
-    const extraCommands = process.env.SKIP_LINTER_TEST === 'true' ? [] : [
-      'oxc.fixAll',
+    const expectedCommands = [
+      'oxc.showOutputChannel',
+      'oxc.showOutputChannelFormatter',
     ];
 
-    deepStrictEqual([
-      'oxc.showOutputChannel',
-      'oxc.restartServer',
-      'oxc.toggleEnable',
-      'oxc.applyAllFixesFile', // TODO: only if linter tests are enabled
-      ...extraCommands,
-    ], oxcCommands);
+    if (process.env.SKIP_LINTER_TEST !== 'true') {
+      expectedCommands.push(
+        'oxc.restartServer',
+        'oxc.toggleEnable',
+        'oxc.applyAllFixesFile',
+        'oxc.fixAll',
+      );
+    }
+
+    if (process.env.SKIP_FORMATTER_TEST !== 'true' && !process.env.SERVER_PATH_DEV?.includes('oxc_language_server')) {
+      expectedCommands.push(
+        'oxc.restartServerFormatter',
+      );
+    }
+
+    deepStrictEqual(expectedCommands, oxcCommands);
   });
 
   testSingleFolderMode('oxc.showOutputChannel', async () => {
     await commands.executeCommand('oxc.showOutputChannel');
-    await sleep(500);
+    await sleep(250);
 
     notEqual(window.activeTextEditor, undefined);
-    const uri = window.activeTextEditor!.document.uri;
-    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc');
+    const { uri } = window.activeTextEditor!.document;
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Lint%29');
+
+    await commands.executeCommand('workbench.action.closeActiveEditor');
+  });
+
+  testSingleFolderMode('oxc.showOutputChannelFormatter', async () => {
+    await commands.executeCommand('oxc.showOutputChannelFormatter');
+    await sleep(250);
+
+    notEqual(window.activeTextEditor, undefined);
+    const { uri } = window.activeTextEditor!.document;
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Fmt%29');
 
     await commands.executeCommand('workbench.action.closeActiveEditor');
   });
 
   testSingleFolderMode('oxc.toggleEnable', async () => {
+    if (process.env.SKIP_LINTER_TEST === 'true') {
+      return;
+    }
     const isEnabledBefore = workspace.getConfiguration('oxc').get<boolean>('enable');
     strictEqual(isEnabledBefore, true);
 

@@ -16,7 +16,6 @@
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-perf": "^3.3.3",
-    "eslint-plugin-regexp": "latest",
     "eslint-plugin-unicorn": "latest",
     "eslint-plugin-vitest": "latest",
     "eslint-plugin-vue": "latest"

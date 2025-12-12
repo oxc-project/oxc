@@ -482,7 +482,7 @@ impl Tester {
         fix_kind: ExpectFixKind,
         fix_index: u8,
     ) -> TestResult {
-        let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
+        let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default());
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
             self.lint_options,
@@ -505,7 +505,7 @@ impl Tester {
                             }),
                     )
                     .with_rule(rule, AllowWarnDeny::Warn)
-                    .build(&external_plugin_store)
+                    .build(&mut external_plugin_store)
                     .unwrap(),
                 FxHashMap::default(),
                 external_plugin_store,

@@ -171,121 +171,113 @@ fn test() {
         ("switch (a) { case 1: break; case 2: default: break; }", None),
         (
             "switch (a) { case 1: break; default: break;
-			 //no default
-			 }",
+              //no default
+            }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: break;
+                case 1: break;
 
-			//oh-oh
-			 // no default
-			 }",
+            //oh-oh
+             // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// No default
-			 }",
+            // No default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// no deFAUlt
-			 }",
+            // no deFAUlt
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// NO DEFAULT
-			 }",
+            // NO DEFAULT
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4;
+                case 1: a = 4;
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4;
+                case 1: a = 4;
 
-			/* no default */
-			 }",
+            /* no default */
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4; break; break;
+                case 1: a = 4; break; break;
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) { // no default
-			 }",
+             }",
             None,
         ),
         ("switch (a) { }", None),
         (
             "switch (a) { case 1: break; default: break; }",
-            Some(serde_json::json!([{
-                "commentPattern": "default case omitted"
-            }])),
+            Some(serde_json::json!([{ "commentPattern": "default case omitted" }])),
         ),
         (
             "switch (a) { case 1: break;
-			 // skip default case
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "^skip default"
-            }])),
+             // skip default case
+             }",
+            Some(serde_json::json!([{ "commentPattern": "^skip default" }])),
         ),
         (
             "switch (a) { case 1: break;
-			 // skip default case
-			 }",
+             // skip default case
+             }",
             Some(serde_json::json!([{
                 "commentPattern": "^skip\\sdefault" // this is escaped for JSON.
             }])),
         ),
         (
             "switch (a) { case 1: break;
-			 /*
-			TODO:
-			 throw error in default case
-			*/
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "default"
-            }])),
+             /*
+            TODO:
+             throw error in default case
+            */
+             }",
+            Some(serde_json::json!([{ "commentPattern": "default" }])),
         ),
         (
             "switch (a) { case 1: break;
-			//
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": ".?"
-            }])),
+            //
+             }",
+            Some(serde_json::json!([{ "commentPattern": ".?" }])),
         ),
     ];
 
@@ -293,42 +285,36 @@ fn test() {
         ("switch (a) { case 1: break; }", None),
         (
             "switch (a) {
-			 // no default
-			 case 1: break;  }",
+             // no default
+             case 1: break;  }",
             None,
         ),
         (
             "switch (a) { case 1: break;
-			 // no default
-			 // nope
-			  }",
+             // no default
+             // nope
+              }",
             None,
         ),
         (
             "switch (a) { case 1: break;
-			 // no default
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "skipped default case"
-            }])),
+             // no default
+             }",
+            Some(serde_json::json!([{ "commentPattern": "skipped default case" }])),
         ),
         (
             "switch (a) {
-			case 1: break;
-			// default omitted intentionally
-			// TODO: add default case
-			}",
-            Some(serde_json::json!([{
-                "commentPattern": "default omitted"
-            }])),
+            case 1: break;
+            // default omitted intentionally
+            // TODO: add default case
+            }",
+            Some(serde_json::json!([{ "commentPattern": "default omitted" }])),
         ),
         (
             "switch (a) {
-			case 1: break;
-			}",
-            Some(serde_json::json!([{
-                "commentPattern": ".?"
-            }])),
+            case 1: break;
+            }",
+            Some(serde_json::json!([{ "commentPattern": ".?" }])),
         ),
     ];
 

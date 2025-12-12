@@ -93,6 +93,17 @@ declare_oxc_lint!(
     ///   await expect(foo).rejects.toThrow(Error);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-conditional-expect": "error"
+    ///   }
+    /// }
+    /// ```
     NoConditionalExpect,
     jest,
     correctness

@@ -48,7 +48,7 @@ impl<'a> Printer<'a> {
             }
         };
         let buffer = CodeBuffer::with_indent(indent_char, indent_width);
-        Self { options, state: PrinterState { buffer, ..Default::default() } }
+        Self { options, state: PrinterState::new(buffer) }
     }
 
     /// Prints the passed in element as well as all its content
@@ -456,8 +456,6 @@ impl<'a> Printer<'a> {
 
             measurer.finish();
 
-            self.state.measured_group_fits = true;
-
             // Print all pairs that fit in flat mode.
             for _ in 0..flat_pairs {
                 self.print_fill_item(
@@ -655,10 +653,6 @@ impl<'a> Printer<'a> {
             }
 
             self.state.line_width = 0;
-
-            // Fit's only tests if groups up to the first line break fit.
-            // The next group must re-measure if it still fits.
-            self.state.measured_group_fits = false;
         } else {
             let char_width = if char == '\t' {
                 // SAFETY: `'\t'` is an valid ASCII character
@@ -714,6 +708,16 @@ struct PrinterState<'a> {
     fits_queue: Vec<&'a [FormatElement<'a>]>,
 }
 
+impl PrinterState<'_> {
+    pub fn new(buffer: CodeBuffer) -> Self {
+        Self {
+            buffer,
+            // Initialize `measured_group_fits` to true to indicate that groups are initially assumed to fit.
+            measured_group_fits: true,
+            ..Default::default()
+        }
+    }
+}
 /// Tracks the mode in which groups with ids are printed. Stores the groups at `group.id()` index.
 /// This is based on the assumption that the group ids for a single document are dense.
 #[derive(Debug, Default)]

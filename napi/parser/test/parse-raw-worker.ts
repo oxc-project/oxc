@@ -3,7 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { basename, join as pathJoin } from "node:path";
 
-import { parseSync } from "../src-js/index.js";
+import { parseSync } from "./parser.ts";
 import {
   ACORN_TEST262_DIR_PATH,
   JSX_DIR_PATH,
@@ -22,16 +22,11 @@ import {
   TS_ESTREE_DIR_PATH,
 } from "./parse-raw-common.ts";
 import { makeUnitsFromTest } from "./typescript-make-units-from-test.ts";
-import type { Node, ParserOptions } from "../src-js/index.js";
+
+import type { Node, ParserOptions } from "./parser.ts";
 
 const { hasOwn } = Object,
   { isArray } = Array;
-
-interface ExtendedParserOptions extends ParserOptions {
-  experimentalRawTransfer?: boolean;
-  experimentalParent?: boolean;
-  experimentalLazy?: boolean;
-}
 
 type TestCaseProps = string | { filename: string; sourceText: string };
 
@@ -111,7 +106,6 @@ async function runTest262Case(
 
   const { program } = parseSync(filename, sourceText, {
     sourceType,
-    // @ts-expect-error
     experimentalRawTransfer: true,
   });
   const json = stringifyAcornTest262Style(program);
@@ -145,7 +139,6 @@ async function runJsxCase(
 
   const { program } = parseSync(filename, sourceText, {
     sourceType,
-    // @ts-expect-error
     experimentalRawTransfer: true,
   });
   const json = stringifyAcornTest262Style(program);
@@ -182,7 +175,7 @@ async function runTsCase(
   for (let i = 0; i < tests.length; i++) {
     const { name: filename, content: code, sourceType } = tests[i];
 
-    const options: ExtendedParserOptions = {
+    const options: ParserOptions = {
       sourceType: sourceType.module ? "module" : "unambiguous",
       astType: "ts",
       preserveParens: false,
@@ -198,7 +191,7 @@ async function runTsCase(
       continue;
     }
 
-    const { program, errors } = parseSync(filename, code, options as ParserOptions);
+    const { program, errors } = parseSync(filename, code, options);
     const oxcJson = stringifyAcornTest262Style(program);
 
     const estreeJson = estreeJsons[i];
@@ -212,13 +205,13 @@ async function runTsCase(
       const standard = parseSync(filename, code, {
         ...options,
         experimentalRawTransfer: false,
-      } as ParserOptions);
+      });
       const standardJson = stringifyAcornTest262Style(standard.program);
       const errorsStandard = standard.errors;
 
       expect(oxcJson).toEqual(standardJson);
 
-      const errorsRawJson = JSON.stringify(removeNullProperties(errors), null, 2);
+      const errorsRawJson = JSON.stringify(errors, null, 2);
       const errorsStandardJson = JSON.stringify(errorsStandard, null, 2);
       expect(errorsRawJson).toEqual(errorsStandardJson);
     }
@@ -266,7 +259,7 @@ async function runInlineFixture(
 function testRangeParent(
   filename: string,
   sourceText: string,
-  options: ExtendedParserOptions | null,
+  options: ParserOptions | null,
   expect: ExpectFunction,
 ): void {
   const ret = parseSync(filename, sourceText, {
@@ -274,7 +267,7 @@ function testRangeParent(
     range: true,
     experimentalRawTransfer: true,
     experimentalParent: true,
-  } as ParserOptions);
+  });
 
   let parent: any = null;
   function walk(node: null | Node[] | Node): void {
@@ -297,7 +290,7 @@ function testRangeParent(
     }
 
     // Check `parent`
-    let previousParent = parent;
+    const previousParent = parent;
     const isNode = hasOwn(node, "type");
     if (isNode) {
       expect(node.parent).toBe(parent);
@@ -307,8 +300,15 @@ function testRangeParent(
     // Walk children
     for (const key in node) {
       if (!hasOwn(node, key)) continue;
-      if (key === "type" || key === "start" || key === "end" || key === "range" || key === "parent")
+      if (
+        key === "type" ||
+        key === "start" ||
+        key === "end" ||
+        key === "range" ||
+        key === "parent"
+      ) {
         continue;
+      }
       walk(node[key]);
     }
 
@@ -320,16 +320,12 @@ function testRangeParent(
 
 // Test lazy deserialization does not throw an error.
 // We don't test the correctness of the output.
-function testLazy(
-  filename: string,
-  sourceText: string,
-  options: ExtendedParserOptions | null,
-): void {
+function testLazy(filename: string, sourceText: string, options: ParserOptions | null): void {
   const ret = parseSync(filename, sourceText, {
     ...options,
     experimentalRawTransfer: false,
     experimentalLazy: true,
-  } as ParserOptions);
+  });
   JSON.stringify(ret.program);
   JSON.stringify(ret.comments);
   JSON.stringify(ret.errors);
@@ -360,11 +356,13 @@ function assertRawAndStandardMatch(
 
   const retRaw = parseSync(filename, sourceText, {
     experimentalRawTransfer: true,
-  } as ParserOptions);
-  const { program: programRaw, comments: commentsRaw } = retRaw;
-  // Remove `null` values, to match what NAPI-RS does
-  const moduleRaw = removeNullProperties(retRaw.module);
-  const errorsRaw = removeNullProperties(retRaw.errors);
+  });
+  const {
+    program: programRaw,
+    comments: commentsRaw,
+    module: moduleRaw,
+    errors: errorsRaw,
+  } = retRaw;
 
   // Compare as JSON (to ensure same field order)
   const jsonStandard = stringify(
@@ -427,7 +425,7 @@ function stringify(obj: any, pretty: boolean): string {
 }
 
 // Stringify to JSON, removing values which are invalid in JSON,
-// matching `acorn-test262` fixtures.
+// matching `estree-conformance` fixtures.
 const INFINITY_PLACEHOLDER = "__INFINITY__INFINITY__INFINITY__";
 const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, "g");
 
@@ -436,8 +434,9 @@ function stringifyAcornTest262Style(obj: any): string {
   const json = JSON.stringify(
     obj,
     (_key, value) => {
-      if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp))
+      if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp)) {
         return null;
+      }
       if (value === Infinity) {
         containsInfinity = true;
         return INFINITY_PLACEHOLDER;
@@ -448,11 +447,6 @@ function stringifyAcornTest262Style(obj: any): string {
   );
 
   return containsInfinity ? json.replace(INFINITY_REGEXP, "1e+400") : json;
-}
-
-// Remove `null` values, to match what NAPI-RS does
-function removeNullProperties(obj: any): any {
-  return JSON.parse(JSON.stringify(obj, (_key, value) => (value === null ? undefined : value)));
 }
 
 // Type for expect function

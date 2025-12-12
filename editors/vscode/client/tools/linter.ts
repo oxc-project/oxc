@@ -13,6 +13,7 @@ import {
 import {
   ConfigurationParams,
   ExecuteCommandRequest,
+  InitializeParams,
   ShowMessageNotification,
 } from "vscode-languageclient";
 
@@ -35,6 +36,16 @@ const languageClientName = "oxc";
 
 const enum LspCommands {
   FixAll = "oxc.fixAll",
+}
+
+class NoFormatterLanguageClient extends LanguageClient {
+  protected fillInitializeParams(params: InitializeParams): void {
+    // Disable formatting capabilities to prevent conflicts with the formatter tool.
+    delete params.capabilities.textDocument?.formatting;
+    delete params.capabilities.textDocument?.rangeFormatting;
+
+    super.fillInitializeParams(params);
+  }
 }
 
 export default class LinterTool implements ToolInterface {
@@ -78,11 +89,11 @@ export default class LinterTool implements ToolInterface {
       ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
       : true;
 
-    const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
+    const restartCommand = commands.registerCommand(OxcCommands.RestartServerLint, async () => {
       await this.restartClient();
     });
 
-    const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
+    const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnableLint, async () => {
       await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
       await this.toggleClient(configService);
@@ -139,7 +150,7 @@ export default class LinterTool implements ToolInterface {
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
+    const clientOptions: LanguageClientOptions = {
       // Register the server for plain text documents
       documentSelector: [
         {
@@ -185,8 +196,12 @@ export default class LinterTool implements ToolInterface {
       },
     };
 
-    // Create the language client and start the client.
-    this.client = new LanguageClient(languageClientName, serverOptions, clientOptions);
+    // If the formatter is not handled by the language server, disable formatting capabilities to prevent conflicts.
+    if (configService.useOxcLanguageServerForFormatting) {
+      this.client = new LanguageClient(languageClientName, serverOptions, clientOptions);
+    } else {
+      this.client = new NoFormatterLanguageClient(languageClientName, serverOptions, clientOptions);
+    }
 
     const onNotificationDispose = this.client.onNotification(
       ShowMessageNotification.type,
@@ -263,6 +278,9 @@ export default class LinterTool implements ToolInterface {
     statusBarItemHandler: StatusBarItemHandler,
   ): Promise<void> {
     this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
+    if (event.affectsConfiguration(`${ConfigService.namespace}.enable`)) {
+      await this.toggleClient(configService); // update the client state
+    }
 
     if (this.client === undefined) {
       return;
@@ -285,7 +303,11 @@ export default class LinterTool implements ToolInterface {
   /**
    * Get the status bar state based on whether oxc is enabled and allowed to start.
    */
-  getStatusBarState(enable: boolean): { bgColor: string; icon: string; tooltipText: string } {
+  getStatusBarState(enable: boolean): {
+    bgColor: string;
+    icon: string;
+    tooltipText: string;
+  } {
     if (!this.allowedToStartServer) {
       return {
         bgColor: "statusBarItem.offlineBackground",
@@ -312,13 +334,13 @@ export default class LinterTool implements ToolInterface {
 
     let text =
       `**${tooltipText}**\n\n` +
-      `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannel})\n\n` +
-      `[$(refresh) Restart Server](command:${OxcCommands.RestartServer})\n\n`;
+      `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannelLint})\n\n` +
+      `[$(refresh) Restart Server](command:${OxcCommands.RestartServerLint})\n\n`;
 
     if (enable) {
-      text += `[$(stop) Stop Server](command:${OxcCommands.ToggleEnable})\n\n`;
+      text += `[$(stop) Stop Server](command:${OxcCommands.ToggleEnableLint})\n\n`;
     } else {
-      text += `[$(play) Start Server](command:${OxcCommands.ToggleEnable})\n\n`;
+      text += `[$(play) Start Server](command:${OxcCommands.ToggleEnableLint})\n\n`;
     }
 
     statusBarItemHandler.setColorAndIcon(bgColor, icon);

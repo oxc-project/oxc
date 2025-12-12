@@ -60,10 +60,10 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
-        LintFileResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadPluginResult,
     },
-    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
@@ -384,7 +384,7 @@ impl Linter {
 
     fn run_external_rules<'a>(
         &self,
-        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
@@ -448,9 +448,11 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
+        let path = path.to_string_lossy();
+        let path = path.as_ref();
+
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let path = path.to_string_lossy();
                 let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
@@ -461,10 +463,20 @@ impl Linter {
             None => "{}".to_string(),
         };
 
+        let globals_json = serde_json::to_string(ctx_host.globals()).unwrap_or_else(|e| {
+            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            ctx_host
+                .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
+            "{}".to_string()
+        });
+
+        // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_string_lossy().into_owned(),
-            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            path.to_owned(),
+            external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
+            external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
+            globals_json,
             allocator,
         );
         match result {
@@ -477,7 +489,7 @@ impl Linter {
                     let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
-                    let (external_rule_id, severity) =
+                    let (external_rule_id, _options_id, severity) =
                         external_rules[diagnostic.rule_index as usize];
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
@@ -511,7 +523,6 @@ impl Linter {
                             match CompositeFix::merge_fixes_fallible(fixes, source_text) {
                                 Ok(fix) => PossibleFixes::Single(fix),
                                 Err(err) => {
-                                    let path = path.to_string_lossy();
                                     let message = format!(
                                         "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
                                     );
@@ -537,7 +548,6 @@ impl Linter {
                 }
             }
             Err(err) => {
-                let path = path.to_string_lossy();
                 let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
@@ -554,7 +564,7 @@ impl Linter {
 /// Any changes made here also need to be made there.
 /// `oxc_ast_tools` checks that the 2 copies are identical.
 #[ast]
-struct RawTransferMetadata2 {
+pub struct RawTransferMetadata2 {
     /// Offset of `Program` within buffer.
     /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
     /// but here it's offset of `Program`.

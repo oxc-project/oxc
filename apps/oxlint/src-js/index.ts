@@ -1,11 +1,16 @@
-export { definePlugin, defineRule } from "./package/define.js";
+// Functions and classes
+export { definePlugin, defineRule } from "./package/define.ts";
+export { RuleTester } from "./package/rule_tester.ts";
 
+// ESTree types
 export type * as ESTree from "./generated/types.d.ts";
+
+// Plugin types
 export type { Context, LanguageOptions } from "./plugins/context.ts";
 export type { Fix, Fixer, FixFn } from "./plugins/fix.ts";
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from "./plugins/load.ts";
 export type { Options } from "./plugins/options.ts";
-export type { Diagnostic, Suggestion } from "./plugins/report.ts";
+export type { Diagnostic, DiagnosticData, Suggestion } from "./plugins/report.ts";
 export type {
   Definition,
   DefinitionType,
@@ -23,10 +28,8 @@ export type {
   RangeOptions,
   SkipOptions,
   Token,
-  BooleanToken,
   CommentToken,
-  BlockCommentToken,
-  LineCommentToken,
+  BooleanToken,
   IdentifierToken,
   JSXIdentifierToken,
   JSXTextToken,

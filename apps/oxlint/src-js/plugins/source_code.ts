@@ -1,12 +1,12 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.js";
+import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
-import visitorKeys from "../generated/keys.js";
-import * as commentMethods from "./comments.js";
+import visitorKeys from "../generated/keys.ts";
+import * as commentMethods from "./comments.ts";
 import {
   getLineColumnFromOffset,
   getNodeByRangeIndex,
@@ -14,16 +14,19 @@ import {
   getOffsetFromLineColumn,
   initLines,
   lines,
+  lineStartIndices,
   resetLines,
-} from "./location.js";
-import { resetScopeManager, SCOPE_MANAGER } from "./scope.js";
-import * as scopeMethods from "./scope.js";
-import { resetTokens } from "./tokens.js";
-import * as tokenMethods from "./tokens.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+} from "./location.ts";
+import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
+import * as scopeMethods from "./scope.ts";
+import { resetTokens } from "./tokens.ts";
+import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
+import * as tokenMethods from "./tokens.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
 import type { Ranged } from "./location.ts";
+import type { Token, CommentToken } from "./tokens.ts";
 import type { BufferWithArrays, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
@@ -117,45 +120,90 @@ export function resetSourceAndAst(): void {
 //
 // Freeze the object to prevent user mutating it.
 export const SOURCE_CODE = Object.freeze({
-  // Get source text.
+  /**
+   * Source text.
+   */
   get text(): string {
     if (sourceText === null) initSourceText();
     debugAssertIsNonNull(sourceText);
     return sourceText;
   },
 
-  // `true` if source text has Unicode BOM.
+  /**
+   * `true` if file has Unicode BOM.
+   */
   get hasBOM(): boolean {
     return hasBOM;
   },
 
-  // Get AST of the file.
+  /**
+   * AST of the file.
+   */
   get ast(): Program {
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
     return ast;
   },
 
-  // Get `ScopeManager` for the file.
+  /**
+   * `true` if the AST is in ESTree format.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  isESTree: true,
+
+  /**
+   * `ScopeManager` for the file.
+   */
   get scopeManager(): ScopeManager {
     return SCOPE_MANAGER;
   },
 
-  // Get visitor keys to traverse this AST.
-  get visitorKeys(): Record<string, string[]> {
+  /**
+   * Visitor keys to traverse this AST.
+   */
+  get visitorKeys(): Readonly<Record<string, readonly string[]>> {
     return visitorKeys;
   },
 
-  // Get parser services for the file.
+  /**
+   * Parser services for the file.
+   */
   get parserServices(): Record<string, unknown> {
     debugAssertIsNonNull(parserServices);
     return parserServices;
   },
 
-  // Get source text as array of lines, split according to specification's definition of line breaks.
+  /**
+   * Source text as array of lines, split according to specification's definition of line breaks.
+   */
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
+  },
+
+  /**
+   * Character offset of the first character of each line in source text,
+   * split according to specification's definition of line breaks.
+   */
+  get lineStartIndices(): number[] {
+    if (lines.length === 0) initLines();
+    return lineStartIndices;
+  },
+
+  /**
+   * Array of all tokens and comments in the file, in source order.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  get tokensAndComments(): (Token | CommentToken)[] {
+    if (tokensAndComments === null) {
+      if (tokens === null) {
+        if (sourceText === null) initSourceText();
+        initTokens();
+      }
+      initTokensAndComments();
+    }
+    debugAssertIsNonNull(tokensAndComments);
+    return tokensAndComments;
   },
 
   /**

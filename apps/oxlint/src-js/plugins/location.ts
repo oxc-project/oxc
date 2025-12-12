@@ -3,9 +3,9 @@
  * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
  */
 
-import { ast, initAst, initSourceText, sourceText } from "./source_code.js";
-import visitorKeys from "../generated/keys.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
+import visitorKeys from "../generated/keys.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
@@ -55,9 +55,9 @@ export interface LineColumn {
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
-// `lineStartOffsets` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
+// `lineStartIndices` starts as `[0]`, and `resetLines` doesn't remove that initial element, so it's never empty.
 export const lines: string[] = [];
-const lineStartOffsets: number[] = [0];
+export const lineStartIndices: number[] = [0];
 
 /**
  * Split source text into lines.
@@ -65,6 +65,12 @@ const lineStartOffsets: number[] = [0];
 export function initLines(): void {
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
+
+  // TODO: ESLint freezes `lines`, but doesn't freeze `lineStartIndices`.
+  // Should we freeze them? Upside is it would prevent user mutating them, but on downside would prevent us re-using
+  // the same arrays for multiple files. Maybe we shouldn't bother, in same way that we don't freeze the AST.
+  // Once we introduce lazy deserialization, presumably we'll use proxy arrays (like `NodeArray`), which will make
+  // them immutable by user. Maybe we can leave it until then. (@overlookmotel)
 
   // This implementation is based on the one in ESLint.
   // TODO: Investigate if using `String.prototype.matchAll` is faster.
@@ -79,16 +85,31 @@ export function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  // Note: `lineStartOffsets` starts as `[0]`
+  // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
+  // Debug check that `lines` and `lineStartIndices` are not already initialized.
+  debugAssert(lines.length === 0);
+  debugAssert(lineStartIndices.length === 1);
+
   let lastOffset = 0,
     offset,
     match;
   while ((match = LINE_BREAK_PATTERN.exec(sourceText)) !== null) {
     offset = match.index;
     lines.push(sourceText.slice(lastOffset, offset));
-    lineStartOffsets.push((lastOffset = offset + match[0].length));
+    lineStartIndices.push((lastOffset = offset + match[0].length));
   }
   lines.push(sourceText.slice(lastOffset));
+
+  debugAssertLinesIsInitialized();
+}
+
+/**
+ * Debug assert that `lines` and `lineStartIndices` are initialized.
+ * No-op in release build - TSDown will remove this function and all calls to it.
+ */
+function debugAssertLinesIsInitialized(): void {
+  debugAssert(lines.length > 0);
+  debugAssert(lines.length === lineStartIndices.length);
 }
 
 /**
@@ -97,7 +118,7 @@ export function initLines(): void {
 export function resetLines(): void {
   lines.length = 0;
   // Leave first entry (0) in place, discard the rest
-  lineStartOffsets.length = 1;
+  lineStartIndices.length = 1;
 }
 
 /**
@@ -111,10 +132,11 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
     throw new TypeError("Expected `offset` to be a non-negative integer.");
   }
 
-  // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+  // Build `lines` and `lineStartIndices` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
   debugAssertIsNonNull(sourceText);
+  debugAssertLinesIsInitialized();
 
   if (offset > sourceText.length) {
     throw new RangeError(
@@ -128,26 +150,28 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
 /**
  * Convert a source text index into a (line, column) pair without:
  * 1. Checking type of `offset`, or that it's in range.
- * 2. Initializing `lineStartOffsets`. Caller must do that before calling this method.
+ * 2. Initializing `lineStartIndices`. Caller must do that before calling this method.
  *
  * @param offset - The index of a character in a file.
  * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
  */
 function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
-  // Binary search `lineStartOffsets` for the line containing `offset`
+  debugAssertLinesIsInitialized();
+
+  // Binary search `lineStartIndices` for the line containing `offset`
   let low = 0,
-    high = lineStartOffsets.length,
+    high = lineStartIndices.length,
     mid: number;
   do {
     mid = ((low + high) / 2) | 0; // Use bitwise OR to floor the division
-    if (offset < lineStartOffsets[mid]) {
+    if (offset < lineStartIndices[mid]) {
       high = mid;
     } else {
       low = mid + 1;
     }
   } while (low < high);
 
-  return { line: low, column: offset - lineStartOffsets[low - 1] };
+  return { line: low, column: offset - lineStartIndices[low - 1] };
 }
 
 /**
@@ -166,12 +190,13 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       (line | 0) === line &&
       (column | 0) === column
     ) {
-      // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+      // Build `lines` and `lineStartIndices` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
       if (lines.length === 0) initLines();
       debugAssertIsNonNull(sourceText);
+      debugAssertLinesIsInitialized();
 
-      const linesCount = lineStartOffsets.length;
+      const linesCount = lineStartIndices.length;
       if (line <= 0 || line > linesCount) {
         throw new RangeError(
           `Line number out of range (line ${line} requested). ` +
@@ -180,7 +205,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       }
       if (column < 0) throw new RangeError(`Invalid column number (column ${column} requested).`);
 
-      const lineOffset = lineStartOffsets[line - 1];
+      const lineOffset = lineStartIndices[line - 1];
       const offset = lineOffset + column;
 
       // Comment from ESLint implementation:
@@ -198,7 +223,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
         nextLineOffset = sourceText.length;
         if (offset <= nextLineOffset) return offset;
       } else {
-        nextLineOffset = lineStartOffsets[line];
+        nextLineOffset = lineStartIndices[line];
         if (offset < nextLineOffset) return offset;
       }
 
@@ -209,9 +234,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
     }
   }
 
-  throw new TypeError(
-    "Expected `loc` to be an object with integer `line` and `column` properties.",
-  );
+  throw new TypeError("Expected `loc` to be an object with integer `line` and `column` properties");
 }
 
 /**
@@ -226,7 +249,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
  * @returns Location
  */
 export function getNodeLoc(node: Node): Location {
-  // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+  // Build `lines` and `lineStartIndices` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
 
@@ -274,7 +297,7 @@ function traverse(node: ESTreeNode): ESTreeNode {
   // Decorators in that position have spans outside of the `export` node's span.
   // ESLint doesn't handle this case correctly, so not a big deal that we don't at present either.
 
-  const keys = (visitorKeys as Record<string, string[]>)[node.type];
+  const keys = (visitorKeys as Record<string, readonly string[]>)[node.type];
 
   // All nodes' properties are in source order, so we could use binary search here.
   // But the max number of visitable properties is 5, so linear search is fine. Possibly linear is faster anyway.

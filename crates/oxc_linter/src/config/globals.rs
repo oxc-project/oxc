@@ -61,7 +61,7 @@ impl OxlintGlobals {
 #[serde(rename_all = "lowercase")]
 pub enum GlobalValue {
     Readonly,
-    Writeable,
+    Writable,
     Off,
 }
 
@@ -69,7 +69,7 @@ impl GlobalValue {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Readonly => "readonly",
-            Self::Writeable => "writeable",
+            Self::Writable => "writable",
             Self::Off => "off",
         }
     }
@@ -87,7 +87,7 @@ impl<'de> Deserialize<'de> for GlobalValue {
 impl From<bool> for GlobalValue {
     #[inline]
     fn from(value: bool) -> Self {
-        if value { GlobalValue::Writeable } else { GlobalValue::Readonly }
+        if value { GlobalValue::Writable } else { GlobalValue::Readonly }
     }
 }
 
@@ -97,7 +97,7 @@ impl TryFrom<&str> for GlobalValue {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "readonly" | "readable" => Ok(GlobalValue::Readonly),
-            "writable" | "writeable" => Ok(GlobalValue::Writeable),
+            "writable" | "writeable" => Ok(GlobalValue::Writable),
             "off" => Ok(GlobalValue::Off),
             _ => Err("Invalid global value"),
         }
@@ -180,7 +180,7 @@ mod test {
     #[test]
     fn test_override_globals() {
         let mut globals = OxlintGlobals::deserialize(&serde_json::json!({
-            "Foo": "writeable",
+            "Foo": "writable",
         }))
         .unwrap();
         let override_globals = OxlintGlobals::deserialize(&serde_json::json!({

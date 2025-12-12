@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{Formatter, prelude::*},
     write,
@@ -114,24 +114,28 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
 fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
-    let source_text = f.source_text();
-
     for left_side in ExpressionLeftSide::from(argument).iter() {
         let start = left_side.span().start;
         let comments = f.context().comments();
         let leading_comments = comments.comments_before(start);
 
-        if leading_comments.iter().any(|comment| {
-            source_text.contains_newline(comment.span) || comments.is_end_of_line_comment(comment)
-        }) {
+        if leading_comments
+            .iter()
+            .any(|comment| comment.is_multiline_block() || comment.followed_by_newline())
+        {
             return true;
         }
 
         let is_own_line_comment_or_multi_line_comment = |leading_comments: &[Comment]| {
-            leading_comments.iter().any(|comment| {
-                comments.is_own_line_comment(comment) || source_text.contains_newline(comment.span)
-            })
+            leading_comments
+                .iter()
+                .any(|comment| comment.is_multiline_block() || comment.preceded_by_newline())
         };
+
+        // Yield expressions only need to check the leading comments on the left side.
+        if matches!(argument.parent, AstNodes::YieldExpression(_)) {
+            continue;
+        }
 
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>

@@ -6,7 +6,11 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -135,7 +139,7 @@ fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut 
                 return &comments[..index];
             }
             // If this comment is a line comment or an end of line comment, so we stop here and return the comments with this comment
-            else if comment.is_line() || f.comments().is_end_of_line_comment(comment) {
+            else if comment.is_line() || comment.followed_by_newline() {
                 return &comments[..=index];
             }
             // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator
@@ -377,6 +381,11 @@ impl<'a> FormatConditionalLike<'a, '_> {
         });
 
         if layout.is_nested_alternate() {
+            // The leading comment should not be printed in the the `align`
+            let start = self.conditional.span().start;
+            let comments = f.context().comments().comments_before(start);
+            FormatLeadingComments::Comments(comments).fmt(f);
+
             write!(f, [align(2, &format_inner)]);
         } else {
             write!(f, format_inner);

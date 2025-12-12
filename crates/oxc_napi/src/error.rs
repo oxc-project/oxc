@@ -4,7 +4,7 @@ use napi_derive::napi;
 
 use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct OxcError {
     pub severity: Severity,
     pub message: String,
@@ -64,7 +64,7 @@ impl From<&OxcDiagnostic> for OxcError {
     }
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ErrorLabel {
     pub message: Option<String>,
     pub start: u32,

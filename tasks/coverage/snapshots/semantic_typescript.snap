@@ -1,8 +1,8 @@
-commit: 669c25c0
+commit: c21f73fd
 
 semantic_typescript Summary:
-AST Parsed     : 6148/6148 (100.00%)
-Positive Passed: 2662/6148 (43.30%)
+AST Parsed     : 6159/6159 (100.00%)
+Positive Passed: 2662/6159 (43.22%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -4611,6 +4611,116 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["y"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "effectFn", "effectGen", "layerEffect"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "layerEffect":
+after transform: SymbolId(11) "layerEffect"
+rebuilt        : <None>
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(17) "Foo"
+rebuilt        : <None>
+Reference symbol mismatch for "effectGen":
+after transform: SymbolId(2) "effectGen"
+rebuilt        : <None>
+Reference symbol mismatch for "effectFn":
+after transform: SymbolId(5) "effectFn"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array"]
+rebuilt        : ["Foo", "effectFn", "effectGen", "layerEffect"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "effectFn", "effectGen", "layerEffect"]
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(10), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(26)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(24): [ScopeId(25)]
+rebuilt        : ScopeId(1): []
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(52): [ReferenceId(62), ReferenceId(65)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
+Reference symbol mismatch for "Tag":
+after transform: SymbolId(30) "Tag"
+rebuilt        : <None>
+Reference symbol mismatch for "layerEffect":
+after transform: SymbolId(41) "layerEffect"
+rebuilt        : <None>
+Reference symbol mismatch for "effectGen":
+after transform: SymbolId(7) "effectGen"
+rebuilt        : <None>
+Reference symbol mismatch for "effectFn":
+after transform: SymbolId(17) "effectFn"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array", "Generator"]
+rebuilt        : ["Tag", "effectFn", "effectGen", "layerEffect"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference3.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "effectFn", "effectGen", "layerEffect"]
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(8), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(22)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(20): [ScopeId(21)]
+rebuilt        : ScopeId(1): []
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(52): [ReferenceId(58), ReferenceId(61)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
+Reference symbol mismatch for "Tag":
+after transform: SymbolId(30) "Tag"
+rebuilt        : <None>
+Reference symbol mismatch for "layerEffect":
+after transform: SymbolId(41) "layerEffect"
+rebuilt        : <None>
+Reference symbol mismatch for "effectGen":
+after transform: SymbolId(7) "effectGen"
+rebuilt        : <None>
+Reference symbol mismatch for "effectFn":
+after transform: SymbolId(17) "effectFn"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array", "Generator"]
+rebuilt        : ["Tag", "effectFn", "effectGen", "layerEffect"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference4.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "effectFn", "effectGen", "layerEffect"]
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(16), ScopeId(18)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(16): [ScopeId(17)]
+rebuilt        : ScopeId(1): []
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(44): [ReferenceId(54), ReferenceId(57)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
+Reference symbol mismatch for "Tag":
+after transform: SymbolId(22) "Tag"
+rebuilt        : <None>
+Reference symbol mismatch for "layerEffect":
+after transform: SymbolId(33) "layerEffect"
+rebuilt        : <None>
+Reference symbol mismatch for "effectGen":
+after transform: SymbolId(7) "effectGen"
+rebuilt        : <None>
+Reference symbol mismatch for "effectFn":
+after transform: SymbolId(13) "effectFn"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array", "Generator"]
+rebuilt        : ["Tag", "effectFn", "effectGen", "layerEffect"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualParameterAndSelfReferentialConstraint1.ts
 Bindings mismatch:
@@ -16264,6 +16374,86 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ex2", "ex3", "test", "useCallback1", "useCallback2"]
+rebuilt        : ScopeId(0): ["test"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+Reference symbol mismatch for "ex2":
+after transform: SymbolId(3) "ex2"
+rebuilt        : <None>
+Reference symbol mismatch for "useCallback1":
+after transform: SymbolId(0) "useCallback1"
+rebuilt        : <None>
+Reference symbol mismatch for "ex3":
+after transform: SymbolId(7) "ex3"
+rebuilt        : <None>
+Reference symbol mismatch for "useCallback1":
+after transform: SymbolId(0) "useCallback1"
+rebuilt        : <None>
+Reference symbol mismatch for "useCallback2":
+after transform: SymbolId(11) "useCallback2"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Function"]
+rebuilt        : ["ex2", "ex3", "useCallback1", "useCallback2"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["findByLabelText", "queries"]
+rebuilt        : ScopeId(0): ["queries"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "queries":
+after transform: SymbolId(11): [ReferenceId(24)]
+rebuilt        : SymbolId(0): []
+Reference symbol mismatch for "findByLabelText":
+after transform: SymbolId(8) "findByLabelText"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Error", "HTMLElement", "Parameters", "Promise", "ReturnType"]
+rebuilt        : ["findByLabelText"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion3.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["deprecate", "soonFrozenObjectDeprecation"]
+rebuilt        : ScopeId(0): ["soonFrozenObjectDeprecation"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "deprecate":
+after transform: SymbolId(0) "deprecate"
+rebuilt        : <None>
+Reference symbol mismatch for "deprecate":
+after transform: SymbolId(0) "deprecate"
+rebuilt        : <None>
+Reference symbol mismatch for "deprecate":
+after transform: SymbolId(0) "deprecate"
+rebuilt        : <None>
+Reference symbol mismatch for "deprecate":
+after transform: SymbolId(0) "deprecate"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Function", "Proxy", "Reflect"]
+rebuilt        : ["Proxy", "Reflect", "deprecate"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion4.ts
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(2): []
+Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6)]
+rebuilt        : ScopeId(3): []
+Unresolved references mismatch:
+after transform: ["Promise"]
+rebuilt        : []
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceDoesNotAddUndefinedOrNull.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["flatMapChildren", "flatMapChildren2", "toArray"]
@@ -25735,6 +25925,43 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["configureStore"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceWidening1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["fn1", "fn2", "fn3", "result1", "result2", "result3", "takeType"]
+rebuilt        : ScopeId(0): ["result1", "result2", "result3"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "fn1":
+after transform: SymbolId(8) "fn1"
+rebuilt        : <None>
+Reference symbol mismatch for "fn2":
+after transform: SymbolId(12) "fn2"
+rebuilt        : <None>
+Reference symbol mismatch for "fn3":
+after transform: SymbolId(16) "fn3"
+rebuilt        : <None>
+Reference symbol mismatch for "takeType":
+after transform: SymbolId(20) "takeType"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Boolean", "Readonly"]
+rebuilt        : ["Boolean", "fn1", "fn2", "fn3", "takeType"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceWidening2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["res1", "test1"]
+rebuilt        : ScopeId(0): ["res1"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "test1":
+after transform: SymbolId(0) "test1"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Record"]
+rebuilt        : ["test1"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypePrimitiveConstraintProperty.ts
 Bindings mismatch:
@@ -37236,6 +37463,17 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(2): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 42, end: 43 }
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck64.ts
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+Unresolved references mismatch:
+after transform: ["Generator", "Iterable", "Iterator"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithEnum.ts
 Bindings mismatch:

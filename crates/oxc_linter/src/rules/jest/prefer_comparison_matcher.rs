@@ -60,6 +60,17 @@ declare_oxc_lint!(
     /// // special case - see below
     /// expect(x < 'Carl').toBe(true);
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-comparison-matcher.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-comparison-matcher": "error"
+    ///   }
+    /// }
+    /// ```
     PreferComparisonMatcher,
     jest,
     style,

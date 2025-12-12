@@ -14,6 +14,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);
             js::check_unresolved_exports(program, ctx);
+            ts::check_ts_export_assignment_in_program(program, ctx);
         }
         AstKind::BindingIdentifier(ident) => {
             js::check_identifier(&ident.name, ident.span, ident.symbol_id.get(), ctx);

@@ -297,8 +297,7 @@ impl std::fmt::Debug for Token {
 
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
-    // FIXME
-    // debug_assert_no_newlines(text);
+    debug_assert_no_cr_line_break(text);
     Text { text, width: None }
 }
 
@@ -334,12 +333,16 @@ impl std::fmt::Debug for Text<'_> {
     }
 }
 
+/// Debug assert that the given text contains no `\r` line terminator characters.
+//
+// `#[inline(always)]` because this is a no-op in release mode
+#[inline(always)]
+#[expect(clippy::inline_always)]
 #[track_caller]
-#[expect(unused)]
-fn debug_assert_no_newlines(text: &str) {
+fn debug_assert_no_cr_line_break(text: &str) {
     debug_assert!(
         !text.contains('\r'),
-        "The content '{text}' contains an unsupported '\\r' line terminator character but text must only use line feeds '\\n' as line separator. Use '\\n' instead of '\\r' and '\\r\\n' to insert a line break in strings."
+        "The content `{text}` contains an unsupported `\\r` line terminator character but text must only use line feeds `\\n` as line separator. Use `\\n` instead of `\\r` and `\\r\\n` to insert a line break in strings."
     );
 }
 
@@ -728,7 +731,17 @@ pub struct Indent<'a, 'ast> {
 impl<'ast> Format<'ast> for Indent<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
         f.write_element(FormatElement::Tag(StartIndent));
+
+        let elements_length = f.elements().len();
+
         Arguments::from(&self.content).fmt(f);
+
+        debug_assert_ne!(
+            elements_length,
+            f.elements().len(),
+            "Indent's content must produce at least one element"
+        );
+
         f.write_element(FormatElement::Tag(EndIndent));
     }
 }
@@ -1474,8 +1487,6 @@ enum IndentMode {
 
 impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
-        let snapshot = f.snapshot();
-
         f.write_element(FormatElement::Tag(StartIndent));
 
         match self.mode {
@@ -1487,16 +1498,15 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
             IndentMode::HardSpace => write!(f, [hard_space(), soft_line_break()]),
         }
 
-        let is_empty = {
-            let mut recording = f.start_recording();
-            recording.write_fmt(Arguments::from(&self.content));
-            recording.stop().is_empty()
-        };
+        let elements_length = f.elements().len();
 
-        if is_empty {
-            f.restore_snapshot(snapshot);
-            return;
-        }
+        Arguments::from(&self.content).fmt(f);
+
+        debug_assert_ne!(
+            elements_length,
+            f.elements().len(),
+            "BlockIndent's content must produce at least one element"
+        );
 
         f.write_element(FormatElement::Tag(EndIndent));
 

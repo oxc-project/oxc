@@ -5,6 +5,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
   private _enable!: boolean;
   private _trace!: TraceLevel;
   private _binPathOxlint: string | undefined;
+  private _binPathOxfmt: string | undefined;
   private _nodePath: string | undefined;
   private _requireConfig!: boolean;
 
@@ -25,6 +26,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     this._enable = this.configuration.get<boolean>("enable") ?? true;
     this._trace = this.configuration.get<TraceLevel>("trace.server") || "off";
     this._binPathOxlint = binPathOxlint;
+    this._binPathOxfmt = this.configuration.get<string>("path.oxfmt");
     this._nodePath = this.configuration.get<string>("path.node");
     this._requireConfig = this.configuration.get<boolean>("requireConfig") ?? false;
   }
@@ -54,6 +56,15 @@ export class VSCodeConfig implements VSCodeConfigInterface {
   updateBinPathOxlint(value: string | undefined): PromiseLike<void> {
     this._binPathOxlint = value;
     return this.configuration.update("path.oxlint", value);
+  }
+
+  get binPathOxfmt(): string | undefined {
+    return this._binPathOxfmt;
+  }
+
+  updateBinPathOxfmt(value: string | undefined): PromiseLike<void> {
+    this._binPathOxfmt = value;
+    return this.configuration.update("path.oxfmt", value);
   }
 
   get nodePath(): string | undefined {

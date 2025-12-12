@@ -9,15 +9,15 @@ packages:
   - tasks/mcp
 
 catalog:
-  '@napi-rs/cli': 3.4.1
-  '@napi-rs/wasm-runtime': 1.0.7
+  '@napi-rs/cli': 3.5.0
+  '@napi-rs/wasm-runtime': 1.1.0
   '@types/node': ^24.0.0
   cross-env: ^10.1.0
   publint: 0.3.15
-  rolldown: 1.0.0-beta.52
-  tsdown: 0.16.8
+  rolldown: 1.0.0-beta.54
+  tsdown: 0.17.3
   typescript: 5.9.3
-  vitest: 4.0.10
+  vitest: 4.0.15
 
 onlyBuiltDependencies:
   - '@vscode/vsce-sign@2.0.8'

@@ -272,9 +272,9 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                 f,
                 [group(&format_args!(
                     first,
-                    indent(&format_with(|f| {
+                    (!tail_parts.is_empty()).then_some(indent(&format_with(|f| {
                         f.join().entries(tail_parts.iter());
-                    }))
+                    })))
                 ))
                 .with_group_id(Some(group_id))]
             );

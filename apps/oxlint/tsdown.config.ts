@@ -4,9 +4,17 @@ import { parseSync, Visitor } from "oxc-parser";
 
 import type { Plugin } from "rolldown";
 
+const { env } = process;
+const isEnabled = (env: string | undefined) => env === "true" || env === "1";
+
+// When run with `CONFORMANCE=true pnpm run build-js`, generate a conformance build with alterations to behavior.
+// Also enables debug assertions.
+// This is the build used in conformance tests.
+const CONFORMANCE = isEnabled(env.CONFORMANCE);
+
 // When run with `DEBUG=true pnpm run build-js`, generate a debug build with extra assertions.
 // This is the build used in tests.
-const DEBUG = process.env.DEBUG === "true" || process.env.DEBUG === "1";
+const DEBUG = CONFORMANCE || isEnabled(env.DEBUG);
 
 const commonConfig = defineConfig({
   platform: "node",
@@ -37,8 +45,11 @@ export default defineConfig([
       codegen: { removeWhitespace: false },
     },
     dts: { resolve: true },
-    attw: true,
-    define: { DEBUG: DEBUG ? "true" : "false" },
+    attw: { profile: "esm-only" },
+    define: {
+      DEBUG: DEBUG ? "true" : "false",
+      CONFORMANCE: CONFORMANCE ? "true" : "false",
+    },
     plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
     inputOptions: {
       // For `replaceAssertsPlugin`

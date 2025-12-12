@@ -1,5 +1,7 @@
 //! Create documentation pages for each rule. Pages are printed as Markdown and
 //! get added to the website.
+//! You can test/run this task with `just website ../oxc-project.github.io`,
+//! assuming you have cloned the oxc website repo next to the oxc repo.
 
 use std::{
     fmt::{self, Write},
@@ -13,7 +15,7 @@ use schemars::{
     schema::{InstanceType, Schema, SchemaObject, SingleOrVec},
 };
 
-use crate::json_schema::{self, Renderer};
+use website_common::Renderer;
 
 use super::HtmlWriter;
 
@@ -21,7 +23,7 @@ use super::HtmlWriter;
 pub(super) struct Context {
     page: HtmlWriter,
     schemas: SchemaGenerator,
-    renderer: json_schema::Renderer,
+    renderer: Renderer,
 }
 
 impl Context {
@@ -55,13 +57,22 @@ impl Context {
             file!()
         )?;
 
+        // If it's a tsgolint rule, provide the additional source link in the script tag. Otherwise, set tsgolint_source to a blank string.
+        let tsgolint_source = if *is_tsgolint_rule {
+            format!("\nconst tsgolintSource = `{}`;", tsgolint_rule_source(rule))
+        } else {
+            String::new()
+        };
+
         writeln!(
             self.page,
             "<script setup>
 import {{ data }} from '../version.data.js';
-const source = `{}`;
+const source = `{}`;{}
 </script>",
-            rule_source(rule)
+            rule_source(rule),
+            // Will be empty string if not a tsgolint rule
+            tsgolint_source
         )?;
 
         writeln!(self.page, r#"# {plugin}/{name} <Badge type="info" text="{category}" />"#)?;
@@ -106,18 +117,36 @@ const source = `{}`;
         // rule configuration
         if let Some(Schema::Object(schema)) = resolved {
             let config_section = self.rule_config(schema);
+            // Pull rule configuration description from the schema metadata, if present.
+            // The schemars `SchemaObject` may contain a `metadata` block with an
+            // optional `description` field. If present, include it above the
+            // configuration listing so readers see the intent for the config.
+            let section_description = schema
+                .metadata
+                .as_ref()
+                .and_then(|m| m.description.as_ref())
+                .map(|desc| format!("\n{desc}\n"))
+                .unwrap_or_default();
             if !config_section.trim().is_empty() {
-                writeln!(self.page, "\n## Configuration\n{config_section}")?;
+                writeln!(self.page, "\n## Configuration\n{section_description}{config_section}")?;
             }
         }
 
         // how to use
         writeln!(self.page, "\n## How to use\n{}", how_to_use(rule))?;
         writeln!(self.page, "\n## References\n")?;
+
+        // rule source link(s)
         writeln!(
             self.page,
             r#"- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>"#
         )?;
+        if *is_tsgolint_rule {
+            writeln!(
+                self.page,
+                r#"- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>"#
+            )?;
+        }
 
         Ok(self.page.take())
     }
@@ -227,6 +256,17 @@ fn rule_source(rule: &RuleTableRow) -> String {
     )
 }
 
+/// Returns the URL to the source code of a tsgolint rule.
+/// Only applicable for tsgolint rules.
+// TODO: Provide a way to link to a specific git ref? We'd need to update the justfile to pass it in correctly.
+#[expect(clippy::disallowed_methods)]
+fn tsgolint_rule_source(rule: &RuleTableRow) -> String {
+    let rule_name = rule.name.replace('-', "_");
+    let rule_path = format!("{rule_name}/{rule_name}.go");
+    // Result: https://github.com/oxc-project/tsgolint/blob/main/internal/rules/prefer_reduce_type_parameter/prefer_reduce_type_parameter.go
+    format!("https://github.com/oxc-project/tsgolint/blob/main/internal/rules/{rule_path}")
+}
+
 /// Returns `true` if the given plugin is a default plugin.
 /// - Example: `eslint` => true
 /// - Example: `jest` => false
@@ -282,16 +322,16 @@ fn how_to_use(rule: &RuleTableRow) -> String {
     };
     format!(
         r"
-To **enable** this rule in the CLI or using the config file, you can use:
+To **enable** this rule using the config file or in the CLI, you can use:
 
 ::: code-group
 
-```bash [CLI]
-{enable_bash_example}
-```
-
 ```json [Config (.oxlintrc.json)]
 {enable_config_example}
+```
+
+```bash [CLI]
+{enable_bash_example}
 ```
 
 :::

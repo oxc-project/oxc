@@ -17,10 +17,10 @@ import {
   getTokensBetween,
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
-} from "../src-js/plugins/tokens.js";
-import { resetSourceAndAst } from "../src-js/plugins/source_code.js";
-import type { Node } from "../src-js/plugins/types.js";
-import type { BinaryExpression } from "../src-js/generated/types.js";
+} from "../src-js/plugins/tokens.ts";
+import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
+import type { Node } from "../src-js/plugins/types.ts";
+import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
 const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/";

@@ -3,12 +3,10 @@ use std::{borrow::Cow, path::Path};
 use cow_utils::CowUtils;
 use phf::phf_set;
 
-use crate::{
-    ir_transform::sort_imports::{
-        group_config::{GroupName, ImportModifier, ImportSelector},
-        source_line::ImportLineMetadata,
-    },
-    options,
+use crate::ir_transform::sort_imports::{
+    group_config::{GroupName, ImportModifier, ImportSelector},
+    options::SortImportsOptions,
+    source_line::ImportLineMetadata,
 };
 
 /// Compute all metadata derived from import line metadata.
@@ -17,7 +15,7 @@ use crate::{
 pub fn compute_import_metadata<'a>(
     metadata: &ImportLineMetadata<'a>,
     groups: &[Vec<GroupName>],
-    options: &options::SortImports,
+    options: &SortImportsOptions,
 ) -> (usize, Cow<'a, str>, bool) {
     let ImportLineMetadata {
         source,
@@ -30,13 +28,14 @@ pub fn compute_import_metadata<'a>(
 
     let source = extract_source_path(source);
     let is_style_import = is_style(source);
+    let path_kind = to_path_kind(source, options);
 
     // Create group matcher from import characteristics
     let matcher = ImportGroupMatcher {
         is_side_effect: *is_side_effect,
         is_type_import: *is_type_import,
         is_style_import,
-        path_kind: to_path_kind(source),
+        path_kind,
         is_subpath: is_subpath(source),
         has_default_specifier: *has_default_specifier,
         has_namespace_specifier: *has_namespace_specifier,
@@ -346,7 +345,7 @@ enum ImportPathKind {
 }
 
 /// Determine the path kind for an import source.
-fn to_path_kind(source: &str) -> ImportPathKind {
+fn to_path_kind(source: &str, options: &SortImportsOptions) -> ImportPathKind {
     if is_builtin(source) {
         return ImportPathKind::Builtin;
     }
@@ -364,8 +363,8 @@ fn to_path_kind(source: &str) -> ImportPathKind {
         return ImportPathKind::Sibling;
     }
 
-    // TODO: This can be changed via `options.internalPattern`
-    if source.starts_with("~/") || source.starts_with("@/") {
+    // Check if source matches any internal pattern
+    if options.internal_pattern.iter().any(|p| source.starts_with(p.as_str())) {
         return ImportPathKind::Internal;
     }
 

@@ -10,6 +10,14 @@ call // C3
 call // C4
 ?.()
 
+call(/* argument comment */)
+call?.(/* argument comment */)
+call(
+  // argument line comment
+)
+call?.( // argument line comment
+)
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -20,6 +28,15 @@ call /* C2 */?.();
 call(); // C3
 call?.(); // C4
 
+call(/* argument comment */);
+call?.(/* argument comment */);
+call(
+  // argument line comment
+);
+call?.(
+  // argument line comment
+);
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -28,5 +45,14 @@ call /* C2 */?.();
 
 call(); // C3
 call?.(); // C4
+
+call(/* argument comment */);
+call?.(/* argument comment */);
+call(
+  // argument line comment
+);
+call?.(
+  // argument line comment
+);
 
 ===================== End =====================

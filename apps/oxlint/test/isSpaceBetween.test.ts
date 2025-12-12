@@ -1,9 +1,9 @@
 import { describe, it, vi, expect, beforeEach } from "vitest";
-import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.js";
-import { resetSourceAndAst } from "../src-js/plugins/source_code";
+import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.ts";
+import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
 import { parse } from "@typescript-eslint/typescript-estree";
 
-import type { Node } from "../src-js/plugins/types.js";
+import type { Node } from "../src-js/plugins/types.ts";
 
 let sourceText: string | null = null;
 
@@ -132,7 +132,7 @@ describe("isSpaceBetweenTokens()", () => {
         jsx: true,
       }),
       body = ast.body as unknown as Node[],
-      tokens = ast.tokens;
+      { tokens } = ast;
 
     expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
 

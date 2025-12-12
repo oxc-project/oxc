@@ -221,36 +221,7 @@ jobs:
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
-        run: |
-          # Check subpackages
-          for package in ${npm_dir}/*
-          do
-            echo $package
-            ls $package
-            cat $package/package.json
-            # Check publish files exist
-            jq -r '.files[]' $package/package.json | while read -r file ; do
-              if ! [ -f $package/$file ] ; then
-                echo "File does not exist." $package/$file
-                exit 1
-              fi
-            done
-            pnpm publish $package/ ${PUBLISH_FLAGS} --dry-run
-            echo ''
-          done
-
-          # Check root package
-          echo ${package_path}
-          ls ${package_path}
-          cat ${package_path}/package.json
-          # Check publish files exist
-          jq -r '.files[]' ${package_path}/package.json | while read -r file ; do
-            if ! [ -f ${package_path}/$file ]; then
-              echo "File does not exist." ${package_path}/$file
-              exit 1
-            fi
-          done
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
+        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
       - name: Trusted Publish
         run: |

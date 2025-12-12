@@ -1,13 +1,14 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use futures::future::join_all;
 use log::{debug, info, warn};
 use rustc_hash::FxBuildHasher;
+use serde_json::Value;
 use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer,
     jsonrpc::{Error, ErrorCode, Result},
-    lsp_types::{
+    ls_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
@@ -58,7 +59,7 @@ pub struct Backend {
     // WorkspaceWorkers are only written on 2 occasions:
     // 1. `initialize` request with workspace folders
     // 2. `workspace/didChangeWorkspaceFolders` request
-    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
+    pub(crate) workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
     capabilities: OnceCell<Capabilities>,
@@ -85,14 +86,14 @@ impl LanguageServer for Backend {
                 return Some(new_settings);
             }
 
-            let deprecated_settings = value.get("settings");
-
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
-            if deprecated_settings.is_some() && params.root_uri.is_some() {
+            if let (Some(deprecated_settings), Some(root_uri)) =
+                (value.get("settings"), params.root_uri.as_ref())
+            {
                 return Some(vec![WorkspaceOption {
-                    workspace_uri: params.root_uri.clone().unwrap(),
-                    options: deprecated_settings.unwrap().clone(),
+                    workspace_uri: root_uri.clone(),
+                    options: deprecated_settings.clone(),
                 }]);
             }
 
@@ -110,10 +111,10 @@ impl LanguageServer for Backend {
         let capabilities = Capabilities::from(params.capabilities);
 
         // client sent workspace folders
-        let workers = if let Some(workspace_folders) = &params.workspace_folders {
+        let workers = if let Some(workspace_folders) = params.workspace_folders {
             workspace_folders
-                .iter()
-                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri.clone()))
+                .into_iter()
+                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri))
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
@@ -128,10 +129,10 @@ impl LanguageServer for Backend {
         // start the linter. We do not start the linter when the client support the request,
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
+            let options = options.unwrap_or_default();
+
             for worker in &workers {
-                let option = &options
-                    .clone()
-                    .unwrap_or_default()
+                let option = options
                     .iter()
                     .find(|workspace_option| {
                         worker.is_responsible_for_uri(&workspace_option.workspace_uri)
@@ -139,7 +140,7 @@ impl LanguageServer for Backend {
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
 
-                worker.start_worker(option.clone(), &self.tool_builders).await;
+                worker.start_worker(option, &self.tool_builders).await;
             }
         }
 
@@ -215,13 +216,13 @@ impl LanguageServer for Backend {
                     let content = self.file_system.read().await.get(uri);
                     if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
                     {
-                        new_diagnostics.push((uri.to_string(), diagnostics));
+                        new_diagnostics.push((uri.clone(), diagnostics));
                     }
                 }
             }
 
             if !new_diagnostics.is_empty() {
-                self.publish_all_diagnostics(&new_diagnostics).await;
+                self.publish_all_diagnostics(new_diagnostics).await;
             }
         }
 
@@ -257,8 +258,8 @@ impl LanguageServer for Backend {
         if !clearing_diagnostics.is_empty() {
             self.clear_diagnostics(clearing_diagnostics).await;
         }
-
-        if !removed_registrations.is_empty()
+        if self.capabilities.get().unwrap().dynamic_watchers
+            && !removed_registrations.is_empty()
             && let Err(err) = self.client.unregister_capability(removed_registrations).await
         {
             warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
@@ -280,22 +281,26 @@ impl LanguageServer for Backend {
         let mut removing_registrations = vec![];
         let mut adding_registrations = vec![];
 
-        // new valid configuration is passed
-        let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
-            .ok()
-            .or_else(|| {
-                // fallback to old configuration
-                // for all workers (default only one)
-                let options = workers
-                    .iter()
-                    .map(|worker| WorkspaceOption {
-                        workspace_uri: worker.get_root_uri().clone(),
-                        options: params.settings.clone(),
-                    })
-                    .collect();
+        // when null, request configuration from client; otherwise, parse as per-workspace options or use as global configuration
+        let options = if params.settings == Value::Null {
+            None
+        } else {
+            serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone()).ok().or_else(
+                || {
+                    // fallback to old configuration
+                    // for all workers (default only one)
+                    let options = workers
+                        .iter()
+                        .map(|worker| WorkspaceOption {
+                            workspace_uri: worker.get_root_uri().clone(),
+                            options: params.settings.clone(),
+                        })
+                        .collect();
 
-                Some(options)
-            });
+                    Some(options)
+                },
+            )
+        };
 
         // the client passed valid options.
         let resolved_options = if let Some(options) = options {
@@ -314,11 +319,11 @@ impl LanguageServer for Backend {
 
             // Only create WorkspaceOption when the config is Some
             configs
-                .iter()
+                .into_iter()
                 .enumerate()
-                .map(|(index, config)| WorkspaceOption {
+                .map(|(index, options)| WorkspaceOption {
                     workspace_uri: workers[index].get_root_uri().clone(),
-                    options: config.clone(),
+                    options,
                 })
                 .collect::<Vec<_>>()
         } else {
@@ -335,8 +340,9 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, registrations, unregistrations) =
-                worker.did_change_configuration(option.options).await;
+            let (diagnostics, registrations, unregistrations) = worker
+                .did_change_configuration(option.options, &*self.file_system.read().await)
+                .await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -347,7 +353,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
         if !removing_registrations.is_empty()
@@ -385,7 +391,7 @@ impl LanguageServer for Backend {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) =
-                worker.did_change_watched_files(file_event).await;
+                worker.did_change_watched_files(file_event, &*self.file_system.read().await).await;
 
             if let Some(diagnostics) = diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -395,18 +401,21 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(&new_diagnostics).await;
-        }
-        if !removing_registrations.is_empty()
-            && let Err(err) = self.client.unregister_capability(removing_registrations).await
-        {
-            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+            self.publish_all_diagnostics(new_diagnostics).await;
         }
 
-        if !adding_registrations.is_empty()
-            && let Err(err) = self.client.register_capability(adding_registrations).await
-        {
-            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !removing_registrations.is_empty()
+                && let Err(err) = self.client.unregister_capability(removing_registrations).await
+            {
+                warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+            }
+
+            if !adding_registrations.is_empty()
+                && let Err(err) = self.client.register_capability(adding_registrations).await
+            {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
     }
 
@@ -447,8 +456,8 @@ impl LanguageServer for Backend {
                 )
                 .await;
 
-            for (index, folder) in params.event.added.iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri.clone());
+            for (index, folder) in params.event.added.into_iter().enumerate() {
+                let worker = WorkspaceWorker::new(folder.uri);
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(options.clone(), &self.tool_builders).await;
@@ -462,6 +471,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(folder.uri);
                 // use default options
                 worker.start_worker(serde_json::Value::Null, &self.tool_builders).await;
+                added_registrations.extend(worker.init_watchers().await);
                 workers.push(worker);
             }
         }
@@ -488,17 +498,15 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didSave>
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
 
-        // saving the file means we can read again from the file system
-        self.file_system.write().await.remove(uri);
-
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(uri, None).await {
-            self.client.publish_diagnostics(uri.clone(), diagnostics, None).await;
+        if let Some(diagnostics) = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await
+        {
+            self.client.publish_diagnostics(uri, diagnostics, None).await;
         }
     }
     /// It will update the in-memory file content if the client supports dynamic formatting.
@@ -506,20 +514,20 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
 
         if let Some(content) = &content {
-            self.file_system.write().await.set(uri, content.clone());
+            self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(uri, content.as_deref()).await {
+        if let Some(diagnostics) = worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
             self.client
-                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
+                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
                 .await;
         }
     }
@@ -529,19 +537,19 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didOpen>
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let uri = &params.text_document.uri;
+        let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
             return;
         };
 
         let content = params.text_document.text;
 
-        self.file_system.write().await.set(uri, content.clone());
+        self.file_system.write().await.set(uri.clone(), content.clone());
 
-        if let Some(diagnostics) = worker.run_diagnostic(uri, Some(&content)).await {
+        if let Some(diagnostics) = worker.run_diagnostic(&uri, Some(&content)).await {
             self.client
-                .publish_diagnostics(uri.clone(), diagnostics, Some(params.text_document.version))
+                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
                 .await;
         }
     }
@@ -558,7 +566,7 @@ impl LanguageServer for Backend {
         };
 
         self.file_system.write().await.remove(uri);
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_uri_cache(&params.text_document.uri).await;
     }
 
     /// It will return code actions or commands for the given range.
@@ -669,16 +677,16 @@ impl Backend {
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
-        let diagnostics: Vec<(String, Vec<Diagnostic>)> =
-            uris.into_iter().map(|uri| (uri.to_string(), vec![])).collect();
-        self.publish_all_diagnostics(&diagnostics).await;
+        self.publish_all_diagnostics(uris.into_iter().map(|uri| (uri, vec![])).collect()).await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: &[(String, Vec<Diagnostic>)]) {
-        join_all(result.iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(Uri::from_str(path).unwrap(), diagnostics.clone(), None)
-        }))
+    async fn publish_all_diagnostics(&self, result: Vec<(Uri, Vec<Diagnostic>)>) {
+        join_all(
+            result
+                .into_iter()
+                .map(|(uri, diagnostics)| self.client.publish_diagnostics(uri, diagnostics, None)),
+        )
         .await;
     }
 }

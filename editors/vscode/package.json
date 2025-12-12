@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vs code extension",
   "license": "MIT",
-  "version": "1.30.0",
+  "version": "1.32.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -41,7 +41,12 @@
     "commands": [
       {
         "command": "oxc.restartServer",
-        "title": "Restart Oxc Server",
+        "title": "Restart oxlint Server",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.restartServerFormatter",
+        "title": "Restart oxfmt Server",
         "category": "Oxc"
       },
       {
@@ -51,7 +56,12 @@
       },
       {
         "command": "oxc.showOutputChannel",
-        "title": "Show Output Channel",
+        "title": "Show Output Channel (Linter)",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showOutputChannelFormatter",
+        "title": "Show Output Channel (Formatter)",
         "category": "Oxc"
       },
       {
@@ -204,6 +214,11 @@
           "scope": "window",
           "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
         },
+        "oxc.path.oxfmt": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+        },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
@@ -213,23 +228,24 @@
     },
     "jsonValidation": [
       {
-        "fileMatch": [
-          "oxlintrc.json",
-          "oxlint.json",
-          ".oxlintrc.json",
-          ".oxlint.json"
-        ],
+        "fileMatch": ".oxlintrc.json",
         "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
+      },
+      {
+        "fileMatch": [
+          ".oxfmtrc.json",
+          ".oxfmtrc.jsonc"
+        ],
+        "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxfmt/configuration_schema.json"
       }
     ],
     "languages": [
       {
         "id": "jsonc",
         "filenames": [
-          "oxlintrc.json",
-          "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json"
+          ".oxfmtrc.json",
+          ".oxfmtrc.jsonc"
         ]
       }
     ]
@@ -239,7 +255,9 @@
       "supported": "limited",
       "description": "The Extension will always use the Language Server shipped with the Extension.",
       "restrictedConfigurations": [
-        "oxc.path.server"
+        "oxc.path.server",
+        "oxc.path.oxlint",
+        "oxc.path.oxfmt"
       ]
     }
   },
@@ -273,7 +291,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "catalog:",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.52",
+    "rolldown": "1.0.0-beta.54",
     "tinyglobby": "^0.2.15",
     "typescript": "catalog:"
   },

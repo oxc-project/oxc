@@ -69,22 +69,23 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 
 <details ${defaultOpen ? "open" : ""}>
 <summary>
-  ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
+  ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
 </summary>
 
-| Status | Name | Docs |
-| :----: | :--- | :--- |
+| Status | Name |
+| :----: | :--- |
 ${views
   .map((v) => {
     let status = "";
-    if (v.isImplemented) status += "✨";
+    if (v.isImplemented) status += "✅";
     if (v.isNotSupported) status += "🚫";
     if (v.isPendingFix) status += "⏳";
-    return `| ${status} | ${v.name} | ${v.docsUrl} |`;
+    const name = v.docsUrl ? `[${v.name}](${v.docsUrl})` : v.name;
+    return `| ${status} | ${name} |`;
   })
   .join("\n")}
 
-✨ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
+✅ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
 
 </details>
 `;
@@ -137,30 +138,50 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     counterRef.total++;
   }
 
+  const sortedViews = sortViews(views);
+
   return [
     renderIntroduction({ npm: pluginMeta.npm }),
     renderCounters({ counters }),
     renderGettingStarted({ pluginName }),
-    0 < views.recommended.length &&
+    0 < sortedViews.recommended.length &&
       renderRulesList({
         title: "Recommended rules",
         counters: counters.recommended,
-        views: views.recommended,
+        views: sortedViews.recommended,
       }),
-    0 < views.notRecommended.length &&
+    0 < sortedViews.notRecommended.length &&
       renderRulesList({
         title: "Not recommended rules",
         counters: counters.notRecommended,
-        views: views.notRecommended,
+        views: sortedViews.notRecommended,
       }),
-    0 < views.deprecated.length &&
+    0 < sortedViews.deprecated.length &&
       renderRulesList({
         title: "Deprecated rules",
         counters: counters.deprecated,
-        views: views.deprecated,
+        views: sortedViews.deprecated,
         defaultOpen: false,
       }),
   ]
     .filter(Boolean)
     .join("\n");
 };
+
+/** @param {Record<string, RuleEntryView[]>} views */
+function sortViews(views) {
+  const copy = { ...views };
+
+  /** @param {string} name */
+  const unprefix = (name) => name.split("/").pop() || "";
+
+  /**
+   * @param {RuleEntryView} a
+   * @param {RuleEntryView} b
+   */
+  const byRuleName = (a, b) => unprefix(a.name).localeCompare(unprefix(b.name));
+
+  for (const key in views) copy[key] = views[key].toSorted(byRuleName);
+
+  return copy;
+}

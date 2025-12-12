@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 💥 BREAKING CHANGES
+
+- 083fea9 napi/parser: [**BREAKING**] Represent empty optional fields on JS side as `null` (#16411) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 699406a napi/parser: Move `ExportEntry::module_request` field to first (#16412) (overlookmotel)
+- 12bd794 napi/parser: Move `ExportEntry::module_request` field to last (#16403) (overlookmotel)
+
+### ⚡ Performance
+
+- 790beeb napi/parser: Do not remove extraneous options on JS side (#16447) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 934d873 napi: [**BREAKING**] Drop `armv7-unknown-linux-musleabihf` support (#16105) (Boshen)
+
+### 🚀 Features
+
+- bab4bc8 napi/parser: Add type annotations to parse-raw-worker test (#15998) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9149a26 linter/plugins, napi/parser: Deep freeze visitor keys (#16293) (overlookmotel)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+
+### ⚡ Performance
+
+- 02bdf90 linter/plugins, napi/parser: Reuse arrays in visitor keys (#16294) (overlookmotel)
+
 ## [0.99.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES

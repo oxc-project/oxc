@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -19,6 +21,14 @@ pub struct FormatSeparatedElement<E: GetSpan> {
     /// The separator to write if the element has no separator yet.
     separator: &'static str,
     options: FormatSeparatedOptions,
+}
+
+impl<T: GetSpan> Deref for FormatSeparatedElement<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.element
+    }
 }
 
 impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {

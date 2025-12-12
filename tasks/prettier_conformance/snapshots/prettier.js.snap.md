@@ -1,4 +1,4 @@
-js compatibility: 734/759 (96.71%)
+js compatibility: 735/761 (96.58%)
 
 # Failed
 
@@ -20,6 +20,8 @@ js compatibility: 734/759 (96.71%)
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
+| js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
+| js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
@@ -28,4 +30,3 @@ js compatibility: 734/759 (96.71%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/text-wrap/test.js | 💥 | 99.56% |

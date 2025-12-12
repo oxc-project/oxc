@@ -622,7 +622,7 @@ fn test() {
         ),
         ("var r = /[[👶🏻]]/v", None), // { "ecmaVersion": 2024 },
         // flag overrides, see oxc-project/oxc#13436
-        // ("new RegExp(/^[👍]$/v, '')", None), // {				"ecmaVersion": 2024,			},
+        // ("new RegExp(/^[👍]$/v, '')", None), // { "ecmaVersion": 2024, },
         (r"/[Á]/", Some(serde_json::json!([{ "allowEscape": false }]))),
         (r"/[\\̶]/", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n̅]/", Some(serde_json::json!([{ "allowEscape": true }]))),

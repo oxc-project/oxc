@@ -1,6 +1,6 @@
 import esquery from "esquery";
-import visitorKeys from "../generated/keys.js";
-import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.js";
+import visitorKeys from "../generated/keys.ts";
+import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { ancestors } from "../generated/walk.js";
 

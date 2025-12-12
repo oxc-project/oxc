@@ -1,7 +1,7 @@
-import { createContext } from "./context.js";
-import { deepFreezeJsonArray } from "./json.js";
-import { DEFAULT_OPTIONS } from "./options.js";
-import { getErrorMessage } from "../utils/utils.js";
+import { createContext } from "./context.ts";
+import { deepFreezeJsonArray } from "./json.ts";
+import { DEFAULT_OPTIONS } from "./options.ts";
+import { getErrorMessage } from "../utils/utils.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
@@ -132,7 +132,7 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   const pluginName = getPluginName(plugin, packageName);
@@ -156,8 +156,9 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== "code" && fixable !== "whitespace")
+        if (fixable !== "code" && fixable !== "whitespace") {
           throw new TypeError("Invalid `rule.meta.fixable`");
+        }
         isFixable = true;
       }
 
@@ -167,6 +168,9 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
         if (!isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
+        // TODO: This isn't quite safe, as `defaultOptions` isn't from JSON, and `deepFreezeJsonArray`
+        // assumes it is. We should perform options merging on Rust side instead, and also validate
+        // `defaultOptions` against options schema.
         deepFreezeJsonArray(inputDefaultOptions);
         defaultOptions = inputDefaultOptions;
       }
@@ -201,7 +205,7 @@ function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetai
 
     if ("createOnce" in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context) as SetNullable<
+      const visitorWithHooks = rule.createOnce(context) as SetNullable<
         VisitorWithHooks,
         "before" | "after"
       >;
@@ -254,8 +258,9 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
   if (pluginMeta != null) {
     const pluginMetaName = pluginMeta.name;
     if (pluginMetaName != null) {
-      if (typeof pluginMetaName !== "string")
+      if (typeof pluginMetaName !== "string") {
         throw new TypeError("`plugin.meta.name` must be a string if defined");
+      }
       return pluginMetaName;
     }
   }
@@ -276,7 +281,8 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
  */
 function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
   if (hookFn == null) return null;
-  if (typeof hookFn !== "function")
+  if (typeof hookFn !== "function") {
     throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  }
   return hookFn;
 }

@@ -15,6 +15,17 @@ const plugin: Plugin = {
     name: "options-plugin",
   },
   rules: {
+    "no-options": {
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
     options: {
       create(context) {
         context.report({
@@ -34,6 +45,25 @@ const plugin: Plugin = {
           true,
           { toBe: false, notToBe: true },
           { deep: [{ deeper: { evenDeeper: [{ soDeep: { soSoDeep: true } }] } }] },
+        ],
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
+    "merge-options": {
+      meta: {
+        defaultOptions: [
+          { fromDefault: 1, overrideDefault: 2, nested: { fromDefault: 3, overrideDefault: 4 } },
+          { fromDefault: 5 },
+          { fromDefault: 6 },
+          7,
         ],
       },
       create(context) {

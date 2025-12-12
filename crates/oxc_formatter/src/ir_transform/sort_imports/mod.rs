@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
@@ -9,29 +10,24 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
-        group_config::{GroupName, default_groups, parse_groups_from_strings},
+        group_config::{GroupName, parse_groups_from_strings},
         partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
     },
-    options,
 };
 
 /// An IR transform that sorts import statements according to specified options.
 /// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
 /// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform {
-    options: options::SortImports,
+    options: options::SortImportsOptions,
     groups: Vec<Vec<GroupName>>,
 }
 
 impl SortImportsTransform {
-    pub fn new(options: options::SortImports) -> Self {
+    pub fn new(options: options::SortImportsOptions) -> Self {
         // Parse string based groups into our internal representation for performance
-        let groups = if let Some(groups) = &options.groups {
-            parse_groups_from_strings(groups)
-        } else {
-            default_groups()
-        };
+        let groups = parse_groups_from_strings(&options.groups);
         Self { options, groups }
     }
 
@@ -157,8 +153,8 @@ impl SortImportsTransform {
         // After sorting, flatten everything back to `FormatElement`s.
         let mut next_elements = ArenaVec::with_capacity_in(prev_elements.len(), allocator);
 
-        let mut chunks_iter = chunks.into_iter().enumerate().peekable();
-        while let Some((_idx, chunk)) = chunks_iter.next() {
+        let mut chunks_iter = chunks.into_iter().peekable();
+        while let Some(chunk) = chunks_iter.next() {
             match chunk {
                 // Boundary chunks: Just output as-is
                 PartitionedChunk::Boundary(line) => {
@@ -166,32 +162,43 @@ impl SortImportsTransform {
                 }
                 // Import chunks: Sort and output
                 PartitionedChunk::Imports(_) => {
-                    // For ease of implementation, we will convert `ImportChunk` into multiple `SortableImport`s.
+                    // Convert `ImportChunk` into `SortableImport`s.
                     //
-                    // `SortableImport` is a logical unit of 1 import statement + its N leading lines.
-                    // And there may be trailing lines after all import statements in the chunk.
+                    // `SortableImport` is a logical unit of 1 import statement with its leading lines.
+                    // `OrphanContent` tracks comments separated by empty lines with their slot positions.
+                    //
+                    // Comments attach based on empty line separation:
+                    // - Comments directly before an `import` (no empty line) → `SortableImport.leading_lines`
+                    // - Comments followed by an empty line → `orphan_contents` (stay at slot position)
+                    //
                     // e.g.
                     // ```
-                    // const THIS_IS_BOUNDARY = true;
-                    // // comment for A
-                    // import A from "a"; // sortable1
-                    // import B from "b"; // sortable2
+                    // // orphan (after_slot: None)
                     //
-                    // // comment for C and empty line above + below
+                    // // leading for A
+                    // import A from "a";
+                    // // orphan (after_slot: Some(0))
                     //
-                    // // another comment for C
-                    // import C from "c"; // sortable3
-                    // // trailing comment and empty line below for this chunk
-                    //
-                    // const YET_ANOTHER_BOUNDARY = true;
+                    // // leading for B
+                    // import B from "b";
+                    // // chunk trailing
                     // ```
-                    let (sorted_imports, trailing_lines) =
+                    let (sorted_imports, orphan_contents, trailing_lines) =
                         chunk.into_sorted_import_units(&self.groups, &self.options);
 
-                    // Output sorted import units
+                    // Output leading orphan content (after_slot: None)
+                    for orphan in &orphan_contents {
+                        if orphan.after_slot.is_none() {
+                            for line in &orphan.lines {
+                                line.write(prev_elements, &mut next_elements, true);
+                            }
+                        }
+                    }
+
+                    // Output sorted import units with orphan content at their slot positions
                     let mut prev_group_idx = None;
                     let mut prev_was_ignored = false;
-                    for sorted_import in sorted_imports {
+                    for (slot_idx, sorted_import) in sorted_imports.iter().enumerate() {
                         // Insert newline when:
                         // 1. Group changes
                         // 2. Previous import was not ignored (don't insert after ignored)
@@ -208,7 +215,7 @@ impl SortImportsTransform {
                         }
 
                         // Output leading lines and import line
-                        for line in sorted_import.leading_lines {
+                        for line in &sorted_import.leading_lines {
                             line.write(
                                 prev_elements,
                                 &mut next_elements,
@@ -216,8 +223,17 @@ impl SortImportsTransform {
                             );
                         }
                         sorted_import.import_line.write(prev_elements, &mut next_elements, false);
+
+                        // Output orphan content that belongs after this slot
+                        for orphan in &orphan_contents {
+                            if orphan.after_slot == Some(slot_idx) {
+                                for line in &orphan.lines {
+                                    line.write(prev_elements, &mut next_elements, false);
+                                }
+                            }
+                        }
                     }
-                    // And output trailing lines
+                    // And output chunk's trailing lines
                     //
                     // Special care is needed for the last empty line.
                     // We should preserve it only if the next chunk is a boundary.
@@ -239,7 +255,7 @@ impl SortImportsTransform {
                     // ```
                     let next_chunk_is_boundary = chunks_iter
                         .peek()
-                        .is_some_and(|(_, c)| matches!(c, PartitionedChunk::Boundary(_)));
+                        .is_some_and(|c| matches!(c, PartitionedChunk::Boundary(_)));
                     for (idx, line) in trailing_lines.iter().enumerate() {
                         let is_last_empty_line =
                             idx == trailing_lines.len() - 1 && matches!(line, SourceLine::Empty);

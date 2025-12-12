@@ -1,11 +1,8 @@
 use std::{fmt::Write, path::PathBuf};
 
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position,
-        Range, Uri,
-    },
+use tower_lsp_server::ls_types::{
+    CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position, Range,
+    Uri,
 };
 
 use crate::{
@@ -102,6 +99,7 @@ fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
 
     let mut result = String::new();
     let _ = writeln!(result, "Title: {}", code_action.title);
+    let _ = writeln!(result, "Is Preferred: {:?}", code_action.is_preferred);
     let _ = writeln!(
         result,
         "{}",
