@@ -634,7 +634,7 @@
   |     "moduleReference"
   |   ],
   |   "TSImportType": [
-  |     "argument",
+  |     "source",
   |     "options",
   |     "qualifier",
   |     "typeArguments"

@@ -1,8 +1,8 @@
-commit: 669c25c0
+commit: c21f73fd
 
 formatter_typescript Summary:
-AST Parsed     : 9822/9822 (100.00%)
-Positive Passed: 9815/9822 (99.93%)
+AST Parsed     : 9833/9833 (100.00%)
+Positive Passed: 9826/9833 (99.93%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts

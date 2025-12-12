@@ -90,6 +90,9 @@ impl<'a> ParserImpl<'a> {
             let first_extends = extends.remove(0);
             super_class = Some(first_extends.0);
             super_type_parameters = first_extends.1;
+            for (_, _, span) in extends {
+                self.error(diagnostics::classes_can_only_extend_single_class(span));
+            }
         }
         let body = self.parse_class_body();
 

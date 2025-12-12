@@ -95,7 +95,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@3575e532701a5fc614b0c842e4119af4cc5fd16d # v2.62.60
+        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # v2.62.63
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -274,7 +274,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@3575e532701a5fc614b0c842e4119af4cc5fd16d # v2.62.60
+        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # v2.62.63
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -390,7 +390,7 @@ jobs:
       contents: write # for softprops/action-gh-release@v1.3.1
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           fetch-depth: 0 # for changelog
@@ -446,7 +446,7 @@ jobs:
           ls
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         id: release
         with:
           body_path: ./target/RELEASE_BODY.md

@@ -1,11 +1,8 @@
 use std::{fmt::Write, path::PathBuf};
 
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position,
-        Range, Uri,
-    },
+use tower_lsp_server::ls_types::{
+    CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position, Range,
+    Uri,
 };
 
 use crate::{

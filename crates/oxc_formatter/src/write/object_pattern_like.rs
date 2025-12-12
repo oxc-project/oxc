@@ -51,28 +51,28 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
+    /// Based on <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L77-L103>
     fn should_break_properties(&self) -> bool {
-        // Check parent node type
-        let parent_is_catch_or_parameter = match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
-            }
-            Self::ObjectAssignmentTarget(_) => false,
-        };
-
-        if parent_is_catch_or_parameter {
-            return false;
-        }
-
         match self {
-            Self::ObjectPattern(node) => node.properties.iter().any(|property| {
-                // <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L81-L95>
+            Self::ObjectPattern(node) => {
+                let parent_is_parameter_or_assignment_pattern = matches!(
+                    node.parent,
+                    AstNodes::CatchParameter(_)
+                        | AstNodes::FormalParameter(_)
+                        | AstNodes::AssignmentPattern(_)
+                );
 
-                matches!(
-                    property.value.kind,
-                    BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
-                )
-            }),
+                if parent_is_parameter_or_assignment_pattern {
+                    return false;
+                }
+
+                node.properties.iter().any(|property| {
+                    matches!(
+                        property.value.kind,
+                        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
+                    )
+                })
+            }
             Self::ObjectAssignmentTarget(node) => {
                 node.properties.iter().any(|property| match property {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,

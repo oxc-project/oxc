@@ -545,7 +545,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                             // `import.meta.env` should not match `import.meta.env.*`
                             return has_matched_part && !is_full_match;
                         }
-                        return true;
+                        return i == 0;
                     }
                     Expression::Identifier(_) => {
                         return false;

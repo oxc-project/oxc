@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- 8c10694 semantic: Expose get_comment_at method (#16439) (camc314)
+- 3981e7a ast: Add get_comment_at to lookup a comment by span (#16438) (camc314)
+
 ## [0.100.0] - 2025-12-01
 
 ### 💥 BREAKING CHANGES

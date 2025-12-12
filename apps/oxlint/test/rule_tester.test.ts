@@ -150,29 +150,27 @@ describe("RuleTester", () => {
   });
 
   describe("config", () => {
-    // TODO: More tests for config
-
     it("can be set globally", () => {
-      const config = { whatever: true };
+      const config = { eslintCompat: true };
       RuleTester.setDefaultConfig(config);
       expect(RuleTester.getDefaultConfig()).toBe(config);
     });
 
     it("is reset to default by `resetDefaultConfig`", () => {
-      RuleTester.setDefaultConfig({ whatever: true });
-      expect(RuleTester.getDefaultConfig()).toHaveProperty("whatever", true);
+      RuleTester.setDefaultConfig({ eslintCompat: true });
+      expect(RuleTester.getDefaultConfig()).toHaveProperty("eslintCompat", true);
 
       RuleTester.resetDefaultConfig();
-      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("whatever");
+      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("eslintCompat");
     });
 
     it("cannot permanently change default config", () => {
       const defaultConfig = RuleTester.getDefaultConfig();
-      defaultConfig.whatever = true;
+      defaultConfig.eslintCompat = true;
       expect(RuleTester.getDefaultConfig()).toBe(defaultConfig);
 
       RuleTester.resetDefaultConfig();
-      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("whatever");
+      expect(RuleTester.getDefaultConfig()).not.toHaveProperty("eslintCompat");
     });
   });
 
@@ -938,6 +936,1880 @@ describe("RuleTester", () => {
         ],
       });
       expect(runCases()).toEqual([null, null, null]);
+    });
+  });
+
+  describe("parsing options", () => {
+    describe("sourceType", () => {
+      it("default (module)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: ["with (obj) {}", "import x from 'foo';"],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+            null,
+          ]
+        `);
+      });
+
+      describe("module", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "module" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "script" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "module" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "module" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+      });
+
+      describe("script", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "script" },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "script" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "import x from 'foo';"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "script" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "script" },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("commonjs", () => {
+        describe("with `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "commonjs" },
+              eslintCompat: true,
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "commonjs" },
+              eslintCompat: true,
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "commonjs" },
+                  eslintCompat: true,
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "commonjs" },
+                  eslintCompat: true,
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                null,
+                [Error: Parsing failed],
+              ]
+            `);
+          });
+        });
+
+        describe("without `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "commonjs" },
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "commonjs" },
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "commonjs" },
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "commonjs" },
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
+              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
+              ]
+            `);
+          });
+        });
+      });
+
+      describe("unambiguous", () => {
+        describe("with `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "unambiguous" },
+              eslintCompat: true,
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "unambiguous" },
+              eslintCompat: true,
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "unambiguous" },
+                  eslintCompat: true,
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "unambiguous" },
+                  eslintCompat: true,
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+                [Error: 'unambiguous' source type is not supported in ESLint compatibility mode.
+              Disable ESLint compatibility mode by setting \`eslintCompat\` to \`false\` in the config / test case.],
+              ]
+            `);
+          });
+        });
+
+        describe("without `eslintCompat` option", () => {
+          it("set globally", () => {
+            RuleTester.setDefaultConfig({
+              languageOptions: { sourceType: "unambiguous" },
+            });
+
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+
+          it("set in `RuleTester` options", () => {
+            const tester = new RuleTester({
+              languageOptions: { sourceType: "unambiguous" },
+            });
+            tester.run("no-foo", simpleRule, {
+              valid: ["with (obj) {}", "import x from 'foo';"],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+
+          it("set in individual test cases", () => {
+            const tester = new RuleTester();
+            tester.run("no-foo", simpleRule, {
+              valid: [
+                {
+                  code: "with (obj) {}",
+                  languageOptions: { sourceType: "unambiguous" },
+                },
+                {
+                  code: "import x from 'foo';",
+                  languageOptions: { sourceType: "unambiguous" },
+                },
+              ],
+              invalid: [],
+            });
+
+            expect(runCases()).toEqual([null, null]);
+          });
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            "with (obj) {}",
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "script" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "module" },
+            },
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "module" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "script" },
+            },
+            {
+              code: "with (obj) {}",
+              languageOptions: { sourceType: "unambiguous" },
+            },
+            {
+              code: "import x from 'foo';",
+              languageOptions: { sourceType: "unambiguous" },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+            null,
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            null,
+          ]
+        `);
+      });
+    });
+
+    describe("lang", () => {
+      it("default (js)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            "let x;",
+            "<div/>",
+            "let x: number;",
+            "let x: T = <div/>;",
+            "class C { f(): void }",
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+          ]
+        `);
+      });
+
+      describe("js", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "js" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "js" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "jsx" } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "js" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "jsx" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "jsx" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "js" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("jsx", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "jsx" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "jsx" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "jsx" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "jsx" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "jsx" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "jsx" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "jsx" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("ts", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "ts" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "ts" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "ts" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "ts" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "ts" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "ts" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "ts" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("tsx", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "tsx" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "tsx" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "tsx" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "tsx" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "tsx" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "tsx" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "tsx" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("dts", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "dts" } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "dts" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              "let x;",
+              "<div/>",
+              "let x: number;",
+              "let x: T = <div/>;",
+              "class C { f(): void }",
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "dts" } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "dts" } },
+              },
+              {
+                code: "let x: number;",
+                languageOptions: { parserOptions: { lang: "dts" } },
+              },
+              {
+                code: "let x: T = <div/>;",
+                languageOptions: { parserOptions: { lang: "dts" } },
+              },
+              {
+                code: "class C { f(): void }",
+                languageOptions: { parserOptions: { lang: "dts" } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+              null,
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            // Default (js)
+            "let x;",
+            "<div/>",
+            "let x: number;",
+            "let x: T = <div/>;",
+            "class C { f(): void }",
+            // JS
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            {
+              code: "let x: number;",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            {
+              code: "let x: T = <div/>;",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            {
+              code: "class C { f(): void }",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            // JSX
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+            },
+            {
+              code: "let x: number;",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+            },
+            {
+              code: "let x: T = <div/>;",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+            },
+            {
+              code: "class C { f(): void }",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+            },
+            // TS
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+            {
+              code: "let x: number;",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+            {
+              code: "let x: T = <div/>;",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+            {
+              code: "class C { f(): void }",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+            // TSX
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { lang: "tsx" } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { lang: "tsx" } },
+            },
+            {
+              code: "let x: number;",
+              languageOptions: { parserOptions: { lang: "tsx" } },
+            },
+            {
+              code: "let x: T = <div/>;",
+              languageOptions: { parserOptions: { lang: "tsx" } },
+            },
+            {
+              code: "class C { f(): void }",
+              languageOptions: { parserOptions: { lang: "tsx" } },
+            },
+            // DTS
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { lang: "dts" } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { lang: "dts" } },
+            },
+            {
+              code: "let x: number;",
+              languageOptions: { parserOptions: { lang: "dts" } },
+            },
+            {
+              code: "let x: T = <div/>;",
+              languageOptions: { parserOptions: { lang: "dts" } },
+            },
+            {
+              code: "class C { f(): void }",
+              languageOptions: { parserOptions: { lang: "dts" } },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+            null,
+            null,
+            null,
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            null,
+          ]
+        `);
+      });
+    });
+
+    describe("ecmaFeatures.jsx", () => {
+      it("default (false)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: ["let x;", "<div/>"],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            [Error: Parsing failed],
+          ]
+        `);
+      });
+
+      describe("false", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("true", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null, null]);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null, null]);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null, null]);
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            "let x;",
+            "<div/>",
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { ecmaFeatures: { jsx: false } } },
+            },
+            {
+              code: "let x;",
+              languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+            },
+            {
+              code: "<div/>",
+              languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            [Error: Parsing failed],
+            null,
+            [Error: Parsing failed],
+            null,
+            null,
+          ]
+        `);
+      });
+
+      describe("does not take priority over `lang` option", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { lang: "js", ecmaFeatures: { jsx: true } } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "js", ecmaFeatures: { jsx: true } } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["let x;", "<div/>"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { lang: "js", ecmaFeatures: { jsx: true } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { lang: "js", ecmaFeatures: { jsx: true } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases with `lang` defined in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { lang: "js" } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let x;",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+              },
+              {
+                code: "<div/>",
+                languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+    });
+
+    describe("ignoreNonFatalErrors", () => {
+      it("default (off)", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: ["function f(x, x) {}"],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+          ]
+        `);
+      });
+
+      describe("disabled", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
+      describe("enabled", () => {
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["function f(x, x) {}"],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases, overriding global setting", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in individual test cases, overriding `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "function f(x, x) {}",
+                languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toEqual([null]);
+        });
+      });
+
+      it("mixed across test cases", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            "function f(x, x) {}",
+            {
+              code: "function f(x, x) {}",
+              languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            },
+            {
+              code: "function f(x, x) {}",
+              languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            },
+          ],
+          invalid: [],
+        });
+
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+            null,
+          ]
+        `);
+      });
     });
   });
 });

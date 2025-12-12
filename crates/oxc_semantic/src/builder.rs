@@ -1715,7 +1715,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.visit_expression(&stmt.object);
-        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
+        self.enter_scope(ScopeFlags::With, &stmt.scope_id);
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]

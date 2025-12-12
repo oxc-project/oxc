@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- da87812 semantic: Add TS2309 error for export assignment with other exports (#15992) (sapphi-red)
+- 8c10694 semantic: Expose get_comment_at method (#16439) (camc314)
+
 ## [0.101.0] - 2025-12-02
 
 ### 🚀 Features

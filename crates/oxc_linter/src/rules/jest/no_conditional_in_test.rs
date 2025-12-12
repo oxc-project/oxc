@@ -92,6 +92,17 @@ declare_oxc_lint!(
     ///   await expect(promiseValue()).resolves.toBe(1);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-in-test.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-conditional-in-test": "error"
+    ///   }
+    /// }
+    /// ```
     NoConditionalInTest,
     jest,
     pedantic,

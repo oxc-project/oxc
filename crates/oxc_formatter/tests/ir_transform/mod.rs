@@ -8,13 +8,15 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     let expected = expected.strip_prefix('\n').expect("Expected code should start with a newline");
 
     let config: Oxfmtrc = serde_json::from_str(config_json).expect("Invalid JSON config");
-    let options = config.into_format_options().expect("Failed to convert config to FormatOptions");
+    let (options, _) = config.into_options().expect("Failed to convert config to FormatOptions");
 
     let actual = format_code(code, &options);
     assert_eq!(
         actual, expected,
         r"
 💥 First format does not match expected!
+============== input ==============
+{code}
 ============== actual =============
 {actual}
 ============= expected ============
@@ -25,13 +27,15 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     );
 
     // Check idempotency
-    let actual = format_code(&actual, &options);
+    let actual2 = format_code(&actual, &options);
     assert_eq!(
-        actual, expected,
+        actual2, expected,
         r"
 💥 Formatting is not idempotent!
-============== actual =============
+============== input ==============
 {actual}
+============== actual =============
+{actual2}
 ============= expected ============
 {expected}
 ============== config =============

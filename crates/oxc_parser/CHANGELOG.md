@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- 7a2afee parser: Add TS1174 error for classes extending multiple base classes (#15993) (sapphi-red)
+
 ## [0.101.0] - 2025-12-02
 
 ### 🚀 Features

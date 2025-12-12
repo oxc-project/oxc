@@ -242,8 +242,9 @@ export function addVisitorToCompiled(visitor: Visitor): void {
       // Wrap `visitFn` so it only executes if the selector matches.
       // If selector is simple (unconditionally matches certain types e.g. `:matches(X, Y)`), skip wrapping.
       const selector = parseSelector(name);
-      if (selector.isComplex)
+      if (selector.isComplex) {
         visitFn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+      }
 
       const { typeIds } = selector;
       if (typeIds !== null) {

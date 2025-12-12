@@ -177,9 +177,9 @@ impl<'a> ClassesStack<'a> {
         })
     }
 
-    /// Lookup details of writeable private property referred to by `ident`.
+    /// Lookup details of writable private property referred to by `ident`.
     /// Returns `Some` if it refers to a private prop and setter method
-    pub fn find_writeable_private_prop<'b>(
+    pub fn find_writable_private_prop<'b>(
         &'b mut self,
         ident: &PrivateIdentifier<'a>,
     ) -> Option<ResolvedPrivateProp<'a, 'b>> {
@@ -229,7 +229,7 @@ impl<'a> ClassesStack<'a> {
 ///
 /// This is the return value of [`ClassesStack::find_private_prop`],
 /// [`ClassesStack::find_readable_private_prop`] and
-/// [`ClassesStack::find_writeable_private_prop`].
+/// [`ClassesStack::find_writable_private_prop`].
 pub(super) struct ResolvedPrivateProp<'a, 'b> {
     /// Binding for temp var representing the property
     pub prop_binding: &'b BoundIdentifier<'a>,

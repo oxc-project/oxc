@@ -60,7 +60,7 @@ impl<'a> ClassProperties<'a, '_> {
         let span = field_expr.span;
         let object = field_expr.object.take_in(ctx.ast);
         let resolved = if is_assignment {
-            match self.classes_stack.find_writeable_private_prop(&field_expr.field) {
+            match self.classes_stack.find_writable_private_prop(&field_expr.field) {
                 Some(prop) => prop,
                 _ => {
                     // Early return for read-only error

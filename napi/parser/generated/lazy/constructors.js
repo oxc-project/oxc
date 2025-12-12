@@ -11743,6 +11743,8 @@ function constructCommentKind(pos, ast) {
       return "Line";
     case 1:
       return "Block";
+    case 2:
+      return "Block";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for CommentKind`);
   }

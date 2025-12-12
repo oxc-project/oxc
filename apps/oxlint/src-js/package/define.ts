@@ -42,8 +42,9 @@ export function definePlugin(plugin: Plugin): Plugin {
   if (plugin === null || typeof plugin !== "object") throw new Error("Plugin must be an object");
 
   const { rules } = plugin;
-  if (rules === null || typeof rules !== "object")
+  if (rules === null || typeof rules !== "object") {
     throw new Error("Plugin must have an object as `rules` property");
+  }
 
   // Make each rule in the plugin ESLint-compatible by calling `defineRule` on it
   for (const ruleName in rules) {
@@ -189,10 +190,12 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 } {
   // Validate type of `createOnce`
   const { createOnce } = rule;
-  if (createOnce == null)
+  if (createOnce == null) {
     throw new Error("Rules must define either a `create` or `createOnce` method");
-  if (typeof createOnce !== "function")
+  }
+  if (typeof createOnce !== "function") {
     throw new Error("Rule `createOnce` property must be a function");
+  }
 
   // Call `createOnce` with empty context object.
   // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
@@ -218,8 +221,9 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 
   // Add `after` hook to `Program:exit` visit fn
   if (afterHook != null) {
-    if (typeof afterHook !== "function")
+    if (typeof afterHook !== "function") {
       throw new Error("`after` property of visitor must be a function if defined");
+    }
 
     const programExit = visitor["Program:exit"];
     visitor["Program:exit"] =

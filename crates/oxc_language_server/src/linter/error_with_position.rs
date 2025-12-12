@@ -1,6 +1,6 @@
-use std::{borrow::Cow, str::FromStr};
+use std::borrow::Cow;
 
-use tower_lsp_server::lsp_types::{
+use tower_lsp_server::ls_types::{
     self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
     NumberOrString, Position, Range, Uri,
 };
@@ -38,8 +38,8 @@ pub fn message_to_lsp_diagnostic(
     rope: &Rope,
 ) -> DiagnosticReport {
     let severity = match message.error.severity {
-        Severity::Error => Some(lsp_types::DiagnosticSeverity::ERROR),
-        _ => Some(lsp_types::DiagnosticSeverity::WARNING),
+        Severity::Error => Some(ls_types::DiagnosticSeverity::ERROR),
+        _ => Some(ls_types::DiagnosticSeverity::WARNING),
     };
 
     let related_information = message.error.labels.as_ref().map(|spans| {
@@ -51,10 +51,10 @@ pub fn message_to_lsp_diagnostic(
                 let end_position =
                     offset_to_position(rope, offset + span.len() as u32, source_text);
 
-                lsp_types::DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
+                ls_types::DiagnosticRelatedInformation {
+                    location: ls_types::Location {
                         uri: uri.clone(),
-                        range: lsp_types::Range::new(start_position, end_position),
+                        range: ls_types::Range::new(start_position, end_position),
                     },
                     message: span
                         .label()
@@ -73,7 +73,8 @@ pub fn message_to_lsp_diagnostic(
         .error
         .url
         .as_ref()
-        .map(|url| CodeDescription { href: Uri::from_str(url).ok().unwrap() });
+        .and_then(|url| url.parse().ok())
+        .map(|href| CodeDescription { href });
 
     let diagnostic_message = match &message.error.help {
         Some(help) => {
@@ -187,7 +188,7 @@ pub fn generate_inverted_diagnostics(
             continue;
         };
         let related_information = Some(vec![DiagnosticRelatedInformation {
-            location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            location: ls_types::Location { uri: uri.clone(), range: d.diagnostic.range },
             message: "original diagnostic".to_string(),
         }]);
         for r in related_info {

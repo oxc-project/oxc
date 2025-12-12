@@ -232,7 +232,7 @@ expression: json
       "type": "string",
       "enum": [
         "readonly",
-        "writeable",
+        "writable",
         "off"
       ]
     },

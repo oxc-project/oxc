@@ -1,14 +1,16 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatTrailingCommas, JsLabels, QuoteProperties, TrailingSeparator,
+    Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
+    },
+    utils::string::{
+        FormatLiteralStringToken, StringLiteralParentKind, is_identifier_name_patched,
     },
     write,
     write::semicolon::OptionalSemicolon,
@@ -165,6 +167,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self.with_entries.iter().any(|attribute| {
+                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string) if {
+                    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
+                    !is_identifier_name_patched(quote_less_content)
+                })
+            });
+
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         let format_comment = format_with(|f| {
             if self.with_entries().is_empty() {
                 let comments = f.context().comments().comments_before(self.span.end);
@@ -184,6 +197,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
                 self.with_entries()
             ]
         );
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
+        }
     }
 }
 
@@ -251,14 +268,17 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::StringLiteral(s) = self.key().as_ast_nodes() {
-            if f.options().quote_properties == QuoteProperties::AsNeeded
-                && is_identifier_name(s.value().as_str())
-            {
-                text(s.value().as_str()).fmt(f);
-            } else {
-                s.fmt(f);
-            }
+        if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
+            let format = FormatLiteralStringToken::new(
+                f.source_text().text_for(string),
+                false,
+                StringLiteralParentKind::ImportAttribute,
+            )
+            .clean_text(f);
+
+            string.format_leading_comments(f);
+            write!(f, format);
+            string.format_trailing_comments(f);
         } else {
             write!(f, self.key());
         }

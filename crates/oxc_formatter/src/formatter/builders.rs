@@ -297,8 +297,7 @@ impl std::fmt::Debug for Token {
 
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
-    // FIXME
-    // debug_assert_no_newlines(text);
+    debug_assert_no_cr_line_break(text);
     Text { text, width: None }
 }
 
@@ -334,12 +333,16 @@ impl std::fmt::Debug for Text<'_> {
     }
 }
 
+/// Debug assert that the given text contains no `\r` line terminator characters.
+//
+// `#[inline(always)]` because this is a no-op in release mode
+#[inline(always)]
+#[expect(clippy::inline_always)]
 #[track_caller]
-#[expect(unused)]
-fn debug_assert_no_newlines(text: &str) {
+fn debug_assert_no_cr_line_break(text: &str) {
     debug_assert!(
         !text.contains('\r'),
-        "The content '{text}' contains an unsupported '\\r' line terminator character but text must only use line feeds '\\n' as line separator. Use '\\n' instead of '\\r' and '\\r\\n' to insert a line break in strings."
+        "The content `{text}` contains an unsupported `\\r` line terminator character but text must only use line feeds `\\n` as line separator. Use `\\n` instead of `\\r` and `\\r\\n` to insert a line break in strings."
     );
 }
 

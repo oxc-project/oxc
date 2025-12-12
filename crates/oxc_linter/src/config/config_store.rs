@@ -673,7 +673,7 @@ mod test {
             files: GlobSet::new(vec!["*.tsx"]),
             env: None,
             plugins: None,
-            globals: Some(from_json!({ "React": "readonly", "Secret": "writeable" })),
+            globals: Some(from_json!({ "React": "readonly", "Secret": "writable" })),
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -739,7 +739,7 @@ mod test {
             plugins: LintPlugins::ESLINT,
             globals: from_json!({
                 "React": "readonly",
-                "Secret": "writeable"
+                "Secret": "writable"
             }),
             ..Default::default()
         };

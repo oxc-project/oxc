@@ -110,8 +110,9 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
     // as otherwise we have to convert `loc` to `range` which is expensive at present.
     // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
     const { range } = node;
-    if (range === null || typeof range !== "object")
+    if (range === null || typeof range !== "object") {
       throw new TypeError("`node.range` must be present");
+    }
     start = range[0];
     end = range[1];
 

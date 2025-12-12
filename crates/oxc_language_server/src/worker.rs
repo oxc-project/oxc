@@ -2,9 +2,8 @@ use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
-    UriExt,
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
         FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern,
         TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
@@ -94,10 +93,10 @@ impl WorkspaceWorker {
         self.options.lock().await.is_none()
     }
 
-    /// Remove all diagnostics for the given URI
-    pub async fn remove_diagnostics(&self, uri: &Uri) {
+    /// Remove all internal cache for the given URI, if any.
+    pub async fn remove_uri_cache(&self, uri: &Uri) {
         self.tools.read().await.iter().for_each(|tool| {
-            tool.remove_diagnostics(uri);
+            tool.remove_uri_cache(uri);
         });
     }
 
@@ -202,7 +201,7 @@ impl WorkspaceWorker {
             actions.extend(tool.get_code_actions_or_commands(
                 uri,
                 range,
-                only_code_action_kinds.clone(),
+                only_code_action_kinds.as_ref(),
             ));
         }
         actions
@@ -380,7 +379,7 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use tower_lsp_server::lsp_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
+    use tower_lsp_server::ls_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
 
     use crate::{
         ToolBuilder,
@@ -470,7 +469,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 
@@ -533,7 +532,7 @@ mod tests {
 
         let fs = LSPFileSystem::default();
         fs.set(
-            &Uri::from_str("file:///root/diagnostics.config").unwrap(),
+            Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
 

@@ -20,9 +20,10 @@ use crate::{
     },
 };
 
+// TODO: Update this diagnostic message to actually include the custom words from the config.
 fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant `alt` attribute.")
-        .with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the `alt` prop.").with_label(span)
+        .with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,9 +34,9 @@ pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 pub struct ImgRedundantAltConfig {
     /// JSX element types to validate (component names) where the rule applies.
     /// For example, `["img", "Image"]`.
-    types_to_validate: Vec<CompactStr>,
+    components: Vec<CompactStr>,
     /// Words considered redundant in alt text that should trigger a warning.
-    redundant_words: Vec<Cow<'static, str>>,
+    words: Vec<Cow<'static, str>>,
 }
 
 impl std::ops::Deref for ImgRedundantAlt {
@@ -51,16 +52,17 @@ const REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
 impl Default for ImgRedundantAltConfig {
     fn default() -> Self {
         Self {
-            types_to_validate: vec![CompactStr::new("img")],
-            redundant_words: vec!["image".into(), "photo".into(), "picture".into()],
+            components: vec![CompactStr::new("img")],
+            words: vec!["image".into(), "photo".into(), "picture".into()],
         }
     }
 }
 impl ImgRedundantAltConfig {
-    fn new(types_to_validate: Vec<&str>, redundant_words: &[&str]) -> Self {
+    fn new(components: Vec<&str>, words: &[&str]) -> Self {
         Self {
-            types_to_validate: types_to_validate.into_iter().map(Into::into).collect(),
-            redundant_words: redundant_words
+            components: components.into_iter().map(Into::into).collect(),
+            // Using cow_to_ascii_lowercase means you cannot use non-ASCII characters (e.g. Japanese, Chinese, etc.). We should consider changing this?
+            words: words
                 .iter()
                 .map(|w| Cow::Owned(w.cow_to_ascii_lowercase().to_string()))
                 .collect::<Vec<_>>(),
@@ -131,7 +133,7 @@ impl Rule for ImgRedundantAlt {
 
         let element_type = get_element_type(ctx, jsx_el);
 
-        if !self.types_to_validate.iter().any(|comp| comp == &element_type) {
+        if !self.components.iter().any(|comp| comp == &element_type) {
             return;
         }
 
@@ -193,7 +195,7 @@ impl ImgRedundantAlt {
     #[inline]
     fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
         let alt_text = alt_text.cow_to_ascii_lowercase();
-        for word in &self.redundant_words {
+        for word in &self.words {
             if let Some(index) = alt_text.find(word.as_ref()) {
                 // check if followed by space or is whole text
                 if index + word.len() == alt_text.len()
@@ -211,7 +213,7 @@ impl ImgRedundantAlt {
 fn test() {
     use crate::tester::Tester;
 
-    fn array() -> serde_json::Value {
+    fn config_array() -> serde_json::Value {
         serde_json::json!([{
             "components": ["Image"],
             "words": ["Word1", "Word2"]
@@ -268,6 +270,22 @@ fn test() {
         (r"<img alt='Photo of friend.' />;", None, None),
         (r"<img alt='Picture of friend.' />;", None, None),
         (r"<img alt='Image of friend.' />;", None, None),
+        (
+            r"<img alt='thing not to say' />;",
+            Some(serde_json::json!([{ "words": ["not to say"] }])),
+            None,
+        ),
+        (
+            r"<PicVersionThree alt='this is a photo' />;",
+            Some(serde_json::json!([{ "components": ["PicVersionThree"] }])),
+            None,
+        ),
+        // TODO: if there is a period immediately after the banned word, it does not get recognized by the current logic.
+        // (
+        //     r"<PicVersionThree alt='this is a photo.' />;",
+        //     Some(serde_json::json!([{ "components": ["PicVersionThree"] }])),
+        //     None,
+        // ),
         (r"<img alt='PhOtO of friend.' />;", None, None),
         (r"<img alt={'photo'} />;", None, None),
         (r"<img alt='piCTUre of friend.' />;", None, None),
@@ -284,12 +302,16 @@ fn test() {
         (r"<img alt={`picture doing ${picture}`} {...this.props} />", None, None),
         (r"<img alt={`photo doing ${photo}`} {...this.props} />", None, None),
         (r"<img alt={`image doing ${image}`} {...this.props} />", None, None),
+        (r"<Image alt='Photo of a friend' />", Some(config_array()), None),
         (r"<Image alt='Photo of a friend' />", None, Some(settings())),
         // TESTS FOR ARRAY OPTION TESTS
-        (r"<img alt='Word1' />;", Some(array()), None),
-        (r"<img alt='Word2' />;", Some(array()), None),
-        (r"<Image alt='Word1' />;", Some(array()), None),
-        (r"<Image alt='Word2' />;", Some(array()), None),
+        (r"<img alt='Word1' />;", Some(config_array()), None),
+        (r"<img alt='Word2' />;", Some(config_array()), None),
+        (r"<Image alt='Word1' />;", Some(config_array()), None),
+        (r"<Image alt='Word2' />;", Some(config_array()), None),
+        // non-english tests, they need to be enabled after we fix the code.
+        // (r"<img alt='イメージ' />", Some(serde_json::json!([{ "words": ["イメージ"] }])), None),
+        // (r"<img alt='イメージです' />", Some(serde_json::json!([{ "words": ["イメージ"] }])), None),
     ];
 
     Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::PLUGIN, pass, fail).test_and_snapshot();

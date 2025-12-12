@@ -1386,7 +1386,7 @@ pub struct ReturnStatement<'a> {
 
 /// With Statement
 #[ast(visit)]
-#[scope]
+#[scope(flags = ScopeFlags::With)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct WithStatement<'a> {

@@ -43,16 +43,20 @@ impl std::ops::Deref for NoOptionalChaining {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow [optional chaining](https://github.com/tc39/proposal-optional-chaining).
+    /// Disallow [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining).
     ///
     /// ### Why is this bad?
     ///
-    /// Optional chaining is a relatively new JavaScript feature that may not be
-    /// supported in older environments. In some cases, transpiling optional
-    /// chaining can result in verbose helper code that impacts bundle size or
-    /// performance. This rule is useful when you need to maintain compatibility
-    /// with older JavaScript targets or want to avoid the overhead of transpiled
-    /// optional chaining.
+    /// You may want to use this rule if you need to maintain compatibility with older environments.
+    /// However, optional chaining has been supported in all major browsers since 2020 and is
+    /// generally safe to use today.
+    ///
+    /// In some cases, transpiling optional chaining can result in verbose helper code
+    /// that impacts bundle size and performance. This rule is useful when you need to
+    /// avoid the overhead of transpiled optional chaining. This is only relevant if you
+    /// are polyfilling to support browsers from pre-2020.
+    ///
+    /// In most codebases at this point, you should not use this rule.
     ///
     /// ### Examples
     ///

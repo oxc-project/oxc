@@ -276,7 +276,7 @@ pub fn arguments_grouped_layout(
         let second_can_group_fn = || second_can_group;
 
         // Check if we should group the last argument (second)
-        if should_group_last_argument_impl(Some(first), second, second_can_group_fn, f) {
+        if should_group_last_argument_impl(2, Some(first), second, second_can_group_fn, f) {
             return Some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
 
@@ -344,6 +344,7 @@ fn should_group_first_argument(
 /// Takes the penultimate argument as an Expression for the 2-argument case,
 /// or extracts it from the arguments array for other cases.
 fn should_group_last_argument_impl(
+    args_len: usize,
     penultimate: Option<&Expression>,
     last: &Expression,
     last_can_group_fn: impl FnOnce() -> bool,
@@ -396,7 +397,8 @@ fn should_group_last_argument_impl(
     match last {
         Expression::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if matches!(penultimate, Some(Expression::ArrowFunctionExpression(_))) {
+            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
+            {
                 return false;
             }
 
@@ -415,7 +417,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 
     let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
     let last_can_group_fn = || can_group_expression_argument(last, f);
-    should_group_last_argument_impl(penultimate, last, last_can_group_fn, f)
+    should_group_last_argument_impl(args.len(), penultimate, last, last_can_group_fn, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few

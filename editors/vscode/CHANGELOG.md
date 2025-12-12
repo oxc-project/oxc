@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 2d6bb85 editors: Toggle client after vscode config changing (#16162) (Liang Mi)
+
+### 🛡️ Security
+
+- d90ef9f deps: Update dependency rolldown to v1.0.0-beta.53 (#16428) (renovate[bot])
+
 ## [1.30.0] - 2025-11-24
 
 ### 🚀 Features

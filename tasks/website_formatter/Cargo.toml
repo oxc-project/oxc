@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
 oxc_formatter = { path = "../../crates/oxc_formatter" }
-oxfmt = { path = "../../apps/oxfmt", default-features = false }
+oxfmt = { path = "../../apps/oxfmt" }
 pico-args = { workspace = true }
 schemars = { workspace = true }
 serde_json = { workspace = true }

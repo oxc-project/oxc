@@ -1,5 +1,5 @@
 use rustc_hash::FxBuildHasher;
-use tower_lsp_server::{LspService, Server, lsp_types::ServerInfo};
+use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 
 mod backend;
 mod capabilities;

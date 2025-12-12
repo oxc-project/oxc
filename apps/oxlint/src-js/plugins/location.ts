@@ -234,9 +234,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
     }
   }
 
-  throw new TypeError(
-    "Expected `loc` to be an object with integer `line` and `column` properties.",
-  );
+  throw new TypeError("Expected `loc` to be an object with integer `line` and `column` properties");
 }
 
 /**

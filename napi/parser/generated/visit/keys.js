@@ -177,7 +177,7 @@ export default freeze({
   TSExternalModuleReference: EXPRESSION,
   TSFunctionType: TYPE_PARAMETERS__PARAMS__RETURN_TYPE,
   TSImportEqualsDeclaration: freeze(["id", "moduleReference"]),
-  TSImportType: freeze(["argument", "options", "qualifier", "typeArguments"]),
+  TSImportType: freeze(["source", "options", "qualifier", "typeArguments"]),
   TSIndexSignature: freeze(["parameters", "typeAnnotation"]),
   TSIndexedAccessType: freeze(["objectType", "indexType"]),
   TSInferType: freeze(["typeParameter"]),

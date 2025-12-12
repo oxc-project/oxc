@@ -1,8 +1,8 @@
-commit: d0994d64
+commit: c0cf5277
 
 minifier_test262 Summary:
-AST Parsed     : 43381/43381 (100.00%)
-Positive Passed: 43378/43381 (99.99%)
+AST Parsed     : 44019/44019 (100.00%)
+Positive Passed: 44016/44019 (99.99%)
 Compress: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toLocaleString/lone-options-accepted.js
 
 Compress: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toLocaleString/lone-options-accepted.js

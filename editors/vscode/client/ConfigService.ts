@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscode";
+import { ConfigurationChangeEvent, RelativePattern, Uri, workspace, WorkspaceFolder } from "vscode";
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
 import { VSCodeConfig } from "./VSCodeConfig";
@@ -120,9 +120,19 @@ export class ConfigService implements IDisposable {
 
   public async getOxfmtServerBinPath(): Promise<string | undefined> {
     let bin = this.vsCodeConfig.binPathOxfmt;
+
+    const cwd = this.workspaceConfigs.keys().next().value;
+    if (!cwd) {
+      return undefined;
+    }
+
     if (!bin) {
-      // try to find oxfmt in node_modules/.bin
-      const files = await workspace.findFiles("**/node_modules/.bin/oxfmt", null, 1);
+      // try to find oxfmt in node_modules/.bin, resolve to the first workspace folder
+      const files = await workspace.findFiles(
+        new RelativePattern(cwd, "**/node_modules/.bin/oxfmt"),
+        null,
+        1,
+      );
 
       return files.length > 0 ? files[0].fsPath : undefined;
     }
@@ -134,10 +144,6 @@ export class ConfigService implements IDisposable {
 
     if (!path.isAbsolute(bin)) {
       // if the path is not absolute, resolve it to the first workspace folder
-      const cwd = this.workspaceConfigs.keys().next().value;
-      if (!cwd) {
-        return undefined;
-      }
       bin = path.normalize(path.join(cwd, bin));
       // strip the leading slash on Windows
       if (process.platform === "win32" && bin.startsWith("\\")) {

@@ -138,9 +138,9 @@ where
                     unreachable!()
                 );
             } else if !finished.is_visited(&v) {
-                try_control!(visitor(DfsEvent::BackEdge(u, v)), continue);
+                try_control!(visitor(DfsEvent::BackEdge(u, v)), {});
             } else {
-                try_control!(visitor(DfsEvent::CrossForwardEdge(u, v)), continue);
+                try_control!(visitor(DfsEvent::CrossForwardEdge(u, v)), {});
             }
         }
     );

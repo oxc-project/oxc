@@ -322,16 +322,16 @@ fn how_to_use(rule: &RuleTableRow) -> String {
     };
     format!(
         r"
-To **enable** this rule in the CLI or using the config file, you can use:
+To **enable** this rule using the config file or in the CLI, you can use:
 
 ::: code-group
 
-```bash [CLI]
-{enable_bash_example}
-```
-
 ```json [Config (.oxlintrc.json)]
 {enable_config_example}
+```
+
+```bash [CLI]
+{enable_bash_example}
 ```
 
 :::

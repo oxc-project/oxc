@@ -1,0 +1,310 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ !!foo
+   · ─────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ !!(foo + bar)
+   · ─────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ !!(foo + bar); var Boolean = null
+   · ─────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ !!(foo + bar)
+   · ─────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.indexOf(1)
+   · ───────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.bar.indexOf(2)
+   · ───────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.lastIndexOf(1)
+   · ───────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo.bar.lastIndexOf(2)
+   · ───────────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo?.lastIndexOf(1)
+   · ────────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ +foo
+   · ────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ -(-foo)
+   · ───────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ +foo.bar
+   · ────────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ 1*foo
+   · ─────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo*1
+   · ─────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ 1*foo.bar
+   · ─────────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo.bar-0
+   · ─────────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ""+foo
+   · ──────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ``+foo
+   · ──────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo+""
+   · ──────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo+``
+   · ──────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ""+foo.bar
+   · ──────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ``+foo.bar
+   · ──────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo.bar+""
+   · ──────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo.bar+``
+   · ──────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ `${foo}`
+   · ────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ╭─▶ `\\
+ 2 │ ╰─▶             ${foo}`
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ╭─▶ `${foo}\\
+ 2 │ ╰─▶             `
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo += ""
+   · ─────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ foo += ``
+   · ─────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = !!foo
+   ·         ─────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = ~foo.indexOf(1)
+   ·         ───────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = 1 * foo
+   ·         ───────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = +foo
+   ·         ────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = "" + foo
+   ·         ────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:9]
+ 1 │ var a = `` + foo
+   ·         ────────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:7]
+ 1 │ typeof+foo
+   ·       ────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:8]
+ 1 │ typeof +foo
+   ·        ────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to string
+   ╭─[no_implicit_coercion.tsx:1:8]
+ 1 │ let x ='' + 1n;
+   ·        ───────
+   ╰────
+  help: Use `String(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~foo?.indexOf(1)
+   · ────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ ~(foo?.indexOf)(1)
+   · ──────────────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ 1 * a / 2
+   · ─────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:2]
+ 1 │ (a * 1) / 2
+   ·  ─────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:10]
+ 1 │ a * 1 / (b * 1)
+   ·          ─────
+   ╰────
+  help: Use `Number(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to number
+   ╭─[no_implicit_coercion.tsx:1:1]
+ 1 │ a * 1 + 2
+   · ─────
+   ╰────
+  help: Use `Number(value)` instead

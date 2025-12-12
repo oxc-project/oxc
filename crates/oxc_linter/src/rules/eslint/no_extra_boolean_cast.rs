@@ -1,13 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, NewExpression, match_member_expression},
+    ast::{CallExpression, Expression, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     operator::{LogicalOperator, UnaryOperator},
-    precedence::{GetPrecedence, Precedence},
+    precedence::Precedence,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -16,6 +16,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::get_precedence,
 };
 
 fn no_extra_double_negation_cast_diagnostic(span: Span) -> OxcDiagnostic {
@@ -242,28 +243,6 @@ fn without_not<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
         Expression::UnaryExpression(expr) if expr.operator == UnaryOperator::LogicalNot => {
             Some(&expr.argument)
         }
-        _ => None,
-    }
-}
-
-/// Returns the precedence of an expression if it has one.
-/// Returns `None` for "atomic" expressions (literals, identifiers, etc.) that have
-/// the highest precedence and never need parentheses.
-fn get_precedence(expr: &Expression) -> Option<Precedence> {
-    match expr {
-        Expression::SequenceExpression(e) => Some(e.precedence()),
-        Expression::AssignmentExpression(e) => Some(e.precedence()),
-        Expression::YieldExpression(e) => Some(e.precedence()),
-        Expression::ConditionalExpression(e) => Some(e.precedence()),
-        Expression::LogicalExpression(e) => Some(e.precedence()),
-        Expression::BinaryExpression(e) => Some(e.precedence()),
-        Expression::UnaryExpression(e) => Some(e.precedence()),
-        Expression::UpdateExpression(e) => Some(e.precedence()),
-        Expression::AwaitExpression(e) => Some(e.precedence()),
-        Expression::NewExpression(e) => Some(e.precedence()),
-        Expression::CallExpression(e) => Some(e.precedence()),
-        match_member_expression!(Expression) => Some(expr.to_member_expression().precedence()),
-        // Literals, identifiers, and other atomic expressions have highest precedence
         _ => None,
     }
 }

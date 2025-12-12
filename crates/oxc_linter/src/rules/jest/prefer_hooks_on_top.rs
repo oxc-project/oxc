@@ -144,6 +144,17 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-hooks-on-top.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-hooks-on-top": "error"
+    ///   }
+    /// }
+    /// ```
     PreferHooksOnTop,
     jest,
     style,

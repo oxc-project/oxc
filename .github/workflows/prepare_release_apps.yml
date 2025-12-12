@@ -21,7 +21,7 @@ jobs:
       oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
       oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -55,7 +55,7 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
-      - uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
+      - uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
@@ -89,7 +89,7 @@ jobs:
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxc-ecosystem-ci
-          workflow: ci.yml
+          workflow: oxlint-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.102.0] - 2025-12-08
+
+### 🐛 Bug Fixes
+
+- 699406a napi/parser: Move `ExportEntry::module_request` field to first (#16412) (overlookmotel)
+- 12bd794 napi/parser: Move `ExportEntry::module_request` field to last (#16403) (overlookmotel)
+
 
 
 ## [0.94.0] - 2025-10-06

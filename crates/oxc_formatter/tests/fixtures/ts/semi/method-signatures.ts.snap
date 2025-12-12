@@ -1,0 +1,43 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+export interface MethodSignatures {
+  (arg: string): void;
+  (arg: number): null;
+}
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+export interface MethodSignatures {
+  (arg: string): void
+  (arg: number): null
+}
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+export interface MethodSignatures {
+  (arg: string): void
+  (arg: number): null
+}
+
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+export interface MethodSignatures {
+  (arg: string): void;
+  (arg: number): null;
+}
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+export interface MethodSignatures {
+  (arg: string): void;
+  (arg: number): null;
+}
+
+===================== End =====================

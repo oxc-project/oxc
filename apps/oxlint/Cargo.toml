@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.31.0"
+version = "1.32.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -32,6 +32,7 @@ oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_diagnostics = { workspace = true }
 oxc_language_server = { workspace = true, features = ["linter"] }
 oxc_linter = { workspace = true }
+oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }

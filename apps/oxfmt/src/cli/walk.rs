@@ -3,9 +3,9 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::{gitignore::GitignoreBuilder, overrides::OverrideBuilder};
+use ignore::gitignore::GitignoreBuilder;
 
-use crate::core::FormatFileSource;
+use crate::core::FormatFileStrategy;
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -18,38 +18,49 @@ impl Walk {
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
         ignore_patterns: &[String],
-    ) -> Result<Self, String> {
-        let (target_paths, exclude_patterns) = normalize_paths(cwd, paths);
+    ) -> Result<Option<Self>, String> {
+        //
+        // Classify and normalize specified paths
+        //
+        let mut target_paths = vec![];
+        let mut exclude_patterns = vec![];
+        for path in paths {
+            let path_str = path.to_string_lossy();
 
-        // Add all non-`!` prefixed paths to the walker base
-        let mut inner = ignore::WalkBuilder::new(
-            target_paths
-                .first()
-                .expect("`target_paths` never be empty, should have at least `cwd`"),
-        );
-        if let Some(paths) = target_paths.get(1..) {
-            for path in paths {
-                inner.add(path);
+            // Instead of `oxlint`'s `--ignore-pattern=PAT`,
+            // `oxfmt` supports `!` prefix in paths like Prettier.
+            if path_str.starts_with('!') {
+                exclude_patterns.push(path_str.to_string());
+                continue;
             }
+
+            // Otherwise, treat as target path
+
+            if path.is_absolute() {
+                target_paths.push(path.clone());
+                continue;
+            }
+
+            // NOTE: `.` and cwd behave differently, need to normalize
+            let path = if path_str == "." {
+                cwd.to_path_buf()
+            } else if let Some(stripped) = path_str.strip_prefix("./") {
+                cwd.join(stripped)
+            } else {
+                cwd.join(path)
+            };
+            target_paths.push(path);
+        }
+        // Default to cwd if no target paths are provided
+        if target_paths.is_empty() {
+            target_paths.push(cwd.to_path_buf());
         }
 
-        // NOTE: We are using `OverrideBuilder` only for exclusion.
-        // This means there is no way to "re-include" a file once ignored.
-
-        // Treat all `!` prefixed patterns as overrides to exclude
-        if !exclude_patterns.is_empty() {
-            let mut builder = OverrideBuilder::new(cwd);
-            for pattern_str in exclude_patterns {
-                builder
-                    .add(&pattern_str)
-                    .map_err(|_| format!("{pattern_str} is not a valid glob for override."))?;
-            }
-            let overrides = builder.build().map_err(|_| "Failed to build overrides".to_string())?;
-            inner.overrides(overrides);
-        }
-
-        // Handle ignore files
+        //
+        // Build ignores
+        //
         let mut builder = GitignoreBuilder::new(cwd);
+        // Handle ignore files
         for ignore_path in &load_ignore_paths(cwd, ignore_paths) {
             if builder.add(ignore_path).is_some() {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
@@ -58,10 +69,46 @@ impl Walk {
         // Handle `config.ignorePatterns`
         for pattern in ignore_patterns {
             if builder.add_line(None, pattern).is_err() {
-                return Err(format!("Failed to add ignore pattern `{pattern}`"));
+                return Err(format!(
+                    "Failed to add ignore pattern `{pattern}` from `.ignorePatterns`"
+                ));
+            }
+        }
+        // Handle `!` prefixed paths as ignore patterns too
+        for pattern in &exclude_patterns {
+            // Remove the leading `!` because `GitignoreBuilder` uses `!` as negation
+            let pattern =
+                pattern.strip_prefix('!').expect("There should be a `!` prefix, already checked");
+            if builder.add_line(None, pattern).is_err() {
+                return Err(format!("Failed to add ignore pattern `{pattern}` from `!` prefix"));
             }
         }
         let ignores = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+
+        //
+        // Filter paths by ignores
+        //
+        // NOTE: Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
+        // so we need to filter them here before passing to the walker.
+        let target_paths: Vec<_> = target_paths
+            .into_iter()
+            .filter(|path| {
+                let matched = ignores.matched(path, path.is_dir());
+                !matched.is_ignore() || matched.is_whitelist()
+            })
+            .collect();
+
+        // If no target paths remain after filtering, return `None`.
+        // Not an error, but nothing to format, leave it to the caller how to handle.
+        let Some(first_path) = target_paths.first() else {
+            return Ok(None);
+        };
+
+        // Add all non-`!` prefixed paths to the walker base
+        let mut inner = ignore::WalkBuilder::new(first_path);
+        for path in target_paths.iter().skip(1) {
+            inner.add(path);
+        }
 
         // NOTE: If return `false` here, it will not be `visit()`ed at all
         inner.filter_entry(move |entry| {
@@ -115,12 +162,12 @@ impl Walk {
             .git_ignore(false)
             .git_exclude(false)
             .build_parallel();
-        Ok(Self { inner })
+        Ok(Some(Self { inner }))
     }
 
     /// Stream entries through a channel as they are discovered
-    pub fn stream_entries(self) -> mpsc::Receiver<FormatFileSource> {
-        let (sender, receiver) = mpsc::channel::<FormatFileSource>();
+    pub fn stream_entries(self) -> mpsc::Receiver<FormatFileStrategy> {
+        let (sender, receiver) = mpsc::channel::<FormatFileStrategy>();
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
@@ -131,49 +178,6 @@ impl Walk {
 
         receiver
     }
-}
-
-/// Normalize user input paths into `target_paths` and `exclude_patterns`.
-/// - `target_paths`: Absolute paths to format
-/// - `exclude_patterns`: Pattern strings to exclude (with `!` prefix)
-fn normalize_paths(cwd: &Path, input_paths: &[PathBuf]) -> (Vec<PathBuf>, Vec<String>) {
-    let mut target_paths = vec![];
-    let mut exclude_patterns = vec![];
-
-    for path in input_paths {
-        let path_str = path.to_string_lossy();
-
-        // Instead of `oxlint`'s `--ignore-pattern=PAT`,
-        // `oxfmt` supports `!` prefix in paths like Prettier.
-        if path_str.starts_with('!') {
-            exclude_patterns.push(path_str.to_string());
-            continue;
-        }
-
-        // Otherwise, treat as target path
-
-        if path.is_absolute() {
-            target_paths.push(path.clone());
-            continue;
-        }
-
-        // NOTE: `.` and cwd behaves differently, need to normalize
-        let path = if path_str == "." {
-            cwd.to_path_buf()
-        } else if let Some(stripped) = path_str.strip_prefix("./") {
-            cwd.join(stripped)
-        } else {
-            cwd.join(path)
-        };
-        target_paths.push(path);
-    }
-
-    // Default to cwd if no `target_paths` are provided
-    if target_paths.is_empty() {
-        target_paths.push(cwd.into());
-    }
-
-    (target_paths, exclude_patterns)
 }
 
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
@@ -187,18 +191,18 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
 
     // Else, search for default ignore files in cwd
     [".gitignore", ".prettierignore"]
-        .iter()
+        .into_iter()
         .filter_map(|file_name| {
             let path = cwd.join(file_name);
-            if path.exists() { Some(path) } else { None }
+            path.exists().then_some(path)
         })
-        .collect::<Vec<_>>()
+        .collect()
 }
 
 // ---
 
 struct WalkBuilder {
-    sender: mpsc::Sender<FormatFileSource>,
+    sender: mpsc::Sender<FormatFileStrategy>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -208,7 +212,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 }
 
 struct WalkVisitor {
-    sender: mpsc::Sender<FormatFileSource>,
+    sender: mpsc::Sender<FormatFileStrategy>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -227,13 +231,13 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Tier 4 = everything else: Not handled
-                    let Ok(format_file_source) = FormatFileSource::try_from(entry.into_path())
+                    let Ok(format_file_source) = FormatFileStrategy::try_from(entry.into_path())
                     else {
                         return ignore::WalkState::Continue;
                     };
 
                     #[cfg(not(feature = "napi"))]
-                    if matches!(format_file_source, FormatFileSource::ExternalFormatter { .. }) {
+                    if !matches!(format_file_source, FormatFileStrategy::OxcFormatter { .. }) {
                         return ignore::WalkState::Continue;
                     }
 

@@ -1437,9 +1437,6 @@ mod test {
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
-        // Note: tsgolint fixes this lint rule by providing two string manipulations
-        // the first removing `as` and the second removing `string` This results in the two spaces
-        // after `str` but before `;`, this is ok, as it's not guaranteed that our fixers are stylistically correct.
         Tester::test_fix_with_args(
             "fixtures/tsgolint_fix/fix.ts",
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
@@ -1452,7 +1449,7 @@ export { redundant };
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
 // The type assertion `as string` is unnecessary because str is already a string
 const str: string = 'hello';
-const redundant = str  ;
+const redundant = str;
 
 export { redundant };
 ",

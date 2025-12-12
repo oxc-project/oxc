@@ -5,7 +5,9 @@ use crate::{
     Buffer, Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::string::{
+        FormatLiteralStringToken, StringLiteralParentKind, is_identifier_name_patched,
+    },
     write,
 };
 
@@ -42,7 +44,7 @@ pub fn write_member_name<'a>(
             false,
             StringLiteralParentKind::Member,
         )
-        .clean_text(f.context().source_type(), f.options());
+        .clean_text(f);
 
         string.format_leading_comments(f);
         write!(f, format);
@@ -54,4 +56,12 @@ pub fn write_member_name<'a>(
 
         f.source_text().span_width(key.span())
     }
+}
+
+/// Determine if the property key string literal should preserve its quotes
+pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &Formatter<'_, '_>) -> bool {
+    matches!(&key, PropertyKey::StringLiteral(string) if {
+        let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
+        !is_identifier_name_patched(quote_less_content)
+    })
 }

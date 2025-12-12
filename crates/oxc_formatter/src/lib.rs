@@ -18,7 +18,7 @@ use oxc_ast::ast::*;
 pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
-pub use crate::service::{oxfmtrc::Oxfmtrc, parse_utils::*};
+pub use crate::service::{oxfmtrc::OxfmtOptions, oxfmtrc::Oxfmtrc, parse_utils::*};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatContext, Formatted},
