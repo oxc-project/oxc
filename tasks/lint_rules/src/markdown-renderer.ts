@@ -1,5 +1,5 @@
-import { TargetPluginMeta } from "./eslint-rules";
-import type { RuleEntry } from "./oxlint-rules";
+import type { TargetPluginMeta } from "./eslint-rules.ts";
+import type { RuleEntry } from "./oxlint-rules.ts";
 
 type RuleEntryView = { name: string } & RuleEntry;
 type CounterView = {

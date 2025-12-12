@@ -1,4 +1,4 @@
-import type { TargetPluginMeta } from "./eslint-rules";
+import type { TargetPluginMeta } from "./eslint-rules.ts";
 
 export const updateGitHubIssue = async ({ issueNo }: TargetPluginMeta, markdown: string) => {
   const issueUrl = `https://github.com/oxc-project/oxc/issues/${issueNo}`;

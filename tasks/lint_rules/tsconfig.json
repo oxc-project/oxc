@@ -1,9 +1,14 @@
 {
   "compilerOptions": {
     "checkJs": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "lib": ["esnext"],
     "target": "esnext",
-    "strict": true
+    "module": "esnext",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": true
   }
 }

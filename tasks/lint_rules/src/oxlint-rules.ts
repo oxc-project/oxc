@@ -423,10 +423,7 @@ export type RuleEntry = {
 };
 
 export const createRuleEntries = (
-  loadedAllRules: Map<
-    string,
-    { meta?: { docs?: { url?: string; recommended?: boolean }; deprecated?: boolean } }
-  >,
+  loadedAllRules: ReturnType<import("eslint").Linter["getRules"]>,
 ): Map<string, RuleEntry> => {
   const rulesEntry = new Map<string, RuleEntry>();
 
