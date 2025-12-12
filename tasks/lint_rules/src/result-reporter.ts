@@ -1,8 +1,6 @@
-/**
- * @param {import("./eslint-rules.mjs").TargetPluginMeta} pluginMeta
- * @param {string} markdown
- */
-export const updateGitHubIssue = async ({ issueNo }, markdown) => {
+import type { TargetPluginMeta } from "./eslint-rules";
+
+export const updateGitHubIssue = async ({ issueNo }: TargetPluginMeta, markdown: string) => {
   const issueUrl = `https://github.com/oxc-project/oxc/issues/${issueNo}`;
 
   try {

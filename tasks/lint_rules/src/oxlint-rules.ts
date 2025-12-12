@@ -1,11 +1,10 @@
 import { readFile, readdir } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
-const readAllImplementedRuleNames = async () => {
+const readAllImplementedRuleNames = async (): Promise<Set<string>> => {
   const rulesFile = await readFile(resolve("crates/oxc_linter/src/rules.rs"), "utf8");
 
-  /** @type {Set<string>} */
-  const rules = new Set();
+  const rules = new Set<string>();
 
   let found = false;
   for (let line of rulesFile.split("\n")) {
@@ -43,18 +42,15 @@ const readAllImplementedRuleNames = async () => {
  * A rule has a pending fix if it's declared with the `pending` keyword in its
  * declare_oxc_lint! macro, like: declare_oxc_lint!(RuleName, plugin, category, pending)
  */
-const readAllPendingFixRuleNames = async () => {
-  /** @type {Set<string>} */
-  const pendingFixRules = new Set();
+const readAllPendingFixRuleNames = async (): Promise<Set<string>> => {
+  const pendingFixRules = new Set<string>();
 
   const rulesDir = resolve("crates/oxc_linter/src/rules");
 
   /**
    * Recursively read all .rs files in a directory
-   * @param {string} dir
-   * @returns {Promise<string[]>}
    */
-  const readRustFiles = async (dir) => {
+  const readRustFiles = async (dir: string): Promise<string[]> => {
     const entries = await readdir(dir, { withFileTypes: true });
     const files = await Promise.all(
       entries.map((entry) => {
@@ -417,22 +413,22 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "vue/valid-model-definition", // deprecated
 ]);
 
-/**
- * @typedef {{
- *   docsUrl: string,
- *   isDeprecated: boolean,
- *   isRecommended: boolean,
- *   isImplemented: boolean,
- *   isNotSupported: boolean,
- *   isPendingFix: boolean,
- * }} RuleEntry
- * @typedef {Map<string, RuleEntry>} RuleEntries
- */
+export type RuleEntry = {
+  docsUrl: string;
+  isDeprecated: boolean;
+  isRecommended: boolean;
+  isImplemented: boolean;
+  isNotSupported: boolean;
+  isPendingFix: boolean;
+};
 
-/** @param {ReturnType<import("eslint").Linter["getRules"]>} loadedAllRules */
-export const createRuleEntries = (loadedAllRules) => {
-  /** @type {RuleEntries} */
-  const rulesEntry = new Map();
+export const createRuleEntries = (
+  loadedAllRules: Map<
+    string,
+    { meta?: { docs?: { url?: string; recommended?: boolean }; deprecated?: boolean } }
+  >,
+): Map<string, RuleEntry> => {
+  const rulesEntry = new Map<string, RuleEntry>();
 
   for (const [name, rule] of loadedAllRules) {
     // Default eslint rules are not prefixed
@@ -456,8 +452,7 @@ export const createRuleEntries = (loadedAllRules) => {
   return rulesEntry;
 };
 
-/** @param {RuleEntries} ruleEntries */
-export const updateImplementedStatus = async (ruleEntries) => {
+export const updateImplementedStatus = async (ruleEntries: Map<string, RuleEntry>) => {
   const implementedRuleNames = await readAllImplementedRuleNames();
 
   for (const name of implementedRuleNames) {
@@ -471,16 +466,14 @@ export const updateImplementedStatus = async (ruleEntries) => {
   }
 };
 
-/** @param {RuleEntries} ruleEntries */
-export const updateNotSupportedStatus = (ruleEntries) => {
+export const updateNotSupportedStatus = (ruleEntries: Map<string, RuleEntry>) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
     const rule = ruleEntries.get(name);
     if (rule) rule.isNotSupported = true;
   }
 };
 
-/** @param {RuleEntries} ruleEntries */
-export const updatePendingFixStatus = async (ruleEntries) => {
+export const updatePendingFixStatus = async (ruleEntries: Map<string, RuleEntry>) => {
   const pendingFixRuleNames = await readAllPendingFixRuleNames();
 
   for (const name of pendingFixRuleNames) {
@@ -491,11 +484,7 @@ export const updatePendingFixStatus = async (ruleEntries) => {
   }
 };
 
-/**
- * @param {string} constName
- * @param {string} fileContent
- */
-const getArrayEntries = (constName, fileContent) => {
+const getArrayEntries = (constName: string, fileContent: string) => {
   // Find the start of the list
   // ```
   // const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
@@ -531,9 +520,10 @@ const getArrayEntries = (constName, fileContent) => {
  * Since oxlint supports these rules under eslint/* and it also supports TS,
  * we should override these to make implementation status up-to-date.
  *
- * @param {RuleEntries} ruleEntries
  */
-export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleEntries) => {
+export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
+  ruleEntries: Map<string, RuleEntry>,
+) => {
   const typescriptCompatibleRulesFile = await readFile(
     "crates/oxc_linter/src/utils/mod.rs",
     "utf8",
@@ -559,9 +549,10 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleE
 /**
  * Some Jest rules are written to be compatible with Vitest, so we should
  * override the status of the Vitest rules to match the Jest rules.
- * @param {RuleEntries} ruleEntries
  */
-export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+export const syncVitestPluginStatusWithJestPluginStatus = async (
+  ruleEntries: Map<string, RuleEntry>,
+) => {
   const vitestCompatibleRulesFile = await readFile("crates/oxc_linter/src/utils/mod.rs", "utf8");
   const rules = getArrayEntries("VITEST_COMPATIBLE_JEST_RULES", vitestCompatibleRulesFile);
 
@@ -581,9 +572,10 @@ export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) =>
 /**
  * Some Unicorn rules rules are re-implemented version of eslint rules.
  * We should override these to make implementation status up-to-date.
- * @param {RuleEntries} ruleEntries
  */
-export const syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {
+export const syncUnicornPluginStatusWithEslintPluginStatus = (
+  ruleEntries: Map<string, RuleEntry>,
+) => {
   const rules = new Set(["no-negated-condition"]);
 
   for (const rule of rules) {

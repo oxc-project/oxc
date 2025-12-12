@@ -1,10 +1,15 @@
-/**
- * @typedef {({ name: string } & import("./oxlint-rules.mjs").RuleEntry)} RuleEntryView
- * @typedef {{ isImplemented: number; isNotSupported: number; isPendingFix: number; total: number }} CounterView
- */
+import { TargetPluginMeta } from "./eslint-rules";
+import type { RuleEntry } from "./oxlint-rules";
 
-/** @param {{ npm: string[]; }} props */
-const renderIntroduction = ({ npm }) => `
+type RuleEntryView = { name: string } & RuleEntry;
+type CounterView = {
+  isImplemented: number;
+  isNotSupported: number;
+  isPendingFix: number;
+  total: number;
+};
+
+const renderIntroduction = ({ npm }: { npm: string[] }) => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
@@ -12,16 +17,11 @@ const renderIntroduction = ({ npm }) => `
 This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
 `;
 
-/**
- * @param {{
- *   counters: {
- *     recommended: CounterView;
- *     notRecommended: CounterView;
- *     deprecated: CounterView;
- *   };
- * }} props
- */
-const renderCounters = ({ counters: { recommended, notRecommended, deprecated } }) => {
+const renderCounters = ({
+  counters: { recommended, notRecommended, deprecated },
+}: {
+  counters: { recommended: CounterView; notRecommended: CounterView; deprecated: CounterView };
+}) => {
   const recommendedTodos =
     recommended.total - (recommended.isImplemented + recommended.isNotSupported);
   const notRecommendedTodos =
@@ -46,8 +46,7 @@ ${countersList}
 `;
 };
 
-/** @param {{ pluginName: string }} props */
-const renderGettingStarted = ({ pluginName }) => `
+const renderGettingStarted = ({ pluginName }: { pluginName: string }) => `
 To get started, run the following command:
 
 \`\`\`sh
@@ -57,14 +56,17 @@ just new-${pluginName}-rule <RULE_NAME>
 Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_all_lint_rules\` at the bottom.
 `;
 
-/**
- * @param {{
- *   title: string;
- *   counters: CounterView;
- *   views: RuleEntryView[];
- *   defaultOpen?: boolean;
- * }} props */
-const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
+const renderRulesList = ({
+  title,
+  counters,
+  views,
+  defaultOpen = true,
+}: {
+  title: string;
+  counters: CounterView;
+  views: RuleEntryView[];
+  defaultOpen?: boolean;
+}) => `
 ## ${title}
 
 <details ${defaultOpen ? "open" : ""}>
@@ -90,14 +92,12 @@ ${views
 </details>
 `;
 
-/**
- * @param {string} pluginName
- * @param {import("./eslint-rules.mjs").TargetPluginMeta} pluginMeta
- * @param {import("./oxlint-rules.mjs").RuleEntries} ruleEntries
- */
-export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
-  /** @type {Record<string, RuleEntryView[]>} */
-  const views = {
+export const renderMarkdown = (
+  pluginName: string,
+  pluginMeta: TargetPluginMeta,
+  ruleEntries: Map<string, RuleEntry>,
+) => {
+  const views: Record<string, RuleEntryView[]> = {
     deprecated: [],
     recommended: [],
     notRecommended: [],
@@ -168,18 +168,13 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     .join("\n");
 };
 
-/** @param {Record<string, RuleEntryView[]>} views */
-function sortViews(views) {
+function sortViews(views: Record<string, RuleEntryView[]>): Record<string, RuleEntryView[]> {
   const copy = { ...views };
 
-  /** @param {string} name */
-  const unprefix = (name) => name.split("/").pop() || "";
+  const unprefix = (name: string) => name.split("/").pop() || "";
 
-  /**
-   * @param {RuleEntryView} a
-   * @param {RuleEntryView} b
-   */
-  const byRuleName = (a, b) => unprefix(a.name).localeCompare(unprefix(b.name));
+  const byRuleName = (a: RuleEntryView, b: RuleEntryView) =>
+    unprefix(a.name).localeCompare(unprefix(b.name));
 
   for (const key in views) copy[key] = views[key].toSorted(byRuleName);
 
