@@ -4,7 +4,7 @@ use oxfmt::cli::{
 
 // Pure Rust CLI entry point.
 // This CLI only supports the basic `Cli` mode.
-// For full featured JS CLI entry point, see `format()` exported by `main_napi.rs`.
+// For full featured JS CLI entry point, see `run_cli()` exported by `main_napi.rs`.
 
 #[tokio::main]
 async fn main() -> CliRunResult {

@@ -1,14 +1,9 @@
-use std::{
-    ffi::OsString,
-    process::{ExitCode, Termination},
-};
+use std::ffi::OsString;
 
 use napi_derive::napi;
 
 use crate::{
-    cli::{
-        CliRunResult, FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing,
-    },
+    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     lsp::run_lsp,
 };
@@ -24,11 +19,13 @@ use crate::{
 /// 3. `format_embedded_cb`: Callback to format embedded code in templates
 /// 4. `format_file_cb`: Callback to format files
 ///
-/// Returns `true` if formatting succeeded without errors, `false` otherwise.
+/// Returns a tuple of `[mode, exitCode]`:
+/// - `mode`: "cli" | "lsp" | "init"
+/// - `exitCode`: exit code (0, 1, 2) for "cli" mode, `undefined` for other modes
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn format(
+pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
     setup_config_cb: JsSetupConfigCb,
@@ -38,18 +35,7 @@ pub async fn format(
         ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
-) -> bool {
-    format_impl(args, setup_config_cb, format_embedded_cb, format_file_cb).await.report()
-        == ExitCode::SUCCESS
-}
-
-/// Run the formatter.
-async fn format_impl(
-    args: Vec<String>,
-    setup_config_cb: JsSetupConfigCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
-    format_file_cb: JsFormatFileCb,
-) -> CliRunResult {
+) -> (String, Option<u8>) {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
@@ -58,19 +44,17 @@ async fn format_impl(
         Ok(cmd) => cmd,
         Err(e) => {
             e.print_message(100);
-            return if e.exit_code() == 0 {
-                CliRunResult::None
-            } else {
-                CliRunResult::InvalidOptionConfig
-            };
+            // `bpaf` returns exit_code 0 for --help/--version, non-0 for parse errors
+            let exit_code = u8::from(e.exit_code() != 0);
+            return ("cli".to_string(), Some(exit_code));
         }
     };
 
     match command.mode {
-        Mode::Init => unreachable!("`--init` should be handled by JS side"),
+        Mode::Init => ("init".to_string(), None),
         Mode::Lsp => {
             run_lsp().await;
-            CliRunResult::None
+            ("lsp".to_string(), None)
         }
         Mode::Cli(_) => {
             init_tracing();
@@ -81,7 +65,10 @@ async fn format_impl(
             let external_formatter =
                 ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
 
-            FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run()
+            let result =
+                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+
+            ("cli".to_string(), Some(result.exit_code()))
         }
     }
 }
