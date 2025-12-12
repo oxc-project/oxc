@@ -66,10 +66,8 @@ const DEPRECATED_REACT_DOM_SERVER_METHODS: &[(&str, &str)] =
     &[("renderToNodeStream", "renderToPipeableStream")];
 
 /// Deprecated React properties
-const DEPRECATED_REACT_PROPERTIES: &[(&str, &str)] = &[
-    ("PropTypes", "prop-types package"),
-    ("DOM", "react-dom-factories package"),
-];
+const DEPRECATED_REACT_PROPERTIES: &[(&str, &str)] =
+    &[("PropTypes", "prop-types package"), ("DOM", "react-dom-factories package")];
 
 /// Deprecated lifecycle methods (React 16.9+)
 const DEPRECATED_LIFECYCLE_METHODS: &[(&str, &str)] = &[
@@ -79,10 +77,8 @@ const DEPRECATED_LIFECYCLE_METHODS: &[(&str, &str)] = &[
 ];
 
 /// Deprecated addons
-const DEPRECATED_REACT_ADDONS: &[(&str, &str)] = &[
-    ("TestUtils", "react-dom/test-utils package"),
-    ("classSet", "classnames package"),
-];
+const DEPRECATED_REACT_ADDONS: &[(&str, &str)] =
+    &[("TestUtils", "react-dom/test-utils package"), ("classSet", "classnames package")];
 
 /// Deprecated react-addons-perf exports
 const DEPRECATED_PERF_EXPORTS: &[&str] = &["printDOM"];
@@ -275,11 +271,7 @@ impl NoDeprecated {
             DEPRECATED_LIFECYCLE_METHODS.iter().find(|(name, _)| *name == prop_name)
             && get_parent_component(node, ctx).is_some()
         {
-            ctx.diagnostic(no_deprecated_diagnostic(
-                obj_prop.key.span(),
-                deprecated,
-                replacement,
-            ));
+            ctx.diagnostic(no_deprecated_diagnostic(obj_prop.key.span(), deprecated, replacement));
         }
     }
 
