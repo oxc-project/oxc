@@ -5,6 +5,7 @@ mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
+mod minimize_functions;
 mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
@@ -16,7 +17,6 @@ mod remove_unused_expression;
 mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
-mod minimize_functions;
 
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;

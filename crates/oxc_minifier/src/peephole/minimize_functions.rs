@@ -56,7 +56,8 @@ impl<'a> PeepholeOptimizations {
             && func_expr.name().is_none()
         {
             ctx.state.changed = true;
-            call_expr.callee = Self::convert_function_expression_to_arrow_function_expression(func_expr, ctx);
+            call_expr.callee =
+                Self::convert_function_expression_to_arrow_function_expression(func_expr, ctx);
             call_expr.arguments.remove(0);
         }
     }
