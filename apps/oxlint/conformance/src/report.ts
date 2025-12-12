@@ -96,7 +96,9 @@ export function generateReport(results: RuleResult[]): string {
     passingTestCount = totalTestCount - failingTestCount,
     noTestsRuleCount = noTestRules.length;
 
-  const pad5 = (num: string | number) => String(num).padStart(5);
+  function countAndPercent(count: number, total: number): string {
+    return `${String(count).padStart(5)} | ${formatPercent(count, total).padStart(6)}`;
+  }
 
   block(`
     # ESLint Rule Tester Conformance Results
@@ -105,22 +107,22 @@ export function generateReport(results: RuleResult[]): string {
 
     ### Rules
 
-    | Status            | Count |
-    | ----------------- | ----- |
-    | Total rules       | ${pad5(totalRuleCount)} |
-    | Fully passing     | ${pad5(fullyPassingRuleCount)} |
-    | Partially passing | ${pad5(partiallyPassingRuleCount)} |
-    | Fully failing     | ${pad5(fullyFailingRuleCount)} |
-    | Load errors       | ${pad5(loadErrorRuleCount)} |
-    | No tests run      | ${pad5(noTestsRuleCount)} |
+    | Status            | Count | %      |
+    | ----------------- | ----- | ------ |
+    | Total rules       | ${countAndPercent(totalRuleCount, totalRuleCount)} |
+    | Fully passing     | ${countAndPercent(fullyPassingRuleCount, totalRuleCount)} |
+    | Partially passing | ${countAndPercent(partiallyPassingRuleCount, totalRuleCount)} |
+    | Fully failing     | ${countAndPercent(fullyFailingRuleCount, totalRuleCount)} |
+    | Load errors       | ${countAndPercent(loadErrorRuleCount, totalRuleCount)} |
+    | No tests run      | ${countAndPercent(noTestsRuleCount, totalRuleCount)} |
 
     ### Tests
 
-    | Status      | Count |
-    | ----------- | ----- |
-    | Total tests | ${pad5(totalTestCount)} |
-    | Passing     | ${pad5(passingTestCount)} |
-    | Failing     | ${pad5(failingTestCount)} |
+    | Status      | Count | %      |
+    | ----------- | ----- | ------ |
+    | Total tests | ${countAndPercent(totalTestCount, totalTestCount)} |
+    | Passing     | ${countAndPercent(passingTestCount, totalTestCount)} |
+    | Failing     | ${countAndPercent(failingTestCount, totalTestCount)} |
 
   `);
 
@@ -327,6 +329,15 @@ function formatTestCase(testCase: TestCase | null, code: string): string | null 
  * @returns Formatted proportion
  */
 function formatProportion(count: number, total: number): string {
-  const percent = ((count / total) * 100).toFixed(1);
-  return `${count} / ${total} (${percent}%)`;
+  return `${count} / ${total} (${formatPercent(count, total)})`;
+}
+
+/**
+ * Produce a string representing `count / total` as a percentage.
+ * @param count - Count
+ * @param total - Total count
+ * @returns Formatted percent
+ */
+function formatPercent(count: number, total: number): string {
+  return `${((count / total) * 100).toFixed(1)}%`;
 }
