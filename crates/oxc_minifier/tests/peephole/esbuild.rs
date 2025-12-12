@@ -1302,7 +1302,7 @@ fn test_flatten_values() {
     test("(function*() { a() })()", "(function* () { a();})();");
     test("(async function() { a() })()", "(async function() { a();})();");
     test("(() => x)()", "x;");
-    test("/* @__PURE__ */ (() => x)()", "x;");
+    test("/* @__PURE__ */ (() => x)()", "");
     test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     test("_ = `a${x}b${y}c`", "_ = `a${x}b${y}c`;");
     test("_ = `a${x}b${'y'}c`", "_ = `a${x}byc`;");
