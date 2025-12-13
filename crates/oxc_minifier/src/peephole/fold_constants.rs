@@ -1050,11 +1050,11 @@ mod test {
         fold_same("+x === !y");
 
         test(
-            r#"const a = 999.9; NOTHING(a,a); NOOP(a === 99.9 + 900)"#,
+            "const a = 999.9; NOTHING(a,a); NOOP(a === 99.9 + 900)",
             "const a = 999.9; NOTHING(a,a), NOOP(!0);",
         );
         test(
-            r#"const a = 233.3; NOTHING(a,a); NOOP(a >= 500)"#,
+            "const a = 233.3; NOTHING(a,a); NOOP(a >= 500)",
             "const a = 233.3; NOTHING(a,a), NOOP(!1);",
         );
     }
