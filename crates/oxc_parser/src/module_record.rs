@@ -63,7 +63,8 @@ impl<'a> ModuleRecordBuilder<'a> {
         // Only build labels once we know we have a duplicate.
         if default_export_spans().take(2).count() > 1 {
             errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_export_spans()),
+                OxcDiagnostic::error("Duplicated default export")
+                    .with_labels(default_export_spans()),
             );
         }
         errors
