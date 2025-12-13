@@ -61,11 +61,10 @@ async function fsRequire(code: string, format: "cjs" | "esm" | "iife") {
   const fsRequire = createFsRequire(vol);
 
   if (format === "iife") {
-    const mockedWindow = {};
-    // @ts-expect-error
+    const mockedWindow = {} as (typeof globalThis)["window"];
     globalThis.window = mockedWindow;
     fsRequire("/index.js");
-    // @ts-expect-error
+    // @ts-expect-error - ignore
     delete globalThis.window;
     return mockedWindow;
   }
