@@ -4,7 +4,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::*;
-use smallvec::SmallVec;
 
 use crate::diagnostics;
 
@@ -47,7 +46,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         // Multiple default exports
         // `export default foo`
         // `export { default }`
-        let default_exports = module_record
+        let mut default_exports = module_record
             .local_export_entries
             .iter()
             .filter_map(|export_entry| export_entry.export_name.default_export_span())
@@ -56,13 +55,24 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .indirect_export_entries
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            )
-            .collect::<SmallVec<[Span; 2]>>();
-        if default_exports.len() > 1 {
-            errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
             );
-        }
+
+        // Avoid collecting spans in the common case (0-1 default export).
+        // Only build labels once we know we have a duplicate.
+        let Some(first_default_export) = default_exports.next() else {
+            return errors;
+        };
+        let Some(second_default_export) = default_exports.next() else {
+            return errors;
+        };
+
+        errors.push(
+            OxcDiagnostic::error("Duplicated default export").with_labels(
+                std::iter::once(first_default_export)
+                    .chain(std::iter::once(second_default_export))
+                    .chain(default_exports),
+            ),
+        );
         errors
     }
 
