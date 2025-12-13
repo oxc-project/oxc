@@ -14,4 +14,4 @@
  * - `mode`: "cli" | "lsp" | "init"
  * - `exitCode`: exit code (0, 1, 2) for "cli" mode, `undefined` for other modes
  */
-export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>, tailwindCb: (classes: string[]) => Promise<void>): Promise<[string, number | undefined | null]>
+export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>, tailwindCb: (classes: string[]) => Promise<string[]>): Promise<[string, number | undefined | null]>

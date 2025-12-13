@@ -81,6 +81,12 @@ pub enum FormatElement<'a> {
         width: TextWidth,
     },
 
+    /// A Tailwind CSS class string that will be sorted during printing.
+    /// The index refers to the position in the collected classes array.
+    TailwindClass {
+        index: usize,
+    },
+
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
     LineSuffixBoundary,
@@ -105,6 +111,7 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
             FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
+            FormatElement::TailwindClass { index } => fmt.debug_tuple("TailwindClass").field(index).finish(),
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -251,7 +258,7 @@ impl FormatElement<'_> {
     }
 
     pub const fn is_text(&self) -> bool {
-        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. })
+        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. } | FormatElement::TailwindClass { .. })
     }
 
     pub const fn is_space(&self) -> bool {
@@ -274,8 +281,9 @@ impl FormatElements for FormatElement<'_> {
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
             FormatElement::BestFitting(best_fitting) => best_fitting.most_flat().will_break(),
-            // `FormatElement::Token` cannot contain line breaks
+            // `FormatElement::Token` and `FormatElement::TailwindClass` cannot contain line breaks
             FormatElement::Token { .. }
+            | FormatElement::TailwindClass { .. }
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)

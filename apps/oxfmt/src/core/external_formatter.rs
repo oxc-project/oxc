@@ -55,10 +55,10 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Type alias for Tailwind class processing callback.
-/// Takes array of class strings and returns nothing (for POC logging).
+/// Takes array of class strings and returns sorted array.
 pub type JsTailwindCb = ThreadsafeFunction<
-    Vec<String>, // Input: array of class strings
-    Promise<()>, // Return: void promise
+    Vec<String>,           // Input: array of class strings
+    Promise<Vec<String>>,  // Return: promise of sorted array
     Vec<String>,
     Status,
     false,
@@ -73,8 +73,8 @@ type FormatFileCallback = Arc<dyn Fn(&str, &str, &str) -> Result<String, String>
 type SetupConfigCallback = Arc<dyn Fn(&str, usize) -> Result<Vec<String>, String> + Send + Sync>;
 
 /// Callback function type for processing Tailwind classes.
-/// Takes Vec of class strings found in JSX attributes.
-type TailwindCallback = Arc<dyn Fn(Vec<String>) + Send + Sync>;
+/// Takes Vec of class strings and returns sorted Vec.
+type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
@@ -219,18 +219,22 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileCallback {
 fn wrap_tailwind(cb: JsTailwindCb) -> TailwindCallback {
     Arc::new(move |classes: Vec<String>| {
         // Use block_on to call async function synchronously (like formatEmbedded)
-        // This is acceptable for a logging callback
-        let _ = block_on(async {
-            match cb.call_async(classes).await {
-                Ok(promise) => {
-                    if let Err(err) = promise.await {
+        block_on(async {
+            match cb.call_async(classes.clone()).await {
+                Ok(promise) => match promise.await {
+                    Ok(sorted) => sorted,
+                    Err(err) => {
                         eprintln!("[oxfmt] Tailwind callback promise rejected: {}", err);
+                        // Return original classes on error
+                        classes
                     }
-                }
+                },
                 Err(err) => {
                     eprintln!("[oxfmt] Failed to call Tailwind callback: {}", err);
+                    // Return original classes on error
+                    classes
                 }
             }
-        });
+        })
     })
 }

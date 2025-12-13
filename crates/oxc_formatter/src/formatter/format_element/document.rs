@@ -187,7 +187,8 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                 element @ (FormatElement::Space
                 | FormatElement::HardSpace
                 | FormatElement::Token { .. }
-                | FormatElement::Text { .. }) => {
+                | FormatElement::Text { .. }
+                | FormatElement::TailwindClass { .. }) => {
                     if !in_text {
                         write!(f, [token("\"")]);
                     }
@@ -205,6 +206,17 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 FormatElement::Token { .. } => element.clone(),
                                 FormatElement::Text { text, width: _ } => {
                                     let text = text.cow_replace('"', "\\\"");
+                                    FormatElement::Text {
+                                        text: f.context().allocator().alloc_str(&text),
+                                        width: TextWidth::from_text(
+                                            &text,
+                                            f.options().indent_width,
+                                        ),
+                                    }
+                                }
+                                FormatElement::TailwindClass { index } => {
+                                    // For debug output, just show the index
+                                    let text = std::format!("<TailwindClass#{}>", index);
                                     FormatElement::Text {
                                         text: f.context().allocator().alloc_str(&text),
                                         width: TextWidth::from_text(

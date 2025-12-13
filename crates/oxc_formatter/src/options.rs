@@ -12,8 +12,8 @@ use crate::{
 };
 
 /// Callback for processing Tailwind CSS classes found in JSX attributes.
-/// Takes a Vec of class strings found in the file.
-pub type TailwindCallback = Arc<dyn Fn(Vec<String>) + Send + Sync>;
+/// Takes a Vec of class strings found in the file and returns a Vec of sorted class strings.
+pub type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct FormatOptions {

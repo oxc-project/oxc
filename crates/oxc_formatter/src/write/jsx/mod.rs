@@ -325,21 +325,41 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
             JSXAttributeName::NamespacedName(_) => None,
         };
 
-        // Collect class/className string literals for Tailwind processing
-        if let Some(name) = attr_name {
+        // Check if this is a class/className attribute with a string literal
+        let tailwind_index = if let Some(name) = attr_name {
             if name == "class" || name == "className" {
                 if let Some(value_node) = self.value() {
                     if let JSXAttributeValue::StringLiteral(string_lit) = &**value_node {
-                        f.context().add_tailwind_class(string_lit.value.to_string());
+                        // Collect class and get its index
+                        Some(f.context().add_tailwind_class(string_lit.value.to_string()))
+                    } else {
+                        None
                     }
+                } else {
+                    None
                 }
+            } else {
+                None
             }
-        }
+        } else {
+            None
+        };
 
-        // Continue with normal formatting
+        // Write attribute name
         write!(f, self.name());
+        
+        // Write attribute value
         if let Some(value) = &self.value() {
-            write!(f, ["=", value]);
+            // If this is a Tailwind class, emit custom IR node
+            if let Some(index) = tailwind_index {
+                use crate::formatter::FormatElement;
+                write!(f, "=");
+                f.write_element(FormatElement::Token { text: "\"" });
+                f.write_element(FormatElement::TailwindClass { index });
+                f.write_element(FormatElement::Token { text: "\"" });
+            } else {
+                write!(f, ["=", value]);
+            }
         }
     }
 }

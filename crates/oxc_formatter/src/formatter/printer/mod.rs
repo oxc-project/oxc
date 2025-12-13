@@ -40,7 +40,7 @@ pub struct Printer<'a> {
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(options: PrinterOptions) -> Self {
+    pub fn new(options: PrinterOptions, sorted_tailwind_classes: &'a [String]) -> Self {
         let (indent_char, indent_width) = match options.indent_style() {
             IndentStyle::Tab => (code_buffer::IndentChar::Tab, 1),
             IndentStyle::Space => {
@@ -48,7 +48,7 @@ impl<'a> Printer<'a> {
             }
         };
         let buffer = CodeBuffer::with_indent(indent_char, indent_width);
-        Self { options, state: PrinterState::new(buffer) }
+        Self { options, state: PrinterState::new(buffer, sorted_tailwind_classes) }
     }
 
     /// Prints the passed in element as well as all its content
@@ -104,6 +104,14 @@ impl<'a> Printer<'a> {
             FormatElement::Token { text } => self.print_text(Text::Token(text)),
             FormatElement::Text { text, width } => {
                 self.print_text(Text::Text { text, width: *width });
+            }
+            FormatElement::TailwindClass { index } => {
+                // Look up the sorted Tailwind class string and print it
+                if let Some(sorted_class) = self.state.sorted_tailwind_classes.get(*index) {
+                    let width = TextWidth::from_text(sorted_class, self.options.indent_width());
+                    self.print_text(Text::Text { text: sorted_class, width });
+                }
+                // If index is out of bounds, skip (shouldn't happen in normal operation)
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -706,12 +714,15 @@ struct PrinterState<'a> {
     fits_indent_stack: Vec<Indention>,
     fits_stack_tem_indent: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
+    /// Sorted Tailwind CSS classes for lookup during printing (POC)
+    sorted_tailwind_classes: &'a [String],
 }
 
-impl PrinterState<'_> {
-    pub fn new(buffer: CodeBuffer) -> Self {
+impl<'a> PrinterState<'a> {
+    pub fn new(buffer: CodeBuffer, sorted_tailwind_classes: &'a [String]) -> Self {
         Self {
             buffer,
+            sorted_tailwind_classes,
             // Initialize `measured_group_fits` to true to indicate that groups are initially assumed to fit.
             measured_group_fits: true,
             ..Default::default()
@@ -1036,6 +1047,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             FormatElement::Text { text, width } => {
                 return Ok(self.fits_text(Text::Text { text, width: *width }));
             }
+            FormatElement::TailwindClass { index } => {
+                // Check if the sorted Tailwind class fits
+                if let Some(sorted_class) = self.printer.state.sorted_tailwind_classes.get(*index) {
+                    let width = TextWidth::from_text(sorted_class, self.options().indent_width());
+                    return Ok(self.fits_text(Text::Text { text: sorted_class, width }));
+                }
+                // If index is out of bounds, assume it fits (shouldn't happen)
+                return Ok(Fits::Yes);
+            }
 
             FormatElement::LineSuffixBoundary => {
                 if self.state.has_line_suffix {
@@ -1328,7 +1348,7 @@ mod tests {
     ) -> Printed {
         let formatted = crate::format!(FormatContext::dummy(allocator), [root]);
 
-        Printer::new(options).print(formatted.document()).expect("Document to be valid")
+        Printer::new(options, &[]).print(formatted.document()).expect("Document to be valid")
     }
 
     #[test]
@@ -1600,6 +1620,7 @@ two lines`,
             PrinterOptions::default()
                 .with_indent_style(IndentStyle::Tab)
                 .with_print_width(PrintWidth::new(10)),
+            &[],
         )
         .print(&document)
         .unwrap();

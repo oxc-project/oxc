@@ -98,7 +98,8 @@ impl<'a> Formatter<'a> {
         if let Some(ref callback) = formatted.context().options().tailwind_callback {
             let classes = formatted.context().take_tailwind_classes();
             if !classes.is_empty() {
-                callback(classes);
+                let sorted = callback(classes);
+                formatted.set_sorted_tailwind_classes(sorted);
             }
         }
 

@@ -1,8 +1,12 @@
 import Tinypool from "tinypool";
 import type { WorkerData, FormatEmbeddedCodeArgs, FormatFileArgs } from "./prettier-worker.ts";
+import { createBatchSorter, type BatchSortContext } from "prettier-plugin-tailwindcss";
 
 // Worker pool for parallel Prettier formatting
 let pool: Tinypool | null = null;
+
+// Tailwind sorter (initialized lazily on first use)
+let tailwindSorter: BatchSortContext | null = null;
 
 // ---
 
@@ -100,14 +104,36 @@ export async function formatFile(
  * Process Tailwind CSS classes found in JSX attributes.
  * NOTE: Called from Rust via NAPI ThreadsafeFunction with FnArgs
  * @param classes - Array of class strings found in JSX class/className attributes
+ * @returns Array of sorted class strings (same order/length as input)
  */
-export async function processTailwindClasses(classes: string[]): Promise<void> {
-  console.log("[oxfmt:tailwind] Found classes in file:");
-  classes.forEach((classStr, idx) => {
-    console.log(`  [${idx}]: "${classStr}"`);
-  });
-  console.log(`  Total: ${classes.length} class/className attributes\n`);
+export async function processTailwindClasses(classes: string[]): Promise<string[]> {
+  // Initialize sorter on first call (lazy)
+  if (!tailwindSorter) {
+    try {
+      tailwindSorter = await createBatchSorter({
+        // Auto-detect Tailwind config from cwd
+        // Could add config options here later
+      });
+      console.log("[oxfmt:tailwind] Initialized Tailwind sorter");
+    } catch (err) {
+      console.error("[oxfmt:tailwind] Failed to initialize sorter:", err);
+      // Return original classes on error
+      return classes;
+    }
+  }
 
-  // TODO: Future enhancement - call prettier-plugin-tailwindcss to sort classes
-  // For POC, just log them to demonstrate collection is working
+  // Sort all classes
+  const sorted = tailwindSorter.sortClasses(classes);
+
+  // Log results
+  console.log("[oxfmt:tailwind] Sorted classes:");
+  sorted.forEach((classStr: string, idx: number) => {
+    const original = classes[idx];
+    const changed = classStr !== original;
+    console.log(`  [${idx}]: "${classStr}"${changed ? ` (was: "${original}")` : ""}`);
+  });
+  console.log(`  Total: ${sorted.length} class/className attributes\n`);
+
+  // Return sorted classes to Rust to replace originals in the output
+  return sorted;
 }

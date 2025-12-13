@@ -155,8 +155,12 @@ impl<'ast> FormatContext<'ast> {
     }
 
     /// Add a Tailwind CSS class string found in JSX attributes
-    pub fn add_tailwind_class(&self, class: String) {
-        self.tailwind_classes.borrow_mut().push(class);
+    /// Returns the index where the class was stored
+    pub fn add_tailwind_class(&self, class: String) -> usize {
+        let mut classes = self.tailwind_classes.borrow_mut();
+        let index = classes.len();
+        classes.push(class);
+        index
     }
 
     /// Take all collected Tailwind classes, clearing the internal storage

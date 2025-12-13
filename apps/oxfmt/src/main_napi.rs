@@ -36,7 +36,7 @@ pub async fn run_cli(
         ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
-    #[napi(ts_arg_type = "(classes: string[]) => Promise<void>")] tailwind_cb: JsTailwindCb,
+    #[napi(ts_arg_type = "(classes: string[]) => Promise<string[]>")] tailwind_cb: JsTailwindCb,
 ) -> (String, Option<u8>) {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
