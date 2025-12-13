@@ -46,31 +46,24 @@ impl<'a> ModuleRecordBuilder<'a> {
         // Multiple default exports
         // `export default foo`
         // `export { default }`
-        let mut default_exports = module_record
-            .local_export_entries
-            .iter()
-            .filter_map(|export_entry| export_entry.export_name.default_export_span())
-            .chain(
-                module_record
-                    .indirect_export_entries
-                    .iter()
-                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            );
+        let default_export_spans = || {
+            module_record
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    module_record
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                )
+        };
 
         // Avoid collecting spans in the common case (0-1 default export).
         // Only build labels once we know we have a duplicate.
-        let first_default_export = default_exports.next();
-        let second_default_export = default_exports.next();
-
-        if let (Some(first_default_export), Some(second_default_export)) =
-            (first_default_export, second_default_export)
-        {
+        if default_export_spans().take(2).count() > 1 {
             errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(
-                    std::iter::once(first_default_export)
-                        .chain(std::iter::once(second_default_export))
-                        .chain(default_exports),
-                ),
+                OxcDiagnostic::error("Duplicated default export").with_labels(default_export_spans()),
             );
         }
         errors
