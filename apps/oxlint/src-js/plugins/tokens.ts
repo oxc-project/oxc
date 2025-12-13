@@ -804,7 +804,7 @@ export function getLastTokens(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenBefore(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
@@ -896,7 +896,7 @@ export function getTokenBefore(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenOrCommentBefore(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   skip?: number,
 ): TokenOrComment | null {
   // Equivalent to `return getTokenBefore(nodeOrToken, { includeComments: true, skip });`,
@@ -914,7 +914,7 @@ export function getTokenOrCommentBefore(
  * @returns Array of `Token`s.
  */
 export function getTokensBefore(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   countOptions?: CountOptions | number | FilterFn | null,
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
@@ -997,7 +997,7 @@ export function getTokensBefore(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenAfter(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
@@ -1085,7 +1085,7 @@ export function getTokenAfter(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getTokenOrCommentAfter(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   skip?: number,
 ): TokenOrComment | null {
   // Equivalent to `return getTokenAfter(nodeOrToken, { includeComments: true, skip });`,
@@ -1103,7 +1103,7 @@ export function getTokenOrCommentAfter(
  * @returns Array of `Token`s.
  */
 export function getTokensAfter(
-  nodeOrToken: NodeOrToken | Comment,
+  nodeOrToken: NodeOrToken,
   countOptions?: CountOptions | number | FilterFn | null,
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
@@ -1186,8 +1186,8 @@ export function getTokensAfter(
  * @returns Array of `Token`s between `left` and `right`.
  */
 export function getTokensBetween(
-  left: NodeOrToken | Comment,
-  right: NodeOrToken | Comment,
+  left: NodeOrToken,
+  right: NodeOrToken,
   countOptions?: CountOptions | number | FilterFn | null,
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
@@ -1283,8 +1283,8 @@ export function getTokensBetween(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getFirstTokenBetween(
-  left: NodeOrToken | Comment,
-  right: NodeOrToken | Comment,
+  left: NodeOrToken,
+  right: NodeOrToken,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
@@ -1378,8 +1378,8 @@ export function getFirstTokenBetween(
  * @returns Array of `Token`s between `left` and `right`.
  */
 export function getFirstTokensBetween(
-  left: NodeOrToken | Comment,
-  right: NodeOrToken | Comment,
+  left: NodeOrToken,
+  right: NodeOrToken,
   countOptions?: CountOptions | number | FilterFn | null,
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
@@ -1474,8 +1474,8 @@ export function getFirstTokensBetween(
  * @returns `Token`, or `null` if all were skipped.
  */
 export function getLastTokenBetween(
-  left: NodeOrToken | Comment,
-  right: NodeOrToken | Comment,
+  left: NodeOrToken,
+  right: NodeOrToken,
   skipOptions?: SkipOptions | number | FilterFn | null,
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
@@ -1570,8 +1570,8 @@ export function getLastTokenBetween(
  * @returns Array of `Token`s between `left` and `right`.
  */
 export function getLastTokensBetween(
-  left: NodeOrToken | Comment,
-  right: NodeOrToken | Comment,
+  left: NodeOrToken,
+  right: NodeOrToken,
   countOptions?: CountOptions | number | FilterFn | null,
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
