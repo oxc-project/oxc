@@ -200,6 +200,10 @@ impl<'a> TypeScriptModule<'a, '_> {
     /// import z = y.z    // reference to y (unused)
     /// ```
     /// Processing `z` first marks `y`'s reference as Type, then `y` marks `x`, then `x` marks `foo`.
+    ///
+    /// Note: `TSImportEqualsDeclaration` can appear at the top-level and inside namespaces.
+    /// We only need to process top-level `Program` here because `TypeScriptNamespace`
+    /// has special handling that already covers the case for import equals inside namespaces.
     pub fn mark_unused_import_equals_references_as_type(
         &self,
         stmts: &[Statement<'a>],
