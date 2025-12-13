@@ -49,4 +49,4 @@ default = []
 allocator = ["dep:mimalloc-safe"]
 
 [package.metadata.cargo-shear]
- ignored-paths = ["src/generated/derive_estree.rs"]
+ignored-paths = ["src/generated/derive_estree.rs"]
