@@ -130,27 +130,23 @@ impl<'a> Ctx<'a, '_> {
         if e.may_have_side_effects(self) {
             None
         } else {
-            let left = if let Some(ident) = e.left.get_identifier_reference() {
-                &self.value_to_expr(
-                    ident.span,
-                    self.get_constant_value_for_reference_id(ident.reference_id.get()?)?,
-                )
-            } else {
-                &e.left
-            };
-
-            let right = if let Some(ident) = e.right.get_identifier_reference() {
-                &self.value_to_expr(
-                    ident.span,
-                    self.get_constant_value_for_reference_id(ident.reference_id.get()?)?,
-                )
-            } else {
-                &e.right
-            };
+            let left = self.resolve_identifier_expression(&e.left);
+            let left = left.as_ref().unwrap_or(&e.left);
+            let right = self.resolve_identifier_expression(&e.right);
+            let right = right.as_ref().unwrap_or(&e.right);
 
             self.eval_binary_operation(e.operator, left, right)
                 .map(|v| self.value_to_expr(e.span, v))
         }
+    }
+
+    #[inline]
+    fn resolve_identifier_expression(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        let ident = expr.get_identifier_reference()?;
+        Some(self.value_to_expr(
+            ident.span,
+            self.get_constant_value_for_reference_id(ident.reference_id())?,
+        ))
     }
 
     pub fn eval_binary_operation(
