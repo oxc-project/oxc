@@ -79,6 +79,9 @@ importers:
       prettier:
         specifier: 3.7.4
         version: 3.7.4
+      prettier-plugin-tailwindcss:
+        specifier: link:/Users/boshen/github/prettier-plugin-tailwindcss
+        version: link:../../../../github/prettier-plugin-tailwindcss
       tinypool:
         specifier: 2.0.0
         version: 2.0.0
