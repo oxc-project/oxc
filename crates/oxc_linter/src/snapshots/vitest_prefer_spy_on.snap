@@ -1,0 +1,83 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:9]
+ 1 │ obj.a = vi.fn(); const test = 10;
+   ·         ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:15]
+ 1 │ Date['now'] = vi['fn']()
+   ·               ───────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:21]
+ 1 │ window[`${name}`] = vi[`fn`]()
+   ·                     ───────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:19]
+ 1 │ obj['prop' + 1] = vi['fn']()
+   ·                   ───────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:15]
+ 1 │ obj.one.two = vi.fn(); const test = 10;
+   ·               ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:9]
+ 1 │ obj.a = vi.fn(() => 10,)
+   ·         ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:11]
+ 1 │ obj.a.b = vi.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();
+   ·           ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:16]
+ 1 │ window.fetch = vi.fn(() => ({})).one.two().three().four
+   ·                ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:12]
+ 1 │ foo[bar] = vi.fn().mockReturnValue(undefined)
+   ·            ─────
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:2:22]
+ 1 │ 
+ 2 │                     foo.bar = vi.fn().mockImplementation(baz => baz)
+   ·                               ─────
+ 3 │                     foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+   ╰────
+  help: Use vi.spyOn() instead
+
+  ⚠ eslint-plugin-vitest(prefer-spy-on): Suggest using `vi.spyOn()`.
+   ╭─[prefer_spy_on.tsx:3:22]
+ 2 │                     foo.bar = vi.fn().mockImplementation(baz => baz)
+ 3 │                     foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+   ·                               ─────
+ 4 │                   
+   ╰────
+  help: Use vi.spyOn() instead
