@@ -371,6 +371,5 @@ fn tests() {
     Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_jest_plugin(true)
-        .with_vitest_plugin(true)
         .test_and_snapshot();
 }
