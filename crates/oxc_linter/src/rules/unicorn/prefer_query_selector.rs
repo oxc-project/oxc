@@ -138,6 +138,19 @@ impl Rule for PreferQuerySelector {
                 });
             }
 
+            // For non-literal arguments, we can still auto-fix `getElementById(id)` -> `querySelector(`#${id}`)
+            // Only apply this fix for simple identifiers so we avoid nested template literals
+            // and complex expressions like member/call expressions or template literals
+            if property_name == "getElementById"
+                && matches!(argument_expr, Expression::Identifier(_))
+            {
+                return ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                    let source_text = fixer.source_range(argument_expr.span());
+                    let span = property_span.merge(argument_expr.span());
+                    fixer.replace(span, format!("{preferred_selector}(`#${{{source_text}}}`"))
+                });
+            }
+
             ctx.diagnostic(diagnostic);
         }
     }
@@ -201,7 +214,16 @@ fn test() {
         ),
         ("document.getElementsByClassName(null);", "document.querySelectorAll(null);", None),
         ("document.getElementsByTagName(`   `);", "document.querySelectorAll(`   `);", None),
+        ("document.getElementById(123);", "document.getElementById(123);", None),
         ("document.getElementById(`id`);", "document.querySelector(`#id`);", None),
+        ("document.getElementById(obj.id);", "document.getElementById(obj.id);", None),
+        ("document.getElementById(getId());", "document.getElementById(getId());", None),
+        ("document.getElementById(`${foo}`);", "document.getElementById(`${foo}`);", None),
+        (
+            "document.getElementById(searchInputId);",
+            "document.querySelector(`#${searchInputId}`);",
+            None,
+        ),
         (
             "document.getElementsByClassName(foo + \"bar\");",
             "document.getElementsByClassName(foo + \"bar\");",
