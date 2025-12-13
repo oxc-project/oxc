@@ -1,9 +1,10 @@
+import assert from "node:assert";
 import { describe, it, vi, expect, beforeEach } from "vitest";
 import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.ts";
 import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
 import { parse } from "@typescript-eslint/typescript-estree";
 
-import type { Node } from "../src-js/plugins/types.ts";
+import type { Program } from "../src-js/generated/types.d.ts";
 
 let sourceText: string | null = null;
 
@@ -57,9 +58,17 @@ describe("isSpaceBetween()", () => {
     ] satisfies [string, boolean][]) {
       it(`should return ${expected} for ${code}`, () => {
         sourceText = code;
-        const ast = parse(sourceText, { range: true, sourceType: "module" }),
-          body = ast.body as unknown as Node[];
-        expect(isSpaceBetween(body[0]!, body.at(-1)!)).toBe(expected);
+        const ast = parse(sourceText, { range: true, sourceType: "module" }) as unknown as Program;
+
+        const firstStmt = ast.body[0];
+        const lastStmt = ast.body.at(-1);
+        assert(firstStmt != null);
+        assert(lastStmt != null);
+        assert(firstStmt !== lastStmt);
+
+        expect(isSpaceBetween(firstStmt, lastStmt)).toBe(expected);
+        // Reversed order
+        expect(isSpaceBetween(lastStmt, firstStmt)).toBe(expected);
       });
     }
   });
@@ -73,19 +82,22 @@ describe("isSpaceBetweenTokens()", () => {
       range: true,
       sourceType: "module",
       jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    }) as unknown as Program;
+
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
     const interpolation = jsx.children[1];
+    assert(interpolation != null);
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, interpolation)).toBe(true);
-
-    expect(isSpaceBetweenTokens(interpolation, jsx.closingElement)).toBe(true);
-
+    expect(isSpaceBetweenTokens(openingElement, interpolation)).toBe(true);
+    expect(isSpaceBetweenTokens(interpolation, closingElement)).toBe(true);
     // Reversed order
-    expect(isSpaceBetweenTokens(interpolation, jsx.openingElement)).toBe(true);
-
-    expect(isSpaceBetweenTokens(jsx.closingElement, interpolation)).toBe(true);
+    expect(isSpaceBetweenTokens(interpolation, openingElement)).toBe(true);
+    expect(isSpaceBetweenTokens(closingElement, interpolation)).toBe(true);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2208-L2233
@@ -95,14 +107,18 @@ describe("isSpaceBetweenTokens()", () => {
       range: true,
       sourceType: "module",
       jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    }) as unknown as Program;
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(true);
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
 
+    expect(isSpaceBetweenTokens(openingElement, closingElement)).toBe(true);
     // Reversed order
-    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(true);
+    expect(isSpaceBetweenTokens(closingElement, openingElement)).toBe(true);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2235-L2261
@@ -112,34 +128,43 @@ describe("isSpaceBetweenTokens()", () => {
       range: true,
       sourceType: "module",
       jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    }) as unknown as Program;
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(false);
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
 
+    expect(isSpaceBetweenTokens(openingElement, closingElement)).toBe(false);
     // Reversed order
-    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(false);
+    expect(isSpaceBetweenTokens(closingElement, openingElement)).toBe(false);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2263-L2300
-  it("should return false either of the arguments' location is inside the other one", () => {
+  it("should return false if either of the arguments' location is inside the other one", () => {
     sourceText = "let foo = bar;";
     const ast = parse(sourceText, {
-        range: true,
-        tokens: true,
-        sourceType: "module",
-        jsx: true,
-      }),
-      body = ast.body as unknown as Node[],
-      { tokens } = ast;
+      range: true,
+      tokens: true,
+      sourceType: "module",
+      jsx: true,
+    }) as unknown as Program;
 
-    expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
+    const stmt = ast.body[0];
+    assert(stmt != null);
 
-    expect(isSpaceBetweenTokens(tokens.at(-1)!, body[0])).toBe(false);
+    const firstToken = ast.tokens[0];
+    const lastToken = ast.tokens.at(-1);
+    assert(firstToken != null);
+    assert(lastToken != null);
+    assert(firstToken !== lastToken);
 
-    expect(isSpaceBetweenTokens(body[0], tokens[0])).toBe(false);
-
-    expect(isSpaceBetweenTokens(body[0], tokens.at(-1)!)).toBe(false);
+    expect(isSpaceBetweenTokens(firstToken, stmt)).toBe(false);
+    expect(isSpaceBetweenTokens(lastToken, stmt)).toBe(false);
+    // Reversed order
+    expect(isSpaceBetweenTokens(stmt, firstToken)).toBe(false);
+    expect(isSpaceBetweenTokens(stmt, lastToken)).toBe(false);
   });
 });

@@ -33,6 +33,11 @@ const createRule: Rule = {
         `(${JSON.stringify(text[offset] || "<EOF>")})`;
     }
 
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const { id } = stmt.declarations[0];
+    assert.strictEqual(id.type, "Identifier");
+
     context.report({
       message:
         "create:\n" +
@@ -41,8 +46,7 @@ const createRule: Rule = {
         `lines: ${JSON.stringify(lines)}\n` +
         `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
         `locs:${locs}\n` +
-        // @ts-ignore
-        `ast: "${ast.body[0].declarations[0].id.name}"\n` +
+        `ast: "${id.name}"\n` +
         `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
         `isESTree: ${sourceCode.isESTree}`,
       node: SPAN,
@@ -102,6 +106,11 @@ const createOnceRule: Rule = {
             `(${JSON.stringify(text[offset] || "<EOF>")})`;
         }
 
+        const stmt = ast.body[0];
+        assert.strictEqual(stmt.type, "VariableDeclaration");
+        const { id } = stmt.declarations[0];
+        assert.strictEqual(id.type, "Identifier");
+
         context.report({
           message:
             "before:\n" +
@@ -110,8 +119,7 @@ const createOnceRule: Rule = {
             `lines: ${JSON.stringify(lines)}\n` +
             `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
             `locs:${locs}\n` +
-            // @ts-ignore
-            `ast: "${ast.body[0].declarations[0].id.name}"\n` +
+            `ast: "${id.name}"\n` +
             `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
             `isESTree: ${sourceCode.isESTree}`,
           node: SPAN,
