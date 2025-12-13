@@ -6,6 +6,8 @@ mod result;
 mod service;
 mod walk;
 
+#[cfg(feature = "napi")]
+pub use command::MigrateSource;
 pub use command::{Mode, format_command};
 pub use format::FormatRunner;
 pub use init::{init_miette, init_rayon, init_tracing};

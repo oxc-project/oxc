@@ -7,6 +7,8 @@ Usage: [-c=PATH] [PATH]...
 Mode Options:
         --init               Initialize `.oxfmtrc.json` with default values
         --lsp                Start language server protocol (LSP) server
+        --migrate=SOURCE     Migrate configuration to `.oxfmtrc.json` from specified source
+                             Available sources: prettier
 
 Output Options:
         --write              Format and write files in place (default)
