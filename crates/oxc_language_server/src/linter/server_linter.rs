@@ -18,7 +18,6 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::linter::error_with_position::LinterCodeAction;
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -29,10 +28,11 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
+        error_with_position::LinterCodeAction,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
     utils::normalize_path,
 };
 
@@ -491,34 +491,30 @@ impl Tool for ServerLinter {
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
-        self.run_file(uri, content)
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+        let Some(diagnostics) = self.run_file(uri, content) else {
+            return vec![];
+        };
+        vec![(uri.clone(), diagnostics)]
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnType`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_change(
-        &self,
-        uri: &Uri,
-        content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnType`, an empty vector is returned
+    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnType {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnSave`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnSave`, an empty vector is returned
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnSave {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }

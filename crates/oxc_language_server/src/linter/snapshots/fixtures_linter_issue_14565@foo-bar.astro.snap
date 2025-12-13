@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/issue_14565/foo-bar.astro
+Linted file: fixtures/linter/issue_14565/foo-bar.astro
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/issue_14565/foo-bar.astro
 
 code: "eslint-plugin-unicorn(filename-case)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/unicorn/filename-case.html"
@@ -16,4 +17,5 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
