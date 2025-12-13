@@ -13,12 +13,18 @@ pub enum CliRunResult {
     FormatFailed,
 }
 
+impl CliRunResult {
+    pub fn exit_code(&self) -> u8 {
+        match self {
+            Self::None | Self::FormatSucceeded => 0,
+            Self::InvalidOptionConfig | Self::FormatMismatch => 1,
+            Self::NoFilesFound | Self::FormatFailed => 2,
+        }
+    }
+}
+
 impl Termination for CliRunResult {
     fn report(self) -> ExitCode {
-        match self {
-            Self::None | Self::FormatSucceeded => ExitCode::from(0),
-            Self::InvalidOptionConfig | Self::FormatMismatch => ExitCode::from(1),
-            Self::NoFilesFound | Self::FormatFailed => ExitCode::from(2),
-        }
+        ExitCode::from(self.exit_code())
     }
 }

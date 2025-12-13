@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/regexp_feature/index.ts
+Linted file: fixtures/linter/regexp_feature/index.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/regexp_feature/index.ts
 
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
@@ -27,6 +28,7 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-control-regex for this line

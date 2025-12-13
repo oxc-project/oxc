@@ -106,6 +106,7 @@ pub(crate) mod eslint {
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
+    pub mod no_implicit_coercion;
     pub mod no_import_assign;
     pub mod no_inner_declarations;
     pub mod no_invalid_regexp;
@@ -131,6 +132,7 @@ pub(crate) mod eslint {
     pub mod no_object_constructor;
     pub mod no_param_reassign;
     pub mod no_plusplus;
+    pub mod no_promise_executor_return;
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
@@ -574,6 +576,7 @@ pub(crate) mod oxc {
     pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
+    pub mod no_this_in_exported_function;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
@@ -701,6 +704,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_implicit_coercion,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
@@ -773,6 +777,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
     eslint::no_plusplus,
+    eslint::no_promise_executor_return,
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
@@ -1006,6 +1011,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
+    oxc::no_this_in_exported_function,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,

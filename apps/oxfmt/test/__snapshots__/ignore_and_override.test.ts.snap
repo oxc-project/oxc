@@ -18,7 +18,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 --------------------
 arguments: --check --ignore-path ignore1
 working directory: fixtures/ignore_and_override
-exit code: 1
+exit code: 2
 --- STDOUT ---------
 Checking formatting...
 
@@ -28,7 +28,7 @@ Expected at least one target file
 --------------------
 arguments: --check --ignore-path ignore1 should_format/ok.js
 working directory: fixtures/ignore_and_override
-exit code: 1
+exit code: 2
 --- STDOUT ---------
 
 --- STDERR ---------

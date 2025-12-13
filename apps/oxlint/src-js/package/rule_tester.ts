@@ -10,6 +10,7 @@
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
 import stringify from "json-stable-stringify-without-jsonify";
+import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetFile } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
@@ -125,17 +126,26 @@ interface Config {
  * Language options config.
  */
 interface LanguageOptions {
-  ecmaVersion?: number | "latest";
   sourceType?: SourceType;
   globals?: Record<
     string,
     boolean | "true" | "writable" | "writeable" | "false" | "readonly" | "readable" | "off" | null
   >;
+  parserOptions?: ParserOptions;
+}
+
+/**
+ * Language options config, with `parser` and `ecmaVersion` properties.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface LanguageOptionsInternal extends LanguageOptions {
+  ecmaVersion?: number | "latest";
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
   };
-  parserOptions?: ParserOptions;
 }
 
 /**
@@ -420,7 +430,7 @@ export class RuleTester {
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
 
-if (DEBUG) {
+if (CONFORMANCE) {
   (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
     modifyTestCase = alter;
   };
@@ -506,6 +516,9 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   } else {
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
+
+    // Sort diagnostics by line and column before comparing to expected errors. ESLint does the same.
+    diagnostics.sort((diag1, diag2) => diag1.line - diag2.line || diag1.column - diag2.column);
 
     const rule = Object.values(plugin.rules)[0],
       messages = rule.meta?.messages ?? null;
@@ -734,7 +747,7 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
-// In debug builds, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
+// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
 // This is used in conformance tests.
 type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
 
@@ -753,7 +766,7 @@ function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
   };
 }
 
-if (DEBUG) {
+if (CONFORMANCE) {
   // oxlint-disable-next-line no-func-assign
   (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
   // oxlint-disable-next-line no-func-assign
@@ -809,8 +822,8 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
   };
 
   // Call hook to modify test case before it is run.
-  // `modifyTestCase` is only available in debug builds - it's only for conformance testing.
-  if (DEBUG && modifyTestCase !== null) modifyTestCase(merged);
+  // `modifyTestCase` is only available in conformance build - it's only for conformance testing.
+  if (CONFORMANCE && modifyTestCase !== null) modifyTestCase(merged);
 
   return merged;
 }
@@ -923,6 +936,10 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     // Parse file into buffer
     parse(filename, test.code, parseOptions);
 
+    // In conformance tests, set `context.languageOptions.ecmaVersion`.
+    // This is not supported outside of conformance tests.
+    if (CONFORMANCE) setEcmaVersionContext(test);
+
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
     const settingsJSON = "{}"; // TODO
@@ -966,53 +983,81 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const { languageOptions } = test;
-  if (languageOptions != null) {
-    // Handle `languageOptions.sourceType`
-    let { sourceType } = languageOptions;
-    if (sourceType != null) {
-      if (test.eslintCompat === true) {
-        // ESLint compatibility mode.
-        // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-        if (sourceType === "commonjs") {
-          sourceType = "script";
-        } else if (sourceType === "unambiguous") {
-          throw new Error(
-            "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-              "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-          );
-        }
-      } else {
-        // Not ESLint compatibility mode.
-        // `commonjs` is disallowed.
-        if (sourceType === "commonjs") {
-          throw new Error(
-            "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-              "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-          );
-        }
-      }
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) return parseOptions;
 
-      parseOptions.sourceType = sourceType;
+  // Throw error if custom parser is provided
+  if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
+
+  // Handle `languageOptions.sourceType`
+  let { sourceType } = languageOptions;
+  if (sourceType != null) {
+    if (test.eslintCompat === true) {
+      // ESLint compatibility mode.
+      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
+      if (sourceType === "commonjs") {
+        sourceType = "script";
+      } else if (sourceType === "unambiguous") {
+        throw new Error(
+          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+        );
+      }
+    } else {
+      // Not ESLint compatibility mode.
+      // `commonjs` is disallowed.
+      if (sourceType === "commonjs") {
+        throw new Error(
+          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
+            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
+        );
+      }
     }
 
-    // Handle `languageOptions.parserOptions`
-    const { parserOptions } = languageOptions;
-    if (parserOptions != null) {
-      // Handle `parserOptions.ignoreNonFatalErrors`
-      if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+    parseOptions.sourceType = sourceType;
+  }
 
-      // Handle `parserOptions.lang`
-      const { lang } = parserOptions;
-      if (lang != null) {
-        parseOptions.lang = lang;
-      } else if (parserOptions.ecmaFeatures?.jsx === true) {
-        parseOptions.lang = "jsx";
-      }
+  // Handle `languageOptions.parserOptions`
+  const { parserOptions } = languageOptions;
+  if (parserOptions != null) {
+    // Handle `parserOptions.ignoreNonFatalErrors`
+    if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+
+    // Handle `parserOptions.lang`
+    const { lang } = parserOptions;
+    if (lang != null) {
+      parseOptions.lang = lang;
+    } else if (parserOptions.ecmaFeatures?.jsx === true) {
+      parseOptions.lang = "jsx";
     }
   }
 
   return parseOptions;
+}
+
+/**
+ * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * This is only supported in conformance tests, where it's necessary to pass some tests.
+ * Oxlint doesn't support any version except latest.
+ * @param test - Test case
+ */
+function setEcmaVersionContext(test: TestCase) {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
+  // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
+  // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
+  // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
+  // in an early step of config parsing.
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  const ecmaVersion = languageOptions?.ecmaVersion;
+
+  let version = ECMA_VERSION;
+  if (typeof ecmaVersion === "number") {
+    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+  }
+
+  setEcmaVersion(version);
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)

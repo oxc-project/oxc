@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 fn prefer_rest_params_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use the rest parameters instead of 'arguments'.").with_label(span)
+    OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -1,18 +1,21 @@
 use std::fmt::Write;
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    fixer::RuleFixer,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -83,7 +86,7 @@ declare_oxc_lint!(
     ConsistentTypeDefinitions,
     typescript,
     style,
-    fix,
+    conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
 );
 
@@ -163,18 +166,22 @@ impl Rule for ConsistentTypeDefinitions {
                         write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                     }
 
-                    ctx.diagnostic_with_fix(
-                        consistent_type_definitions_diagnostic(
-                            ConsistentTypeDefinitionsConfig::Type,
-                            Span::sized(decl.span.start, 9),
-                        ),
-                        |fixer| {
-                            fixer.replace(
-                                exp.span,
-                                format!("type {name} = {body}{extends}\nexport default {name}"),
-                            )
-                        },
+                    let diagnostic = consistent_type_definitions_diagnostic(
+                        ConsistentTypeDefinitionsConfig::Type,
+                        Span::sized(decl.span.start, 9),
                     );
+
+                    let fix = |fixer: RuleFixer<'_, 'a>| {
+                        fixer.replace(
+                            exp.span,
+                            format!("type {name} = {body}{extends}\nexport default {name}"),
+                        )
+                    };
+                    if is_within_declare_global_block(ctx, node.id()) {
+                        ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                    } else {
+                        ctx.diagnostic_with_fix(diagnostic, fix);
+                    }
                 }
                 _ => {}
             },
@@ -208,18 +215,22 @@ impl Rule for ConsistentTypeDefinitions {
                     write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                 }
 
-                ctx.diagnostic_with_fix(
-                    consistent_type_definitions_diagnostic(
-                        ConsistentTypeDefinitionsConfig::Type,
-                        Span::sized(start, 9),
-                    ),
-                    |fixer| {
-                        fixer.replace(
-                            Span::new(start, decl.span.end),
-                            format!("type {name} = {body}{extends}"),
-                        )
-                    },
+                let diagnostic = consistent_type_definitions_diagnostic(
+                    ConsistentTypeDefinitionsConfig::Type,
+                    Span::sized(start, 9),
                 );
+
+                let fix = |fixer: RuleFixer<'_, 'a>| {
+                    fixer.replace(
+                        Span::new(start, decl.span.end),
+                        format!("type {name} = {body}{extends}"),
+                    )
+                };
+                if is_within_declare_global_block(ctx, node.id()) {
+                    ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                } else {
+                    ctx.diagnostic_with_fix(diagnostic, fix);
+                }
             }
             _ => {}
         }
@@ -228,6 +239,12 @@ impl Rule for ConsistentTypeDefinitions {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
+}
+
+fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
+    ctx.nodes()
+        .ancestors(node_id)
+        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
 }
 
 #[test]
@@ -529,7 +546,43 @@ export declare type Test = {
         ),
     ];
 
+    let fix_dangerous = vec![
+        (
+            "declare global {
+                interface ProcessEnv {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            "declare global {
+                type ProcessEnv = {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
+        (
+            "declare global {
+                namespace NodeJS {
+                    interface ProcessEnv {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            "declare global {
+                namespace NodeJS {
+                    type ProcessEnv = {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
+    ];
+
     Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::PLUGIN, pass, fail)
         .expect_fix(fix)
+        .expect_fix(fix_dangerous)
         .test_and_snapshot();
 }

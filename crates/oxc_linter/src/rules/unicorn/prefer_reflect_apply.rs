@@ -9,8 +9,8 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_reflect_apply_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer Reflect.apply() over Function#apply()")
-        .with_help("Reflect.apply() is less verbose and easier to understand.")
+    OxcDiagnostic::warn("Prefer `Reflect.apply()` over `Function#apply()`.")
+        .with_help("`Reflect.apply()` is less verbose and easier to understand.")
         .with_label(span)
 }
 
@@ -23,9 +23,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Reflect.apply() is arguably less verbose and easier to understand.
+    /// `Reflect.apply()` is arguably less verbose and easier to understand.
     /// In addition, when you accept arbitrary methods,
-    /// it's not safe to assume .apply() exists or is not overridden.
+    /// it's not safe to assume `.apply()` exists or is not overridden.
     ///
     /// ### Examples
     ///

@@ -3,7 +3,7 @@ commit: c21f73fd
 parser_typescript Summary:
 AST Parsed     : 9832/9833 (99.99%)
 Positive Passed: 9823/9833 (99.90%)
-Negative Passed: 1485/2547 (58.30%)
+Negative Passed: 1486/2547 (58.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -653,8 +653,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationEnumClassMergeOfReexportIsError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7.ts
 
@@ -8166,6 +8164,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts:1:1]
+ 1 │ global {
+   · ──────
+ 2 │     interface Array<T> { x }
+   ╰────
+
   × Identifier `Kettle` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleDuplicateIdentifiers.ts:20:14]
  19 │ 
@@ -8181,7 +8186,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │     member2 = 42;
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:2:5]
  1 │ {
  2 │     namespace M { }
@@ -8189,7 +8194,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8198,7 +8203,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8206,7 +8211,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8215,7 +8220,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
  2 │     namespace M { }
@@ -8223,7 +8228,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
  2 │     namespace M { }
@@ -8231,7 +8236,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8240,7 +8245,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8249,7 +8254,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8257,7 +8262,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8265,7 +8270,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8274,7 +8279,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8283,7 +8288,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:3:9]
  2 │     {
  3 │         namespace M { }
@@ -8291,7 +8296,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │         export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:4:16]
  3 │             namespace M { }
  4 │ ╭─▶         export namespace N {
@@ -8300,7 +8305,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:8:9]
  7 │ 
  8 │         namespace Q.K { }
@@ -8308,7 +8313,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:9]
   9 │     
  10 │ ╭─▶         declare module "ambient" {
@@ -12171,7 +12176,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ type U2 = string | (foo: number) => void
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
  83 │ 
  84 │     namespace Baz { export const value = 1234 }
@@ -12179,7 +12184,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  85 │ }
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
  83 │ 
  84 │     namespace Baz { export const value = 1234 }
@@ -12284,7 +12289,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     bing = true; // no error
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
  15 │     namespace M {} // error
@@ -12292,7 +12297,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │         
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
  15 │     namespace M {} // error

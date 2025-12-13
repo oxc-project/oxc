@@ -156,8 +156,9 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== "code" && fixable !== "whitespace")
+        if (fixable !== "code" && fixable !== "whitespace") {
           throw new TypeError("Invalid `rule.meta.fixable`");
+        }
         isFixable = true;
       }
 
@@ -257,8 +258,9 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
   if (pluginMeta != null) {
     const pluginMetaName = pluginMeta.name;
     if (pluginMetaName != null) {
-      if (typeof pluginMetaName !== "string")
+      if (typeof pluginMetaName !== "string") {
         throw new TypeError("`plugin.meta.name` must be a string if defined");
+      }
       return pluginMetaName;
     }
   }
@@ -279,7 +281,8 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
  */
 function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
   if (hookFn == null) return null;
-  if (typeof hookFn !== "function")
+  if (typeof hookFn !== "function") {
     throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  }
   return hookFn;
 }

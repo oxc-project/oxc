@@ -1,3 +1,4 @@
+use crate::{ctx::Ctx, keep_var::KeepVar};
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
@@ -7,13 +8,12 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
+use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::Ancestor;
 use std::cmp::Ordering;
 use std::{cmp::min, iter, ops::ControlFlow};
-
-use crate::{ctx::Ctx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -516,20 +516,53 @@ impl<'a> PeepholeOptimizations {
                         .and_then(|index| init_expr.properties.get_mut(index))
                         .and_then(|mut value| {
                             if let ObjectPropertyKind::ObjectProperty(prop) = &mut value {
-                                // Some(prop.value.take_in(ctx.ast))
-                                let val = prop.value.take_in(ctx.ast);
-
-                                prop.value = ctx.create_ident_expr(
-                                    val.span(),
-                                    key.name,
-                                    id_prop
-                                        .value
+                                if id_prop.value.kind.is_binding_identifier()
+                                    || id_prop.value.kind.is_assignment_pattern()
+                                {
+                                    let val = prop.value.take_in(ctx.ast);
+                                    prop.value = ctx.create_ident_expr(
+                                        id_prop.value.span(),
+                                        key.name,
+                                        id_prop
+                                            .value
+                                            .get_binding_identifier()
+                                            .map(BindingIdentifier::symbol_id),
+                                        ReferenceFlags::Read,
+                                    );
+                                    Some(val)
+                                } else {
+                                    let unique = ctx.generate_uid_in_current_scope(
+                                        &key.name,
+                                        SymbolFlags::ConstVariable,
+                                    );
+                                    let ident = unique.create_binding_pattern(ctx);
+                                    let symbol_id = ident
                                         .get_binding_identifier()
-                                        .map(BindingIdentifier::symbol_id),
-                                    ReferenceFlags::Read,
-                                );
-                                // replace reference for `{ x, x: c } = ....`
-                                Some(val)
+                                        .map(BindingIdentifier::symbol_id);
+
+                                    result.push(ctx.ast.variable_declarator(
+                                        SPAN,
+                                        decl.kind,
+                                        ident,
+                                        Option::from(prop.value.take_in(ctx.ast)),
+                                        decl.definite,
+                                    ));
+
+                                    prop.value = ctx.create_ident_expr(
+                                        key.span,
+                                        unique.name,
+                                        symbol_id,
+                                        ReferenceFlags::Read,
+                                    );
+
+                                    // replace reference for `{ x, x: c } = ....`
+                                    Some(ctx.create_ident_expr(
+                                        id_prop.value.span(),
+                                        unique.name,
+                                        symbol_id,
+                                        ReferenceFlags::Read,
+                                    ))
+                                }
                             } else {
                                 None
                             }
@@ -717,12 +750,6 @@ impl<'a> PeepholeOptimizations {
     /// Simplifies destructuring assignments by transforming array patterns into a sequence of
     /// variable declarations, whenever possible. This function modifies the input declarations
     /// and returns whether any changes were made.
-    ///
-    /// - Iterates over the given `declarations`, identifying destructuring patterns
-    ///   of the form `[...] = [...]` (arrays assigned to arrays).
-    /// - Cases with `rest` parameters (e.g., `[a, b, ...rest]`) and adjusts the
-    ///   remaining array expression accordingly.
-    /// - Removes invalid patterns, empty assignments (e.g., `[] = []`), and
     fn simplify_destructuring_assignment(
         _kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
@@ -2217,7 +2244,7 @@ mod test {
     }
 
     #[test]
-    fn test_object_variable_declaration() {
+    fn test_simplify_object_destruction_assignment() {
         test_same("var {} = {}");
 
         test("var {a} = {a: 1}", "var a = 1");
@@ -2232,11 +2259,10 @@ mod test {
 
         test("var {a, b} = {a: 1}", "var a = 1, b");
         test("var {a, a: {b}} = {a: {b: 1}}", "var b = 1");
-        test("var {a: {c}, a: {b}} = {a: {b: 2, c: 1}}", "var c = 1, b = 2");
-        test_same("var {a: [b], a: {c}} = {a: {[0]: b, c}}"); // Uncaught TypeError: (intermediate value).a is not iterable
-
-        // var {a: {c}, a: {b}} = {a: {b: 2, c: 1}}
-        // var {a: {c}, a: {b}} = {a: {b: 2, c: 1}}
+        // ideally `var c = 1, b = 2`
+        test("var {a:{c},a:{b}}={a:{b:2,c:1}}", "var _a={b:2,c:1},{c}=_a,{b}=_a");
+        // Uncaught TypeError: (intermediate value).a is not iterable -> Uncaught TypeError: _a is not iterable
+        test("var {a:[b],a:{c}}={a:{[0]:b,c}}", "var _a={0:b,c},[b]=_a,{c}=_a");
     }
 
     #[test]

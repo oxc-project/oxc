@@ -36,6 +36,7 @@
     "QuotePropsConfig": {
       "enum": [
         "as-needed",
+        "consistent",
         "preserve"
       ],
       "type": "string"

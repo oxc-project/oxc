@@ -434,6 +434,16 @@ impl RuleRunner for crate::rules::eslint::no_global_assign::NoGlobalAssign {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::eslint::no_implicit_coercion::NoImplicitCoercion {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::BinaryExpression,
+        AstType::TemplateLiteral,
+        AstType::UnaryExpression,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::no_import_assign::NoImportAssign {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ImportDeclaration]));
@@ -599,6 +609,12 @@ impl RuleRunner for crate::rules::eslint::no_param_reassign::NoParamReassign {
 impl RuleRunner for crate::rules::eslint::no_plusplus::NoPlusplus {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::UpdateExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::eslint::no_promise_executor_return::NoPromiseExecutorReturn {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2034,6 +2050,15 @@ impl RuleRunner for crate::rules::oxc::no_rest_spread_properties::NoRestSpreadPr
         AstType::BindingRestElement,
         AstType::ObjectAssignmentTarget,
         AstType::SpreadElement,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::oxc::no_this_in_exported_function::NoThisInExportedFunction {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportDefaultDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ExportSpecifier,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, CommentKind,
+    AstKind,
     ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -157,32 +157,14 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         node_end = export_name_decl.span.end;
                     }
 
-                    let has_comments = ctx.has_comments_between(interface_decl.span);
+                    let mut comments = ctx.comments_range(node_start..node_end).peekable();
+                    if comments.peek().is_some() {
+                        let mut comments_text = String::new();
 
-                    if has_comments {
-                        let comments = ctx
-                            .comments_range(node_start..node_end)
-                            .map(|comment| (*comment, comment.content_span()));
-
-                        let comments_text = {
-                            let mut comments_vec: Vec<String> = vec![];
-                            comments.for_each(|(comment_interface, span)| {
-                                let comment = span.source_text(source_code);
-
-                                match comment_interface.kind {
-                                    CommentKind::Line => {
-                                        let single_line_comment: String = format!("//{comment}\n");
-                                        comments_vec.push(single_line_comment);
-                                    }
-                                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
-                                        let multi_line_comment: String = format!("/*{comment}*/\n");
-                                        comments_vec.push(multi_line_comment);
-                                    }
-                                }
-                            });
-
-                            comments_vec.join("")
-                        };
+                        for comment in comments {
+                            comments_text.push_str(comment.span.source_text(source_code));
+                            comments_text.push('\n');
+                        }
 
                         return Fix::new(
                             format!(

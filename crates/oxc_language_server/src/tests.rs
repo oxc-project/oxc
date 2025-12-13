@@ -8,7 +8,7 @@ use tower_lsp_server::{
     ls_types::*,
 };
 
-use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend};
+use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult};
 
 pub struct FakeToolBuilder;
 
@@ -124,29 +124,28 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if uri.as_str().ends_with("diagnostics.config") {
-            return Some(vec![Diagnostic {
-                message: format!(
-                    "Fake diagnostic for content: {}",
-                    content.unwrap_or("<no content>")
-                ),
-                ..Default::default()
-            }]);
+            return vec![(
+                uri.clone(),
+                vec![Diagnostic {
+                    message: format!(
+                        "Fake diagnostic for content: {}",
+                        content.unwrap_or("<no content>")
+                    ),
+                    ..Default::default()
+                }],
+            )];
         }
-        None
+        vec![]
     }
 
-    fn run_diagnostic_on_change(
-        &self,
-        uri: &Uri,
-        content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(uri, content)
     }
 
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(uri, content)
     }

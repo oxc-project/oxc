@@ -9,11 +9,11 @@ The results are saved in `conformance/snapshot.md`.
 
 ## Setup
 
-Build Oxlint in debug mode:
+Build Oxlint in conformance mode:
 
 ```sh
 cd apps/oxlint
-pnpm run build-test
+pnpm run build-conformance
 ```
 
 Initialize ESLint submodule:

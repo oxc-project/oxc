@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
-use super::command::OutputOptions;
+use super::command::OutputMode;
 use crate::core::{FormatFileStrategy, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
@@ -15,16 +15,16 @@ pub enum SuccessResult {
 
 pub struct FormatService {
     cwd: Box<Path>,
-    output_options: OutputOptions,
+    format_mode: OutputMode,
     formatter: SourceFormatter,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, output_options: OutputOptions, formatter: SourceFormatter) -> Self
+    pub fn new<T>(cwd: T, format_mode: OutputMode, formatter: SourceFormatter) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), output_options, formatter }
+        Self { cwd: cwd.into(), format_mode, formatter }
     }
 
     /// Process entries as they are received from the channel
@@ -35,7 +35,7 @@ impl FormatService {
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|entry| {
-            let start_time = matches!(self.output_options, OutputOptions::Check).then(Instant::now);
+            let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
             let path = entry.path();
             let Ok(source_text) = utils::read_to_string(path) else {
@@ -73,15 +73,15 @@ impl FormatService {
             };
 
             // Write back if needed
-            if matches!(self.output_options, OutputOptions::Write) && is_changed {
+            if matches!(self.format_mode, OutputMode::Write) && is_changed {
                 fs::write(path, code)
                     .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
                     .unwrap();
             }
 
             // Report result
-            let result = match (&self.output_options, is_changed) {
-                (OutputOptions::Check | OutputOptions::ListDifferent, true) => {
+            let result = match (&self.format_mode, is_changed) {
+                (OutputMode::Check | OutputMode::ListDifferent, true) => {
                     let display_path = path
                         // Show path relative to `cwd` for cleaner output
                         .strip_prefix(&self.cwd)
@@ -91,7 +91,7 @@ impl FormatService {
                         .cow_replace('\\', "/")
                         .to_string();
 
-                    if matches!(self.output_options, OutputOptions::Check) {
+                    if matches!(self.format_mode, OutputMode::Check) {
                         let elapsed = start_time.unwrap().elapsed().as_millis();
                         SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
                     } else {

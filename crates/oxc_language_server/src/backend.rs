@@ -214,15 +214,13 @@ impl LanguageServer for Backend {
                         continue;
                     }
                     let content = self.file_system.read().await.get(uri);
-                    if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
-                    {
-                        new_diagnostics.push((uri.clone(), diagnostics));
-                    }
+                    let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+                    new_diagnostics.extend(diagnostics);
                 }
             }
 
             if !new_diagnostics.is_empty() {
-                self.publish_all_diagnostics(new_diagnostics).await;
+                self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
             }
         }
 
@@ -353,7 +351,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
         if !removing_registrations.is_empty()
@@ -401,7 +399,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -504,9 +502,9 @@ impl LanguageServer for Backend {
             return;
         };
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await
-        {
-            self.client.publish_diagnostics(uri, diagnostics, None).await;
+        let diagnostics = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await;
+        if !diagnostics.is_empty() {
+            self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default()).await;
         }
     }
     /// It will update the in-memory file content if the client supports dynamic formatting.
@@ -525,10 +523,11 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
-            self.client
-                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
-                .await;
+        let diagnostics = worker.run_diagnostic_on_change(&uri, content.as_deref()).await;
+        if !diagnostics.is_empty() {
+            let version_map = ConcurrentHashMap::default();
+            version_map.pin().insert(uri.clone(), params.text_document.version);
+            self.publish_all_diagnostics(diagnostics, version_map).await;
         }
     }
 
@@ -547,10 +546,11 @@ impl LanguageServer for Backend {
 
         self.file_system.write().await.set(uri.clone(), content.clone());
 
-        if let Some(diagnostics) = worker.run_diagnostic(&uri, Some(&content)).await {
-            self.client
-                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
-                .await;
+        let diagnostics = worker.run_diagnostic(&uri, Some(&content)).await;
+        if !diagnostics.is_empty() {
+            let version_map = ConcurrentHashMap::default();
+            version_map.pin().insert(uri.clone(), params.text_document.version);
+            self.publish_all_diagnostics(diagnostics, version_map).await;
         }
     }
 
@@ -677,16 +677,23 @@ impl Backend {
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
-        self.publish_all_diagnostics(uris.into_iter().map(|uri| (uri, vec![])).collect()).await;
+        self.publish_all_diagnostics(
+            uris.into_iter().map(|uri| (uri, vec![])).collect(),
+            ConcurrentHashMap::default(),
+        )
+        .await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: Vec<(Uri, Vec<Diagnostic>)>) {
-        join_all(
-            result
-                .into_iter()
-                .map(|(uri, diagnostics)| self.client.publish_diagnostics(uri, diagnostics, None)),
-        )
+    async fn publish_all_diagnostics(
+        &self,
+        result: Vec<(Uri, Vec<Diagnostic>)>,
+        version_map: ConcurrentHashMap<Uri, i32>,
+    ) {
+        join_all(result.into_iter().map(|(uri, diagnostics)| {
+            let version = version_map.pin().get(&uri).copied();
+            self.client.publish_diagnostics(uri, diagnostics, version)
+        }))
         .await;
     }
 }
