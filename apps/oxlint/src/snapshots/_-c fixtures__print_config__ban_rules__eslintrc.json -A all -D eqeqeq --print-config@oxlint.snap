@@ -51,6 +51,7 @@ working directory:
     "builtin": true
   },
   "globals": {},
+  "linterOptions": {},
   "ignorePatterns": []
 }
 ----------
