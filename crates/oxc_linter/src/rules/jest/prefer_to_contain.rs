@@ -154,10 +154,10 @@ impl PreferToContain {
             };
 
             let argument_trailing_comma = {
-                let has_traling_comma = fixer.source_text()
+                let has_trailing_comma = fixer.source_text()
                     [(property_span.end as usize)..(includes_call_expr.span.end as usize)]
                     .contains(',');
-                if has_traling_comma { "," } else { "" }
+                if has_trailing_comma { "," } else { "" }
             }
             .to_string();
 
