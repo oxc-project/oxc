@@ -1,4 +1,5 @@
 mod config;
+mod eof;
 mod format;
 mod support;
 pub mod utils;
@@ -7,6 +8,7 @@ pub mod utils;
 mod external_formatter;
 
 pub use config::{load_config, resolve_config_path};
+pub use eof::{equals_with_eof_adjustment, write_with_eof_adjustment};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;
 

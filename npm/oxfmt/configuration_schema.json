@@ -201,6 +201,14 @@
         "null"
       ]
     },
+    "insertFinalNewline": {
+      "description": "Ensure files end with a newline. (Default: unset - preserve original)\n\nWhen unset (or `null`), the formatter will preserve the original file's\nEOF newline behavior. Set to `true` to always add a final newline,\nor `false` to never add one.",
+      "markdownDescription": "Ensure files end with a newline. (Default: unset - preserve original)\n\nWhen unset (or `null`), the formatter will preserve the original file's\nEOF newline behavior. Set to `true` to always add a final newline,\nor `false` to never add one.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
       "markdownDescription": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
