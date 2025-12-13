@@ -1,8 +1,8 @@
 // oxlint-disable no-console
 
 import { parseArgs } from "node:util";
-import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mjs";
-import { renderMarkdown } from "./markdown-renderer.mjs";
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.ts";
+import { renderMarkdown } from "./markdown-renderer.ts";
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
@@ -11,8 +11,8 @@ import {
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
-} from "./oxlint-rules.mjs";
-import { updateGitHubIssue } from "./result-reporter.mjs";
+} from "./oxlint-rules.ts";
+import { updateGitHubIssue } from "./result-reporter.ts";
 
 const HELP = `
 Usage:
@@ -71,10 +71,12 @@ void (async () => {
   //
   const results = await Promise.allSettled(
     Array.from(targetPluginNames).map((pluginName) => {
-      const pluginMeta =
-        /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
-          ALL_TARGET_PLUGINS.get(pluginName)
-        );
+      const pluginMeta = ALL_TARGET_PLUGINS.get(pluginName);
+
+      if (pluginMeta === undefined) {
+        return Promise.reject(new Error(`Plugin meta not found for ${pluginName}`));
+      }
+
       const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);

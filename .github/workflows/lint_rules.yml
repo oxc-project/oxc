@@ -31,4 +31,4 @@ jobs:
       - name: Run task
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./tasks/lint_rules --update
+        run: node ./tasks/lint_rules/src/main.ts --update

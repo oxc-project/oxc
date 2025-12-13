@@ -12,59 +12,79 @@ import { Linter } from "eslint";
 // Some plugins have the recommended flag in rule itself, but some plugins have it in config.
 
 // https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/src/index.ts
+// @ts-ignore
 import pluginTypescript from "@typescript-eslint/eslint-plugin";
 // https://github.com/eslint-community/eslint-plugin-n/blob/v17.13.2/lib/index.js
+// @ts-ignore
 import pluginNAll from "eslint-plugin-n";
 // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v57.0.0/index.js
+// @ts-ignore
 import pluginUnicorn from "eslint-plugin-unicorn";
 // https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/src/index.js
+// @ts-ignore
 import pluginJSDoc from "eslint-plugin-jsdoc";
 // https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/src/index.js
 import {
   configs as pluginImportConfigs,
   rules as pluginImportAllRules,
+  // @ts-ignore
 } from "eslint-plugin-import";
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/index.js
+// @ts-ignore
 import pluginJSXA11y from "eslint-plugin-jsx-a11y";
 // https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/src/index.ts
+// @ts-ignore
 import pluginJest from "eslint-plugin-jest";
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/index.js
+// @ts-ignore
 import pluginReact from "eslint-plugin-react";
 // https://github.com/facebook/react/blob/v19.2.0/packages/eslint-plugin-react-hooks/src/index.ts
+// @ts-ignore
 import pluginReactHooks from "eslint-plugin-react-hooks";
 // https://github.com/cvazac/eslint-plugin-react-perf/blob/9bfa930661a23218f5460ebd39d35d76ccdb5724/index.js
+// @ts-ignore
 import pluginReactPerf from "eslint-plugin-react-perf";
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
+// @ts-ignore
 import pluginNext from "@next/eslint-plugin-next";
 // https://github.com/eslint-community/eslint-plugin-promise/blob/v7.1.0/index.js
+// @ts-ignore
 import pluginPromise from "eslint-plugin-promise";
 // https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
+// @ts-ignore
 import pluginVitest from "eslint-plugin-vitest";
 // https://github.com/vuejs/eslint-plugin-vue
+// @ts-ignore
 import pluginVue from "eslint-plugin-vue";
 
-// destructuring default exports
-const { configs: pluginTypeScriptConfigs, rules: pluginTypeScriptAllRules } = pluginTypescript;
-const { rules: pluginNAllRules } = pluginNAll;
-const { configs: pluginUnicornConfigs, rules: pluginUnicornAllRules } = pluginUnicorn;
-const { rules: pluginJSDocAllRules, configs: pluginJSDocConfigs } = pluginJSDoc;
-const { rules: pluginJSXA11yAllRules, configs: pluginJSXA11yConfigs } = pluginJSXA11y;
-const { rules: pluginJestAllRules, configs: pluginJestConfigs } = pluginJest;
-const {
-  // @ts-expect-error: Module has no exported member
-  configs: pluginPromiseConfigs,
-  rules: pluginPromiseRules,
-} = pluginPromise;
-const { rules: pluginReactAllRules } = pluginReact;
-// @ts-expect-error: Module has no exported member
-const { rules: pluginReactHooksAllRules } = pluginReactHooks;
-const { rules: pluginReactPerfAllRules, configs: pluginReactPerfConfigs } = pluginReactPerf;
-const { rules: pluginNextAllRules } = pluginNext;
-const { configs: pluginVitestConfigs, rules: pluginVitestRules } = pluginVitest;
-const { configs: pluginVueConfigs, rules: pluginVueRules } = pluginVue;
+type AnyRules = Record<string, any>;
+type AnyConfigs = Record<string, any>;
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginTypeScriptRules = (linter) => {
+// destructuring default exports (all plugins lack proper TypeScript types)
+const pluginTypeScriptConfigs: AnyConfigs = (pluginTypescript as any).configs;
+const pluginTypeScriptAllRules: AnyRules = (pluginTypescript as any).rules;
+const pluginNAllRules: AnyRules = (pluginNAll as any).rules;
+const pluginUnicornConfigs: AnyConfigs = (pluginUnicorn as any).configs;
+const pluginUnicornAllRules: AnyRules = (pluginUnicorn as any).rules;
+const pluginJSDocAllRules: AnyRules = (pluginJSDoc as any).rules;
+const pluginJSDocConfigs: AnyConfigs = (pluginJSDoc as any).configs;
+const pluginJSXA11yAllRules: AnyRules = (pluginJSXA11y as any).rules;
+const pluginJSXA11yConfigs: AnyConfigs = (pluginJSXA11y as any).configs;
+const pluginJestAllRules: AnyRules = (pluginJest as any).rules;
+const pluginJestConfigs: AnyConfigs = (pluginJest as any).configs;
+const pluginPromiseConfigs: AnyConfigs = (pluginPromise as any).configs;
+const pluginPromiseRules: AnyRules = (pluginPromise as any).rules;
+const pluginReactAllRules: AnyRules = (pluginReact as any).rules;
+const pluginReactHooksAllRules: AnyRules = (pluginReactHooks as any).rules;
+const pluginReactPerfAllRules: AnyRules = (pluginReactPerf as any).rules;
+const pluginReactPerfConfigs: AnyConfigs = (pluginReactPerf as any).configs;
+const pluginNextAllRules: AnyRules = (pluginNext as any).rules;
+const pluginVitestConfigs: AnyConfigs = (pluginVitest as any).configs;
+const pluginVitestRules: AnyRules = (pluginVitest as any).rules;
+const pluginVueConfigs: AnyConfigs = (pluginVue as any).configs;
+const pluginVueRules: AnyRules = (pluginVue as any).rules;
+
+const loadPluginTypeScriptRules = (linter: Linter) => {
   // We want to list all rules but not support type-checked rules
   const pluginTypeScriptDisableTypeCheckedRules = new Map(
     Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
@@ -94,18 +114,15 @@ const loadPluginTypeScriptRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginNRules = (linter) => {
+const loadPluginNRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginNAllRules)) {
     const prefixedName = `n/${name}`;
 
-    // @ts-expect-error: The types of 'meta.fixable', 'null' is not assignable to type '"code" | "whitespace" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginUnicornRules = (linter) => {
+const loadPluginUnicornRules = (linter: Linter) => {
   const pluginUnicornRecommendedRules = new Map(
     Object.entries(pluginUnicornConfigs.recommended.rules),
   );
@@ -114,48 +131,40 @@ const loadPluginUnicornRules = (linter) => {
 
     // If name is presented and value is not "off", it is recommended
     const recommendedValue = pluginUnicornRecommendedRules.get(prefixedName);
-    // @ts-expect-error: `rule.meta.docs` is possibly `undefined`
     rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJSDocRules = (linter) => {
+const loadPluginJSDocRules = (linter: Linter) => {
   const pluginJSDocRecommendedRules = new Map(Object.entries(pluginJSDocConfigs.recommended.rules));
   for (const [name, rule] of Object.entries(pluginJSDocAllRules)) {
     const prefixedName = `jsdoc/${name}`;
 
     // If name is presented and value is not "off", it is recommended
     const recommendedValue = pluginJSDocRecommendedRules.get(prefixedName);
-    // @ts-expect-error: `rule.meta.docs` is possibly `undefined`
     rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginImportRules = (linter) => {
+const loadPluginImportRules = (linter: Linter) => {
   const pluginImportRecommendedRules = new Map(
-    // @ts-expect-error: Property 'rules' does not exist on type 'Object'.
-    Object.entries(pluginImportConfigs.recommended.rules),
+    Object.entries((pluginImportConfigs as AnyConfigs).recommended.rules),
   );
-  for (const [name, rule] of Object.entries(pluginImportAllRules)) {
+  for (const [name, rule] of Object.entries(pluginImportAllRules as AnyRules)) {
     const prefixedName = `import/${name}`;
 
-    // @ts-expect-error: Property 'recommended' does not exist on type
     rule.meta.docs.recommended = pluginImportRecommendedRules.has(prefixedName);
 
-    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJSXA11yRules = (linter) => {
-  const pluginJSXA11yRecommendedRules = new Map(
+const loadPluginJSXA11yRules = (linter: Linter) => {
+  const pluginJSXA11yRecommendedRules = new Map<string, any>(
     Object.entries(pluginJSXA11yConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginJSXA11yAllRules)) {
@@ -172,12 +181,8 @@ const loadPluginJSXA11yRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJestRules = (linter) => {
-  const pluginJestRecommendedRules = new Map(
-    // @ts-expect-error: Property 'recommended' does not exist on type '{}'.
-    Object.entries(pluginJestConfigs.recommended.rules),
-  );
+const loadPluginJestRules = (linter: Linter) => {
+  const pluginJestRecommendedRules = new Map(Object.entries(pluginJestConfigs.recommended.rules));
   for (const [name, rule] of Object.entries(pluginJestAllRules)) {
     const prefixedName = `jest/${name}`;
 
@@ -189,8 +194,7 @@ const loadPluginJestRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginReactRules = (linter) => {
+const loadPluginReactRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginReactAllRules)) {
     const prefixedName = `react/${name}`;
 
@@ -203,13 +207,11 @@ const loadPluginReactRules = (linter) => {
     // (but `react-hooks` plugin has only 2 rules, so it's fine...!)
     const prefixedName = `react/${name}`;
 
-    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginReactPerfRules = (linter) => {
+const loadPluginReactPerfRules = (linter: Linter) => {
   const pluginReactPerfRecommendedRules = new Map(
     Object.entries(pluginReactPerfConfigs.recommended.rules),
   );
@@ -222,8 +224,7 @@ const loadPluginReactPerfRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginNextRules = (linter) => {
+const loadPluginNextRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginNextAllRules)) {
     const prefixedName = `nextjs/${name}`;
 
@@ -231,36 +232,37 @@ const loadPluginNextRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginPromiseRules = (linter) => {
+const loadPluginPromiseRules = (linter: Linter) => {
   const pluginPromiseRecommendedRules = new Map(
     Object.entries(pluginPromiseConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginPromiseRules)) {
     const prefixedName = `promise/${name}`;
 
-    rule.meta.docs.recommended = pluginPromiseRecommendedRules.has(prefixedName);
+    if (rule.meta && rule.meta.docs) {
+      rule.meta.docs.recommended = pluginPromiseRecommendedRules.has(prefixedName);
+    }
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginVitestRules = (linter) => {
+const loadPluginVitestRules = (linter: Linter) => {
   const pluginVitestRecommendedRules = new Map(
     Object.entries(pluginVitestConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginVitestRules)) {
     const prefixedName = `vitest/${name}`;
 
-    rule.meta.docs.recommended = pluginVitestRecommendedRules.has(prefixedName);
+    if (rule.meta?.docs) {
+      rule.meta.docs.recommended = pluginVitestRecommendedRules.has(prefixedName);
+    }
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginVueRules = (linter) => {
+const loadPluginVueRules = (linter: Linter) => {
   const pluginVueRecommendedRules = new Map(
     Object.entries(pluginVueConfigs.recommended.rules || {}),
   );
@@ -273,14 +275,12 @@ const loadPluginVueRules = (linter) => {
   }
 };
 
-/**
- * @typedef {{
- *   npm: string[];
- *   issueNo: number;
- * }} TargetPluginMeta
- * @type {Map<string, TargetPluginMeta>}
- */
-export const ALL_TARGET_PLUGINS = new Map([
+export type TargetPluginMeta = {
+  npm: string[];
+  issueNo: number;
+};
+
+export const ALL_TARGET_PLUGINS = new Map<string, TargetPluginMeta>([
   ["eslint", { npm: ["eslint"], issueNo: 479 }],
   ["typescript", { npm: ["@typescript-eslint/eslint-plugin"], issueNo: 2180 }],
   ["n", { npm: ["eslint-plugin-n"], issueNo: 493 }],
@@ -309,8 +309,7 @@ export const createESLintLinter = () =>
     configType: "eslintrc",
   });
 
-/** @param {import("eslint").Linter} linter */
-export const loadTargetPluginRules = (linter) => {
+export const loadTargetPluginRules = (linter: Linter) => {
   loadPluginTypeScriptRules(linter);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
