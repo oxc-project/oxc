@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::*;
+use smallvec::SmallVec;
 
 use crate::diagnostics;
 
@@ -56,7 +57,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
             )
-            .collect::<std::vec::Vec<_>>();
+            .collect::<SmallVec<[Span; 2]>>();
         if default_exports.len() > 1 {
             errors.push(
                 OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
