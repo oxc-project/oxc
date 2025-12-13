@@ -37,31 +37,23 @@ fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// Zero-copy extension rule configuration using static references for minimal memory usage.
+/// Extension rule configuration; Copy to avoid extra indirection.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, JsonSchema, Serialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, JsonSchema, Serialize)]
 pub enum ExtensionRule {
     Always = 0,
     Never = 1,
     IgnorePackages = 2,
 }
 
-/// Static instances of ExtensionRule variants for zero-copy reference sharing.
-/// These are stored in read-only memory and accessed via references throughout the application.
-static ALWAYS: ExtensionRule = ExtensionRule::Always;
-static NEVER: ExtensionRule = ExtensionRule::Never;
-static IGNORE_PACKAGES: ExtensionRule = ExtensionRule::IgnorePackages;
-
 impl ExtensionRule {
-    /// Parse a string into a static reference to an ExtensionRule variant.
-    ///
-    /// Returns a reference to one of the static instances (ALWAYS, NEVER, IGNORE_PACKAGES)
+    /// Parse a string into an ExtensionRule variant.
     #[inline]
-    pub fn from_str(s: &str) -> Option<&'static ExtensionRule> {
+    pub fn from_str(s: &str) -> Option<ExtensionRule> {
         match s {
-            "always" => Some(&ALWAYS),
-            "never" => Some(&NEVER),
-            "ignorePackages" => Some(&IGNORE_PACKAGES),
+            "always" => Some(ExtensionRule::Always),
+            "never" => Some(ExtensionRule::Never),
+            "ignorePackages" => Some(ExtensionRule::IgnorePackages),
             _ => None,
         }
     }
@@ -126,17 +118,16 @@ impl PathGroupOverride {
 }
 
 /// This configuration structure stores extension rules in a hash map with pre-allocated capacity
-/// for optimal performance. All extension names are stored as string slices to avoid
-/// allocations, and all rules are static references for zero-copy operation.
+/// for optimal performance.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports (e.g., 'react', 'lodash') when enforcing extension rules.
     ignore_packages: bool,
-    require_extension: Option<&'static ExtensionRule>,
+    require_extension: Option<ExtensionRule>,
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
-    extensions: FxHashMap<String, &'static ExtensionRule>,
+    extensions: FxHashMap<String, ExtensionRule>,
     /// Path group overrides for import specifiers.
     path_group_overrides: Vec<PathGroupOverride>,
 }
@@ -153,23 +144,23 @@ impl ExtensionsConfig {
 
     /// Get the configured rule for a specific file extension.
     ///
-    /// Returns a reference to the static ExtensionRule if configured, or None otherwise.
+    /// Returns the configured ExtensionRule if present, or None otherwise.
     /// This method is inlined for hot-path performance.
     #[inline]
-    pub fn get_rule(&self, ext: &str) -> Option<&'static ExtensionRule> {
+    pub fn get_rule(&self, ext: &str) -> Option<ExtensionRule> {
         self.extensions.get(ext).copied()
     }
 
     /// Check if an extension is configured to always require the extension.
     #[inline]
     pub fn is_always(&self, ext: &str) -> bool {
-        matches!(self.get_rule(ext), Some(&ExtensionRule::Always))
+        matches!(self.get_rule(ext), Some(ExtensionRule::Always))
     }
 
     /// Check if an extension is configured to never allow the extension.
     #[inline]
     pub fn is_never(&self, ext: &str) -> bool {
-        matches!(self.get_rule(ext), Some(&ExtensionRule::Never))
+        matches!(self.get_rule(ext), Some(ExtensionRule::Never))
     }
 
     /// Check path group overrides for the given import path.
@@ -354,15 +345,12 @@ impl Rule for Extensions {
 /// This function dynamically parses extension configurations from JSON, supporting
 /// both individual extension fields (js, jsx, ts, tsx, json, etc.) and arbitrary
 /// custom extensions.
-fn build_config(
-    value: &serde_json::Value,
-    default: Option<&'static ExtensionRule>,
-) -> ExtensionsConfig {
+fn build_config(value: &serde_json::Value, default: Option<ExtensionRule>) -> ExtensionsConfig {
     // If default is IgnorePackages, convert to "always" with ignorePackages: true
     // This matches ESLint's behavior where "ignorePackages" string converts to this config
     let (default, default_ignore_packages) =
-        if matches!(default, Some(&ExtensionRule::IgnorePackages)) {
-            (Some(&ALWAYS), true)
+        if matches!(default, Some(ExtensionRule::IgnorePackages)) {
+            (Some(ExtensionRule::Always), true)
         } else {
             (default, false)
         };
@@ -430,7 +418,7 @@ impl Extensions {
         &self,
         module_record: (CompactStr, &RequestedModule),
         ctx: &LintContext,
-        require_extension: Option<&'static ExtensionRule>,
+        require_extension: Option<ExtensionRule>,
         check_type_imports: bool,
         ignore_packages: bool,
         is_import: bool,
@@ -468,7 +456,7 @@ impl Extensions {
             && ignore_packages
             && matches!(
                 require_extension,
-                Some(&ExtensionRule::Always | &ExtensionRule::IgnorePackages)
+                Some(ExtensionRule::Always | ExtensionRule::IgnorePackages)
             )
         {
             return;
@@ -515,7 +503,7 @@ impl Extensions {
             let has_resolved_extension = resolved_extension.is_some();
 
             let should_flag = match require_extension {
-                Some(&ExtensionRule::Always) => {
+                Some(ExtensionRule::Always) => {
                     // Extension should always be present
                     if !extension_is_written {
                         // Missing extension - check if THIS specific extension is configured as "never"
@@ -542,7 +530,7 @@ impl Extensions {
                         false
                     }
                 }
-                Some(&ExtensionRule::Never) => {
+                Some(ExtensionRule::Never) => {
                     // Extension should never be present
                     extension_is_written && !config.is_always(ext_str)
                 }
@@ -569,7 +557,7 @@ impl Extensions {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
                 }
             }
-        } else if matches!(require_extension, Some(&ExtensionRule::Always)) {
+        } else if matches!(require_extension, Some(ExtensionRule::Always)) {
             // No extension found (neither resolved nor written), but always is required
             // However, if standard extensions have "never" rules, be lenient (without module resolution, we can't know the actual extension)
             let has_never_rules = config.is_never("js")
@@ -582,7 +570,7 @@ impl Extensions {
             if !has_never_rules {
                 ctx.diagnostic(extension_missing_diagnostic(span, is_import));
             }
-        } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
+        } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
             // With ignorePackages, extensions are required for relative imports
             // UNLESS all standard extensions are configured (which means the user
             // has explicitly set rules for them, typically "never")
@@ -602,7 +590,7 @@ impl Extensions {
         &self,
         call_expr: &CallExpression<'_>,
         ctx: &LintContext,
-        require_extension: Option<&'static ExtensionRule>,
+        require_extension: Option<ExtensionRule>,
     ) {
         let config = &self.0;
         for argument in &call_expr.arguments {
@@ -644,7 +632,7 @@ impl Extensions {
                     let has_resolved_extension = resolved_extension.is_some();
 
                     let should_flag = match require_extension {
-                        Some(&ExtensionRule::Always) => {
+                        Some(ExtensionRule::Always) => {
                             // Extension should always be present
                             if !extension_is_written {
                                 // Missing extension - check if THIS specific extension is configured as "never"
@@ -671,7 +659,7 @@ impl Extensions {
                                 false
                             }
                         }
-                        Some(&ExtensionRule::Never) => {
+                        Some(ExtensionRule::Never) => {
                             // Extension should never be present
                             extension_is_written && !config.is_always(ext_str)
                         }
@@ -698,7 +686,7 @@ impl Extensions {
                             ctx.diagnostic(extension_missing_diagnostic(span, true));
                         }
                     }
-                } else if matches!(require_extension, Some(&ExtensionRule::Always)) {
+                } else if matches!(require_extension, Some(ExtensionRule::Always)) {
                     // No extension found (neither resolved nor written), but always is required
                     // However, if standard extensions have "never" rules, be lenient (without module resolution, we can't know the actual extension)
                     let has_never_rules = config.is_never("js")
@@ -711,7 +699,7 @@ impl Extensions {
                     if !has_never_rules {
                         ctx.diagnostic(extension_missing_diagnostic(span, true));
                     }
-                } else if matches!(require_extension, Some(&ExtensionRule::IgnorePackages)) {
+                } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
                     // With ignorePackages, extensions are required for relative imports
                     // UNLESS all standard extensions are configured (which means the user
                     // has explicitly set rules for them, typically "never")
