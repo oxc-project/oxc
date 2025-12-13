@@ -7,7 +7,7 @@ import { sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
-import type { Span } from "./location.ts";
+import type { Span, Range } from "./location.ts";
 
 const { max, min } = Math;
 
@@ -173,6 +173,35 @@ export function initTokens() {
     // TODO: Set this option dependent on source type
     jsx: true,
   }) as ParseRet);
+
+  // Check `tokens` and `comments` have valid ranges and are in ascending order
+  if (DEBUG) {
+    debugCheckValidRanges(tokens, "token");
+    debugCheckValidRanges(comments, "comment");
+
+    const tokensAndComments = [...tokens, ...comments];
+    tokensAndComments.sort((a, b) => a.range[0] - b.range[0]);
+    debugCheckValidRanges(tokensAndComments, "token/comment");
+  }
+}
+
+/**
+ * Check `tokens` have valid ranges and are in ascending order.
+ *
+ * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
+ */
+function debugCheckValidRanges<T extends { range: Range }>(tokens: T[], description: string): void {
+  if (!DEBUG) return;
+
+  let lastEnd = 0;
+  for (const token of tokens) {
+    const [start, end] = token.range;
+    if (end <= start) throw new Error(`Invalid ${description} range: ${start}-${end}`);
+    if (start < lastEnd) {
+      throw new Error(`Overlapping ${description}s: last end: ${lastEnd}, next start: ${start}`);
+    }
+    lastEnd = end;
+  }
 }
 
 /**
@@ -284,10 +313,7 @@ function debugCheckTokensAndComments() {
   debugAssertIsNonNull(tokensAndComments);
 
   const expected = [...tokens, ...comments];
-  expected.sort((a, b) => {
-    if (a.range[0] === b.range[0]) throw new Error("2 tokens/comments have the same start");
-    return a.range[0] - b.range[0];
-  });
+  expected.sort((a, b) => a.range[0] - b.range[0]);
 
   if (tokensAndComments.length !== expected.length) {
     throw new Error("`tokensAndComments` has wrong length");
