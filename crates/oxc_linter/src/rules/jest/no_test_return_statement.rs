@@ -47,6 +47,17 @@ declare_oxc_lint!(
     ///    expect(1).toBe(1);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-test-return-statement.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-test-return-statement": "error"
+    ///   }
+    /// }
+    /// ```
     NoTestReturnStatement,
     jest,
     style,

@@ -3,8 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use chained assignment")
@@ -12,7 +17,7 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoMultiAssign {
     /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
@@ -104,13 +109,9 @@ declare_oxc_lint!(
 
 impl Rule for NoMultiAssign {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let ignore_non_declaration = value
-            .get(0)
-            .and_then(|config| config.get("ignoreNonDeclaration"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { ignore_non_declaration }
+        serde_json::from_value::<DefaultRuleConfig<NoMultiAssign>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

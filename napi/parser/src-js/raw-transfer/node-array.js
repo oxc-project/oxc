@@ -145,7 +145,7 @@ export class NodeArray extends Array {
      *
      * @param {NodeArray} arr - `NodeArray` object
      * @param {number} index - Index of element to get
-     * @returns {*|undefined} - Element at index `index`, or `undefined` if out of bounds
+     * @returns {*} - Element at index `index`, or `undefined` if out of bounds
      */
     getElement = (arr, index) => {
       const internal = arr.#internal;

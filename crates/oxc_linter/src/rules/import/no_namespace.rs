@@ -4,8 +4,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::ImportImportName,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of namespaced aka wildcard \"*\" imports prohibited")
@@ -13,10 +18,10 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNamespace(Box<NoNamespaceConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNamespaceConfig {
     /// An array of glob strings for modules that should be ignored by the rule.
@@ -79,16 +84,9 @@ declare_oxc_lint!(
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for NoNamespace {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self(Box::new(NoNamespaceConfig {
-            ignore: obj
-                .and_then(|v| v.get("ignore"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<NoNamespace>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

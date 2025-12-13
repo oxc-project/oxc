@@ -21,14 +21,14 @@ body:
     id: command
     attributes:
       label: What command did you run?
-      description: Please include the full command with all arguments. If you're not certain (e.g. you're using the VSCode extension), please provide as much detail as possible.
+      description: Please include the full command with all arguments. If you're not certain (e.g. you're using the VS Code extension), please provide as much detail as possible.
       placeholder: "`oxlint -c .oxlintrc.json`"
 
   - type: textarea
     id: config
     attributes:
       label: What does your `.oxlintrc.json` config file look like?
-      description: If you're not using a config file, please say so. Otherwise paste please paste its contents here.
+      description: If you're not using a config file, please say so. Otherwise please paste its contents here.
       value: |
         ```jsonc
         // your config here

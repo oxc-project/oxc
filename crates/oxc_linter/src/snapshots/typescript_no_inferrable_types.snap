@@ -282,9 +282,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
-   ╭─[no_inferrable_types.tsx:1:15]
- 1 │ const fn = (a?: number = 5) => {};
-   ·               ────────
+   ╭─[no_inferrable_types.tsx:1:14]
+ 1 │ const fn = (a: number = 5) => {};
+   ·              ────────
    ╰────
   help: Remove the type annotation
 

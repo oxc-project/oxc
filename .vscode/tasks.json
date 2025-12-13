@@ -71,6 +71,19 @@
         "panel": "dedicated",
         "reveal": "never"
       }
+    },
+    {
+      "type": "shell",
+      "command": "cd ./editors/vscode && pnpm build:dev",
+      "windows": {
+        "command": "cd ./editors/vscode; pnpm build:dev"
+      },
+      "label": "pnpm build:dev",
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
     }
   ]
 }

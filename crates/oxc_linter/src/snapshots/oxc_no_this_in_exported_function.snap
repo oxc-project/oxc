@@ -1,0 +1,184 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:37]
+ 1 │ export function foo() { console.log(this); }
+   ·                                     ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:25]
+ 1 │ export function foo() { this.something(); }
+   ·                         ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:38]
+ 1 │ export function foo() { const self = this; }
+   ·                                      ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:45]
+ 1 │ export default function foo() { console.log(this); }
+   ·                                             ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:41]
+ 1 │ export default function() { console.log(this); }
+   ·                                         ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:33]
+ 1 │ export default function foo() { this.bar(); }
+   ·                                 ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:37]
+ 1 │ export function foo() { console.log(this); this.bar(); const x = this; }
+   ·                                     ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:44]
+ 1 │ export function foo() { console.log(this); this.bar(); const x = this; }
+   ·                                            ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:66]
+ 1 │ export function foo() { console.log(this); this.bar(); const x = this; }
+   ·                                                                  ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:49]
+ 1 │ export function foo() { if (true) { console.log(this); } }
+   ·                                                 ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:27]
+ 1 │ export function foo() { { this.bar(); } }
+   ·                           ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:39]
+ 1 │ export default function namedFunc() { this.bar(); }
+   ·                                       ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:77]
+ 1 │ export function foo() { const obj = { get prop() { return this; } }; return this; }
+   ·                                                                             ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:43]
+ 1 │ export function foo() { const bar = () => this.baz(); }
+   ·                                           ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:30]
+ 1 │ function foo() { console.log(this); } export { foo };
+   ·                              ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:40]
+ 1 │ var foo = function foo() { console.log(this); }; export { foo };
+   ·                                        ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:37]
+ 1 │ var foo = function () { console.log(this); }; export { foo };
+   ·                                     ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:58]
+ 1 │ export function foo() { class Bar { static [(console.log(this), 'baz')] = 1 } }
+   ·                                                          ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:51]
+ 1 │ export function foo() { class Bar { [(console.log(this), 'baz')] = 1 } }
+   ·                                                   ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:43]
+ 1 │ export async function foo() { console.log(this); }
+   ·                                           ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:32]
+ 1 │ export function* foo() { yield this; }
+   ·                                ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:38]
+ 1 │ export async function* foo() { yield this; }
+   ·                                      ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:35]
+ 1 │ export default async function() { this.bar(); }
+   ·                                   ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:36]
+ 1 │ export default function*() { yield this; }
+   ·                                    ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:24]
+ 1 │ async function foo() { this.bar(); } export { foo };
+   ·                        ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.
+
+  ⚠ oxc(no-this-in-exported-function): `this` should not be used in exported functions
+   ╭─[no_this_in_exported_function.tsx:1:25]
+ 1 │ function* foo() { yield this; } export { foo };
+   ·                         ────
+   ╰────
+  help: Remove `this` or convert to a non-exported function. In bundlers, `this` becomes `undefined` in exported functions.

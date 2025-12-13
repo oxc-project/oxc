@@ -1,93 +1,93 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-bitwise): Unexpected use of "^"
+  ⚠ eslint(no-bitwise): Unexpected use of `"^"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a ^ b
    · ─────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "|"
+  ⚠ eslint(no-bitwise): Unexpected use of `"|"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a | b
    · ─────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "&"
+  ⚠ eslint(no-bitwise): Unexpected use of `"&"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a & b
    · ─────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "<<"
+  ⚠ eslint(no-bitwise): Unexpected use of `"<<"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a << b
    · ──────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of ">>"
+  ⚠ eslint(no-bitwise): Unexpected use of `">>"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >> b
    · ──────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of ">>>"
+  ⚠ eslint(no-bitwise): Unexpected use of `">>>"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>> b
    · ───────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "~"
+  ⚠ eslint(no-bitwise): Unexpected use of `"~"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ ~a
    · ──
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "^="
+  ⚠ eslint(no-bitwise): Unexpected use of `"^="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a ^= b
    · ──────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "|="
+  ⚠ eslint(no-bitwise): Unexpected use of `"|="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a |= b
    · ──────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "&="
+  ⚠ eslint(no-bitwise): Unexpected use of `"&="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a &= b
    · ──────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of "<<="
+  ⚠ eslint(no-bitwise): Unexpected use of `"<<="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a <<= b
    · ───────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of ">>="
+  ⚠ eslint(no-bitwise): Unexpected use of `">>="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>= b
    · ───────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
-  ⚠ eslint(no-bitwise): Unexpected use of ">>>="
+  ⚠ eslint(no-bitwise): Unexpected use of `">>>="`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>>= b
    · ────────
    ╰────
-  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?

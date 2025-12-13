@@ -1,9 +1,6 @@
 use std::{fmt::Write, path::PathBuf};
 
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{TextEdit, Uri},
-};
+use tower_lsp_server::ls_types::{TextEdit, Uri};
 
 use crate::{
     ToolRestartChanges,

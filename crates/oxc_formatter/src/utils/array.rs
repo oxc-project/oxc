@@ -82,8 +82,6 @@ pub fn write_array_node<'a, 'b, N>(
             }),
         );
     }
-
-    join.finish();
 }
 
 /// Determines if a trailing separator should be inserted after an array element

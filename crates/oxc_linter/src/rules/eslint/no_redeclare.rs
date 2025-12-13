@@ -4,10 +4,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ModuleKind, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
@@ -22,16 +23,16 @@ fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnosti
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRedeclare {
     /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
-    built_in_globals: bool,
+    builtin_globals: bool,
 }
 
 impl Default for NoRedeclare {
     fn default() -> Self {
-        Self { built_in_globals: true }
+        Self { builtin_globals: true }
     }
 }
 
@@ -67,20 +68,16 @@ declare_oxc_lint!(
 
 impl Rule for NoRedeclare {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let built_in_globals = value
-            .get(0)
-            .and_then(|config| config.get("builtinGlobals"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-
-        Self { built_in_globals }
+        serde_json::from_value::<DefaultRuleConfig<NoRedeclare>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
-            let is_builtin = self.built_in_globals
+            let is_builtin = self.builtin_globals
                 && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
 
             if is_builtin {
@@ -135,7 +132,7 @@ fn test() {
     use crate::tester::Tester;
 
     let defaults = NoRedeclare::default();
-    assert!(defaults.built_in_globals);
+    assert!(defaults.builtin_globals);
 
     let pass = vec![
         ("var a = 3; var b = function() { var a = 10; };", None),

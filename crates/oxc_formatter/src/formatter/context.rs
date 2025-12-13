@@ -22,9 +22,16 @@ pub struct FormatContext<'ast> {
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
-    allocator: &'ast Allocator,
+    /// Tracks whether quotes are needed for properties in the current object-like node.
+    ///
+    /// When [`FormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
+    /// whether at least one property key requires quotes. A stack is used to handle nested object-like
+    /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
+    quote_needed_stack: Vec<bool>,
 
     embedded_formatter: Option<EmbeddedFormatter>,
+
+    allocator: &'ast Allocator,
 }
 
 impl std::fmt::Debug for FormatContext<'_> {
@@ -54,9 +61,10 @@ impl<'ast> FormatContext<'ast> {
             source_text,
             source_type,
             comments: Comments::new(source_text, comments),
-            allocator,
             cached_elements: FxHashMap::default(),
+            quote_needed_stack: Vec::new(),
             embedded_formatter,
+            allocator,
         }
     }
 
@@ -66,9 +74,10 @@ impl<'ast> FormatContext<'ast> {
             source_text: SourceText::new(""),
             source_type: SourceType::default(),
             comments: Comments::new(SourceText::new(""), &[]),
-            allocator,
             cached_elements: FxHashMap::default(),
+            quote_needed_stack: Vec::new(),
             embedded_formatter: None,
+            allocator,
         }
     }
 
@@ -110,6 +119,28 @@ impl<'ast> FormatContext<'ast> {
     /// Caches the formatted element for the given key.
     pub(crate) fn cache_element<T: GetSpan>(&mut self, key: &T, formatted: FormatElement<'ast>) {
         self.cached_elements.insert(key.span(), formatted);
+    }
+
+    /// Pushes a new quote needed state onto the stack.
+    pub fn push_quote_needed(&mut self, needed: bool) {
+        debug_assert!(
+            self.options.quote_properties.is_consistent(),
+            "`push_quote_needed` should only be used when `self.options.quote_properties.is_consistent()` is true"
+        );
+        self.quote_needed_stack.push(needed);
+    }
+
+    /// Pops the top quote needed state from the stack.
+    pub fn pop_quote_needed(&mut self) {
+        debug_assert!(
+            self.options.quote_properties.is_consistent(),
+            "`pop_quote_needed` should only be used when `self.options.quote_properties.is_consistent()` is true"
+        );
+        self.quote_needed_stack.pop();
+    }
+
+    pub fn is_quote_needed(&self) -> bool {
+        *self.quote_needed_stack.last().unwrap_or(&false)
     }
 
     pub fn allocator(&self) -> &'ast Allocator {

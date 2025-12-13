@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join as pathJoin, sep as pathSep } from "node:path";
 
 import { execa } from "execa";
-import { expect } from "vitest";
+import { expect as defaultExpect, type ExpectStatic } from "vitest";
 
 // Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
 const normalizeSlashes =
@@ -57,8 +57,9 @@ export function getFixtures(): Fixture[] {
       options = DEFAULT_OPTIONS;
     }
 
-    if (typeof options !== "object" || options === null)
+    if (typeof options !== "object" || options === null) {
       throw new TypeError("`options.json` must be an object");
+    }
     options = { ...DEFAULT_OPTIONS, ...options };
     if (
       typeof options.oxlint !== "boolean" ||
@@ -88,6 +89,8 @@ interface TestFixtureOptions {
   snapshotName: string;
   // `true` if the command is ESLint
   isESLint: boolean;
+  // Vitest expect function (required for concurrent tests)
+  expect?: ExpectStatic;
 }
 
 /**
@@ -95,6 +98,7 @@ interface TestFixtureOptions {
  * @param options - Options for running the test
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
+  const { expect = defaultExpect } = options;
   const { name: fixtureName, dirPath } = options.fixture,
     pathPrefixLen = dirPath.length + 1;
 
@@ -151,7 +155,6 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
     }
   }
 
-  // Assert snapshot is as expected
   await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 
@@ -203,7 +206,7 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
     // Handle stack trace lines.
     // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
-    let match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       let [, preamble, at] = match;
       if (!at.startsWith(FIXTURES_URL)) return [];

@@ -1,6 +1,6 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
         TextEdit, Uri, WorkspaceEdit,
     },
@@ -68,7 +68,7 @@ pub trait Tool: Send + Sync {
         &self,
         _uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
@@ -114,8 +114,8 @@ pub trait Tool: Send + Sync {
         None
     }
 
-    /// Remove diagnostics associated with the given URI.
-    fn remove_diagnostics(&self, _uri: &Uri) {
+    /// Remove internal cache for the given URI, if any.
+    fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
 
@@ -129,8 +129,6 @@ pub struct ToolRestartChanges {
     /// The tool that was restarted (linter, formatter).
     /// If None, no tool was restarted.
     pub tool: Option<Box<dyn Tool>>,
-    /// The diagnostic reports that need to be revalidated after the tool restart
-    pub diagnostic_reports: Option<Vec<(String, Vec<Diagnostic>)>>,
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,

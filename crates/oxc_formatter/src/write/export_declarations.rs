@@ -176,26 +176,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        f.join_with(soft_line_break_or_space())
-            .entries(
-                FormatSeparatedIter::new(self.iter(), ",")
-                    .with_trailing_separator(trailing_separator)
-                    .map(|specifier| {
-                        format_with(move |f| {
-                            // Should add empty line before the specifier if there are comments before it.
-                            let specifier_span = specifier.span();
-                            if f.context().comments().has_comment_before(specifier_span.start)
-                                && f.source_text().get_lines_before(specifier_span, f.comments())
-                                    > 1
-                            {
-                                write!(f, [empty_line()]);
-                            }
+        f.join_with(soft_line_break_or_space()).entries(
+            FormatSeparatedIter::new(self.iter(), ",")
+                .with_trailing_separator(trailing_separator)
+                .map(|specifier| {
+                    format_with(move |f| {
+                        // Should add empty line before the specifier if there are comments before it.
+                        let specifier_span = specifier.span();
+                        if f.context().comments().has_comment_before(specifier_span.start)
+                            && f.source_text().get_lines_before(specifier_span, f.comments()) > 1
+                        {
+                            write!(f, [empty_line()]);
+                        }
 
-                            write!(f, specifier);
-                        })
-                    }),
-            )
-            .finish();
+                        write!(f, specifier);
+                    })
+                }),
+        );
     }
 }
 

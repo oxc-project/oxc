@@ -15,7 +15,7 @@ No files found matching the given patterns.
 --------------------
 arguments: --check __non__existent__file.js
 working directory: fixtures
-exit code: 1
+exit code: 2
 --- STDOUT ---------
 Checking formatting...
 

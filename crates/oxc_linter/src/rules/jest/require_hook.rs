@@ -8,10 +8,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
         parse_jest_fn_call,
@@ -24,14 +25,14 @@ fn use_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RequireHookConfig {
     /// An array of function names that are allowed to be called outside of hooks.
     allowed_function_calls: Vec<CompactStr>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireHook(Box<RequireHookConfig>);
 
 impl std::ops::Deref for RequireHook {
@@ -166,14 +167,9 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_function_calls = value
-            .get(0)
-            .and_then(|config| config.get("allowedFunctionCalls"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(RequireHookConfig { allowed_function_calls }))
+        serde_json::from_value::<DefaultRuleConfig<RequireHook>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

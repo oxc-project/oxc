@@ -250,7 +250,12 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if (inline_logical_expression && !flattened)
             || (!inline_logical_expression && should_indent_if_inlines)
         {
-            return write!(f, [group(&format_once(|f| { f.join().entries(parts).finish() }))]);
+            return write!(
+                f,
+                [group(&format_once(|f| {
+                    f.join().entries(parts);
+                }))]
+            );
         }
 
         // `parts` is guaranteed to have at least 2 elements (Left + Right)
@@ -267,7 +272,9 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                 f,
                 [group(&format_args!(
                     first,
-                    indent(&format_with(|f| { f.join().entries(tail_parts.iter()).finish() }))
+                    (!tail_parts.is_empty()).then_some(indent(&format_with(|f| {
+                        f.join().entries(tail_parts.iter());
+                    })))
                 ))
                 .with_group_id(Some(group_id))]
             );
@@ -436,7 +443,10 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
 
                     if should_inline {
                         write!(f, [space()]);
-                        if f.comments().has_leading_own_line_comment(right.span().start) {
+
+                        if !right.is_jsx()
+                            && f.comments().has_leading_own_line_comment(right.span().start)
+                        {
                             return write!(f, soft_line_indent_or_space(right));
                         }
                     } else {
@@ -505,18 +515,8 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
 impl BinaryLeftOrRightSide<'_, '_> {
     fn is_jsx(&self) -> bool {
         match self {
-            BinaryLeftOrRightSide::Left { parent } => {
-                matches!(
-                    parent.left().as_ref(),
-                    Expression::JSXElement(_) | Expression::JSXFragment(_)
-                )
-            }
-            BinaryLeftOrRightSide::Right { parent, .. } => {
-                matches!(
-                    parent.right().as_ref(),
-                    Expression::JSXElement(_) | Expression::JSXFragment(_)
-                )
-            }
+            BinaryLeftOrRightSide::Left { parent } => parent.left().is_jsx(),
+            BinaryLeftOrRightSide::Right { parent, .. } => parent.right().is_jsx(),
         }
     }
 }

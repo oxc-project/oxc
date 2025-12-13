@@ -12,7 +12,7 @@ const SPAN: Node = {
 
 const rule: Rule = {
   create(context) {
-    const settings = context.settings;
+    const { settings } = context;
 
     // Report each setting key and value
     Object.keys(settings).forEach((key) => {

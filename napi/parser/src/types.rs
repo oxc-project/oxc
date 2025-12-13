@@ -170,7 +170,7 @@ pub enum ImportNameKind {
     Default,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ImportName {
     pub kind: ImportNameKind,
     pub name: Option<String>,
@@ -178,7 +178,7 @@ pub struct ImportName {
     pub end: Option<u32>,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct StaticExportEntry {
     pub start: u32,
     pub end: u32,
@@ -222,7 +222,7 @@ pub enum ExportImportNameKind {
     None,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportImportName {
     pub kind: ExportImportNameKind,
     pub name: Option<String>,
@@ -240,7 +240,7 @@ pub enum ExportExportNameKind {
     None,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportExportName {
     pub kind: ExportExportNameKind,
     pub name: Option<String>,
@@ -248,7 +248,7 @@ pub struct ExportExportName {
     pub end: Option<u32>,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportLocalName {
     pub kind: ExportLocalNameKind,
     pub name: Option<String>,

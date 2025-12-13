@@ -5,14 +5,19 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::PROMISE_STATIC_METHODS,
+};
 
 fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))
+    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}` method."))
         .with_label(member_span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SpecOnly(Box<SpecOnlyConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
@@ -58,15 +63,9 @@ declare_oxc_lint!(
 
 impl Rule for SpecOnly {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_methods = value
-            .get(0)
-            .and_then(|v| v.get("allowedMethods"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-            });
-
-        Self(Box::new(SpecOnlyConfig { allowed_methods }))
+        serde_json::from_value::<DefaultRuleConfig<SpecOnly>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -103,6 +102,7 @@ fn test() {
         ("Promise.resolve()", None),
         ("Promise.reject()", None),
         ("Promise.all()", None),
+        ("Promise.all()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.race()", None),
         ("Promise.withResolvers()", None),
         ("new Promise(function (resolve, reject) {})", None),
@@ -110,12 +110,13 @@ fn test() {
         ("doSomething(Promise.all)", None),
         (
             "Promise.permittedMethod()",
-            Some(serde_json::json!([ { "allowedMethods": ["permittedMethod"], }, ])),
+            Some(serde_json::json!([{ "allowedMethods": ["permittedMethod"] }])),
         ),
     ];
 
     let fail = vec![
         ("Promise.done()", None),
+        ("Promise.done()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.something()", None),
         ("new Promise.done()", None),
         (
@@ -134,6 +135,15 @@ fn test() {
             }
             ",
             None,
+        ),
+        (
+            "Promise.notPermittedMethod()",
+            Some(serde_json::json!([{ "allowedMethods": ["permittedMethod"] }])),
+        ),
+        (
+            // test case-sensitive match
+            "Promise.differingCase()",
+            Some(serde_json::json!([{ "allowedMethods": ["differingcase"] }])),
         ),
     ];
 

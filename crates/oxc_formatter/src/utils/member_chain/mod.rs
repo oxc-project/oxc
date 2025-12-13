@@ -200,7 +200,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
-            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish();
+            f.join().entries(iter::once(&self.head).chain(self.tail.iter()));
         });
 
         self.inspect_member_chain_groups(f);

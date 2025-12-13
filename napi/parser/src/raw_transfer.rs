@@ -44,6 +44,7 @@ const BUMP_ALIGN: usize = 16;
 /// Does not check that the offset is within bounds of `buffer`.
 /// To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE + BUFFER_ALIGN` bytes.
 #[napi(skip_typescript)]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     let buffer = &*buffer;
     let offset = (BUFFER_ALIGN - (buffer.as_ptr() as usize % BUFFER_ALIGN)) % BUFFER_ALIGN;
@@ -76,6 +77,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 ///
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
 #[napi(skip_typescript)]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub unsafe fn parse_raw_sync(
     filename: String,
     mut buffer: Uint8Array,
@@ -282,13 +284,4 @@ unsafe fn parse_raw_impl(
     unsafe {
         buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }
-}
-
-/// Returns `true` if raw transfer is supported on this platform.
-//
-// This module is only compiled on 64-bit little-endian platforms.
-// Fallback version for unsupported platforms in `lib.rs`.
-#[napi]
-pub fn raw_transfer_supported() -> bool {
-    true
 }

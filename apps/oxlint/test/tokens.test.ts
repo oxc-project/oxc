@@ -17,10 +17,10 @@ import {
   getTokensBetween,
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
-} from "../src-js/plugins/tokens.js";
-import { resetSourceAndAst } from "../src-js/plugins/source_code.js";
-import type { Node } from "../src-js/plugins/types.js";
-import type { BinaryExpression } from "../src-js/generated/types.js";
+} from "../src-js/plugins/tokens.ts";
+import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
+import type { Node } from "../src-js/plugins/types.ts";
+import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
 const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/";
@@ -892,7 +892,8 @@ describe("when calling getLastToken", () => {
     resetSourceAndAst();
     sourceText = "foo // comment";
 
-    expect(getLastToken(Program)!.value).toBe("foo");
+    // TODO: this verbatim range should be replaced with `ast`
+    expect(getLastToken({ range: [0, 3] } as Node)!.value).toBe("foo");
     resetSourceAndAst();
   });
 
@@ -901,7 +902,8 @@ describe("when calling getLastToken", () => {
     sourceText = "// comment";
 
     expect(
-      getLastToken({ range: [0, 11] } as Node, {
+      // TODO: this verbatim range should be replaced with `ast`
+      getLastToken({ range: [0, 10] } as Node, {
         filter() {
           expect.fail("Unexpected call to filter callback");
         },

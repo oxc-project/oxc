@@ -145,9 +145,9 @@ impl NoUntypedMockFactory {
                     let mut code = String::with_capacity(string_literal.value.len() + 20);
                     code.push_str("<typeof import('");
                     code.push_str(string_literal.value.as_str());
-                    code.push_str("')>(");
+                    code.push_str("')>");
 
-                    fixer.replace(Span::sized(string_literal.span.start - 1, 1), code)
+                    fixer.insert_text_after(&call_expr.callee, code)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
@@ -397,6 +397,18 @@ fn test() {
                     return jest.fn(() => 42);
                 });
             ",
+            None,
+        ),
+        // Test case for newline between jest.mock( and module name
+        (
+            "jest.mock(
+  'foo',
+  () => {}
+);",
+            "jest.mock<typeof import('foo')>(
+  'foo',
+  () => {}
+);",
             None,
         ),
     ];

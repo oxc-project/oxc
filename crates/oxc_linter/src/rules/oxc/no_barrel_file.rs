@@ -1,14 +1,14 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-
 use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -18,7 +18,7 @@ fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> O
     .with_labels(labels)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoBarrelFile {
     /// The maximum number of modules that can be re-exported via `export *`
@@ -74,15 +74,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoBarrelFile {
-    #[expect(clippy::cast_possible_truncation)]
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            threshold: value
-                .get(0)
-                .and_then(|config| config.get("threshold"))
-                .and_then(serde_json::Value::as_u64)
-                .map_or(NoBarrelFile::default().threshold, |n| n as usize),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoBarrelFile>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -123,7 +118,7 @@ impl Rule for NoBarrelFile {
         }
 
         let threshold = self.threshold;
-        if total >= threshold {
+        if total > threshold {
             if labels.is_empty() {
                 labels.push(Span::new(0, 0).label("File defined here."));
             }
@@ -153,6 +148,17 @@ fn test() {
         (r#"export type { foo } from "foo";"#, None),
         (r#"export type * from "foo"; export type { bar } from "bar";"#, None),
         (r#"import { foo, bar, baz } from "../import/export-star/models";"#, None),
+        (
+            r#"import boo from "foo";
+                    const test = 0;"#,
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (r"export const test = 0;", Some(serde_json::json!([{"threshold": 0}]))),
+        (
+            r"export const test = 0;
+            export const other = 1;",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
     ];
 
     let settings = Some(serde_json::json!([{"threshold": 1}]));

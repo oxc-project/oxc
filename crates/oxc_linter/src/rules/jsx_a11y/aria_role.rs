@@ -6,12 +6,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     globals::{HTML_TAG, VALID_ARIA_ROLES},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_prop_value, has_jsx_prop},
 };
 
@@ -23,10 +24,10 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AriaRole(Box<AriaRoleConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AriaRoleConfig {
     /// Determines if developer-created components are checked.
@@ -97,34 +98,14 @@ declare_oxc_lint!(
     AriaRole,
     jsx_a11y,
     correctness,
-    config = AriaRoleConfig
+    config = AriaRoleConfig,
 );
 
 impl Rule for AriaRole {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.as_array() else {
-            return Self::default();
-        };
-        let mut ignore_non_dom = false;
-        let mut allowed_invalid_roles: Vec<String> = vec![];
-
-        let _ = value.iter().find(|v| {
-            if let serde_json::Value::Object(obj) = v {
-                if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                    ignore_non_dom = *val;
-                }
-
-                if let Some(serde_json::Value::Array(val)) = obj.get("allowedInvalidRoles") {
-                    allowed_invalid_roles =
-                        val.iter().map(|v| v.as_str().unwrap().to_string()).collect();
-                }
-
-                return true;
-            }
-            false
-        });
-
-        Self(Box::new(AriaRoleConfig { ignore_non_dom, allowed_invalid_roles }))
+        serde_json::from_value::<DefaultRuleConfig<AriaRole>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -176,13 +157,13 @@ fn test() {
     use crate::tester::Tester;
 
     fn ignore_non_dom_schema() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "ignoreNonDOM": true
         }])
     }
 
     fn allowed_invalid_roles() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "allowedInvalidRoles": ["invalid-role", "other-invalid-role"],
         }])
     }

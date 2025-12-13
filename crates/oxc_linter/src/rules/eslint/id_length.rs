@@ -570,19 +570,19 @@ fn test() {
         (
             "function BEFORE_send() {};",
             Some(
-                serde_json::json!([				{ "min": 3, "max": 5, "exceptionPatterns": ["^BEFORE_", "send$"] },			]),
+                serde_json::json!([{ "min": 3, "max": 5, "exceptionPatterns": ["^BEFORE_", "send$"] },]),
             ),
         ),
         (
             "function BEFORE_send() {};",
             Some(
-                serde_json::json!([				{ "min": 3, "max": 5, "exceptionPatterns": ["^BEFORE_", "^A", "^Z"] },			]),
+                serde_json::json!([{ "min": 3, "max": 5, "exceptionPatterns": ["^BEFORE_", "^A", "^Z"] }]),
             ),
         ),
         (
             "function BEFORE_send() {};",
             Some(
-                serde_json::json!([				{ "min": 3, "max": 5, "exceptionPatterns": ["^A", "^BEFORE_", "^Z"] },			]),
+                serde_json::json!([{ "min": 3, "max": 5, "exceptionPatterns": ["^A", "^BEFORE_", "^Z"] }]),
             ),
         ),
         (
@@ -597,46 +597,46 @@ fn test() {
         ("class Foo { #abc = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
-        ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("(𐌘) => { 𐌘 * 𐌘 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("class 𠮟 { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("class F { 𐌘() {} }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("class F { #𐌘() {} }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 2022,			},
-        ("class F { 𐌘 = 1 }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 2022,			},
-        ("class F { #𐌘 = 1 }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 2022,			},
-        ("function f(...𐌘) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("function f([𐌘]) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("var [ 𐌘 ] = a;", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("var { p: [𐌘]} = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("function f({𐌘}) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("var { 𐌘 } = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("var { p: 𐌘} = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
-        ("({ prop: o.𐌘 } = {});", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // {				"ecmaVersion": 6,			},
+        ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("(𐌘) => { 𐌘 * 𐌘 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("class 𠮟 { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("class F { 𐌘() {} }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("class F { #𐌘() {} }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 2022, },
+        ("class F { 𐌘 = 1 }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 2022, },
+        ("class F { #𐌘 = 1 }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 2022, },
+        ("function f(...𐌘) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("function f([𐌘]) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("var [ 𐌘 ] = a;", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("var { p: [𐌘]} = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("function f({𐌘}) { }", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("var { 𐌘 } = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("var { p: 𐌘} = {};", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
+        ("({ prop: o.𐌘 } = {});", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
         (
             "import foo from 'foo.json' with { type: 'json' }",
             Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-        ), // {				"ecmaVersion": 2025,			},
+        ), // { "ecmaVersion": 2025 },
         (
             "export * from 'foo.json' with { type: 'json' }",
             Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-        ), // {				"ecmaVersion": 2025,			},
+        ), // { "ecmaVersion": 2025 },
         (
             "export { default } from 'foo.json' with { type: 'json' }",
             Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-        ), // {				"ecmaVersion": 2025,			},
+        ), // { "ecmaVersion": 2025 },
                                                                                       // TODO:
                                                                                       // (
                                                                                       //     "import('foo.json', { with: { type: 'json' } })",
                                                                                       //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // {				"ecmaVersion": 2025,			},
+                                                                                      // ), // { "ecmaVersion": 2025 },
                                                                                       // (
                                                                                       //     "import('foo.json', { 'with': { type: 'json' } })",
                                                                                       //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // {				"ecmaVersion": 2025,			},
+                                                                                      // ), // { "ecmaVersion": 2025 },
                                                                                       // (
                                                                                       //     "import('foo.json', { with: { type } })",
                                                                                       //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // {				"ecmaVersion": 2025,			}
+                                                                                      // ), // { "ecmaVersion": 2025 }
     ];
 
     let fail = vec![
@@ -715,21 +715,21 @@ fn test() {
         ("class Foo { #abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", None),              // { "ecmaVersion": 6 },
-        ("var myObj = { 𐌘: 1 };", None),   // {				"ecmaVersion": 6,			},
-        ("(𐌘) => { 𐌘 * 𐌘 };", None),       // {				"ecmaVersion": 6,			},
-        ("class 𠮟 { }", None),            // {				"ecmaVersion": 6,			},
-        ("class Foo { 𐌘() {} }", None),    // {				"ecmaVersion": 6,			},
-        ("class Foo1 { #𐌘() {} }", None),  // {				"ecmaVersion": 2022,			},
-        ("class Foo2 { 𐌘 = 1 }", None),    // {				"ecmaVersion": 2022,			},
-        ("class Foo3 { #𐌘 = 1 }", None),   // {				"ecmaVersion": 2022,			},
-        ("function foo1(...𐌘) { }", None), // {				"ecmaVersion": 6,			},
-        ("function foo([𐌘]) { }", None),   // {				"ecmaVersion": 6,			},
-        ("var [ 𐌘 ] = arr;", None),        // {				"ecmaVersion": 6,			},
-        ("var { prop: [𐌘]} = {};", None),  // {				"ecmaVersion": 6,			},
-        ("function foo({𐌘}) { }", None),   // {				"ecmaVersion": 6,			},
-        ("var { 𐌘 } = {};", None),         // {				"ecmaVersion": 6,			},
-        ("var { prop: 𐌘} = {};", None),    // {				"ecmaVersion": 6,			},
-        ("({ prop: obj.𐌘 } = {});", None), // {				"ecmaVersion": 6,			}
+        ("var myObj = { 𐌘: 1 };", None),   // { "ecmaVersion": 6, },
+        ("(𐌘) => { 𐌘 * 𐌘 };", None),       // { "ecmaVersion": 6, },
+        ("class 𠮟 { }", None),            // { "ecmaVersion": 6, },
+        ("class Foo { 𐌘() {} }", None),    // { "ecmaVersion": 6, },
+        ("class Foo1 { #𐌘() {} }", None),  // { "ecmaVersion": 2022 },
+        ("class Foo2 { 𐌘 = 1 }", None),    // { "ecmaVersion": 2022 },
+        ("class Foo3 { #𐌘 = 1 }", None),   // { "ecmaVersion": 2022 },
+        ("function foo1(...𐌘) { }", None), // { "ecmaVersion": 6, },
+        ("function foo([𐌘]) { }", None),   // { "ecmaVersion": 6, },
+        ("var [ 𐌘 ] = arr;", None),        // { "ecmaVersion": 6, },
+        ("var { prop: [𐌘]} = {};", None),  // { "ecmaVersion": 6, },
+        ("function foo({𐌘}) { }", None),   // { "ecmaVersion": 6, },
+        ("var { 𐌘 } = {};", None),         // { "ecmaVersion": 6, },
+        ("var { prop: 𐌘} = {};", None),    // { "ecmaVersion": 6, },
+        ("({ prop: obj.𐌘 } = {});", None), // { "ecmaVersion": 6, }
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();

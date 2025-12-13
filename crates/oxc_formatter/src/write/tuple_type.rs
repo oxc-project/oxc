@@ -13,9 +13,11 @@ use super::FormatWrite;
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        f.join_nodes_with_soft_line()
-            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
-            .finish();
+        f.join_nodes_with_soft_line().entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            trailing_separator,
+        );
     }
 }
 

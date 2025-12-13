@@ -8,13 +8,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::is_method_call,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
@@ -23,19 +24,19 @@ fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferStructuredClone(Box<PreferStructuredCloneConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PreferStructuredCloneConfig {
     /// List of functions that are allowed to be used for deep cloning instead of structuredClone.
-    allowed_functions: Vec<String>,
+    functions: Vec<String>,
 }
 
 impl Default for PreferStructuredCloneConfig {
     fn default() -> Self {
-        Self { allowed_functions: vec!["cloneDeep".to_string(), "utils.clone".to_string()] }
+        Self { functions: vec!["cloneDeep".to_string(), "utils.clone".to_string()] }
     }
 }
 
@@ -78,17 +79,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferStructuredClone {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-
-        let allowed_functions = config
-            .and_then(|config| config.get("functions"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
-            .unwrap_or(vec![String::from("cloneDeep"), String::from("utils.clone")]);
-
-        Self(Box::new(PreferStructuredCloneConfig { allowed_functions }))
+        serde_json::from_value::<DefaultRuleConfig<PreferStructuredClone>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -137,7 +130,7 @@ impl Rule for PreferStructuredClone {
                 |fixer| replace_with_structured_clone(fixer, call_expr, first_argument),
             );
         } else if let Some(first_argument) = call_expr.arguments[0].as_expression() {
-            for function in &self.allowed_functions {
+            for function in &self.functions {
                 if let Some((object, method)) = function.split_once('.') {
                     if is_method_call(call_expr, Some(&[object]), Some(&[method]), None, None) {
                         ctx.diagnostic_with_suggestion(

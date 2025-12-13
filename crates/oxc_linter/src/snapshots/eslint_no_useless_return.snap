@@ -1,0 +1,228 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:18]
+ 1 │ function foo() { return; }
+   ·                  ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:33]
+ 1 │ function foo() { doSomething(); return; }
+   ·                                 ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:42]
+ 1 │ function foo() { if (condition) { bar(); return; } else { baz(); } }
+   ·                                          ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:27]
+ 1 │ function foo() { if (foo) return; }
+   ·                           ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:6:13]
+ 5 │             }
+ 6 │             return;
+   ·             ───────
+ 7 │         }
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:84]
+ 1 │ function foo() { switch (bar) { case 1: doSomething(); default: doSomethingElse(); return; } }
+   ·                                                                                    ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:80]
+ 1 │ function foo() { switch (bar) { default: doSomething(); case 1: doSomething(); return; } }
+   ·                                                                                ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:65]
+ 1 │ function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } break; default: doSomethingElse(); } }
+   ·                                                                 ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:65]
+ 1 │ function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } else { doSomething(); } break; default: doSomethingElse(); } }
+   ·                                                                 ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:65]
+ 1 │ function foo() { switch (bar) { case 1: if (a) { doSomething(); return; } default: } }
+   ·                                                                 ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:39]
+ 1 │ function foo() { try {} catch (err) { return; } }
+   ·                                       ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:5:17]
+ 4 │                 foo();
+ 5 │                 return;
+   ·                 ───────
+ 6 │             } catch (err) {
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:6:21]
+ 5 │                     bar();
+ 6 │                     return;
+   ·                     ───────
+ 7 │                 } catch (err) {}
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:4:17]
+ 3 │             try {
+ 4 │                 return;
+   ·                 ───────
+ 5 │             } catch (err) {
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:4:17]
+ 3 │             try {
+ 4 │                 return;
+   ·                 ───────
+ 5 │             } finally {
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:8:21]
+ 7 │                     baz();
+ 8 │                     return;
+   ·                     ───────
+ 9 │                 } catch (e) {
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:4:13]
+ 3 │             try {} finally {}
+ 4 │             return;
+   ·             ───────
+ 5 │         }
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:7:21]
+ 6 │                 function bar() {
+ 7 │                     return;
+   ·                     ───────
+ 8 │                 }
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:9]
+ 1 │ () => { return; }
+   ·         ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:26]
+ 1 │ function foo() { return; return; }
+   ·                          ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:35]
+ 1 │ function foo() { function bar() { return; } }
+   ·                                   ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:21]
+ 1 │ const foo = () => { return; }
+   ·                     ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:36]
+ 1 │ const foo = () => { doSomething(); return; }
+   ·                                    ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:23]
+ 1 │ const obj = { foo() { return; } }
+   ·                       ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:21]
+ 1 │ class Foo { bar() { return; } }
+   ·                     ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:45]
+ 1 │ function foo() { if (a) { if (b) { if (c) { return; } } } }
+   ·                                             ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:27]
+ 1 │ function foo() { label: { return; } }
+   ·                           ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:31]
+ 1 │ function foo() { with (obj) { return; } }
+   ·                               ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:27]
+ 1 │ const obj = { get foo() { return; } }
+   ·                           ───────
+   ╰────
+  help: Remove this redundant `return` statement.
+
+  ⚠ eslint(no-useless-return): Unnecessary return statement.
+   ╭─[no_useless_return.tsx:1:30]
+ 1 │ const obj = { set foo(val) { return; } }
+   ·                              ───────
+   ╰────
+  help: Remove this redundant `return` statement.

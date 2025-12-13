@@ -10,5 +10,10 @@ async fn main() {
         v
     };
 
-    oxc_language_server::run_server(tools).await;
+    oxc_language_server::run_server(
+        "oxc".to_string(),
+        env!("CARGO_PKG_VERSION").to_string(),
+        tools,
+    )
+    .await;
 }

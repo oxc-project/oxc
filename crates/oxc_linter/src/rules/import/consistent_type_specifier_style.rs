@@ -11,7 +11,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDiagnostic {
     let (warn_msg, help_msg) = if *mode == Mode::PreferInline {
@@ -31,25 +36,15 @@ fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDia
 #[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Prefer `import type { Foo } from 'foo'` for type imports.
     #[default]
     PreferTopLevel,
+    /// Prefer `import { type Foo } from 'foo'` for type imports.
     PreferInline,
 }
 
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        if raw == "prefer-inline" { Self::PreferInline } else { Self::PreferTopLevel }
-    }
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentTypeSpecifierStyle {
-    /// Specify whether to prefer top-level type-only imports or inline type specifiers.
-    /// - `"prefer-top-level"`: `import type { Foo } from 'foo'`
-    /// - `"prefer-inline"`: `import { type Foo } from 'foo'`
-    mode: Mode,
-}
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ConsistentTypeSpecifierStyle(Mode);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -91,12 +86,14 @@ declare_oxc_lint!(
     import,
     style,
     conditional_fix,
-    config = ConsistentTypeSpecifierStyle,
+    config = Mode,
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {
     fn from_configuration(value: Value) -> Self {
-        Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() }
+        serde_json::from_value::<DefaultRuleConfig<ConsistentTypeSpecifierStyle>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
@@ -112,7 +109,7 @@ impl Rule for ConsistentTypeSpecifierStyle {
         {
             return;
         }
-        if self.mode == Mode::PreferTopLevel && import_decl.import_kind.is_value() {
+        if self.0 == Mode::PreferTopLevel && import_decl.import_kind.is_value() {
             let (value_specifiers, type_specifiers) = split_import_specifiers_by_kind(specifiers);
             if type_specifiers.is_empty() {
                 return;
@@ -120,7 +117,7 @@ impl Rule for ConsistentTypeSpecifierStyle {
 
             for item in &type_specifiers {
                 ctx.diagnostic_with_fix(
-                    consistent_type_specifier_style_diagnostic(item.span(), &self.mode),
+                    consistent_type_specifier_style_diagnostic(item.span(), &self.0),
                     |fixer| {
                         let mut import_source = String::new();
 
@@ -141,9 +138,9 @@ impl Rule for ConsistentTypeSpecifierStyle {
                 );
             }
         }
-        if self.mode == Mode::PreferInline && import_decl.import_kind.is_type() {
+        if self.0 == Mode::PreferInline && import_decl.import_kind.is_type() {
             ctx.diagnostic_with_fix(
-                consistent_type_specifier_style_diagnostic(import_decl.span, &self.mode),
+                consistent_type_specifier_style_diagnostic(import_decl.span, &self.0),
                 |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(len);

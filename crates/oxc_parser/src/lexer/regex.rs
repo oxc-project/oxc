@@ -1,4 +1,4 @@
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::diagnostics;
 

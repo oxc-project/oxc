@@ -9,11 +9,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::get_parent_component,
 };
 
@@ -29,7 +30,7 @@ fn string_in_ref_deprecated(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoStringRefs {
     /// Disallow template literals in addition to string literals.
@@ -114,10 +115,9 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
 
 impl Rule for NoStringRefs {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let no_template_literals =
-            value.get("noTemplateLiterals").and_then(serde_json::Value::as_bool).unwrap_or(false);
-
-        Self { no_template_literals }
+        serde_json::from_value::<DefaultRuleConfig<NoStringRefs>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -279,7 +279,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -292,7 +292,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -302,7 +302,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
@@ -335,7 +335,7 @@ fn test() {
                 }
               }
             ",
-            Some(serde_json::json!({ "noTemplateLiterals": true })),
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
     ];
 

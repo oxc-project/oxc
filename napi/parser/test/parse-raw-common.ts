@@ -21,11 +21,11 @@ export const TS_SHORT_DIR_PATH = "tasks/coverage/typescript";
 export const TS_DIR_PATH = pathJoin(ROOT_DIR_PATH, TS_SHORT_DIR_PATH);
 export const ACORN_TEST262_DIR_PATH = pathJoin(
   ROOT_DIR_PATH,
-  "tasks/coverage/acorn-test262/tests/test262/test",
+  "tasks/coverage/estree-conformance/tests/test262/test",
 );
-export const JSX_SHORT_DIR_PATH = "tasks/coverage/acorn-test262/tests/acorn-jsx/pass";
+export const JSX_SHORT_DIR_PATH = "tasks/coverage/estree-conformance/tests/acorn-jsx/pass";
 export const JSX_DIR_PATH = pathJoin(ROOT_DIR_PATH, JSX_SHORT_DIR_PATH);
-const TS_ESTREE_SHORT_DIR_PATH = "tasks/coverage/acorn-test262/tests/typescript";
+const TS_ESTREE_SHORT_DIR_PATH = "tasks/coverage/estree-conformance/tests/typescript";
 export const TS_ESTREE_DIR_PATH = pathJoin(ROOT_DIR_PATH, TS_ESTREE_SHORT_DIR_PATH);
 export const TEST262_SNAPSHOT_PATH = pathJoin(
   ROOT_DIR_PATH,

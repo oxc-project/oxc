@@ -1,0 +1,475 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:19]
+ 1 │ window.addEventListener('click', e => {
+ 2 │                 console.log(e.keyCode);
+   ·                               ───────
+ 3 │             })
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:1:36]
+ 1 │ window.addEventListener('click', ({keyCode}) => {
+   ·                                    ───────
+ 2 │                 console.log(keyCode);
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:1:36]
+ 1 │ window.addEventListener('click', ({which}) => {
+   ·                                    ─────
+ 2 │                 if (which === 23) {
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:1:36]
+ 1 │ window.addEventListener('click', ({which, another}) => {
+   ·                                    ─────
+ 2 │                 if (which === 23) {
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 27) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 65) {}
+   ·                           ───────
+ 3 │             });
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 10) {}
+   ·                           ───────
+ 3 │             });
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:16]
+ 1 │ foo.addEventListener('click', event => {
+ 2 │                 if (!event.keyCode) {}
+   ·                            ───────
+ 3 │             });
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', a => {
+ 2 │                 if (a.keyCode === 27) {
+   ·                       ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', (a, b, c) => {
+ 2 │                 if (a.keyCode === 27) {
+   ·                       ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(a, b, c) {
+ 2 │                 if (a.keyCode === 27) {
+   ·                       ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(b) {
+ 2 │                 if (b.keyCode === 27) {
+   ·                       ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:12]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {keyCode, a, b} = e;
+   ·                        ───────
+ 3 │             });
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {a: keyCode, a, b} = e;
+   ·                           ───────
+ 3 │             });
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:3:13]
+ 2 │                 f.addEventList('some', e => {
+ 3 │                     const {keyCode} = event;
+   ·                            ───────
+ 4 │                     console.log(event.key)
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:19]
+ 1 │ window.addEventListener('click', e => {
+ 2 │                 console.log(e.charCode);
+   ·                               ────────
+ 3 │             })
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo11111111.addEventListener('click', event => {
+ 2 │                 if (event.charCode === 27) {
+   ·                           ────────
+ 3 │                 }
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', a => {
+ 2 │                 if (a.charCode === 27) {
+   ·                       ────────
+ 3 │                 }
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', (a, b, c) => {
+ 2 │                 if (a.charCode === 27) {
+   ·                       ────────
+ 3 │                 }
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(a, b, c) {
+ 2 │                 if (a.charCode === 27) {
+   ·                       ────────
+ 3 │                 }
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(b) {
+ 2 │                 if (b.charCode === 27) {
+   ·                       ────────
+ 3 │                 }
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:12]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {charCode, a, b} = e;
+   ·                        ────────
+ 3 │             });
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {a: charCode, a, b} = e;
+   ·                           ────────
+ 3 │             });
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:19]
+ 1 │ window.addEventListener('click', e => {
+ 2 │                 console.log(e.which);
+   ·                               ─────
+ 3 │             })
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', event => {
+ 2 │                 if (event.which === 27) {
+   ·                           ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', a => {
+ 2 │                 if (a.which === 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', (a, b, c) => {
+ 2 │                 if (a.which === 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(a, b, c) {
+ 2 │                 if (a.which === 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(b) {
+ 2 │                 if (b.which === 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:12]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {which, a, b} = e;
+   ·                        ─────
+ 3 │             });
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo.addEventListener('click', e => {
+ 2 │                 const {a: which, a, b} = e;
+   ·                           ─────
+ 3 │             });
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(b) {
+ 2 │                 if (b.which === 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:4:12]
+ 3 │                 }
+ 4 │                 const {keyCode} = b;
+   ·                        ───────
+ 5 │                 if (keyCode === 32) return 4;
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:2:11]
+ 1 │ foo.addEventListener('click', function(b) {
+ 2 │                 if (b.which > 27) {
+   ·                       ─────
+ 3 │                 }
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:4:12]
+ 3 │                 }
+ 4 │                 const {keyCode} = b;
+   ·                        ───────
+ 5 │                 if (keyCode === 32) return 4;
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
+   ╭─[prefer_keyboard_event_key.tsx:7:17]
+ 6 │                             {
+ 7 │                                 const { charCode } = e;
+   ·                                         ────────
+ 8 │                                 console.log(e.keyCode, charCode);
+   ╰────
+  help: The `charCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:8:23]
+ 7 │                                 const { charCode } = e;
+ 8 │                                 console.log(e.keyCode, charCode);
+   ·                                               ───────
+ 9 │                             }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 13) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 38) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 40) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 37) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 39) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 221) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 186) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 187) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 188) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 189) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 190) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 191) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 219) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 222) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
+   ╭─[prefer_keyboard_event_key.tsx:1:36]
+ 1 │ window.addEventListener('click', ({which, another}) => {
+   ·                                    ─────
+ 2 │                 if (which === 23) {
+   ╰────
+  help: The `which` property is deprecated.
+
+  ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
+   ╭─[prefer_keyboard_event_key.tsx:2:15]
+ 1 │ foo123.addEventListener('click', event => {
+ 2 │                 if (event.keyCode === 27) {
+   ·                           ───────
+ 3 │                 }
+   ╰────
+  help: The `keyCode` property is deprecated.

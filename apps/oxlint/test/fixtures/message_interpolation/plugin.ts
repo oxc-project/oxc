@@ -10,11 +10,11 @@ const plugin: Plugin = {
         return {
           VariableDeclaration(node) {
             if (node.kind === "var") {
-              const declarations = node.declarations;
+              const { declarations } = node;
               if (declarations.length > 0) {
                 const firstDeclaration = declarations[0];
                 if (firstDeclaration.id.type === "Identifier") {
-                  const name = firstDeclaration.id.name;
+                  const { name } = firstDeclaration.id;
 
                   if (name === "testWithNoData") {
                     // Test with no placeholders, no data

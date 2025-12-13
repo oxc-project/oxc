@@ -1,11 +1,20 @@
 import { join } from "node:path";
 import { defineConfig } from "tsdown";
+import { parseSync, Visitor } from "oxc-parser";
 
 import type { Plugin } from "rolldown";
 
+const { env } = process;
+const isEnabled = (env: string | undefined) => env === "true" || env === "1";
+
+// When run with `CONFORMANCE=true pnpm run build-js`, generate a conformance build with alterations to behavior.
+// Also enables debug assertions.
+// This is the build used in conformance tests.
+const CONFORMANCE = isEnabled(env.CONFORMANCE);
+
 // When run with `DEBUG=true pnpm run build-js`, generate a debug build with extra assertions.
 // This is the build used in tests.
-const DEBUG = process.env.DEBUG === "true" || process.env.DEBUG === "1";
+const DEBUG = CONFORMANCE || isEnabled(env.DEBUG);
 
 const commonConfig = defineConfig({
   platform: "node",
@@ -36,8 +45,11 @@ export default defineConfig([
       codegen: { removeWhitespace: false },
     },
     dts: { resolve: true },
-    attw: true,
-    define: { DEBUG: DEBUG ? "true" : "false" },
+    attw: { profile: "esm-only" },
+    define: {
+      DEBUG: DEBUG ? "true" : "false",
+      CONFORMANCE: CONFORMANCE ? "true" : "false",
+    },
     plugins: DEBUG ? [] : [createReplaceAssertsPlugin()],
     inputOptions: {
       // For `replaceAssertsPlugin`
@@ -58,17 +70,22 @@ export default defineConfig([
 ]);
 
 /**
- * Create a plugin to remove imports of `assert*` functions from `src-js/utils/asserts.ts`,
- * and replace those imports with empty function declarations.
+ * Create a plugin to remove imports of `debugAssert*` / `typeAssert*` functions from `src-js/utils/asserts.ts`,
+ * and all their call sites.
  *
  * ```ts
  * // Original code
- * import { assertIs, assertIsNonNull } from '../utils/asserts.ts';
+ * import { debugAssertIsNonNull } from '../utils/asserts.ts';
+ * const foo = getFoo();
+ * debugAssertIsNonNull(foo.bar);
  *
  * // After transform
- * function assertIs() {}
- * function assertIsNonNull() {}
+ * const foo = getFoo();
  * ```
+ *
+ * This solves 2 problems:
+ *
+ * # 1. Minifier works chunk-by-chunk
  *
  * Minifier can already remove all calls to these functions as dead code, but only if the functions are defined
  * in the same file as the call sites.
@@ -77,7 +94,23 @@ export default defineConfig([
  * So without this transform, TSDown creates a shared chunk for `asserts.ts`. Minifier works chunk-by-chunk,
  * so can't see that these functions are no-ops, and doesn't remove the function calls.
  *
- * Inlining these functions in each file solves the problem, and minifier removes all trace of them.
+ * # 2. Not entirely removed
+ *
+ * Even if minifier does remove all calls to these functions, it can't prove that expressions *inside* the calls
+ * don't have side effects.
+ *
+ * In example above, it can't know if `foo` has a getter for `bar` property.
+ * So it removes the call to `debugAssertIsNonNull`, but leaves behind the `foo.bar` expression.
+ *
+ * ```ts
+ * const foo = getFoo();
+ * foo.bar;
+ * ```
+ *
+ * This plugin visits AST and removes all calls to `debugAssert*` / `typeAssert*` functions entirely,
+ * *including* the expressions inside the calls.
+ *
+ * This makes these debug assertion functions act like `debug_assert!` in Rust.
  *
  * @returns Plugin
  */
@@ -90,11 +123,16 @@ function createReplaceAssertsPlugin(): Plugin {
       // Only process TS files in `src-js` directory
       filter: { id: /\/src-js\/.+\.ts$/ },
 
-      async handler(code, id, meta) {
+      async handler(code, path, meta) {
         const magicString = meta.magicString!;
-        const program = this.parse(code, { lang: "ts" });
+        const { program, errors } = parseSync(path, code);
+        if (errors.length !== 0) throw new Error(`Failed to parse ${path}: ${errors[0].message}`);
 
-        stmts: for (const stmt of program.body) {
+        // Gather names of assertion functions imported from `asserts.ts`.
+        // Also gather all identifiers used in the `import` statements, so can avoid erroring on them in visitor below.
+        const assertFnNames: Set<string> = new Set(),
+          idents = new Set();
+        for (const stmt of program.body) {
           if (stmt.type !== "ImportDeclaration") continue;
 
           // Check if import is from `utils/asserts.ts`.
@@ -102,18 +140,45 @@ function createReplaceAssertsPlugin(): Plugin {
           const source = stmt.source.value;
           if (!source.endsWith("/asserts.ts") && !source.endsWith("/asserts.js")) continue;
           // oxlint-disable-next-line no-await-in-loop
-          const importedId = await this.resolve(source, id);
+          const importedId = await this.resolve(source, path);
           if (importedId === null || importedId.id !== ASSERTS_PATH) continue;
 
-          // Replace `import` statement with empty function declarations
-          let functionsCode = "";
+          // Remove `import` statement
           for (const specifier of stmt.specifiers) {
-            // Skip this `import` statement if it's a default or namespace import - can't handle those
-            if (specifier.type !== "ImportSpecifier") continue stmts;
-            functionsCode += `function ${specifier.local.name}() {}\n`;
+            if (specifier.type !== "ImportSpecifier") {
+              throw new Error(`Only use named imports when importing from \`asserts.ts\`: ${path}`);
+            }
+            idents.add(specifier.local);
+            if (specifier.imported.type === "Identifier") idents.add(specifier.imported);
+            assertFnNames.add(specifier.local.name);
           }
-          magicString.overwrite(stmt.start, stmt.end, functionsCode);
+          magicString.remove(stmt.start, stmt.end);
         }
+
+        if (assertFnNames.size === 0) return;
+
+        // Visit AST and remove all calls to assertion functions
+        const visitor = new Visitor({
+          // Replace `debugAssert(...)` calls with `null`. Minifier will remove the `null`.
+          CallExpression(node) {
+            const { callee } = node;
+            if (callee.type !== "Identifier") return;
+            if (assertFnNames.has(callee.name)) {
+              idents.add(callee);
+              magicString.overwrite(node.start, node.end, "null");
+            }
+          },
+          // Error if assertion functions are used in any other way. We lack logic to deal with that.
+          Identifier(node) {
+            const { name } = node;
+            if (assertFnNames.has(name) && !idents.has(node)) {
+              throw new Error(
+                `Do not use \`${name}\` imported from \`asserts.ts\` except in function calls: ${path}`,
+              );
+            }
+          },
+        });
+        visitor.visit(program);
 
         return { code: magicString };
       },

@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,7 +20,7 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NumericSeparatorsStyleConfig {
     /// Only enforce the rule when the numeric literal already contains a separator (`_`).
@@ -57,6 +58,28 @@ impl Default for NumericSeparatorsStyleConfig {
             hexadecimal: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
             number: NumericBaseConfig { group_length: 3, minimum_digits: 5 },
             octal: NumericBaseConfig { group_length: 4, minimum_digits: 0 },
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NumericBaseConfig {
+    /// The number of digits per group when inserting numeric separators.
+    /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+    group_length: usize,
+    /// The minimum number of digits required before grouping is applied.
+    /// Values with fewer digits than this threshold will not be grouped.
+    minimum_digits: usize,
+}
+
+impl NumericBaseConfig {
+    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
+        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
+            self.group_length = usize::try_from(group_length).unwrap();
+        }
+        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
+            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
         }
     }
 }
@@ -106,6 +129,33 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumericSeparatorsStyle {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut cfg = NumericSeparatorsStyleConfig::default();
+
+        if let Some(config) = value.get(0) {
+            if let Some(config) = config.get("binary") {
+                cfg.binary.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("hexadecimal") {
+                cfg.hexadecimal.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("number") {
+                cfg.number.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("octal") {
+                cfg.octal.set_numeric_base_from_config(config);
+            }
+
+            if let Some(val) =
+                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
+            {
+                cfg.only_if_contains_separator = val;
+            }
+        }
+
+        Self(Box::new(cfg))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
@@ -140,33 +190,6 @@ impl Rule for NumericSeparatorsStyle {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut cfg = NumericSeparatorsStyleConfig::default();
-
-        if let Some(config) = value.get(0) {
-            if let Some(config) = config.get("binary") {
-                cfg.binary.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("hexadecimal") {
-                cfg.hexadecimal.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("number") {
-                cfg.number.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("octal") {
-                cfg.octal.set_numeric_base_from_config(config);
-            }
-
-            if let Some(val) =
-                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
-            {
-                cfg.only_if_contains_separator = val;
-            }
-        }
-
-        Self(Box::new(cfg))
     }
 }
 
@@ -283,27 +306,6 @@ impl NumericSeparatorsStyle {
         }
 
         out
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-struct NumericBaseConfig {
-    /// The number of digits per group when inserting numeric separators.
-    /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
-    group_length: usize,
-    /// The minimum number of digits required before grouping is applied.
-    /// Values with fewer digits than this threshold will not be grouped.
-    minimum_digits: usize,
-}
-impl NumericBaseConfig {
-    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
-        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = usize::try_from(group_length).unwrap();
-        }
-        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
-        }
     }
 }
 

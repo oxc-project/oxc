@@ -1,13 +1,9 @@
-commit: 669c25c0
+commit: c21f73fd
 
 parser_typescript Summary:
-AST Parsed     : 9821/9822 (99.99%)
-Positive Passed: 9812/9822 (99.90%)
-Negative Passed: 1467/2547 (57.60%)
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
-
+AST Parsed     : 9832/9833 (99.99%)
+Positive Passed: 9823/9833 (99.90%)
+Negative Passed: 1486/2547 (58.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -124,8 +120,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendi
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsInterface_not.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsMultipleBaseClasses.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsNull.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExtendsNull2.ts
@@ -223,8 +217,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeNotFound.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationFileNoCrashOnExtraExportModifier.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnImport1.ts
 
@@ -326,8 +318,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMul
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnlyDeclaration.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType03.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorMessageOnObjectLiteralType.ts
@@ -336,15 +326,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorSupress
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyleOctalLiteralInEnums.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ExportEquals.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEquals.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
 
@@ -367,8 +353,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunct
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsNamespace_augment.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
 
@@ -498,17 +482,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVar
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importedEnumMemberMergedWithExportedAliasIsError.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleExports1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleExports2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incrementOnTypeParameter.ts
 
@@ -678,8 +654,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal7_1.ts
@@ -707,8 +681,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExpo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExportAssignmentsInAmbientDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleExports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multipleInheritance.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/multivar.ts
 
@@ -1490,8 +1462,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/duplicateExportAssignments.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importTsBeforeDTs.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importsImplicitlyReadonly.ts
@@ -1531,8 +1501,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/valuesMergingAcrossModules.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/fixSignatureCaching.ts
 
@@ -1784,8 +1752,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
@@ -1815,10 +1781,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts
 
@@ -2347,7 +2309,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts:2:5]
  1 │ class C {
  2 │    [e]();
@@ -2357,7 +2319,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts:2:5]
  1 │ class C {
  2 │    [e]();
@@ -2373,7 +2335,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: No modifiers are allowed here.
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:2:4]
  1 │ class C {
  2 │    constructor();
@@ -2381,7 +2343,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:3:4]
  2 │    constructor();
  3 │    foo();
@@ -2389,7 +2351,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration11.ts:2:4]
  1 │ class C {
  2 │    constructor();
@@ -2397,7 +2359,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration13.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2405,7 +2367,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    bar() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2413,7 +2375,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    constructor();
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:3:4]
  2 │    foo();
  3 │    constructor();
@@ -2421,7 +2383,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration15.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2429,7 +2391,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    constructor() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration21.ts:2:5]
  1 │ class C {
  2 │     0();
@@ -2437,7 +2399,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     1() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration22.ts:2:5]
  1 │ class C {
  2 │     "foo"();
@@ -2452,7 +2414,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
  6 │     data(): U;
@@ -2460,7 +2422,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     next(): string;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:7:5]
  6 │     data(): U;
  7 │     next(): string;
@@ -2486,7 +2448,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ 
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration8.ts:2:3]
  1 │ class C {
  2 │   constructor();
@@ -2494,7 +2456,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration9.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -2510,6 +2472,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
   help: Did you mean `readonly`?
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/ExportAssignment7.ts:4:1]
+ 3 │ 
+ 4 │ export = B;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/ExportAssignment8.ts:1:1]
+ 1 │ export = B;
+   · ───────────
+ 2 │ 
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × TS(2414): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/compiler/InterfaceDeclaration8.ts:1:11]
@@ -2617,7 +2595,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │     get concreteWithNoBody(): string;
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
  15 │     abstract notAllowed: string;
  16 │     get concreteWithNoBody(): string;
@@ -3642,6 +3620,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/compiler/classExtendsMultipleBaseClasses.ts:3:19]
+ 2 │ class B { }
+ 3 │ class C extends A,B { }
+   ·                   ─
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
   × Expected `(` but found `}`
    ╭─[typescript/tests/cases/compiler/classFieldsBrokenConstructorEmitNoCrash1.ts:4:1]
  3 │   constructor
@@ -3649,6 +3635,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ┬
    · ╰── `(` expected
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts:2:20]
+ 1 │     class C { foo: number }
+ 2 │ ╭─▶ class D extends C, {
+ 3 │ ╰─▶ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/compiler/classHeritageWithTrailingSeparator.ts:3:2]
@@ -3724,7 +3718,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts:3:5]
  2 │     foo(): string;
  3 │     foo(x): number;
@@ -3732,7 +3726,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     bar(x): any { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:2:5]
  1 │ class C {
  2 │     foo(): string;
@@ -3740,7 +3734,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     bar(x): any { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:4:5]
  3 │     bar(x): any { }
  4 │     foo(x): number;
@@ -4849,7 +4843,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  293 │     class interface { }
      ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/crashOnMethodSignatures.ts:2:5]
  1 │ class A {
  2 │     a(completed: () => any): void;
@@ -4939,6 +4933,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ╰── `from` expected
  2 │ export default Foo
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/declarationFileNoCrashOnExtraExportModifier.ts:1:1]
+ 1 │ export = exports;
+   · ─────────────────
+ 2 │ declare class exports {
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:2:13]
@@ -5736,6 +5738,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │ const x = ({ [foo.bar]: c }) => undefined;
     ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts:2:1]
+ 1 │ export var x;
+ 2 │ export = x;
+   · ───────────
+ 3 │ import("./a");
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType01.ts:44:24]
  43 │ 
@@ -5826,6 +5837,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │         with (z) {
     ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/es5ExportEquals.ts:3:1]
+ 2 │ 
+ 3 │ export = f;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Expected `{` but found `(`
    ╭─[typescript/tests/cases/compiler/es6ClassTest9.ts:1:18]
  1 │ declare class foo();
@@ -5833,6 +5852,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ╰── `{` expected
  2 │ function foo() {}
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/es6ExportEquals.ts:3:1]
+ 2 │ 
+ 3 │ export = f;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts:1:8]
@@ -6219,6 +6246,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ──────
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/exportAssignmentWithExports.ts:3:1]
+ 2 │ class D { }
+ 3 │ export = D;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × A class name is required.
    ╭─[typescript/tests/cases/compiler/exportClassWithoutName.ts:1:8]
  1 │ export class {
@@ -6382,7 +6417,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ 
    ╰────
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
  1 │ (arg1?, arg2) => 101;
    ·         ────
@@ -6486,7 +6521,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │   function f() {
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:6:13]
  5 │     }
  6 │     private foo(s: string): string;
@@ -6494,7 +6529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:14:13]
  13 │     private foo(s: string): string;
  14 │     private foo(n: number): string;
@@ -6715,6 +6750,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     var b: a;
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts:6:1]
+ 5 │ export import a = x.c;
+ 6 │ export = x;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts:7:5]
+ 6 │     export import a = x.c;
+ 7 │     export = x;
+   ·     ───────────
+ 8 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Cannot use import statement outside a module
    ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
@@ -6722,6 +6774,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────
  3 │ }
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/incompatibleExports1.ts:4:5]
+ 3 │     interface y { a: Date }
+ 4 │     export = y;
+   ·     ───────────
+ 5 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/compiler/incompatibleExports1.ts:16:5]
+ 15 │  
+ 16 │     export = c;
+    ·     ───────────
+ 17 │ }
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/compiler/incompatibleExports2.ts:4:5]
+ 3 │     interface y { a: Date }
+ 4 │     export = y;
+   ·     ───────────
+ 5 │ }
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/incompleteDottedExpressionAtEOF.ts:2:18]
@@ -6738,7 +6817,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ var x = tt;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/incorrectClassOverloadChain.ts:3:5]
  2 │     foo(): string;
  3 │     foo(x): number;
@@ -6853,7 +6932,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ─
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/indexer2A.ts:4:5]
  3 │     // Decided to enforce a semicolon after declarations
  4 │     hasOwnProperty(objectId: number): boolean
@@ -7961,7 +8040,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     while( (a2 > 0) && a1
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:2:3]
  1 │ export class C1 {
  2 │   m(): void;
@@ -7969,7 +8048,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:7:3]
  6 │ export class C2 {
  7 │   m(): void;
@@ -7977,7 +8056,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:15:3]
  14 │   m(a, b);
  15 │   m(a);
@@ -7985,7 +8064,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:21:10]
  20 │ class C4 {
  21 │   static m(a): void;
@@ -7993,7 +8072,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  22 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:27:10]
  26 │   static m(a): void;
  27 │   static m(): void;
@@ -8001,7 +8080,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  28 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:32:10]
  31 │ class C6 {
  32 │   static m(): void;
@@ -8009,7 +8088,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  33 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:40:10]
  39 │   static m(a): void;
  40 │   static m(): void;
@@ -8017,7 +8096,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  41 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:48:10]
  47 │   static m(a): void;
  48 │   static m(a, b): void;
@@ -8085,6 +8164,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[typescript/tests/cases/compiler/moduleAugmentationGlobal6_1.ts:1:1]
+ 1 │ global {
+   · ──────
+ 2 │     interface Array<T> { x }
+   ╰────
+
   × Identifier `Kettle` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleDuplicateIdentifiers.ts:20:14]
  19 │ 
@@ -8100,7 +8186,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │     member2 = 42;
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:2:5]
  1 │ {
  2 │     namespace M { }
@@ -8108,7 +8194,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8117,7 +8203,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8125,7 +8211,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8134,7 +8220,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
  2 │     namespace M { }
@@ -8142,7 +8228,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
  2 │     namespace M { }
@@ -8150,7 +8236,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8159,7 +8245,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -8168,7 +8254,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8176,7 +8262,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
  6 │ 
  7 │     namespace Q.K { }
@@ -8184,7 +8270,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8193,7 +8279,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -8202,7 +8288,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:3:9]
  2 │     {
  3 │         namespace M { }
@@ -8210,7 +8296,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │         export namespace N {
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:4:16]
  3 │             namespace M { }
  4 │ ╭─▶         export namespace N {
@@ -8219,7 +8305,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:8:9]
  7 │ 
  8 │         namespace Q.K { }
@@ -8227,7 +8313,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ 
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:9]
   9 │     
  10 │ ╭─▶         declare module "ambient" {
@@ -8343,6 +8429,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                    ╰── `;` expected
  5 │     public private p4;
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+    ╭─[typescript/tests/cases/compiler/multipleInheritance.ts:9:21]
+  8 │ 
+  9 │ class C extends B1, B2 { // duplicate member
+    ·                     ──
+ 10 │ }
+    ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
+  × TS(1174): Classes can only extend a single class.
+    ╭─[typescript/tests/cases/compiler/multipleInheritance.ts:18:21]
+ 17 │ 
+ 18 │ class E extends D1, D2 { // nope, duplicate member
+    ·                     ──
+ 19 │ }
+    ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:2:9]
@@ -8953,7 +9057,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │   static test()
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:3:6]
  2 │ class Person {
  3 │     ["B"](a: number): string;
@@ -8961,7 +9065,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     ["A"](a: string|number): number | string {
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:14:6]
  13 │ class C {
  14 │     ["foo"](): void
@@ -8969,7 +9073,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  15 │     ["bar"](): void;
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:15:6]
  14 │     ["foo"](): void
  15 │     ["bar"](): void;
@@ -8977,7 +9081,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │     ["foo"]() {
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:52:6]
  51 │ class C3 {
  52 │     [1](): void;  // should error
@@ -9683,7 +9787,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │  
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/recursiveTypeRelations.ts:8:5]
  7 │ class Query<A extends Attributes<keyof A>> {
  8 │     multiply<B extends Attributes<keyof B>>(x: B): Query<A & B>;
@@ -12072,7 +12176,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ type U2 = string | (foo: number) => void
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
  83 │ 
  84 │     namespace Baz { export const value = 1234 }
@@ -12080,7 +12184,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  85 │ }
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
  83 │ 
  84 │     namespace Baz { export const value = 1234 }
@@ -12185,7 +12289,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     bing = true; // no error
    ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
  15 │     namespace M {} // error
@@ -12193,7 +12297,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │         
     ╰────
 
-  × A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
  15 │     namespace M {} // error
@@ -12233,6 +12337,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                        ▲
  21 │ 
     ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
+ 56 │     export var q;
+ 57 │     export = n;
+    ·     ───────────
+ 58 │ }
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
@@ -12783,7 +12896,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:46:5]
  45 │     abstract nom(): boolean;
  46 │     nom(x : number): boolean; // error -- use of modifier abstract must match on all overloads.
@@ -12887,7 +13000,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:15:5]
  14 │     
  15 │     qux();
@@ -14688,7 +14801,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
  2 │     foo();
  3 │     static foo(); // error
@@ -14696,7 +14809,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:8:5]
  7 │     static foo();
  8 │     foo(); // error    
@@ -14704,7 +14817,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:13:12]
  12 │     foo(x: T);
  13 │     static foo(x: number); // error
@@ -14712,7 +14825,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │ }
     ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:18:5]
  17 │     static foo(x: number);
  18 │     foo(x: T); // error    
@@ -15267,7 +15380,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ───────────
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/es6/Symbols/symbolProperty43.ts:3:6]
  2 │     [Symbol.iterator](x: string): string;
  3 │     [Symbol.iterator](x: number): number;
@@ -19230,6 +19343,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ─
    ╰────
 
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts:10:1]
+  9 │ // Invalid, as there is already an exported member.
+ 10 │ export = C1;
+    · ────────────
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesAMD.ts:1:4]
  1 │ var;
@@ -19608,6 +19729,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ──
  4 │ declare export as namespace oo2;
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts:2:1]
+ 1 │ export interface I {}
+ 2 │ export = { x: 1 };
+   · ──────────────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Identifier `fn2` has already been declared
     ╭─[typescript/tests/cases/conformance/functions/functionNameConflicts.ts:8:9]
@@ -20918,7 +21047,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:2:4]
  1 │ class C {
  2 │    constructor();
@@ -20926,7 +21055,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo();
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:3:4]
  2 │    constructor();
  3 │    foo();
@@ -20934,7 +21063,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration11.ts:2:4]
  1 │ class C {
  2 │    constructor();
@@ -20942,7 +21071,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    foo() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration13.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20950,7 +21079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    bar() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20958,7 +21087,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    constructor();
    ╰────
 
-  × Constructor implementation is missing.
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:3:4]
  2 │    foo();
  3 │    constructor();
@@ -20966,7 +21095,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration15.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -20982,7 +21111,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Merge the two 'implements' clauses into one by a ','
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration21.ts:2:5]
  1 │ class C {
  2 │     0();
@@ -20990,7 +21119,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     1() { }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration22.ts:2:5]
  1 │ class C {
  2 │     "foo"();
@@ -21005,7 +21134,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
  6 │     data(): U;
@@ -21013,7 +21142,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     next(): string;
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:7:5]
  6 │     data(): U;
  7 │     next(): string;
@@ -21046,7 +21175,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Merge the two 'implements' clauses into one by a ','
 
-  × Constructor implementation is missing.
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts:1:20]
+ 1 │ class C extends A, B {
+   ·                    ─
+ 2 │ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
+  × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
  1 │ class C {
  2 │   constructor();
@@ -21054,7 +21191,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Function implementation is missing or not immediately following the declaration.
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration9.ts:2:4]
  1 │ class C {
  2 │    foo();
@@ -21343,6 +21480,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause2.ts:1:20]
+ 1 │ ╭─▶ class C extends A, {
+ 2 │ ╰─▶ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
+
   × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause2.ts:2:2]
  1 │ class C extends A, {
@@ -21363,6 +21507,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                              ─
  2 │ }
    ╰────
+
+  × TS(1174): Classes can only extend a single class.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause5.ts:1:20]
+ 1 │ class C extends A, implements B, {
+   ·                    ──────────
+ 2 │ }
+   ╰────
+  help: Remove the extra base class or use interfaces for multiple inheritance
 
   × Expected `{` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause5.ts:1:31]
@@ -21733,6 +21885,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ export = ;
    ·          ─
    ╰────
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts:4:1]
+ 3 │ 
+ 4 │ export = B;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment8.ts:1:1]
+ 1 │ export = B;
+   · ───────────
+ 2 │ 
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parseIncompleteBinaryExpression1.ts:1:9]
@@ -22371,7 +22539,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: No modifiers are allowed here.
 
-  × A required parameter cannot follow an optional parameter.
+  × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:2:9]
  1 │ class C {
  2 │   F(A?, B) { }

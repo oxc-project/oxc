@@ -156,15 +156,15 @@ fn test() {
         r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })"#,
         r#"it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#,
         r#"it.concurrent("something", () => {
-			                 expect(true).toMatchSnapshot();
-			
-			                 expect(true).toMatchSnapshot();
-			            })"#,
+                        expect(true).toMatchSnapshot();
+
+                         expect(true).toMatchSnapshot();
+                    })"#,
         r#"it.concurrent("something", () => {
-			                 expect(true).toBe(true);
-			
-			                 expect(true).toMatchSnapshot();
-			            })"#,
+                         expect(true).toBe(true);
+
+                         expect(true).toMatchSnapshot();
+                    })"#,
         r#"it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })"#,
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,

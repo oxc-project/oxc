@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 5c62c16 linter/plugins: Allow JS plugins to access `globals` (#16512) (Arsh)
+- ba7bd51 linter: Implement no-useless-return rule (#16388) (FMP1783)
+- fa605df linter: Fix `arrow-body-style` automatically (#16252) (Hamir Mahal)
+- 9001234 linter: Add fix support for tsgolint diagnostics (#16344) (camc314)
+- 0ec454c linter/plugins: Merge default options into options (#16358) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8933c84 linter: Fix jest/expect-expect rule docs. (#16550) (connorshea)
+- 1c08879 linter: Fix false positive in no-invalid-fetch-options for conditional expressions (#16570) (camc314)
+- a7d435b linter/sort-keys: Preserve multi-line formatting in autofix (#16563) (camc314)
+- a58c76a linter: Fix the `react/jsx-fragments` rule config to take a string argument (#16175) (connorshea)
+- 655341b linter/oxc: Not emit error when the threshold is zero and we haven't detected a barrel file (#16455) (Said Atrahouch)
+- b9f359f linter/no-var: Expand fix span to prevent conflicts with other rules (#16445) (camc314)
+- c6778f3 linter: Preserve original quote style in no-hex-escape fixer (#16410) (camc314)
+- 3ad913b linter: Improve rule docs page autofix description (#16281) (Hamir Mahal)
+- 0b7e00c linter: Handle keyword unary expressions in yoda rule fix (#16402) (camc314)
+- 723a7e5 linter: Prevent invalid BigInt literal fix for exponential notation (#16401) (camc314)
+- 2589fb1 linter: Fix prefer_expect_resolves fixer for member expressions (#16393) (camc314)
+- 428c7cd linter: Wrap logical expressions in parentheses when fixing no-extra-boolean-cast (#16363) (camc314)
+- 3903567 linter: Skip prefer-string-raw in type annotations and .d.ts files (#16382) (camc314)
+- d490daa linter/func-names: Use centralized reserved keyword check and fix ancestor traversal (#16362) (camc314)
+- d846c53 tsgolint: Use `expect` when sending diagnostics (#16341) (camc314)
+- f5d0ebb linter/func-names: Avoid suggesting reserved keywords as function names (#16352) (camc314)
+- d268135 linter/no-console-spaces: Preserve escape sequences in fixer output (#16349) (camc314)
+- b02c21a linter/valid-title: Preserve escape sequences in fixer output (#16348) (camc314)
+- 2373b76 linter/no-untyped-mock-factory: Fix fixer producing invalid syntax when newline exists after opening paren (#16351) (camc314)
+
+### ⚡ Performance
+
+- 5017db8 linter/plugins: Reduce calls to `Path::to_string_lossy` (#16429) (overlookmotel)
+- 194e357 linter: Use `SmallVec` for rule options (#16400) (Copilot)
+- e31b2bd linter: Only clone config if required (#16350) (overlookmotel)
+- 3026086 linter: Avoid cloning rule options (#16338) (overlookmotel)
+
+### 📚 Documentation
+
+- fef77af linter: Fix `jsx-a11y/img-redundant-alt` configuration option names. (#16552) (connorshea)
+- c0766df linter: Add config option docs for `unicorn/filename-case` rule. (#16280) (connorshea)
+- 514c724 linter: Fix the name of the IIFEs config option in eslint/max-lines-per-function (#16554) (connorshea)
+- 4d94438 linter/rules: Correct arrow body style options in documentation (#16509) (GRK)
+- 6bac4ec linter: Pull configuration struct doc comment when rendering config docs (#16288) (connorshea)
+- 041b119 linter: Add config option docs to `jest/consistent-test-it` rule. (#16286) (connorshea)
+
+## [1.31.0] - 2025-12-01
+
+### 🚀 Features
+
+- 4b24825 linter: Implement no-restricted-types rule (#16276) (camc314)
+
+### 🐛 Bug Fixes
+
+- 71271ee linter: Fix `typescript/no-empty-interface` config option casing. (#16282) (connorshea)
+- 385e13e linter: Support both prefer-inline and preferInline for import/no-duplicates (#16275) (copilot-swe-agent)
+- efc08d3 linter: Fix config docs for no-return-assign and unicode-bom rules. (#16260) (connorshea)
+- dc96d3f linter: Correct docs to use string option for import/first rule. (#16264) (connorshea)
+- 15ce491 linter: Correct the default config options for the switch-exhaustiveness-check rule. (#16268) (connorshea)
+- 13f985c linter: Fix casing for unicorn/explicit-length-check config option. (#16269) (connorshea)
+- 42e9dcc linter: Fix docs for `consistent-type-specifier-style` and `consistent-type-definitions` rules. (#16253) (connorshea)
+- 505ceb1 linter: Fix the radix rule docs to correctly render as a string-only config option (#16248) (connorshea)
+- 55fcfba linter: Add considerDefaultExhaustiveForUnions option to switch-exhaustiveness-check (#16204) (camc314)
+- 75249e0 linter/plugins: Handle non-UTF8 file paths (#16157) (overlookmotel)
+- d2b7dcb tsgolint: Improve lsp diagnostic when linting fails (#16115) (camc314)
+- 8810bd5 linter: Prevent conflicting fixes between prefer_number_properties and prefer_numeric_literals (#16113) (camc314)
+- 2da2fc1 linter: Fix prefer-string-raw fixer producing invalid JS for non-ASCII strings (#16102) (camc314)
+- e1c21ca linter/jsx-key: Implement missing options (#15731) (camc314)
+
+### ⚡ Performance
+
+- 714a91a linter/no-restricted-types: Skip running if config is empty (#16278) (camc314)
+
+### 📚 Documentation
+
+- d4a1581 linter: Add a link to MDN for the no-proto rule. (#16213) (connorshea)
+- 6d6e9c9 linter: Improve the docs for oxc/no-async-await rule. (#16181) (connorshea)
+
 ## [1.30.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES

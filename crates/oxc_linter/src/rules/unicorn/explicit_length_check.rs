@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node},
 };
 
@@ -45,16 +45,8 @@ enum NonZero {
     NotEqual,
 }
 
-impl NonZero {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "not-equal" => Self::NotEqual,
-            _ => Self::GreaterThan,
-        }
-    }
-}
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case", default)]
 pub struct ExplicitLengthCheck {
     /// Configuration option to specify how non-zero length checks should be enforced.
     ///
@@ -271,7 +263,14 @@ impl ExplicitLengthCheck {
         }
     }
 }
+
 impl Rule for ExplicitLengthCheck {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<ExplicitLengthCheck>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticMemberExpression(static_member_expr) = node.kind() {
             let StaticMemberExpression { object, property, .. } = static_member_expr;
@@ -307,17 +306,6 @@ impl Rule for ExplicitLengthCheck {
                     _ => {}
                 }
             }
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            non_zero: value
-                .get(0)
-                .and_then(|v| v.get("non-zero"))
-                .and_then(serde_json::Value::as_str)
-                .map(NonZero::from)
-                .unwrap_or_default(),
         }
     }
 }

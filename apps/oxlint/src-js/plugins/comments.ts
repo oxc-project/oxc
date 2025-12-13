@@ -2,8 +2,8 @@
  * `SourceCode` methods related to comments.
  */
 
-import { ast, initAst, sourceText } from "./source_code.js";
-import { debugAssertIsNonNull } from "../utils/asserts.js";
+import { ast, initAst, sourceText } from "./source_code.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
 

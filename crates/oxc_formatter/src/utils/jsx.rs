@@ -186,12 +186,6 @@ impl PartialEq for JsxChild<'_, '_> {
 
 impl Eq for JsxChild<'_, '_> {}
 
-impl JsxChild<'_, '_> {
-    pub const fn is_any_line(&self) -> bool {
-        matches!(self, Self::EmptyLine | Self::Newline)
-    }
-}
-
 /// A word in a Jsx Text. A word is string sequence that isn't separated by any JSX whitespace.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct JsxWord<'a> {

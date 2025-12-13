@@ -13,7 +13,11 @@ use oxc_syntax::operator::AssignmentOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
@@ -100,13 +104,9 @@ declare_oxc_lint!(
 
 impl Rule for NoSelfAssign {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            props: value
-                .get(0)
-                .and_then(|v| v.get("props"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoSelfAssign>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -6,7 +6,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
     GlobalContext,
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
+    side_effects::{
+        MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
+    },
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -47,11 +49,7 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
     }
 
     fn manual_pure_functions(&self, callee: &Expression) -> bool {
-        if let Expression::Identifier(id) = callee {
-            self.pure_function_names.iter().any(|name| name == id.name.as_str())
-        } else {
-            false
-        }
+        is_pure_function(callee, &self.pure_function_names)
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
@@ -987,6 +985,19 @@ fn test_is_pure_call_support() {
     test_with_ctx("foo`1`", &ctx, false);
     test_with_ctx("foo`${bar()}`", &ctx, true);
     test_with_ctx("bar``", &ctx, true);
+}
+
+#[test]
+fn test_manual_pure_functions_with_dotted_names() {
+    let ctx = Ctx { pure_function_names: vec!["console".to_string()], ..Default::default() };
+    test_with_ctx("console()", &ctx, false);
+    test_with_ctx("console.log()", &ctx, false);
+    test_with_ctx("console.log(bar())", &ctx, true);
+    test_with_ctx("other.log()", &ctx, true);
+    let ctx = Ctx { pure_function_names: vec!["console.log".to_string()], ..Default::default() };
+    test_with_ctx("console.log()", &ctx, false);
+    test_with_ctx("console.warn()", &ctx, true);
+    test_with_ctx("console.log.foo()", &ctx, false);
 }
 
 #[test]

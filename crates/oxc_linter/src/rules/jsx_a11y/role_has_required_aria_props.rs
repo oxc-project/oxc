@@ -16,6 +16,7 @@ fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) 
 
 #[derive(Debug, Default, Clone)]
 pub struct RoleHasRequiredAriaProps;
+
 declare_oxc_lint!(
     /// ### What it does
     ///

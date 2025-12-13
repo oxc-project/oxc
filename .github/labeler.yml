@@ -32,7 +32,7 @@ A-linter:
 
 A-linter-plugins:
   - changed-files:
-      - any-glob-to-any-file: ["apps/oxlint/src-js/**"]
+      - any-glob-to-any-file: ["apps/oxlint/src-js/**", "apps/oxlint/test/**", "apps/oxlint/conformance/**"]
 
 A-minifier:
   - changed-files:

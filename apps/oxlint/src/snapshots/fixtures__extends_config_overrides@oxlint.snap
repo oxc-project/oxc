@@ -6,14 +6,14 @@ arguments: overrides
 working directory: fixtures/extends_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected any. Specify a different type.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected `any`. Specify a different type.
    ,-[overrides/test.ts:1:10]
  1 | const x: any = 3;
    :          ^^^
    `----
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected any. Specify a different type.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected `any`. Specify a different type.
    ,-[overrides/test.tsx:1:23]
  1 | function component(): any {
    :                       ^^^

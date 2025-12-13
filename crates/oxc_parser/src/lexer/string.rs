@@ -255,15 +255,21 @@ impl<'a> Lexer<'a> {
             return self.escaped_strings[&token.start()];
         }
 
-        let raw = &self.source.whole()[token.start() as usize..token.end() as usize];
+        let source_text = self.source.whole();
+        let mut start = token.start() as usize;
+        let mut end = token.end() as usize;
         match token.kind() {
             Kind::Str => {
-                &raw[1..raw.len() - 1] // omit surrounding quotes
+                // Omit surrounding quotes
+                start += 1;
+                end -= 1;
             }
             Kind::PrivateIdentifier => {
-                &raw[1..] // omit leading `#`
+                // Omit leading `#`
+                start += 1;
             }
-            _ => raw,
+            _ => {}
         }
+        &source_text[start..end]
     }
 }

@@ -12,8 +12,6 @@ const require = createRequire(import.meta.url);
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
 export function parseSyncRaw(filename, sourceText, options) {
-  let _;
-  ({ experimentalRawTransfer: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
 }
 
@@ -36,8 +34,6 @@ export function parseSyncRaw(filename, sourceText, options) {
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
 export function parse(filename, sourceText, options) {
-  let _;
-  ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
 }
 

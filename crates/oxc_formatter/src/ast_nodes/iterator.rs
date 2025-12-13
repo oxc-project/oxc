@@ -160,7 +160,6 @@ impl_ast_node_vec!(ObjectPropertyKind<'a>);
 impl_ast_node_vec!(TemplateElement<'a>);
 impl_ast_node_vec!(Argument<'a>);
 impl_ast_node_vec!(AssignmentTargetProperty<'a>);
-impl_ast_node_vec!(Directive<'a>);
 impl_ast_node_vec!(VariableDeclarator<'a>);
 impl_ast_node_vec!(SwitchCase<'a>);
 impl_ast_node_vec!(BindingProperty<'a>);
@@ -270,6 +269,89 @@ impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Statement<'a>>> {
     type IntoIter = AstNodeIterator<'a, Statement<'a>>;
     fn into_iter(self) -> Self::IntoIter {
         AstNodeIterator::<Statement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            allocator: self.allocator,
+        }
+    }
+}
+
+fn get_following_span_for_directive_parent(parent: &AstNodes<'_>) -> Option<Span> {
+    match parent {
+        AstNodes::Program(program) => program.body().first().map(GetSpan::span),
+        AstNodes::FunctionBody(function_body) => {
+            function_body.statements().first().map(GetSpan::span)
+        }
+        AstNodes::TSModuleBlock(ts_module_block) => {
+            ts_module_block.body().first().map(GetSpan::span)
+        }
+        _ => None,
+    }
+}
+
+// Manual implementation for Vec<Directive> because we need to handle
+// following_span for the last directive in Program.body.
+impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Directive<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_span: inner_iter
+                        .next()
+                        .map(GetSpan::span)
+                        .or_else(|| get_following_span_for_directive_parent(self.parent)),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_span: get_following_span_for_directive_parent(self.parent),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Directive<'a>> {
+    type Item = &'a AstNode<'a, Directive<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_span: self
+                        .inner
+                        .peek()
+                        .copied()
+                        .map(GetSpan::span)
+                        .or_else(|| get_following_span_for_directive_parent(self.parent)),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Directive<'a>>> {
+    type Item = &'a AstNode<'a, Directive<'a>>;
+    type IntoIter = AstNodeIterator<'a, Directive<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Directive<'a>> {
             inner: self.inner.iter().peekable(),
             parent: self.parent,
             allocator: self.allocator,

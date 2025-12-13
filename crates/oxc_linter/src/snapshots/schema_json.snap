@@ -232,7 +232,7 @@ expression: json
       "type": "string",
       "enum": [
         "readonly",
-        "writeable",
+        "writable",
         "off"
       ]
     },
@@ -343,7 +343,6 @@ expression: json
         "react-perf",
         "promise",
         "node",
-        "regex",
         "vue"
       ]
     },

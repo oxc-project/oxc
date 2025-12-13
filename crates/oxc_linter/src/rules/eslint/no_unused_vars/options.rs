@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde_json::Value;
 
-/// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
+// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 #[must_use]

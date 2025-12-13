@@ -40,8 +40,6 @@ import pluginNext from "@next/eslint-plugin-next";
 import pluginPromise from "eslint-plugin-promise";
 // https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
 import pluginVitest from "eslint-plugin-vitest";
-// https://github.com/ota-meshi/eslint-plugin-regexp
-import pluginRegexp from "eslint-plugin-regexp";
 // https://github.com/vuejs/eslint-plugin-vue
 import pluginVue from "eslint-plugin-vue";
 
@@ -63,7 +61,6 @@ const { rules: pluginReactHooksAllRules } = pluginReactHooks;
 const { rules: pluginReactPerfAllRules, configs: pluginReactPerfConfigs } = pluginReactPerf;
 const { rules: pluginNextAllRules } = pluginNext;
 const { configs: pluginVitestConfigs, rules: pluginVitestRules } = pluginVitest;
-const { configs: pluginRegexpConfigs, rules: pluginRegexpRules } = pluginRegexp;
 const { configs: pluginVueConfigs, rules: pluginVueRules } = pluginVue;
 
 /** @param {import("eslint").Linter} linter */
@@ -263,20 +260,6 @@ const loadPluginVitestRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-const loadPluginRegexpRules = (linter) => {
-  const pluginRegexpRecommendedRules = new Map(
-    Object.entries(pluginRegexpConfigs.recommended.rules),
-  );
-  for (const [name, rule] of Object.entries(pluginRegexpRules)) {
-    const prefixedName = `regexp/${name}`;
-
-    rule.meta.docs.recommended = pluginRegexpRecommendedRules.has(prefixedName);
-
-    linter.defineRule(prefixedName, rule);
-  }
-};
-
-/** @param {import("eslint").Linter} linter */
 const loadPluginVueRules = (linter) => {
   const pluginVueRecommendedRules = new Map(
     Object.entries(pluginVueConfigs.recommended.rules || {}),
@@ -317,7 +300,6 @@ export const ALL_TARGET_PLUGINS = new Map([
   ["nextjs", { npm: ["@next/eslint-plugin-next"], issueNo: 1929 }],
   ["promise", { npm: ["eslint-plugin-promise"], issueNo: 4655 }],
   ["vitest", { npm: ["eslint-plugin-vitest"], issueNo: 4656 }],
-  ["regexp", { npm: ["eslint-plugin-regexp"], issueNo: 11439 }],
   ["vue", { npm: ["eslint-plugin-vue"], issueNo: 11440 }],
 ]);
 
@@ -341,6 +323,5 @@ export const loadTargetPluginRules = (linter) => {
   loadPluginNextRules(linter);
   loadPluginPromiseRules(linter);
   loadPluginVitestRules(linter);
-  loadPluginRegexpRules(linter);
   loadPluginVueRules(linter);
 };

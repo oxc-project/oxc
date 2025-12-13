@@ -7,8 +7,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn comparison_with_na_n(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
@@ -36,7 +41,7 @@ fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct UseIsnan {
     /// Whether to disallow NaN in switch cases and discriminants
@@ -139,21 +144,9 @@ impl Rule for UseIsnan {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let (enforce_for_switch_case, enforce_for_index_of) =
-            value.get(0).map_or((true, false), |config| {
-                (
-                    config
-                        .get("enforceForSwitchCase")
-                        .and_then(serde_json::Value::as_bool)
-                        .unwrap_or(true),
-                    config
-                        .get("enforceForIndexOf")
-                        .and_then(serde_json::Value::as_bool)
-                        .unwrap_or_default(),
-                )
-            });
-
-        Self { enforce_for_switch_case, enforce_for_index_of }
+        serde_json::from_value::<DefaultRuleConfig<UseIsnan>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 }
 

@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const childProcess = require("node:child_process");
 
 const pkg = JSON.parse(fs.readFileSync(require.resolve("oxc-transform/package.json"), "utf-8"));
-const version = pkg.version;
+const { version } = pkg;
 const baseDir = `/tmp/oxc-transform-${version}`;
 const bindingEntry = `${baseDir}/node_modules/@oxc-transform/binding-wasm32-wasi/transform.wasi.cjs`;
 

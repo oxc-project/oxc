@@ -17,7 +17,7 @@ fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/max-dependencies.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/max-dependencies.md>
 #[derive(Debug, Default, Clone)]
 pub struct MaxDependencies(Box<MaxDependenciesConfig>);
 

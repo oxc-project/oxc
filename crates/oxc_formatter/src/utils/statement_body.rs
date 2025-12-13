@@ -37,9 +37,13 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
             write!(f, [space()]);
-            // Use `write` instead of `format` to avoid printing leading comments of the block.
-            // Those comments should be printed inside the block statement.
-            block.write(f);
+            if matches!(self.body.parent, AstNodes::IfStatement(_)) {
+                write!(f, [block]);
+            } else {
+                // Use `write` instead of `format` to avoid printing leading comments of the block.
+                // Those comments should be printed inside the block statement.
+                block.write(f);
+            }
         } else if self.force_space {
             write!(f, [space(), self.body]);
         } else {

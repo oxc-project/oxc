@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:21]
+   ╭─[no_conditional_in_test.tsx:3:30]
  2 │                     it('foo', () => {
  3 │                       expect(bar ? foo : baz).toBe(boo);
    ·                              ───────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:23]
+   ╭─[no_conditional_in_test.tsx:4:32]
  3 │                       const foo = function (bar) {
  4 │                         return foo ? bar : null;
    ·                                ────────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:26]
+   ╭─[no_conditional_in_test.tsx:3:35]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:26]
+   ╭─[no_conditional_in_test.tsx:3:35]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:26]
+   ╭─[no_conditional_in_test.tsx:3:35]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:33]
+   ╭─[no_conditional_in_test.tsx:4:42]
  3 │                       const foo = bar ? foo : baz;
  4 │                       const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
    ·                                          ────────────────────────────────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:4:16]
+    ╭─[no_conditional_in_test.tsx:4:25]
   3 │                           const values = something.map(thing => {
   4 │ ╭─▶                         switch (thing.isFoo) {
   5 │ │                             case true:
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                         it('foo', () => {
  3 │ ╭─▶                       switch (true) {
  4 │ │                           case true: {}
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it.skip('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -87,7 +87,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it.only('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     xit('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     fit('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test.skip('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -127,7 +127,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test.only('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     xtest('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -143,7 +143,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     xtest('foo', function () {
  3 │                       switch('bar') {}
    ·                       ────────────────
@@ -151,15 +151,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:5:16]
- 4 │             
+   ╭─[no_conditional_in_test.tsx:5:25]
+ 4 │ 
  5 │                         switch('bar') {}
    ·                         ────────────────
  6 │                       })
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:16]
+   ╭─[no_conditional_in_test.tsx:4:25]
  3 │                       it('bar', () => {
  4 │                         switch('bar') {}
    ·                         ────────────────
@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:7:16]
+   ╭─[no_conditional_in_test.tsx:7:25]
  6 │                       it('baz', () => {
  7 │                         switch('qux') {}
    ·                         ────────────────
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:8:16]
+   ╭─[no_conditional_in_test.tsx:8:25]
  7 │                         switch('qux') {}
  8 │                         switch('quux') {}
    ·                         ─────────────────
@@ -183,7 +183,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       switch ('bar') {}
    ·                       ─────────────────
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:6:20]
+    ╭─[no_conditional_in_test.tsx:6:29]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             switch (thing.isFoo) {
   7 │ │                                 case true:
@@ -203,8 +203,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:14:18]
- 13 │                 
+    ╭─[no_conditional_in_test.tsx:14:27]
+ 13 │     
  14 │ ╭─▶                           switch('invalid') {
  15 │ │                               case true:
  16 │ │                                 expect(values).toStrictEqual(['foo']);
@@ -213,7 +213,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:16]
+   ╭─[no_conditional_in_test.tsx:4:25]
  3 │                           const foo = function(bar) {
  4 │ ╭─▶                         if (bar) {
  5 │ │                             return 1;
@@ -224,7 +224,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:16]
+   ╭─[no_conditional_in_test.tsx:4:25]
  3 │                           function foo(bar) {
  4 │ ╭─▶                         if (bar) {
  5 │ │                             return 1;
@@ -235,7 +235,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -243,7 +243,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it.skip('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -251,7 +251,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it.skip('foo', function () {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -259,7 +259,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     it.only('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -267,7 +267,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     xit('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -275,7 +275,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     fit('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -283,7 +283,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -291,7 +291,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test.skip('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     test.only('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -307,7 +307,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                     xtest('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
@@ -315,7 +315,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:16]
+   ╭─[no_conditional_in_test.tsx:4:25]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
    ·                         ─────────────
@@ -323,7 +323,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:16]
+   ╭─[no_conditional_in_test.tsx:4:25]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
    ·                         ─────────────
@@ -331,7 +331,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:7:16]
+   ╭─[no_conditional_in_test.tsx:7:25]
  6 │                       it('baz', () => {
  7 │                         if ('qux') {}
    ·                         ─────────────
@@ -339,7 +339,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:8:16]
+   ╭─[no_conditional_in_test.tsx:8:25]
  7 │                         if ('qux') {}
  8 │                         if ('quux') {}
    ·                         ──────────────
@@ -347,7 +347,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
@@ -355,7 +355,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
@@ -363,7 +363,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
@@ -371,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
@@ -379,7 +379,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:4:14]
+   ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
@@ -387,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:6:20]
+    ╭─[no_conditional_in_test.tsx:6:29]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             if (thing.isFoo) {
   7 │ │                                 return thing.foo
@@ -398,8 +398,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:13:18]
- 12 │                 
+    ╭─[no_conditional_in_test.tsx:13:27]
+ 12 │     
  13 │ ╭─▶                           if ('invalid') {
  14 │ │                               expect(values).toStrictEqual(['foo']);
  15 │ ╰─▶                           }
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-   ╭─[no_conditional_in_test.tsx:3:14]
+   ╭─[no_conditional_in_test.tsx:3:23]
  2 │                         test("shows error", () => {
  3 │ ╭─▶                       if (1 === 2) {
  4 │ │                           expect(true).toBe(false);
@@ -416,7 +416,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
-    ╭─[no_conditional_in_test.tsx:10:14]
+    ╭─[no_conditional_in_test.tsx:10:23]
   9 │                           setTimeout(() => console.log("noop"));
  10 │ ╭─▶                       if (1 === 2) {
  11 │ │                           expect(true).toBe(false);

@@ -36,7 +36,7 @@ fn no_warning_comments_diagnostic(term: &str, comment: &str, span: Span) -> OxcD
 }
 
 #[derive(Debug, Clone)]
-struct Config {
+struct NoWarningCommentsConfig {
     terms: Vec<String>,
     patterns: Vec<Regex>,
 }
@@ -48,7 +48,16 @@ enum Location {
 }
 
 #[derive(Debug, Clone)]
-pub struct NoWarningComments(Box<Config>);
+pub struct NoWarningComments(Box<NoWarningCommentsConfig>);
+
+impl Default for NoWarningComments {
+    fn default() -> Self {
+        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
+        let location = Location::Start;
+        let decoration = FxHashSet::default();
+        Self::new(&terms, &location, &decoration)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -116,15 +125,6 @@ declare_oxc_lint!(
     pedantic
 );
 
-impl Default for NoWarningComments {
-    fn default() -> Self {
-        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
-        let location = Location::Start;
-        let decoration = FxHashSet::default();
-        Self::new(&terms, &location, &decoration)
-    }
-}
-
 impl Rule for NoWarningComments {
     fn from_configuration(value: serde_json::Value) -> Self {
         let config = value.get(0);
@@ -183,7 +183,7 @@ impl Rule for NoWarningComments {
 impl NoWarningComments {
     fn new(terms: &[String], location: &Location, decoration: &FxHashSet<String>) -> Self {
         let patterns = Self::build_patterns(terms, location, decoration);
-        Self(Box::new(Config { terms: terms.to_vec(), patterns }))
+        Self(Box::new(NoWarningCommentsConfig { terms: terms.to_vec(), patterns }))
     }
 
     fn build_patterns(

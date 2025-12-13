@@ -198,7 +198,7 @@ impl<'a> ParserImpl<'a> {
             let ident = self.parse_jsx_identifier();
             // `<foo.bar- />` is a syntax error.
             if ident.name.contains('-') {
-                let error = diagnostics::unexpected_token(ident.span);
+                let error = diagnostics::identifier_expected_jsx_no_hyphen(ident.span);
                 return self.fatal_error(error);
             }
             property = Some(ident);
@@ -289,6 +289,13 @@ impl<'a> ParserImpl<'a> {
                 self.expect(Kind::RCurly);
             }
             let span = self.end_span(span_start);
+
+            // Empty expression is not allowed in JSX attribute value
+            // e.g. `<C attr={} />`
+            if !in_jsx_child {
+                self.error(diagnostics::jsx_attribute_value_empty_expression(span));
+            }
+
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
             let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));

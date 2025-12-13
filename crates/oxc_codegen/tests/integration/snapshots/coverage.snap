@@ -109,3 +109,35 @@ try {
 } 
 /* istanbul ignore next */
 catch (e) {}
+
+########## 20
+try { console.log('test'); }
+catch (err) /* v8 ignore next */ { console.error(err); }
+----------
+try {
+	console.log('test');
+} catch (err) /* v8 ignore next */ {
+	console.error(err);
+}
+
+########## 21
+try { something(); }
+catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }
+----------
+try {
+	something();
+} catch (err) /* c8 ignore next *//* istanbul ignore next */ {
+	handle(err);
+}
+
+########## 22
+try { something(); }
+catch (err) // v8 ignore next
+{ handle(err); }
+----------
+try {
+	something();
+} catch (err) {
+	handle(err);
+}
+

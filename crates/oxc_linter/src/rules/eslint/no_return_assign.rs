@@ -3,9 +3,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_return_assign_diagnostic(span: Span, message: &'static str) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -13,17 +18,24 @@ fn no_return_assign_diagnostic(span: Span, message: &'static str) -> OxcDiagnost
         .with_help("Did you mean to use `==` instead of `=`?")
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoReturnAssign {
-    /// Whether to always disallow assignment in return statements.
-    always_disallow_assignment_in_return: bool,
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoReturnAssign(NoReturnAssignMode);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum NoReturnAssignMode {
+    /// Disallow all assignments in return statements.
+    Always,
+    /// Allow assignments in return statements only if they are enclosed in parentheses.
+    /// This is the default mode.
+    #[default]
+    ExceptParens,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows assignment operators in return statements
+    /// Disallows assignment operators in return statements.
     ///
     /// ### Why is this bad?
     ///
@@ -48,7 +60,7 @@ declare_oxc_lint!(
     eslint,
     style,
     pending, // TODO: add a suggestion
-    config = NoReturnAssign,
+    config = NoReturnAssignMode,
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {
@@ -61,18 +73,18 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 
 impl Rule for NoReturnAssign {
     fn from_configuration(value: Value) -> Self {
-        let always_disallow_assignment_in_return = value
-            .get(0)
-            .and_then(Value::as_str)
-            .map_or_else(|| false, |value| value != "except-parens");
-        Self { always_disallow_assignment_in_return }
+        serde_json::from_value::<DefaultRuleConfig<NoReturnAssign>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assign) = node.kind() else {
             return;
         };
-        if !self.always_disallow_assignment_in_return
+
+        // Skip if mode is ExceptParens and the assignment is parenthesized
+        if matches!(self.0, NoReturnAssignMode::ExceptParens)
             && ctx.nodes().parent_kind(node.id()).as_parenthesized_expression().is_some()
         {
             return;

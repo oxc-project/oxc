@@ -1,3 +1,5 @@
+import type { Options } from "./options.ts";
+
 /**
  * Rule metadata.
  * `meta` property of `Rule`.
@@ -43,9 +45,8 @@ export interface RuleMeta {
    * Default options for the rule.
    * If present, any user-provided options in their config will be merged on top of them recursively.
    */
-  // TODO: Make this more precise.
   // TODO: Use this to alter options passed to rules.
-  defaultOptions?: unknown[];
+  defaultOptions?: Options;
   /**
    * Indicates whether the rule has been deprecated, and info about the deprecation and possible replacements.
    */

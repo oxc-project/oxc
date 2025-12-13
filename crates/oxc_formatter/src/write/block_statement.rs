@@ -11,11 +11,9 @@ use crate::{
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join_nodes_with_hardline()
-            .entries(
-                self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
-            )
-            .finish();
+        f.join_nodes_with_hardline().entries(
+            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
+        );
     }
 }
 

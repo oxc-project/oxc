@@ -16,64 +16,60 @@ use serde::Deserialize;
 use serde_json::Value;
 use smallvec::SmallVec;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::default_true};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
 }
+
 fn func_missing_argument_type(param_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing argument type on function").with_label(param_span)
 }
+
 fn func_argument_is_explicitly_any(param_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Argument is explicitly typed as `any`").with_label(param_span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct ExplicitModuleBoundaryTypes(Box<Config>);
-impl From<Config> for ExplicitModuleBoundaryTypes {
-    fn from(config: Config) -> Self {
-        Self(Box::new(config))
-    }
-}
+pub struct ExplicitModuleBoundaryTypes(Box<ExplicitModuleBoundaryTypesConfig>);
+
 impl Deref for ExplicitModuleBoundaryTypes {
-    type Target = Config;
+    type Target = ExplicitModuleBoundaryTypesConfig;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
-#[serde(rename_all = "camelCase")]
-pub struct Config {
+#[derive(Debug, Clone, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ExplicitModuleBoundaryTypesConfig {
     /// Whether to ignore arguments that are explicitly typed as `any`.
-    #[serde(default)]
     allow_arguments_explicitly_typed_as_any: bool,
     /// Whether to ignore return type annotations on body-less arrow functions
     /// that return an `as const` type assertion. You must still type the
     /// parameters of the function.
-    #[serde(default = "default_true")]
     allow_direct_const_assertion_in_arrow_functions: bool,
     /// An array of function/method names that will not have their arguments or
     /// return values checked.
-    #[serde(default)]
     allowed_names: Vec<CompactStr>,
     /// Whether to ignore return type annotations on functions immediately
     /// returning another function expression. You must still type the
     /// parameters of the function.
-    #[serde(default = "default_true")]
     allow_higher_order_functions: bool,
     /// Whether to ignore return type annotations on functions with overload
     /// signatures.
-    #[serde(default)]
     allow_overload_functions: bool,
     /// Whether to ignore type annotations on the variable of a function
     /// expression.
-    #[serde(default = "default_true")]
     allow_typed_function_expressions: bool,
 }
 
-impl Default for Config {
+impl Default for ExplicitModuleBoundaryTypesConfig {
     fn default() -> Self {
         Self {
             allow_arguments_explicitly_typed_as_any: false,
@@ -86,16 +82,11 @@ impl Default for Config {
     }
 }
 
-impl TryFrom<Value> for Config {
-    type Error = serde_json::Error;
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
-        serde_json::from_value(value)
-    }
-}
-impl Config {
+impl ExplicitModuleBoundaryTypesConfig {
     fn is_allowed_name(&self, name: &str) -> bool {
         self.allowed_names.iter().any(|n| n == name)
     }
+
     fn is_some_allowed_name<S: AsRef<str>>(&self, name: Option<S>) -> bool {
         name.is_some_and(|name| self.is_allowed_name(name.as_ref()))
     }
@@ -167,15 +158,14 @@ declare_oxc_lint!(
     ExplicitModuleBoundaryTypes,
     typescript,
     restriction,
-    config = Config,
+    config = ExplicitModuleBoundaryTypesConfig,
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {
-    fn from_configuration(mut value: Value) -> Self {
-        let Some(value) = value.get_mut(0).filter(|v| v.is_object()) else {
-            return Self::default();
-        };
-        serde_json::from_value(value.take()).unwrap_or_default()
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<ExplicitModuleBoundaryTypes>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -698,20 +688,24 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
 
 #[cfg(test)]
 mod test {
-    use super::{Config, ExplicitModuleBoundaryTypes};
+    use super::{ExplicitModuleBoundaryTypes, ExplicitModuleBoundaryTypesConfig};
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
     use serde_json::{Value, json};
     use std::path::PathBuf;
 
     #[test]
     fn config() {
-        let cases: Vec<(Config, Value)> = vec![(Config::default(), json!({}))];
+        let cases: Vec<(ExplicitModuleBoundaryTypesConfig, Value)> =
+            vec![(ExplicitModuleBoundaryTypesConfig::default(), json!({}))];
         for (config, expected) in cases {
-            assert_eq!(config, expected.try_into().unwrap());
+            let actual: ExplicitModuleBoundaryTypesConfig =
+                serde_json::from_value(expected).unwrap();
+            assert_eq!(config, actual);
         }
 
         // test from_configuration, which suppresses invalid configs
-        let cases: Vec<(Config, Value)> = vec![(Config::default(), json!([{}]))];
+        let cases: Vec<(ExplicitModuleBoundaryTypesConfig, Value)> =
+            vec![(ExplicitModuleBoundaryTypesConfig::default(), json!([{}]))];
         for (expected, value) in cases {
             let actual = ExplicitModuleBoundaryTypes::from_configuration(value);
             assert_eq!(*actual, expected);

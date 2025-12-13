@@ -19,6 +19,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: remove `forwardRef` wrapper
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -36,6 +37,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: add `ref` parameter
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -53,6 +55,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable forward-ref-uses-ref for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -70,6 +73,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable forward-ref-uses-ref for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

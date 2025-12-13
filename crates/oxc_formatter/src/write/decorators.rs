@@ -27,7 +27,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
                     f,
                     [group(&format_args!(
                         format_with(|f| {
-                            f.join_nodes_with_soft_line().entries(self.iter()).finish();
+                            f.join_nodes_with_soft_line().entries(self.iter());
                         }),
                         soft_line_break_or_space()
                     ))
@@ -46,7 +46,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
             }
         }
 
-        f.join_with(&soft_line_break_or_space()).entries(self.iter()).finish();
+        f.join_with(&soft_line_break_or_space()).entries(self.iter());
 
         write!(f, [soft_line_break_or_space()]);
     }
@@ -101,5 +101,5 @@ fn should_expand_decorators<'a>(
     decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    decorators.iter().any(|decorator| f.source_text().lines_after(decorator.span().end) > 0)
+    decorators.iter().any(|decorator| f.source_text().has_newline_after(decorator.span().end))
 }

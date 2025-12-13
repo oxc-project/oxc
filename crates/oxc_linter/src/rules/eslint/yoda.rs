@@ -296,7 +296,7 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let str_between_left_and_operator = ctx.source_range(Span::new(left_span.end, operator_start));
         let str_between_operator_and_right = ctx.source_range(Span::new(operator_end, right_span.start));
 
-        let left_prev_token = if left_span.start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
+        let left_prev_token = if left_span.start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() || is_keyword_expression(&expr.right)) {
             let tokens = ctx.source_range(Span::new(0, left_span.start));
             let token = tokens.chars().last();
             match_token(token)
@@ -327,7 +327,22 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
 }
 
 fn match_token(token: Option<char>) -> bool {
-    !matches!(token, Some(' ' | '(' | ')' | '/' | '=' | ';'))
+    !matches!(token, Some(' ' | '(' | ')' | '{' | '}' | '/' | '=' | ';'))
+}
+
+/// Returns `true` if the expression starts with a keyword (typeof, void, delete,
+/// await, yield, new) that needs a space separator.
+fn is_keyword_expression(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::UnaryExpression(unary)
+            if matches!(unary.operator, UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete)
+    ) || matches!(
+        expr,
+        Expression::AwaitExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::NewExpression(_)
+    )
 }
 
 fn flip_operator(operator: BinaryOperator) -> BinaryOperator {
@@ -1165,6 +1180,37 @@ fn test() {
             "{( t=='' )}",
             "{(  ''==t  )}",
             Some(serde_json::json!(["always", { "onlyEquality": true }])),
+        ),
+        // Keyword expressions (typeof/void/delete/await/yield/new) need space after return
+        (
+            "function a(){return\"undefined\"===typeof x}",
+            "function a(){return typeof x===\"undefined\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return 0===void x}",
+            "function a(){return void x===0}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return true===delete x.y}",
+            "function a(){return delete x.y===true}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "async function a(){return\"x\"===await foo}",
+            "async function a(){return await foo===\"x\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function* a(){return\"x\"===(yield foo)}",
+            "function* a(){return(yield foo)===\"x\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return\"x\"===new Foo()}",
+            "function a(){return new Foo()===\"x\"}",
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

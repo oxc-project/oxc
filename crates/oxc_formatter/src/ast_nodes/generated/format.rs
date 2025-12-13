@@ -4377,7 +4377,6 @@ impl<'a> Format<'a> for AstNode<'a, TSUnionType<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f);

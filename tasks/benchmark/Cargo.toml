@@ -76,8 +76,6 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
-rustc-hash = { workspace = true }
-
 # Only for lexer benchmark
 cow-utils = { workspace = true, optional = true }
 
@@ -118,3 +116,6 @@ linter = [
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
 ]
+
+[dev-dependencies]
+rustc-hash = { workspace = true }

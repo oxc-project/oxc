@@ -90,7 +90,6 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
 
             join.entry(span, stmt);
         }
-        join.finish();
     }
 }
 
@@ -101,7 +100,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
             return;
         };
 
-        f.join_nodes_with_hardline().entries(self).finish();
+        f.join_nodes_with_hardline().entries(self);
 
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
         // JsDirectiveList, for example:

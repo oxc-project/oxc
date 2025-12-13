@@ -6,11 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_jsx_attribute_name, is_create_element_call},
 };
 
@@ -26,7 +27,7 @@ fn exclusive_checked_attribute(checked_span: Span, default_checked_span: Span) -
         .with_labels([checked_span, default_checked_span])
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct CheckedRequiresOnchangeOrReadonly {
     /// Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
@@ -192,20 +193,9 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            ignore_missing_properties: value
-                .and_then(|val| {
-                    val.get("ignoreMissingProperties").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            ignore_exclusive_checked_attribute: value
-                .and_then(|val| {
-                    val.get("ignoreExclusiveCheckedAttribute").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<CheckedRequiresOnchangeOrReadonly>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 }
 

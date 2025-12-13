@@ -40,7 +40,7 @@ fn test_rule_default_matches_from_configuration_null() {
         let default_rule = rule.clone();
 
         // Get the configuration using rule::from_configuration(null)
-        let null_configured_rule = rule.read_json(Value::Null);
+        let null_configured_rule = rule.from_configuration(Value::Null);
 
         // Compare the two configurations
         // Since RuleEnum doesn't implement PartialEq for the inner rule types,

@@ -6,9 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected expression to be used")
@@ -16,10 +21,10 @@ fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnusedExpressions(Box<NoUnusedExpressionsConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnusedExpressionsConfig {
     /// When set to `true`, allows short circuit evaluations in expressions.
@@ -29,6 +34,7 @@ pub struct NoUnusedExpressionsConfig {
     /// When set to `true`, allows tagged template literals in expressions.
     allow_tagged_templates: bool,
     /// When set to `true`, enforces the rule for unused JSX expressions also.
+    #[serde(rename = "enforceForJSX")]
     enforce_for_jsx: bool,
 }
 
@@ -73,29 +79,10 @@ impl Rule for NoUnusedExpressions {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoUnusedExpressionsConfig {
-            allow_short_circuit: value
-                .get(0)
-                .and_then(|x| x.get("allowShortCircuit"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-            allow_ternary: value
-                .get(0)
-                .and_then(|x| x.get("allowTernary"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-            allow_tagged_templates: value
-                .get(0)
-                .and_then(|x| x.get("allowTaggedTemplates"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-            enforce_for_jsx: value
-                .get(0)
-                .and_then(|x| x.get("enforceForJSX"))
-                .and_then(Value::as_bool)
-                .unwrap_or_default(),
-        }))
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoUnusedExpressions>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 }
 

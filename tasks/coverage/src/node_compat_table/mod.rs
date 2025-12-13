@@ -93,7 +93,7 @@ impl NodeCompatCase {
 impl Case for NodeCompatCase {
     fn new(path: PathBuf, code: String) -> Self {
         let wrapped_code = format!(
-            // https://github.com/williamkapke/node-compat-table/blob/c6ca25d77e054aaa2e227aaef00251a5272c9f0c/test.js#L22
+            // https://github.com/compat-table/node-compat-table/blob/c6ca25d77e054aaa2e227aaef00251a5272c9f0c/test.js#L22
             r"
 global.__createIterableObject = function (arr, methods) {{
   methods = methods || {{}}

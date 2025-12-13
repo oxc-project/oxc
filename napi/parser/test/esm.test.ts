@@ -5,7 +5,7 @@ import { parseSync } from "../src-js/index.js";
 describe("esm", () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export#syntax
-  let code = `
+  const code = `
 import defaultExport from "module-name";
 import * as name from "module-name";
 import { export1 } from "module-name";

@@ -6,7 +6,6 @@ use crate::options::FormatOptions;
 
 use super::{
     Arguments, Buffer, Comments, FormatContext, FormatState, GroupId, SourceText, VecBuffer,
-    buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
 };
@@ -275,13 +274,5 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.buffer.state_mut()
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        self.buffer.snapshot()
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        self.buffer.restore_snapshot(snapshot);
     }
 }

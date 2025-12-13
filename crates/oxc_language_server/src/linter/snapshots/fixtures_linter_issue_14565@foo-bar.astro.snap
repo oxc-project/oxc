@@ -8,7 +8,7 @@ file: fixtures/linter/issue_14565/foo-bar.astro
 
 code: "eslint-plugin-unicorn(filename-case)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/unicorn/filename-case.html"
-message: "Filename should be in snake case, or pascal case\nhelp: Rename the file to 'foo_bar.astro', or 'FooBar.astro'"
+message: "Filename should be in snake_case, or PascalCase\nhelp: Rename the file to 'foo_bar.astro', or 'FooBar.astro'"
 range: Range { start: Position { line: 0, character: 3 }, end: Position { line: 0, character: 3 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_14565/foo-bar.astro"

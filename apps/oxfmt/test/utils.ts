@@ -62,13 +62,13 @@ ${afterContent}
 
 // ---
 
-type RunResult = {
+export type RunResult = {
   stdout: string;
   stderr: string;
   exitCode: number;
 };
 
-async function runCli(cwd: string, args: string[]): Promise<RunResult> {
+export async function runCli(cwd: string, args: string[]): Promise<RunResult> {
   const cliPath = join(import.meta.dirname, "..", "dist", "cli.js");
 
   const result = await execa("node", [cliPath, ...args], {

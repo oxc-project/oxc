@@ -57,6 +57,17 @@ declare_oxc_lint!(
     ///   .mockResolvedValueOnce(42)
     ///   .mockRejectedValue(new Error('too many calls!'));
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-mock-promise-shorthand.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-mock-promise-shorthand": "error"
+    ///   }
+    /// }
+    /// ```
     PreferMockPromiseShorthand,
     jest,
     style,

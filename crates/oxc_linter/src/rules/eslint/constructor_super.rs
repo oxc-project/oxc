@@ -107,7 +107,7 @@ declare_oxc_lint!(
     /// ```
     ConstructorSuper,
     eslint,
-    nursery,
+    correctness,
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -692,72 +692,72 @@ fn test() {
         "class A extends B { constructor(a) { super(); for (b in a) ( foo(b) ); } }",
         "class Foo extends Object { constructor(method) { super(); this.method = method || function() {}; } }",
         "class A extends Object {
-			    constructor() {
-			        super();
-			        for (let i = 0; i < 0; i++);
-			    }
-			}
-			",
+                constructor() {
+                    super();
+                    for (let i = 0; i < 0; i++);
+                }
+            }
+            ",
         "class A extends Object {
-			    constructor() {
-			        super();
-			        for (; i < 0; i++);
-			    }
-			}
-			",
+                constructor() {
+                    super();
+                    for (; i < 0; i++);
+                }
+            }
+            ",
         "class A extends Object {
-			    constructor() {
-			        super();
-			        for (let i = 0;; i++) {
-			            if (foo) break;
-			        }
-			    }
-			}
-			",
+                constructor() {
+                    super();
+                    for (let i = 0;; i++) {
+                        if (foo) break;
+                    }
+                }
+            }
+            ",
         "class A extends Object {
-			    constructor() {
-			        super();
-			        for (let i = 0; i < 0;);
-			    }
-			}
-			",
+                constructor() {
+                    super();
+                    for (let i = 0; i < 0;);
+                }
+            }
+            ",
         "class A extends Object {
-			    constructor() {
-			        super();
-			        for (let i = 0;;) {
-			            if (foo) break;
-			        }
-			    }
-			}
-			",
+                constructor() {
+                    super();
+                    for (let i = 0;;) {
+                        if (foo) break;
+                    }
+                }
+            }
+            ",
         "
-			            class A extends B {
-			                constructor(props) {
-			                    super(props);
+                        class A extends B {
+                            constructor(props) {
+                                super(props);
 
-			                    try {
-			                        let arr = [];
-			                        for (let a of arr) {
-			                        }
-			                    } catch (err) {
-			                    }
-			                }
-			            }
-			        ",
+                                try {
+                                    let arr = [];
+                                    for (let a of arr) {
+                                    }
+                                } catch (err) {
+                                }
+                            }
+                        }
+                    ",
         "class A extends obj?.prop { constructor() { super(); } }",
         "
-			            class A extends Base {
-			                constructor(list) {
-			                    for (const a of list) {
-			                        if (a.foo) {
-			                            super(a);
-			                            return;
-			                        }
-			                    }
-			                    super();
-			                }
-			            }
-			        ",
+                        class A extends Base {
+                            constructor(list) {
+                                for (const a of list) {
+                                    if (a.foo) {
+                                        super(a);
+                                        return;
+                                    }
+                                }
+                                super();
+                            }
+                        }
+                    ",
     ];
 
     let fail = vec![
@@ -797,51 +797,51 @@ fn test() {
         "class A extends B { constructor(a) { while (a) super(); } }",
         "class A extends B { constructor() { return; super(); } }",
         "class Foo extends Bar {
-			                constructor() {
-			                    for (a in b) for (c in d);
-			                }
-			            }",
+                            constructor() {
+                                for (a in b) for (c in d);
+                            }
+                        }",
         "class C extends D {
 
-			                constructor() {
-			                    do {
-			                        something();
-			                    } while (foo);
-			                }
+                            constructor() {
+                                do {
+                                    something();
+                                } while (foo);
+                            }
 
-			            }",
+                        }",
         "class C extends D {
 
-			                constructor() {
-			                    for (let i = 1;;i++) {
-			                        if (bar) {
-			                            break;
-			                        }
-			                    }
-			                }
+                            constructor() {
+                                for (let i = 1;;i++) {
+                                    if (bar) {
+                                        break;
+                                    }
+                                }
+                            }
 
-			            }",
+                        }",
         "class C extends D {
 
-			                constructor() {
-			                    do {
-			                        super();
-			                    } while (foo);
-			                }
+                            constructor() {
+                                do {
+                                    super();
+                                } while (foo);
+                            }
 
-			            }",
+                        }",
         "class C extends D {
 
-			                constructor() {
-			                    while (foo) {
-			                        if (bar) {
-			                            super();
-			                            break;
-			                        }
-			                    }
-			                }
+                            constructor() {
+                                while (foo) {
+                                    if (bar) {
+                                        super();
+                                        break;
+                                    }
+                                }
+                            }
 
-			            }",
+                        }",
     ];
 
     Tester::new(ConstructorSuper::NAME, ConstructorSuper::PLUGIN, pass, fail).test_and_snapshot();

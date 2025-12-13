@@ -73,6 +73,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
+
+        if comments.is_empty() {
+            write!(f, "<>");
+            return;
+        }
+
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
@@ -96,6 +102,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
+
+        if comments.is_empty() {
+            write!(f, "</>");
+            return;
+        }
+
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
@@ -301,7 +313,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
             soft_line_break_or_space()
         };
 
-        f.join_with(&line_break).entries(self.iter()).finish();
+        f.join_with(&line_break).entries(self.iter());
     }
 }
 

@@ -1,2 +1,2 @@
 export * from "./bindings.js";
-export { formatEmbeddedCode } from "./embedded.js";
+export { setupConfig, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";

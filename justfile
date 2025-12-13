@@ -170,7 +170,6 @@ new-react-perf-rule name: (new-rule name "react-perf")
 new-n-rule name: (new-rule name "n")
 new-promise-rule name: (new-rule name "promise")
 new-vitest-rule name: (new-rule name "vitest")
-new-regexp-rule name: (new-rule name "regexp")
 new-vue-rule name: (new-rule name "vue")
 
 # Alias for backward compatibility
@@ -251,6 +250,7 @@ website path:
   cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
   cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
+  cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 
 # Generate linter schema json for `npm/oxlint/configuration_schema.json`
 linter-schema-json:

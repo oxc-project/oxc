@@ -3,21 +3,22 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected any. Specify a different type.")
+    OxcDiagnostic::warn("Unexpected `any`. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoExplicitAny {
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
@@ -76,6 +77,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExplicitAny {
+    fn from_configuration(value: Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoExplicitAny>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSAnyKeyword(any) = node.kind() else {
             return;
@@ -91,16 +98,6 @@ impl Rule for NoExplicitAny {
         } else {
             ctx.diagnostic(no_explicit_any_diagnostic(any.span));
         }
-    }
-
-    fn from_configuration(value: Value) -> Self {
-        let Some(cfg) = value.get(0) else {
-            return Self::default();
-        };
-        let fix_to_unknown = cfg.get("fixToUnknown").and_then(Value::as_bool).unwrap_or(false);
-        let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
-
-        Self { fix_to_unknown, ignore_rest_args }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

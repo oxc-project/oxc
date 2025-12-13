@@ -1,3 +1,9 @@
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
+};
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
@@ -7,8 +13,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use serde::Deserialize;
 
 fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic {
     let warn_msg = match issue {
@@ -24,7 +29,7 @@ fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoReturnWrap {
     /// `allowReject` allows returning `Promise.reject` inside a promise handler.
@@ -132,13 +137,9 @@ declare_oxc_lint!(
 
 impl Rule for NoReturnWrap {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_reject = value
-            .get(0)
-            .and_then(|v| v.get("allowReject"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_reject }
+        serde_json::from_value::<DefaultRuleConfig<NoReturnWrap>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

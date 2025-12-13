@@ -1,8 +1,8 @@
-commit: 26058a01
+commit: c0cf5277
 
 parser_test262 Summary:
-AST Parsed     : 45249/45257 (99.98%)
-Positive Passed: 45249/45257 (99.98%)
+AST Parsed     : 46429/46437 (99.98%)
+Positive Passed: 46421/46437 (99.97%)
 Negative Passed: 4579/4581 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
 
@@ -76,6 +76,534 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  20 │   async() = 1;
     ·   ───────
  21 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:24:15]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script=Beria_Erfe}+$/u,
+    ·               ──────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:29:15]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script=Berf}+$/u,
+    ·               ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:34:11]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{sc=Beria_Erfe}+$/u,
+    ·           ──────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:39:11]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{sc=Berf}+$/u,
+    ·           ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:55:15]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script=Beria_Erfe}+$/u,
+    ·               ──────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:60:15]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script=Berf}+$/u,
+    ·               ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:65:11]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{sc=Beria_Erfe}+$/u,
+    ·           ──────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:70:11]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{sc=Berf}+$/u,
+    ·           ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:23:15]
+ 22 │ testPropertyEscapes(
+ 23 │   /^\p{Script=Sidetic}+$/u,
+    ·               ───────
+ 24 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:28:15]
+ 27 │ testPropertyEscapes(
+ 28 │   /^\p{Script=Sidt}+$/u,
+    ·               ────
+ 29 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:33:11]
+ 32 │ testPropertyEscapes(
+ 33 │   /^\p{sc=Sidetic}+$/u,
+    ·           ───────
+ 34 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:38:11]
+ 37 │ testPropertyEscapes(
+ 38 │   /^\p{sc=Sidt}+$/u,
+    ·           ────
+ 39 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:53:15]
+ 52 │ testPropertyEscapes(
+ 53 │   /^\P{Script=Sidetic}+$/u,
+    ·               ───────
+ 54 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:58:15]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script=Sidt}+$/u,
+    ·               ────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:63:11]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{sc=Sidetic}+$/u,
+    ·           ───────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:68:11]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{sc=Sidt}+$/u,
+    ·           ────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:25:15]
+ 24 │ testPropertyEscapes(
+ 25 │   /^\p{Script=Tai_Yo}+$/u,
+    ·               ──────
+ 26 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:30:15]
+ 29 │ testPropertyEscapes(
+ 30 │   /^\p{Script=Tayo}+$/u,
+    ·               ────
+ 31 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:35:11]
+ 34 │ testPropertyEscapes(
+ 35 │   /^\p{sc=Tai_Yo}+$/u,
+    ·           ──────
+ 36 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:40:11]
+ 39 │ testPropertyEscapes(
+ 40 │   /^\p{sc=Tayo}+$/u,
+    ·           ────
+ 41 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:58:15]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script=Tai_Yo}+$/u,
+    ·               ──────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:63:15]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{Script=Tayo}+$/u,
+    ·               ────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:68:11]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{sc=Tai_Yo}+$/u,
+    ·           ──────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:73:11]
+ 72 │ testPropertyEscapes(
+ 73 │   /^\P{sc=Tayo}+$/u,
+    ·           ────
+ 74 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:24:15]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script=Tolong_Siki}+$/u,
+    ·               ───────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:29:15]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script=Tols}+$/u,
+    ·               ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:34:11]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{sc=Tolong_Siki}+$/u,
+    ·           ───────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:39:11]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{sc=Tols}+$/u,
+    ·           ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:55:15]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script=Tolong_Siki}+$/u,
+    ·               ───────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:60:15]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script=Tols}+$/u,
+    ·               ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:65:11]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{sc=Tolong_Siki}+$/u,
+    ·           ───────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:70:11]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{sc=Tols}+$/u,
+    ·           ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:24:26]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script_Extensions=Beria_Erfe}+$/u,
+    ·                          ──────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:29:26]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script_Extensions=Berf}+$/u,
+    ·                          ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:34:12]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{scx=Beria_Erfe}+$/u,
+    ·            ──────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:39:12]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{scx=Berf}+$/u,
+    ·            ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:55:26]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script_Extensions=Beria_Erfe}+$/u,
+    ·                          ──────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:60:26]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script_Extensions=Berf}+$/u,
+    ·                          ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:65:12]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{scx=Beria_Erfe}+$/u,
+    ·            ──────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:70:12]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{scx=Berf}+$/u,
+    ·            ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:23:26]
+ 22 │ testPropertyEscapes(
+ 23 │   /^\p{Script_Extensions=Sidetic}+$/u,
+    ·                          ───────
+ 24 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:28:26]
+ 27 │ testPropertyEscapes(
+ 28 │   /^\p{Script_Extensions=Sidt}+$/u,
+    ·                          ────
+ 29 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:33:12]
+ 32 │ testPropertyEscapes(
+ 33 │   /^\p{scx=Sidetic}+$/u,
+    ·            ───────
+ 34 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:38:12]
+ 37 │ testPropertyEscapes(
+ 38 │   /^\p{scx=Sidt}+$/u,
+    ·            ────
+ 39 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:53:26]
+ 52 │ testPropertyEscapes(
+ 53 │   /^\P{Script_Extensions=Sidetic}+$/u,
+    ·                          ───────
+ 54 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:58:26]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script_Extensions=Sidt}+$/u,
+    ·                          ────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:63:12]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{scx=Sidetic}+$/u,
+    ·            ───────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:68:12]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{scx=Sidt}+$/u,
+    ·            ────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:25:26]
+ 24 │ testPropertyEscapes(
+ 25 │   /^\p{Script_Extensions=Tai_Yo}+$/u,
+    ·                          ──────
+ 26 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:30:26]
+ 29 │ testPropertyEscapes(
+ 30 │   /^\p{Script_Extensions=Tayo}+$/u,
+    ·                          ────
+ 31 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:35:12]
+ 34 │ testPropertyEscapes(
+ 35 │   /^\p{scx=Tai_Yo}+$/u,
+    ·            ──────
+ 36 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:40:12]
+ 39 │ testPropertyEscapes(
+ 40 │   /^\p{scx=Tayo}+$/u,
+    ·            ────
+ 41 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:58:26]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script_Extensions=Tai_Yo}+$/u,
+    ·                          ──────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:63:26]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{Script_Extensions=Tayo}+$/u,
+    ·                          ────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:68:12]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{scx=Tai_Yo}+$/u,
+    ·            ──────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:73:12]
+ 72 │ testPropertyEscapes(
+ 73 │   /^\P{scx=Tayo}+$/u,
+    ·            ────
+ 74 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:24:26]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script_Extensions=Tolong_Siki}+$/u,
+    ·                          ───────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:29:26]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script_Extensions=Tols}+$/u,
+    ·                          ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:34:12]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{scx=Tolong_Siki}+$/u,
+    ·            ───────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:39:12]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{scx=Tols}+$/u,
+    ·            ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:55:26]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script_Extensions=Tolong_Siki}+$/u,
+    ·                          ───────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:60:26]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script_Extensions=Tols}+$/u,
+    ·                          ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:65:12]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{scx=Tolong_Siki}+$/u,
+    ·            ───────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:70:12]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{scx=Tols}+$/u,
+    ·            ────
+ 71 │   nonMatchSymbols,
     ╰────
 
 Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js

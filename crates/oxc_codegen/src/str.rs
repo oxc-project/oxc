@@ -2,7 +2,10 @@ use std::slice;
 
 use oxc_ast::ast::StringLiteral;
 use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
-use oxc_syntax::identifier::{LS, NBSP, PS};
+use oxc_syntax::{
+    identifier::NBSP,
+    line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
+};
 
 use crate::Codegen;
 
@@ -292,22 +295,6 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
     ch.encode_utf8(&mut bytes);
     bytes
 }
-
-/// `LS` character as UTF-8 bytes.
-const LS_BYTES: [u8; 3] = to_bytes(LS);
-/// `PS` character as UTF-8 bytes.
-const PS_BYTES: [u8; 3] = to_bytes(PS);
-
-/// First byte of either `LS` or `PS`
-pub const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
-
-const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-
-/// Last 2 bytes of `LS` character.
-pub const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
-/// Last 2 bytes of `PS` character.
-pub const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// `NBSP` character as UTF-8 bytes.
 const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);

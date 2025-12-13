@@ -95,10 +95,8 @@ use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
-    identifier::{is_line_terminator, is_white_space_single_line},
-    reference::ReferenceFlags,
-    symbol::SymbolFlags,
-    xml_entities::XML_ENTITIES,
+    identifier::is_white_space_single_line, line_terminator::is_line_terminator,
+    reference::ReferenceFlags, symbol::SymbolFlags, xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -499,7 +497,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
 
     #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
+        if !expr.is_jsx() {
             return;
         }
         *expr = match expr.take_in(ctx.ast) {

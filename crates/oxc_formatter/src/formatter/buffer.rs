@@ -1,6 +1,5 @@
 #![expect(clippy::mutable_key_type)]
 use std::{
-    any::{Any, TypeId},
     fmt::Debug,
     ops::{Deref, DerefMut},
 };
@@ -72,72 +71,6 @@ pub trait Buffer<'ast> {
 
     /// Returns the mutable formatting state relevant for this formatting session.
     fn state_mut(&mut self) -> &mut FormatState<'ast>;
-
-    /// Takes a snapshot of the Buffers state, excluding the formatter state.
-    fn snapshot(&self) -> BufferSnapshot;
-
-    /// Restores the snapshot buffer
-    ///
-    /// ## Panics
-    /// If the passed snapshot id is a snapshot of another buffer OR
-    /// if the snapshot is restored out of order
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot);
-}
-
-/// Snapshot of a buffer state that can be restored at a later point.
-///
-/// Used in cases where the formatting of an object fails but a parent formatter knows an alternative
-/// strategy on how to format the object that might succeed.
-#[derive(Debug)]
-pub enum BufferSnapshot {
-    /// Stores an absolute position of a buffers state, for example, the offset of the last written element.
-    Position(usize),
-
-    /// Generic structure for custom buffers that need to store more complex data. Slightly more
-    /// expensive because it requires allocating the buffer state on the heap.
-    Any(Box<dyn Any>),
-}
-
-impl BufferSnapshot {
-    /// Creates a new buffer snapshot that points to the specified position.
-    pub const fn position(index: usize) -> Self {
-        Self::Position(index)
-    }
-
-    /// Unwraps the position value.
-    ///
-    /// # Panics
-    ///
-    /// If self is not a [`BufferSnapshot::Position`]
-    pub fn unwrap_position(&self) -> usize {
-        match self {
-            BufferSnapshot::Position(index) => *index,
-            BufferSnapshot::Any(_) => panic!("Tried to unwrap Any snapshot as a position."),
-        }
-    }
-
-    /// Unwraps the any value.
-    ///
-    /// # Panics
-    ///
-    /// If `self` is not a [`BufferSnapshot::Any`].
-    pub fn unwrap_any<T: 'static>(self) -> T {
-        match self {
-            BufferSnapshot::Position(_) => {
-                panic!("Tried to unwrap Position snapshot as Any snapshot.")
-            }
-            BufferSnapshot::Any(value) => match value.downcast::<T>() {
-                Ok(snapshot) => *snapshot,
-                Err(err) => {
-                    panic!(
-                        "Tried to unwrap snapshot of type {:?} as {:?}",
-                        (*err).type_id(),
-                        TypeId::of::<T>()
-                    )
-                }
-            },
-        }
-    }
 }
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
@@ -160,14 +93,6 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         (**self).state_mut()
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        (**self).snapshot()
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        (**self).restore_snapshot(snapshot);
     }
 }
 
@@ -238,21 +163,6 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.state
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        BufferSnapshot::position(self.elements.len())
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        let position = snapshot.unwrap_position();
-        assert!(
-            self.elements.len() >= position,
-            r"Outdated snapshot. This buffer contains fewer elements than at the time the snapshot was taken.
-Make sure that you take and restore the snapshot in order and that this snapshot belongs to the current buffer."
-        );
-
-        self.elements.truncate(position);
     }
 }
 
@@ -365,25 +275,6 @@ where
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
     }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        BufferSnapshot::Any(Box::new(PreambleBufferSnapshot {
-            inner: self.inner.snapshot(),
-            empty: self.empty,
-        }))
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        let snapshot = snapshot.unwrap_any::<PreambleBufferSnapshot>();
-
-        self.empty = snapshot.empty;
-        self.inner.restore_snapshot(snapshot.inner);
-    }
-}
-
-struct PreambleBufferSnapshot {
-    inner: BufferSnapshot,
-    empty: bool,
 }
 
 /// Buffer that allows you inspecting elements as they get written to the formatter.
@@ -417,14 +308,6 @@ where
 
     fn state_mut(&mut self) -> &mut FormatState<'a> {
         self.inner.state_mut()
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        self.inner.snapshot()
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        self.inner.restore_snapshot(snapshot);
     }
 }
 
@@ -651,14 +534,6 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        self.inner.snapshot()
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        self.inner.restore_snapshot(snapshot);
     }
 }
 

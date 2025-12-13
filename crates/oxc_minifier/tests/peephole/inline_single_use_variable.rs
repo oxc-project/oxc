@@ -222,6 +222,25 @@ fn test_inline_single_use_variable() {
         "function wrapper() { var __proto__ = []; return { __proto__ } }",
         "function wrapper() { return { ['__proto__']: [] } }",
     );
+
+    // cannot be compressed to `function wrapper() { var foo; globalThis[console.log(foo)] = (() => { foo = 1 })() }`
+    test(
+        "function wrapper() { var foo; var bar = (() => { foo = 1 })(); globalThis[console.log(foo)] = bar }",
+        "function wrapper() { var foo, bar = (() => { foo = 1 })(); globalThis[console.log(foo)] = bar }",
+    );
+    // cannot be compressed to `function wrapper() { let foo; return foo.bar = (() => { foo = {} })(), foo }`
+    test(
+        "function wrapper() { let foo; const bar = (() => { foo = {} })(); foo.bar = bar; return foo }",
+        "function wrapper() { let foo, bar = (() => { foo = {} })(); return foo.bar = bar, foo }",
+    );
+    test(
+        "function wrapper() { let foo = {}; const bar = (() => { console.log() })(); foo.bar = bar; return foo }",
+        "function wrapper() { let foo = {}; return foo.bar = (() => { console.log() })(), foo }",
+    );
+    test(
+        "function wrapper() { const bar = (() => { console.log() })(); this.bar = bar; return this }",
+        "function wrapper() { return this.bar = (() => { console.log() })(), this }",
+    );
 }
 
 #[test]

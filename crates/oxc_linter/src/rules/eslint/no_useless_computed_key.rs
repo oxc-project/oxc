@@ -3,9 +3,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagnostic {
     // false positive, if we remove the closure, `borrowed data escapes outside of function `raw` escapes the function body here`
@@ -16,7 +21,7 @@ fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUselessComputedKey {
     /// The `enforceForClassMembers` option controls whether the rule applies to
@@ -114,14 +119,11 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessComputedKey {
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            enforce_for_class_members: obj
-                .and_then(|v| v.get("enforceForClassMembers"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoUselessComputedKey>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectProperty(property) if property.computed => {

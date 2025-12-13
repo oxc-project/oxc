@@ -3,15 +3,20 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
 fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
 }
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferAwaitToThen(PreferAwaitToThenConfig);
 
 impl std::ops::Deref for PreferAwaitToThen {
@@ -22,7 +27,7 @@ impl std::ops::Deref for PreferAwaitToThen {
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct PreferAwaitToThenConfig {
     /// If true, enforces the rule even after an `await` or `yield` expression.
@@ -69,10 +74,9 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-        let strict = config.and_then(|v| v.get("strict")).and_then(Value::as_bool).unwrap_or(false);
-
-        Self(PreferAwaitToThenConfig { strict })
+        serde_json::from_value::<DefaultRuleConfig<PreferAwaitToThen>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

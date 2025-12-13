@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "runtime": "classic"
+      }
+    ]
+  ],
+  "throws": "Invalid @jsxFrag value \"import\". It will be ignored"
+}

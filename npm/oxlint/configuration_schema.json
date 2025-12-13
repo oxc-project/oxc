@@ -228,7 +228,7 @@
       "type": "string",
       "enum": [
         "readonly",
-        "writeable",
+        "writable",
         "off"
       ]
     },
@@ -339,7 +339,6 @@
         "react-perf",
         "promise",
         "node",
-        "regex",
         "vue"
       ]
     },

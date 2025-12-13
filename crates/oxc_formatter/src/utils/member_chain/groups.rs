@@ -113,7 +113,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 
 impl<'a> Format<'a> for TailChainGroups<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join().entries(self.groups.iter()).finish();
+        f.join().entries(self.groups.iter());
     }
 }
 
@@ -248,6 +248,6 @@ pub struct FormatMemberChainGroup<'a, 'b> {
 
 impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join().entries(self.group.members.iter()).finish();
+        f.join().entries(self.group.members.iter());
     }
 }

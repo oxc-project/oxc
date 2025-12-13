@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{identifier::is_line_terminator, operator::BinaryOperator};
+use oxc_syntax::{line_terminator::is_line_terminator, operator::BinaryOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

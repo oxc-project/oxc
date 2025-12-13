@@ -15,8 +15,12 @@ pub enum CommentKind {
     /// Line comment
     #[default]
     Line = 0,
-    /// Block comment
-    Block = 1,
+    /// Single-line comment
+    #[estree(rename = "Block")]
+    SingleLineBlock = 1,
+    /// Multi-line block comment (contains line breaks)
+    #[estree(rename = "Block")]
+    MultiLineBlock = 2,
 }
 
 /// Information about a comment's position relative to a token.
@@ -172,7 +176,9 @@ impl Comment {
     pub fn content_span(&self) -> Span {
         match self.kind {
             CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
+            CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                Span::new(self.span.start + 2, self.span.end - 2)
+            }
         }
     }
 
@@ -182,10 +188,16 @@ impl Comment {
         self.kind == CommentKind::Line
     }
 
-    /// Returns `true` if this is a block comment.
+    /// Returns `true` if this is a block comment (either single-line or multi-line).
     #[inline]
     pub fn is_block(self) -> bool {
-        self.kind == CommentKind::Block
+        matches!(self.kind, CommentKind::SingleLineBlock | CommentKind::MultiLineBlock)
+    }
+
+    /// Returns `true` if this is a multi-line block comment.
+    #[inline]
+    pub fn is_multiline_block(self) -> bool {
+        self.kind == CommentKind::MultiLineBlock
     }
 
     /// Returns `true` if this comment is before a token.
@@ -274,6 +286,12 @@ impl Comment {
     #[inline]
     pub fn followed_by_newline(self) -> bool {
         self.newlines.contains(CommentNewlines::Trailing)
+    }
+
+    /// Returns `true` if this comment has newlines either before or after it.
+    #[inline]
+    pub fn has_newlines_around(self) -> bool {
+        self.newlines != CommentNewlines::None
     }
 
     /// Sets the state of `newlines` to include/exclude a newline before the comment.

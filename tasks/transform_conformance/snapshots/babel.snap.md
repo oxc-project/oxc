@@ -1,6 +1,6 @@
-commit: 99dcba5e
+commit: 3591b24e
 
-Passed: 712/1220
+Passed: 701/1176
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -11,7 +11,7 @@ Passed: 712/1220
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (45/130)
+# babel-preset-env (30/82)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -25,21 +25,6 @@ x Output mismatch
 env: Systemjs module is not implemented.
 
 * dynamic-import/modules-umd/input.mjs
-env: Umd module is not implemented.
-
-* dynamic-import-babel-7/auto-esm-unsupported-import-unsupported/input.mjs
-x Output mismatch
-
-* dynamic-import-babel-7/modules-amd/input.js
-env: Amd module is not implemented.
-
-* dynamic-import-babel-7/modules-cjs/input.mjs
-x Output mismatch
-
-* dynamic-import-babel-7/modules-systemjs/input.mjs
-env: Systemjs module is not implemented.
-
-* dynamic-import-babel-7/modules-umd/input.mjs
 env: Umd module is not implemented.
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
@@ -166,90 +151,6 @@ x Output mismatch
 x Output mismatch
 
 * preset-options/unicode-sets-regex-chrome-111/input.js
-x Output mismatch
-
-* preset-options-babel-7/browserslist-config-ignore-config-with-false/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/browserslist-config-ignore-package-with-false/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/browserslist-defaults/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/browserslist-defaults-not-ie/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/deno-1_0/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/destructuring-edge/input.js
-x Output mismatch
-
-* preset-options-babel-7/duplicate-named-capturing-groups-regex-chrome-120/input.js
-x Output mismatch
-
-* preset-options-babel-7/empty-options/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/esmodules-async-functions/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/include/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/include-scoped/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/ios-10/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/ios-10_3/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/ios-6/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/loose-typeof-symbol/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/loose-with-typeof-symbol-includes/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/no-options/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/regexp-modifiers-chrome-121/input.js
-x Output mismatch
-
-* preset-options-babel-7/reserved-keys-ie8/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/reserved-names-ie8/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/rhino-1_7_13/input.mjs
-x Output mismatch
-
-* preset-options-babel-7/safari-10_3-block-scoped/input.js
-x Output mismatch
-
-* preset-options-babel-7/safari-tagged-template-literals/input.js
-x Output mismatch
-
-* preset-options-babel-7/shippedProposals/input.js
-x Output mismatch
-
-* preset-options-babel-7/spec/input.js
-x Output mismatch
-
-* preset-options-babel-7/unicode-property-regex-chrome-49/input.js
-x Output mismatch
-
-* preset-options-babel-7/unicode-sets-regex-chrome-111/input.js
-x Output mismatch
-
-* preset-options-babel-7/useBuiltIns-false/input.mjs
 x Output mismatch
 
 * sanity/block-scoping-for-of/input.js
@@ -2830,7 +2731,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (134/146)
+# babel-plugin-transform-react-jsx (138/150)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 

@@ -8,7 +8,11 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 // Use the same prefix with `oxc_regular_expression` crate
 fn duplicated_flag_diagnostic(span: Span) -> OxcDiagnostic {
@@ -24,7 +28,7 @@ fn invalid_unicode_flags_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoInvalidRegexp(Box<NoInvalidRegexpConfig>);
 
 declare_oxc_lint!(
@@ -67,11 +71,9 @@ struct NoInvalidRegexpConfig {
 
 impl Rule for NoInvalidRegexp {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+        serde_json::from_value::<DefaultRuleConfig<NoInvalidRegexp>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

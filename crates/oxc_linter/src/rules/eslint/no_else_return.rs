@@ -4,8 +4,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary `else` after `return`.")
@@ -16,7 +21,7 @@ fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagno
         .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoElseReturn {
     /// Whether to allow `else if` blocks after a return statement.
@@ -334,13 +339,9 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
 
 impl Rule for NoElseReturn {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.get(0) else { return Self::default() };
-        Self {
-            allow_else_if: value
-                .get("allowElseIf")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoElseReturn>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

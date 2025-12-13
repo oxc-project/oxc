@@ -7,8 +7,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unsafe_optional_chaining_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe usage of optional chaining")
@@ -22,7 +27,7 @@ fn no_unsafe_arithmetic_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnsafeOptionalChaining {
     /// Disallow arithmetic operations on optional chaining expressions.
@@ -60,13 +65,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeOptionalChaining {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            disallow_arithmetic_operators: value
-                .get(0)
-                .and_then(|v| v.get("disallowArithmeticOperators"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoUnsafeOptionalChaining>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

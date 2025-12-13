@@ -63,6 +63,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-console for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -80,6 +81,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-console for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -97,6 +99,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -114,6 +117,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -131,6 +135,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -148,6 +153,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -165,6 +171,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -182,6 +189,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

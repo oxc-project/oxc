@@ -1,6 +1,7 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
+    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName, TSLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,6 +74,14 @@ impl Rule for PreferStringRaw {
         let parent_node = ctx.nodes().parent_node(node.id());
 
         match parent_node.kind() {
+            // Skip string literals in type annotations - String.raw cannot be used in type positions
+            AstKind::TSLiteralType(ts_literal_type) => {
+                if let TSLiteral::StringLiteral(lit) = &ts_literal_type.literal
+                    && lit.address() == string_literal.unstable_address()
+                {
+                    return;
+                }
+            }
             AstKind::Directive(_) => return,
             AstKind::ImportDeclaration(decl) => {
                 if string_literal.span == decl.source.span {
@@ -171,6 +180,10 @@ impl Rule for PreferStringRaw {
             fixer.replace(string_literal.span, fix)
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        !ctx.source_type().is_typescript_definition()
+    }
 }
 
 /// Returns true if the string ends with an odd number of backslashes.
@@ -231,6 +244,11 @@ fn test() {
         // (regression test for byte-length vs char-length bug)
         r"const a = 'c:\\someöäü\\';",
         r"const a = 'c:\\日本語\\';",
+        // String literals in type annotations should not be changed (String.raw is not valid in type positions)
+        r#"declare const POSIX_REGEX_SOURCE: { ascii: "\\x00-\\x7F"; };"#,
+        r#"type Foo = { path: "C:\\windows\\path"; };"#,
+        r#"interface Bar { regex: "foo\\.bar"; }"#,
+        r#"let x: "a\\b";"#,
     ];
 
     let fail = vec![
@@ -285,4 +303,12 @@ fn test() {
     Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+
+    let dts_pass = vec![r#"declare const POSIX_REGEX_SOURCE: { ascii: "\\x00-\\x7F"; };"#];
+    let dts_fail: Vec<&str> = vec![];
+
+    Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, dts_pass, dts_fail)
+        .change_rule_path("test.d.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

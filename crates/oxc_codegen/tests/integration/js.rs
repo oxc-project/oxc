@@ -144,6 +144,10 @@ fn do_while_stmt() {
     test_minify("do throw x; while (true)", "do throw x;while(true);");
     test_minify("do with(x); while (true)", "do with(x);while(true);");
     test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify(
+        "try { x } catch (err) /* v8 ignore next */ { y }",
+        "try{x}catch(err)/* v8 ignore next */{y}",
+    );
     test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
 }
 

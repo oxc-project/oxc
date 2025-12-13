@@ -129,7 +129,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/prefer-hooks-in-order.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -1170,13 +1170,13 @@ fn test() {
                     it('foo nested', () => {
                         // this is a test
                     });
-                    
-                    describe('deeply nested', () => { 
+
+                    describe('deeply nested', () => {
                         afterAll(() => {});
                         afterAll(() => {});
                         // This comment does nothing
                         afterEach(() => {});
-                
+
                         it('foo nested', () => {
                             // this is a test
                         });
@@ -1201,7 +1201,7 @@ fn test() {
                 it('foo', () => {
                     // this is a test
                 });
-            
+
                 describe('my nested test', () => {
                     afterAll(() => {});
                     afterEach(() => {});
@@ -1225,26 +1225,26 @@ fn test() {
                 it('accepts this input', () => {
                     // ...
                 });
-                
+
                 it('returns that value', () => {
                     // ...
                 });
 
                 describe('when the database has specific values', () => {
                     const specificValue = '...';
-                
+
                     beforeEach(() => {
                         seedMyDatabase(specificValue);
                     });
-                
+
                     it('accepts that input', () => {
                         // ...
                     });
-                
+
                     it('throws an error', () => {
                         // ...
                     });
-                
+
                     afterEach(() => {
                         clearLogger();
                     });
@@ -1252,12 +1252,12 @@ fn test() {
                     beforeEach(() => {
                         mockLogger();
                     });
-                
+
                     it('logs a message', () => {
                         // ...
                     });
                 });
-                
+
                 afterAll(() => {
                     removeMyDatabase();
                 });

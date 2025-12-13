@@ -8,9 +8,13 @@ use oxc_span::{CompactStr, GetSpan};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
@@ -76,18 +80,9 @@ declare_oxc_lint!(
 
 impl Rule for NoExtendNative {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoExtendNativeConfig {
-            exceptions: obj
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect(),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<NoExtendNative>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

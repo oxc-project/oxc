@@ -70,6 +70,17 @@ declare_oxc_lint!(
     ///     expect(1).toBe(1);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-standalone-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-standalone-expect": "error"
+    ///   }
+    /// }
+    /// ```
     NoStandaloneExpect,
     jest,
     correctness,

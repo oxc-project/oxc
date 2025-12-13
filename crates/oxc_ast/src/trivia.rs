@@ -60,8 +60,8 @@ pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
 
 /// Check if a position falls within any comment
 ///
-/// Returns `true` if the specified position is inside any comment's span,
-/// including the start and end positions.
+/// Returns `true` if the specified position is inside any comment's span.
+/// The start position is included, but the end position is excluded.
 ///
 /// Uses binary search for efficient lookup in O(log n) time.
 ///
@@ -78,6 +78,31 @@ pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
 /// assert!(!is_inside_comment(&comments, 25)); // Outside comment
 /// ```
 pub fn is_inside_comment(comments: &[Comment], pos: u32) -> bool {
+    get_comment_at(comments, pos).is_some()
+}
+
+/// Get the comment containing a position, if any
+///
+/// Returns a reference to the comment if the specified position is inside any
+/// comment's span. The start position is included, but the end position is excluded.
+///
+/// Uses binary search for efficient lookup in O(log n) time.
+///
+/// # Arguments
+///
+/// * `comments` - A slice of comments sorted by starting position
+/// * `pos` - The position to check
+///
+/// # Examples
+///
+/// ```ignore
+/// // Comment spans from position 10 to 20
+/// if let Some(comment) = get_comment_at(&comments, 15) {
+///     // Position is inside this comment
+///     println!("Comment spans {:?}", comment.span);
+/// }
+/// ```
+pub fn get_comment_at(comments: &[Comment], pos: u32) -> Option<&Comment> {
     comments
         .binary_search_by(|c| {
             if pos < c.span.start {
@@ -88,7 +113,8 @@ pub fn is_inside_comment(comments: &[Comment], pos: u32) -> bool {
                 Ordering::Equal
             }
         })
-        .is_ok()
+        .ok()
+        .map(|idx| &comments[idx])
 }
 
 /// Double-ended iterator over a range of comments, by starting position
@@ -199,13 +225,50 @@ mod test {
 
     #[test]
     fn test_is_inside_comment() {
-        let comments =
-            vec![Comment::new(0, 4, CommentKind::Line), Comment::new(10, 20, CommentKind::Block)]
-                .into_boxed_slice();
+        let comments = vec![
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(10, 20, CommentKind::SingleLineBlock),
+        ]
+        .into_boxed_slice();
 
         assert!(is_inside_comment(&comments, 2));
         assert!(!is_inside_comment(&comments, 5));
         assert!(is_inside_comment(&comments, 15));
         assert!(!is_inside_comment(&comments, 21));
+    }
+
+    #[test]
+    fn test_get_comment_at() {
+        let comments = vec![
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(10, 20, CommentKind::SingleLineBlock),
+        ]
+        .into_boxed_slice();
+
+        // Inside first comment
+        let comment = get_comment_at(&comments, 2);
+        let comment = comment.expect("Expected a comment at position 2");
+        assert_eq!(comment.span.start, 0);
+        assert_eq!(comment.span.end, 4);
+
+        // Between comments
+        assert!(get_comment_at(&comments, 5).is_none());
+
+        // Inside second comment
+        let comment = get_comment_at(&comments, 15);
+        let comment = comment.expect("Expected a comment at position 15");
+        assert_eq!(comment.span.start, 10);
+        assert_eq!(comment.span.end, 20);
+
+        // After all comments
+        assert!(get_comment_at(&comments, 21).is_none());
+
+        // Boundary cases: start positions are included
+        assert!(get_comment_at(&comments, 0).is_some()); // Start of first comment
+        assert!(get_comment_at(&comments, 10).is_some()); // Start of second comment
+
+        // Boundary cases: end positions are excluded
+        assert!(get_comment_at(&comments, 4).is_none()); // End of first comment
+        assert!(get_comment_at(&comments, 20).is_none()); // End of second comment
     }
 }

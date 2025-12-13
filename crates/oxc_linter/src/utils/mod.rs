@@ -33,7 +33,7 @@ pub use self::{
 /// List of Jest rules that have Vitest equivalents.
 // When adding a new rule to this list, please ensure oxlint-migrate is also updated.
 // See https://github.com/oxc-project/oxlint-migrate/blob/2c336c67d75adb09a402ae66fb3099f1dedbe516/scripts/constants.ts
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 36] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -48,6 +48,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "no-hooks",
     "no-identical-title",
     "no-interpolation-in-snapshots",
+    "no-mocks-import",
     "no-restricted-jest-methods",
     "no-restricted-matchers",
     "no-standalone-expect",

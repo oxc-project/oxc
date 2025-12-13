@@ -34,7 +34,9 @@ export default class StatusBarItemHandler {
   }
 
   private updateFullTooltip(): void {
-    const text = Array.from(this.tooltipSections.values()).join("\n\n");
+    const text = [this.tooltipSections.get("linter"), this.tooltipSections.get("formatter")]
+      .filter(Boolean)
+      .join("\n\n---\n\n");
 
     if (!(this.statusBarItem.tooltip instanceof MarkdownString)) {
       this.statusBarItem.tooltip = new MarkdownString("", true);

@@ -18,7 +18,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     globals::is_valid_aria_property,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::get_jsx_attribute_name,
 };
 
@@ -48,7 +48,7 @@ fn unknown_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
@@ -474,11 +474,9 @@ fn has_uppercase(name: &str) -> bool {
 
 impl Rule for NoUnknownProperty {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+        serde_json::from_value::<DefaultRuleConfig<NoUnknownProperty>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

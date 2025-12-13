@@ -31,8 +31,8 @@ target/
 tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
-tasks/coverage/acorn-test262/
-tasks/coverage/acorn-test262-diff/
+tasks/coverage/estree-conformance/
+tasks/coverage/estree-conformance-diff/
 tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
 

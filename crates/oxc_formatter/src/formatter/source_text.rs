@@ -1,7 +1,10 @@
 use std::ops::Deref;
 
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::{CR, LF, is_line_terminator, is_white_space_single_line};
+use oxc_syntax::{
+    identifier::is_white_space_single_line,
+    line_terminator::{CR, LF, is_line_terminator},
+};
 
 use super::Comments;
 

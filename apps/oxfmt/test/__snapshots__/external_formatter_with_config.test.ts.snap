@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`external_formatter_with_config > should pass config options to prettier 1`] = `
+"--- FILE -----------
+test.vue
+--- BEFORE ---------
+<template>
+  <div>
+          <span>Hello</span>
+  </div>
+</template>
+
+<script>
+export default {name:"Test",data(){return {foo:"bar",baz:123}}}
+</script>
+
+<style>
+.foo{color:red;background:blue}
+</style>
+
+--- AFTER ----------
+<template>
+	<div>
+		<span>Hello</span>
+	</div>
+</template>
+
+<script>
+export default {
+	name: 'Test',
+	data() {
+		return { foo: 'bar', baz: 123 };
+	},
+};
+</script>
+
+<style>
+.foo {
+	color: red;
+	background: blue;
+}
+</style>
+
+--------------------"
+`;

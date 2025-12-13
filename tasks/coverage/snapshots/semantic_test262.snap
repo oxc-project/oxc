@@ -1,8 +1,8 @@
-commit: 26058a01
+commit: c0cf5277
 
 semantic_test262 Summary:
-AST Parsed     : 45257/45257 (100.00%)
-Positive Passed: 43613/45257 (96.37%)
+AST Parsed     : 46437/46437 (100.00%)
+Positive Passed: 44785/46437 (96.44%)
 semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 
@@ -69,6 +69,86 @@ rebuilt        : SymbolId(8): ScopeId(4)
 Symbol scope ID mismatch for "_step":
 after transform: SymbolId(5): ScopeId(5)
 rebuilt        : SymbolId(9): ScopeId(4)
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+
+semantic Error: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
+Invalid regular expression: Invalid unicode property name
 
 semantic Error: tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
 Scope flags mismatch:

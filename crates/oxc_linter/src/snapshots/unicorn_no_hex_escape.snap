@@ -6,7 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const foo = "\xb1"
    ·             ──────
    ╰────
-  help: Replace `"\xb1"` with `'\u00b1'`.
+  help: Replace `"\xb1"` with `"\u00b1"`.
 
   ⚠ eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.
    ╭─[no_hex_escape.tsx:1:41]

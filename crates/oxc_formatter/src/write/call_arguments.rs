@@ -87,13 +87,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     format_with(|f| {
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Omit,
-                            )
-                            .finish();
+                        f.join_with(space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            TrailingSeparator::Omit,
+                        );
                     }),
                     r_paren_token
                 ]
@@ -131,9 +129,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     soft_block_indent(&format_with(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
-                            .finish();
+                        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            trailing_operator,
+                        );
                     })),
                     r_paren_token,
                 ]
@@ -276,7 +276,7 @@ pub fn arguments_grouped_layout(
         let second_can_group_fn = || second_can_group;
 
         // Check if we should group the last argument (second)
-        if should_group_last_argument_impl(Some(first), second, second_can_group_fn, f) {
+        if should_group_last_argument_impl(2, Some(first), second, second_can_group_fn, f) {
             return Some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
 
@@ -332,7 +332,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| f.comments().is_end_of_line_comment(c))
+            .any(|c| c.followed_by_newline())
     {
         return false;
     }
@@ -344,6 +344,7 @@ fn should_group_first_argument(
 /// Takes the penultimate argument as an Expression for the 2-argument case,
 /// or extracts it from the arguments array for other cases.
 fn should_group_last_argument_impl(
+    args_len: usize,
     penultimate: Option<&Expression>,
     last: &Expression,
     last_can_group_fn: impl FnOnce() -> bool,
@@ -373,7 +374,7 @@ fn should_group_last_argument_impl(
             |c| {
                 // Exclude end-of-line comments (treated as previous node's comment)
                 // and comments followed by a comma
-                !f.comments().is_end_of_line_comment(c)
+                !c.followed_by_newline()
                     && !f.source_text().next_non_whitespace_byte_is(c.span.end, b',')
             },
         )
@@ -396,7 +397,8 @@ fn should_group_last_argument_impl(
     match last {
         Expression::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if matches!(penultimate, Some(Expression::ArrowFunctionExpression(_))) {
+            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
+            {
                 return false;
             }
 
@@ -415,7 +417,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 
     let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
     let last_can_group_fn = || can_group_expression_argument(last, f);
-    should_group_last_argument_impl(penultimate, last, last_can_group_fn, f)
+    should_group_last_argument_impl(args.len(), penultimate, last, last_can_group_fn, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few
@@ -813,8 +815,6 @@ fn write_grouped_arguments<'a>(
                             }));
                         }
                     }
-
-                    joiner.finish();
                 }),
                 ")"
             ]
@@ -841,15 +841,15 @@ fn write_grouped_arguments<'a>(
                 [
                     "(",
                     format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries(grouped.into_iter().map(|(element, _)| {
+                        f.join_with(soft_line_break_or_space()).entries(grouped.into_iter().map(
+                            |(element, _)| {
                                 format_once(move |f| {
                                     if let Some(element) = element {
                                         f.write_element(element);
                                     }
                                 })
-                            }))
-                            .finish();
+                            },
+                        ));
                     }),
                     ")",
                 ]

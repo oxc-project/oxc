@@ -100,6 +100,16 @@ export interface WorkspaceConfigInterface {
   ["fmt.configPath"]?: string | null;
 }
 
+export type OxlintWorkspaceConfigInterface = Omit<
+  WorkspaceConfigInterface,
+  "fmt.experimental" | "fmt.configPath"
+>;
+
+export type OxfmtWorkspaceConfigInterface = Pick<
+  WorkspaceConfigInterface,
+  "fmt.experimental" | "fmt.configPath"
+>;
+
 export class WorkspaceConfig {
   private _configPath: string | null = null;
   private _tsConfigPath: string | null = null;
@@ -297,7 +307,7 @@ export class WorkspaceConfig {
     };
   }
 
-  public toOxlintConfig(): Omit<WorkspaceConfigInterface, "fmt.experimental" | "fmt.configPath"> {
+  public toOxlintConfig(): OxlintWorkspaceConfigInterface {
     return {
       run: this.runTrigger,
       configPath: this.configPath ?? null,
@@ -314,7 +324,7 @@ export class WorkspaceConfig {
     };
   }
 
-  public toOxfmtConfig(): Pick<WorkspaceConfigInterface, "fmt.experimental" | "fmt.configPath"> {
+  public toOxfmtConfig(): OxfmtWorkspaceConfigInterface {
     return {
       ["fmt.experimental"]: this.formattingExperimental,
       ["fmt.configPath"]: this.formattingConfigPath ?? null,

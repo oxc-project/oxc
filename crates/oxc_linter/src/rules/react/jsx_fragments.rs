@@ -6,27 +6,52 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_jsx_fragment};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_jsx_fragment,
+};
 
 fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
     let msg = if mode == FragmentMode::Element {
-        "Standard form for React fragments is preferred"
+        "Standard form for React fragments is preferred."
     } else {
-        "Shorthand form for React fragments is preferred"
+        "Shorthand form for React fragments is preferred."
     };
     let help = if mode == FragmentMode::Element {
-        "Use <React.Fragment></React.Fragment> instead of <></>"
+        "Use `<React.Fragment></React.Fragment>` instead of `<></>`."
     } else {
-        "Use <></> instead of <React.Fragment></React.Fragment>"
+        "Use `<></>` instead of `<React.Fragment></React.Fragment>`."
     };
     OxcDiagnostic::warn(msg).with_help(help).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct JsxFragments {
-    /// `syntax` mode:
-    ///
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(untagged)]
+pub enum JsxFragments {
+    Mode(FragmentMode),
+    Object { mode: FragmentMode },
+}
+
+impl Default for JsxFragments {
+    fn default() -> Self {
+        JsxFragments::Mode(FragmentMode::Syntax)
+    }
+}
+
+impl JsxFragments {
+    fn mode(&self) -> FragmentMode {
+        match self {
+            JsxFragments::Mode(m) => *m,
+            JsxFragments::Object { mode } => *mode,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Copy, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum FragmentMode {
     /// This is the default mode. It will enforce the shorthand syntax for React fragments, with one exception.
     /// Keys or attributes are not supported by the shorthand syntax, so the rule will not warn on standard-form fragments that use those.
     ///
@@ -43,8 +68,8 @@ pub struct JsxFragments {
     /// ```jsx
     /// <React.Fragment key="key"><Foo /></React.Fragment>
     /// ```
-    ///
-    /// `element` mode:
+    #[default]
+    Syntax,
     /// This mode enforces the standard form for React fragments.
     ///
     /// Examples of **incorrect** code for this rule:
@@ -60,21 +85,7 @@ pub struct JsxFragments {
     /// ```jsx
     /// <React.Fragment key="key"><Foo /></React.Fragment>
     /// ```
-    mode: FragmentMode,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq, Copy, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum FragmentMode {
-    #[default]
-    Syntax,
     Element,
-}
-
-impl From<&str> for FragmentMode {
-    fn from(value: &str) -> Self {
-        if value == "element" { Self::Element } else { Self::Syntax }
-    }
 }
 
 declare_oxc_lint!(
@@ -89,24 +100,21 @@ declare_oxc_lint!(
     react,
     style,
     fix,
-    config = JsxFragments,
+    config = FragmentMode,
 );
 
 impl Rule for JsxFragments {
+    // Generally we should prefer the string-only syntax for compatibility with the original ESLint rule,
+    // but we originally implemented the rule with only the object syntax, so we support both now.
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            mode: obj
-                .and_then(|v| v.get("mode"))
-                .and_then(Value::as_str)
-                .map(FragmentMode::from)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<JsxFragments>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXElement(jsx_elem) if self.mode == FragmentMode::Syntax => {
+            AstKind::JSXElement(jsx_elem) if self.mode() == FragmentMode::Syntax => {
                 let Some(closing_element) = &jsx_elem.closing_element else {
                     return;
                 };
@@ -116,7 +124,7 @@ impl Rule for JsxFragments {
                     return;
                 }
                 ctx.diagnostic_with_fix(
-                    jsx_fragments_diagnostic(jsx_elem.opening_element.name.span(), self.mode),
+                    jsx_fragments_diagnostic(jsx_elem.opening_element.name.span(), self.mode()),
                     |fixer| {
                         let before_opening_tag = ctx.source_range(Span::new(
                             jsx_elem.span().start,
@@ -140,9 +148,9 @@ impl Rule for JsxFragments {
                     },
                 );
             }
-            AstKind::JSXFragment(jsx_frag) if self.mode == FragmentMode::Element => {
+            AstKind::JSXFragment(jsx_frag) if self.mode() == FragmentMode::Element => {
                 ctx.diagnostic_with_fix(
-                    jsx_fragments_diagnostic(jsx_frag.opening_fragment.span(), self.mode),
+                    jsx_fragments_diagnostic(jsx_frag.opening_fragment.span(), self.mode()),
                     |fixer| {
                         let before_opening_tag = ctx.source_range(Span::new(
                             jsx_frag.span().start,
@@ -186,24 +194,31 @@ fn test() {
         (r#"<React.Fragment key="key"><Foo /></React.Fragment>"#, None),
         ("<Fragment />", None),
         ("<React.Fragment />", None),
+        // Configuration can be done via a string directly, or an object with the `mode` field.
+        ("<><Foo /></>", Some(json!(["syntax"]))),
+        ("<><Foo /></>", Some(json!([{"mode": "syntax"}]))),
+        ("<React.Fragment><Foo /></React.Fragment>", Some(json!(["element"]))),
         ("<React.Fragment><Foo /></React.Fragment>", Some(json!([{"mode": "element"}]))),
     ];
 
     let fail = vec![
         ("<Fragment><Foo /></Fragment>", None),
         ("<React.Fragment><Foo /></React.Fragment>", None),
+        ("<><Foo /></>", Some(json!(["element"]))),
         ("<><Foo /></>", Some(json!([{"mode": "element"}]))),
     ];
 
     let fix = vec![
         ("<Fragment><Foo /></Fragment>", "<><Foo /></>", None),
         ("<React.Fragment><Foo /></React.Fragment>", "<><Foo /></>", None),
+        ("<><Foo /></>", "<React.Fragment><Foo /></React.Fragment>", Some(json!(["element"]))),
         (
             "<><Foo /></>",
             "<React.Fragment><Foo /></React.Fragment>",
             Some(json!([{"mode": "element"}])),
         ),
     ];
+
     Tester::new(JsxFragments::NAME, JsxFragments::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

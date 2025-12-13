@@ -6,7 +6,11 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -135,7 +139,7 @@ fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut 
                 return &comments[..index];
             }
             // If this comment is a line comment or an end of line comment, so we stop here and return the comments with this comment
-            else if comment.is_line() || f.comments().is_end_of_line_comment(comment) {
+            else if comment.is_line() || comment.followed_by_newline() {
                 return &comments[..=index];
             }
             // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator
@@ -342,13 +346,6 @@ impl<'a> FormatConditionalLike<'a, '_> {
         }
     }
 
-    /// Checks if any part of the conditional has multiline comments
-    #[inline]
-    fn has_multiline_comment(_f: &Formatter<'_, 'a>) -> bool {
-        // TODO: Implement multiline comment detection
-        false
-    }
-
     /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].
     #[inline]
     fn is_parent_static_member_expression(&self, layout: ConditionalLayout) -> bool {
@@ -384,6 +381,11 @@ impl<'a> FormatConditionalLike<'a, '_> {
         });
 
         if layout.is_nested_alternate() {
+            // The leading comment should not be printed in the the `align`
+            let start = self.conditional.span().start;
+            let comments = f.context().comments().comments_before(start);
+            FormatLeadingComments::Comments(comments).fmt(f);
+
             write!(f, [align(2, &format_inner)]);
         } else {
             write!(f, format_inner);
@@ -502,7 +504,6 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.layout(f);
         let should_extra_indent = self.should_extra_indent(layout);
-        let has_multiline_comment = Self::has_multiline_comment(f);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
 
         let format_inner = format_with(|f| {
@@ -580,11 +581,8 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
         });
 
         if layout.is_nested_test() || should_extra_indent {
-            write!(f, [group(&soft_block_indent(&grouped)).should_expand(has_multiline_comment)]);
+            write!(f, [group(&soft_block_indent(&grouped))]);
         } else {
-            if has_multiline_comment {
-                write!(f, [expand_parent()]);
-            }
             grouped.fmt(f);
         }
     }
@@ -647,7 +645,7 @@ impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
                 }
                 .fmt(f);
             } else {
-                FormatNodeWithoutTrailingComments(self.expression).fmt(f);
+                self.expression.fmt(f);
             }
         });
 

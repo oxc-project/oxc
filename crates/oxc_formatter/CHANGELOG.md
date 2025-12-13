@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.17.0] - 2025-12-08
+
+### 🚀 Features
+
+- 7bb3304 oxfmt: Pass populated config to prettier formatting (#16584) (leaysgur)
+- 69f84d2 oxfmt: Pass raw config to prettier formatting (#16582) (leaysgur)
+- 930533f formatter: Convert single `\r` to `\n` in string and add a debug assertion to ensure that there is no `\r` in the text (#16531) (Dunqing)
+- 80e6999 formatter: Add debug assertion to ensure that there is no empty content is passed in (#16475) (Dunqing)
+- 7374856 formatter/sort-imports: Support `options.internalPattern` (#16372) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 40b0134 formatter: Incorrect formatting of `useImperativeHandle` hook (#16533) (Dunqing)
+- 75393e7 formatter: Incorrect handling of `CRLF` for multiline block comment (#16528) (Dunqing)
+- ee0756b formatter: JSX text wrapping incorrect 2 (#16320) (Dunqing)
+- 36308b8 formatter: Fix indent for new expression with type cast (#16380) (leaysgur)
+
+### ⚡ Performance
+
+- 6f16a8f formatter: Avoid using an indent with a empty content (#16474) (Dunqing)
+- 201c98f formatter: Early return when no comments need to be printed (#16432) (Dunqing)
+
+## [0.16.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+### 🚀 Features
+
+- 862bdf7 oxfmt: Detect unsupported experimental options (take2) (#16088) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 75ac90c formatter: Comments in call arguments should be printed as-is (#16327) (Dunqing)
+- fd77568 formatter: Don't wrap parenthesis for yield expression if there is no leading comment (#16326) (Dunqing)
+- 8ccfb06 formatter: Should indent class extends and interface heritage when it is a member expression without type arguments (#16323) (Dunqing)
+- 2b8f982 formatter: JSX text wrapping incorrect (#16318) (Dunqing)
+- f3ffebe formatter: Should indent variable declarator if there is a trailing comment (#16243) (Dunqing)
+- 31d3186 formatter: Incorrect handling of directives with comments (#16235) (Dunqing)
+- ac8fcaf formatter: Add parens for new: private field expr (#16312) (leaysgur)
+- 380a0af formatter: Incorrect printing of class binding trailing comments (#16234) (Dunqing)
+- 0ca8154 formatter: Incorrect printing of trailing comments of callee when the call arguments are empty (#16232) (Dunqing)
+- ac3a92e formatter: Print comment in ternary jsx (#16224) (leaysgur)
+- e3a7388 formatter: Fix parens for static member chain (#16229) (leaysgur)
+- 55334c3 formatter: Incorrect printing of dangling comments in the if statement (#16228) (Dunqing)
+- 9096a63 formatter: Correct printing of trailing comments after the semicolon for class properties (#16225) (Dunqing)
+- 75fd568 formatter: Inconsistent union type output between two runs (#16222) (Dunqing)
+- cd70484 formatter: Should not add a hard space before function body (#16221) (Dunqing)
+- 9097167 formatter: Incorrect printing of union types with comments (#16205) (Dunqing)
+- 79b78b3 formatter: Template literal element should not be indented (#16189) (Dunqing)
+- 48d6ed2 formatter: Nested assignment pattern should not expand outer object pattern (#16160) (Dunqing)
+- 8f4137d formatter: Output is incorrect when using comments inside JSX which is the right hand-side of `LogicalExpression` (#16156) (Dunqing)
+- 85c3a10 formatter/sort_imports: Handle internal prefixes correctly (#16128) (leaysgur)
+- 889d2e7 formatter: Handle poor layout for grouped call arguments (#16093) (Dunqing)
+- 14b0a6a oxfmt: Fix JS-ish file detection (#16092) (leaysgur)
+- 9706a1a oxfmt: Ignore unsupported options (#16085) (leaysgur)
+
 ## [0.15.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES

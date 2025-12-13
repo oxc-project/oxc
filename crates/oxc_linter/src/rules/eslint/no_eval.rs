@@ -3,20 +3,21 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::{self},
     config::GlobalValue,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eval can be harmful.").with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoEval {
     /// This `allowIndirect` option allows indirect `eval()` calls.
@@ -93,12 +94,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEval {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_indirect = value
-            .get(0)
-            .and_then(|config| config.get("allowIndirect").and_then(serde_json::Value::as_bool))
-            .unwrap_or(true);
-
-        Self { allow_indirect }
+        serde_json::from_value::<DefaultRuleConfig<NoEval>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

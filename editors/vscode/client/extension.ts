@@ -3,20 +3,37 @@ import { commands, ExtensionContext, window, workspace } from "vscode";
 import { OxcCommands } from "./commands";
 import { ConfigService } from "./ConfigService";
 import StatusBarItemHandler from "./StatusBarItemHandler";
+import Formatter from "./tools/formatter";
 import Linter from "./tools/linter";
+import ToolInterface from "./tools/ToolInterface";
 
 const outputChannelName = "Oxc";
-const linter = new Linter();
+const tools: ToolInterface[] = [];
+
+if (process.env.SKIP_LINTER_TEST !== "true") {
+  tools.push(new Linter());
+}
+if (process.env.SKIP_FORMATTER_TEST !== "true") {
+  tools.push(new Formatter());
+}
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
 
-  const outputChannel = window.createOutputChannel(outputChannelName, {
+  const outputChannelLint = window.createOutputChannel(outputChannelName + " (Lint)", {
     log: true,
   });
 
-  const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
-    outputChannel.show();
+  const outputChannelFormat = window.createOutputChannel(outputChannelName + " (Fmt)", {
+    log: true,
+  });
+
+  const showOutputLintCommand = commands.registerCommand(OxcCommands.ShowOutputChannelLint, () => {
+    outputChannelLint.show();
+  });
+
+  const showOutputFmtCommand = commands.registerCommand(OxcCommands.ShowOutputChannelFmt, () => {
+    outputChannelFormat.show();
   });
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(
@@ -33,35 +50,92 @@ export async function activate(context: ExtensionContext) {
   const statusBarItemHandler = new StatusBarItemHandler(context.extension.packageJSON?.version);
 
   context.subscriptions.push(
-    showOutputCommand,
+    showOutputLintCommand,
+    showOutputFmtCommand,
     configService,
-    outputChannel,
+    outputChannelLint,
+    outputChannelFormat,
     onDidChangeWorkspaceFoldersDispose,
     statusBarItemHandler,
   );
 
   configService.onConfigChange = async function onConfigChange(event) {
-    await linter.onConfigChange(event, configService, statusBarItemHandler);
-  };
-  const binaryPath = await linter.getBinary(context, outputChannel, configService);
-
-  // For the linter this should never happen, but just in case.
-  if (!binaryPath) {
-    statusBarItemHandler.setColorAndIcon("statusBarItem.errorBackground", "error");
-    statusBarItemHandler.updateToolTooltip(
-      "linter",
-      "Error: No valid oxc language server binary found.",
+    await Promise.all(
+      tools.map((tool) => tool.onConfigChange(event, configService, statusBarItemHandler)),
     );
-    statusBarItemHandler.show();
-    outputChannel.error("No valid oxc language server binary found.");
-    return;
+  };
+
+  const binaryPaths = await Promise.all(
+    tools.map((tool) =>
+      tool.getBinary(
+        context,
+        tool instanceof Linter ? outputChannelLint : outputChannelFormat,
+        configService,
+      ),
+    ),
+  );
+
+  // remove this block, when `oxfmt` binary is always required. This will be a breaking change.
+  if (
+    binaryPaths.some((path) => path?.includes("oxc_language_server")) &&
+    !configService.vsCodeConfig.binPathOxfmt
+  ) {
+    configService.useOxcLanguageServerForFormatting = true;
   }
 
-  await linter.activate(context, binaryPath, outputChannel, configService, statusBarItemHandler);
-  // Show status bar item after activation
+  await Promise.all(
+    tools.map((tool): Promise<void> => {
+      const binaryPath = binaryPaths[tools.indexOf(tool)];
+
+      // For the linter this should never happen, but just in case.
+      if (!binaryPath && tool instanceof Linter) {
+        statusBarItemHandler.setColorAndIcon("statusBarItem.errorBackground", "error");
+        statusBarItemHandler.updateToolTooltip(
+          "linter",
+          "**oxlint disabled**\n\nError: No valid oxc language server binary found.",
+        );
+        return Promise.resolve();
+      }
+
+      if (tool instanceof Formatter) {
+        if (configService.useOxcLanguageServerForFormatting) {
+          // The formatter is already handled by the linter tool in this case.
+          statusBarItemHandler.updateToolTooltip(
+            "formatter",
+            "**oxfmt disabled**\n\noxc_language_server is used for formatting.",
+          );
+          outputChannelFormat.appendLine("oxc_language_server is used for formatting.");
+          return Promise.resolve();
+        } else if (!binaryPath) {
+          // No valid binary found for the formatter.
+          statusBarItemHandler.updateToolTooltip(
+            "formatter",
+            "**oxfmt disabled**\n\nNo valid oxfmt binary found.",
+          );
+          outputChannelFormat.appendLine(
+            "No valid oxfmt binary found. Formatter will not be activated.",
+          );
+          return Promise.resolve();
+        }
+      }
+
+      // binaryPath is guaranteed to be defined here.
+      const binaryPathResolved = binaryPath!;
+
+      return tool.activate(
+        context,
+        binaryPathResolved,
+        tool instanceof Linter ? outputChannelLint : outputChannelFormat,
+        configService,
+        statusBarItemHandler,
+      );
+    }),
+  );
+
+  // Finally show the status bar item.
   statusBarItemHandler.show();
 }
 
 export async function deactivate(): Promise<void> {
-  await linter.deactivate();
+  await Promise.all(tools.map((tool) => tool.deactivate()));
 }

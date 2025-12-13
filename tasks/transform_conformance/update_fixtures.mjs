@@ -147,13 +147,13 @@ function updateOptions(options) {
 
 // Ensure all class plugins are enabled if any of class related plugins are enabled
 function ensureAllClassPluginsEnabled(options) {
-  let plugins = options.plugins;
+  const { plugins } = options;
   if (!plugins) return false;
 
-  let already_enabled = [];
+  const already_enabled = [];
   let pluginOptions;
   plugins.forEach((plugin) => {
-    let pluginName = getName(plugin);
+    const pluginName = getName(plugin);
     if (CLASS_PLUGINS.includes(pluginName)) {
       if (Array.isArray(plugin) && plugin[1]) {
         // Store options for the plugin, so that we can ensure all plugins are

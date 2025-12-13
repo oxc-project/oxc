@@ -5,7 +5,7 @@ use oxc_ecmascript::{
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
     },
-    side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
+    side_effects::{MayHaveSideEffects, PropertyReadSideEffects, is_pure_function},
 };
 use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
@@ -67,16 +67,11 @@ impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a,
     }
 
     fn manual_pure_functions(&self, callee: &Expression) -> bool {
-        if let Expression::Identifier(ident) = callee {
-            return self
-                .state
-                .options
-                .treeshake
-                .manual_pure_functions
-                .iter()
-                .any(|name| ident.name.as_str() == name);
+        let pure_functions = &self.state.options.treeshake.manual_pure_functions;
+        if pure_functions.is_empty() {
+            return false;
         }
-        false
+        is_pure_function(callee, pure_functions)
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {

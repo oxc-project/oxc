@@ -8,7 +8,7 @@
 use std::ops::RangeBounds;
 
 use oxc_ast::{
-    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range,
+    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range, get_comment_at,
     has_comments_between, is_inside_comment,
 };
 #[cfg(feature = "cfg")]
@@ -161,6 +161,11 @@ impl<'a> Semantic<'a> {
 
     pub fn is_inside_comment(&self, pos: u32) -> bool {
         is_inside_comment(self.comments, pos)
+    }
+
+    /// Get the comment containing a position, if any.
+    pub fn get_comment_at(&self, pos: u32) -> Option<&Comment> {
+        get_comment_at(self.comments, pos)
     }
 
     pub fn irregular_whitespaces(&self) -> &[Span] {

@@ -47,18 +47,26 @@ impl Tester {
     }
 
     pub fn test_fix(file: &str, before: &str, after: &str) {
+        Self::test_fix_with_args(file, before, after, &[]);
+    }
+
+    /// Test fix with additional CLI arguments (e.g., `--type-aware` for tsgolint)
+    pub fn test_fix_with_args(file: &str, before: &str, after: &str, extra_args: &[&str]) {
         use std::fs;
         #[expect(clippy::disallowed_methods)]
         let content_original = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(content_original, before);
 
-        Tester::new().test(&["--fix", file]);
+        let mut args = vec!["--fix"];
+        args.extend(extra_args);
+        args.push(file);
+        Tester::new().test(&args);
 
         #[expect(clippy::disallowed_methods)]
         let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(new_content, after);
 
-        Tester::new().test(&["--fix", file]);
+        Tester::new().test(&args);
 
         // File should not be modified if no fix is applied.
         let modified_before: std::time::SystemTime =

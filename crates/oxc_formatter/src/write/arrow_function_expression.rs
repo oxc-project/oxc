@@ -205,7 +205,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         [
                             formatted_signature,
                             group(&format_args!(
-                                soft_line_indent_or_hard_space(&format_with(|f| {
+                                soft_line_indent_or_space(&format_with(|f| {
                                     if should_add_parens {
                                         write!(f, if_group_fits_on_line(&"("));
                                     }

@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "runtime": "classic"
+      }
+    ]
+  ],
+  "throws": "Invalid @jsx value \"1\". It will be ignored"
+}

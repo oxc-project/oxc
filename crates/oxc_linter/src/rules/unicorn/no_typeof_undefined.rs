@@ -4,15 +4,21 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, ast_util::get_declaration_of_variable, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::get_declaration_of_variable,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoTypeofUndefined {
     /// If set to `true`, also report `typeof x === "undefined"` when `x` may be a global
@@ -83,10 +89,9 @@ impl Rule for NoTypeofUndefined {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let check_global_variables =
-            value.get("checkGlobalVariables").and_then(serde_json::Value::as_bool).unwrap_or(false);
-
-        Self { check_global_variables }
+        serde_json::from_value::<DefaultRuleConfig<NoTypeofUndefined>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 }
 
@@ -139,11 +144,11 @@ fn test() {
         (r#"typeof foo.bar === "undefined""#, None),
         (
             r#"let foo; typeof foo === "undefined""#,
-            Some(serde_json::json!({ "checkGlobalVariables": false })),
+            Some(serde_json::json!([{ "checkGlobalVariables": false }])),
         ),
         (
             r#"typeof foo === "undefined""#,
-            Some(serde_json::json!({ "checkGlobalVariables": true })),
+            Some(serde_json::json!([{ "checkGlobalVariables": true }])),
         ),
     ];
 

@@ -163,6 +163,10 @@ fn trim_leading_zeros(raw: &str) -> &str {
 }
 
 fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
+    if raw.contains('e') || raw.contains('E') {
+        return None;
+    }
+
     let literal = match base {
         NumberBase::Binary | NumberBase::Hex => format!("{raw}n"),
         NumberBase::Octal => {
@@ -220,6 +224,8 @@ fn test() {
         r"BigInt(0888)",
         r"BigInt(1.0)",
         r"BigInt(1e2)",
+        r"BigInt(1e6)",
+        r"BigInt(1E6)",
         r"BigInt(/* comment */1)",
         r"BigInt(9007199254740993)",
         r"BigInt(0x20000000000001)",
@@ -248,6 +254,9 @@ fn test() {
             r"BigInt(9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999)",
             "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999n",
         ),
+        (r"BigInt(1e2)", r"BigInt(1e2)"),
+        (r"BigInt(1e6)", r"BigInt(1e6)"),
+        (r"BigInt(1E6)", r"BigInt(1E6)"),
     ];
 
     Tester::new(PreferBigintLiterals::NAME, PreferBigintLiterals::PLUGIN, pass, fail)

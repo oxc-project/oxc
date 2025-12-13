@@ -100,6 +100,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
 
   ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1e6)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1E6)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
    ╭─[prefer_bigint_literals.tsx:1:21]
  1 │ BigInt(/* comment */1)
    ·                     ─

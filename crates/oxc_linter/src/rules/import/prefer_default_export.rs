@@ -5,7 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{context::LintContext, module_record::ExportEntry, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::ExportEntry,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic {
     let msg = if target == Target::Single {
@@ -22,12 +26,6 @@ enum Target {
     #[default]
     Single,
     Any,
-}
-
-impl From<&str> for Target {
-    fn from(raw: &str) -> Self {
-        if raw == "any" { Self::Any } else { Self::Single }
-    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -81,14 +79,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferDefaultExport {
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            target: obj
-                .and_then(|v| v.get("target"))
-                .and_then(Value::as_str)
-                .map(Target::from)
-                .unwrap_or_default(),
-        }
+        serde_json::from_value::<DefaultRuleConfig<PreferDefaultExport>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

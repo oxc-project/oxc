@@ -6,16 +6,21 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(msg).with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoAnonymousDefaultExport {
     /// Allow anonymous array as default export.
@@ -117,42 +122,11 @@ declare_oxc_lint!(
 
 impl Rule for NoAnonymousDefaultExport {
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_array: obj
-                .and_then(|v| v.get("allowArray"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_arrow_function: obj
-                .and_then(|v| v.get("allowArrowFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_class: obj
-                .and_then(|v| v.get("allowAnonymousClass"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_function: obj
-                .and_then(|v| v.get("allowAnonymousFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_call_expression: obj
-                .and_then(|v| v.get("allowCallExpression"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-            allow_new: obj
-                .and_then(|v| v.get("allowNew"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_literal: obj
-                .and_then(|v| v.get("allowLiteral"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_object: obj
-                .and_then(|v| v.get("allowObject"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoAnonymousDefaultExport>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_decl) = node.kind() else {
             return;

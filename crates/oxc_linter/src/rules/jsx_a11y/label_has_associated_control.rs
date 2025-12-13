@@ -51,7 +51,7 @@ pub struct LabelHasAssociatedControlConfig {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "camelCase")]
 enum Assert {
     HtmlFor,
     Nesting,
