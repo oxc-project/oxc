@@ -16,26 +16,26 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn missing_super_all(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected to call 'super()'.")
-        .with_help("Add a 'super()' call to the constructor")
+    OxcDiagnostic::warn("Expected to call `super()`.")
+        .with_help("Add a `super()` call to the constructor")
         .with_label(span)
 }
 
 fn missing_super_some(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Lacked a call of 'super()' in some code paths.")
-        .with_help("Ensure 'super()' is called in all code paths")
+    OxcDiagnostic::warn("Lacked a call of `super()` in some code paths.")
+        .with_help("Ensure `super()` is called in all code paths")
         .with_label(span)
 }
 
 fn duplicate_super(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected duplicate 'super()'.")
-        .with_help("Remove the duplicate 'super()' call")
+    OxcDiagnostic::warn("Unexpected duplicate `super()`.")
+        .with_help("Remove the duplicate `super()` call")
         .with_label(span)
 }
 
 fn bad_super(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected 'super()' because 'super' is not a constructor.")
-        .with_help("Remove the 'super()' call or check the class declaration")
+    OxcDiagnostic::warn("Unexpected `super()` because `super` is not a constructor.")
+        .with_help("Remove the `super()` call or check the class declaration")
         .with_label(span)
 }
 

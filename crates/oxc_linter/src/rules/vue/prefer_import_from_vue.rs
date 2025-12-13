@@ -5,7 +5,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn prefer_import_from_vue_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("enforce import from 'vue' instead of import from '@vue/*'")
+    OxcDiagnostic::warn("Use `import from 'vue'` instead of `import from '@vue/*'`.")
         .with_label(span)
 }
 
@@ -15,7 +15,7 @@ pub struct PreferImportFromVue;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce import from 'vue' instead of import from '@vue/*'.
+    /// Enforce `import from 'vue'` instead of `import from '@vue/*'`.
     ///
     /// ### Why is this bad?
     ///
