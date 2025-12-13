@@ -1,35 +1,35 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-iterator): Reserved name '__iterator__'
+  ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test.__iterator__;
    ·         ─────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
 
-  ⚠ eslint(no-iterator): Reserved name '__iterator__'
+  ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:1]
  1 │ Foo.prototype.__iterator__ = function() {};
    · ──────────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
 
-  ⚠ eslint(no-iterator): Reserved name '__iterator__'
+  ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test['__iterator__'];
    ·         ────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
 
-  ⚠ eslint(no-iterator): Reserved name '__iterator__'
+  ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test[`__iterator__`];
    ·         ────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
 
-  ⚠ eslint(no-iterator): Reserved name '__iterator__'
+  ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:1]
  1 │ test[`__iterator__`] = function () {};
    · ────────────────────

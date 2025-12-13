@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn prefer_array_find_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer 'find' over filtering and accessing the first result")
-        .with_help("Use 'find(predicate)' instead of 'filter(predicate)[0]' or similar patterns")
+    OxcDiagnostic::warn("Prefer `find` over filtering and accessing the first result.")
+        .with_help("Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.")
         .with_label(span)
 }
 
