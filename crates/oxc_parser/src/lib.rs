@@ -94,6 +94,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{ModuleKind, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
+use std::marker::PhantomData;
 
 use crate::{
     context::{Context, StatementContext},
@@ -182,6 +183,16 @@ pub struct ParserReturn<'a> {
     pub is_flow_language: bool,
 }
 
+/// Compile-time configuration for the parser and lexer.
+///
+/// Will be used to configure token collection and UTF-8 to UTF-16 translation only for oxlint.
+pub trait ParserConfig {}
+
+/// Parser configuration intended for general use.
+pub struct StandardParserConfig;
+
+impl ParserConfig for StandardParserConfig {}
+
 /// Parse options
 ///
 /// You may provide options to the [`Parser`] using [`Parser::with_options`].
@@ -238,23 +249,47 @@ impl Default for ParseOptions {
 /// Recursive Descent Parser for ECMAScript and TypeScript
 ///
 /// See [`Parser::parse`] for entry function.
-pub struct Parser<'a> {
+pub struct Parser<'a, C: ParserConfig = StandardParserConfig> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
     options: ParseOptions,
+    marker: PhantomData<C>,
 }
 
-impl<'a> Parser<'a> {
+impl<'a> Parser<'a, StandardParserConfig> {
+    /// Create a new [`Parser`] using the standard configuration.
+    ///
+    /// # Parameters
+    /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
+    /// - `source_text`: Source code to parse
+    /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
+    #[inline]
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        Self {
+            allocator,
+            source_text,
+            source_type,
+            options: ParseOptions::default(),
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, C: ParserConfig> Parser<'a, C> {
     /// Create a new [`Parser`]
     ///
     /// # Parameters
     /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
     /// - `source_text`: Source code to parse
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+    pub fn new_with_config(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+    ) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options }
+        Self { allocator, source_text, source_type, options, marker: PhantomData }
     }
 
     /// Set parse options
@@ -299,7 +334,7 @@ mod parser_parse {
         }
     }
 
-    impl<'a> Parser<'a> {
+    impl<'a, C: ParserConfig> Parser<'a, C> {
         /// Main entry point
         ///
         /// Returns an empty `Program` on unrecoverable error,
@@ -354,10 +389,11 @@ use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, C: ParserConfig = StandardParserConfig> {
     options: ParseOptions,
 
-    pub(crate) lexer: Lexer<'a>,
+    // TODO: investigate whether this needs to be `pub(crate)`
+    pub(crate) lexer: Lexer<'a, C>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -393,13 +429,30 @@ struct ParserImpl<'a> {
     is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a> ParserImpl<'a, StandardParserConfig> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
     #[inline]
     pub fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        unique: UniquePromise,
+    ) -> Self {
+        Self::new_with_config(allocator, source_text, source_type, options, unique)
+    }
+}
+
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
+    /// Create a new `ParserImpl`.
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
+    /// on a single thread at one time.
+    #[inline]
+    pub fn new_with_config(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,

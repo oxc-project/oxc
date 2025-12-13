@@ -1,9 +1,9 @@
 use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 
-use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
+use crate::{Context, ParserConfig, ParserImpl, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// `BindingElement`
     ///     `SingleNameBinding`
     ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
