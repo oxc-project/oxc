@@ -230,6 +230,13 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
+            // Don't transform `x.y || (x = {}, x.y = 3)` to `x.y ||= (x = {}, 3)` because
+            // `||=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
+            // https://github.com/oxc-project/oxc/issues/16647
+            if Self::member_object_may_be_mutated(&assignment_expr.left, ctx) {
+                return;
+            }
+
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
             let Some(Expression::AssignmentExpression(mut assignment_expr)) =
                 sequence_expr.expressions.pop()
@@ -283,6 +290,41 @@ impl<'a> PeepholeOptimizations {
         if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
             let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
             reference.flags_mut().insert(ReferenceFlags::Read);
+        }
+    }
+
+    fn member_object_may_be_mutated(
+        assignment_target: &AssignmentTarget<'a>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        let object = match assignment_target {
+            AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
+            AssignmentTarget::PrivateFieldExpression(member_expr) => &member_expr.object,
+            AssignmentTarget::StaticMemberExpression(member_expr) => &member_expr.object,
+            _ => return false,
+        };
+
+        Self::expression_reference_may_be_mutated(object, ctx)
+    }
+
+    fn expression_reference_may_be_mutated(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::Identifier(id) => ctx
+                .scoping()
+                .get_reference(id.reference_id())
+                .symbol_id()
+                .is_none_or(|id| ctx.scoping().symbol_is_mutated(id)),
+            Expression::ThisExpression(_) => false,
+            Expression::StaticMemberExpression(member_expr) => {
+                Self::expression_reference_may_be_mutated(&member_expr.object, ctx)
+            }
+            Expression::ComputedMemberExpression(member_expr) => {
+                Self::expression_reference_may_be_mutated(&member_expr.object, ctx)
+            }
+            Expression::PrivateFieldExpression(member_expr) => {
+                Self::expression_reference_may_be_mutated(&member_expr.object, ctx)
+            }
+            _ => true,
         }
     }
 }
