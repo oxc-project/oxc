@@ -659,13 +659,13 @@ impl Runtime {
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
-    ) -> Vec<Message> {
+    ) -> Vec<(Arc<OsStr>, Vec<crate::Message>)> {
         use std::sync::Mutex;
 
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        let messages = Mutex::new(Vec::<Message>::new());
+        let messages = Mutex::new(Vec::<(Arc<OsStr>, Vec<crate::Message>)>::new());
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -696,11 +696,12 @@ impl Runtime {
                                 }
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
-                                        messages.lock().unwrap().extend(
+                                        messages.lock().unwrap().push((
+                                            Arc::clone(&module_to_lint.path),
                                             diagnostics.into_iter().map(|diagnostic| {
                                                 Message::new(diagnostic, PossibleFixes::None)
-                                            }),
-                                        );
+                                            }).collect(),
+                                        ));
                                     }
                                     None
                                 }
@@ -715,7 +716,6 @@ impl Runtime {
                         let (section_messages, disable_directives) = me
                             .linter
                             .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
-
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
                                 .lock()
@@ -723,9 +723,12 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        messages.lock().unwrap().extend(
-                            section_messages
-                        );
+                        if !section_messages.is_empty() {
+                            messages.lock().unwrap().push((
+                                Arc::clone(&module_to_lint.path),
+                                section_messages
+                            ));
+                        }
                     },
                 );
                 },

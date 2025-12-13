@@ -91,7 +91,7 @@ impl LintService {
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
-    ) -> Vec<crate::Message> {
+    ) -> Vec<(Arc<OsStr>, Vec<crate::Message>)> {
         self.runtime.run_source(file_system, paths)
     }
 

@@ -555,11 +555,15 @@ impl ServerLinter {
     }
 
     fn get_code_actions_for_uri(&self, uri: &Uri) -> Option<Vec<LinterCodeAction>> {
-        if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
+        // for code actions we need to make a roundtrip to `from_file_path` and `to_file_path`.
+        // The editor URI schema might differ from our own produced URIs.
+        let uri = Uri::from_file_path(uri.to_file_path()?)?;
+
+        if let Some(cached_code_actions) = self.code_actions.pin().get(&uri) {
             cached_code_actions.clone()
         } else {
-            self.run_file(uri, None);
-            self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
+            self.run_file(&uri, None);
+            self.code_actions.pin().get(&uri).and_then(std::clone::Clone::clone)
         }
     }
 

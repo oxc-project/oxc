@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use log::{debug, warn};
+use log::{debug, error, warn};
 use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::Uri;
@@ -111,34 +111,46 @@ impl IsolatedLintHandler {
         let source_text =
             if let Some(content) = content { content } else { &read_to_string(&path).ok()? };
 
-        let mut diagnostics = self.lint_path(&path, uri, source_text);
+        let mut diagnostics = self.lint_path(&path, source_text);
         diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
         Some(diagnostics)
     }
 
-    fn lint_path(&self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
+    fn lint_path(&self, path: &Path, source_text: &str) -> Vec<DiagnosticReport> {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
         let mut fs = IsolatedLintHandlerFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> = self
-            .runner
-            .run_source(&[Arc::from(path.as_os_str())], &fs)
-            .into_iter()
-            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
-            .collect();
+        let results = self.runner.run_source(&[Arc::from(path.as_os_str())], &fs);
 
-        // Add unused directives if configured
-        if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
-        {
+        let mut messages: Vec<DiagnosticReport> = Vec::new();
+
+        for (msg_path_os, msgs) in results {
+            // Convert Arc<OsStr> to &Path for coordinator lookup
+            let msg_path = Path::new(msg_path_os.as_ref());
+            let Some(uri) = Uri::from_file_path(msg_path) else {
+                error!("Failed to convert path to URI: {}", msg_path.display());
+                continue;
+            };
+
+            // Map rule diagnostics to LSP diagnostics
             messages.extend(
-                create_unused_directives_messages(&directives, severity, source_text)
-                    .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
+                msgs.into_iter()
+                    .map(|message| message_to_lsp_diagnostic(message, &uri, source_text, rope)),
             );
+
+            // Add unused directives for this file if configured
+            if let Some(severity) = self.unused_directives_severity
+                && let Some(directives) = self.runner.directives_coordinator().get(msg_path)
+            {
+                messages.extend(
+                    create_unused_directives_messages(&directives, severity, source_text)
+                        .into_iter()
+                        .map(|message| message_to_lsp_diagnostic(message, &uri, source_text, rope)),
+                );
+            }
         }
 
         messages
