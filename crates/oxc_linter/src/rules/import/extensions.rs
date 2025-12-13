@@ -163,6 +163,31 @@ impl ExtensionsConfig {
         matches!(self.get_rule(ext), Some(ExtensionRule::Never))
     }
 
+    /// Check if the extension is a standard JS/TS extension.
+    #[inline]
+    pub fn is_standard_extension(ext: &str) -> bool {
+        matches!(ext, "js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs" | "json")
+    }
+
+    /// Check if any standard extension has a "never" rule configured.
+    /// Used for lenient behavior when module resolution is unavailable.
+    #[inline]
+    pub fn has_any_never_rules(&self) -> bool {
+        self.is_never("js")
+            || self.is_never("jsx")
+            || self.is_never("ts")
+            || self.is_never("tsx")
+            || self.is_never("mjs")
+            || self.is_never("cjs")
+    }
+
+    /// Check if any core extensions have explicit rules configured.
+    /// Used to determine if the user has set up per-extension rules.
+    #[inline]
+    pub fn has_any_standard_rules(&self) -> bool {
+        self.has_rule("js") || self.has_rule("jsx") || self.has_rule("ts") || self.has_rule("tsx")
+    }
+
     /// Check path group overrides for the given import path.
     ///
     /// Returns the action to take if a pattern matches, or None if no patterns match.
@@ -173,6 +198,53 @@ impl ExtensionsConfig {
             .iter()
             .find(|override_| override_.matches(import_path))
             .map(PathGroupOverride::action)
+    }
+
+    /// Determine if an extension violation should be flagged.
+    ///
+    /// Returns `true` if the import violates the configured extension rules.
+    pub fn should_flag_extension(
+        &self,
+        ext_str: &str,
+        extension_is_written: bool,
+        has_resolved_extension: bool,
+        require_extension: Option<ExtensionRule>,
+    ) -> bool {
+        match require_extension {
+            Some(ExtensionRule::Always) => {
+                // Extension should always be present
+                if !extension_is_written {
+                    // Missing extension - check if THIS specific extension is configured as "never"
+                    // If so, the per-extension "never" rule overrides the global "always"
+                    if has_resolved_extension {
+                        !self.is_never(ext_str)
+                    } else {
+                        // No module resolution - be lenient if ANY standard extensions have "never" rules
+                        !self.has_any_never_rules()
+                    }
+                } else if self.is_never(ext_str) {
+                    // Extension is explicitly configured as "never"
+                    true
+                } else {
+                    // Extension is present and not explicitly "never" - allow it
+                    false
+                }
+            }
+            Some(ExtensionRule::Never) => {
+                // Extension should never be present
+                extension_is_written && !self.is_always(ext_str)
+            }
+            _ => {
+                // Default behavior: flag if extension violates per-extension rules
+                if extension_is_written {
+                    // Extension is present, check if it should not be
+                    self.is_never(ext_str)
+                } else {
+                    // Extension is missing, check if it should be present
+                    self.is_always(ext_str)
+                }
+            }
+        }
     }
 }
 
@@ -307,24 +379,22 @@ impl Rule for Extensions {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let config = &self.0;
         let module_record = ctx.module_record();
 
-        let config = self.0.clone();
-
+        // Process require() calls
         for node in ctx.nodes().iter() {
             if let AstKind::CallExpression(call_expr) = node.kind() {
                 let Expression::Identifier(ident) = &call_expr.callee else {
-                    return;
+                    continue;
                 };
-                let func_name = ident.name.as_str();
-                let count = call_expr.arguments.len();
-
-                if matches!(func_name, "require") && count > 0 {
+                if ident.name.as_str() == "require" && !call_expr.arguments.is_empty() {
                     self.process_require_record(call_expr, ctx, config.require_extension);
                 }
             }
         }
 
+        // Process import/export statements
         for (module_name, module) in &module_record.requested_modules {
             for module_item in module {
                 self.process_module_record(
@@ -414,6 +484,68 @@ fn build_config(value: &serde_json::Value, default: Option<ExtensionRule>) -> Ex
 }
 
 impl Extensions {
+    /// Core validation logic for extension checking.
+    /// Used by both process_module_record and process_require_record.
+    fn validate_extension(
+        &self,
+        ctx: &LintContext,
+        resolved_extension: Option<&str>,
+        written_extension: Option<&CompactStr>,
+        span: Span,
+        is_import: bool,
+        require_extension: Option<ExtensionRule>,
+    ) {
+        let config = &self.0;
+
+        // Determine which extension to check against the configuration
+        // Prefer resolved extension (actual file), fallback to written extension (import text)
+        let extension_to_check = resolved_extension.or(written_extension.map(CompactStr::as_str));
+
+        if let Some(ext_str) = extension_to_check {
+            // Skip validation if this extension is not explicitly configured,
+            // UNLESS there's a global require_extension rule (always/never)
+            // This prevents false positives for unconfigured extensions
+            if !config.has_rule(ext_str)
+                && require_extension.is_none()
+                && !ExtensionsConfig::is_standard_extension(ext_str)
+            {
+                return;
+            }
+
+            let extension_is_written = written_extension.is_some();
+            let has_resolved_extension = resolved_extension.is_some();
+
+            let should_flag = config.should_flag_extension(
+                ext_str,
+                extension_is_written,
+                has_resolved_extension,
+                require_extension,
+            );
+
+            if should_flag {
+                if let Some(ext) = written_extension {
+                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                        span, ext, is_import,
+                    ));
+                } else {
+                    ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+                }
+            }
+        } else if matches!(require_extension, Some(ExtensionRule::Always)) {
+            // No extension found (neither resolved nor written), but always is required
+            // However, if standard extensions have "never" rules, be lenient
+            if !config.has_any_never_rules() {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
+        } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
+            // With ignorePackages, extensions are required for relative imports
+            // UNLESS standard extensions are configured
+            if !config.has_any_standard_rules() {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
+        }
+    }
+
     fn process_module_record(
         &self,
         module_record: (CompactStr, &RequestedModule),
@@ -431,27 +563,20 @@ impl Extensions {
         }
 
         // Check pathGroupOverrides first (highest precedence)
-        // If a pattern matches, apply the action: ignore or enforce
         let path_group_action = config.check_path_group_overrides(module_name.as_str());
-
         if path_group_action == Some(PathGroupAction::Ignore) {
-            // Skip all validation for this import
             return;
         }
-
-        let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
-            || ctx.globals().is_enabled(module_name.as_str());
-
-        let is_package = is_package_import(module_name.as_str());
 
         // Built-in Node modules are always skipped
-        if is_builtin_node_module {
+        let is_builtin = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
+            || ctx.globals().is_enabled(module_name.as_str());
+        if is_builtin {
             return;
         }
 
-        // ignorePackages only affects "always" rule (exempts packages from requiring extensions)
-        // It does NOT affect "never" rule (extensions are still forbidden on packages)
-        // Skip validation only when: it's a package, ignorePackages is true, AND we're enforcing "always"
+        // ignorePackages only affects "always" rule
+        let is_package = is_package_import(module_name.as_str());
         if is_package
             && ignore_packages
             && matches!(
@@ -462,14 +587,10 @@ impl Extensions {
             return;
         }
 
-        // Try to get the actual file extension from the resolved module path
+        // Get extensions
         let resolved_extension = get_resolved_extension(ctx.module_record(), module_name.as_str());
 
-        // Get what's written in the import statement
         // For ROOT packages, don't extract extensions - dots are part of package names
-        // e.g., "pkg.js" or "@babel/core.js" is a package name, not a file with ".js" extension
-        // But for package SUBPATHS like "@babel/core/lib/parser.js", DO extract the extension
-        // EXCEPTION: For bespoke imports with "enforce" action, ALWAYS extract the extension
         let is_root_package = is_root_package_import(module_name.as_str());
         let is_enforced_bespoke = matches!(path_group_action, Some(PathGroupAction::Enforce));
         let written_extension = if is_root_package && !is_enforced_bespoke {
@@ -478,112 +599,14 @@ impl Extensions {
             get_file_extension_from_module_name(&module_name)
         };
 
-        let span = module.statement_span;
-
-        // Determine which extension to check against the configuration
-        // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.as_deref().or(written_extension.as_deref());
-
-        if let Some(ext_str) = extension_to_check {
-            // Standard JS/TS extensions that are implicitly recognized
-            let is_standard_extension =
-                matches!(ext_str, "js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs" | "json");
-
-            // Skip validation if this extension is not explicitly configured,
-            // UNLESS there's a global require_extension rule (always/never)
-            // This prevents false positives for unconfigured extensions
-            if !config.has_rule(ext_str) && require_extension.is_none() && !is_standard_extension {
-                return;
-            }
-
-            // Check if the extension is present in the import statement
-            let extension_is_written = written_extension.is_some();
-
-            // Check if we have a resolved extension (from module resolution) or just written extension
-            let has_resolved_extension = resolved_extension.is_some();
-
-            let should_flag = match require_extension {
-                Some(ExtensionRule::Always) => {
-                    // Extension should always be present
-                    if !extension_is_written {
-                        // Missing extension - check if THIS specific extension is configured as "never"
-                        // If so, the per-extension "never" rule overrides the global "always"
-                        // Also allow if we have a resolved extension (from module resolution)
-                        if has_resolved_extension {
-                            !config.is_never(ext_str)
-                        } else {
-                            // No module resolution - be lenient if ANY standard extensions have "never" rules
-                            // This handles the case where the user configured "always" with specific "never" overrides
-                            let has_never_rules = config.is_never("js")
-                                || config.is_never("jsx")
-                                || config.is_never("ts")
-                                || config.is_never("tsx")
-                                || config.is_never("mjs")
-                                || config.is_never("cjs");
-                            !has_never_rules
-                        }
-                    } else if config.is_never(ext_str) {
-                        // Extension is explicitly configured as "never"
-                        true
-                    } else {
-                        // Extension is present and not explicitly "never" - allow it
-                        false
-                    }
-                }
-                Some(ExtensionRule::Never) => {
-                    // Extension should never be present
-                    extension_is_written && !config.is_always(ext_str)
-                }
-                _ => {
-                    // Default behavior: flag if extension violates per-extension rules
-                    if extension_is_written {
-                        // Extension is present, check if it should not be
-                        config.is_never(ext_str)
-                    } else {
-                        // Extension is missing, check if it should be present
-                        config.is_always(ext_str)
-                    }
-                }
-            };
-
-            if should_flag {
-                if extension_is_written {
-                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span,
-                        written_extension.as_ref().unwrap(),
-                        is_import,
-                    ));
-                } else {
-                    ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-                }
-            }
-        } else if matches!(require_extension, Some(ExtensionRule::Always)) {
-            // No extension found (neither resolved nor written), but always is required
-            // However, if standard extensions have "never" rules, be lenient (without module resolution, we can't know the actual extension)
-            let has_never_rules = config.is_never("js")
-                || config.is_never("jsx")
-                || config.is_never("ts")
-                || config.is_never("tsx")
-                || config.is_never("mjs")
-                || config.is_never("cjs");
-
-            if !has_never_rules {
-                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-            }
-        } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
-            // With ignorePackages, extensions are required for relative imports
-            // UNLESS all standard extensions are configured (which means the user
-            // has explicitly set rules for them, typically "never")
-            let has_standard_extension_rules = config.has_rule("js")
-                || config.has_rule("jsx")
-                || config.has_rule("ts")
-                || config.has_rule("tsx");
-
-            if !has_standard_extension_rules {
-                // No per-extension rules, so missing extensions should be flagged
-                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-            }
-        }
+        self.validate_extension(
+            ctx,
+            resolved_extension.as_deref(),
+            written_extension.as_ref(),
+            module.statement_span,
+            is_import,
+            require_extension,
+        );
     }
 
     fn process_require_record(
@@ -592,127 +615,22 @@ impl Extensions {
         ctx: &LintContext,
         require_extension: Option<ExtensionRule>,
     ) {
-        let config = &self.0;
         for argument in &call_expr.arguments {
             if let Argument::StringLiteral(s) = argument {
                 let module_name = s.value.to_compact_str();
-                let span = call_expr.span;
 
-                // Try to get the actual file extension from the resolved module path
                 let resolved_extension =
                     get_resolved_extension(ctx.module_record(), module_name.as_str());
-
-                // Get what's written in the require statement
                 let written_extension = get_file_extension_from_module_name(&module_name);
 
-                // Determine which extension to check against the configuration
-                // Prefer resolved extension (actual file), fallback to written extension (require text)
-                let extension_to_check =
-                    resolved_extension.as_deref().or(written_extension.as_deref());
-
-                if let Some(ext_str) = extension_to_check {
-                    // Standard JS/TS extensions that are implicitly recognized
-                    let is_standard_extension =
-                        matches!(ext_str, "js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs" | "json");
-
-                    // Skip validation if this extension is not explicitly configured,
-                    // UNLESS there's a global require_extension rule (always/never)
-                    // This prevents false positives for unconfigured extensions
-                    if !config.has_rule(ext_str)
-                        && require_extension.is_none()
-                        && !is_standard_extension
-                    {
-                        continue;
-                    }
-
-                    // Check if the extension is present in the require statement
-                    let extension_is_written = written_extension.is_some();
-
-                    // Check if we have a resolved extension (from module resolution) or just written extension
-                    let has_resolved_extension = resolved_extension.is_some();
-
-                    let should_flag = match require_extension {
-                        Some(ExtensionRule::Always) => {
-                            // Extension should always be present
-                            if !extension_is_written {
-                                // Missing extension - check if THIS specific extension is configured as "never"
-                                // If so, the per-extension "never" rule overrides the global "always"
-                                // Also allow if we have a resolved extension (from module resolution)
-                                if has_resolved_extension {
-                                    !config.is_never(ext_str)
-                                } else {
-                                    // No module resolution - be lenient if ANY standard extensions have "never" rules
-                                    // This handles the case where the user configured "always" with specific "never" overrides
-                                    let has_never_rules = config.is_never("js")
-                                        || config.is_never("jsx")
-                                        || config.is_never("ts")
-                                        || config.is_never("tsx")
-                                        || config.is_never("mjs")
-                                        || config.is_never("cjs");
-                                    !has_never_rules
-                                }
-                            } else if config.is_never(ext_str) {
-                                // Extension is explicitly configured as "never"
-                                true
-                            } else {
-                                // Extension is present and not explicitly "never" - allow it
-                                false
-                            }
-                        }
-                        Some(ExtensionRule::Never) => {
-                            // Extension should never be present
-                            extension_is_written && !config.is_always(ext_str)
-                        }
-                        _ => {
-                            // Default behavior: flag if extension violates per-extension rules
-                            if extension_is_written {
-                                // Extension is present, check if it should not be
-                                config.is_never(ext_str)
-                            } else {
-                                // Extension is missing, check if it should be present
-                                config.is_always(ext_str)
-                            }
-                        }
-                    };
-
-                    if should_flag {
-                        if extension_is_written {
-                            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                                span,
-                                written_extension.as_ref().unwrap(),
-                                true,
-                            ));
-                        } else {
-                            ctx.diagnostic(extension_missing_diagnostic(span, true));
-                        }
-                    }
-                } else if matches!(require_extension, Some(ExtensionRule::Always)) {
-                    // No extension found (neither resolved nor written), but always is required
-                    // However, if standard extensions have "never" rules, be lenient (without module resolution, we can't know the actual extension)
-                    let has_never_rules = config.is_never("js")
-                        || config.is_never("jsx")
-                        || config.is_never("ts")
-                        || config.is_never("tsx")
-                        || config.is_never("mjs")
-                        || config.is_never("cjs");
-
-                    if !has_never_rules {
-                        ctx.diagnostic(extension_missing_diagnostic(span, true));
-                    }
-                } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
-                    // With ignorePackages, extensions are required for relative imports
-                    // UNLESS all standard extensions are configured (which means the user
-                    // has explicitly set rules for them, typically "never")
-                    let has_standard_extension_rules = config.has_rule("js")
-                        || config.has_rule("jsx")
-                        || config.has_rule("ts")
-                        || config.has_rule("tsx");
-
-                    if !has_standard_extension_rules {
-                        // No per-extension rules, so missing extensions should be flagged
-                        ctx.diagnostic(extension_missing_diagnostic(span, true));
-                    }
-                }
+                self.validate_extension(
+                    ctx,
+                    resolved_extension.as_deref(),
+                    written_extension.as_ref(),
+                    call_expr.span,
+                    true, // require is always treated as import
+                    require_extension,
+                );
             }
         }
     }
