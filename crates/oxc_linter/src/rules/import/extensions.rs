@@ -1,12 +1,11 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::RequestedModule;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -181,13 +180,6 @@ impl ExtensionsConfig {
             || self.is_never("cjs")
     }
 
-    /// Check if any core extensions have explicit rules configured.
-    /// Used to determine if the user has set up per-extension rules.
-    #[inline]
-    pub fn has_any_standard_rules(&self) -> bool {
-        self.has_rule("js") || self.has_rule("jsx") || self.has_rule("ts") || self.has_rule("tsx")
-    }
-
     /// Check path group overrides for the given import path.
     ///
     /// Returns the action to take if a pattern matches, or None if no patterns match.
@@ -203,6 +195,7 @@ impl ExtensionsConfig {
     /// Determine if an extension violation should be flagged.
     ///
     /// Returns `true` if the import violates the configured extension rules.
+    /// Per-extension rules override global rules (e.g., `{ "js": "never" }` overrides global "always").
     pub fn should_flag_extension(
         &self,
         ext_str: &str,
@@ -210,40 +203,22 @@ impl ExtensionsConfig {
         has_resolved_extension: bool,
         require_extension: Option<ExtensionRule>,
     ) -> bool {
-        match require_extension {
-            Some(ExtensionRule::Always) => {
-                // Extension should always be present
-                if !extension_is_written {
-                    // Missing extension - check if THIS specific extension is configured as "never"
-                    // If so, the per-extension "never" rule overrides the global "always"
-                    if has_resolved_extension {
-                        !self.is_never(ext_str)
-                    } else {
-                        // No module resolution - be lenient if ANY standard extensions have "never" rules
-                        !self.has_any_never_rules()
-                    }
-                } else if self.is_never(ext_str) {
-                    // Extension is explicitly configured as "never"
-                    true
+        match (extension_is_written, require_extension) {
+            // Extension is written - check if it should be forbidden
+            (true, Some(ExtensionRule::Never)) => !self.is_always(ext_str),
+            (true, _) => self.is_never(ext_str),
+
+            // Extension is missing - check if it should be required
+            (false, Some(ExtensionRule::Always)) => {
+                // Per-extension "never" overrides global "always"
+                // Lenient: when no module resolution, check if any standard extension has "never"
+                if has_resolved_extension {
+                    !self.is_never(ext_str)
                 } else {
-                    // Extension is present and not explicitly "never" - allow it
-                    false
+                    !self.has_any_never_rules()
                 }
             }
-            Some(ExtensionRule::Never) => {
-                // Extension should never be present
-                extension_is_written && !self.is_always(ext_str)
-            }
-            _ => {
-                // Default behavior: flag if extension violates per-extension rules
-                if extension_is_written {
-                    // Extension is present, check if it should not be
-                    self.is_never(ext_str)
-                } else {
-                    // Extension is missing, check if it should be present
-                    self.is_always(ext_str)
-                }
-            }
+            (false, _) => self.is_always(ext_str),
         }
     }
 }
@@ -379,9 +354,6 @@ impl Rule for Extensions {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let config = &self.0;
-        let module_record = ctx.module_record();
-
         // Process require() calls
         for node in ctx.nodes().iter() {
             if let AstKind::CallExpression(call_expr) = node.kind() {
@@ -389,21 +361,30 @@ impl Rule for Extensions {
                     continue;
                 };
                 if ident.name.as_str() == "require" && !call_expr.arguments.is_empty() {
-                    self.process_require_record(call_expr, ctx, config.require_extension);
+                    for argument in &call_expr.arguments {
+                        if let Argument::StringLiteral(s) = argument {
+                            self.process_import(
+                                ctx,
+                                s.value.as_str(),
+                                call_expr.span,
+                                false, // require() is never a type import
+                                true,  // treat require as import for diagnostics
+                            );
+                        }
+                    }
                 }
             }
         }
 
         // Process import/export statements
-        for (module_name, module) in &module_record.requested_modules {
-            for module_item in module {
-                self.process_module_record(
-                    (module_name.clone(), module_item),
+        for (module_name, modules) in &ctx.module_record().requested_modules {
+            for module in modules {
+                self.process_import(
                     ctx,
-                    config.require_extension,
-                    config.check_type_imports,
-                    config.ignore_packages,
-                    module_item.is_import,
+                    module_name.as_str(),
+                    module.statement_span,
+                    module.is_type,
+                    module.is_import,
                 );
             }
         }
@@ -485,7 +466,6 @@ fn build_config(value: &serde_json::Value, default: Option<ExtensionRule>) -> Ex
 
 impl Extensions {
     /// Core validation logic for extension checking.
-    /// Used by both process_module_record and process_require_record.
     fn validate_extension(
         &self,
         ctx: &LintContext,
@@ -497,14 +477,12 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Determine which extension to check against the configuration
         // Prefer resolved extension (actual file), fallback to written extension (import text)
         let extension_to_check = resolved_extension.or(written_extension.map(CompactStr::as_str));
 
         if let Some(ext_str) = extension_to_check {
-            // Skip validation if this extension is not explicitly configured,
-            // UNLESS there's a global require_extension rule (always/never)
-            // This prevents false positives for unconfigured extensions
+            // Skip validation for unconfigured extensions (prevents false positives)
+            // unless there's a global rule or it's a standard extension
             if !config.has_rule(ext_str)
                 && require_extension.is_none()
                 && !ExtensionsConfig::is_standard_extension(ext_str)
@@ -512,17 +490,12 @@ impl Extensions {
                 return;
             }
 
-            let extension_is_written = written_extension.is_some();
-            let has_resolved_extension = resolved_extension.is_some();
-
-            let should_flag = config.should_flag_extension(
+            if config.should_flag_extension(
                 ext_str,
-                extension_is_written,
-                has_resolved_extension,
+                written_extension.is_some(),
+                resolved_extension.is_some(),
                 require_extension,
-            );
-
-            if should_flag {
+            ) {
                 if let Some(ext) = written_extension {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span, ext, is_import,
@@ -532,55 +505,53 @@ impl Extensions {
                 }
             }
         } else if matches!(require_extension, Some(ExtensionRule::Always)) {
-            // No extension found (neither resolved nor written), but always is required
-            // However, if standard extensions have "never" rules, be lenient
+            // No extension found but "always" requires one
+            // Lenient: skip if any standard extension has "never" rule
             if !config.has_any_never_rules() {
                 ctx.diagnostic(extension_missing_diagnostic(span, is_import));
             }
-        } else if matches!(require_extension, Some(ExtensionRule::IgnorePackages)) {
-            // With ignorePackages, extensions are required for relative imports
-            // UNLESS standard extensions are configured
-            if !config.has_any_standard_rules() {
-                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-            }
         }
+        // Note: IgnorePackages is converted to Always in build_config, so no branch needed
     }
 
-    fn process_module_record(
+    /// Unified import/require processing with all pre-validation checks.
+    ///
+    /// Handles both ESM imports/exports and CommonJS require() calls with consistent
+    /// validation logic. This ensures require() now correctly checks pathGroupOverrides,
+    /// built-in modules, and ignorePackages (which was previously missing).
+    fn process_import(
         &self,
-        module_record: (CompactStr, &RequestedModule),
         ctx: &LintContext,
-        require_extension: Option<ExtensionRule>,
-        check_type_imports: bool,
-        ignore_packages: bool,
+        module_name: &str,
+        span: Span,
+        is_type_import: bool,
         is_import: bool,
     ) {
         let config = &self.0;
-        let (module_name, module) = module_record;
 
-        if module.is_type && !check_type_imports {
+        // Type imports check (only for ESM, always false for require)
+        if is_type_import && !config.check_type_imports {
             return;
         }
 
         // Check pathGroupOverrides first (highest precedence)
-        let path_group_action = config.check_path_group_overrides(module_name.as_str());
+        let path_group_action = config.check_path_group_overrides(module_name);
         if path_group_action == Some(PathGroupAction::Ignore) {
             return;
         }
 
         // Built-in Node modules are always skipped
-        let is_builtin = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
-            || ctx.globals().is_enabled(module_name.as_str());
-        if is_builtin {
+        if NODEJS_BUILTINS.binary_search(&module_name).is_ok()
+            || ctx.globals().is_enabled(module_name)
+        {
             return;
         }
 
         // ignorePackages only affects "always" rule
-        let is_package = is_package_import(module_name.as_str());
-        if is_package
-            && ignore_packages
+        if config.ignore_packages
+            && is_package_import(module_name)
             && matches!(
-                require_extension,
+                config.require_extension,
                 Some(ExtensionRule::Always | ExtensionRule::IgnorePackages)
             )
         {
@@ -588,51 +559,25 @@ impl Extensions {
         }
 
         // Get extensions
-        let resolved_extension = get_resolved_extension(ctx.module_record(), module_name.as_str());
+        let resolved_extension = get_resolved_extension(ctx.module_record(), module_name);
 
         // For ROOT packages, don't extract extensions - dots are part of package names
-        let is_root_package = is_root_package_import(module_name.as_str());
+        // Exception: if pathGroupOverrides explicitly enforces validation
         let is_enforced_bespoke = matches!(path_group_action, Some(PathGroupAction::Enforce));
-        let written_extension = if is_root_package && !is_enforced_bespoke {
+        let written_extension = if is_root_package_import(module_name) && !is_enforced_bespoke {
             None
         } else {
-            get_file_extension_from_module_name(&module_name)
+            get_file_extension_from_module_name(&CompactStr::new(module_name))
         };
 
         self.validate_extension(
             ctx,
             resolved_extension.as_deref(),
             written_extension.as_ref(),
-            module.statement_span,
+            span,
             is_import,
-            require_extension,
+            config.require_extension,
         );
-    }
-
-    fn process_require_record(
-        &self,
-        call_expr: &CallExpression<'_>,
-        ctx: &LintContext,
-        require_extension: Option<ExtensionRule>,
-    ) {
-        for argument in &call_expr.arguments {
-            if let Argument::StringLiteral(s) = argument {
-                let module_name = s.value.to_compact_str();
-
-                let resolved_extension =
-                    get_resolved_extension(ctx.module_record(), module_name.as_str());
-                let written_extension = get_file_extension_from_module_name(&module_name);
-
-                self.validate_extension(
-                    ctx,
-                    resolved_extension.as_deref(),
-                    written_extension.as_ref(),
-                    call_expr.span,
-                    true, // require is always treated as import
-                    require_extension,
-                );
-            }
-        }
     }
 }
 /// Determines if an import specifier is a ROOT package (package name without subpath).
