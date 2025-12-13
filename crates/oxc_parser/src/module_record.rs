@@ -59,20 +59,20 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         // Avoid collecting spans in the common case (0-1 default export).
         // Only build labels once we know we have a duplicate.
-        let Some(first_default_export) = default_exports.next() else {
-            return errors;
-        };
-        let Some(second_default_export) = default_exports.next() else {
-            return errors;
-        };
+        let first_default_export = default_exports.next();
+        let second_default_export = default_exports.next();
 
-        errors.push(
-            OxcDiagnostic::error("Duplicated default export").with_labels(
-                std::iter::once(first_default_export)
-                    .chain(std::iter::once(second_default_export))
-                    .chain(default_exports),
-            ),
-        );
+        if let (Some(first_default_export), Some(second_default_export)) =
+            (first_default_export, second_default_export)
+        {
+            errors.push(
+                OxcDiagnostic::error("Duplicated default export").with_labels(
+                    std::iter::once(first_default_export)
+                        .chain(std::iter::once(second_default_export))
+                        .chain(default_exports),
+                ),
+            );
+        }
         errors
     }
 
