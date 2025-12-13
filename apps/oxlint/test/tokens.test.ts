@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   getTokens,
   getTokensBefore,
@@ -18,37 +18,55 @@ import {
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
 } from "../src-js/plugins/tokens.ts";
-import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
+import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { buffers } from "../src-js/plugins/lint.ts";
+import {
+  initSourceText,
+  resetSourceAndAst,
+  setupSourceForFile,
+} from "../src-js/plugins/source_code.ts";
+import { parse as parseRaw } from "../src-js/package/parse.ts";
+import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
+
 import type { Node } from "../src-js/plugins/types.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
 const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/";
 
-// Mock `source_code.ts` to inject source text from `sourceText` defined here
-let sourceText: string;
-
-vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
-  const original: any = await importOriginal();
-  return {
-    ...original,
-    get sourceText() {
-      return sourceText;
-    },
-  };
-});
-
 /**
- * Setup for a test case, setting source text to `text`.
+ * Setup for a test case, using `sourceText` as source text.
+ *
+ * This function:
+ * - Parses source text with Oxc parser - which writes AST and source text into buffer.
+ * - Initializes global state, as if was linting the provided file.
+ * - Initializes source text.
+ * - Does *not* deserialize the AST - tokens methods should do that automatically where they require AST.
  *
  * It's not necessary to call this function before each test case, because `beforeEach` hook calls it already.
  * Only use this function if test needs to set source text to a different value from default `SOURCE_TEXT`.
  *
- * @param text - Source text to use for test
+ * @param sourceText - Source text to use for test
  */
-function setup(text: string) {
+function setup(sourceText: string) {
+  // Reset global state
+  resetFileContext();
   resetSourceAndAst();
-  sourceText = text;
+
+  // Set file path
+  const path = "dummy.js";
+  setupFileContext(path);
+
+  // Parse source text into buffer
+  parseRaw(path, sourceText);
+
+  // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
+  const buffer = buffers[0];
+  debugAssertIsNonNull(buffer);
+  setupSourceForFile(buffer, /* hasBOM */ false, /* parserServices */ {});
+
+  // Initialize source text (deserialize from buffer)
+  initSourceText();
 }
 
 // Reset global state and set source text to `SOURCE_TEXT` before each test.
@@ -58,7 +76,7 @@ beforeEach(() => {
 });
 
 // TODO: We are lying about `Program`'s range here.
-// The range provided by `@typescript-eslint/typescript-estree` does not match the assertions for that of `espree`.
+// The range provided by TypeScript does not match the assertions for that of `espree`.
 // The deviation is being corrected in upcoming releases of ESLint and TS-ESLint.
 // https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#updates-to-program-ast-node-range-coverage
 // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632

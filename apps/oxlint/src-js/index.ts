@@ -28,7 +28,6 @@ export type {
   RangeOptions,
   SkipOptions,
   Token,
-  CommentToken,
   BooleanToken,
   IdentifierToken,
   JSXIdentifierToken,

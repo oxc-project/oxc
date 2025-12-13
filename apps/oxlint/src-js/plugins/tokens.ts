@@ -2,12 +2,12 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { createRequire } from "node:module";
-import { sourceText } from "./source_code.ts";
+import { ast, initAst } from "./source_code.ts";
+import { parseTokens } from "./tokens_parse.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
-import type { Span, Range } from "./location.ts";
+import type { Span } from "./location.ts";
 
 const { max, min } = Math;
 
@@ -65,7 +65,7 @@ export type Token =
   | StringToken
   | TemplateToken;
 
-interface BaseToken extends Omit<Span, "start" | "end"> {
+interface BaseToken extends Span {
   value: string;
 }
 
@@ -121,11 +121,7 @@ export interface TemplateToken extends BaseToken {
   type: "Template";
 }
 
-export interface CommentToken extends BaseToken {
-  type: "Line" | "Block";
-}
-
-type TokenOrComment = Token | CommentToken;
+type TokenOrComment = Token | Comment;
 
 // `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
 // This object is reused over and over to avoid creating a new options object on each call.
@@ -134,55 +130,20 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
 // Tokens for the current file parsed by TS-ESLint.
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
-let comments: CommentToken[] | null = null;
-export let tokensAndComments: (Token | CommentToken)[] | null = null;
-
-// TS-ESLint `parse` method.
-// Lazy-loaded only when needed, as it's a lot of code.
-// Bundle contains both `@typescript-eslint/typescript-estree` and `typescript`.
-let tsEslintParse: typeof import("@typescript-eslint/typescript-estree").parse | null = null;
+let comments: Comment[] | null = null;
+export let tokensAndComments: TokenOrComment[] | null = null;
 
 /**
  * Initialize TS-ESLint tokens for current file.
  *
- * Caller must ensure `sourceText` is initialized before calling this function.
+ * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
-  debugAssertIsNonNull(sourceText);
+  // Use TypeScript parser to get tokens
+  tokens = parseTokens();
 
-  // Lazy-load TS-ESLint.
-  // `./ts_eslint.cjs` is path to the bundle in `dist` directory, as well as relative path in `src-js`,
-  // so is valid both in bundled `dist` output, and in unit tests.
-  // In conformance build, use `@typescript-eslint/typescript-estree` package directly.
-  // TODO: Use `ts_eslint.cjs` bundle in conformance build too, once all parse errors are fixed.
-  if (tsEslintParse === null) {
-    const require = createRequire(import.meta.url);
-    const mod = (
-      CONFORMANCE ? require("@typescript-eslint/typescript-estree") : require("./ts_eslint.cjs")
-    ) as typeof import("@typescript-eslint/typescript-estree");
-    tsEslintParse = mod.parse;
-  }
-
-  // Our types differ a little from TS-ESLint's
-  type ParseRet = { tokens: Token[]; comments: CommentToken[] };
-
-  ({ tokens, comments } = tsEslintParse(sourceText, {
-    sourceType: "module",
-    tokens: true,
-    comment: true,
-    // TODO: Set this option dependent on source type
-    jsx: true,
-  }) as ParseRet);
-
-  // Check `tokens` and `comments` have valid ranges and are in ascending order
-  if (DEBUG) {
-    debugCheckValidRanges(tokens, "token");
-    debugCheckValidRanges(comments, "comment");
-
-    const tokensAndComments = [...tokens, ...comments];
-    tokensAndComments.sort((a, b) => a.range[0] - b.range[0]);
-    debugCheckValidRanges(tokensAndComments, "token/comment");
-  }
+  // Check `tokens` have valid ranges and are in ascending order
+  debugCheckValidRanges(tokens, "token");
 }
 
 /**
@@ -190,7 +151,7 @@ export function initTokens() {
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
-function debugCheckValidRanges<T extends { range: Range }>(tokens: T[], description: string): void {
+function debugCheckValidRanges(tokens: TokenOrComment[], description: string): void {
   if (!DEBUG) return;
 
   let lastEnd = 0;
@@ -207,12 +168,20 @@ function debugCheckValidRanges<T extends { range: Range }>(tokens: T[], descript
 /**
  * Initialize `tokensAndComments`.
  *
- * Caller must ensure `tokens` and `comments` are initialized before calling this function,
+ * Caller must ensure `tokens` is initialized before calling this function,
  * by calling `initTokens()` if `tokens === null`.
  */
 export function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
+
+  // Get comments from AST
+  if (comments === null) {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+    comments = ast.comments;
+
+    debugCheckValidRanges(comments, "comment");
+  }
 
   // TODO: Replace `range[0]` with `start` throughout this function
   // once we have our own tokens which have `start` property
@@ -324,6 +293,8 @@ function debugCheckTokensAndComments() {
       throw new Error("`tokensAndComments` is not correctly ordered");
     }
   }
+
+  debugCheckValidRanges(tokensAndComments, "token/comment");
 }
 
 /**
@@ -355,7 +326,6 @@ export function getTokens(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
   let count = typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
@@ -464,7 +434,6 @@ export function getFirstToken(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens at the beginning of the given node to skip
   let skip =
@@ -559,7 +528,6 @@ export function getFirstTokens(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const count =
     typeof countOptions === "number"
@@ -651,7 +619,6 @@ export function getLastToken(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens at the end of the given node to skip
   let skip =
@@ -746,7 +713,6 @@ export function getLastTokens(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
   const count =
@@ -843,7 +809,6 @@ export function getTokenBefore(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens preceding the given node to skip
   let skip =
@@ -954,7 +919,6 @@ export function getTokensBefore(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Maximum number of tokens to return
   const count =
@@ -1038,7 +1002,6 @@ export function getTokenAfter(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens following the given node to skip
   let skip =
@@ -1145,7 +1108,6 @@ export function getTokensAfter(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const count =
     typeof countOptions === "number"
@@ -1230,7 +1192,6 @@ export function getTokensBetween(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const count =
     typeof countOptions === "object" && countOptions !== null ? countOptions.count : null;
@@ -1328,7 +1289,6 @@ export function getFirstTokenBetween(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens at the beginning of the "between" range to skip
   let skip =
@@ -1424,7 +1384,6 @@ export function getFirstTokensBetween(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const count =
     typeof countOptions === "number"
@@ -1521,7 +1480,6 @@ export function getLastTokenBetween(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   // Number of tokens at the end of the "between" range to skip
   let skip =
@@ -1618,7 +1576,6 @@ export function getLastTokensBetween(
 ): TokenOrComment[] {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const count =
     typeof countOptions === "number"
@@ -1712,7 +1669,6 @@ export function getTokenByRangeStart(
 ): TokenOrComment | null {
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
-  debugAssertIsNonNull(comments);
 
   const includeComments =
     typeof rangeOptions === "object" &&
