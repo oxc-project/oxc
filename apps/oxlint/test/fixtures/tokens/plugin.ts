@@ -25,9 +25,9 @@ const rule: Rule = {
 
             return (
               `${token.type.padEnd(17)} ` +
-              `loc=${start.line}:${start.column}-${end.line}:${end.column} `.padEnd(16) +
-              `range=${range[0]}-${range[1]} `.padEnd(10) +
-              `"${token.value}"`
+              `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18) +
+              `range= ${range[0]}-${range[1]} `.padEnd(15) +
+              `${JSON.stringify(token.value)}`
             );
           })
           .join("\n"),
@@ -48,14 +48,22 @@ const rule: Rule = {
 
             return (
               `${token.type.padEnd(17)} ` +
-              `loc=${start.line}:${start.column}-${end.line}:${end.column} `.padEnd(16) +
-              `range=${range[0]}-${range[1]} `.padEnd(10) +
-              `"${token.value}"`
+              `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18) +
+              `range= ${range[0]}-${range[1]} `.padEnd(15) +
+              `${JSON.stringify(token.value)}`
             );
           })
           .join("\n"),
       node: { range: [0, sourceCode.text.length] },
     });
+
+    // Report each token / comment separately
+    for (const token of tokensAndComments) {
+      context.report({
+        message: `${token.type} (${JSON.stringify(token.value)})`,
+        node: token,
+      });
+    }
 
     return {};
   },
