@@ -29,3 +29,6 @@ bitflags = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
+
+[package.metadata.cargo-shear]
+ ignored-paths = ["src/generated/derive_get_address.rs"]
