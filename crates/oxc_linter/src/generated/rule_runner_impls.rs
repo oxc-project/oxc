@@ -2339,6 +2339,18 @@ impl RuleRunner for crate::rules::react::no_danger_with_children::NoDangerWithCh
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::react::no_deprecated::NoDeprecated {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ImportSpecifier,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::StaticMemberExpression,
+        AstType::VariableDeclarator,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::react::no_direct_mutation_state::NoDirectMutationState {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AssignmentExpression,

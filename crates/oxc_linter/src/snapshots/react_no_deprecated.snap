@@ -1,0 +1,354 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-deprecated): `React.renderComponent` is deprecated. Use `React.render` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.renderComponent()
+   ·       ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `this.transferPropsTo` is deprecated. Use `spread operator ({...})` instead.
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ this.transferPropsTo()
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.addons.TestUtils` is deprecated. Use `react-dom/test-utils package` instead.
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.addons.TestUtils
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.addons.classSet` is deprecated. Use `classnames package` instead.
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.addons.classSet()
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.addons.classSet` is deprecated. Use `classnames package` instead.
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.addons.classSet()
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.render` is deprecated. Use `ReactDOM.render` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.render(element, container);
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.unmountComponentAtNode` is deprecated. Use `ReactDOM.unmountComponentAtNode` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.unmountComponentAtNode(container);
+   ·       ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.findDOMNode` is deprecated. Use `ReactDOM.findDOMNode` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.findDOMNode(instance);
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.renderToString` is deprecated. Use `ReactDOMServer.renderToString` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.renderToString(element);
+   ·       ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.renderToStaticMarkup` is deprecated. Use `ReactDOMServer.renderToStaticMarkup` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.renderToStaticMarkup(element);
+   ·       ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.createClass({});
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.PropTypes` is deprecated. Use `prop-types package` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.PropTypes
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:6]
+ 1 │ var {createClass} = require('react');
+   ·      ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:6]
+ 1 │ var {createClass, PropTypes} = require('react');
+   ·      ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `PropTypes` is deprecated. Use `prop-types package` instead.
+   ╭─[no_deprecated.tsx:1:19]
+ 1 │ var {createClass, PropTypes} = require('react');
+   ·                   ─────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {createClass} from 'react';
+   ·         ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {createClass, PropTypes} from 'react';
+   ·         ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `PropTypes` is deprecated. Use `prop-types package` instead.
+   ╭─[no_deprecated.tsx:1:22]
+ 1 │ import {createClass, PropTypes} from 'react';
+   ·                      ─────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:3:20]
+ 2 │             import React from 'react';
+ 3 │             const {createClass, PropTypes} = React;
+   ·                    ───────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `PropTypes` is deprecated. Use `prop-types package` instead.
+   ╭─[no_deprecated.tsx:3:33]
+ 2 │             import React from 'react';
+ 3 │             const {createClass, PropTypes} = React;
+   ·                                 ─────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `printDOM` is deprecated.
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {printDOM} from 'react-addons-perf';
+   ·         ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `printDOM` is deprecated.
+   ╭─[no_deprecated.tsx:3:20]
+ 2 │             const ReactPerf = require('react-addons-perf');
+ 3 │             const {printDOM} = ReactPerf;
+   ·                    ────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `printDOM` is deprecated.
+   ╭─[no_deprecated.tsx:3:20]
+ 2 │             import ReactPerf from 'react-addons-perf';
+ 3 │             const {printDOM} = ReactPerf;
+   ·                    ────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `React.DOM` is deprecated. Use `react-dom-factories package` instead.
+   ╭─[no_deprecated.tsx:1:7]
+ 1 │ React.DOM.div
+   ·       ───
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:3:15]
+ 2 │             class Bar extends React.PureComponent {
+ 3 │               componentWillMount() {}
+   ·               ──────────────────
+ 4 │               componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               componentWillMount() {}
+ 4 │               componentWillReceiveProps() {}
+   ·               ─────────────────────────
+ 5 │               componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillReceiveProps() {}
+ 5 │               componentWillUpdate() {}
+   ·               ───────────────────
+ 6 │             };
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:4:17]
+ 3 │               return class Bar extends React.PureComponent {
+ 4 │                 componentWillMount() {}
+   ·                 ──────────────────
+ 5 │                 componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:5:17]
+ 4 │                 componentWillMount() {}
+ 5 │                 componentWillReceiveProps() {}
+   ·                 ─────────────────────────
+ 6 │                 componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:6:17]
+ 5 │                 componentWillReceiveProps() {}
+ 6 │                 componentWillUpdate() {}
+   ·                 ───────────────────
+ 7 │               };
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:3:15]
+ 2 │             class Bar extends PureComponent {
+ 3 │               componentWillMount() {}
+   ·               ──────────────────
+ 4 │               componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               componentWillMount() {}
+ 4 │               componentWillReceiveProps() {}
+   ·               ─────────────────────────
+ 5 │               componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillReceiveProps() {}
+ 5 │               componentWillUpdate() {}
+   ·               ───────────────────
+ 6 │             };
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:3:15]
+ 2 │             class Foo extends React.Component {
+ 3 │               componentWillMount() {}
+   ·               ──────────────────
+ 4 │               componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               componentWillMount() {}
+ 4 │               componentWillReceiveProps() {}
+   ·               ─────────────────────────
+ 5 │               componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillReceiveProps() {}
+ 5 │               componentWillUpdate() {}
+   ·               ───────────────────
+ 6 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:3:15]
+ 2 │             class Foo extends Component {
+ 3 │               componentWillMount() {}
+   ·               ──────────────────
+ 4 │               componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               componentWillMount() {}
+ 4 │               componentWillReceiveProps() {}
+   ·               ─────────────────────────
+ 5 │               componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillReceiveProps() {}
+ 5 │               componentWillUpdate() {}
+   ·               ───────────────────
+ 6 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:3:15]
+ 2 │             var Foo = createReactClass({
+ 3 │               componentWillMount: function() {},
+   ·               ──────────────────
+ 4 │               componentWillReceiveProps: function() {},
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               componentWillMount: function() {},
+ 4 │               componentWillReceiveProps: function() {},
+   ·               ─────────────────────────
+ 5 │               componentWillUpdate: function() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillReceiveProps: function() {},
+ 5 │               componentWillUpdate: function() {}
+   ·               ───────────────────
+ 6 │             })
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillMount` is deprecated. Use `UNSAFE_componentWillMount` instead.
+   ╭─[no_deprecated.tsx:4:15]
+ 3 │               constructor() {}
+ 4 │               componentWillMount() {}
+   ·               ──────────────────
+ 5 │               componentWillReceiveProps() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillReceiveProps` is deprecated. Use `UNSAFE_componentWillReceiveProps` instead.
+   ╭─[no_deprecated.tsx:5:15]
+ 4 │               componentWillMount() {}
+ 5 │               componentWillReceiveProps() {}
+   ·               ─────────────────────────
+ 6 │               componentWillUpdate() {}
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `componentWillUpdate` is deprecated. Use `UNSAFE_componentWillUpdate` instead.
+   ╭─[no_deprecated.tsx:6:15]
+ 5 │               componentWillReceiveProps() {}
+ 6 │               componentWillUpdate() {}
+   ·               ───────────────────
+ 7 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `ReactDOM.render` is deprecated. Use `createRoot` instead.
+   ╭─[no_deprecated.tsx:3:22]
+ 2 │             import { render } from 'react-dom';
+ 3 │             ReactDOM.render(<div></div>, container);
+   ·                      ──────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `ReactDOM.hydrate` is deprecated. Use `hydrateRoot` instead.
+   ╭─[no_deprecated.tsx:3:22]
+ 2 │             import { hydrate } from 'react-dom';
+ 3 │             ReactDOM.hydrate(<div></div>, container);
+   ·                      ───────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `ReactDOM.unmountComponentAtNode` is deprecated. Use `root.unmount` instead.
+   ╭─[no_deprecated.tsx:3:22]
+ 2 │             import { unmountComponentAtNode } from 'react-dom';
+ 3 │             ReactDOM.unmountComponentAtNode(container);
+   ·                      ──────────────────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `ReactDOMServer.renderToNodeStream` is deprecated. Use `renderToPipeableStream` instead.
+   ╭─[no_deprecated.tsx:3:28]
+ 2 │             import { renderToNodeStream } from 'react-dom/server';
+ 3 │             ReactDOMServer.renderToNodeStream(element);
+   ·                            ──────────────────
+ 4 │             
+   ╰────
