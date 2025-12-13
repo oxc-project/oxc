@@ -266,7 +266,7 @@ impl<'a> PeepholeOptimizations {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan
             | BinaryOperator::ShiftRight
-            | BinaryOperator::Instanceof => ctx.eval_binary(e),
+            | BinaryOperator::Instanceof => ctx.eval_binary_with_const(e),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 ctx.eval_binary(e).or_else(|| Self::try_fold_left_child_op(e, ctx))
             }
