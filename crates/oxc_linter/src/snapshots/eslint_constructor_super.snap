@@ -315,3 +315,39 @@ source: crates/oxc_linter/src/tester.rs
  11 │     
     ╰────
   help: Ensure `super()` is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of `super()` in some code paths.
+   ╭─[constructor_super.tsx:2:13]
+ 1 │     class A extends B {
+ 2 │ ╭─▶             constructor() {
+ 3 │ │                   while (condition) {
+ 4 │ │                       if (x) { super(); }
+ 5 │ │                   }
+ 6 │ ╰─▶             }
+ 7 │             }
+   ╰────
+  help: Ensure `super()` is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of `super()` in some code paths.
+   ╭─[constructor_super.tsx:2:13]
+ 1 │     class A extends B {
+ 2 │ ╭─▶             constructor() {
+ 3 │ │                   for (let i = 0; i < 10; i++) {
+ 4 │ │                       if (i === 5) { super(); }
+ 5 │ │                   }
+ 6 │ ╰─▶             }
+ 7 │             }
+   ╰────
+  help: Ensure `super()` is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of `super()` in some code paths.
+   ╭─[constructor_super.tsx:2:13]
+ 1 │     class A extends B {
+ 2 │ ╭─▶             constructor() {
+ 3 │ │                   do {
+ 4 │ │                       if (x) { super(); }
+ 5 │ │                   } while (condition);
+ 6 │ ╰─▶             }
+ 7 │             }
+   ╰────
+  help: Ensure `super()` is called in all code paths
