@@ -2,7 +2,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.t
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
-// @ts-expect-error we need to generate `.d.ts` file for this module
+// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
@@ -26,8 +26,8 @@ import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
 import type { Ranged } from "./location.ts";
-import type { Token, CommentToken } from "./tokens.ts";
-import type { BufferWithArrays, Node } from "./types.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
 const { max } = Math;
@@ -194,7 +194,7 @@ export const SOURCE_CODE = Object.freeze({
    * Array of all tokens and comments in the file, in source order.
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
-  get tokensAndComments(): (Token | CommentToken)[] {
+  get tokensAndComments(): (Token | Comment)[] {
     if (tokensAndComments === null) {
       if (tokens === null) {
         if (sourceText === null) initSourceText();
@@ -239,7 +239,7 @@ export const SOURCE_CODE = Object.freeze({
     const ancestors = [];
 
     while (true) {
-      // @ts-expect-error `parent` property should be present on `Node` type
+      // @ts-expect-error - TODO: `parent` property should be present on `Node` type
       node = node.parent;
       if (node === null) break;
       ancestors.push(node);

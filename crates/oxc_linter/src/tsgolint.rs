@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -320,12 +321,20 @@ impl TsGoLintState {
     pub fn lint_source(
         &self,
         path: &Arc<OsStr>,
-        source_text: String,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) -> Result<Vec<Message>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
         let mut source_overrides = FxHashMap::default();
-        source_overrides.insert(path.to_string_lossy().to_string(), source_text.clone());
+        let allocator = Allocator::default();
+        let Ok(source_text) = file_system.read_to_arena_str(Path::new(path.as_ref()), &allocator)
+        else {
+            return Err(format!("Failed to read source text for file: {}", path.to_string_lossy()));
+        };
+
+        // Clone source_text to own it for the spawned thread
+        let source_text_owned = source_text.to_string();
+        source_overrides.insert(path.to_string_lossy().to_string(), source_text_owned.clone());
 
         let json_input = self.json_input(
             std::slice::from_ref(path),
@@ -383,7 +392,7 @@ impl TsGoLintState {
 
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
-                                        &source_text,
+                                        &source_text_owned,
                                     );
 
                                     message.error.severity = if severity == AllowWarnDeny::Deny {

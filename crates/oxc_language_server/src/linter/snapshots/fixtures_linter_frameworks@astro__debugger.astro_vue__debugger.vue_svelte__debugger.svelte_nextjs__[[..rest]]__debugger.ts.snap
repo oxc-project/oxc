@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/frameworks/astro/debugger.astro
+Linted file: fixtures/linter/frameworks/astro/debugger.astro
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/frameworks/astro/debugger.astro
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -49,6 +50,7 @@ related_information[0].location.range: Range { start: Position { line: 18, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Remove the debugger statement
@@ -267,9 +269,10 @@ TextEdit: TextEdit {
 
 
 ########## 
-file: fixtures/linter/frameworks/vue/debugger.vue
+Linted file: fixtures/linter/frameworks/vue/debugger.vue
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/frameworks/vue/debugger.vue
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -292,6 +295,7 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Remove the debugger statement
@@ -402,9 +406,10 @@ TextEdit: TextEdit {
 
 
 ########## 
-file: fixtures/linter/frameworks/svelte/debugger.svelte
+Linted file: fixtures/linter/frameworks/svelte/debugger.svelte
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/frameworks/svelte/debugger.svelte
 
 code: "eslint(no-unassigned-vars)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html"
@@ -438,6 +443,7 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-unassigned-vars for this line
@@ -566,9 +572,10 @@ TextEdit: TextEdit {
 
 
 ########## 
-file: fixtures/linter/frameworks/nextjs/[[..rest]]/debugger.ts
+Linted file: fixtures/linter/frameworks/nextjs/[[..rest]]/debugger.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/frameworks/nextjs/%5B%5B..rest%5D%5D/debugger.ts
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
@@ -580,6 +587,7 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Remove the debugger statement

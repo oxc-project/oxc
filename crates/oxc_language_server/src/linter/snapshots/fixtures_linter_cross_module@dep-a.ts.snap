@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/cross_module/dep-a.ts
+Linted file: fixtures/linter/cross_module/dep-a.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/cross_module/dep-a.ts
 
 code: "eslint-plugin-import(no-cycle)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html"
@@ -16,6 +17,7 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-cycle for this line

@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn prefer_namespace_keyword_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use 'namespace' instead of 'module' to declare custom TypeScript modules.")
+    OxcDiagnostic::warn("Use `namespace` instead of `module` to declare custom TypeScript modules.")
         .with_label(span)
 }
 
