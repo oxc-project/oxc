@@ -1,0 +1,6 @@
+---
+source: crates/oxc_linter/tests/schema_validation_test.rs
+assertion_line: 117
+expression: error_messages
+---
+- "foobar" is not one of "readonly", "writable" or "off"

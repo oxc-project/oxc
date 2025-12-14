@@ -7,6 +7,7 @@
 use std::fs;
 use std::path::PathBuf;
 
+use insta::assert_snapshot;
 use jsonschema::Validator;
 use project_root::get_project_root;
 
@@ -98,13 +99,22 @@ fn test_invalid_configs_fail_validation() {
         let instance: serde_json::Value = serde_json::from_str(&content)
             .unwrap_or_else(|e| panic!("Failed to parse {file_name} as JSON: {e}"));
 
-        // Use iter_errors to check for validation errors
+        // Collect validation errors
         let errors: Vec<_> = schema.iter_errors(&instance).collect();
 
+        // Ensure there are errors
         assert!(
             !errors.is_empty(),
             "Invalid config '{file_name}' unexpectedly passed schema validation"
         );
+
+        // Snapshot the human-readable error messages for this invalid file
+        let error_messages: String =
+            errors.iter().map(|e| format!("- {e}")).collect::<Vec<_>>().join("\n");
+
+        // Name snapshots by file to keep them stable and readable
+        let snap_name = format!("invalid_{file_name}_errors");
+        assert_snapshot!(snap_name, error_messages);
     }
 }
 

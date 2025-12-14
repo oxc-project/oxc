@@ -1,0 +1,6 @@
+---
+source: crates/oxc_linter/tests/schema_validation_test.rs
+assertion_line: 117
+expression: error_messages
+---
+- "not-an-array" is not valid under any of the schemas listed in the 'anyOf' keyword
