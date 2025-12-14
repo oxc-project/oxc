@@ -108,14 +108,20 @@ fn test_invalid_configs_fail_validation() {
             "Invalid config '{file_name}' unexpectedly passed schema validation"
         );
 
-        // Snapshot the human-readable error messages for this invalid file
+        // Snapshot the invalid JSON content and human-readable error messages together
         let error_messages: String =
             errors.iter().map(|e| format!("- {e}")).collect::<Vec<_>>().join("\n");
+
+        let snapshot_body = format!(
+            "File: {file_name}\n\n.oxlintrc.json:\n{json}\nErrors:\n{errors}\n",
+            json = content,
+            errors = error_messages
+        );
 
         // Name snapshots by file to keep them stable and readable
         let snap_name = format!("invalid_{file_name}_errors");
         insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            assert_snapshot!(snap_name, error_messages);
+            assert_snapshot!(snap_name, snapshot_body);
         });
     }
 }

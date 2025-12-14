@@ -1,5 +1,13 @@
 ---
 source: crates/oxc_linter/tests/schema_validation_test.rs
-expression: error_messages
+expression: snapshot_body
 ---
+File: env_wrong_type.json
+
+.oxlintrc.json:
+{
+  "env": "not-an-object"
+}
+
+Errors:
 - "not-an-object" is not of type "object"
