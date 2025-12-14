@@ -164,11 +164,6 @@ struct AccessorInfo {
 }
 
 impl AccessorPairs {
-    /// Get the static property key name if possible
-    fn get_property_key_name(key: &PropertyKey) -> Option<String> {
-        key.static_name().map(|n| n.to_string())
-    }
-
     /// Check if two property keys are equivalent
     fn are_keys_equivalent(key1: &PropertyKey, key2: &PropertyKey) -> bool {
         // For expression keys (computed properties), strip parentheses before comparing
@@ -195,8 +190,8 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = Self::get_property_key_name(&prop.key) {
-                let info = accessors.entry(name).or_default();
+            if let Some(name) = prop.key.static_name() {
+                let info = accessors.entry(name.into_owned()).or_default();
                 if kind == PropertyKind::Get {
                     info.getter = Some(prop.key.span());
                 } else {
@@ -237,8 +232,8 @@ impl AccessorPairs {
             let computed =
                 if method.r#static { &mut computed_static } else { &mut computed_instance };
 
-            if let Some(name) = Self::get_property_key_name(&method.key) {
-                let info = accessors.entry(name).or_default();
+            if let Some(name) = method.key.static_name() {
+                let info = accessors.entry(name.into_owned()).or_default();
                 if kind == MethodDefinitionKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -398,11 +393,11 @@ impl AccessorPairs {
                 continue;
             };
 
-            let Some(name) = Self::get_property_key_name(&prop.key) else {
+            let Some(name) = prop.key.static_name() else {
                 continue;
             };
 
-            match name.as_str() {
+            match &*name {
                 "get" => has_get = true,
                 "set" => {
                     has_set = true;
@@ -437,8 +432,8 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = Self::get_ts_property_key_name(&method.key) {
-                let info = accessors.entry(name).or_default();
+            if let Some(name) = method.key.static_name() {
+                let info = accessors.entry(name.into_owned()).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -467,8 +462,8 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = Self::get_ts_property_key_name(&method.key) {
-                let info = accessors.entry(name).or_default();
+            if let Some(name) = method.key.static_name() {
+                let info = accessors.entry(name.into_owned()).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -507,10 +502,6 @@ impl AccessorPairs {
                 _ => {}
             }
         }
-    }
-
-    fn get_ts_property_key_name(key: &PropertyKey) -> Option<String> {
-        Self::get_property_key_name(key)
     }
 }
 
