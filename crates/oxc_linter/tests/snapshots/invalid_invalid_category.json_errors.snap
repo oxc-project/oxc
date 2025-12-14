@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/tests/schema_validation_test.rs
-assertion_line: 117
 expression: error_messages
 ---
 - Additional properties are not allowed ('invalid' was unexpected)

@@ -114,7 +114,9 @@ fn test_invalid_configs_fail_validation() {
 
         // Name snapshots by file to keep them stable and readable
         let snap_name = format!("invalid_{file_name}_errors");
-        assert_snapshot!(snap_name, error_messages);
+        insta::with_settings!({ prepend_module_to_snapshot => false }, {
+            assert_snapshot!(snap_name, error_messages);
+        });
     }
 }
 
