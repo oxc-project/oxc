@@ -12,7 +12,11 @@
     "React": "readonly",
     "process": "writable",
     "console": "readonly",
-    "window": "off"
+    "window": "off",
+    "foo": "writeable",
+    "bar": "readable",
+    "baz": true,
+    "qux": false
   },
   "overrides": [
     {
