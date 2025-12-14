@@ -45,6 +45,9 @@ fn test_valid_configs_pass_validation() {
         "rules_config.json",
         "ignore_patterns.json",
         "empty_config.json",
+        "complex_nested.json",
+        "extends_and_overrides.json",
+        "combined_sources.json",
     ];
 
     for file_name in &test_files {

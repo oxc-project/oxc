@@ -1,0 +1,61 @@
+{
+  "$schema": "../../../../../../npm/oxlint/configuration_schema.json",
+  "extends": [
+    "oxlint:recommended",
+    "plugin:typescript/recommended",
+    "plugin:unicorn/recommended"
+  ],
+  "plugins": [
+    "typescript",
+    "unicorn"
+  ],
+  "rules": {
+    "no-debugger": "error",
+    "no-alert": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.js"
+      ],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "unicorn/filename-case": [
+          "warn",
+          {
+            "case": "kebabCase"
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "no-unused-vars": [
+          "warn",
+          {
+            "vars": "all",
+            "args": "none"
+          }
+        ],
+        "typescript/no-explicit-any": [
+          "warn",
+          {
+            "ignoreRestArgs": true
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/vendor/**",
+    "**/fixtures/**",
+    "**/generated/**"
+  ]
+}

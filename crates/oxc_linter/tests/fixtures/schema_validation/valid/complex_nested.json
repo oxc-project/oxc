@@ -1,0 +1,101 @@
+{
+  "$schema": "../../../../../../npm/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "jest",
+    "unicorn"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "jest": true
+  },
+  "globals": {
+    "__DEV__": "readonly",
+    "process": "readonly",
+    "Buffer": "readonly"
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/build/**",
+    "**/.cache/**",
+    "coverage/**"
+  ],
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "eqeqeq": "error",
+    "unicorn/prefer-query-selector": "off",
+    "jest/no-disabled-tests": "warn",
+    "typescript/no-explicit-any": [
+      "warn",
+      {
+        "ignoreRestArgs": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "typescript/explicit-module-boundary-types": "off",
+        "typescript/no-non-null-assertion": "warn"
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.spec.ts"
+      ],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-console": "off",
+        "jest/expect-expect": [
+          "warn",
+          {
+            "assertFunctionNames": [
+              "expect"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "scripts/**"
+      ],
+      "env": {
+        "node": true
+      },
+      "globals": {
+        "__DEV__": "writable"
+      },
+      "rules": {
+        "no-process-exit": "off",
+        "no-console": "off"
+      }
+    }
+  ]
+}
