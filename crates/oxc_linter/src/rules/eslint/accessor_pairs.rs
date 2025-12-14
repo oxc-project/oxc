@@ -171,8 +171,14 @@ impl AccessorPairs {
 
     /// Check if two property keys are equivalent
     fn are_keys_equivalent(key1: &PropertyKey, key2: &PropertyKey) -> bool {
-        // Use ContentEq trait for structural comparison
-        key1.content_eq(key2)
+        // For expression keys (computed properties), strip parentheses before comparing
+        // so that `[a]` and `[(a)]` are considered equivalent
+        match (key1.as_expression(), key2.as_expression()) {
+            (Some(expr1), Some(expr2)) => {
+                expr1.get_inner_expression().content_eq(expr2.get_inner_expression())
+            }
+            _ => key1.content_eq(key2),
+        }
     }
 
     fn check_object_expression(&self, obj: &ObjectExpression, ctx: &LintContext) {
