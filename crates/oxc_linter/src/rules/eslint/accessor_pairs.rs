@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, ClassBody, Expression, MethodDefinitionKind, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind, TSSignature,
-        TSTypeLiteral,
+        Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
+        TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -13,7 +13,11 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn setter_without_getter_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Setter is defined without a getter")
@@ -120,11 +124,9 @@ declare_oxc_lint!(
 
 impl Rule for AccessorPairs {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .map(|v| serde_json::from_value::<AccessorPairsConfig>(v.clone()).unwrap_or_default())
-            .unwrap_or_default();
+        let config = serde_json::from_value::<DefaultRuleConfig<AccessorPairsConfig>>(value)
+            .unwrap_or_default()
+            .into_inner();
         Self(Box::new(config))
     }
 
@@ -216,7 +218,7 @@ impl AccessorPairs {
         let mut computed_static: Vec<(&PropertyKey, MethodDefinitionKind, Span)> = vec![];
 
         for element in &class_body.body {
-            let oxc_ast::ast::ClassElement::MethodDefinition(method) = element else {
+            let ClassElement::MethodDefinition(method) = element else {
                 continue;
             };
 
