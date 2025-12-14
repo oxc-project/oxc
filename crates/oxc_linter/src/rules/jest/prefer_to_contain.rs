@@ -133,10 +133,6 @@ impl PreferToContain {
                 return fixer.noop();
             };
 
-            let Some((property_span, _)) = mem_expr.static_property_info() else {
-                return fixer.noop();
-            };
-
             let negation = {
                 let boolean_value = jest_expect_first_arg
                     .get_inner_expression()
@@ -153,26 +149,14 @@ impl PreferToContain {
                 }
             };
 
-            let argument_trailing_comma = {
-                let has_trailing_comma = fixer.source_text()
-                    [(property_span.end as usize)..(includes_call_expr.span.end as usize)]
-                    .contains(',');
-                if has_trailing_comma { "," } else { "" }
-            }
-            .to_string();
-
-            let trailing_property = fixer.source_text()
-                [(includes_call_expr.span.end as usize)..(expect_call_expr.span.end as usize)]
-                .to_string();
-
             let mut formatter = fixer.codegen();
 
             formatter.print_expression(&expect_call_expr.callee);
             formatter.print_str("(");
             formatter.print_expression(mem_expr.object());
-            formatter.print_str(format!("{trailing_property}{negation}.toContain(").as_str());
+            formatter.print_str(format!("){negation}.toContain(").as_str());
             formatter.print_expression(argument.to_expression());
-            formatter.print_str(format!("{argument_trailing_comma})").as_str());
+            formatter.print_str(")");
 
             fixer.replace(call_expr.span, formatter.into_source_text())
         });
@@ -279,7 +263,7 @@ fn tests() {
     #[expect(clippy::literal_string_with_formatting_args)]
     let fix = vec![
         ("expect(a.includes(b)).toEqual(true);", "expect(a).toContain(b);", None),
-        ("expect(a.includes(b,),).toEqual(true,);", "expect(a,).toContain(b,);", None),
+        ("expect(a.includes(b,),).toEqual(true,)", "expect(a).toContain(b)", None),
         ("expect(a['includes'](b)).toEqual(true);", "expect(a).toContain(b);", None),
         ("expect(a['includes'](b))['toEqual'](true);", "expect(a).toContain(b);", None),
         ("expect(a['includes'](b)).toEqual(false);", "expect(a).not.toContain(b);", None),

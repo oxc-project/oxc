@@ -13,7 +13,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect(a.includes(b,),).toEqual(true,)
    ·                         ───────
    ╰────
-  help: Replace `expect(a.includes(b,),).toEqual(true,)` with `expect(a,).toContain(b,)`.
+  help: Replace `expect(a.includes(b,),).toEqual(true,)` with `expect(a).toContain(b)`.
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
