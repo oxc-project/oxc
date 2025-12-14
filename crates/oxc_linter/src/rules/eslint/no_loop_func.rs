@@ -337,6 +337,10 @@ fn test() {
         "for (let i=0; i<l; i++) { (function() { i; }) }",
         "for (let i in {}) { i = 7; (function() { i; }) }",
         "for (const i of {}) { (function() { i; }) }",
+        "for (using i of foo) { (function() { i; }) }",
+        "for (await using i of foo) { (function() { i; }) }",
+        "for (var i = 0; i < 10; ++i) { using foo = bar(i); (function() { foo; }) }",
+        "for (var i = 0; i < 10; ++i) { await using foo = bar(i); (function() { foo; }) }",
         "for (let i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != i)) {  } }",
         "let a = 0; for (let i=0; i<l; i++) { (function() { a; }); }",
         "let a = 0; for (let i in {}) { (function() { a; }); }",
@@ -347,11 +351,143 @@ fn test() {
         "var a = 0; for (let i=0; i<l; i++) { (function() { a; }); }",
         "var a = 0; for (let i in {}) { (function() { a; }); }",
         "var a = 0; for (let i of {}) { (function() { a; }); }",
-        "while (true) { (function() { a; }); } let a;",
+        "let result = {};
+			for (const score in scores) {
+			  const letters = scores[score];
+			  letters.split('').forEach(letter => {
+			    result[letter] = score;
+			  });
+			}
+			result.__default = 6;",
+"while (true) {
+			    (function() { a; });
+			}
+			let a;",
         "while(i) { (function() { i; }) }",
         "do { (function() { i; }) } while (i)",
         "var i; while(i) { (function() { i; }) }",
         "var i; do { (function() { i; }) } while (i)",
+        "for (var i=0; i<l; i++) { (function() { undeclared; }) }",
+        "for (let i=0; i<l; i++) { (function() { undeclared; }) }",
+        "for (var i in {}) { i = 7; (function() { undeclared; }) }",
+        "for (let i in {}) { i = 7; (function() { undeclared; }) }",
+        "for (const i of {}) { (function() { undeclared; }) }",
+        "for (let i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != undeclared)) {  } }",
+"
+			            let current = getStart();
+			            while (current) {
+			            (() => {
+			                current;
+			                current.a;
+			                current.b;
+			                current.c;
+			                current.d;
+			            })();
+
+			            current = current.upper;
+			            }
+			            ",
+"for (var i=0; (function() { i; })(), i<l; i++) { }",
+"for (var i=0; i<l; (function() { i; })(), i++) { }",
+"for (var i = 0; i < 10; ++i) { (()=>{ i;})() }",
+"for (var i = 0; i < 10; ++i) { (function a(){i;})() }",
+"
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((f => f)((() => i)()));
+			            }
+			            ",
+"
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((() => {
+			                    return (() => i)();
+			                })());
+			            }
+			            ",
+"
+			            const foo = bar;
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push(() => foo);
+			            }
+
+						foo = baz; // This is a runtime error, but not concern of this rule. For this rule, variable 'foo' is constant.
+			            ",
+"
+			            using foo = bar;
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push(() => foo);
+			            }
+
+						foo = baz; // This is a runtime error, but not concern of this rule. For this rule, variable 'foo' is constant.
+			            ",
+"
+			            await using foo = bar;
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push(() => foo);
+			            }
+
+						foo = baz; // This is a runtime error, but not concern of this rule. For this rule, variable 'foo' is constant.
+			            ",
+"
+			  for (let i = 0; i < 10; i++) {
+				function foo() {
+				  console.log('A');
+				}
+			  }
+				  ",
+"
+			  let someArray: MyType[] = [];
+			  for (let i = 0; i < 10; i += 1) {
+				someArray = someArray.filter((item: MyType) => !!item);
+			  }
+				  ",
+"
+			  let someArray: MyType[] = [];
+			  for (let i = 0; i < 10; i += 1) {
+				someArray = someArray.filter((item: MyType) => !!item);
+			  }
+					",
+"
+			  let someArray: MyType[] = [];
+			  for (let i = 0; i < 10; i += 1) {
+				someArray = someArray.filter((item: MyType) => !!item);
+			  }
+					",
+"
+			  type MyType = 1;
+			  let someArray: MyType[] = [];
+			  for (let i = 0; i < 10; i += 1) {
+				someArray = someArray.filter((item: MyType) => !!item);
+			  }
+				  ",
+"
+			    // UnconfiguredGlobalType is not defined anywhere or configured in globals
+			    for (var i = 0; i < 10; i++) {
+			      const process = (item: UnconfiguredGlobalType) => {
+			        // This is valid because the type reference is considered safe
+			        // even though UnconfiguredGlobalType is not configured
+			        return item.id;
+			      };
+			    }
+			    ",
+"
+			    for (var i = 0; i < 10; i++) {
+			      // ConfiguredType is in globals, UnconfiguredType is not
+			      // Both should be considered safe as they are type references
+			      const process = (configItem: ConfiguredType, unconfigItem: UnconfiguredType) => {
+			        return {
+			          config: configItem.value,
+			          unconfig: unconfigItem.value
+			        };
+			      };
+			    }
+			      ",
     ];
 
     let fail = vec![
@@ -365,9 +501,220 @@ fn test() {
         "let a; for (let i=0; i<l; i++) { a = 1; (function() { a; });}",
         "let a; for (let i in {}) { (function() { a; }); a = 1; }",
         "let a; for (let i of {}) { (function() { a; }); } a = 1; ",
+        "let a; for (let i=0; i<l; i++) { (function() { (function() { a; }); }); a = 1; }",
+        "let a; for (let i in {}) { a = 1; function foo() { (function() { a; }); } }",
+        "let a; for (let i of {}) { (() => { (function() { a; }); }); } a = 1;",
+        "for (var i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != i)) {  } }",
+        "for (let x of xs) { let a; for (let y of ys) { a = 1; (function() { a; }); } }",
+        "for (var x of xs) { for (let y of ys) { (function() { x; }); } }",
         "for (var x of xs) { (function() { x; }); }",
         "var a; for (let x of xs) { a = 1; (function() { a; }); }",
         "var a; for (let x of xs) { (function() { a; }); a = 1; }",
+        "let a; function foo() { a = 10; } for (let x of xs) { (function() { a; }); } foo();",
+        "let a; function foo() { a = 10; for (let x of xs) { (function() { a; }); } } foo();",
+        "let a; for (var i=0; i<l; i++) { (function* (){i;})() }",
+        "let a; for (var i=0; i<l; i++) { (async function (){i;})() }",
+        "
+			            let current = getStart();
+			            const arr = [];
+			            while (current) {
+			                (function f() {
+			                    current;
+			                    arr.push(f);
+			                })();
+
+			                current = current.upper;
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                (function fun () {
+			                    if (arr.includes(fun)) return i;
+			                    else arr.push(fun);
+			                })();
+			            }
+			            ",
+        "
+			            let current = getStart();
+			            const arr = [];
+			            while (current) {
+			                const p = (async () => {
+			                    await someDelay();
+			                    current;
+			                })();
+
+			                arr.push(p);
+			                current = current.upper;
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((f => f)(
+			                    () => i
+			                ));
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((() => {
+			                    return () => i;
+			                })());
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((() => {
+			                    return () => { return i };
+			                })());
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((() => {
+			                    return () => {
+			                        return () => i
+			                    };
+			                })());
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i++) {
+			                arr.push((() => {
+			                    return () =>
+			                        (() => i)();
+			                })());
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i ++) {
+			                (() => {
+			                    arr.push((async () => {
+			                        await 1;
+			                        return i;
+			                    })());
+			                })();
+			            }
+			            ",
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i ++) {
+			                (() => {
+			                    (function f() {
+			                        if (!arr.includes(f)) {
+			                            arr.push(f);
+			                        }
+			                        return i;
+			                    })();
+			                })();
+
+			            }
+			            ",
+        r#"
+			            var arr1 = [], arr2 = [];
+
+			            for (var [i, j] of ["a", "b", "c"].entries()) {
+			                (() => {
+			                    arr1.push((() => i)());
+			                    arr2.push(() => j);
+			                })();
+			            }
+			            "#,
+        "
+			            var arr = [];
+
+			            for (var i = 0; i < 5; i ++) {
+			                ((f) => {
+			                    arr.push(f);
+			                })(() => {
+			                    return (() => i)();
+			                });
+
+			            }
+			            ",
+        "
+			            for (var i = 0; i < 5; i++) {
+			                (async () => {
+			                    () => i;
+			                })();
+			            }
+			            ",
+        r#"
+			            for (var i = 0; i < 10; i++) {
+							items.push({
+								id: i,
+								name: "Item " + i
+							});
+
+							const process = function (callback){
+								callback({ id: i, name: "Item " + i });
+							};
+						}
+			            "#,
+        "
+			  for (var i = 0; i < 10; i++) {
+			    function foo() {
+			      console.log(i);
+			    }
+			  }
+						",
+        "
+			  for (var i = 0; i < 10; i++) {
+			    const handler = (event: Event) => {
+			      console.log(i);
+			    };
+			  }
+						",
+        r#"
+			  interface Item {
+			    id: number;
+			    name: string;
+			  }
+
+			  const items: Item[] = [];
+			  for (var i = 0; i < 10; i++) {
+			    items.push({
+			      id: i,
+			      name: "Item " + i
+			    });
+
+			    const process = function(callback: (item: Item) => void): void {
+			      callback({ id: i, name: "Item " + i });
+			    };
+			  }
+						"#,
+        "
+			  type Processor<T> = (item: T) => void;
+
+			  for (var i = 0; i < 10; i++) {
+			    const processor: Processor<number> = (item) => {
+			      return item + i;
+			    };
+			  }
+						",
+        "
+			      for (var i = 0; i < 10; i++) {
+			        // UnconfiguredGlobalType is not defined anywhere
+			        // But the function still references i which makes it unsafe
+			        const process = (item: UnconfiguredGlobalType) => {
+			          console.log(i, item.value);
+			        };
+			      }
+			      ",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();
