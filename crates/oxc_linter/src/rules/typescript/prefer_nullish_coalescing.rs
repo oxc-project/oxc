@@ -2,12 +2,9 @@ use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    rule::{DefaultRuleConfig, Rule},
-    utils::default_true,
-};
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferNullishCoalescing(Box<PreferNullishCoalescingConfig>);
 
 /// Options for ignoring specific primitive types.
@@ -55,7 +52,6 @@ pub struct PreferNullishCoalescingConfig {
     /// Whether to ignore arguments to the `Boolean` constructor.
     pub ignore_boolean_coercion: bool,
     /// Whether to ignore cases that are located within a conditional test.
-    #[serde(default = "default_true")]
     pub ignore_conditional_tests: bool,
     /// Whether to ignore any if statements that could be simplified by using
     /// the nullish coalescing operator.
@@ -144,11 +140,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferNullishCoalescing {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<PreferNullishCoalescingConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<PreferNullishCoalescing>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
