@@ -1,5 +1,3 @@
 codegen_misc Summary:
 AST Parsed     : 53/53 (100.00%)
-Positive Passed: 52/53 (98.11%)
-Normal: tasks/coverage/misc/pass/let-optional-chaining.cjs
-
+Positive Passed: 53/53 (100.00%)
