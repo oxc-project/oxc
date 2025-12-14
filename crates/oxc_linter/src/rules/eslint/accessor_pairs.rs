@@ -32,20 +32,17 @@ fn getter_without_setter_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct AccessorPairsConfig {
-    #[serde(default = "default_true")]
+    /// Report a setter without a getter.
     set_without_get: bool,
-    #[serde(default)]
+    /// Report a getter without a setter.
     get_without_set: bool,
-    #[serde(default = "default_true")]
+    /// Enforce the rule for class members.
     enforce_for_class_members: bool,
-    #[serde(default, rename = "enforceForTSTypes")]
+    /// Enforce the rule for TypeScript interfaces and types.
+    #[serde(rename = "enforceForTSTypes")]
     enforce_for_ts_types: bool,
-}
-
-fn default_true() -> bool {
-    true
 }
 
 impl Default for AccessorPairsConfig {
@@ -120,6 +117,7 @@ declare_oxc_lint!(
     AccessorPairs,
     eslint,
     pedantic,
+    config = AccessorPairsConfig,
 );
 
 impl Rule for AccessorPairs {
