@@ -13,7 +13,8 @@ use crate::{
 };
 
 fn non_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should only be called in a global scope").with_label(span)
+    OxcDiagnostic::warn("`jest.setTimeout` should only be called in a global scope")
+        .with_label(span)
 }
 
 fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
