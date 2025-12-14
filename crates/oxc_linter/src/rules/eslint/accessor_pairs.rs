@@ -643,6 +643,38 @@ fn test() {
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
+            "var o = { get [a]() {}, set [(a)](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [(a)]() {}, set [a](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [a]() {}, set [ a ](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [/*comment*/a/*comment*/]() {}, set [a](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [f()]() {}, set [f()](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [f(a)]() {}, set [f(a)](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [a + b]() {}, set [a + b](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
+            "var o = { get [`${a}`]() {}, set [`${a}`](foo) {} };",
+            Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
+        ),
+        (
             "var o = { get a() {}, set a(foo) {}, get b() {}, set b(bar) {} };",
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
@@ -703,7 +735,7 @@ fn test() {
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r"var o = {a: 1};
+            "var o = {a: 1};
 			 Object.defineProperty(o, 'b',
 			{set: function(value) {
 			 val = value;
@@ -737,355 +769,279 @@ fn test() {
         ),
         (
             "class A { get a() {} set b(foo) {} static get c() {} static set d(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": false,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": false, }]),
+            ),
         ),
         (
             "(class A { get a() {} set b(foo) {} static get c() {} static set d(bar) {} });",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": false,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": false, }]),
+            ),
         ),
         (
             "class A { get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": false,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": false, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": false,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": false, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set a(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set b(foo) {} static get c() {} static set d(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": false,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": false, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A {}",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "(class {})",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { constructor () {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static a() {} 'b'() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { [a]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { a() {} static a() {} b() {} static c() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set a(foo) {} get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} static set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} static get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "(class { set a(foo) {} get a() {} });",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get 'a'() {} set ['a'](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set [`a`](foo) {} get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get 'a'() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get 1e2() {} static set [100](foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a]() {} set [a](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
+        ),
+        (
+            "A = class { set [(f())](foo) {} get [(f())]() {} };",
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
+        ),
+        (
+            "class A { static set [f(a)](foo) {} static get [f(a)]() {} }",
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set b(foo) {} set a(bar) {} get b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set a(bar) {} b() {} set c(foo) {} get c() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "(class { get a() {} static set a(foo) {} set a(bar) {} static get a() {} });",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} b() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set a(foo) {} get a() {} b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} get b() {} c() {} set b(foo) {} d() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set a(foo) {} static a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get a() {} static b() {} static set a(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static set a(foo) {} static get a() {} a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} get a() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a]() {} set [a](foo) {} set [a](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set 'a'(foo) {} get [`a`]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { get a() {} set a(foo) {} a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { a() {} get a() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} static set a(foo) {} static get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} static set a(foo) {} static get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} static get a() {} static a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} a() {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} static a() {} static get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         ("interface I { get prop(): any }", None),
         ("type T = { set prop(value: any) }", None),
@@ -1379,13 +1335,13 @@ fn test() {
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r"var o = {
+            "var o = {
 			  set [
 			 a](foo) {} };",
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r"var o = {d: 1};
+            "var o = {d: 1};
 			 Object.defineProperty(o, 'c',
 			{set: function(value) {
 			 val = value;
@@ -1397,7 +1353,7 @@ fn test() {
         ("Object.defineProperties(obj, {foo: {set: function(value) {}}});", None),
         ("Object.create(null, {foo: {set: function(value) {}}});", None),
         (
-            r"var o = {d: 1};
+            "var o = {d: 1};
 			 Object?.defineProperty(o, 'c',
 			{set: function(value) {
 			 val = value;
@@ -1409,7 +1365,7 @@ fn test() {
         ("Object?.defineProperties(obj, {foo: {set: function(value) {}}});", None),
         ("Object?.create(null, {foo: {set: function(value) {}}});", None),
         (
-            r"var o = {d: 1};
+            "var o = {d: 1};
 			 (Object?.defineProperty)(o, 'c',
 			{set: function(value) {
 			 val = value;
@@ -1468,35 +1424,27 @@ fn test() {
         ("class A { static set #a(foo) {} }", None),
         (
             "class A { set a(value) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": false,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": false, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static set a(value) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "let foo = class A { get a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "(class { get a() {} });",
@@ -1504,557 +1452,419 @@ fn test() {
         ),
         (
             "class A { get '#a'() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get #a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get '#a'() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get #a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get abc() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static set 'abc'(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "(class { get 123() {} });",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get 1e2() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { get ['abc']() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set [`abc`](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get [123]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [abc]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get [f(abc)]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set [a + b](foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get ['constructor']() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set b(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set a(foo) {} get b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get a() {} static set b(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set b(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": false,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": false, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set b(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": false,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": false, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get 'a '() {} set 'a'(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get 'a'() {} set 1(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get 1() {} set 2(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get ''() {} set null(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} set [a](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a]() {} set [b](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a]() {} set [a++](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a + b]() {} set [a - b](foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get #a() {} set '#a'(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get '#a'() {} set #a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} static set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get a() {} set a(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set [a](foo) {} static get [a]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set [a](foo) {} get [a]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} get b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { get a() {} get [b]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [a]() {} get [b]() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set a(foo) {} set b(bar) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} static get b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static set a(foo) {} static set b(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} } class B { set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set a(foo) {} }, class { get a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { get a() {} }, { set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = { get a() {} }, class { set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} get b() {} set b(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { get b() {} get a() {} set b(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set b(foo) {} get b() {} set a(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get b() {} set a(foo) {} static set b(bar) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} get b() {} set b(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get b() {} static get a() {} set b(bar) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set b(foo) {} static get a() {} static get b() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { set a(foo) {} set a(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static get a() {} static get a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { set a(foo) {} set a(foo) {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} get b() {} c() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { a() {} get b() {} c() {} set d(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static a() {} get b() {} static c() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} get a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static a() {} set a(foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} static get b() {} c() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "A = class { static a() {} static set b(foo) {} static c() {} d() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { a() {} static get a() {} a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static set a(foo) {} static a() {} }",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { get a() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
-            r"A = class {
+            "A = class {
 			  set [
 			 a](foo) {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         (
             "class A { static get b() {} };",
-            Some(serde_json::json!([{
-                "setWithoutGet": true,
-                "getWithoutSet": true,
-                "enforceForClassMembers": true,
-            }])),
+            Some(
+                serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true, "enforceForClassMembers": true, }]),
+            ),
         ),
         ("({ set prop(value) {} });", None),
         (
