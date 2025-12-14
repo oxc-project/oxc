@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeId, SymbolId};
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::symbol::SymbolFlags;
 
@@ -57,15 +57,16 @@ declare_oxc_lint!(
 impl Rule for NoLoopFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Check for function expressions, arrow functions, and function declarations
-        let func_span = match node.kind() {
+        let (func_span, is_async_or_generator) = match node.kind() {
             AstKind::Function(func) => {
                 // Skip if not inside a statement (i.e., method definitions, etc.)
                 if !func.is_expression() && !func.is_declaration() {
                     return;
                 }
-                func.span
+
+                (func.span, func.r#async || func.generator)
             }
-            AstKind::ArrowFunctionExpression(arrow) => arrow.span,
+            AstKind::ArrowFunctionExpression(arrow) => (arrow.span, arrow.r#async),
             _ => return,
         };
 
@@ -73,6 +74,19 @@ impl Rule for NoLoopFunc {
         let Some(loop_node) = Self::get_containing_loop(node, ctx) else {
             return;
         };
+
+        // Skip synchronous IIFEs (Immediately Invoked Function Expressions) only if they
+        // don't contain nested functions. Nested functions inside an IIFE could escape
+        // (be returned, stored, etc.) with captured variables that change across iterations.
+        // Async IIFEs and generator IIFEs are never safe:
+        // - Async: execution suspends at await points, may resume after loop iteration
+        // - Generator: returns iterator, code runs when iterated (possibly after loop)
+        if !is_async_or_generator
+            && Self::is_safe_iife(node, ctx)
+            && !Self::contains_nested_functions(node, ctx)
+        {
+            return;
+        }
 
         // Check if any referenced variables are unsafe
         if Self::has_unsafe_references(node, loop_node, ctx) {
@@ -82,6 +96,119 @@ impl Rule for NoLoopFunc {
 }
 
 impl NoLoopFunc {
+    /// Check if the function is a safe IIFE (Immediately Invoked Function Expression).
+    /// A safe IIFE is one that:
+    /// 1. Is immediately invoked (has a CallExpression parent where this function is the callee)
+    /// 2. Does not reference itself (named function expressions that reference their own name
+    ///    could escape by storing themselves somewhere)
+    ///
+    /// This is safe because the function executes immediately within each iteration,
+    /// so the closure captures the current value and uses it right away.
+    fn is_safe_iife<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+        let nodes = ctx.nodes();
+
+        let mut current = nodes.parent_node(func_node.id());
+        while matches!(current.kind(), AstKind::ParenthesizedExpression(_)) {
+            current = nodes.parent_node(current.id());
+        }
+
+        let AstKind::CallExpression(call_expr) = current.kind() else {
+            return false;
+        };
+
+        let func_span = func_node.span();
+        if !call_expr.callee.span().contains_inclusive(func_span) {
+            return false;
+        }
+
+        // Check if the function has a name that is referenced inside itself.
+        // Named function expressions like `(function f() { arr.push(f); })()` can escape
+        // by storing themselves somewhere, making them unsafe.
+        if let AstKind::Function(func) = func_node.kind()
+            && let Some(id) = &func.id
+        {
+            for reference in ctx.scoping().get_resolved_references(id.symbol_id()) {
+                let ref_node = nodes.get_node(reference.node_id());
+                // If the reference is inside the function, the function could escape
+                if func_span.contains_inclusive(ref_node.span()) {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
+    /// Check if a function contains nested functions that could escape.
+    /// A nested function "escapes" if:
+    /// - It's not immediately invoked (not an IIFE), OR
+    /// - It's async or a generator (even if IIFE, execution doesn't complete immediately), OR
+    /// - It's a named IIFE that references itself (could store itself somewhere)
+    fn contains_nested_functions<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+        let func_span = func_node.span();
+        let nodes = ctx.nodes();
+        let scoping = ctx.scoping();
+
+        // Check all nodes to find nested functions within this function
+        for node in ctx.nodes() {
+            let node_span = node.span();
+            // Skip the function itself
+            if node_span == func_span {
+                continue;
+            }
+            // Check if this node is inside the function
+            if !func_span.contains_inclusive(node_span) {
+                continue;
+            }
+
+            // Check if it's a nested function and get relevant info
+            let (is_async_or_generator, func_id, is_function) = match node.kind() {
+                AstKind::Function(f) => (f.r#async || f.generator, f.id.as_ref(), true),
+                AstKind::ArrowFunctionExpression(f) => (f.r#async, None, true),
+                _ => (false, None, false),
+            };
+
+            if !is_function {
+                continue;
+            }
+
+            // Async/generator functions are never safe, even if immediately invoked
+            if is_async_or_generator {
+                return true;
+            }
+
+            // Check if this nested function is itself immediately invoked (IIFE).
+            // If it is and it's synchronous, it might be safe. If not, it could escape.
+            let mut parent = nodes.parent_node(node.id());
+            while matches!(parent.kind(), AstKind::ParenthesizedExpression(_)) {
+                parent = nodes.parent_node(parent.id());
+            }
+
+            let is_iife = if let AstKind::CallExpression(call) = parent.kind() {
+                // It's an IIFE if the function is the callee
+                call.callee.span().contains_inclusive(node_span)
+            } else {
+                false
+            };
+
+            if !is_iife {
+                // Not an IIFE, it escapes
+                return true;
+            }
+
+            // Even if it's an IIFE, check if it has a name that references itself
+            // (could escape by storing itself somewhere like `arr.push(f)`)
+            if let Some(id) = func_id {
+                return scoping
+                    .get_resolved_references(id.symbol_id())
+                    .map(|reference| nodes.get_node(reference.node_id()))
+                    .any(|node| node.span().contains_inclusive(node_span));
+            }
+        }
+
+        false
+    }
+
     /// Find the containing loop statement, stopping at function boundaries.
     /// Only returns a loop if the function is inside the loop's body (not init/test/update).
     fn get_containing_loop<'a, 'b>(
@@ -125,7 +252,7 @@ impl NoLoopFunc {
     ) -> bool {
         let scoping = ctx.scoping();
         let nodes = ctx.nodes();
-        let func_scope_id = func_node.scope_id();
+        let func_span = func_node.span();
 
         // Iterate through all symbols and check their references
         for symbol_id in scoping.symbol_ids() {
@@ -136,11 +263,13 @@ impl NoLoopFunc {
                 continue;
             }
 
-            // Get the scope where the symbol is declared
-            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            // Get the declaration node for the symbol
+            let symbol_decl_node_id = scoping.symbol_declaration(symbol_id);
+            let symbol_decl_node = nodes.get_node(symbol_decl_node_id);
+            let symbol_decl_span = symbol_decl_node.span();
 
             // Skip if the symbol is declared inside the function (local variable)
-            if Self::is_scope_inside_function(symbol_scope_id, func_scope_id, ctx) {
+            if func_span.contains_inclusive(symbol_decl_span) {
                 continue;
             }
 
@@ -148,8 +277,9 @@ impl NoLoopFunc {
             let mut is_referenced_in_function = false;
             for reference in scoping.get_resolved_references(symbol_id) {
                 let ref_node = nodes.get_node(reference.node_id());
-                let ref_scope_id = ref_node.scope_id();
-                if Self::is_scope_inside_function(ref_scope_id, func_scope_id, ctx) {
+                let ref_span = ref_node.span();
+                // A reference is only inside the function if its span is contained within the function's span
+                if func_span.contains_inclusive(ref_span) {
                     is_referenced_in_function = true;
                     break;
                 }
@@ -168,25 +298,12 @@ impl NoLoopFunc {
         false
     }
 
-    /// Check if a scope is inside a function (including the function's own scope)
-    fn is_scope_inside_function(
-        scope_id: ScopeId,
-        func_scope_id: ScopeId,
-        ctx: &LintContext,
-    ) -> bool {
-        let scoping = ctx.scoping();
-        let mut current = Some(scope_id);
-        while let Some(id) = current {
-            if id == func_scope_id {
-                return true;
-            }
-            current = scoping.scope_parent_id(id);
-        }
-        false
-    }
-
     /// Determine if a variable reference is unsafe within a loop context
-    fn is_unsafe_reference(symbol_id: SymbolId, loop_node: &AstNode, ctx: &LintContext) -> bool {
+    fn is_unsafe_reference<'a>(
+        symbol_id: SymbolId,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
         let scoping = ctx.scoping();
         let nodes = ctx.nodes();
         let flags = scoping.symbol_flags(symbol_id);
@@ -223,11 +340,11 @@ impl NoLoopFunc {
     }
 
     /// Check if a var-declared variable is unsafe in a loop
-    fn is_var_unsafe_in_loop(
+    fn is_var_unsafe_in_loop<'a>(
         symbol_id: SymbolId,
-        symbol_decl_node: &AstNode,
-        loop_node: &AstNode,
-        ctx: &LintContext,
+        symbol_decl_node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
     ) -> bool {
         let loop_span = loop_node.span();
         let decl_span = symbol_decl_node.span();
@@ -235,6 +352,13 @@ impl NoLoopFunc {
         // If declared inside the loop (including loop header), it's unsafe
         // because all iterations share the same binding
         if loop_span.contains_inclusive(decl_span) {
+            return true;
+        }
+
+        // Check if the variable is declared in a for-in/for-of header of an OUTER loop.
+        // For `for (var x of xs)`, x gets a new value each iteration, which is not tracked
+        // as a write reference. We need to check if the function is nested inside such a loop.
+        if Self::is_var_in_outer_forof_loop(symbol_decl_node, loop_node, ctx) {
             return true;
         }
 
@@ -251,6 +375,53 @@ impl NoLoopFunc {
         }
 
         false
+    }
+
+    /// Check if a var variable is declared in an outer for-in/for-of loop header.
+    /// This is needed because the iteration assignment in for-in/for-of is not tracked
+    /// as a write reference, but it still makes the closure unsafe.
+    fn is_var_in_outer_forof_loop<'a>(
+        symbol_decl_node: &AstNode<'a>,
+        current_loop: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        let nodes = ctx.nodes();
+        let decl_span = symbol_decl_node.span();
+
+        // Walk up from the current loop to find outer loops
+        let mut current = nodes.parent_node(current_loop.id());
+        loop {
+            match current.kind() {
+                AstKind::ForInStatement(stmt) => {
+                    // Check if the variable is declared in the left part
+                    if stmt.left.span().contains_inclusive(decl_span) {
+                        return true;
+                    }
+                }
+                AstKind::ForOfStatement(stmt) => {
+                    // Check if the variable is declared in the left part
+                    if stmt.left.span().contains_inclusive(decl_span) {
+                        return true;
+                    }
+                }
+                AstKind::ForStatement(stmt) => {
+                    // For regular for loops, check if declared in init and modified in update
+                    if let Some(init) = &stmt.init
+                        && init.span().contains_inclusive(decl_span)
+                        && stmt.update.is_some()
+                    {
+                        return true;
+                    }
+                }
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+            current = nodes.parent_node(current.id());
+        }
     }
 
     /// Check if a let-declared variable is unsafe in a loop
