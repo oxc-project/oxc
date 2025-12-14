@@ -202,10 +202,8 @@ impl AccessorPairs {
             }
         }
 
-        // Report static property accessors
         self.report_accessor_issues(&accessors, ctx);
 
-        // Check computed properties
         self.check_computed_accessors(&computed_accessors, ctx);
     }
 
