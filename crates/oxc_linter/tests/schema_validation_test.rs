@@ -8,7 +8,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use jsonschema::Validator;
-use oxc_linter::Oxlintrc;
 use project_root::get_project_root;
 
 /// Get the path to the test fixtures directory
@@ -16,11 +15,19 @@ fn get_fixtures_path() -> PathBuf {
     get_project_root().unwrap().join("crates/oxc_linter/tests/fixtures/schema_validation")
 }
 
-/// Load the generated JSON schema
+fn schema_content() -> String {
+    // Load the generated schema from the expected location
+    let schema_json = get_project_root()
+        .unwrap()
+        .join("npm/oxlint/configuration_schema.json");
+
+    fs::read_to_string(&schema_json).expect("Failed to read generated schema")
+}
+
+/// Load the JSON schema from 'npm/oxlint/configuration_schema.json'
 fn load_schema() -> Validator {
-    let schema_json = Oxlintrc::generate_schema_json();
     let schema: serde_json::Value =
-        serde_json::from_str(&schema_json).expect("Failed to parse generated schema as JSON");
+        serde_json::from_str(&schema_content()).expect("Failed to parse generated schema as JSON");
 
     Validator::new(&schema).expect("Failed to compile JSON schema")
 }
@@ -69,6 +76,9 @@ fn test_invalid_configs_fail_validation() {
     let schema = load_schema();
     let invalid_dir = get_fixtures_path().join("invalid");
 
+    // TODO: Add another invalid test case to ensure that unknown fields are caught.
+    // `additionalProperties` needs to be set to false for this to work and we need
+    // to explicitly allow the "$schema" field.
     let test_files = [
         "invalid_plugin.json",
         "invalid_category.json",
@@ -76,8 +86,6 @@ fn test_invalid_configs_fail_validation() {
         "plugins_wrong_type.json",
         "globals_wrong_value.json",
         "globals_writeable_not_allowed.json",
-        // NOTE: "unknown_field.json" is removed because JSON Schema Draft 7
-        // allows additional properties by default unless explicitly forbidden
         "env_wrong_type.json",
     ];
 
@@ -102,9 +110,8 @@ fn test_invalid_configs_fail_validation() {
 /// Test that the schema itself is valid JSON Schema Draft 7
 #[test]
 fn test_schema_is_valid() {
-    let schema_json = Oxlintrc::generate_schema_json();
     let schema: serde_json::Value =
-        serde_json::from_str(&schema_json).expect("Failed to parse generated schema as JSON");
+        serde_json::from_str(&schema_content()).expect("Failed to parse generated schema as JSON");
 
     // Check that the schema has the expected $schema field
     assert_eq!(
