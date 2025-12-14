@@ -67,6 +67,7 @@ impl Rule for ApproxConstant {
                         }
                     },
                 );
+                break;
             }
         }
     }
