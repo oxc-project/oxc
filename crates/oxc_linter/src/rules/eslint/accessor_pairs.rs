@@ -141,7 +141,7 @@ impl Rule for AccessorPairs {
                 }
             }
             AstKind::CallExpression(call) => {
-                self.check_call_expression(call, ctx);
+                self.check_call_expression(call, node, ctx);
             }
             AstKind::TSInterfaceBody(interface_body) => {
                 if self.enforce_for_ts_types {
@@ -310,8 +310,13 @@ impl AccessorPairs {
     }
 
     /// Check calls to Object.defineProperty, Object.defineProperties, Object.create, Reflect.defineProperty
-    fn check_call_expression(&self, call: &CallExpression, ctx: &LintContext) {
-        let Some(callee) = Self::get_define_property_callee(call) else {
+    fn check_call_expression<'a>(
+        &self,
+        call: &CallExpression<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let Some(callee) = Self::get_define_property_callee(call, node, ctx) else {
             return;
         };
 
@@ -341,7 +346,11 @@ impl AccessorPairs {
         }
     }
 
-    fn get_define_property_callee(call: &CallExpression) -> Option<DefinePropertyCallee> {
+    fn get_define_property_callee<'a>(
+        call: &CallExpression<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<DefinePropertyCallee> {
         let callee = call.callee.without_parentheses();
 
         // Handle optional chaining: Object?.defineProperty
@@ -358,6 +367,12 @@ impl AccessorPairs {
             Expression::Identifier(id) => &id.name,
             _ => return None,
         };
+
+        // Check if Object/Reflect is the global object (not shadowed by a local variable)
+        let is_global = ctx.scoping().find_binding(node.scope_id(), object_name).is_none();
+        if !is_global {
+            return None;
+        }
 
         let property_name = &member.property.name;
 
@@ -704,6 +719,12 @@ fn test() {
         ("var o = {set: function() {}}", None),
         ("Object.defineProperties(obj, {set: {value: function() {}}});", None),
         ("Object.create(null, {set: {value: function() {}}});", None),
+        // Shadowed Object should not be flagged
+        ("var Object = {}; Object.defineProperty(obj, 'foo', {set: function(value) {}});", None),
+        (
+            "function f(Object) { Object.defineProperty(obj, 'foo', {set: function(value) {}}); }",
+            None,
+        ),
         ("var o = {get: function() {}}", Some(serde_json::json!([{ "getWithoutSet": true }]))),
         ("var o = {[set]: function() {}}", None),
         (
