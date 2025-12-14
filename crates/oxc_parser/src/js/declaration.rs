@@ -24,8 +24,8 @@ impl<'a> ParserImpl<'a> {
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_or_higher();
             self.parse_expression_statement(span, expr)
-        // let.a = 1, let()[a] = 1
-        } else if matches!(peeked, Kind::Dot | Kind::LParen) {
+        // let.a = 1, let?.a = 1, let()[a] = 1
+        } else if matches!(peeked, Kind::Dot | Kind::QuestionDot | Kind::LParen) {
             let expr = self.parse_expr();
             self.ast.statement_expression(self.end_span(span), expr)
         // single statement let declaration: while (0) let
