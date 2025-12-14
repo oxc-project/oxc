@@ -57,8 +57,8 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 /// Type alias for Tailwind class processing callback.
 /// Takes array of class strings and returns sorted array.
 pub type JsTailwindCb = ThreadsafeFunction<
-    Vec<String>,           // Input: array of class strings
-    Promise<Vec<String>>,  // Return: promise of sorted array
+    Vec<String>,          // Input: array of class strings
+    Promise<Vec<String>>, // Return: promise of sorted array
     Vec<String>,
     Status,
     false,

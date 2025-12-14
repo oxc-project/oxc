@@ -104,14 +104,16 @@ impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
 
-        let printed = Printer::new(print_options, &self.sorted_tailwind_classes).print(&self.document)?;
+        let printed =
+            Printer::new(print_options, &self.sorted_tailwind_classes).print(&self.document)?;
 
         Ok(printed)
     }
 
     pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-        let printed = Printer::new(print_options, &self.sorted_tailwind_classes).print_with_indent(&self.document, indent)?;
+        let printed = Printer::new(print_options, &self.sorted_tailwind_classes)
+            .print_with_indent(&self.document, indent)?;
 
         Ok(printed)
     }

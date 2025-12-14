@@ -111,7 +111,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
             FormatElement::Text { text, .. } => fmt.debug_tuple("Text").field(text).finish(),
-            FormatElement::TailwindClass { index } => fmt.debug_tuple("TailwindClass").field(index).finish(),
+            FormatElement::TailwindClass { index } => {
+                fmt.debug_tuple("TailwindClass").field(index).finish()
+            }
             FormatElement::LineSuffixBoundary => fmt.write_str("LineSuffixBoundary"),
             FormatElement::BestFitting(best_fitting) => {
                 fmt.debug_tuple("BestFitting").field(&best_fitting).finish()
@@ -258,7 +260,12 @@ impl FormatElement<'_> {
     }
 
     pub const fn is_text(&self) -> bool {
-        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. } | FormatElement::TailwindClass { .. })
+        matches!(
+            self,
+            FormatElement::Text { .. }
+                | FormatElement::Token { .. }
+                | FormatElement::TailwindClass { .. }
+        )
     }
 
     pub const fn is_space(&self) -> bool {

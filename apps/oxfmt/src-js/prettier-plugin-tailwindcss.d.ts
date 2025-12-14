@@ -7,7 +7,5 @@ declare module "prettier-plugin-tailwindcss" {
     sortClasses(classes: string[]): string[];
   }
 
-  export function createBatchSorter(
-    options?: BatchSortOptions
-  ): Promise<BatchSortContext>;
+  export function createBatchSorter(options?: BatchSortOptions): Promise<BatchSortContext>;
 }

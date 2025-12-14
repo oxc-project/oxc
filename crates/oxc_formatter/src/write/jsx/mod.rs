@@ -347,7 +347,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
 
         // Write attribute name
         write!(f, self.name());
-        
+
         // Write attribute value
         if let Some(value) = &self.value() {
             // If this is a Tailwind class, emit custom IR node
