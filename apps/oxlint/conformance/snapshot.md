@@ -6,9 +6,9 @@
 
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
-| Total rules       |   259 | 100.0% |
-| Fully passing     |   197 |  76.1% |
-| Partially passing |    61 |  23.6% |
+| Total rules       |   277 | 100.0% |
+| Fully passing     |   216 |  78.0% |
+| Partially passing |    60 |  21.7% |
 | Fully failing     |     1 |   0.4% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -17,16 +17,19 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 26416 | 100.0% |
-| Passing     | 25392 |  96.1% |
-| Failing     |  1024 |   3.9% |
+| Total tests | 29765 | 100.0% |
+| Passing     | 28670 |  96.3% |
+| Failing     |   988 |   3.3% |
+| Skipped     |   107 |   0.4% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
 - `array-bracket-newline` (209 tests)
+- `array-bracket-spacing` (143 tests) (4 skipped)
 - `array-element-newline` (155 tests)
 - `arrow-body-style` (87 tests)
+- `arrow-parens` (109 tests) (21 skipped)
 - `arrow-spacing` (42 tests)
 - `block-spacing` (101 tests)
 - `brace-style` (168 tests)
@@ -48,6 +51,7 @@
 - `func-names` (109 tests)
 - `func-style` (120 tests)
 - `function-call-argument-newline` (58 tests)
+- `function-paren-newline` (177 tests) (2 skipped)
 - `generator-star-spacing` (201 tests)
 - `global-require` (22 tests)
 - `grouped-accessor-pairs` (150 tests)
@@ -57,9 +61,11 @@
 - `id-match` (98 tests)
 - `implicit-arrow-linebreak` (62 tests)
 - `indent-legacy` (317 tests)
+- `indent` (1090 tests) (14 skipped)
 - `init-declarations` (81 tests)
 - `jsx-quotes` (18 tests)
 - `key-spacing` (153 tests)
+- `keyword-spacing` (1078 tests) (9 skipped)
 - `line-comment-position` (38 tests)
 - `linebreak-style` (12 tests)
 - `lines-between-class-members` (112 tests)
@@ -75,6 +81,7 @@
 - `multiline-comment-style` (110 tests)
 - `multiline-ternary` (144 tests)
 - `new-cap` (80 tests)
+- `new-parens` (42 tests) (1 skipped)
 - `newline-after-var` (117 tests)
 - `newline-before-return` (93 tests)
 - `newline-per-chained-call` (37 tests)
@@ -111,6 +118,7 @@
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
+- `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
 - `no-extra-semi` (53 tests)
 - `no-floating-decimal` (8 tests)
@@ -169,7 +177,9 @@
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
 - `no-underscore-dangle` (116 tests)
+- `no-unexpected-multiline` (56 tests) (4 skipped)
 - `no-unmodified-loop-condition` (37 tests)
+- `no-unneeded-ternary` (47 tests) (2 skipped)
 - `no-unsafe-finally` (28 tests)
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
@@ -178,13 +188,19 @@
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
 - `no-useless-concat` (20 tests)
+- `no-useless-constructor` (49 tests) (1 skipped)
 - `no-useless-escape` (288 tests)
+- `no-useless-rename` (163 tests) (1 skipped)
+- `no-var` (52 tests) (1 skipped)
 - `no-void` (12 tests)
 - `no-warning-comments` (61 tests)
 - `no-whitespace-before-property` (192 tests)
 - `no-with` (2 tests)
 - `nonblock-statement-body-position` (48 tests)
+- `object-curly-newline` (144 tests) (8 skipped)
+- `object-curly-spacing` (178 tests) (2 skipped)
 - `object-property-newline` (75 tests)
+- `object-shorthand` (262 tests) (2 skipped)
 - `one-var-declaration-per-line` (38 tests)
 - `one-var` (296 tests)
 - `operator-assignment` (119 tests)
@@ -201,6 +217,7 @@
 - `preserve-caught-error` (49 tests)
 - `quote-props` (104 tests)
 - `quotes` (113 tests)
+- `require-await` (38 tests) (2 skipped)
 - `require-yield` (15 tests)
 - `rest-spread-spacing` (82 tests)
 - `semi-spacing` (62 tests)
@@ -208,7 +225,10 @@
 - `sort-imports` (61 tests)
 - `sort-keys` (215 tests)
 - `sort-vars` (61 tests)
+- `space-before-blocks` (161 tests) (2 skipped)
+- `space-before-function-paren` (75 tests) (1 skipped)
 - `space-in-parens` (139 tests)
+- `space-infix-ops` (74 tests) (7 skipped)
 - `space-unary-ops` (112 tests)
 - `spaced-comment` (99 tests)
 - `switch-colon-spacing` (46 tests)
@@ -225,28 +245,27 @@
 
 - `block-scoped-var` - 97 / 106 (91.5%)
 - `camelcase` - 187 / 204 (91.7%)
-- `comma-dangle` - 257 / 267 (96.3%)
+- `comma-dangle` - 265 / 267 (99.3%)
 - `computed-property-spacing` - 123 / 125 (98.4%)
 - `consistent-this` - 23 / 26 (88.5%)
 - `func-call-spacing` - 137 / 151 (90.7%)
 - `id-blacklist` - 120 / 131 (91.6%)
 - `id-denylist` - 132 / 143 (92.3%)
-- `indent` - 1076 / 1090 (98.7%)
 - `lines-around-comment` - 198 / 199 (99.5%)
 - `lines-around-directive` - 231 / 239 (96.7%)
-- `logical-assignment-operators` - 272 / 304 (89.5%)
+- `logical-assignment-operators` - 276 / 304 (90.8%)
 - `no-alert` - 36 / 42 (85.7%)
 - `no-array-constructor` - 145 / 146 (99.3%)
 - `no-catch-shadow` - 1 / 8 (12.5%)
 - `no-constant-binary-expression` - 225 / 260 (86.5%)
 - `no-constant-condition` - 305 / 307 (99.3%)
 - `no-eval` - 76 / 101 (75.2%)
-- `no-extra-parens` - 1067 / 1072 (99.5%)
+- `no-extra-parens` - 1068 / 1072 (99.6%)
 - `no-global-assign` - 12 / 18 (66.7%)
 - `no-implicit-globals` - 153 / 245 (62.4%)
 - `no-implied-eval` - 83 / 138 (60.1%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `no-lone-blocks` - 47 / 50 (94.0%)
+- `no-lone-blocks` - 49 / 50 (98.0%)
 - `no-misleading-character-class` - 185 / 190 (97.4%)
 - `no-multiple-empty-lines` - 45 / 46 (97.8%)
 - `no-native-reassign` - 12 / 18 (66.7%)
@@ -272,11 +291,11 @@
 - `no-useless-backreference` - 188 / 190 (98.9%)
 - `no-useless-computed-key` - 95 / 96 (99.0%)
 - `padding-line-between-statements` - 364 / 624 (58.3%)
-- `prefer-const` - 134 / 138 (97.1%)
-- `prefer-exponentiation-operator` - 161 / 167 (96.4%)
+- `prefer-const` - 136 / 138 (98.6%)
+- `prefer-exponentiation-operator` - 164 / 167 (98.2%)
 - `prefer-named-capture-group` - 54 / 57 (94.7%)
 - `prefer-object-has-own` - 91 / 92 (98.9%)
-- `prefer-object-spread` - 80 / 87 (92.0%)
+- `prefer-object-spread` - 82 / 87 (94.3%)
 - `prefer-regex-literals` - 239 / 251 (95.2%)
 - `radix` - 33 / 54 (61.1%)
 - `require-unicode-regexp` - 76 / 79 (96.2%)
@@ -292,6 +311,7 @@
 
 Pass: 97 / 106 (91.5%)
 Fail: 9 / 106 (8.5%)
+Skip: 0 / 106 (0.0%)
 
 #### block-scoped-var > invalid
 
@@ -672,6 +692,7 @@ AssertionError [ERR_ASSERTION]: Should have 6 errors but had 0: []
 
 Pass: 187 / 204 (91.7%)
 Fail: 17 / 204 (8.3%)
+Skip: 0 / 204 (0.0%)
 
 #### camelcase > valid
 
@@ -1453,231 +1474,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 2: [
 ### `comma-dangle`
 
 Pass: 257 / 267 (96.3%)
-Fail: 10 / 267 (3.7%)
-
-#### comma-dangle > valid
-
-```js
-function foo({a}: {a: string,}) {}
-```
-
-```json
-{
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo({a,}: {a: string}) {}
-```
-
-```json
-{
-  "options": [
-    "always"
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo(a): {b: boolean,} {}
-```
-
-```json
-{
-  "options": [
-    {
-      "functions": "never"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo(a,): {b: boolean} {}
-```
-
-```json
-{
-  "options": [
-    {
-      "functions": "always"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo({a}: {a: string,}) {}
-```
-
-```json
-{
-  "output": "function foo({a,}: {a: string,}) {}",
-  "options": [
-    "always"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "missing"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo({a,}: {a: string}) {}
-```
-
-```json
-{
-  "output": "function foo({a}: {a: string}) {}",
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo(a): {b: boolean,} {}
-```
-
-```json
-{
-  "output": "function foo(a,): {b: boolean,} {}",
-  "options": [
-    {
-      "functions": "always"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "missing"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo(a,): {b: boolean} {}
-```
-
-```json
-{
-  "output": "function foo(a): {b: boolean} {}",
-  "options": [
-    {
-      "functions": "never"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
+Fail: 2 / 267 (0.7%)
+Skip: 8 / 267 (3.0%)
 
 #### comma-dangle > invalid
 
@@ -1791,6 +1589,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 
 Pass: 123 / 125 (98.4%)
 Fail: 2 / 125 (1.6%)
+Skip: 0 / 125 (0.0%)
 
 #### computed-property-spacing > invalid
 
@@ -2098,6 +1897,7 @@ AssertionError [ERR_ASSERTION]: Should have 12 errors but had 0: []
 
 Pass: 23 / 26 (88.5%)
 Fail: 3 / 26 (11.5%)
+Skip: 0 / 26 (0.0%)
 
 #### consistent-this > valid
 
@@ -2214,6 +2014,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 137 / 151 (90.7%)
 Fail: 14 / 151 (9.3%)
+Skip: 0 / 151 (0.0%)
 
 #### func-call-spacing > invalid
 
@@ -2607,6 +2408,7 @@ RangeError: Invalid column number (column -1 requested).
 
 Pass: 120 / 131 (91.6%)
 Fail: 11 / 131 (8.4%)
+Skip: 0 / 131 (0.0%)
 
 #### id-blacklist > valid
 
@@ -3073,6 +2875,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 132 / 143 (92.3%)
 Fail: 11 / 143 (7.7%)
+Skip: 0 / 143 (0.0%)
 
 #### id-denylist > valid
 
@@ -3535,555 +3338,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `indent`
-
-Pass: 1076 / 1090 (98.7%)
-Fail: 14 / 1090 (1.3%)
-
-#### indent > valid
-
-```js
-interface Foo {
-    bar: string;
-    baz: number;
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-namespace Foo {
-    const bar = 3,
-        baz = 2;
-
-    if (true) {
-        const bax = 3;
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-abstract class Foo {
-    public bar() {
-        let aaa = 4,
-            boo;
-
-        if (true) {
-            boo = 3;
-        }
-
-        boo = 3 + 2;
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-function foo() {
-    function bar() {
-        abstract class X {
-            public baz() {
-                if (true) {
-                    qux();
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-namespace Unknown {
-    function foo() {
-        function bar() {
-            abstract class X {
-                public baz() {
-                    if (true) {
-                        qux();
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-type httpMethod = 'GET'
-  | 'POST'
-  | 'PUT';
-```
-
-```json
-{
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 0
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-type httpMethod = 'GET'
-| 'POST'
-| 'PUT';
-```
-
-```json
-{
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 1
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-namespace Foo {
-    const bar = 3,
-    baz = 2;
-
-    if (true) {
-    const bax = 3;
-    }
-}
-```
-
-```json
-{
-  "output": "namespace Foo {\n    const bar = 3,\n        baz = 2;\n\n    if (true) {\n        const bax = 3;\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 6
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-abstract class Foo {
-    public bar() {
-        let aaa = 4,
-        boo;
-
-        if (true) {
-        boo = 3;
-        }
-
-    boo = 3 + 2;
-    }
-}
-```
-
-```json
-{
-  "output": "abstract class Foo {\n    public bar() {\n        let aaa = 4,\n            boo;\n\n        if (true) {\n            boo = 3;\n        }\n\n        boo = 3 + 2;\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 4
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 7
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 10
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-function foo() {
-    function bar() {
-        abstract class X {
-        public baz() {
-        if (true) {
-        qux();
-        }
-        }
-        }
-    }
-}
-```
-
-```json
-{
-  "output": "function foo() {\n    function bar() {\n        abstract class X {\n            public baz() {\n                if (true) {\n                    qux();\n                }\n            }\n        }\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 4
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "16 spaces",
-        "actual": 8
-      },
-      "line": 5
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "20 spaces",
-        "actual": 8
-      },
-      "line": 6
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "16 spaces",
-        "actual": 8
-      },
-      "line": 7
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 8
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-namespace Unknown {
-    function foo() {
-    function bar() {
-            abstract class X {
-                public baz() {
-                    if (true) {
-                    qux();
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "output": "namespace Unknown {\n    function foo() {\n        function bar() {\n            abstract class X {\n                public baz() {\n                    if (true) {\n                        qux();\n                    }\n                }\n            }\n        }\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "24 spaces",
-        "actual": 20
-      },
-      "line": 7
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-({
-    foo
-    }: bar) => baz
-```
-
-```json
-{
-  "output": "({\n    foo\n}: bar) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-([
-    foo
-    ]: bar) => baz
-```
-
-```json
-{
-  "output": "([\n    foo\n]: bar) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-({
-    foo
-    }: {}) => baz
-```
-
-```json
-{
-  "output": "({\n    foo\n}: {}) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `lines-around-comment`
 
 Pass: 198 / 199 (99.5%)
 Fail: 1 / 199 (0.5%)
+Skip: 0 / 199 (0.0%)
 
 #### lines-around-comment > invalid
 
@@ -4122,6 +3381,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 231 / 239 (96.7%)
 Fail: 8 / 239 (3.3%)
+Skip: 0 / 239 (0.0%)
 
 #### lines-around-directive > valid
 
@@ -4526,7 +3786,8 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 ### `logical-assignment-operators`
 
 Pass: 272 / 304 (89.5%)
-Fail: 32 / 304 (10.5%)
+Fail: 28 / 304 (9.2%)
+Skip: 4 / 304 (1.3%)
 
 #### logical-assignment-operators > valid
 
@@ -5480,160 +4741,11 @@ TypeError: Cannot convert object to primitive value
     at apps/oxlint/dist/lint.js
 
 
-#### logical-assignment-operators > invalid
-
-```js
-a ||= b as number;
-```
-
-```json
-{
-  "output": "a = a || (b as number);",
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "data": {
-        "operator": "||="
-      }
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-a.b.c || (a.b.c = d as number)
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "a.b.c ||= d as number"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-a.b.c || (a.b.c = (d as number))
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "a.b.c ||= (d as number)"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-(a.b.c || (a.b.c = d)) as number
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "(a.b.c ||= d) as number"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-alert`
 
 Pass: 36 / 42 (85.7%)
 Fail: 6 / 42 (14.3%)
+Skip: 0 / 42 (0.0%)
 
 #### no-alert > valid
 
@@ -5845,6 +4957,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 145 / 146 (99.3%)
 Fail: 1 / 146 (0.7%)
+Skip: 0 / 146 (0.0%)
 
 #### no-array-constructor > valid
 
@@ -5889,6 +5002,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 1 / 8 (12.5%)
 Fail: 7 / 8 (87.5%)
+Skip: 0 / 8 (0.0%)
 
 #### no-catch-shadow > valid
 
@@ -6063,6 +5177,7 @@ TypeError: Cannot convert object to primitive value
 
 Pass: 225 / 260 (86.5%)
 Fail: 35 / 260 (13.5%)
+Skip: 0 / 260 (0.0%)
 
 #### no-constant-binary-expression > invalid
 
@@ -6999,6 +6114,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 305 / 307 (99.3%)
 Fail: 2 / 307 (0.7%)
+Skip: 0 / 307 (0.0%)
 
 #### no-constant-condition > valid
 
@@ -7069,6 +6185,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 76 / 101 (75.2%)
 Fail: 25 / 101 (24.8%)
+Skip: 0 / 101 (0.0%)
 
 #### no-eval > valid
 
@@ -7863,7 +6980,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 ### `no-extra-parens`
 
 Pass: 1067 / 1072 (99.5%)
-Fail: 5 / 1072 (0.5%)
+Fail: 4 / 1072 (0.4%)
+Skip: 1 / 1072 (0.1%)
 
 #### no-extra-parens > valid
 
@@ -7998,31 +7116,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-#### no-extra-parens > valid
-
-```js
-const x = (1 satisfies number).toFixed();
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-global-assign`
 
 Pass: 12 / 18 (66.7%)
 Fail: 6 / 18 (33.3%)
+Skip: 0 / 18 (0.0%)
 
 #### no-global-assign > invalid
 
@@ -9383,6 +8481,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 153 / 245 (62.4%)
 Fail: 92 / 245 (37.6%)
+Skip: 0 / 245 (0.0%)
 
 #### no-implicit-globals > valid
 
@@ -14415,6 +13514,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 3: [
 
 Pass: 83 / 138 (60.1%)
 Fail: 55 / 138 (39.9%)
+Skip: 0 / 138 (0.0%)
 
 #### no-implied-eval > invalid
 
@@ -51254,6 +50354,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 279 / 280 (99.6%)
 Fail: 1 / 280 (0.4%)
+Skip: 0 / 280 (0.0%)
 
 #### no-irregular-whitespace > valid
 
@@ -51291,7 +50392,8 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ### `no-lone-blocks`
 
 Pass: 47 / 50 (94.0%)
-Fail: 3 / 50 (6.0%)
+Fail: 1 / 50 (2.0%)
+Skip: 2 / 50 (4.0%)
 
 #### no-lone-blocks > valid
 
@@ -51335,60 +50437,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-#### no-lone-blocks > valid
-
-```js
-
-{
-  using x = makeDisposable();
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {},
-    "ecmaVersion": 2022
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### no-lone-blocks > valid
-
-```js
-
-{
-  await using x = makeDisposable();
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {},
-    "ecmaVersion": 2022
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-misleading-character-class`
 
 Pass: 185 / 190 (97.4%)
 Fail: 5 / 190 (2.6%)
+Skip: 0 / 190 (0.0%)
 
 #### no-misleading-character-class > valid
 
@@ -51577,6 +50630,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 45 / 46 (97.8%)
 Fail: 1 / 46 (2.2%)
+Skip: 0 / 46 (0.0%)
 
 #### no-multiple-empty-lines > invalid
 
@@ -51617,6 +50671,7 @@ RangeError: Line number out of range (line 3 requested). Line numbers should be 
 
 Pass: 12 / 18 (66.7%)
 Fail: 6 / 18 (33.3%)
+Skip: 0 / 18 (0.0%)
 
 #### no-native-reassign > invalid
 
@@ -52977,6 +52032,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 12 / 14 (85.7%)
 Fail: 2 / 14 (14.3%)
+Skip: 0 / 14 (0.0%)
 
 #### no-new-native-nonconstructor > invalid
 
@@ -53034,6 +52090,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 5 / 7 (71.4%)
 Fail: 2 / 7 (28.6%)
+Skip: 0 / 7 (0.0%)
 
 #### no-new-symbol > invalid
 
@@ -53091,6 +52148,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 9 / 11 (81.8%)
 Fail: 2 / 11 (18.2%)
+Skip: 0 / 11 (0.0%)
 
 #### no-new-wrappers > valid
 
@@ -53171,6 +52229,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 73 / 107 (68.2%)
 Fail: 34 / 107 (31.8%)
+Skip: 0 / 107 (0.0%)
 
 #### no-obj-calls > valid
 
@@ -58993,6 +58052,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 55 / 56 (98.2%)
 Fail: 1 / 56 (1.8%)
+Skip: 0 / 56 (0.0%)
 
 #### no-object-constructor > valid
 
@@ -59037,6 +58097,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 51 / 75 (68.0%)
 Fail: 24 / 75 (32.0%)
+Skip: 0 / 75 (0.0%)
 
 #### no-redeclare > valid
 
@@ -62299,6 +61360,7 @@ AssertionError [ERR_ASSERTION]: Should have 3 errors but had 0: []
 
 Pass: 143 / 166 (86.1%)
 Fail: 23 / 166 (13.9%)
+Skip: 0 / 166 (0.0%)
 
 #### no-restricted-globals > invalid
 
@@ -78556,6 +77618,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 253 / 254 (99.6%)
 Fail: 1 / 254 (0.4%)
+Skip: 0 / 254 (0.0%)
 
 #### no-restricted-imports > valid
 
@@ -78610,6 +77673,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 161 / 164 (98.2%)
 Fail: 3 / 164 (1.8%)
+Skip: 0 / 164 (0.0%)
 
 #### no-setter-return > valid
 
@@ -78726,6 +77790,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 43 / 44 (97.7%)
 Fail: 1 / 44 (2.3%)
+Skip: 0 / 44 (0.0%)
 
 #### no-shadow-restricted-names > invalid
 
@@ -78761,6 +77826,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 300 / 308 (97.4%)
 Fail: 8 / 308 (2.6%)
+Skip: 0 / 308 (0.0%)
 
 #### no-shadow > invalid
 
@@ -82604,6 +81670,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 8 / 10 (80.0%)
 Fail: 2 / 10 (20.0%)
+Skip: 0 / 10 (0.0%)
 
 #### no-sync > invalid
 
@@ -82677,6 +81744,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 0 / 11 (0.0%)
 Fail: 11 / 11 (100.0%)
+Skip: 0 / 11 (0.0%)
 
 #### no-tabs > valid
 
@@ -83000,6 +82068,7 @@ TypeError: sourceCode.getLines is not a function
 
 Pass: 53 / 54 (98.1%)
 Fail: 1 / 54 (1.9%)
+Skip: 0 / 54 (0.0%)
 
 #### no-trailing-spaces > valid
 
@@ -83044,6 +82113,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 54 / 94 (57.4%)
 Fail: 40 / 94 (42.6%)
+Skip: 0 / 94 (0.0%)
 
 #### no-undef > valid
 
@@ -92937,6 +92007,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 4: [
 
 Pass: 37 / 53 (69.8%)
 Fail: 16 / 53 (30.2%)
+Skip: 0 / 53 (0.0%)
 
 #### no-undefined > invalid
 
@@ -93358,6 +92429,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 120 / 124 (96.8%)
 Fail: 4 / 124 (3.2%)
+Skip: 0 / 124 (0.0%)
 
 #### no-unused-expressions > invalid
 
@@ -93489,6 +92561,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
 
 Pass: 340 / 436 (78.0%)
 Fail: 96 / 436 (22.0%)
+Skip: 0 / 436 (0.0%)
 
 #### no-unused-vars > valid
 
@@ -97550,6 +96623,7 @@ AssertionError [ERR_ASSERTION]: Hydrated message "'a' is assigned a value but ne
 
 Pass: 323 / 347 (93.1%)
 Fail: 24 / 347 (6.9%)
+Skip: 0 / 347 (0.0%)
 
 #### no-use-before-define > invalid
 
@@ -98317,6 +97391,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 188 / 190 (98.9%)
 Fail: 2 / 190 (1.1%)
+Skip: 0 / 190 (0.0%)
 
 #### no-useless-backreference > valid
 
@@ -98394,6 +97469,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 95 / 96 (99.0%)
 Fail: 1 / 96 (1.0%)
+Skip: 0 / 96 (0.0%)
 
 #### no-useless-computed-key > invalid
 
@@ -98432,6 +97508,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 364 / 624 (58.3%)
 Fail: 260 / 624 (41.7%)
+Skip: 0 / 624 (0.0%)
 
 #### padding-line-between-statements > invalid
 
@@ -108751,7 +107828,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 ### `prefer-const`
 
 Pass: 134 / 138 (97.1%)
-Fail: 4 / 138 (2.9%)
+Fail: 2 / 138 (1.4%)
+Skip: 2 / 138 (1.4%)
 
 #### prefer-const > valid
 
@@ -108784,68 +107862,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-#### prefer-const > valid
-
-```js
-let { name, ...otherStuff } = obj; otherStuff = {};
-```
-
-```json
-{
-  "options": [
-    {
-      "destructuring": "all"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-const > invalid
-
-```js
-let { name, ...otherStuff } = obj; otherStuff = {};
-```
-
-```json
-{
-  "output": null,
-  "options": [
-    {
-      "destructuring": "any"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useConst",
-      "data": {
-        "name": "name"
-      },
-      "column": 7
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
 
 
 #### prefer-const > invalid
@@ -108887,7 +107903,8 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 ### `prefer-exponentiation-operator`
 
 Pass: 161 / 167 (96.4%)
-Fail: 6 / 167 (3.6%)
+Fail: 3 / 167 (1.8%)
+Skip: 3 / 167 (1.8%)
 
 #### prefer-exponentiation-operator > valid
 
@@ -108990,91 +108007,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a, b as any)
-```
-
-```json
-{
-  "output": "a**(b as any)",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a as any, b)
-```
-
-```json
-{
-  "output": "(a as any)**b",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a, b) as any
-```
-
-```json
-{
-  "output": "(a**b) as any",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `prefer-named-capture-group`
 
 Pass: 54 / 57 (94.7%)
 Fail: 3 / 57 (5.3%)
+Skip: 0 / 57 (0.0%)
 
 #### prefer-named-capture-group > invalid
 
@@ -109218,6 +108155,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 91 / 92 (98.9%)
 Fail: 1 / 92 (1.1%)
+Skip: 0 / 92 (0.0%)
 
 #### prefer-object-has-own > valid
 
@@ -109256,7 +108194,8 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ### `prefer-object-spread`
 
 Pass: 80 / 87 (92.0%)
-Fail: 7 / 87 (8.0%)
+Fail: 5 / 87 (5.7%)
+Skip: 2 / 87 (2.3%)
 
 #### prefer-object-spread > invalid
 
@@ -109427,68 +108366,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-#### prefer-object-spread > invalid
-
-```js
-const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());
-```
-
-```json
-{
-  "output": "const obj = { ...getObject()};",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-object-spread > invalid
-
-```js
-Object.assign<{}, A>({}, foo);
-```
-
-```json
-{
-  "output": "({ ...foo});",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `prefer-regex-literals`
 
 Pass: 239 / 251 (95.2%)
 Fail: 12 / 251 (4.8%)
+Skip: 0 / 251 (0.0%)
 
 #### prefer-regex-literals > valid
 
@@ -109930,6 +108812,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 33 / 54 (61.1%)
 Fail: 21 / 54 (38.9%)
+Skip: 0 / 54 (0.0%)
 
 #### radix > valid
 
@@ -110563,6 +109446,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 76 / 79 (96.2%)
 Fail: 3 / 79 (3.8%)
+Skip: 0 / 79 (0.0%)
 
 #### require-unicode-regexp > invalid
 
@@ -111843,6 +110727,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 307 / 308 (99.7%)
 Fail: 1 / 308 (0.3%)
+Skip: 0 / 308 (0.0%)
 
 #### semi > invalid
 
@@ -111904,6 +110789,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 
 Pass: 106 / 126 (84.1%)
 Fail: 20 / 126 (15.9%)
+Skip: 0 / 126 (0.0%)
 
 #### strict > valid
 
@@ -112840,6 +111726,7 @@ AssertionError [ERR_ASSERTION]: messageId 'function' does not match expected mes
 
 Pass: 6 / 8 (75.0%)
 Fail: 2 / 8 (25.0%)
+Skip: 0 / 8 (0.0%)
 
 #### symbol-description > invalid
 
@@ -112897,6 +111784,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 4 / 7 (57.1%)
 Fail: 3 / 7 (42.9%)
+Skip: 0 / 7 (0.0%)
 
 #### unicode-bom > valid
 
@@ -113000,6 +111888,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 53 / 54 (98.1%)
 Fail: 1 / 54 (1.9%)
+Skip: 0 / 54 (0.0%)
 
 #### valid-typeof > invalid
 
