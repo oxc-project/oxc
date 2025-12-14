@@ -76,5 +76,6 @@ url = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+jsonschema = { version = "0.37" }
 markdown = { workspace = true }
 project-root = { workspace = true }
