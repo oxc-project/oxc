@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "curly": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.js"
+      ],
+      "rules": {
+        "no-console": "error"
+      },
+      "categories": {
+        "perf": true
+      }
+    }
+  ]
+}
