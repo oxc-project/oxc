@@ -26,8 +26,12 @@ impl EmbeddedFormatter {
     }
 
     /// Check if the given tag name is supported for embedded formatting.
+    /// Supports both simple identifiers (css) and member expressions (styled.div).
     pub fn is_supported_tag(tag_name: &str) -> bool {
-        SUPPORTED_TAGS.contains(&tag_name)
+        // For member expressions, check if the base identifier is supported
+        // e.g., "styled" from "styled.div"
+        let base_tag = tag_name.split('.').next().unwrap_or(tag_name);
+        SUPPORTED_TAGS.contains(&base_tag)
     }
 
     /// Format embedded code with the given tag name.

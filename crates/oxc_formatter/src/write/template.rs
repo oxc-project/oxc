@@ -679,6 +679,20 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
+/// Extract the full tag name from an expression
+/// Handles both simple identifiers (css) and member expressions (styled.div)
+fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
+    match expr {
+        Expression::Identifier(ident) => Some(ident.name.as_str().to_string()),
+        Expression::StaticMemberExpression(member) => {
+            // Recursively build the full member expression name
+            let base = get_tag_name(&member.object)?;
+            Some(format!("{}.{}", base, member.property.name.as_str()))
+        }
+        _ => None,
+    }
+}
+
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
 fn try_format_embedded_template<'a>(
@@ -690,13 +704,12 @@ fn try_format_embedded_template<'a>(
         return false;
     }
 
-    let Expression::Identifier(ident) = &tagged.tag else {
+    let Some(tag_name) = get_tag_name(&tagged.tag) else {
         return false;
     };
 
-    let tag_name = ident.name.as_str();
     // Check if the tag is supported by the embedded formatter
-    if !EmbeddedFormatter::is_supported_tag(tag_name) {
+    if !EmbeddedFormatter::is_supported_tag(&tag_name) {
         return false;
     }
 
@@ -706,7 +719,7 @@ fn try_format_embedded_template<'a>(
     };
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
+    let Ok(formatted) = embedded_formatter.format(&tag_name, template_content) else {
         return false;
     };
 
