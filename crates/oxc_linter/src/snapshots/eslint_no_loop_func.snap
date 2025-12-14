@@ -365,3 +365,16 @@ source: crates/oxc_linter/src/tester.rs
  8 │                       }
    ╰────
   help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+    ╭─[no_loop_func.tsx:4:18]
+  3 │                 for (var i = 0; i < 5; i++) {
+  4 │ ╭─▶                 (() => {
+  5 │ │                       (function f() {
+  6 │ │                           arr.push(f);
+  7 │ │                           return i;
+  8 │ │                       })();
+  9 │ ╰─▶                 })();
+ 10 │                 }
+    ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.

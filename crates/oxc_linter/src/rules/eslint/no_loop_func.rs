@@ -202,7 +202,7 @@ impl NoLoopFunc {
                 return scoping
                     .get_resolved_references(id.symbol_id())
                     .map(|reference| nodes.get_node(reference.node_id()))
-                    .any(|node| node.span().contains_inclusive(node_span));
+                    .any(|ref_node| node_span.contains_inclusive(ref_node.span()));
             }
         }
 
@@ -886,6 +886,17 @@ fn test() {
 			        };
 			      }
 			      ",
+        "
+            var arr = [];
+            for (var i = 0; i < 5; i++) {
+                (() => {
+                    (function f() {
+                        arr.push(f);
+                        return i;
+                    })();
+                })();
+            }
+            ",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();
