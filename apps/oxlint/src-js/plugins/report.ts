@@ -5,11 +5,12 @@
 import { filePath } from "./context.ts";
 import { getFixes } from "./fix.ts";
 import { getOffsetFromLineColumn } from "./location.ts";
+import { typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Fix, FixFn } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
-import type { Location, Ranged } from "./location.ts";
+import type { LineColumn, Ranged } from "./location.ts";
 
 const { hasOwn, keys: ObjectKeys } = Object;
 
@@ -31,10 +32,18 @@ interface DiagnosticBase {
   message?: string | null | undefined;
   messageId?: string | null | undefined;
   node?: Ranged;
-  loc?: Location;
+  loc?: LocationWithOptionalEnd | LineColumn;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[];
+}
+
+/**
+ * Location with `end` property optional.
+ */
+interface LocationWithOptionalEnd {
+  start: LineColumn;
+  end?: LineColumn | null | undefined;
 }
 
 /**
@@ -92,13 +101,27 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   }
 
   // TODO: Validate `diagnostic`
-  let start: number, end: number, loc: Location | undefined;
+  let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
 
   if (hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
-    if (typeof loc !== "object") throw new TypeError("`loc` must be an object");
-    start = getOffsetFromLineColumn(loc.start);
-    end = getOffsetFromLineColumn(loc.end);
+    // Can be any of:
+    // * `{ start: { line, column }, end: { line, column } }`
+    // * `{ start: { line, column }, end: null }`
+    // * `{ start: { line, column }, end: undefined }`
+    // * `{ start: { line, column } }`
+    // * `{ line, column }`
+    if (typeof loc !== "object") throw new TypeError("`loc` must be an object if provided");
+
+    if (hasOwn(loc, "start")) {
+      typeAssertIs<LocationWithOptionalEnd>(loc);
+      start = getOffsetFromLineColumn(loc.start);
+      end = loc.end == null ? start : getOffsetFromLineColumn(loc.end);
+    } else {
+      typeAssertIs<LineColumn>(loc);
+      start = getOffsetFromLineColumn(loc);
+      end = start;
+    }
   } else {
     // `node`
     const { node } = diagnostic;

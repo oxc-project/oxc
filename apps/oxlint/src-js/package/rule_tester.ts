@@ -250,8 +250,8 @@ interface ErrorBase {
   data?: DiagnosticData;
   line?: number;
   column?: number;
-  endLine?: number;
-  endColumn?: number;
+  endLine?: number | undefined;
+  endColumn?: number | undefined;
 }
 
 /**
@@ -659,13 +659,33 @@ function assertInvalidTestCaseLocationIsCorrect(
     expectedLocation.column = error.column;
   }
 
+  // `context.report()` accepts just `loc: { line, column }` for error location.
+  // ESLint translates that to `loc: { start: { line, column }, end: null }`.
+  // Oxlint instead sets `end` to same offset as `start`.
+  //
+  // Test cases can specify `endLine: undefined` and `endColumn: undefined` to match this case.
+  //
+  // In ESLint compat mode, deal with this incompatibility.
+  const canVoidEndLocation =
+    test.eslintCompat === true &&
+    diagnostic.endLine === diagnostic.line &&
+    diagnostic.endColumn === diagnostic.column;
+
   if (hasOwn(error, "endLine")) {
-    actualLocation.endLine = diagnostic.endLine;
+    if (error.endLine === undefined && canVoidEndLocation) {
+      actualLocation.endLine = undefined;
+    } else {
+      actualLocation.endLine = diagnostic.endLine;
+    }
     expectedLocation.endLine = error.endLine;
   }
 
   if (hasOwn(error, "endColumn")) {
-    actualLocation.endColumn = diagnostic.endColumn + columnOffset;
+    if (error.endColumn === undefined && canVoidEndLocation) {
+      actualLocation.endColumn = undefined;
+    } else {
+      actualLocation.endColumn = diagnostic.endColumn + columnOffset;
+    }
     expectedLocation.endColumn = error.endColumn;
   }
 
