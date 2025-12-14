@@ -266,6 +266,13 @@ working directory: fixtures/tsgolint
  10 | }
     `----
 
+  x typescript-eslint(prefer-nullish-coalescing): Prefer using nullish coalescing operator (`??`) instead of a ternary expression, as it is simpler to read.
+   ,-[prefer-nullish-coalescing.ts:2:23]
+ 1 | declare const nullableString: string | null;
+ 2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
+   :                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
@@ -381,8 +388,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 49 errors.
-Finished in <variable>ms on 44 files using 1 threads.
+Found 0 warnings and 50 errors.
+Finished in <variable>ms on 45 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

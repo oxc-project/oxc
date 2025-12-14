@@ -274,6 +274,7 @@ pub(crate) mod typescript {
     pub mod prefer_includes;
     pub mod prefer_literal_enum_member;
     pub mod prefer_namespace_keyword;
+    pub mod prefer_nullish_coalescing;
     pub mod prefer_promise_reject_errors;
     pub mod prefer_reduce_type_parameter;
     pub mod prefer_return_this_type;
@@ -1153,6 +1154,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_includes,
     typescript::prefer_literal_enum_member,
     typescript::prefer_namespace_keyword,
+    typescript::prefer_nullish_coalescing,
     typescript::prefer_promise_reject_errors,
     typescript::prefer_reduce_type_parameter,
     typescript::prefer_return_this_type,

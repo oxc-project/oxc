@@ -2989,6 +2989,11 @@ impl RuleRunner for crate::rules::typescript::prefer_namespace_keyword::PreferNa
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::typescript::prefer_nullish_coalescing::PreferNullishCoalescing {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::prefer_promise_reject_errors::PreferPromiseRejectErrors
 {
