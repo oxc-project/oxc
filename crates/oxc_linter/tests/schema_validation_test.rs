@@ -17,9 +17,7 @@ fn get_fixtures_path() -> PathBuf {
 
 fn schema_content() -> String {
     // Load the generated schema from the expected location
-    let schema_json = get_project_root()
-        .unwrap()
-        .join("npm/oxlint/configuration_schema.json");
+    let schema_json = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
 
     fs::read_to_string(&schema_json).expect("Failed to read generated schema")
 }
