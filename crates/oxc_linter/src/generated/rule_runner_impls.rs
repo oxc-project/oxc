@@ -8,6 +8,11 @@ use oxc_semantic::AstTypesBitset;
 
 use crate::rule::{RuleRunFunctionsImplemented, RuleRunner};
 
+impl RuleRunner for crate::rules::eslint::accessor_pairs::AccessorPairs {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::array_callback_return::ArrayCallbackReturn {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));

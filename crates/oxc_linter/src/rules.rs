@@ -40,6 +40,7 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
+    pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
@@ -679,6 +680,7 @@ pub(crate) mod vue {
 }
 
 oxc_macros::declare_all_lint_rules! {
+    eslint::accessor_pairs,
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
