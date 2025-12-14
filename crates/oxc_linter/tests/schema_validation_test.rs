@@ -112,11 +112,8 @@ fn test_invalid_configs_fail_validation() {
         let error_messages: String =
             errors.iter().map(|e| format!("- {e}")).collect::<Vec<_>>().join("\n");
 
-        let snapshot_body = format!(
-            "File: {file_name}\n\n.oxlintrc.json:\n{json}\nErrors:\n{errors}\n",
-            json = content,
-            errors = error_messages
-        );
+        let snapshot_body =
+            format!("File: {file_name}\n\n.oxlintrc.json:\n{content}\nErrors:\n{error_messages}\n");
 
         // Name snapshots by file to keep them stable and readable
         let snap_name = format!("invalid_{file_name}_errors");
