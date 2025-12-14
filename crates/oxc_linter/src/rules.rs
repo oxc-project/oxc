@@ -117,6 +117,7 @@ pub(crate) mod eslint {
     pub mod no_labels;
     pub mod no_lone_blocks;
     pub mod no_lonely_if;
+    pub mod no_loop_func;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_misleading_character_class;
@@ -708,6 +709,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_implicit_coercion,
+    eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
