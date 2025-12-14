@@ -31,7 +31,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// TThis rule triggers a warning if `toBe()`, `toEqual()` or `toStrictEqual()` is
+    /// This rule triggers a warning if `toBe()`, `toEqual()` or `toStrictEqual()` is
     /// used to assert object inclusion in an array
     ///
     /// ### Examples
@@ -49,6 +49,17 @@ declare_oxc_lint!(
     /// ```javascript
     /// expect(a).toContain(b);
     /// expect(a).not.toContain(b);
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-to-contain.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-to-contain": "error"
+    ///   }
+    /// }
     /// ```
     PreferToContain,
     jest,
