@@ -2,6 +2,10 @@
   "categories": {
     "correctness": "warn",
     "suspicious": "error",
-    "pedantic": "off"
+    "pedantic": "off",
+    "style": "warn",
+    "perf": "error",
+    "nursery": "error",
+    "restriction": "off"
   }
 }
