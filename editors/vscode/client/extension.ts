@@ -1,5 +1,6 @@
 import { commands, ExtensionContext, window, workspace } from "vscode";
 
+import { join } from "node:path";
 import { OxcCommands } from "./commands";
 import { ConfigService } from "./ConfigService";
 import StatusBarItemHandler from "./StatusBarItemHandler";
@@ -74,6 +75,15 @@ export async function activate(context: ExtensionContext) {
       ),
     ),
   );
+
+  // when no oxlint binary path are provided, fallback to internal oxc_language_server
+  if (!binaryPaths[0]) {
+    const ext = process.platform === "win32" ? ".exe" : "";
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    binaryPaths[0] =
+      process.env.SERVER_PATH_DEV ??
+      join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+  }
 
   // remove this block, when `oxfmt` binary is always required. This will be a breaking change.
   if (
