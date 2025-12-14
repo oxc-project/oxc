@@ -1,0 +1,7 @@
+{
+  "globals": {
+    "Foo": "writable",
+    "Bar": "readonly",
+    "Baz": "off"
+  }
+}

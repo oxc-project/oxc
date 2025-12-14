@@ -35,6 +35,7 @@ fn test_valid_configs_pass_validation() {
         "basic_plugins.json",
         "valid_categories.json",
         "full_config.json",
+        "globals_config.json",
         "env_config.json",
         "rules_config.json",
         "ignore_patterns.json",
@@ -73,6 +74,8 @@ fn test_invalid_configs_fail_validation() {
         "invalid_category.json",
         "invalid_severity.json",
         "plugins_wrong_type.json",
+        "globals_wrong_value.json",
+        "globals_writeable_not_allowed.json",
         // NOTE: "unknown_field.json" is removed because JSON Schema Draft 7
         // allows additional properties by default unless explicitly forbidden
         "env_wrong_type.json",
