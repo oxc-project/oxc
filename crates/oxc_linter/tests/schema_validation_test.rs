@@ -54,7 +54,7 @@ fn test_valid_configs_pass_validation() {
 
     for file_path in &test_files {
         let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap();
-        let content = fs::read_to_string(&file_path)
+        let content = fs::read_to_string(file_path)
             .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
         let instance: serde_json::Value = serde_json::from_str(&content)
@@ -87,7 +87,7 @@ fn test_invalid_configs_fail_validation() {
 
     for file_path in &test_files {
         let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap();
-        let content = fs::read_to_string(&file_path)
+        let content = fs::read_to_string(file_path)
             .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
         let instance: serde_json::Value = serde_json::from_str(&content)
