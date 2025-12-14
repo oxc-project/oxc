@@ -10,7 +10,7 @@ mod tests;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
@@ -32,7 +32,7 @@ pub struct PreferLowercaseTitleConfig {
     ///
     /// Example of **correct** code for the `{ "allowedPrefixes": ["GET"] }` option:
     /// ```js
-    /// /* eslint jest/prefer-lowercase-title: ["error", { "allowedPrefixes": ["GET"] }] */
+    /// /* jest/prefer-lowercase-title: ["error", { "allowedPrefixes": ["GET"] }] */
     /// describe('GET /live');
     /// ```
     allowed_prefixes: Vec<CompactStr>,
@@ -48,19 +48,19 @@ pub struct PreferLowercaseTitleConfig {
     ///
     /// Example of **correct** code for the `{ "ignore": ["describe"] }` option:
     /// ```js
-    /// /* eslint jest/prefer-lowercase-title: ["error", { "ignore": ["describe"] }] */
+    /// /* jest/prefer-lowercase-title: ["error", { "ignore": ["describe"] }] */
     /// describe('Uppercase description');
     /// ```
     ///
     /// Example of **correct** code for the `{ "ignore": ["test"] }` option:
     /// ```js
-    /// /* eslint jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] */
+    /// /* jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] */
     /// test('Uppercase description');
     /// ```
     ///
     /// Example of **correct** code for the `{ "ignore": ["it"] }` option:
     /// ```js
-    /// /* eslint jest/prefer-lowercase-title: ["error", { "ignore": ["it"] }] */
+    /// /* jest/prefer-lowercase-title: ["error", { "ignore": ["it"] }] */
     /// it('Uppercase description');
     /// ```
     ignore: Vec<CompactStr>,
@@ -69,7 +69,7 @@ pub struct PreferLowercaseTitleConfig {
     ///
     /// Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
     /// ```js
-    /// /* eslint jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] */
+    /// /* jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] */
     /// describe('MyClass', () => {
     ///     describe('#myMethod', () => {
     ///         it('does things', () => {
@@ -83,7 +83,7 @@ pub struct PreferLowercaseTitleConfig {
     ///
     /// Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
     /// ```js
-    /// /* eslint vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
+    /// /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
     /// describe('myClass', () => {
     ///     describe('myMethod', () => {
     ///         it('does things', () => {
@@ -95,7 +95,7 @@ pub struct PreferLowercaseTitleConfig {
     ///
     /// Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
     /// ```js
-    /// /* eslint vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
+    /// /* vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
     /// describe('MyClass', () => {
     ///     describe('MyMethod', () => {
     ///         it('does things', () => {
@@ -126,7 +126,7 @@ impl std::ops::Deref for PreferLowercaseTitle {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
@@ -171,32 +171,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        let ignore_top_level_describe = obj
-            .and_then(|config| config.get("ignoreTopLevelDescribe"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-        let lowercase_first_character_only = obj
-            .and_then(|config| config.get("lowercaseFirstCharacterOnly"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let ignore = obj
-            .and_then(|config| config.get("ignore"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-        let allowed_prefixes = obj
-            .and_then(|config| config.get("allowedPrefixes"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(PreferLowercaseTitleConfig {
-            allowed_prefixes,
-            ignore,
-            ignore_top_level_describe,
-            lowercase_first_character_only,
-        }))
+        serde_json::from_value::<DefaultRuleConfig<PreferLowercaseTitle>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_on_jest_node<'a, 'c>(
