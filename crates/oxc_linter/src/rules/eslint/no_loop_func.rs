@@ -152,16 +152,10 @@ impl NoLoopFunc {
         // Check all nodes to find nested functions within this function
         for node in ctx.nodes() {
             let node_span = node.span();
-            // Skip the function itself
-            if node_span == func_span {
-                continue;
-            }
-            // Check if this node is inside the function
-            if !func_span.contains_inclusive(node_span) {
+            if node_span == func_span || !func_span.contains_inclusive(node_span) {
                 continue;
             }
 
-            // Check if it's a nested function and get relevant info
             let (is_async_or_generator, func_id, is_function) = match node.kind() {
                 AstKind::Function(f) => (f.r#async || f.generator, f.id.as_ref(), true),
                 AstKind::ArrowFunctionExpression(f) => (f.r#async, None, true),
@@ -185,14 +179,12 @@ impl NoLoopFunc {
             }
 
             let is_iife = if let AstKind::CallExpression(call) = parent.kind() {
-                // It's an IIFE if the function is the callee
                 call.callee.span().contains_inclusive(node_span)
             } else {
                 false
             };
 
             if !is_iife {
-                // Not an IIFE, it escapes
                 return true;
             }
 
