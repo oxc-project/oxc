@@ -28,7 +28,6 @@ export type {
   RangeOptions,
   SkipOptions,
   Token,
-  CommentToken,
   BooleanToken,
   IdentifierToken,
   JSXIdentifierToken,
@@ -56,7 +55,6 @@ export type {
   BeforeHook,
   Comment,
   Node,
-  NodeOrToken,
   Visitor,
   VisitorWithHooks,
 } from "./plugins/types.ts";

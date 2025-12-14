@@ -40,6 +40,7 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
+    pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
@@ -116,6 +117,7 @@ pub(crate) mod eslint {
     pub mod no_labels;
     pub mod no_lone_blocks;
     pub mod no_lonely_if;
+    pub mod no_loop_func;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_misleading_character_class;
@@ -273,6 +275,7 @@ pub(crate) mod typescript {
     pub mod prefer_includes;
     pub mod prefer_literal_enum_member;
     pub mod prefer_namespace_keyword;
+    pub mod prefer_nullish_coalescing;
     pub mod prefer_promise_reject_errors;
     pub mod prefer_reduce_type_parameter;
     pub mod prefer_return_this_type;
@@ -679,6 +682,7 @@ pub(crate) mod vue {
 }
 
 oxc_macros::declare_all_lint_rules! {
+    eslint::accessor_pairs,
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
@@ -705,6 +709,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_implicit_coercion,
+    eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
@@ -1151,6 +1156,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_includes,
     typescript::prefer_literal_enum_member,
     typescript::prefer_namespace_keyword,
+    typescript::prefer_nullish_coalescing,
     typescript::prefer_promise_reject_errors,
     typescript::prefer_reduce_type_parameter,
     typescript::prefer_return_this_type,

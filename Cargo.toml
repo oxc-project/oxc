@@ -156,12 +156,12 @@ syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 
 #
-javascript-globals = "1" # JavaScript global definitions
-json-strip-comments = "3" # Strip JSON comments
-oxc-browserslist = "2" # Browser compatibility queries
-oxc_index = { version = "4", features = ["nonmax", "serde"] } # Type-safe indices
-oxc_resolver = "11" # Module resolution
-oxc_sourcemap = "6" # Source map generation
+javascript-globals = "1.3.4" # JavaScript global definitions
+json-strip-comments = "3.1.0" # Strip JSON comments
+oxc-browserslist = "2.1.4" # Browser compatibility queries
+oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
+oxc_resolver = "11.15.0" # Module resolution
+oxc_sourcemap = "6.0.1" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait

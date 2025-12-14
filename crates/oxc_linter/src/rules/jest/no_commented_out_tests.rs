@@ -6,8 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_commented_out_tests_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Some tests seem to be commented")
-        .with_help("Remove or uncomment this comment")
+    OxcDiagnostic::warn("Some tests appear to be inside comments.")
+        .with_help("Remove or uncomment this test.")
         .with_label(span)
 }
 
@@ -17,13 +17,14 @@ pub struct NoCommentedOutTests;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule raises a warning about commented out tests. It's similar to
-    /// no-disabled-tests rule.
+    /// This rule raises a warning about commented out tests. It's similar to the
+    /// `no-disabled-tests` rule.
     ///
     /// ### Why is this bad?
     ///
-    /// You may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to
-    /// no-disabled-tests rule.
+    /// You may forget to uncomment some tests. This rule raises a warning about commented-out tests.
+    ///
+    /// It is generally better to skip a test if it's flaky, or remove it if it's no longer needed.
     ///
     /// ### Examples
     ///

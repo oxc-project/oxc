@@ -12,8 +12,9 @@ use crate::{
     utils::{PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call},
 };
 
-fn no_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span)
+fn non_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`jest.setTimeout` should only be called in a global scope")
+        .with_label(span)
 }
 
 fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
@@ -23,7 +24,7 @@ fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn no_unorder_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
+    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods.")
         .with_label(span)
 }
 
@@ -178,7 +179,7 @@ fn handle_jest_set_time_out<'a>(
 
         if expr.property.name == "setTimeout" {
             if !scopes.scope_flags(parent_node.scope_id()).is_top() {
-                ctx.diagnostic(no_global_set_timeout_diagnostic(expr.span));
+                ctx.diagnostic(non_global_set_timeout_diagnostic(expr.span));
             }
 
             if *seen_jest_set_timeout {

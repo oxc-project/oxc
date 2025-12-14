@@ -26,8 +26,8 @@ import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
 import type { Ranged } from "./location.ts";
-import type { Token, CommentToken } from "./tokens.ts";
-import type { BufferWithArrays, Node } from "./types.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
 const { max } = Math;
@@ -194,7 +194,7 @@ export const SOURCE_CODE = Object.freeze({
    * Array of all tokens and comments in the file, in source order.
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
-  get tokensAndComments(): (Token | CommentToken)[] {
+  get tokensAndComments(): (Token | Comment)[] {
     if (tokensAndComments === null) {
       if (tokens === null) {
         if (sourceText === null) initSourceText();

@@ -25,10 +25,6 @@ declare_oxc_lint!(
     /// which improves readability and consistency. This rule applies equally to JavaScript and
     /// TypeScript functions.
     ///
-    /// ### Options
-    ///
-    /// No options available for this rule
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -189,7 +185,7 @@ fn test() {
                 public a: number,
                 protected b = 10,
                 private c?: number,
-            ) {} 
+            ) {}
         }",
         "
         class Foo {
@@ -264,7 +260,7 @@ fn test() {
             constructor(
                 public a?: number,
                 private b: number,
-            ) {} 
+            ) {}
         }",
         "
         class Foo {

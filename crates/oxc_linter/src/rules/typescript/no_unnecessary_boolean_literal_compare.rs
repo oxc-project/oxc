@@ -2,12 +2,9 @@ use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    rule::{DefaultRuleConfig, Rule},
-    utils::default_true,
-};
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnnecessaryBooleanLiteralCompare(Box<NoUnnecessaryBooleanLiteralCompareConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -15,11 +12,9 @@ pub struct NoUnnecessaryBooleanLiteralCompare(Box<NoUnnecessaryBooleanLiteralCom
 pub struct NoUnnecessaryBooleanLiteralCompareConfig {
     /// Whether to allow comparing nullable boolean expressions to `false`.
     /// When false, `x === false` where x is `boolean | null` will be flagged.
-    #[serde(default = "default_true")]
     pub allow_comparing_nullable_booleans_to_false: bool,
     /// Whether to allow comparing nullable boolean expressions to `true`.
     /// When false, `x === true` where x is `boolean | null` will be flagged.
-    #[serde(default = "default_true")]
     pub allow_comparing_nullable_booleans_to_true: bool,
     /// Whether to allow this rule to run without `strictNullChecks` enabled.
     /// This is not recommended as the rule may produce incorrect results.
@@ -97,13 +92,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryBooleanLiteralCompare {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryBooleanLiteralCompareConfig>>(
-                value,
-            )
+        serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryBooleanLiteralCompare>>(value)
             .unwrap_or_default()
-            .into_inner(),
-        ))
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

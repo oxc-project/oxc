@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -138,32 +138,9 @@ fn array_simple(
 
 impl Rule for ArrayType {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(ArrayTypeConfig {
-            default: value
-                .get(0)
-                .and_then(|v| v.get("default"))
-                .and_then(serde_json::Value::as_str)
-                .map_or_else(
-                    || ArrayOption::Array,
-                    |s| match s {
-                        "array" => ArrayOption::Array,
-                        "generic" => ArrayOption::Generic,
-                        _ => ArrayOption::ArraySimple,
-                    },
-                ),
-            readonly: value
-                .get(0)
-                .and_then(|v| v.get("readonly"))
-                .and_then(serde_json::Value::as_str)
-                .map_or_else(
-                    || None,
-                    |s| match s {
-                        "array" => Some(ArrayOption::Array),
-                        "generic" => Some(ArrayOption::Generic),
-                        _ => Some(ArrayOption::ArraySimple),
-                    },
-                ),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<ArrayType>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

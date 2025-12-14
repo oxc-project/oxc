@@ -24,15 +24,15 @@ pub struct NoDupeKeys;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow duplicate keys in object literals
+    /// Disallow duplicate keys in object literals.
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///
     /// Multiple properties with the same key in object literals can cause
     /// unexpected behavior in your application.
-    ///
-    /// It is safe to disable this rule when using TypeScript because
-    /// TypeScript's compiler enforces this check.
     ///
     /// ### Examples
     ///

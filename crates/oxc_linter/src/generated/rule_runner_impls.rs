@@ -8,6 +8,17 @@ use oxc_semantic::AstTypesBitset;
 
 use crate::rule::{RuleRunFunctionsImplemented, RuleRunner};
 
+impl RuleRunner for crate::rules::eslint::accessor_pairs::AccessorPairs {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ClassBody,
+        AstType::ObjectExpression,
+        AstType::TSInterfaceBody,
+        AstType::TSTypeLiteral,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::array_callback_return::ArrayCallbackReturn {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
@@ -500,6 +511,12 @@ impl RuleRunner for crate::rules::eslint::no_lone_blocks::NoLoneBlocks {
 impl RuleRunner for crate::rules::eslint::no_lonely_if::NoLonelyIf {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::IfStatement]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::eslint::no_loop_func::NoLoopFunc {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2976,6 +2993,11 @@ impl RuleRunner for crate::rules::typescript::prefer_namespace_keyword::PreferNa
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::TSModuleDeclaration]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::typescript::prefer_nullish_coalescing::PreferNullishCoalescing {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
 impl RuleRunner

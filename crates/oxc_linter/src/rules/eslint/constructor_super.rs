@@ -50,6 +50,9 @@ declare_oxc_lint!(
     /// Requires `super()` calls in constructors of derived classes and disallows `super()` calls
     /// in constructors of non-derived classes.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
     /// In JavaScript, calling `super()` in the constructor of a derived class (a class that extends
