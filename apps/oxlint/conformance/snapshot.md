@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   259 | 100.0% |
-| Fully passing     |   193 |  74.5% |
-| Partially passing |    65 |  25.1% |
+| Fully passing     |   194 |  74.9% |
+| Partially passing |    64 |  24.7% |
 | Fully failing     |     1 |   0.4% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 26416 | 100.0% |
-| Passing     | 25330 |  95.9% |
-| Failing     |  1086 |   4.1% |
+| Passing     | 25331 |  95.9% |
+| Failing     |  1085 |   4.1% |
 
 ## Fully Passing Rules
 
@@ -40,6 +40,7 @@
 - `default-case` (23 tests)
 - `default-param-last` (96 tests)
 - `dot-location` (78 tests)
+- `dot-notation` (69 tests)
 - `eqeqeq` (68 tests)
 - `for-direction` (72 tests)
 - `func-name-matching` (193 tests)
@@ -224,7 +225,6 @@
 - `comma-dangle` - 257 / 267 (96.3%)
 - `computed-property-spacing` - 123 / 125 (98.4%)
 - `consistent-this` - 23 / 26 (88.5%)
-- `dot-notation` - 68 / 69 (98.6%)
 - `eol-last` - 29 / 35 (82.9%)
 - `func-call-spacing` - 137 / 151 (90.7%)
 - `id-blacklist` - 120 / 131 (91.6%)
@@ -2208,46 +2208,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-### `dot-notation`
-
-Pass: 68 / 69 (98.6%)
-Fail: 1 / 69 (1.4%)
-
-#### dot-notation > invalid
-
-```js
-let?.true
-```
-
-```json
-{
-  "output": "let?.[\"true\"]",
-  "options": [
-    {
-      "allowKeywords": false
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2020
-  },
-  "errors": [
-    {
-      "messageId": "useBrackets",
-      "data": {
-        "key": "true"
-      }
-    }
-  ]
-}
-```
-
-Error: Parsing failed
-    at parse (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
 
 
 ### `eol-last`
