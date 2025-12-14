@@ -140,8 +140,8 @@ impl PreferToContain {
                     .unwrap_or(false);
                 let has_not = jest_expect_fn_call
                     .modifiers()
-                    .first()
-                    .is_some_and(|value| value.name().is_some_and(|modifier| modifier.eq("not")));
+                    .iter()
+                    .any(|modifier| modifier.is_name_equal("not"));
 
                 match (boolean_value, has_not) {
                     (false, true) | (true, false) => "",
