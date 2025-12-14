@@ -703,7 +703,7 @@ fn test() {
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r#"var o = {a: 1};
+            r"var o = {a: 1};
 			 Object.defineProperty(o, 'b',
 			{set: function(value) {
 			 val = value;
@@ -711,7 +711,7 @@ fn test() {
 			 get: function() {
 			 return val;
 			}
-			});"#,
+			});",
             None,
         ),
         ("var o = {set: function() {}}", None),
@@ -1379,42 +1379,42 @@ fn test() {
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r#"var o = {
+            r"var o = {
 			  set [
-			 a](foo) {} };"#,
+			 a](foo) {} };",
             Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }])),
         ),
         (
-            r#"var o = {d: 1};
+            r"var o = {d: 1};
 			 Object.defineProperty(o, 'c',
 			{set: function(value) {
 			 val = value;
 			}
-			});"#,
+			});",
             None,
         ),
         ("Reflect.defineProperty(obj, 'foo', {set: function(value) {}});", None),
         ("Object.defineProperties(obj, {foo: {set: function(value) {}}});", None),
         ("Object.create(null, {foo: {set: function(value) {}}});", None),
         (
-            r#"var o = {d: 1};
+            r"var o = {d: 1};
 			 Object?.defineProperty(o, 'c',
 			{set: function(value) {
 			 val = value;
 			}
-			});"#,
+			});",
             None,
         ),
         ("Reflect?.defineProperty(obj, 'foo', {set: function(value) {}});", None),
         ("Object?.defineProperties(obj, {foo: {set: function(value) {}}});", None),
         ("Object?.create(null, {foo: {set: function(value) {}}});", None),
         (
-            r#"var o = {d: 1};
+            r"var o = {d: 1};
 			 (Object?.defineProperty)(o, 'c',
 			{set: function(value) {
 			 val = value;
 			}
-			});"#,
+			});",
             None,
         ),
         ("(Reflect?.defineProperty)(obj, 'foo', {set: function(value) {}});", None),
@@ -2039,9 +2039,9 @@ fn test() {
             }])),
         ),
         (
-            r#"A = class {
+            r"A = class {
 			  set [
-			 a](foo) {} };"#,
+			 a](foo) {} };",
             Some(serde_json::json!([{
                 "setWithoutGet": true,
                 "getWithoutSet": true,
