@@ -393,7 +393,11 @@ impl AccessorPairs {
 
         // Only report setWithoutGet for property descriptors
         // (ESLint doesn't check getWithoutSet for Object.defineProperty)
-        if has_set && !has_get && self.set_without_get && let Some(span) = set_span {
+        if has_set
+            && !has_get
+            && self.set_without_get
+            && let Some(span) = set_span
+        {
             ctx.diagnostic(setter_without_getter_diagnostic(span));
         }
     }
