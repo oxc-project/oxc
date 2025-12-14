@@ -2,6 +2,7 @@
   "ignorePatterns": [
     "dist",
     "node_modules",
-    "*.min.js"
+    "*.min.js",
+    "**/*.ts"
   ]
 }

@@ -44,19 +44,18 @@ fn test_valid_configs_pass_validation() {
     for file_name in &test_files {
         let file_path = valid_dir.join(file_name);
         let content = fs::read_to_string(&file_path)
-            .unwrap_or_else(|e| panic!("Failed to read {}: {}", file_name, e));
+            .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
         let instance: serde_json::Value = serde_json::from_str(&content)
-            .unwrap_or_else(|e| panic!("Failed to parse {} as JSON: {}", file_name, e));
+            .unwrap_or_else(|e| panic!("Failed to parse {file_name} as JSON: {e}"));
 
         // Use iter_errors to get all validation errors
         let errors: Vec<_> = schema.iter_errors(&instance).collect();
 
         if !errors.is_empty() {
-            let error_messages: Vec<String> = errors.iter().map(|e| format!("  - {}", e)).collect();
+            let error_messages: Vec<String> = errors.iter().map(|e| format!("  - {e}")).collect();
             panic!(
-                "Valid config '{}' failed schema validation:\n{}",
-                file_name,
+                "Valid config '{file_name}' failed schema validation:\n{}",
                 error_messages.join("\n")
             );
         }
@@ -82,18 +81,17 @@ fn test_invalid_configs_fail_validation() {
     for file_name in &test_files {
         let file_path = invalid_dir.join(file_name);
         let content = fs::read_to_string(&file_path)
-            .unwrap_or_else(|e| panic!("Failed to read {}: {}", file_name, e));
+            .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
         let instance: serde_json::Value = serde_json::from_str(&content)
-            .unwrap_or_else(|e| panic!("Failed to parse {} as JSON: {}", file_name, e));
+            .unwrap_or_else(|e| panic!("Failed to parse {file_name} as JSON: {e}"));
 
         // Use iter_errors to check for validation errors
         let errors: Vec<_> = schema.iter_errors(&instance).collect();
 
         assert!(
             !errors.is_empty(),
-            "Invalid config '{}' unexpectedly passed schema validation",
-            file_name
+            "Invalid config '{file_name}' unexpectedly passed schema validation"
         );
     }
 }

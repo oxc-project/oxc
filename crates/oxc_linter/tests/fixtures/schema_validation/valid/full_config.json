@@ -4,6 +4,10 @@
     "typescript",
     "unicorn"
   ],
+  "jsPlugins": [
+    "eslint-plugin-foo",
+    "eslint-plugin-bar"
+  ],
   "env": {
     "browser": true
   },
