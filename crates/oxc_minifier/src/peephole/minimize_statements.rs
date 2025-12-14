@@ -12,8 +12,11 @@ use oxc_span::{ContentEq, GetSpan, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::Ancestor;
-use std::cmp::Ordering;
-use std::{cmp::min, iter, ops::ControlFlow};
+use std::{
+    cmp::{Ordering, min},
+    iter,
+    ops::ControlFlow,
+};
 
 use super::PeepholeOptimizations;
 
@@ -465,15 +468,9 @@ impl<'a> PeepholeOptimizations {
 
         let Some(Expression::ObjectExpression(init_expr)) = &decl.init else { return false };
 
-        if init_expr
-            .properties
-            .iter()
-            .any(|e| e.is_spread() /*|| e.may_have_side_effects(ctx) */)
-        {
+        if init_expr.properties.iter().any(|e| e.is_spread() || e.may_have_side_effects(ctx)) {
             return false;
         }
-
-        // todo: more checks
 
         true
     }
@@ -490,8 +487,6 @@ impl<'a> PeepholeOptimizations {
             return false;
         };
 
-        println!("simplify_object_destruction_assignment");
-
         id_kind.properties.sort_by(|a, b| {
             let a_short = a.shorthand || b.value.kind.is_binding_identifier();
             let b_short = b.shorthand || b.value.kind.is_binding_identifier();
@@ -505,93 +500,82 @@ impl<'a> PeepholeOptimizations {
         });
 
         for id_prop in id_kind.properties.drain(..) {
-            match id_prop.key {
-                PropertyKey::StaticIdentifier(key) => {
-                    let init_value = init_expr
-                        .properties
-                        .iter()
-                        .rposition(|init| {
-                            init.prop_name().is_some_and(|name| name.0.eq(key.name.as_str()))
-                        })
-                        .and_then(|index| init_expr.properties.get_mut(index))
-                        .and_then(|mut value| {
-                            if let ObjectPropertyKind::ObjectProperty(prop) = &mut value {
-                                if id_prop.value.kind.is_binding_identifier()
-                                    || id_prop.value.kind.is_assignment_pattern()
-                                {
-                                    let val = prop.value.take_in(ctx.ast);
-                                    prop.value = ctx.create_ident_expr(
-                                        id_prop.value.span(),
-                                        key.name,
-                                        id_prop
-                                            .value
-                                            .get_binding_identifier()
-                                            .map(BindingIdentifier::symbol_id),
-                                        ReferenceFlags::Read,
-                                    );
-                                    Some(val)
-                                } else {
-                                    let unique = ctx.generate_uid_in_current_scope(
-                                        &key.name,
-                                        SymbolFlags::ConstVariable,
-                                    );
-                                    let ident = unique.create_binding_pattern(ctx);
-                                    let symbol_id = ident
-                                        .get_binding_identifier()
-                                        .map(BindingIdentifier::symbol_id);
+            let id_prop_name = match id_prop.key {
+                PropertyKey::StaticIdentifier(ident) => ident.name,
+                PropertyKey::Identifier(ident) => ident.name,
+                PropertyKey::StringLiteral(lit) => lit.value,
+                PropertyKey::NumericLiteral(lit) => Atom::from(ctx.ast.str(&lit.to_string())),
+                unk_property => panic!("usuported type {:?}", unk_property), // TODO
+            };
 
-                                    result.push(ctx.ast.variable_declarator(
-                                        SPAN,
-                                        decl.kind,
-                                        ident,
-                                        Option::from(prop.value.take_in(ctx.ast)),
-                                        decl.definite,
-                                    ));
+            let init_value = init_expr
+                .properties
+                .iter()
+                .rposition(|init| {
+                    init.prop_name().is_some_and(|name| name.0.eq(id_prop_name.as_str()))
+                })
+                .and_then(|index| init_expr.properties.get_mut(index))
+                .and_then(|mut value| {
+                    if let ObjectPropertyKind::ObjectProperty(prop) = &mut value {
+                        if id_prop.value.kind.is_binding_identifier()
+                            || id_prop.value.kind.is_assignment_pattern()
+                        {
+                            let val = prop.value.take_in(ctx.ast);
+                            prop.value = ctx.create_ident_expr(
+                                id_prop.value.span(),
+                                id_prop_name,
+                                id_prop
+                                    .value
+                                    .get_binding_identifier()
+                                    .map(BindingIdentifier::symbol_id),
+                                ReferenceFlags::Read,
+                            );
+                            Some(val)
+                        } else {
+                            let unique = ctx.generate_uid_in_current_scope(
+                                &id_prop_name,
+                                SymbolFlags::ConstVariable,
+                            );
+                            let ident = unique.create_binding_pattern(ctx);
+                            let symbol_id =
+                                ident.get_binding_identifier().map(BindingIdentifier::symbol_id);
 
-                                    prop.value = ctx.create_ident_expr(
-                                        key.span,
-                                        unique.name,
-                                        symbol_id,
-                                        ReferenceFlags::Read,
-                                    );
+                            result.push(ctx.ast.variable_declarator(
+                                SPAN,
+                                decl.kind,
+                                ident,
+                                Option::from(prop.value.take_in(ctx.ast)),
+                                decl.definite,
+                            ));
 
-                                    // replace reference for `{ x, x: c } = ....`
-                                    Some(ctx.create_ident_expr(
-                                        id_prop.value.span(),
-                                        unique.name,
-                                        symbol_id,
-                                        ReferenceFlags::Read,
-                                    ))
-                                }
-                            } else {
-                                None
-                            }
-                        });
+                            prop.value = ctx.create_ident_expr(
+                                SPAN,
+                                unique.name,
+                                symbol_id,
+                                ReferenceFlags::Read,
+                            );
 
-                    // let callee = ctx.create_ident_expr(
-                    //     SPAN,
-                    //     Atom::from("require"),
-                    //     require_symbol_id,
-                    //     ReferenceFlags::read(),
-                    // );
+                            // replace reference for `{ x, x: c } = ....`
+                            Some(ctx.create_ident_expr(
+                                id_prop.value.span(),
+                                unique.name,
+                                symbol_id,
+                                ReferenceFlags::Read,
+                            ))
+                        }
+                    } else {
+                        None
+                    }
+                });
 
-                    // println!("init_value:{:#?}", init_value);
-                    // println!("id_prop:{:#?}", id_prop.value);
-
-                    result.push(ctx.ast.variable_declarator(
-                        id_prop.span,
-                        decl.kind,
-                        id_prop.value,
-                        init_value,
-                        decl.definite,
-                    ));
-                    println!("result:{:#?}", result);
-                    // let expr = id_prop.key.into_expression();
-                }
-                _ => todo!("support spread"),
-            }
+            result.push(ctx.ast.variable_declarator(
+                id_prop.span,
+                decl.kind,
+                id_prop.value,
+                init_value,
+                decl.definite,
+            ));
         }
-        // println!("props {:?}", id_kind);
         true
     }
 
