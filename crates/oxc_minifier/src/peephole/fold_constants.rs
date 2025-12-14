@@ -266,7 +266,7 @@ impl<'a> PeepholeOptimizations {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan
             | BinaryOperator::ShiftRight
-            | BinaryOperator::Instanceof => ctx.eval_binary(e),
+            | BinaryOperator::Instanceof => ctx.eval_binary_with_const(e),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 ctx.eval_binary(e).or_else(|| Self::try_fold_left_child_op(e, ctx))
             }
@@ -1048,6 +1048,15 @@ mod test {
         fold_same("+x==!y");
         fold_same("+x<=!y");
         fold_same("+x === !y");
+
+        test(
+            "const a = 999.9; NOTHING(a,a); NOOP(a === 99.9 + 900)",
+            "const a = 999.9; NOTHING(a,a), NOOP(!0);",
+        );
+        test(
+            "const a = 233.3; NOTHING(a,a); NOOP(a >= 500)",
+            "const a = 233.3; NOTHING(a,a), NOOP(!1);",
+        );
     }
 
     #[test]
@@ -1055,6 +1064,15 @@ mod test {
         fold_same("!x==''+y");
         fold_same("!x<=''+y");
         fold_same("!x !== '' + y");
+
+        test(
+            r#"const a = "5555"; NOTHING(a,a); NOOP(a === "5555")"#,
+            "const a = '5555'; NOTHING(a,a), NOOP(!0);",
+        );
+        test(
+            r#"const a = "5555"; NOOP(a === "5555"); export { a as e }"#,
+            "const a = '5555'; NOOP(!0); export { a as e };",
+        );
     }
 
     #[test]
@@ -1217,6 +1235,11 @@ mod test {
         fold_same("x = typeof[1,[foo()]]");
         fold_same("x = typeof{bathwater:baby()}");
         fold_same("x = typeof class { static { foo() } }");
+
+        test(
+            r#"let a = 1; NOOP(typeof a === "number"); export { a as e }"#,
+            "let a = 1; NOOP(!0); export { a as e };",
+        );
     }
 
     #[test]
