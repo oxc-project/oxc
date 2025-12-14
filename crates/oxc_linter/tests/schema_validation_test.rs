@@ -31,28 +31,29 @@ fn load_schema() -> Validator {
     Validator::new(&schema).expect("Failed to compile JSON schema")
 }
 
+/// Return a sorted list of JSON files in `dir`
+fn list_json_files(dir: &PathBuf) -> Vec<std::path::PathBuf> {
+    let mut files: Vec<std::path::PathBuf> = fs::read_dir(dir)
+        .unwrap_or_else(|e| panic!("Failed to read dir {}: {e}", dir.display()))
+        .filter_map(|entry| entry.ok().map(|e| e.path()))
+        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+        .collect();
+
+    files.sort_by_key(|p| p.file_name().map(|s| s.to_string_lossy().to_string()));
+    files
+}
+
 /// Test that valid configuration files pass schema validation
 #[test]
 fn test_valid_configs_pass_validation() {
     let schema = load_schema();
     let valid_dir = get_fixtures_path().join("valid");
 
-    let test_files = [
-        "basic_plugins.json",
-        "valid_categories.json",
-        "full_config.json",
-        "globals_config.json",
-        "env_config.json",
-        "rules_config.json",
-        "ignore_patterns.json",
-        "empty_config.json",
-        "complex_nested.json",
-        "extends_and_overrides.json",
-        "combined_sources.json",
-    ];
+    // Get all json files in the valid fixture directory.
+    let test_files = list_json_files(&valid_dir);
 
-    for file_name in &test_files {
-        let file_path = valid_dir.join(file_name);
+    for file_path in &test_files {
+        let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap();
         let content = fs::read_to_string(&file_path)
             .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
@@ -81,18 +82,11 @@ fn test_invalid_configs_fail_validation() {
     // TODO: Add another invalid test case to ensure that unknown fields are caught.
     // `additionalProperties` needs to be set to false for this to work and we need
     // to explicitly allow the "$schema" field.
-    let test_files = [
-        "invalid_plugin.json",
-        "invalid_category.json",
-        "invalid_severity.json",
-        "plugins_wrong_type.json",
-        "globals_wrong_value.json",
-        "globals_writeable_not_allowed.json",
-        "env_wrong_type.json",
-    ];
+    // Get all json files in the invalid fixture directory.
+    let test_files = list_json_files(&invalid_dir);
 
-    for file_name in &test_files {
-        let file_path = invalid_dir.join(file_name);
+    for file_path in &test_files {
+        let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap();
         let content = fs::read_to_string(&file_path)
             .unwrap_or_else(|e| panic!("Failed to read {file_name}: {e}"));
 
