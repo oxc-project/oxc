@@ -1,4 +1,5 @@
-// Test that `let` can be used as identifier with optional chaining in script
+// Test that `let` can be used as identifier with optional chaining and member access in script
+let.x;
 let?.x;
 let?.y.z;
 let?.[0];
