@@ -83,7 +83,12 @@ import {
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
 } from "../generated/type_ids.ts";
-import { parseSelector, wrapVisitFnWithSelectorMatch } from "./selector.ts";
+import {
+  parseSelector,
+  wrapVisitFnWithSelectorMatch,
+  EXIT_FLAG,
+  IDENTIFIER_COUNT_INCREMENT,
+} from "./selector.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node, Visitor } from "./types.ts";
@@ -105,11 +110,8 @@ interface VisitProp {
   // Only `null` in between compilations - this field is only nullable to allow `VisitProp` objects to be reused,
   // while allowing the `VisitFn` to be garbage collected.
   fn: VisitFn | null;
-  // TODO: Combine `attributeCount` and `identifierCount` into a single `specificity` field
-  // Number of attributes in selector. Used for calculating selector's specificity.
-  attributeCount: number;
-  // Number of identifiers in selector. Used for calculating selector's specificity.
-  identifierCount: number;
+  // Specificity of visitor function.
+  specificity: number;
   // Selector string e.g. `Program`, `Program > ExpressionStatement`, `*`.
   // Does not include trailing `:exit`.
   // Used as tie-breaker for specificity.
@@ -125,16 +127,6 @@ interface CompilingNonLeafVisitorEntry {
   // Visitor props for exit
   exit: VisitProp[];
 }
-
-// Value to add to `attributeCount` for exit visit fns.
-//
-// V8 stores small integers ("SMI"s) inline in object, instead of on heap.
-// When V8 pointer compression is enabled, SMIs are 31-bit signed integers,
-// so max positive value of an SMI is `2^30 - 1`.
-// So `1 << 29` is the largest value we can use, while keeping within the SMI range.
-// It seems inconceivable that a selector could contain `1 << 29` attributes,
-// so this should not clash with the actual attribute count.
-const EXIT_FLAG = 1 << 29;
 
 // During compilation, arrays of visitor props are stored in these arrays.
 // These arrays are initialized with empty arrays, and never modified thereafter.
@@ -254,32 +246,28 @@ export function addVisitorToCompiled(visitor: Visitor): void {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
 
-    // If this is an exit visit fn, `attributeCount` is `EXIT_FLAG`, otherwise 0.
-    // Visit fns are sorted in ascending order of `attributeCount`.
-    // For leaf nodes, the high `attributeCount` ensures that exit visit fns are sorted after enter visit fns,
+    // If this is an exit visit fn, set `specificity` initially to `EXIT_FLAG`, otherwise 0.
+    // Visit fns are sorted in ascending order of `specificity`.
+    // For leaf nodes, the high `specificity` ensures that exit visit fns are sorted after enter visit fns,
     // and therefore `exit` fns are called after `enter` fns.
-    // `attributeCount` is updated later for selectors which do have attributes.
-    let attributeCount = 0;
+    let specificity = 0;
 
     const isExit = name.endsWith(":exit");
     if (isExit) {
       name = name.slice(0, -5);
-      attributeCount = EXIT_FLAG;
+      specificity = EXIT_FLAG;
     }
 
     // Create `VisitProp` object.
     // Use an existing object from cache if available, otherwise create a new one.
-    //
-    // Identifier count defaults to 1, for common case of visit fns which only visit a single node e.g. `Program`.
     let visitProp: VisitProp;
     if (visitPropsCacheNextIndex < visitPropsCache.length) {
       visitProp = visitPropsCache[visitPropsCacheNextIndex];
       visitProp.fn = visitFn;
-      visitProp.attributeCount = attributeCount;
-      visitProp.identifierCount = 1;
+      visitProp.specificity = specificity;
       visitProp.selectorStr = name;
     } else {
-      visitProp = { fn: visitFn, attributeCount, identifierCount: 1, selectorStr: name };
+      visitProp = { fn: visitFn, specificity, selectorStr: name };
       visitPropsCache.push(visitProp);
     }
     visitPropsCacheNextIndex++;
@@ -288,26 +276,23 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     // to avoid 2 hashmap lookups for selectors?
     let typeId = NODE_TYPE_IDS_MAP.get(name);
     if (typeId !== undefined) {
-      // Single type visit function e.g. `Program`
+      // Single type visit function e.g. `Program`.
+      // Add a single identifier to `specificity`. Use `|=` to keep exit flag.
+      visitProp.specificity |= IDENTIFIER_COUNT_INCREMENT;
       addVisitFn(typeId, visitProp, isExit);
       continue;
     }
 
     // `*` matches any node without any filtering, so no need to wrap it
-    if (name === "*") {
-      visitProp.identifierCount = 0;
-    } else {
+    if (name !== "*") {
       // Selector.
       // Parse selector.
       // Wrap `visitFn` so it only executes if the selector matches.
       // If selector is simple (unconditionally matches certain types e.g. `:matches(X, Y)`), skip wrapping.
       const selector = parseSelector(name);
 
-      // Update specificity.
-      // Note: Need to use `|=` for `attributeCount`, to keep the exit flag.
-      debugAssert(selector.attributeCount < EXIT_FLAG);
-      visitProp.attributeCount |= selector.attributeCount;
-      visitProp.identifierCount = selector.identifierCount;
+      // Update specificity. Use `|=` to keep exit flag.
+      visitProp.specificity |= selector.specificity;
 
       if (selector.isComplex) {
         visitProp.fn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
@@ -475,15 +460,9 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     mergedFn = visitProps[0].fn;
   } else {
     // Sort in ascending order of specificity.
-    // Order:
-    // * `attributeCount` in ascending order.
-    // * `identifierCount` in ascending order.
-    // * Selector string as tie-breaker.
+    // Selector string as tie-breaker.
     visitProps.sort((a, b) => {
-      let diff = a.attributeCount - b.attributeCount;
-      if (diff !== 0) return diff;
-
-      diff = a.identifierCount - b.identifierCount;
+      const diff = a.specificity - b.specificity;
       if (diff !== 0) return diff;
 
       const strA = a.selectorStr,
