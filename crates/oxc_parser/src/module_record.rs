@@ -46,20 +46,25 @@ impl<'a> ModuleRecordBuilder<'a> {
         // Multiple default exports
         // `export default foo`
         // `export { default }`
-        let default_exports = module_record
-            .local_export_entries
-            .iter()
-            .filter_map(|export_entry| export_entry.export_name.default_export_span())
-            .chain(
-                module_record
-                    .indirect_export_entries
-                    .iter()
-                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            )
-            .collect::<std::vec::Vec<_>>();
-        if default_exports.len() > 1 {
+        let default_export_spans = || {
+            module_record
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    module_record
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                )
+        };
+
+        // Avoid collecting spans in the common case (0-1 default export).
+        // Only build labels once we know we have a duplicate.
+        if default_export_spans().take(2).count() > 1 {
             errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
+                OxcDiagnostic::error("Duplicated default export")
+                    .with_labels(default_export_spans()),
             );
         }
         errors
