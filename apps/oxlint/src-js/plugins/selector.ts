@@ -6,7 +6,8 @@ import { ancestors } from "../generated/walk.js";
 
 import type { ESQueryOptions, Selector as EsquerySelector } from "esquery";
 import type { Node as EsqueryNode } from "estree";
-import type { Node, VisitFn } from "./types.ts";
+import type { Node } from "./types.ts";
+import type { VisitFn } from "./visitor.ts";
 
 const ObjectKeys = Object.keys;
 

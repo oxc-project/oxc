@@ -80,10 +80,24 @@ import {
 import { parseSelector, wrapVisitFnWithSelectorMatch } from "./selector.ts";
 import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from "./types.ts";
+import type { Node, Visitor } from "./types.ts";
 
 const ObjectKeys = Object.keys,
   { isArray } = Array;
+
+// Visit function for a specific AST node type.
+export type VisitFn = (node: Node) => void;
+
+// Enter+exit pair, for non-leaf nodes in compiled visitor.
+export interface EnterExit {
+  enter: VisitFn | null;
+  exit: VisitFn | null;
+}
+
+// Element of compiled visitor array.
+// * `VisitFn | null` for leaf nodes.
+// * `EnterExit | null` for non-leaf nodes.
+type CompiledVisitorEntry = VisitFn | EnterExit | null;
 
 // Types for temporary state of entries of `compiledVisitor`
 // between calling `initCompiledVisitor` and `finalizeCompiledVisitor`.
