@@ -170,6 +170,7 @@ pub(crate) mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_assignment;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
