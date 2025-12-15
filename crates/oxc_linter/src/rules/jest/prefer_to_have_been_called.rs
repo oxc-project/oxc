@@ -121,7 +121,6 @@ impl PreferToHaveBeenCalled {
                 // need to find the position of not and replace to the end of the method call
                 let not_start = not_modifier.span.start;
 
-
                 let call_end = call_expr.span.end;
                 let replace_span = Span::new(not_start, call_end);
 
