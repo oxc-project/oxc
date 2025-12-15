@@ -17,18 +17,6 @@ fn prefer_to_have_been_called_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn is_zero_arg(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::NumericLiteral(lit) => lit.value == 0.0,
-        Expression::BigIntLiteral(lit) => lit.value == "0",
-        Expression::TSAsExpression(ts) => is_zero_arg(&ts.expression),
-        Expression::TSSatisfiesExpression(ts) => is_zero_arg(&ts.expression),
-        Expression::ParenthesizedExpression(p) => is_zero_arg(&p.expression),
-        Expression::TSNonNullExpression(n) => is_zero_arg(&n.expression),
-        _ => false,
-    }
-}
-
 #[derive(Debug, Default, Clone)]
 pub struct PreferToHaveBeenCalled;
 
@@ -137,6 +125,13 @@ impl PreferToHaveBeenCalled {
     }
 }
 
+fn is_zero_arg(expr: &Expression<'_>) -> bool {
+    match expr.get_inner_expression() {
+        Expression::NumericLiteral(lit) => lit.value == 0.0,
+        Expression::BigIntLiteral(lit) => lit.value == "0",
+        _ => false,
+    }
+}
 #[test]
 fn test() {
     use crate::tester::Tester;
