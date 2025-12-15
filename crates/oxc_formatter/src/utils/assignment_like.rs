@@ -322,11 +322,11 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             Self::ObjectProperty(property) => {
                 debug_assert!(!property.shorthand);
-                write!(f, [":", space()]);
+                write!(f, [":"]);
             }
             Self::BindingProperty(property) => {
                 if !property.shorthand {
-                    write!(f, [":", space()]);
+                    write!(f, [":"]);
                 }
             }
             Self::PropertyDefinition(property_class_member) => {
@@ -342,14 +342,11 @@ impl<'a> AssignmentLike<'a, '_> {
     fn write_right(&self, f: &mut Formatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
-                write!(
-                    f,
-                    [space(), with_assignment_layout(declarator.init().unwrap(), Some(layout))]
-                );
+                write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
             }
             Self::AssignmentExpression(assignment) => {
                 let right = assignment.right();
-                write!(f, [space(), with_assignment_layout(right, Some(layout))]);
+                write!(f, [with_assignment_layout(right, Some(layout))]);
             }
             Self::ObjectProperty(property) => {
                 let value = property.value();
@@ -359,17 +356,14 @@ impl<'a> AssignmentLike<'a, '_> {
                 write!(f, property.value());
             }
             Self::PropertyDefinition(property) => {
-                write!(
-                    f,
-                    [space(), with_assignment_layout(property.value().unwrap(), Some(layout))]
-                );
+                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
                 if let AstNodes::TSUnionType(union) = declaration.type_annotation().as_ast_nodes() {
                     union.write(f);
                     union.format_trailing_comments(f);
                 } else {
-                    write!(f, [space(), declaration.type_annotation()]);
+                    write!(f, [declaration.type_annotation()]);
                 }
             }
         }
