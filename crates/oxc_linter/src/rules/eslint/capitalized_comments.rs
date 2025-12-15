@@ -394,89 +394,693 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Basic uppercase (default "always")
+        ("//Uppercase", None),
         ("// Uppercase", None),
+        ("/*Uppercase */", None),
         ("/* Uppercase */", None),
-        ("/** Uppercase */", None),
-        // Numbers and non-letters at start
-        ("// 123", None),
-        ("/* 123 */", None),
-        // Empty comments
-        ("// ", None),
-        ("/* */", None),
-        // Directive comments
-        ("// eslint-disable-line", None),
-        ("/* eslint-disable */", None),
-        ("/* global foo */", None),
-        ("/* globals foo */", None),
-        ("/* exported foo */", None),
-        ("// istanbul ignore next", None),
-        ("// jshint asi:true", None),
-        ("// jscs: enable", None),
-        // URLs (various schemes)
-        ("// https://example.com", None),
-        ("// http://example.com", None),
-        ("// ftp://example.com", None),
-        ("// file://path/to/file", None),
-        ("// custom-scheme://resource", None),
-        // JSDoc with URL on second line
-        ("/**\n * https://example.com\n */", None),
-        // Shebang
-        ("#!/usr/bin/env node", None),
-        // With "always" option
-        ("// Uppercase", Some(serde_json::json!(["always"]))),
-        // With "never" option
-        ("// lowercase", Some(serde_json::json!(["never"]))),
-        // ignorePattern (prefix match on normalized text)
-        ("// pragma: no cover", Some(serde_json::json!(["always", { "ignorePattern": "pragma" }]))),
-        // ignorePattern in JSDoc
         (
-            "/**\n * pragma: something\n */",
-            Some(serde_json::json!(["always", { "ignorePattern": "pragma" }])),
+            "/*
+			Uppercase */",
+            None,
         ),
-        // ignoreInlineComments
+        ("/** Uppercase */", None),
+        (
+            "/**
+			Uppercase */",
+            None,
+        ),
+        ("//Über", None),
+        ("//Π", None),
+        (
+            "/* Uppercase
+			second line need not be uppercase */",
+            None,
+        ),
+        ("// ", None),
+        ("//	", None),
+        ("/* */", None),
+        ("/*	*/", None),
+        (
+            "/*
+			*/", None,
+        ),
+        (
+            "/*
+*/", None,
+        ),
+        (
+            "/*
+			*/", None,
+        ),
+        ("/* */", None),
+        ("/* */", None),
+        ("//123", None),
+        ("// 123", None),
+        ("/*123*/", None),
+        ("/* 123 */", None),
+        ("/**123 */", None),
+        ("/** 123 */", None),
+        (
+            "/**
+			123 */",
+            None,
+        ),
+        (
+            "/*
+			123 */",
+            None,
+        ),
+        (
+            "/*123
+			second line need not be uppercase */",
+            None,
+        ),
+        (
+            "/**
+			 * @fileoverview This is a file */",
+            None,
+        ),
+        ("// jscs: enable", None),
+        ("// jscs:disable", None),
+        ("// eslint-disable-line", None),
+        ("// eslint-disable-next-line", None),
+        ("/* eslint semi:off */", None),
+        ("/* eslint-enable */", None),
+        ("/* istanbul ignore next */", None),
+        ("/* jshint asi:true */", None),
+        ("/* jscs: enable */", None),
+        ("/* global var1, var2 */", None),
+        ("/* global var1:true, var2 */", None),
+        ("/* globals var1, var2 */", None),
+        ("/* globals var1:true, var2 */", None),
+        ("/* exported myVar */", None),
+        ("#!foo", None),
+        ("#!foo", Some(serde_json::json!(["always"]))),
+        ("#!Foo", Some(serde_json::json!(["never"]))),
+        ("#!/usr/bin/env node", None),
+        ("#!/usr/bin/env node", Some(serde_json::json!(["always"]))),
+        ("#!/usr/bin/env node", Some(serde_json::json!(["never"]))),
+        ("//Uppercase", Some(serde_json::json!(["always"]))),
+        ("// Uppercase", Some(serde_json::json!(["always"]))),
+        ("/*Uppercase */", Some(serde_json::json!(["always"]))),
+        ("/* Uppercase */", Some(serde_json::json!(["always"]))),
+        (
+            "/*
+			Uppercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("/** Uppercase */", Some(serde_json::json!(["always"]))),
+        (
+            "/**
+			Uppercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//Über", Some(serde_json::json!(["always"]))),
+        ("//Π", Some(serde_json::json!(["always"]))),
+        (
+            "/* Uppercase
+			second line need not be uppercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//123", Some(serde_json::json!(["always"]))),
+        ("// 123", Some(serde_json::json!(["always"]))),
+        ("/*123*/", Some(serde_json::json!(["always"]))),
+        ("/**123*/", Some(serde_json::json!(["always"]))),
+        ("/* 123 */", Some(serde_json::json!(["always"]))),
+        ("/** 123*/", Some(serde_json::json!(["always"]))),
+        (
+            "/**
+			123*/",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			123 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*123
+			second line need not be uppercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/**
+			 @todo: foobar
+			 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/**
+			 * @fileoverview This is a file */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("// jscs: enable", Some(serde_json::json!(["always"]))),
+        ("// jscs:disable", Some(serde_json::json!(["always"]))),
+        ("// eslint-disable-line", Some(serde_json::json!(["always"]))),
+        ("// eslint-disable-next-line", Some(serde_json::json!(["always"]))),
+        ("/* eslint semi:off */", Some(serde_json::json!(["always"]))),
+        ("/* eslint-enable */", Some(serde_json::json!(["always"]))),
+        ("/* istanbul ignore next */", Some(serde_json::json!(["always"]))),
+        ("/* jshint asi:true */", Some(serde_json::json!(["always"]))),
+        ("/* jscs: enable */", Some(serde_json::json!(["always"]))),
+        ("/* global var1, var2 */", Some(serde_json::json!(["always"]))),
+        ("/* global var1:true, var2 */", Some(serde_json::json!(["always"]))),
+        ("/* globals var1, var2 */", Some(serde_json::json!(["always"]))),
+        ("/* globals var1:true, var2 */", Some(serde_json::json!(["always"]))),
+        ("/* exported myVar */", Some(serde_json::json!(["always"]))),
+        ("//lowercase", Some(serde_json::json!(["never"]))),
+        ("// lowercase", Some(serde_json::json!(["never"]))),
+        ("/*lowercase */", Some(serde_json::json!(["never"]))),
+        ("/* lowercase */", Some(serde_json::json!(["never"]))),
+        (
+            "/*
+			lowercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("//über", Some(serde_json::json!(["never"]))),
+        ("//π", Some(serde_json::json!(["never"]))),
+        (
+            "/* lowercase
+			Second line need not be lowercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("//123", Some(serde_json::json!(["never"]))),
+        ("// 123", Some(serde_json::json!(["never"]))),
+        ("/*123*/", Some(serde_json::json!(["never"]))),
+        ("/* 123 */", Some(serde_json::json!(["never"]))),
+        (
+            "/*
+			123 */",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "/*123
+			second line need not be uppercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "/**
+			 @TODO: foobar
+			 */",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "/**
+			 * @Fileoverview This is a file */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("// matching", Some(serde_json::json!(["always", { "ignorePattern": "match" }]))),
+        ("// Matching", Some(serde_json::json!(["never", { "ignorePattern": "Match" }]))),
+        ("// bar", Some(serde_json::json!(["always", { "ignorePattern": "foo|bar" }]))),
+        ("// Bar", Some(serde_json::json!(["never", { "ignorePattern": "Foo|Bar" }]))),
         (
             "foo(/* ignored */ a);",
             Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
         ),
-        // ignoreConsecutiveComments
         (
-            "// Valid comment\n// following comment",
+            "foo(/* Ignored */ a);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(/*
+			ignored */ a);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(/*
+			Ignored */ a);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "// This comment is valid since it is capitalized,
+			// and this one is valid since it follows a valid one,
+			// and same with this one.",
             Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
         ),
-        // Non-cased letters (CJK, Hebrew, Arabic) - should be ignored
-        ("// 你好世界", None),    // Chinese
-        ("// こんにちは", None),  // Japanese Hiragana
-        ("// مرحبا", None),       // Arabic
-        ("// שלום", None),        // Hebrew
-        ("/* 中文注释 */", None), // Chinese in block comment
-        // Non-cased with "never" option - should also pass
-        ("// 你好", Some(serde_json::json!(["never"]))),
+        (
+            "/* This comment is valid since it is capitalized, */
+			/* and this one is valid since it follows a valid one, */
+			/* and same with this one. */",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
+        ),
+        (
+            "/*
+			 * This comment is valid since it is capitalized,
+			 */
+			/* and this one is valid since it follows a valid one, */
+			/*
+			 * and same with this one.
+			 */",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
+        ),
+        (
+            "// This comment is valid since it is capitalized,
+			// and this one is valid since it follows a valid one,
+			foo();
+			// This comment now has to be capitalized.",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
+        ),
+        ("// https://github.com", Some(serde_json::json!(["always"]))),
+        ("// HTTPS://GITHUB.COM", Some(serde_json::json!(["never"]))),
+        (
+            "// Valid capitalized line comment
+			/* Valid capitalized block comment */
+			// lineCommentIgnorePattern
+			/* blockCommentIgnorePattern */",
+            Some(
+                serde_json::json!([				"always",				{					"line": {						"ignorePattern": "lineCommentIgnorePattern",					},					"block": {						"ignorePattern": "blockCommentIgnorePattern",					},				},			]),
+            ),
+        ),
     ];
 
     let fail = vec![
-        // Basic lowercase (default "always")
+        ("//lowercase", None),
         ("// lowercase", None),
+        ("/*lowercase */", None),
         ("/* lowercase */", None),
         ("/** lowercase */", None),
-        // With "always" option
+        (
+            "/*
+			lowercase */",
+            None,
+        ),
+        (
+            "/**
+			lowercase */",
+            None,
+        ),
+        ("//über", None),
+        ("//π", None),
+        (
+            "/* lowercase
+			Second line need not be lowercase */",
+            None,
+        ),
+        ("// ꮳꮃꭹ", None),
+        ("/* 𐳡𐳡𐳡 */", None),
+        ("//lowercase", Some(serde_json::json!(["always"]))),
         ("// lowercase", Some(serde_json::json!(["always"]))),
-        // With "never" option
+        ("/*lowercase */", Some(serde_json::json!(["always"]))),
+        ("/* lowercase */", Some(serde_json::json!(["always"]))),
+        ("/** lowercase */", Some(serde_json::json!(["always"]))),
+        (
+            "/**
+			lowercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//über", Some(serde_json::json!(["always"]))),
+        ("//π", Some(serde_json::json!(["always"]))),
+        (
+            "/* lowercase
+			Second line need not be lowercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//Uppercase", Some(serde_json::json!(["never"]))),
         ("// Uppercase", Some(serde_json::json!(["never"]))),
+        ("/*Uppercase */", Some(serde_json::json!(["never"]))),
         ("/* Uppercase */", Some(serde_json::json!(["never"]))),
-        // Non-matching pattern
-        ("// not matching", Some(serde_json::json!(["always", { "ignorePattern": "something" }]))),
+        (
+            "/*
+			Uppercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("//Über", Some(serde_json::json!(["never"]))),
+        ("//Π", Some(serde_json::json!(["never"]))),
+        (
+            "/* Uppercase
+			second line need not be uppercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("// Გ", Some(serde_json::json!(["never"]))),
+        ("// 𑢢", Some(serde_json::json!(["never"]))),
+        ("//* jscs: enable", Some(serde_json::json!(["always"]))),
+        ("//* jscs:disable", Some(serde_json::json!(["always"]))),
+        ("//* eslint-disable-line", Some(serde_json::json!(["always"]))),
+        ("//* eslint-disable-next-line", Some(serde_json::json!(["always"]))),
+        (
+            "/*
+			 * eslint semi:off */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 * eslint-env node */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  istanbul ignore next */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  jshint asi:true */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  jscs: enable */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  global var1, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  global var1:true, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  globals var1, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  globals var1:true, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  exported myVar */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("foo(/* invalid */a);", Some(serde_json::json!(["always"]))),
+        (
+            "foo(/* invalid */a);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": false }])),
+        ),
+        (
+            "foo(a, // not an inline comment
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, /* not an inline comment */
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* not an inline comment */b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* not an inline comment */
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, // Not an inline comment
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, /* Not an inline comment */
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* Not an inline comment */b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* Not an inline comment */
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        ("// not matching", Some(serde_json::json!(["always", { "ignorePattern": "ignored?" }]))),
+        ("// Not matching", Some(serde_json::json!(["never", { "ignorePattern": "ignored?" }]))),
+        (
+            "// This comment is valid since it is capitalized,
+			// and this one is valid since it follows a valid one,
+			foo();
+			// this comment is now invalid.",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
+        ),
+        (
+            "// this comment is invalid since it is not capitalized,
+			// but this one is ignored since it is consecutive.",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
+        ),
+        (
+            "// This comment is invalid since it is not capitalized,
+			// But this one is ignored since it is consecutive.",
+            Some(serde_json::json!(["never", { "ignoreConsecutiveComments": true }])),
+        ),
+        (
+            "// This comment is valid since it is capitalized,
+			// but this one is invalid even if it follows a valid one.",
+            Some(serde_json::json!(["always", { "ignoreConsecutiveComments": false }])),
+        ),
+        ("// should fail. https://github.com", Some(serde_json::json!(["always"]))),
+        ("// Should fail. https://github.com", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
-        // Lowercase to uppercase
+        ("//lowercase", "//Lowercase", None),
         ("// lowercase", "// Lowercase", None),
+        ("/*lowercase */", "/*Lowercase */", None),
         ("/* lowercase */", "/* Lowercase */", None),
-        // Uppercase to lowercase with "never"
+        ("/** lowercase */", "/** Lowercase */", None),
+        (
+            "/*
+			lowercase */",
+            "/*
+			Lowercase */",
+            None,
+        ),
+        (
+            "/**
+			lowercase */",
+            "/**
+			Lowercase */",
+            None,
+        ),
+        ("//über", "//Über", None),
+        ("//π", "//Π", None),
+        (
+            "/* lowercase
+			Second line need not be lowercase */",
+            "/* Lowercase
+			Second line need not be lowercase */",
+            None,
+        ),
+        ("// ꮳꮃꭹ", "// Ꮳꮃꭹ", None),
+        ("/* 𐳡𐳡𐳡 */", "/* 𐲡𐳡𐳡 */", None),
+        ("//lowercase", "//Lowercase", Some(serde_json::json!(["always"]))),
+        ("// lowercase", "// Lowercase", Some(serde_json::json!(["always"]))),
+        ("/*lowercase */", "/*Lowercase */", Some(serde_json::json!(["always"]))),
+        ("/* lowercase */", "/* Lowercase */", Some(serde_json::json!(["always"]))),
+        ("/** lowercase */", "/** Lowercase */", Some(serde_json::json!(["always"]))),
+        (
+            "/**
+			lowercase */",
+            "/**
+			Lowercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//über", "//Über", Some(serde_json::json!(["always"]))),
+        ("//π", "//Π", Some(serde_json::json!(["always"]))),
+        (
+            "/* lowercase
+			Second line need not be lowercase */",
+            "/* Lowercase
+			Second line need not be lowercase */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("//Uppercase", "//uppercase", Some(serde_json::json!(["never"]))),
         ("// Uppercase", "// uppercase", Some(serde_json::json!(["never"]))),
+        ("/*Uppercase */", "/*uppercase */", Some(serde_json::json!(["never"]))),
         ("/* Uppercase */", "/* uppercase */", Some(serde_json::json!(["never"]))),
+        (
+            "/*
+			Uppercase */",
+            "/*
+			uppercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("//Über", "//über", Some(serde_json::json!(["never"]))),
+        ("//Π", "//π", Some(serde_json::json!(["never"]))),
+        (
+            "/* Uppercase
+			second line need not be uppercase */",
+            "/* uppercase
+			second line need not be uppercase */",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("// Გ", "// გ", Some(serde_json::json!(["never"]))),
+        ("// 𑢢", "// 𑣂", Some(serde_json::json!(["never"]))),
+        ("//* jscs: enable", "//* Jscs: enable", Some(serde_json::json!(["always"]))),
+        ("//* jscs:disable", "//* Jscs:disable", Some(serde_json::json!(["always"]))),
+        ("//* eslint-disable-line", "//* Eslint-disable-line", Some(serde_json::json!(["always"]))),
+        (
+            "//* eslint-disable-next-line",
+            "//* Eslint-disable-next-line",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 * eslint semi:off */",
+            "/*
+			 * Eslint semi:off */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 * eslint-env node */",
+            "/*
+			 * Eslint-env node */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  istanbul ignore next */",
+            "/*
+			 *  Istanbul ignore next */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  jshint asi:true */",
+            "/*
+			 *  Jshint asi:true */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  jscs: enable */",
+            "/*
+			 *  Jscs: enable */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  global var1, var2 */",
+            "/*
+			 *  Global var1, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  global var1:true, var2 */",
+            "/*
+			 *  Global var1:true, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  globals var1, var2 */",
+            "/*
+			 *  Globals var1, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  globals var1:true, var2 */",
+            "/*
+			 *  Globals var1:true, var2 */",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "/*
+			 *  exported myVar */",
+            "/*
+			 *  Exported myVar */",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("foo(/* invalid */a);", "foo(/* Invalid */a);", Some(serde_json::json!(["always"]))),
+        (
+            "foo(/* invalid */a);",
+            "foo(/* Invalid */a);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": false }])),
+        ),
+        (
+            "foo(a, // not an inline comment
+			b);",
+            "foo(a, // Not an inline comment
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, /* not an inline comment */
+			b);",
+            "foo(a, /* Not an inline comment */
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* not an inline comment */b);",
+            "foo(a,
+			/* Not an inline comment */b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* not an inline comment */
+			b);",
+            "foo(a,
+			/* Not an inline comment */
+			b);",
+            Some(serde_json::json!(["always", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, // Not an inline comment
+			b);",
+            "foo(a, // not an inline comment
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a, /* Not an inline comment */
+			b);",
+            "foo(a, /* not an inline comment */
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* Not an inline comment */b);",
+            "foo(a,
+			/* not an inline comment */b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "foo(a,
+			/* Not an inline comment */
+			b);",
+            "foo(a,
+			/* not an inline comment */
+			b);",
+            Some(serde_json::json!(["never", { "ignoreInlineComments": true }])),
+        ),
+        (
+            "// not matching",
+            "// Not matching",
+            Some(serde_json::json!(["always", { "ignorePattern": "ignored?" }])),
+        ),
+        (
+            "// Not matching",
+            "// not matching",
+            Some(serde_json::json!(["never", { "ignorePattern": "ignored?" }])),
+        ),
+        (
+            "// should fail. https://github.com",
+            "// Should fail. https://github.com",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "// Should fail. https://github.com",
+            "// should fail. https://github.com",
+            Some(serde_json::json!(["never"])),
+        ),
     ];
-
     Tester::new(CapitalizedComments::NAME, CapitalizedComments::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
