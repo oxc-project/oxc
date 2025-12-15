@@ -95,7 +95,7 @@ export function initAllOptions(): void {
  * Config options take precedence over default options.
  *
  * Returned options are deep frozen.
- * `ruleOptions` may be frozen in place (or partially frozen) too.
+ * `configOptions` may be frozen in place (or partially frozen) too.
  * `defaultOptions` must already be deep frozen before calling this function.
  *
  * Follows the same merging logic as ESLint's `getRuleOptions`.
