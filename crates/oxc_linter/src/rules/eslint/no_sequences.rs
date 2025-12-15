@@ -197,43 +197,72 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // For loop init and update are always allowed (even with allowInParentheses: false)
-        ("for (i = 0, j = 10; i < j; i++, j--) {}", None),
-        ("for (a = 0, b = 10; a < b; a++, b--) foo();", None),
-        // For loop with parentheses around init/update - still allowed
-        ("for ((a, b);;);", None),
-        ("for (;; (a, b));", None),
-        ("for ((a, b);;);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
-        // Wrapped in parentheses (default allowInParentheses: true)
-        ("foo = (doSomething(), val);", None),
-        ("(0, eval)(\"doSomething();\");", None),
-        ("a = ((b, c), d);", None),
-        // Single extra parentheses in conditions is enough (ESLint docs examples)
-        // Grammar-required parens (e.g., `if (...)`) don't appear in AST
-        ("if ((doSomething(), !!test));", None),
+        ("var arr = [1, 2];", None),
+        ("var obj = {a: 1, b: 2};", None),
+        ("var a = 1, b = 2;", None),
+        ("var foo = (1, 2);", None),
+        (r#"(0,eval)("foo()");"#, None),
+        ("for (i = 1, j = 2;; i++, j++);", None),
+        ("foo(a, (b, c), d);", None),
         ("do {} while ((doSomething(), !!test));", None),
-        ("while ((a, b)) {}", None),
-        ("switch ((val = foo(), val)) {}", None),
+        ("for ((doSomething(), somethingElse()); (doSomething(), !!test); );", None),
+        ("if ((doSomething(), !!test));", None),
+        ("switch ((doSomething(), val)) {}", None),
+        ("while ((doSomething(), !!test));", None),
         ("with ((doSomething(), val)) {}", None),
-        // Arrow function body requires double parentheses
-        ("const fn = (x) => ((log(), x));", None),
-        // With allowInParentheses: true (explicit)
-        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": true }]))),
+        ("a => ((doSomething(), a))", None),
+        ("var foo = (1, 2);", Some(serde_json::json!([{}]))),
+        ("var foo = (1, 2);", Some(serde_json::json!([{ "allowInParentheses": true }]))),
+        (
+            "for ((i = 0, j = 0); test; );",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        ("for (; test; (i++, j++));", Some(serde_json::json!([{ "allowInParentheses": false }]))),
+        ("const foo = () => { return ((bar = 123), 10) }", None),
+        ("const foo = () => (((bar = 123), 10));", None),
     ];
 
     let fail = vec![
-        // Basic sequence without parentheses
-        ("foo = doSomething(), val;", None),
-        ("0, eval(\"doSomething();\");", None),
-        ("a = b, c;", None),
-        // Arrow function body with single parentheses (needs double per ESLint)
-        ("const fn = (x) => (log(), x);", None),
-        // With allowInParentheses: false, even parenthesized sequences are errors
-        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
+        ("1, 2;", None),
+        ("a = 1, 2", None),
+        ("do {} while (doSomething(), !!test);", None),
+        ("for (; doSomething(), !!test; );", None),
+        ("if (doSomething(), !!test);", None),
+        ("switch (doSomething(), val) {}", None),
+        ("while (doSomething(), !!test);", None),
+        ("with (doSomething(), val) {}", None),
+        ("a => (doSomething(), a)", None),
+        ("(1), 2", None),
+        ("((1)) , (2)", None),
+        ("while((1) , 2);", None),
+        ("var foo = (1, 2);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
+        (r#"(0,eval)("foo()");"#, Some(serde_json::json!([{ "allowInParentheses": false }]))),
+        ("foo(a, (b, c), d);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
         (
-            "(0, eval)(\"doSomething();\");",
+            "do {} while ((doSomething(), !!test));",
             Some(serde_json::json!([{ "allowInParentheses": false }])),
         ),
+        (
+            "for (; (doSomething(), !!test); );",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        (
+            "if ((doSomething(), !!test));",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        (
+            "switch ((doSomething(), val)) {}",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        (
+            "while ((doSomething(), !!test));",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        (
+            "with ((doSomething(), val)) {}",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
+        ("a => ((doSomething(), a))", Some(serde_json::json!([{ "allowInParentheses": false }]))), // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoSequences::NAME, NoSequences::PLUGIN, pass, fail).test_and_snapshot();
