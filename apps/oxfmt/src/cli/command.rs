@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
 use bpaf::{Bpaf, Parser};
+#[cfg(feature = "napi")]
+use cow_utils::CowUtils;
 
 const VERSION: &str = match option_env!("OXC_VERSION") {
     Some(v) => v,
@@ -38,6 +40,8 @@ pub struct FormatCommand {
     pub paths: Vec<PathBuf>,
 }
 
+// ---
+
 /// Operation Mode
 #[derive(Debug, Clone)]
 pub enum Mode {
@@ -48,9 +52,12 @@ pub enum Mode {
     Lsp,
     #[cfg(feature = "napi")]
     /// Initialize `.oxfmtrc.json` with default values
-    // NOTE: This is handled by JS side before reaching Rust.
-    // Just to display help message correctly.
+    // NOTE: Actual logic is handled by JS side.
     Init,
+    #[cfg(feature = "napi")]
+    /// Migrate Prettier configuration to `.oxfmtrc.json`
+    // NOTE: Actual logic is handled by JS side.
+    Migrate(MigrateSource),
 }
 
 fn mode() -> impl bpaf::Parser<Mode> {
@@ -66,7 +73,15 @@ fn mode() -> impl bpaf::Parser<Mode> {
             .help("Start language server protocol (LSP) server")
             .req_flag(Mode::Lsp)
             .hide_usage();
-        let mode_options = bpaf::construct!([init, lsp]).group_help("Mode Options:");
+        let migrate = bpaf::long("migrate")
+            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier")
+            .argument::<String>("SOURCE")
+            .parse(|s| match s.cow_to_lowercase().as_ref() {
+                "prettier" => Ok(Mode::Migrate(MigrateSource::Prettier)),
+                _ => Err(format!("Unknown migration source: {s}. Supported: prettier.")),
+            })
+            .hide_usage();
+        let mode_options = bpaf::construct!([init, lsp, migrate]).group_help("Mode Options:");
 
         bpaf::construct!([mode_options, output_mode_options]).fallback(Mode::Cli(OutputMode::Write))
     }
@@ -103,6 +118,16 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
 
     bpaf::construct!([write, check, list_different]).group_help("Output Options:")
 }
+
+/// Migration Source
+#[cfg(feature = "napi")]
+#[derive(Debug, Clone)]
+pub enum MigrateSource {
+    /// Migrate from Prettier configuration
+    Prettier,
+}
+
+// ---
 
 /// Config Options
 #[derive(Debug, Clone, Bpaf)]

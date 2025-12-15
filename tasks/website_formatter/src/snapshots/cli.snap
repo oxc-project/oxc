@@ -15,6 +15,8 @@ search: false
   Initialize `.oxfmtrc.json` with default values
 - **`    --lsp`** &mdash; 
   Start language server protocol (LSP) server
+- **`    --migrate`**=_`SOURCE`_ &mdash; 
+  Migrate configuration to `.oxfmtrc.json` from specified source Available sources: prettier
 
 
 
