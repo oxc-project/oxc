@@ -1,9 +1,12 @@
-use lazy_regex::Regex;
+use std::cell::LazyCell;
+
+use lazy_regex::{Regex, RegexBuilder};
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, Comment};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -17,7 +20,6 @@ fn no_inline_comments_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoInlineComments(Box<NoInlineCommentsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
 pub struct NoInlineCommentsConfig {
     /// A regex pattern to ignore certain inline comments.
     ///
@@ -29,7 +31,6 @@ pub struct NoInlineCommentsConfig {
     ///     "no-inline-comments": ["error", { "ignorePattern": "webpackChunkName" }]
     /// }
     /// ```
-    #[schemars(skip)]
     ignore_pattern: Option<Regex>,
 }
 
@@ -78,30 +79,29 @@ impl Rule for NoInlineComments {
     fn from_configuration(value: serde_json::Value) -> Self {
         let ignore_pattern = value
             .get(0)
-            .and_then(|v| v.get("ignorePattern"))
-            .and_then(|v| v.as_str())
-            .and_then(|s| Regex::new(s).ok());
+            .and_then(|config| config.get("ignorePattern"))
+            .and_then(serde_json::Value::as_str)
+            .and_then(|pattern| RegexBuilder::new(pattern).build().ok());
+        let config = NoInlineCommentsConfig { ignore_pattern };
 
-        Self(Box::new(NoInlineCommentsConfig { ignore_pattern }))
+        Self(Box::new(config))
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let source_text = ctx.source_text();
 
-        // Pre-collect JSXEmptyExpression spans for efficient lookup
-        // Using Vec since JSXEmptyExpression nodes are typically few, and we need range containment checks
-        let jsx_empty_expr_spans: Vec<Span> = ctx
-            .nodes()
-            .iter()
-            .filter_map(|node| {
-                if let AstKind::JSXEmptyExpression(expr) = node.kind() {
-                    Some(expr.span)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
+        let jsx_empty_expr_spans = LazyCell::new(|| {
+            ctx.nodes()
+                .iter()
+                .filter_map(|node| {
+                    if let AstKind::JSXEmptyExpression(expr) = node.kind() {
+                        Some(expr.span)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<Span>>()
+        });
         for comment in ctx.semantic().comments() {
             let comment_span = comment.span;
             let comment_text = ctx.source_range(comment.content_span());
@@ -161,18 +161,6 @@ fn is_directive_comment(comment: &Comment, text: &str) -> bool {
         return true;
     }
 
-    // Block comments only: global, globals, exported (ESLint only recognizes these in block comments)
-    if comment.is_block()
-        && (trimmed.starts_with("global ")
-            || trimmed.starts_with("global\t")
-            || trimmed.starts_with("globals ")
-            || trimmed.starts_with("globals\t")
-            || trimmed.starts_with("exported ")
-            || trimmed.starts_with("exported\t"))
-    {
-        return true;
-    }
-
     false
 }
 
@@ -210,7 +198,7 @@ fn is_jsx_expression_comment(
     // - postamble should be empty or just "}" (not having content after })
     // This means `{/* comment */}` alone on a line is OK, but `{/* comment */}</div>` is not
 
-    // Check preamble: should be empty or end with just "{"
+    // Check preamble: should be empty or be just "{"
     let preamble_valid = preamble.is_empty() || preamble == "{";
 
     // Check postamble: should be empty or be just "}"
@@ -245,10 +233,6 @@ fn test() {
         // ESLint config directive with space (/* eslint ... */)
         (r#"var a = 1; /* eslint no-console: "off" */"#, None),
         (r"var a = 1; /* eslint-env node */", None),
-        // global/globals/exported only in block comments
-        ("foo(); /* global foo */", None),
-        ("foo(); /* globals foo */", None),
-        ("var foo; /* exported foo */", None),
         (
             "var a = (
 			            <div>
