@@ -28,14 +28,16 @@
       true,
       [],
       16
-    ]
+    ],
+    "options-plugin/empty-default-options": ["error", "from-config", 42]
   },
   "overrides": [
     {
       "files": ["files/nested/**"],
       "rules": {
         "options-plugin/options": ["error", { "somethingElse": true }],
-        "options-plugin/merge-options": ["error", { "fromConfig": 21 }, { "fromConfig": 22 }]
+        "options-plugin/merge-options": ["error", { "fromConfig": 21 }, { "fromConfig": 22 }],
+        "options-plugin/empty-default-options": "error"
       }
     }
   ]
