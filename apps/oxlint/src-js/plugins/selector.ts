@@ -2,7 +2,7 @@ import esquery from "esquery";
 import visitorKeys from "../generated/keys.ts";
 import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
-import { debugAssert } from "../utils/asserts.ts";
+import { debugAssert, typeAssertIs } from "../utils/asserts.ts";
 
 import type { ESQueryOptions, Selector as EsquerySelector } from "esquery";
 import type { Node as EsqueryNode } from "estree";
@@ -255,15 +255,11 @@ export function wrapVisitFnWithSelectorMatch(
   esquerySelector: EsquerySelector,
 ): VisitFn {
   return (node: Node) => {
-    if (
-      esqueryMatches(
-        node as unknown as EsqueryNode,
-        esquerySelector,
-        // @ts-expect-error - Our TS types don't align perfectly with estree
-        ancestors,
-        ESQUERY_OPTIONS,
-      )
-    ) {
+    // Our types don't align with `esquery`
+    typeAssertIs<EsqueryNode>(node);
+    typeAssertIs<EsqueryNode[]>(ancestors);
+
+    if (esqueryMatches(node, esquerySelector, ancestors, ESQUERY_OPTIONS)) {
       visitFn(node);
     }
   };
