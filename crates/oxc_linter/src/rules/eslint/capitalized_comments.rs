@@ -219,8 +219,10 @@ impl Rule for CapitalizedComments {
                 continue; // No letter found, skip
             };
 
-            // Check if this is a directive comment (using normalized text)
-            if is_directive_comment(&normalized) {
+            // Check if this is a directive comment (using original content, not normalized)
+            // ESLint only ignores directives when they start at the beginning (after whitespace)
+            // e.g., "// eslint-disable" is ignored, but "//* eslint-disable" is not
+            if is_directive_comment(content) {
                 continue;
             }
 

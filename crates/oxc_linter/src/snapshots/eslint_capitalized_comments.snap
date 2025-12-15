@@ -3,8 +3,22 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
    ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //lowercase
+   · ───────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
  1 │ // lowercase
    · ────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /*lowercase */
+   · ──────────────
    ╰────
   help: Change the first letter of the comment to uppercase
 
@@ -24,10 +38,122 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
    ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶             lowercase */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ ╰─▶             lowercase */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //über
+   · ──────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //π
+   · ───
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /* lowercase
+ 2 │ ╰─▶             Second line need not be lowercase */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // ꮳꮃꭹ
+   · ──────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /* 𐳡𐳡𐳡 */
+   · ─────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //lowercase
+   · ───────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
  1 │ // lowercase
    · ────────────
    ╰────
   help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /*lowercase */
+   · ──────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /* lowercase */
+   · ───────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /** lowercase */
+   · ────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ ╰─▶             lowercase */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //über
+   · ──────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //π
+   · ───
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /* lowercase
+ 2 │ ╰─▶             Second line need not be lowercase */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //Uppercase
+   · ───────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
 
   ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
    ╭─[capitalized_comments.tsx:1:1]
@@ -38,8 +164,235 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
    ╭─[capitalized_comments.tsx:1:1]
+ 1 │ /*Uppercase */
+   · ──────────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
  1 │ /* Uppercase */
    · ───────────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶             Uppercase */
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //Über
+   · ──────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //Π
+   · ───
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /* Uppercase
+ 2 │ ╰─▶             second line need not be uppercase */
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // Გ
+   · ────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // 𑢢
+   · ────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //* jscs: enable
+   · ────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //* jscs:disable
+   · ────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //* eslint-disable-line
+   · ───────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ //* eslint-disable-next-line
+   · ────────────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              * eslint semi:off */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              * eslint-env node */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  istanbul ignore next */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  jshint asi:true */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  jscs: enable */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  global var1, var2 */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  global var1:true, var2 */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  globals var1, var2 */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  globals var1:true, var2 */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶              *  exported myVar */
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:5]
+ 1 │ foo(/* invalid */a);
+   ·     ─────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:5]
+ 1 │ foo(/* invalid */a);
+   ·     ─────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:8]
+ 1 │ foo(a, // not an inline comment
+   ·        ────────────────────────
+ 2 │             b);
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:8]
+ 1 │ foo(a, /* not an inline comment */
+   ·        ───────────────────────────
+ 2 │             b);
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:2:4]
+ 1 │ foo(a,
+ 2 │             /* not an inline comment */b);
+   ·             ───────────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:2:4]
+ 1 │ foo(a,
+ 2 │             /* not an inline comment */
+   ·             ───────────────────────────
+ 3 │             b);
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:8]
+ 1 │ foo(a, // Not an inline comment
+   ·        ────────────────────────
+ 2 │             b);
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:8]
+ 1 │ foo(a, /* Not an inline comment */
+   ·        ───────────────────────────
+ 2 │             b);
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:2:4]
+ 1 │ foo(a,
+ 2 │             /* Not an inline comment */b);
+   ·             ───────────────────────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:2:4]
+ 1 │ foo(a,
+ 2 │             /* Not an inline comment */
+   ·             ───────────────────────────
+ 3 │             b);
    ╰────
   help: Change the first letter of the comment to lowercase
 
@@ -49,3 +402,56 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // Not matching
+   · ───────────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:4:4]
+ 3 │             foo();
+ 4 │             // this comment is now invalid.
+   ·             ───────────────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // this comment is invalid since it is not capitalized,
+   · ───────────────────────────────────────────────────────
+ 2 │             // but this one is ignored since it is consecutive.
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // This comment is invalid since it is not capitalized,
+   · ───────────────────────────────────────────────────────
+ 2 │             // But this one is ignored since it is consecutive.
+   ╰────
+  help: Change the first letter of the comment to lowercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:2:4]
+ 1 │ // This comment is valid since it is capitalized,
+ 2 │             // but this one is invalid even if it follows a valid one.
+   ·             ──────────────────────────────────────────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // should fail. https://github.com
+   · ──────────────────────────────────
+   ╰────
+  help: Change the first letter of the comment to uppercase
+
+  ⚠ eslint(capitalized-comments): Comments should not begin with an uppercase letter
+   ╭─[capitalized_comments.tsx:1:1]
+ 1 │ // Should fail. https://github.com
+   · ──────────────────────────────────
+   ╰────
+  help: Change the first letter of the comment to lowercase
