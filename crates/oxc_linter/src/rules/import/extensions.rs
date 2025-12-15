@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn extension_should_not_be_included_in_diagnostic(
     span: Span,
-    extension: &CompactStr,
+    extension: &str,
     is_import: bool,
 ) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
@@ -471,7 +471,7 @@ impl Extensions {
         &self,
         ctx: &LintContext,
         resolved_extension: Option<&str>,
-        written_extension: Option<&CompactStr>,
+        written_extension: Option<&str>,
         span: Span,
         is_import: bool,
         require_extension: Option<ExtensionRule>,
@@ -479,7 +479,7 @@ impl Extensions {
         let config = &self.0;
 
         // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.or(written_extension.map(CompactStr::as_str));
+        let extension_to_check = resolved_extension.or(written_extension);
 
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
@@ -570,13 +570,13 @@ impl Extensions {
         {
             None
         } else {
-            get_file_extension_from_module_name(&CompactStr::new(module_name))
+            get_file_extension_from_module_name(module_name)
         };
 
         self.validate_extension(
             ctx,
             resolved_extension.as_deref(),
-            written_extension.as_ref(),
+            written_extension.as_deref(),
             span,
             is_import,
             config.require_extension,
@@ -681,14 +681,14 @@ fn is_package_import(module_name: &str) -> bool {
 /// - `"./foo"` → `None`
 /// - `"./foo."` → `None` (empty extension)
 /// - `"./foo.bar/"` → `None` (directory path)
-fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
+fn get_file_extension_from_module_name(module_name: &str) -> Option<String> {
     use cow_utils::CowUtils;
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
         && !extension.is_empty()
         && !extension.starts_with('/')
     {
-        return Some(CompactStr::from(extension.cow_to_ascii_lowercase().as_ref()));
+        return Some(extension.cow_to_ascii_lowercase().into_owned());
     }
 
     None
