@@ -445,11 +445,11 @@ fn test() {
             Some(serde_json::json!(["always", { "ignoreConsecutiveComments": true }])),
         ),
         // Non-cased letters (CJK, Hebrew, Arabic) - should be ignored
-        ("// 你好世界", None),              // Chinese
-        ("// こんにちは", None),            // Japanese Hiragana
-        ("// مرحبا", None),                 // Arabic
-        ("// שלום", None),                  // Hebrew
-        ("/* 中文注释 */", None),           // Chinese in block comment
+        ("// 你好世界", None),    // Chinese
+        ("// こんにちは", None),  // Japanese Hiragana
+        ("// مرحبا", None),       // Arabic
+        ("// שלום", None),        // Hebrew
+        ("/* 中文注释 */", None), // Chinese in block comment
         // Non-cased with "never" option - should also pass
         ("// 你好", Some(serde_json::json!(["never"]))),
     ];
