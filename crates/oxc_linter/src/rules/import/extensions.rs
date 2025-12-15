@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn extension_should_not_be_included_in_diagnostic(
     span: Span,
@@ -427,29 +427,29 @@ impl Rule for Extensions {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Process require() calls
-        for node in ctx.nodes().iter() {
-            if let AstKind::CallExpression(call_expr) = node.kind() {
-                let Expression::Identifier(ident) = &call_expr.callee else {
-                    continue;
-                };
-                if ident.name.as_str() == "require" {
-                    for argument in &call_expr.arguments {
-                        if let Argument::StringLiteral(s) = argument {
-                            self.process_import(
-                                ctx,
-                                s.value.as_str(),
-                                call_expr.span,
-                                false, // require() is never a type import
-                                true,  // treat require as import for diagnostics
-                            );
-                        }
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            let Expression::Identifier(ident) = &call_expr.callee else {
+                return;
+            };
+            if ident.name.as_str() == "require" {
+                for argument in &call_expr.arguments {
+                    if let Argument::StringLiteral(s) = argument {
+                        self.process_import(
+                            ctx,
+                            s.value.as_str(),
+                            call_expr.span,
+                            false, // require() is never a type import
+                            true,  // treat require as import for diagnostics
+                        );
                     }
                 }
             }
         }
+    }
 
+    fn run_once(&self, ctx: &LintContext) {
         // Process import/export statements
         for (module_name, modules) in &ctx.module_record().requested_modules {
             for module in modules {
