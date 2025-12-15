@@ -18,9 +18,7 @@ use crate::{
 };
 
 fn use_jest_spy_on(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `jest.spyOn()`.")
-        .with_help("Use jest.spyOn() instead")
-        .with_label(span)
+    OxcDiagnostic::warn("Suggest using `jest.spyOn()` or `vi.spyOn()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -60,6 +58,17 @@ declare_oxc_lint!(
     /// ```javascript
     /// jest.spyOn(Date, 'now');
     /// jest.spyOn(Date, 'now').mockImplementation(() => 10);
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-spy-on.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-spy-on": "error"
+    ///   }
+    /// }
     /// ```
     PreferSpyOn,
     jest,
@@ -150,8 +159,10 @@ impl PreferSpyOn {
         has_mock_implementation: bool,
         fixer: RuleFixer<'_, 'a>,
     ) -> String {
+        let (framework_spy, arguments) = Self::get_test_fn_call(call_expr);
+
         let mut formatter = fixer.codegen();
-        formatter.print_str("jest.spyOn(");
+        formatter.print_str(framework_spy);
 
         match left_assign {
             MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
@@ -178,7 +189,7 @@ impl PreferSpyOn {
 
         formatter.print_str(".mockImplementation(");
 
-        if let Some(expr) = Self::get_jest_fn_call(call_expr) {
+        if let Some(expr) = arguments {
             formatter.print_expression(expr);
         }
 
@@ -186,23 +197,30 @@ impl PreferSpyOn {
         formatter.into_source_text()
     }
 
-    fn get_jest_fn_call<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-        let is_jest_fn = get_node_name(&call_expr.callee) == "jest.fn";
+    fn get_test_fn_call<'a>(
+        call_expr: &'a CallExpression<'a>,
+    ) -> (&'a str, Option<&'a Expression<'a>>) {
+        let node_name = get_node_name(&call_expr.callee);
+        let is_test_fn = node_name == "jest.fn" || node_name == "vi.fn";
 
-        if is_jest_fn {
-            return call_expr.arguments.first().and_then(Argument::as_expression);
+        if is_test_fn {
+            let framework_spy = match node_name.as_str() {
+                "vi.fn" => "vi.spyOn(",
+                _ => "jest.spyOn(",
+            };
+            return (framework_spy, call_expr.arguments.first().and_then(Argument::as_expression));
         }
 
         match &call_expr.callee {
             expr if expr.is_member_expression() => {
                 let mem_expr = expr.to_member_expression();
                 if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
-                    return Self::get_jest_fn_call(call_expr);
+                    return Self::get_test_fn_call(call_expr);
                 }
-                None
+                ("", None)
             }
-            Expression::CallExpression(call_expr) => Self::get_jest_fn_call(call_expr),
-            _ => None,
+            Expression::CallExpression(call_expr) => Self::get_test_fn_call(call_expr),
+            _ => ("", None),
         }
     }
 
@@ -225,7 +243,7 @@ impl PreferSpyOn {
 fn tests() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("Date.now = () => 10", None),
         ("window.fetch = jest.fn", None),
         ("Date.now = fn()", None),
@@ -237,7 +255,7 @@ fn tests() {
         ("window[`${name}`] = jest[`fn${expression}`]()", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("obj.a = jest.fn(); const test = 10;", None),
         ("Date['now'] = jest['fn']()", None),
         ("window[`${name}`] = jest[`fn`]()", None),
@@ -259,7 +277,7 @@ fn tests() {
         ),
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         (
             "obj.a = jest.fn(); const test = 10;",
             "jest.spyOn(obj, 'a').mockImplementation(); const test = 10;",
@@ -310,8 +328,94 @@ fn tests() {
         ),
     ];
 
+    let vitest_pass = vec![
+        ("Date.now = () => 10", None),
+        ("window.fetch = vi.fn", None),
+        ("Date.now = fn()", None),
+        ("obj.mock = vi.something()", None),
+        ("const mock = vi.fn()", None),
+        ("mock = vi.fn()", None),
+        ("const mockObj = { mock: vi.fn() }", None),
+        ("mockObj = { mock: vi.fn() }", None),
+        ("window[`${name}`] = vi[`fn${expression}`]()", None),
+    ];
+
+    let vitest_fail = vec![
+        ("obj.a = vi.fn(); const test = 10;", None),
+        ("Date['now'] = vi['fn']()", None),
+        ("window[`${name}`] = vi[`fn`]()", None),
+        ("obj['prop' + 1] = vi['fn']()", None),
+        ("obj.one.two = vi.fn(); const test = 10;", None),
+        ("obj.a = vi.fn(() => 10,)", None), // { "parserOptions": { "ecmaVersion": 2017 } }
+        (
+            "obj.a.b = vi.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();",
+            None,
+        ),
+        ("window.fetch = vi.fn(() => ({})).one.two().three().four", None),
+        ("foo[bar] = vi.fn().mockReturnValue(undefined)", None),
+        (
+            "
+			        foo.bar = vi.fn().mockImplementation(baz => baz)
+			        foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+			      ",
+            None,
+        ),
+    ];
+
+    let vitest_fix = vec![
+        (
+            "obj.a = vi.fn(); const test = 10;",
+            "vi.spyOn(obj, 'a').mockImplementation(); const test = 10;",
+            None,
+        ),
+        ("Date['now'] = vi['fn']()", "vi.spyOn(Date, 'now').mockImplementation()", None),
+        (
+            "window[`${name}`] = vi[`fn`]()",
+            "vi.spyOn(window, `${name}`).mockImplementation()",
+            None,
+        ),
+        ("obj['prop' + 1] = vi['fn']()", "vi.spyOn(obj, 'prop' + 1).mockImplementation()", None),
+        (
+            "obj.one.two = vi.fn(); const test = 10;",
+            "vi.spyOn(obj.one, 'two').mockImplementation(); const test = 10;",
+            None,
+        ),
+        ("obj.a = vi.fn(() => 10,)", "vi.spyOn(obj, 'a').mockImplementation(() => 10)", None),
+        (
+            "obj.a.b = vi.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();",
+            "vi.spyOn(obj.a, 'b').mockImplementation(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();",
+            None,
+        ),
+        (
+            "window.fetch = vi.fn(() => ({})).one.two().three().four",
+            "vi.spyOn(window, 'fetch').mockImplementation(() => ({})).one.two().three().four",
+            None,
+        ),
+        (
+            "foo[bar] = vi.fn().mockReturnValue(undefined)",
+            "vi.spyOn(foo, bar).mockImplementation().mockReturnValue(undefined)",
+            None,
+        ),
+        (
+            "
+			        foo.bar = vi.fn().mockImplementation(baz => baz)
+			        foo.bar = vi.fn(a => b).mockImplementation(baz => baz)
+			      ",
+            "
+			        vi.spyOn(foo, 'bar').mockImplementation(baz => baz)
+			        vi.spyOn(foo, 'bar').mockImplementation(baz => baz)
+			      ",
+            None,
+        ),
+    ];
+
+    pass.extend(vitest_pass);
+    fail.extend(vitest_fail);
+    fix.extend(vitest_fix);
+
     Tester::new(PreferSpyOn::NAME, PreferSpyOn::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
         .expect_fix(fix)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }
