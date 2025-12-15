@@ -1,7 +1,6 @@
 import esquery from "esquery";
 import visitorKeys from "../generated/keys.ts";
 import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
-// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { ancestors } from "../generated/walk.js";
 import { debugAssert } from "../utils/asserts.ts";
 
@@ -257,7 +256,13 @@ export function wrapVisitFnWithSelectorMatch(
 ): VisitFn {
   return (node: Node) => {
     if (
-      esqueryMatches(node as unknown as EsqueryNode, esquerySelector, ancestors, ESQUERY_OPTIONS)
+      esqueryMatches(
+        node as unknown as EsqueryNode,
+        esquerySelector,
+        // @ts-expect-error: our TS types don't align perfectly with estree
+        ancestors,
+        ESQUERY_OPTIONS,
+      )
     ) {
       visitFn(node);
     }
