@@ -14,7 +14,9 @@ use crate::{
     context::LintContext,
     fixer::RuleFixer,
     rule::Rule,
-    utils::{PossibleJestNode, get_node_name, parse_general_jest_fn_call},
+    utils::{
+        KnownMemberExpressionProperty, PossibleJestNode, get_node_name, parse_general_jest_fn_call,
+    },
 };
 
 fn use_jest_spy_on(span: Span) -> OxcDiagnostic {
@@ -125,7 +127,7 @@ impl PreferSpyOn {
         };
 
         let Some(first_fn_member_name) =
-            jest_fn_call.members.first().map_or(None, |member| member.name())
+            jest_fn_call.members.first().and_then(KnownMemberExpressionProperty::name)
         else {
             return;
         };
