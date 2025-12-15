@@ -194,6 +194,7 @@ mod test {
 
         // decorators
         test_same_options("class C { @dec foo() {} }", &options);
+        test_same_options("@dec class C {}", &options);
 
         // TypeError
         test_same_options("class C extends (() => {}) {}", &options);
