@@ -2,10 +2,13 @@
   "name": "oxlint-app",
   "version": "1.33.0",
   "private": true,
-  "type": "module",
-  "main": "dist/index.js",
   "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
   "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "imports": {
+    "#oxlint": "./dist/index.js"
+  },
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && cross-env DEBUG=true pnpm run build-js",
@@ -18,9 +21,6 @@
     "test": "tsc && vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
     "conformance": "node ./conformance/src/index.ts"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
   },
   "devDependencies": {
     "@types/esquery": "^1.5.4",
@@ -54,7 +54,7 @@
       "darwin-arm64"
     ]
   },
-  "imports": {
-    "#oxlint": "./dist/index.js"
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

@@ -1,27 +1,11 @@
 {
   "name": "oxc-minify",
   "version": "0.103.0",
-  "type": "module",
-  "main": "index.js",
-  "browser": "browser.js",
-  "scripts": {
-    "build-dev": "napi build --esm --platform",
-    "build-test": "pnpm run build-dev",
-    "build": "pnpm run build-dev --features allocator --release",
-    "postbuild": "publint",
-    "postbuild-dev": "node scripts/patch.js",
-    "test": "tsc && vitest run --dir ./test"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
   "description": "Oxc Minifier Node API",
   "keywords": [
-    "oxc",
-    "minify"
+    "minify",
+    "oxc"
   ],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
@@ -29,18 +13,27 @@
     "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/minify"
   },
+  "author": "Boshen and oxc contributors",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "browser": "browser.js",
   "files": [
+    "browser.js",
     "index.d.ts",
     "index.js",
-    "browser.js",
     "webcontainer-fallback.cjs"
   ],
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+  "scripts": {
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev",
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
+    "postbuild-dev": "node scripts/patch.js",
+    "test": "tsc && vitest run --dir ./test"
   },
   "devDependencies": {
     "@types/node": "catalog:",
@@ -72,5 +65,12 @@
         "fs": false
       }
     }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

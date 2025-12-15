@@ -32,16 +32,9 @@ jobs:
         with:
           cache-key: warm
           save-cache: false
-          tools: just,cargo-insta,typos-cli,cargo-shear,dprint,ast-grep
+          tools: just,cargo-insta,typos-cli,cargo-shear,ast-grep
           components: clippy rust-docs rustfmt rust-analyzer
 
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
-
-      - name: Restore dprint plugin cache
-        id: cache-restore
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
-        with:
-          key: dprint-${{ hashFiles('dprint.json') }}
-          path: ~/.cache/dprint
 
       - run: pnpm run --filter mcp-oxc build

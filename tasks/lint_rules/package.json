@@ -1,8 +1,8 @@
 {
-  "private": true,
   "name": "lint_rules",
-  "main": "./src/main.mjs",
   "version": "0.0.0",
+  "private": true,
+  "main": "./src/main.mjs",
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",

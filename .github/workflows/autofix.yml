@@ -21,18 +21,11 @@ jobs:
 
       - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
-      - name: Restore dprint plugin cache
-        id: cache-restore
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
-        with:
-          key: dprint-${{ hashFiles('dprint.json') }}
-          path: ~/.cache/dprint
-
       - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           restore-cache: true
           cache-key: warm
-          tools: just,dprint,cargo-shear@1.9.0
+          tools: just,cargo-shear@1.9.0
           components: rustfmt
 
       - name: cargo-shear

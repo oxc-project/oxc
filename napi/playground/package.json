@@ -22,10 +22,6 @@
   "dependencies": {
     "@napi-rs/wasm-runtime": "catalog:"
   },
-  "collaborators": [
-    "Boshen <boshenc@gmail.com>",
-    "Oxc contributors"
-  ],
   "napi": {
     "binaryName": "playground",
     "packageName": "@oxc-playground/binding",

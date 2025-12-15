@@ -4,6 +4,9 @@
   "scripts": {
     "test": "vitest run --dir ./test && pnpm -r test run"
   },
+  "dependencies": {
+    "@types/supertest": "^6.0.3"
+  },
   "devDependencies": {
     "alpinejs": "^3.14.9",
     "antd": "^6.0.0",
@@ -37,8 +40,5 @@
     "vitest": "^4.0.1",
     "vue": "^3.5.14",
     "yup": "^1.6.1"
-  },
-  "dependencies": {
-    "@types/supertest": "^6.0.3"
   }
 }
