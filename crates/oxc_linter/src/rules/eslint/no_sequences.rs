@@ -52,7 +52,8 @@ declare_oxc_lint!(
     ///
     /// 0, eval("doSomething();");
     ///
-    /// do {} while ((doSomething(), !!test));
+    /// // Arrow function body needs double parentheses
+    /// const fn = () => (doSomething(), val);
     ///
     /// // with allowInParentheses: false
     /// foo = (doSomething(), val);
@@ -64,9 +65,13 @@ declare_oxc_lint!(
     ///
     /// (0, eval)("doSomething();");
     ///
-    /// do {} while (((doSomething(), !!test)));
+    /// // Single extra parentheses is enough for conditions
+    /// do {} while ((doSomething(), !!test));
     ///
     /// for (i = 0, j = 10; i < j; i++, j--) {}
+    ///
+    /// // Arrow function body needs double parentheses
+    /// const fn = () => ((doSomething(), val));
     /// ```
     NoSequences,
     eslint,
