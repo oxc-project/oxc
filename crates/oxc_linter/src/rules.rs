@@ -145,6 +145,7 @@ pub(crate) mod eslint {
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
+    pub mod no_sequences;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
@@ -792,6 +793,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
+    eslint::no_sequences,
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
