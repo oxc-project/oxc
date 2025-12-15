@@ -66,22 +66,22 @@ export async function runMigratePrettier() {
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
     // Oxfmt does not support this
     if (key === "overrides") {
-      console.error(`- "overrides" is not supported, skipping...`);
+      console.error(`  - "overrides" is not supported, skipping...`);
       continue;
     }
     // Oxfmt does not yet support plugins
     if (key === "plugins") {
-      console.error(`- "plugins" is not supported yet, skipping...`);
+      console.error(`  - "plugins" is not supported yet, skipping...`);
       continue;
     }
     // Oxfmt does not support this, fallback to default
     if (key === "endOfLine" && value === "auto") {
-      console.error(`- "endOfLine: auto" is not supported, skipping...`);
+      console.error(`  - "endOfLine: auto" is not supported, skipping...`);
       continue;
     }
     // Oxfmt does not support these experimental options yet
     if (key === "experimentalTernaries" || key === "experimentalOperatorPosition") {
-      console.error(`- "${key}" is not supported in JS/TS files yet`);
+      console.error(`  - "${key}" is not supported in JS/TS files yet`);
       continue;
     }
 
@@ -94,14 +94,14 @@ export async function runMigratePrettier() {
   // Oxfmt default is 100, Prettier default is 80.
   if (typeof oxfmtrc.printWidth !== "number") {
     console.error(
-      `- "printWidth" is not set in Prettier config, defaulting to 80 (Oxfmt default: 100)`,
+      `  - "printWidth" is not set in Prettier config, defaulting to 80 (Oxfmt default: 100)`,
     );
     oxfmtrc.printWidth = 80;
   }
   // `embeddedLanguageFormatting` is not fully supported yet and default "off" in Oxfmt.
   // Prettier default is "auto".
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
-    console.error(`- "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
+    console.error(`  - "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
   }
 
   // Migrate `ignorePatterns` from `.prettierignore`
