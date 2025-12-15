@@ -82,22 +82,20 @@ impl Rule for PreferSpyOn {
             return;
         };
 
-        let left = &assign_expr.left;
-        let right = &assign_expr.right;
-
-        let Some(left_assign) = left
+        let Some(left_assign) = &assign_expr
+            .left
             .as_simple_assignment_target()
             .and_then(SimpleAssignmentTarget::as_member_expression)
         else {
             return;
         };
 
-        match right {
+        match &assign_expr.right {
             Expression::CallExpression(call_expr) => {
                 Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
             }
             _ => {
-                if let Some(mem_expr) = right.as_member_expression() {
+                if let Some(mem_expr) = assign_expr.right.as_member_expression() {
                     let Expression::CallExpression(call_expr) = mem_expr.object() else {
                         return;
                     };
@@ -121,11 +119,18 @@ impl PreferSpyOn {
         else {
             return;
         };
+
         let Some(first_fn_member) = jest_fn_call.members.first() else {
             return;
         };
 
-        if first_fn_member.name().unwrap() != "fn" {
+        let Some(first_fn_member_name) =
+            jest_fn_call.members.first().map_or(None, |member| member.name())
+        else {
+            return;
+        };
+
+        if first_fn_member_name != "fn" {
             return;
         }
 
