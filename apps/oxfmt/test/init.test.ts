@@ -58,7 +58,7 @@ describe("init", () => {
       const result = await runCli(tempDir, ["--init"]);
 
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("Configuration file already exists.");
+      expect(result.stderr).toContain("Oxfmt configuration file already exists.");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -74,7 +74,7 @@ describe("init", () => {
       const result = await runCli(tempDir, ["--init"]);
 
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("Configuration file already exists.");
+      expect(result.stderr).toContain("Oxfmt configuration file already exists.");
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
