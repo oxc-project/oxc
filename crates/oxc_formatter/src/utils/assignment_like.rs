@@ -949,12 +949,12 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     !is_member_call_chain(call_expressions[0], f)
 }
 
-/// This function checks if `JsAnyCallArgument` is short
-/// We need it to decide if `JsCallExpression` with the argument is breakable or not
+/// This function checks if [`Argument`] is short
+/// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
-/// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L374>
-fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> bool {
-    match expression {
+/// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
+fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bool {
+    match argument {
         Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
             is_short_argument(&unary_expression.argument, threshold, f)
@@ -977,6 +977,10 @@ fn is_short_argument(expression: &Expression, threshold: u16, f: &Formatter) -> 
                 let raw = literal.quasis[0].value.raw;
                 raw.len() <= threshold as usize && !raw.contains('\n')
             }
+        }
+        Expression::CallExpression(call) => {
+            call.arguments.is_empty()
+                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
         }
         Expression::ThisExpression(_)
         | Expression::NullLiteral(_)
