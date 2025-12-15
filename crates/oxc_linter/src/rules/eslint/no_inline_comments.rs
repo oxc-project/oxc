@@ -3,6 +3,7 @@ use oxc_ast::{AstKind, Comment};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,8 +13,33 @@ fn no_inline_comments_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct NoInlineComments(Option<Box<Regex>>);
+#[derive(Debug, Default, Clone)]
+pub struct NoInlineComments(Box<NoInlineCommentsConfig>);
+
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct NoInlineCommentsConfig {
+    /// A regex pattern to ignore certain inline comments.
+    ///
+    /// Comments matching this pattern will not be reported.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///     "no-inline-comments": ["error", { "ignorePattern": "webpackChunkName" }]
+    /// }
+    /// ```
+    #[schemars(skip)]
+    ignore_pattern: Option<Regex>,
+}
+
+impl std::ops::Deref for NoInlineComments {
+    type Target = NoInlineCommentsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -44,20 +70,19 @@ declare_oxc_lint!(
     /// ```
     NoInlineComments,
     eslint,
-    pedantic
+    pedantic,
+    config = NoInlineCommentsConfig
 );
 
 impl Rule for NoInlineComments {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-
-        let ignore_pattern = config
+        let ignore_pattern = value
+            .get(0)
             .and_then(|v| v.get("ignorePattern"))
             .and_then(|v| v.as_str())
-            .and_then(|s| Regex::new(s).ok())
-            .map(Box::new);
+            .and_then(|s| Regex::new(s).ok());
 
-        Self(ignore_pattern)
+        Self(Box::new(NoInlineCommentsConfig { ignore_pattern }))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -82,7 +107,7 @@ impl Rule for NoInlineComments {
             let comment_text = ctx.source_range(comment.content_span());
 
             // Check if this matches the ignorePattern
-            if let Some(ref pattern) = self.0
+            if let Some(ref pattern) = self.ignore_pattern
                 && pattern.is_match(comment_text)
             {
                 continue;
@@ -219,7 +244,7 @@ fn test() {
         ("var a = 1; /* eslint-disable-line no-debugger */", None),
         // ESLint config directive with space (/* eslint ... */)
         (r#"var a = 1; /* eslint no-console: "off" */"#, None),
-        (r#"var a = 1; /* eslint-env node */"#, None),
+        (r"var a = 1; /* eslint-env node */", None),
         // global/globals/exported only in block comments
         ("foo(); /* global foo */", None),
         ("foo(); /* globals foo */", None),
