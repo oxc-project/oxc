@@ -1,7 +1,6 @@
 # Rust
 target/
 **/*.rs.bk
-*.rlib
 
 # Wasm
 **/*.wasm
