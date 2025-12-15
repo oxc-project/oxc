@@ -206,10 +206,7 @@ fn test() {
         // For loop with parentheses around init/update - still allowed
         ("for ((a, b);;);", None),
         ("for (;; (a, b));", None),
-        (
-            "for ((a, b);;);",
-            Some(serde_json::json!([{ "allowInParentheses": false }])),
-        ),
+        ("for ((a, b);;);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
         // Wrapped in parentheses (default allowInParentheses: true)
         ("foo = (doSomething(), val);", None),
         ("(0, eval)(\"doSomething();\");", None),
@@ -224,10 +221,7 @@ fn test() {
         // Arrow function body requires double parentheses
         ("const fn = (x) => ((log(), x));", None),
         // With allowInParentheses: true (explicit)
-        (
-            "foo = (doSomething(), val);",
-            Some(serde_json::json!([{ "allowInParentheses": true }])),
-        ),
+        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": true }]))),
     ];
 
     let fail = vec![
@@ -245,10 +239,7 @@ fn test() {
         // Arrow function body with single parentheses (needs double per ESLint)
         ("const fn = (x) => (log(), x);", None),
         // With allowInParentheses: false, even parenthesized sequences are errors
-        (
-            "foo = (doSomething(), val);",
-            Some(serde_json::json!([{ "allowInParentheses": false }])),
-        ),
+        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
         (
             "(0, eval)(\"doSomething();\");",
             Some(serde_json::json!([{ "allowInParentheses": false }])),
