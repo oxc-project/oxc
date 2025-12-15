@@ -11,6 +11,7 @@ import {
 } from "./json.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
+import type { Writable } from "type-fest";
 import type { JsonValue } from "./json.ts";
 
 const { freeze } = Object,
@@ -82,7 +83,8 @@ export function setOptions(optionsJson: string): void {
   // `mergeOptions` also deep-freezes the options.
   for (let i = 1, len = allOptions.length; i < len; i++) {
     allOptions[i] = mergeOptions(
-      allOptions[i] as Options, // `allOptions`' type is `Readonly`, but the array is mutable at present
+      // `allOptions`' type is `Readonly`, but the array is mutable at present
+      allOptions[i] as Writable<(typeof allOptions)[number]>,
       registeredRules[ruleIds[i]].defaultOptions,
     );
   }
