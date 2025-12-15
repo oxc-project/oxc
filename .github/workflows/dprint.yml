@@ -24,7 +24,7 @@ jobs:
       - run: dprint check
 
       - name: Save dprint plugin cache
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
