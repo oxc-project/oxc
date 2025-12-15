@@ -137,6 +137,7 @@ pub struct ExtensionsConfig {
     ///
     /// Example: `["always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
     ignore_packages: bool,
+    #[serde(skip)]
     require_extension: Option<ExtensionRule>,
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
