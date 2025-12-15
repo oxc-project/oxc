@@ -484,9 +484,10 @@ impl Extensions {
         if let Some(ext_str) = extension_to_check {
             // Skip validation for unconfigured extensions (prevents false positives)
             // unless there's a global rule or it's a standard extension
-            if !config.has_rule(ext_str)
-                && require_extension.is_none()
+            // (cheapest checks first: is_none, matches!, then hash lookup)
+            if require_extension.is_none()
                 && !ExtensionsConfig::is_standard_extension(ext_str)
+                && !config.has_rule(ext_str)
             {
                 return;
             }
