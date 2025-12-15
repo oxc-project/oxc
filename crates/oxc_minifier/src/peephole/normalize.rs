@@ -331,7 +331,10 @@ impl<'a> Normalize {
                             if class_expr.super_class.is_some() && body.statements.is_empty() {
                                 return true;
                             }
-                            return body.statements.iter().any(|stmt| stmt.may_have_side_effects(&ctx));
+                            return body
+                                .statements
+                                .iter()
+                                .any(|stmt| stmt.may_have_side_effects(&ctx));
                         }
                         false
                     });
