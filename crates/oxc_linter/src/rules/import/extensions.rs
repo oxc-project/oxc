@@ -139,6 +139,7 @@ pub struct ExtensionsConfig {
     ignore_packages: bool,
     #[serde(skip)]
     require_extension: Option<ExtensionRule>,
+    /// Whether to check type imports when enforcing extension rules.
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
     extensions: FxHashMap<String, ExtensionRule>,
