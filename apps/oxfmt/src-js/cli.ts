@@ -17,11 +17,8 @@ void (async () => {
     case "migrate:prettier":
       await runMigratePrettier();
       break;
-    // LSP mode is handled by Rust, nothing to do here
-    case "lsp":
-      break;
-    // CLI mode also handled by Rust, just need to set exit code
-    case "cli":
+    // Other modes are handled by Rust, just need to set `exitCode`
+    default:
       // NOTE: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
       // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
       // https://nodejs.org/api/process.html#processexitcode

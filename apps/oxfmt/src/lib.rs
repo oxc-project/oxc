@@ -1,10 +1,11 @@
 pub mod cli;
 mod core;
+#[cfg(feature = "napi")]
 pub mod lsp;
-
-// Only include code to run formatter when the `napi` feature is enabled.
 #[cfg(feature = "napi")]
 mod main_napi;
+#[cfg(feature = "napi")]
+pub mod stdin;
 #[cfg(feature = "napi")]
 pub use main_napi::*;
 
