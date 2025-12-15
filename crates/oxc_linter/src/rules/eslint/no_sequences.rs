@@ -162,34 +162,26 @@ impl NoSequences {
             return false;
         }
 
-        // Check if this is a position that requires extra parentheses:
-        // - IfStatement test
-        // - WhileStatement test
-        // - DoWhileStatement test
-        // - SwitchStatement discriminant
-        // - WithStatement object
-        let requires_extra_parens = matches!(
-            cur.kind(),
-            AstKind::IfStatement(_)
-                | AstKind::WhileStatement(_)
-                | AstKind::DoWhileStatement(_)
-                | AstKind::SwitchStatement(_)
-                | AstKind::WithStatement(_)
-        );
-
-        // Also check for ArrowFunctionExpression body
+        // Check for ArrowFunctionExpression body
         // In oxc's AST: SequenceExpr -> ParenthesizedExpr -> ExpressionStatement -> FunctionBody -> ArrowFunctionExpr
+        // Arrow body needs double parentheses because the first layer is syntactically required
+        // (otherwise `() => a, b` would be parsed as `(() => a), b`)
         let is_arrow_body = matches!(cur.kind(), AstKind::ExpressionStatement(_))
             && matches!(
                 nodes.parent_node(nodes.parent_node(cur.id()).id()).kind(),
                 AstKind::ArrowFunctionExpression(arrow) if arrow.expression
             );
 
-        if requires_extra_parens || is_arrow_body {
-            // Need at least 2 levels of parentheses for these cases
+        if is_arrow_body {
+            // Arrow body needs at least 2 levels of parentheses
+            // () => (a, b) has paren_depth=1, needs () => ((a, b)) with paren_depth=2
             paren_depth >= 2
         } else {
-            // Single parentheses is enough for other cases
+            // For if/while/do/switch/with and other positions:
+            // The grammar-required parentheses (e.g., `if (...)`) don't appear in the AST
+            // as ParenthesizedExpression, so paren_depth >= 1 means one extra layer of parens
+            // which indicates intentional use of the comma operator.
+            // E.g., `if ((a, b))` has paren_depth=1 and should be allowed.
             true
         }
     }
@@ -211,13 +203,13 @@ fn test() {
         ("foo = (doSomething(), val);", None),
         ("(0, eval)(\"doSomething();\");", None),
         ("a = ((b, c), d);", None),
-        // Double parentheses for conditions (grammar positions require extra parens)
-        ("do {} while (((doSomething(), !!test)));", None),
-        ("while (((a, b))) {}", None),
-        ("if (((a, b))) {}", None),
-        ("switch (((a, b))) {}", None),
-        // With statement with double parentheses
-        ("with (((a, b))) {}", None),
+        // Single extra parentheses in conditions is enough (ESLint docs examples)
+        // Grammar-required parens (e.g., `if (...)`) don't appear in AST
+        ("if ((doSomething(), !!test));", None),
+        ("do {} while ((doSomething(), !!test));", None),
+        ("while ((a, b)) {}", None),
+        ("switch ((val = foo(), val)) {}", None),
+        ("with ((doSomething(), val)) {}", None),
         // Arrow function body requires double parentheses
         ("const fn = (x) => ((log(), x));", None),
         // With allowInParentheses: true (explicit)
@@ -229,13 +221,6 @@ fn test() {
         ("foo = doSomething(), val;", None),
         ("0, eval(\"doSomething();\");", None),
         ("a = b, c;", None),
-        // Single parentheses in condition (needs double)
-        ("do {} while ((doSomething(), !!test));", None),
-        ("while ((a, b)) {}", None),
-        ("if ((a, b)) {}", None),
-        ("switch ((a, b)) {}", None),
-        // With statement with single parentheses (needs double)
-        ("with ((a, b)) {}", None),
         // Arrow function body with single parentheses (needs double per ESLint)
         ("const fn = (x) => (log(), x);", None),
         // With allowInParentheses: false, even parenthesized sequences are errors
