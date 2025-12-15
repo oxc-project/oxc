@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, rule::DefaultRuleConfig};
+use crate::{AstNode, context::LintContext, rule::DefaultRuleConfig, rule::Rule};
 
 fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of comma operator")
@@ -76,9 +76,7 @@ declare_oxc_lint!(
 
 impl Rule for NoSequences {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
