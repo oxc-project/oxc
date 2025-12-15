@@ -19,8 +19,8 @@ catalogs:
       specifier: ^10.1.0
       version: 10.1.0
     publint:
-      specifier: 0.3.15
-      version: 0.3.15
+      specifier: 0.3.16
+      version: 0.3.16
     rolldown:
       specifier: 1.0.0-beta.54
       version: 1.0.0-beta.54
@@ -66,7 +66,7 @@ importers:
         version: 0.9.0
       publint:
         specifier: 'catalog:'
-        version: 0.3.15
+        version: 0.3.16
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -91,7 +91,7 @@ importers:
         version: 9.6.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
+        version: 0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.16)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -111,8 +111,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       '@typescript-eslint/scope-manager':
-        specifier: 8.48.1
-        version: 8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
+        specifier: 8.49.0
+        version: 8.49.0(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0
@@ -139,10 +139,10 @@ importers:
         version: 1.0.0-beta.54
       tsdown:
         specifier: 'catalog:'
-        version: 0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
+        version: 0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.16)(typescript@5.9.3)
       type-fest:
         specifier: ^5.2.0
-        version: 5.3.0
+        version: 5.3.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -216,7 +216,7 @@ importers:
         version: 1.1.0
       '@typescript-eslint/visitor-keys':
         specifier: ^8.44.0
-        version: 8.48.1
+        version: 8.49.0
       '@vitest/browser':
         specifier: 4.0.15
         version: 4.0.15(vite@7.2.2(@types/node@25.0.2)(jiti@2.6.1))(vitest@4.0.15)
@@ -2247,16 +2247,16 @@ packages:
   '@types/vscode@1.93.0':
     resolution: {integrity: sha512-kUK6jAHSR5zY8ps42xuW89NLcBpw1kOabah7yv38J8MyiYuOHxLQBi0e7zeXbQgVefDy/mZZetqEFC+Fl5eIEQ==}
 
-  '@typescript-eslint/scope-manager@8.48.1':
-    resolution: {integrity: sha512-rj4vWQsytQbLxC5Bf4XwZ0/CKd362DkWMUkviT7DCS057SK64D5lH74sSGzhI6PDD2HCEq02xAP9cX68dYyg1w==}
+  '@typescript-eslint/scope-manager@8.49.0':
+    resolution: {integrity: sha512-npgS3zi+/30KSOkXNs0LQXtsg9ekZ8OISAOLGWA/ZOEn0ZH74Ginfl7foziV8DT+D98WfQ5Kopwqb/PZOaIJGg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript-eslint/types@8.48.1':
-    resolution: {integrity: sha512-+fZ3LZNeiELGmimrujsDCT4CRIbq5oXdHe7chLiW8qzqyPMnn1puNstCrMNVAqwcl2FdIxkuJ4tOs/RFDBVc/Q==}
+  '@typescript-eslint/types@8.49.0':
+    resolution: {integrity: sha512-e9k/fneezorUo6WShlQpMxXh8/8wfyc+biu6tnAqA81oWrEic0k21RHzP9uqqpyBBeBKu4T+Bsjy9/b8u7obXQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript-eslint/visitor-keys@8.48.1':
-    resolution: {integrity: sha512-BmxxndzEWhE4TIEEMBs8lP3MBWN3jFPs/p6gPm/wkv02o41hI6cq9AuSmGAaTTHPtA1FTi2jBre4A9rm5ZmX+Q==}
+  '@typescript-eslint/visitor-keys@8.49.0':
+    resolution: {integrity: sha512-LlKaciDe3GmZFphXIc79THF/YYBugZ7FS1pO581E/edlVVNbZKDy93evqmrfQ9/Y4uN0vVhX4iuchq26mK/iiA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typespec/ts-http-runtime@0.3.2':
@@ -3610,8 +3610,8 @@ packages:
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
-  package-manager-detector@1.5.0:
-    resolution: {integrity: sha512-uBj69dVlYe/+wxj8JOpr97XfsxH/eumMt6HqjNTmJDf/6NO9s+0uxeOneIz3AsPt2m6y9PqzDzd3ATcU17MNfw==}
+  package-manager-detector@1.6.0:
+    resolution: {integrity: sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==}
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
@@ -3738,8 +3738,8 @@ packages:
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
-  publint@0.3.15:
-    resolution: {integrity: sha512-xPbRAPW+vqdiaKy5sVVY0uFAu3LaviaPO3pZ9FaRx59l9+U/RKR1OEbLhkug87cwiVKxPXyB4txsv5cad67u+A==}
+  publint@0.3.16:
+    resolution: {integrity: sha512-MFqyfRLAExPVZdTQFwkAQELzA8idyXzROVOytg6nEJ/GEypXBUmMGrVaID8cTuzRS1U5L8yTOdOJtMXgFUJAeA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4155,8 +4155,8 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-  type-fest@5.3.0:
-    resolution: {integrity: sha512-d9CwU93nN0IA1QL+GSNDdwLAu1Ew5ZjTwupvedwg3WdfoH6pIDvYQ2hV0Uc2nKBLPq7NB5apCx57MLS5qlmO5g==}
+  type-fest@5.3.1:
+    resolution: {integrity: sha512-VCn+LMHbd4t6sF3wfU/+HKT63C9OoyrSIf4b+vtWHpt2U7/4InZG467YDNMFMR70DdHjAdpPWmw2lzRdg0Xqqg==}
     engines: {node: '>=20'}
 
   typed-rest-client@1.8.11:
@@ -6049,16 +6049,16 @@ snapshots:
 
   '@types/vscode@1.93.0': {}
 
-  '@typescript-eslint/scope-manager@8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)':
+  '@typescript-eslint/scope-manager@8.49.0(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)':
     dependencies:
-      '@typescript-eslint/types': 8.48.1
-      '@typescript-eslint/visitor-keys': 8.48.1
+      '@typescript-eslint/types': 8.49.0
+      '@typescript-eslint/visitor-keys': 8.49.0
 
-  '@typescript-eslint/types@8.48.1': {}
+  '@typescript-eslint/types@8.49.0': {}
 
-  '@typescript-eslint/visitor-keys@8.48.1':
+  '@typescript-eslint/visitor-keys@8.49.0':
     dependencies:
-      '@typescript-eslint/types': 8.48.1
+      '@typescript-eslint/types': 8.49.0
       eslint-visitor-keys: 4.2.1
 
   '@typespec/ts-http-runtime@0.3.2':
@@ -7562,7 +7562,7 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  package-manager-detector@1.5.0: {}
+  package-manager-detector@1.6.0: {}
 
   pako@1.0.11: {}
 
@@ -7677,10 +7677,10 @@ snapshots:
 
   proxy-from-env@1.1.0: {}
 
-  publint@0.3.15:
+  publint@0.3.16:
     dependencies:
       '@publint/pack': 0.1.2
-      package-manager-detector: 1.5.0
+      package-manager-detector: 1.6.0
       picocolors: 1.1.1
       sade: 1.8.1
 
@@ -8116,7 +8116,7 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  tsdown@0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3):
+  tsdown@0.17.4(@arethetypeswrong/core@0.18.2)(publint@0.3.16)(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 6.7.14
@@ -8135,7 +8135,7 @@ snapshots:
       unrun: 0.2.19
     optionalDependencies:
       '@arethetypeswrong/core': 0.18.2
-      publint: 0.3.15
+      publint: 0.3.16
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@ts-macro/tsc'
@@ -8161,7 +8161,7 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-  type-fest@5.3.0:
+  type-fest@5.3.1:
     dependencies:
       tagged-tag: 1.0.0
 
