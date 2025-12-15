@@ -103,7 +103,8 @@ impl Rule for PreferDomNodeDataset {
                 // Playwright's `Locator#getAttribute()` returns a promise.
                 // https://playwright.dev/docs/api/class-locator#locator-get-attribute
                 // https://github.com/sindresorhus/eslint-plugin-unicorn/pull/2334
-                if matches!(ctx.nodes().parent_node(node.id()).kind(), AstKind::AwaitExpression(_)) {
+                if matches!(ctx.nodes().parent_node(node.id()).kind(), AstKind::AwaitExpression(_))
+                {
                     return;
                 }
             }
