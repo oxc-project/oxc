@@ -3,8 +3,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, rule::DefaultRuleConfig};
 
 fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of comma operator")
@@ -12,18 +13,19 @@ fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoSequences {
     /// If this option is set to `false`, this rule disallows the comma operator
     /// even when the expression sequence is explicitly wrapped in parentheses.
     /// Default is `true`.
-    #[serde(default = "default_allow_in_parentheses")]
     allow_in_parentheses: bool,
 }
 
-fn default_allow_in_parentheses() -> bool {
-    true
+impl Default for NoSequences {
+    fn default() -> Self {
+        Self { allow_in_parentheses: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -69,18 +71,14 @@ declare_oxc_lint!(
     NoSequences,
     eslint,
     restriction,
+    config = NoSequences,
 );
 
 impl Rule for NoSequences {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            allow_in_parentheses: obj
-                .and_then(|v| v.get("allowInParentheses"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
