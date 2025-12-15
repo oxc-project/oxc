@@ -209,6 +209,7 @@ impl ExtensionsConfig {
             || self.is_never("tsx")
             || self.is_never("mjs")
             || self.is_never("cjs")
+            || self.is_never("json")
     }
 
     /// Check path group overrides for the given import path.
