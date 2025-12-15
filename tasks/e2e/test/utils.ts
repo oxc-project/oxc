@@ -15,7 +15,7 @@ const nodeModulesPath = path.resolve(
 const minifyOptions: any[] = [
   { compress: true, mangle: true, codegen: { whitespace: true } },
   { compress: true, mangle: false, codegen: { whitespace: true } },
-].map((o) => ({ type: "minify", ...o }));
+].map((o) => Object.assign({ type: "minify" }, o));
 
 const transformOptions: any[] = [
   { target: "esnext" },
@@ -29,7 +29,7 @@ const transformOptions: any[] = [
   { target: "es2017" },
   { target: "es2016" },
   { target: "es2015" },
-].map((o) => ({ type: "transform", ...o }));
+].map((o) => Object.assign({ type: "transform" }, o));
 
 export async function getModules(
   dir: string,
