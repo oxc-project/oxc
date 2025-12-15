@@ -658,11 +658,12 @@ fn is_package_import(module_name: &str) -> bool {
     }
 
     // Other single-char path aliases: ~/, #/
-    if module_name.len() >= 2 {
-        let bytes = module_name.as_bytes();
-        if bytes[1] == b'/' && bytes[0] != b'.' && bytes[0] != b'@' {
-            return false; // Path alias like ~/ or #/
-        }
+    // Use slice pattern for single bounds check
+    if let [first, b'/', ..] = module_name.as_bytes()
+        && *first != b'.'
+        && *first != b'@'
+    {
+        return false; // Path alias like ~/ or #/
     }
 
     // Everything else is a bare package import
