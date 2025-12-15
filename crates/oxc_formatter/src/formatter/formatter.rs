@@ -6,7 +6,6 @@ use crate::options::FormatOptions;
 
 use super::{
     Arguments, Buffer, Comments, FormatContext, FormatState, GroupId, SourceText, VecBuffer,
-    buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
 };
@@ -75,7 +74,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// use biome_formatter::format;
     /// use biome_formatter::prelude::*;
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
     ///     f.join()
     ///         .entry(&token("a"))
@@ -107,7 +106,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// use biome_formatter::{format, format_args};
     /// use biome_formatter::prelude::*;
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
     ///     f.join_with(&format_args!(token(","), space()))
     ///         .entry(&token("1"))
@@ -183,7 +182,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{format, format_args};
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
     ///     f.fill()
     ///         .entry(&soft_line_break_or_space(), &token("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
@@ -205,7 +204,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{format, format_args};
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let entries = vec![
     ///     token("<b>Important: </b>"),
     ///     token("Please do not commit memory bugs such as segfaults, buffer overflows, etc. otherwise you "),
@@ -229,15 +228,12 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(
-        &mut self,
-        content: &dyn Format<'ast>,
-    ) -> FormatResult<Option<FormatElement<'ast>>> {
+    pub fn intern(&mut self, content: &dyn Format<'ast>) -> Option<FormatElement<'ast>> {
         let mut buffer = VecBuffer::new(self.state_mut());
-        crate::write!(&mut buffer, [content])?;
+        crate::write!(&mut buffer, [content]);
         let elements = buffer.into_vec();
 
-        Ok(self.intern_vec(elements))
+        self.intern_vec(elements)
     }
 
     #[expect(clippy::unused_self)] // Keep `self` the same as the original source
@@ -257,8 +253,8 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
 
 impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     #[inline(always)]
-    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
-        self.buffer.write_element(element)
+    fn write_element(&mut self, element: FormatElement<'ast>) {
+        self.buffer.write_element(element);
     }
 
     fn elements(&self) -> &[FormatElement<'ast>] {
@@ -266,11 +262,10 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     }
 
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) -> FormatResult<()> {
+    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) {
         for argument in arguments.items() {
-            argument.format(self)?;
+            argument.format(self);
         }
-        Ok(())
     }
 
     fn state(&self) -> &FormatState<'ast> {
@@ -279,13 +274,5 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.buffer.state_mut()
-    }
-
-    fn snapshot(&self) -> BufferSnapshot {
-        self.buffer.snapshot()
-    }
-
-    fn restore_snapshot(&mut self, snapshot: BufferSnapshot) {
-        self.buffer.restore_snapshot(snapshot);
     }
 }

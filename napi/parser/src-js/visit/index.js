@@ -1,4 +1,4 @@
-import { createRequire } from 'node:module';
+import { createRequire } from "node:module";
 
 // Lazy-loaded when first construct a `Visitor`
 let walkProgram = null,
@@ -15,8 +15,12 @@ export class Visitor {
   constructor(visitor) {
     if (walkProgram === null) {
       const require = createRequire(import.meta.url);
-      ({ walkProgram } = require('../../generated/visit/walk.js'));
-      ({ addVisitorToCompiled, createCompiledVisitor, finalizeCompiledVisitor } = require('./visitor.js'));
+      ({ walkProgram } = require("../../generated/visit/walk.js"));
+      ({
+        addVisitorToCompiled,
+        createCompiledVisitor,
+        finalizeCompiledVisitor,
+      } = require("./visitor.js"));
     }
 
     const compiledVisitor = createCompiledVisitor();

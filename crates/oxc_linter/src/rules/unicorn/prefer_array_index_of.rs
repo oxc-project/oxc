@@ -10,8 +10,8 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_array_index_of_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer 'indexOf' over 'findIndex' for simple equality checks")
-        .with_help("Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance")
+    OxcDiagnostic::warn("Prefer `indexOf` over `findIndex` for simple equality checks")
+        .with_help("Use `indexOf(value)` instead of `findIndex(x => x === value)` for better clarity and performance")
         .with_label(span)
 }
 

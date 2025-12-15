@@ -1,4 +1,3 @@
-import { lintFile } from './lint.js';
-import { loadPlugin } from './load.js';
-
-export { lintFile, loadPlugin };
+export { lintFile } from "./lint.ts";
+export { loadPlugin } from "./load.ts";
+export { setupConfigs } from "./config.ts";

@@ -6,9 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_array_reverse_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array#toReversed()` instead of `Array#reverse()`.")
@@ -16,7 +21,7 @@ fn no_array_reverse_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoArrayReverse {
     /// This rule allows `array.reverse()` as an expression statement by default.
@@ -65,13 +70,9 @@ declare_oxc_lint!(
 
 impl Rule for NoArrayReverse {
     fn from_configuration(value: Value) -> Self {
-        Self {
-            allow_expression_statement: value
-                .get(0)
-                .and_then(|v| v.get("allowExpressionStatement"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoArrayReverse>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

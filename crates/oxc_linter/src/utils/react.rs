@@ -267,9 +267,6 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
 /// like useState (built-in) or useOnlineStatus (custom).
 pub fn is_react_hook_name(name: &str) -> bool {
     name.starts_with("use") && name.chars().nth(3).is_none_or(char::is_uppercase)
-    // uncomment this check if react decided to drop the idea of `use` hook.
-    // <https://react.dev/reference/react/use> It is currently in `Canary` builds.
-    // name.starts_with("use") && name.chars().nth(3).is_some_and(char::is_uppercase)
 }
 
 /// Checks whether the `name` follows the official conventions of React Hooks.
@@ -350,4 +347,86 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
     }
 
     false
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::AstBuilder;
+    use oxc_span::Span;
+
+    #[test]
+    fn test_is_react_component_name() {
+        // Good names:
+        assert!(is_react_component_name("MyComponent"));
+        assert!(is_react_component_name("X"));
+        assert!(is_react_component_name("Component_Name")); // Allowed but horrible
+        // This should be allowed:
+        // ```jsx
+        // function Form() {}
+        // Form.Input = function Input() { ... };
+        // <Form.Input />
+        // ```
+        assert!(is_react_component_name("Component.Name"));
+        // Bad names:
+        assert!(!is_react_component_name("myComponent"));
+        assert!(!is_react_component_name("useSomething"));
+        assert!(!is_react_component_name("x"));
+        assert!(!is_react_component_name("componentname"));
+        assert!(!is_react_component_name("use"));
+    }
+
+    #[test]
+    fn test_is_react_hook() {
+        let alloc = Allocator::default();
+        let ast = AstBuilder::new(&alloc);
+
+        // Identifier: useState
+        let use_state = ast.expression_identifier(Span::default(), "useState");
+        assert!(is_react_hook(&use_state));
+
+        // Identifier: use
+        let just_use = ast.expression_identifier(Span::default(), "use");
+        assert!(is_react_hook(&just_use));
+
+        // Identifier: userError, should not be considered a hook despite starting with "use"
+        let user_error = ast.expression_identifier(Span::default(), "userError");
+        assert!(!is_react_hook(&user_error));
+
+        // Identifier that's not a hook
+        let not_hook = ast.expression_identifier(Span::default(), "notAHook");
+        assert!(!is_react_hook(&not_hook));
+
+        // Static member: React.useEffect -> valid
+        let react_obj = ast.expression_identifier(Span::default(), "React");
+        let prop = ast.identifier_name(Span::default(), "useEffect");
+        let react_use_effect =
+            ast.member_expression_static(Span::default(), react_obj, prop, false).into();
+        assert!(is_react_hook(&react_use_effect));
+
+        // Static member: react.useEffect -> invalid because namespace isn't PascalCase
+        let react_lower = ast.expression_identifier(Span::default(), "react");
+        let prop2 = ast.identifier_name(Span::default(), "useEffect");
+        let react_lower_use_effect =
+            ast.member_expression_static(Span::default(), react_lower, prop2, false).into();
+        assert!(!is_react_hook(&react_lower_use_effect));
+    }
+
+    #[test]
+    fn test_is_react_hook_name() {
+        // Good names:
+        assert!(is_react_hook_name("useState"));
+        assert!(is_react_hook_name("useFooBar"));
+        assert!(is_react_hook_name("useEffect"));
+        assert!(is_react_hook_name("use"));
+        // Bad names:
+        assert!(!is_react_hook_name("userError"));
+        assert!(!is_react_hook_name("notAHook"));
+        assert!(!is_react_hook_name("UseState"));
+        assert!(!is_react_hook_name("Use"));
+        assert!(!is_react_hook_name("user"));
+        assert!(!is_react_hook_name("use_state"));
+    }
 }

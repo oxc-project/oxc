@@ -20,11 +20,13 @@ A-editor:
 
 A-formatter:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_formatter/**", "tasks/prettier_conformance/**", "apps/oxfmt/**"]
+      - any-glob-to-any-file:
+          ["crates/oxc_formatter/**", "tasks/prettier_conformance/**", "apps/oxfmt/**"]
 
 A-transformer:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_transformer/**", "tasks/transform_conformance/**", "napi/transform/**"]
+      - any-glob-to-any-file:
+          ["crates/oxc_transformer/**", "tasks/transform_conformance/**", "napi/transform/**"]
 
 A-linter:
   - changed-files:
@@ -32,7 +34,8 @@ A-linter:
 
 A-linter-plugins:
   - changed-files:
-      - any-glob-to-any-file: ["apps/oxlint/src-js/**"]
+      - any-glob-to-any-file:
+          ["apps/oxlint/src-js/**", "apps/oxlint/test/**", "apps/oxlint/conformance/**"]
 
 A-minifier:
   - changed-files:

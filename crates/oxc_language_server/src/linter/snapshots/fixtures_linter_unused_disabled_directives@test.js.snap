@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/unused_disabled_directives/test.js
+Linted file: fixtures/linter/unused_disabled_directives/test.js
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/unused_disabled_directives/test.js
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
@@ -60,9 +61,11 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-console for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -80,6 +83,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-console for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -97,6 +101,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Remove the debugger statement
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -114,6 +119,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -131,6 +137,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -148,6 +155,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -165,6 +173,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -182,6 +191,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

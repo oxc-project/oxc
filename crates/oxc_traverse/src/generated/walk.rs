@@ -25,7 +25,7 @@ use crate::{
 
 /// Walk AST with `Traverse` impl.
 ///
-/// SAFETY:
+/// # Safety
 /// * `program` must be a pointer to a valid `Program` which has lifetime `'a`
 ///   (`Program<'a>`).
 /// * `ctx` must contain a `TraverseAncestry<'a>` with single `Ancestor::None` on its stack.
@@ -5183,12 +5183,12 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeArgument(
-        ancestor::TSImportTypeWithoutArgument(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
+        ancestor::TSImportTypeWithoutSource(node, PhantomData),
     ));
-    walk_ts_type(
+    walk_string_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_SOURCE) as *mut StringLiteral,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)

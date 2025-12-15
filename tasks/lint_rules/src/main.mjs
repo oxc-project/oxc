@@ -1,6 +1,8 @@
-import { parseArgs } from 'node:util';
-import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from './eslint-rules.mjs';
-import { renderMarkdown } from './markdown-renderer.mjs';
+// oxlint-disable no-console
+
+import { parseArgs } from "node:util";
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mjs";
+import { renderMarkdown } from "./markdown-renderer.mjs";
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
@@ -8,8 +10,9 @@ import {
   syncVitestPluginStatusWithJestPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
-} from './oxlint-rules.mjs';
-import { updateGitHubIssue } from './result-reporter.mjs';
+  updatePendingFixStatus,
+} from "./oxlint-rules.mjs";
+import { updateGitHubIssue } from "./result-reporter.mjs";
 
 const HELP = `
 Usage:
@@ -20,7 +23,7 @@ Options:
   --update: Update the issue instead of printing to stdout
   --help, -h: Print this help message
 
-Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
+Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(", ")}
 `;
 
 void (async () => {
@@ -30,9 +33,9 @@ void (async () => {
   const { values } = parseArgs({
     options: {
       // Mainly for debugging
-      target: { type: 'string', short: 't', multiple: true },
-      update: { type: 'boolean' },
-      help: { type: 'boolean', short: 'h' },
+      target: { type: "string", short: "t", multiple: true },
+      update: { type: "boolean" },
+      help: { type: "boolean", short: "h" },
     },
   });
 
@@ -58,6 +61,7 @@ void (async () => {
   const ruleEntries = createRuleEntries(linter.getRules());
   await updateImplementedStatus(ruleEntries);
   updateNotSupportedStatus(ruleEntries);
+  await updatePendingFixStatus(ruleEntries);
   await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
   await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
   syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
@@ -68,7 +72,9 @@ void (async () => {
   const results = await Promise.allSettled(
     Array.from(targetPluginNames).map((pluginName) => {
       const pluginMeta =
-        /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (ALL_TARGET_PLUGINS.get(pluginName));
+        /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
+          ALL_TARGET_PLUGINS.get(pluginName)
+        );
       const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);
@@ -77,7 +83,7 @@ void (async () => {
     }),
   );
   for (const result of results) {
-    if (result.status === 'fulfilled') console.log(result.value);
-    if (result.status === 'rejected') console.error(result.reason);
+    if (result.status === "fulfilled") console.log(result.value);
+    if (result.status === "rejected") console.error(result.reason);
   }
 })();

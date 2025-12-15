@@ -1,19 +1,22 @@
 use std::fmt::Write;
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn consistent_type_definitions_diagnostic(
@@ -28,33 +31,26 @@ fn consistent_type_definitions_diagnostic(
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ConsistentTypeDefinitions {
-    /// Configuration option to enforce either `interface` or `type` for object type definitions.
-    ///
-    /// Setting to `type` enforces the use of types for object type definitions.
-    ///
-    /// Examples of **incorrect** code for this option:
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct ConsistentTypeDefinitions(ConsistentTypeDefinitionsConfig);
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum ConsistentTypeDefinitionsConfig {
+    /// Prefer `interface` over `type` for object type definitions:
     ///
     /// ```typescript
     /// interface T {
     ///   x: number;
     /// }
     /// ```
+    #[default]
+    Interface,
+    /// Prefer `type` over `interface` for object type definitions:
     ///
-    /// Examples of **correct** code for this option:
     /// ```typescript
     /// type T = { x: number };
     /// ```
-    config: ConsistentTypeDefinitionsConfig,
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-enum ConsistentTypeDefinitionsConfig {
-    #[default]
-    Interface,
     Type,
 }
 
@@ -71,7 +67,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// By default this rule enforces the use of interfaces for object types.
+    /// By default this rule enforces the use of `interface` for defining object types.
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
@@ -90,27 +86,22 @@ declare_oxc_lint!(
     ConsistentTypeDefinitions,
     typescript,
     style,
-    fix,
-    config = ConsistentTypeDefinitions,
+    conditional_fix_dangerous,
+    config = ConsistentTypeDefinitionsConfig,
 );
 
 impl Rule for ConsistentTypeDefinitions {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            ConsistentTypeDefinitionsConfig::default,
-            |value| match value {
-                "type" => ConsistentTypeDefinitionsConfig::Type,
-                _ => ConsistentTypeDefinitionsConfig::Interface,
-            },
-        );
-        Self { config }
+        serde_json::from_value::<DefaultRuleConfig<ConsistentTypeDefinitions>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeAliasDeclaration(decl) => match &decl.type_annotation {
                 TSType::TSTypeLiteral(_)
-                    if self.config == ConsistentTypeDefinitionsConfig::Interface =>
+                    if self.0 == ConsistentTypeDefinitionsConfig::Interface =>
                 {
                     let start = if decl.declare {
                         let base_start = decl.span.start + 7;
@@ -155,7 +146,7 @@ impl Rule for ConsistentTypeDefinitions {
 
             AstKind::ExportDefaultDeclaration(exp) => match &exp.declaration {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
-                    if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                    if self.0 == ConsistentTypeDefinitionsConfig::Type =>
                 {
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -175,24 +166,28 @@ impl Rule for ConsistentTypeDefinitions {
                         write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                     }
 
-                    ctx.diagnostic_with_fix(
-                        consistent_type_definitions_diagnostic(
-                            ConsistentTypeDefinitionsConfig::Type,
-                            Span::sized(decl.span.start, 9),
-                        ),
-                        |fixer| {
-                            fixer.replace(
-                                exp.span,
-                                format!("type {name} = {body}{extends}\nexport default {name}"),
-                            )
-                        },
+                    let diagnostic = consistent_type_definitions_diagnostic(
+                        ConsistentTypeDefinitionsConfig::Type,
+                        Span::sized(decl.span.start, 9),
                     );
+
+                    let fix = |fixer: RuleFixer<'_, 'a>| {
+                        fixer.replace(
+                            exp.span,
+                            format!("type {name} = {body}{extends}\nexport default {name}"),
+                        )
+                    };
+                    if is_within_declare_global_block(ctx, node.id()) {
+                        ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                    } else {
+                        ctx.diagnostic_with_fix(diagnostic, fix);
+                    }
                 }
                 _ => {}
             },
 
             AstKind::TSInterfaceDeclaration(decl)
-                if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                if self.0 == ConsistentTypeDefinitionsConfig::Type =>
             {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
@@ -220,18 +215,22 @@ impl Rule for ConsistentTypeDefinitions {
                     write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                 }
 
-                ctx.diagnostic_with_fix(
-                    consistent_type_definitions_diagnostic(
-                        ConsistentTypeDefinitionsConfig::Type,
-                        Span::sized(start, 9),
-                    ),
-                    |fixer| {
-                        fixer.replace(
-                            Span::new(start, decl.span.end),
-                            format!("type {name} = {body}{extends}"),
-                        )
-                    },
+                let diagnostic = consistent_type_definitions_diagnostic(
+                    ConsistentTypeDefinitionsConfig::Type,
+                    Span::sized(start, 9),
                 );
+
+                let fix = |fixer: RuleFixer<'_, 'a>| {
+                    fixer.replace(
+                        Span::new(start, decl.span.end),
+                        format!("type {name} = {body}{extends}"),
+                    )
+                };
+                if is_within_declare_global_block(ctx, node.id()) {
+                    ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                } else {
+                    ctx.diagnostic_with_fix(diagnostic, fix);
+                }
             }
             _ => {}
         }
@@ -240,6 +239,12 @@ impl Rule for ConsistentTypeDefinitions {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
+}
+
+fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
+    ctx.nodes()
+        .ancestors(node_id)
+        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
 }
 
 #[test]
@@ -541,7 +546,43 @@ export declare type Test = {
         ),
     ];
 
+    let fix_dangerous = vec![
+        (
+            "declare global {
+                interface ProcessEnv {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            "declare global {
+                type ProcessEnv = {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
+        (
+            "declare global {
+                namespace NodeJS {
+                    interface ProcessEnv {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            "declare global {
+                namespace NodeJS {
+                    type ProcessEnv = {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
+    ];
+
     Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::PLUGIN, pass, fail)
         .expect_fix(fix)
+        .expect_fix(fix_dangerous)
         .test_and_snapshot();
 }

@@ -3,11 +3,13 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator,
+    Buffer, Format, FormatTrailingCommas, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer, format_element,
+        Comments, FormatElement, Formatter, SourceText, VecBuffer,
+        buffer::RemoveSoftLinesBuffer,
+        format_element,
         prelude::{
             FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
             soft_block_indent, soft_line_break_or_space, space,
@@ -26,15 +28,17 @@ use crate::{
 };
 
 use super::{
+    FormatJsArrowFunctionExpression,
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
         FormatJsArrowFunctionExpressionOptions, FunctionCacheMode, GroupedCallArgumentLayout,
     },
+    function::FormatFunction,
     parameters::has_only_simple_parameters,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
 
@@ -83,13 +87,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     format_with(|f| {
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Omit,
-                            )
-                            .finish()
+                        f.join_with(space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            TrailingSeparator::Omit,
+                        );
                     }),
                     r_paren_token
                 ]
@@ -119,23 +121,25 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         }
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
-            write_grouped_arguments(self, group_layout, f)
+            write_grouped_arguments(self, group_layout, f);
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
             write!(
                 f,
                 [
                     l_paren_token,
-                    soft_block_indent(&format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
-                            .finish()
+                    soft_block_indent(&format_with(|f| {
+                        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+                            self.iter(),
+                            ",",
+                            trailing_operator,
+                        );
                     })),
                     r_paren_token,
                 ]
-            )
+            );
         } else {
-            format_all_args_broken_out(self, false, f)
+            format_all_args_broken_out(self, false, f);
         }
     }
 }
@@ -188,25 +192,25 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 
 fn format_all_elements_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-    elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
+    elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
-) -> FormatResult<()> {
+) {
     write!(
         buffer,
         [group(&format_args!(
             "(",
             soft_block_indent(&format_once(move |f| {
                 for (index, (element, lines_before)) in elements.into_iter().enumerate() {
-                    if let Ok(Some(element)) = element {
+                    if let Some(element) = element {
                         if index > 0 {
                             match lines_before {
-                                0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                                _ => write!(f, [empty_line()])?,
+                                0 | 1 => write!(f, [soft_line_break_or_space()]),
+                                _ => write!(f, [empty_line()]),
                             }
                         }
 
-                        f.write_element(element)?;
+                        f.write_element(element);
                     }
                 }
 
@@ -214,46 +218,46 @@ fn format_all_elements_broken_out<'a, 'b>(
                     f,
                     [(!matches!(node.parent, AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
-                )
+                );
             })),
             ")",
         ))
         .should_expand(expand)]
-    )
+    );
 }
 
 fn format_all_args_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
-) -> FormatResult<()> {
+) {
     let last_index = node.len() - 1;
     write!(
         buffer,
         [group(&format_args!(
             "(",
-            soft_block_indent(&format_once(move |f| {
+            soft_block_indent(&format_with(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
                         match f.source_text().get_lines_before(argument.span(), f.comments()) {
-                            0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                            _ => write!(f, [empty_line()])?,
+                            0 | 1 => write!(f, [soft_line_break_or_space()]),
+                            _ => write!(f, [empty_line()]),
                         }
                     }
 
-                    write!(f, [argument, (index != last_index).then_some(",")])?;
+                    write!(f, [argument, (index != last_index).then_some(",")]);
                 }
 
                 write!(
                     f,
                     [(!matches!(node.parent, AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
-                )
+                );
             })),
             ")",
         ))
         .should_expand(expand)]
-    )
+    );
 }
 
 pub fn arguments_grouped_layout(
@@ -272,7 +276,7 @@ pub fn arguments_grouped_layout(
         let second_can_group_fn = || second_can_group;
 
         // Check if we should group the last argument (second)
-        if should_group_last_argument_impl(Some(first), second, second_can_group_fn, f) {
+        if should_group_last_argument_impl(2, Some(first), second, second_can_group_fn, f) {
             return Some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
 
@@ -328,7 +332,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| f.comments().is_end_of_line_comment(c))
+            .any(|c| c.followed_by_newline())
     {
         return false;
     }
@@ -340,6 +344,7 @@ fn should_group_first_argument(
 /// Takes the penultimate argument as an Expression for the 2-argument case,
 /// or extracts it from the arguments array for other cases.
 fn should_group_last_argument_impl(
+    args_len: usize,
     penultimate: Option<&Expression>,
     last: &Expression,
     last_can_group_fn: impl FnOnce() -> bool,
@@ -369,7 +374,7 @@ fn should_group_last_argument_impl(
             |c| {
                 // Exclude end-of-line comments (treated as previous node's comment)
                 // and comments followed by a comma
-                !f.comments().is_end_of_line_comment(c)
+                !c.followed_by_newline()
                     && !f.source_text().next_non_whitespace_byte_is(c.span.end, b',')
             },
         )
@@ -392,7 +397,8 @@ fn should_group_last_argument_impl(
     match last {
         Expression::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if matches!(penultimate, Some(Expression::ArrowFunctionExpression(_))) {
+            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
+            {
                 return false;
             }
 
@@ -411,7 +417,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 
     let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
     let last_can_group_fn = || can_group_expression_argument(last, f);
-    should_group_last_argument_impl(penultimate, last, last_can_group_fn, f)
+    should_group_last_argument_impl(args.len(), penultimate, last, last_can_group_fn, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few
@@ -617,7 +623,7 @@ fn write_grouped_arguments<'a>(
     node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
+) {
     let last_index = node.len() - 1;
     let only_one_argument = last_index == 0;
     let mut non_grouped_breaks = false;
@@ -632,7 +638,13 @@ fn write_grouped_arguments<'a>(
             let is_grouped_argument = (group_layout.is_grouped_first() && index == 0)
                 || (group_layout.is_grouped_last() && index == last_index);
 
-            let format_argument = format_once(|f| {
+            // We have to get the lines before the argument has been formatted, because it relies on
+            // the comments before the argument. After formatting, the comments might marked as printed,
+            // which would lead to a wrong line count.
+            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
+            let comma = (last_index != index).then_some(",");
+
+            let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
                     match argument.as_ast_nodes() {
                         AstNodes::Function(function)
@@ -641,47 +653,46 @@ fn write_grouped_arguments<'a>(
                                     || function_has_only_simple_parameters(&function.params)) =>
                         {
                             has_cached = true;
-                            return function.fmt_with_options(
-                                FormatFunctionOptions {
-                                    cache_mode: FunctionCacheMode::Cache,
-                                    ..Default::default()
-                                },
+                            return write!(
                                 f,
+                                [
+                                    FormatFunction::new_with_options(
+                                        function,
+                                        FormatFunctionOptions {
+                                            cache_mode: FunctionCacheMode::Cache,
+                                            ..FormatFunctionOptions::default()
+                                        },
+                                    ),
+                                    comma
+                                ]
                             );
                         }
                         AstNodes::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
-                            return arrow.fmt_with_options(
-                                FormatJsArrowFunctionExpressionOptions {
-                                    cache_mode: FunctionCacheMode::Cache,
-                                    ..FormatJsArrowFunctionExpressionOptions::default()
-                                },
+                            return write!(
                                 f,
+                                [
+                                    FormatJsArrowFunctionExpression::new_with_options(
+                                        arrow,
+                                        FormatJsArrowFunctionExpressionOptions {
+                                            cache_mode: FunctionCacheMode::Cache,
+                                            ..FormatJsArrowFunctionExpressionOptions::default()
+                                        },
+                                    ),
+                                    comma
+                                ]
                             );
                         }
                         _ => {}
                     }
                 }
-                argument.fmt(f)
-            });
-
-            // We have to get the lines before the argument has been formatted, because it relies on
-            // the comments before the argument. After formatting, the comments might marked as printed,
-            // which would lead to a wrong line count.
-            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
-
-            let interned = f.intern(&format_once(|f| {
-                format_argument.fmt(f)?;
-                write!(f, (last_index != index).then_some(","))
+                write!(f, [argument, comma]);
             }));
 
             let break_type =
                 if is_grouped_argument { &mut grouped_breaks } else { &mut non_grouped_breaks };
 
-            *break_type = *break_type
-                || interned
-                    .as_ref()
-                    .is_ok_and(|i| i.as_ref().is_some_and(FormatElement::will_break));
+            *break_type = *break_type || interned.as_ref().is_some_and(FormatElement::will_break);
 
             (interned, lines_before)
         })
@@ -696,11 +707,11 @@ fn write_grouped_arguments<'a>(
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer)?;
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
         buffer.into_vec().into_bump_slice()
     };
@@ -714,44 +725,60 @@ fn write_grouped_arguments<'a>(
     // as first or last argument.
     let mut grouped = elements;
     if has_cached {
-        match group_layout {
+        let (argument, grouped_element) = match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
-                let argument = node.first().unwrap();
-                let interned = f.intern(&format_once(|f| {
-                    FormatGroupedFirstArgument { argument }.fmt(f)?;
-                    write!(f, (last_index != 0).then_some(","))
-                }));
-
-                // Turns out, using the grouped layout isn't a good fit because some parameters of the
-                // grouped function or arrow expression break. In that case, fall back to the all args expanded
-                // formatting.
-                // This back tracking is required because testing if the grouped argument breaks would also return `true`
-                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
-                // any content in the signature breaks.
-                if matches!(interned, Err(FormatError::PoorLayout)) {
-                    return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
-                }
-
-                grouped.first_mut().unwrap().0 = interned;
+                (node.first().unwrap(), &mut grouped.first_mut().unwrap().0)
             }
             GroupedCallArgumentLayout::GroupedLastArgument => {
-                let argument = node.last().unwrap();
-                let interned = f.intern(&format_once(|f| {
-                    FormatGroupedLastArgument { argument, is_only: only_one_argument }.fmt(f)
-                }));
+                (node.last().unwrap(), &mut grouped.last_mut().unwrap().0)
+            }
+        };
 
-                // Turns out, using the grouped layout isn't a good fit because some parameters of the
-                // grouped function or arrow expression break. In that case, fall back to the all args expanded
-                // formatting.
-                // This back tracking is required because testing if the grouped argument breaks would also return `true`
-                // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
-                // any content in the signature breaks.
-                if matches!(interned, Err(FormatError::PoorLayout)) {
+        let function_params = match argument.as_ast_nodes() {
+            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
+            AstNodes::Function(function) => Some(&function.params),
+            _ => None,
+        };
+
+        // Turns out, using the grouped layout isn't a good fit because some parameters of the
+        // grouped function or arrow expression break. In that case, fall back to the all args expanded
+        // formatting.
+        // This back tracking is required because testing if the grouped argument breaks would also return `true`
+        // if any content of the function body breaks. But, as far as this is concerned, it's only interested if
+        // any content in the signature breaks.
+        //
+        // <https://github.com/biomejs/biome/blob/98ca2ae9f3b9b25a14d63b243223583aba6e4907/crates/biome_js_formatter/src/js/expressions/call_arguments.rs#L466-L482>
+        if let Some(params) = function_params {
+            let Some(cached_element) = f.context().get_cached_element(params.as_ref()) else {
+                unreachable!(
+                    "The parameters should have already been formatted and cached in the `FormatFunction` or `FormatJsArrowFunctionExpression`"
+                );
+            };
+
+            // Remove soft lines from the cached parameters and check if they would break.
+            // If they break even without soft lines, we need to use the expanded layout.
+            let interned = f.intern(&format_once(|f| {
+                RemoveSoftLinesBuffer::new(f).write_element(cached_element);
+            }));
+
+            if let Some(interned) = interned {
+                if interned.will_break() {
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
-                grouped.last_mut().unwrap().0 = interned;
+                // No break; it should print the element without soft lines.
+                // It would be used in the `FormatFunction` or `FormatJsArrowFunctionExpression`.
+                f.context_mut().cache_element(params.as_ref(), interned);
             }
+        }
+
+        *grouped_element = if group_layout.is_grouped_first() {
+            f.intern(&format_with(|f| {
+                FormatGroupedFirstArgument { argument }.fmt(f);
+                write!(f, (last_index != 0).then_some(","));
+            }))
+        } else {
+            f.intern(&FormatGroupedLastArgument { argument, is_only: only_one_argument })
         }
     }
 
@@ -759,13 +786,13 @@ fn write_grouped_arguments<'a>(
     let middle_variant = {
         let mut buffer = VecBuffer::new(f.state_mut());
 
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
         write!(
             buffer,
             [
                 "(",
-                format_once(|f| {
+                format_with(|f| {
                     let mut joiner = f.join_with(soft_line_break_or_space());
 
                     for (i, (element, _)) in grouped.iter().enumerate() {
@@ -773,33 +800,27 @@ fn write_grouped_arguments<'a>(
                             || (group_layout.is_grouped_last() && i == last_index)
                         {
                             joiner.entry(
-                                &group(&format_once(|f| {
-                                    if let Some(arg_element) = element.clone()? {
-                                        f.write_element(arg_element)
-                                    } else {
-                                        Ok(())
+                                &group(&format_with(|f| {
+                                    if let Some(arg_element) = element.clone() {
+                                        f.write_element(arg_element);
                                     }
                                 }))
                                 .should_expand(true),
                             );
                         } else {
-                            joiner.entry(&format_once(|f| {
-                                if let Some(arg_element) = element.clone()? {
-                                    f.write_element(arg_element)
-                                } else {
-                                    Ok(())
+                            joiner.entry(&format_with(|f| {
+                                if let Some(arg_element) = element.clone() {
+                                    f.write_element(arg_element);
                                 }
                             }));
                         }
                     }
-
-                    joiner.finish()
                 }),
                 ")"
             ]
-        )?;
+        );
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
         buffer.into_vec().into_bump_slice()
     };
@@ -807,36 +828,34 @@ fn write_grouped_arguments<'a>(
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
-        write!(f, [expand_parent()])?;
+        write!(f, [expand_parent()]);
         ArenaVec::from_array_in([middle_variant, most_expanded], f.context().allocator())
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
             let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
+            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
 
             write!(
                 buffer,
                 [
                     "(",
                     format_once(|f| {
-                        f.join_with(soft_line_break_or_space())
-                            .entries(grouped.into_iter().map(|(element, _)| {
+                        f.join_with(soft_line_break_or_space()).entries(grouped.into_iter().map(
+                            |(element, _)| {
                                 format_once(move |f| {
-                                    if let Some(element) = element? {
-                                        f.write_element(element)
-                                    } else {
-                                        Ok(())
+                                    if let Some(element) = element {
+                                        f.write_element(element);
                                     }
                                 })
-                            }))
-                            .finish()
+                            },
+                        ));
                     }),
                     ")",
                 ]
-            )?;
+            );
 
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
+            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
             buffer.into_vec().into_bump_slice()
         };
@@ -852,7 +871,7 @@ fn write_grouped_arguments<'a>(
     unsafe {
         f.write_element(FormatElement::BestFitting(
             format_element::BestFittingElement::from_vec_unchecked(variants),
-        ))
+        ));
     }
 }
 
@@ -862,18 +881,21 @@ struct FormatGroupedFirstArgument<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f);
+            }
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -890,7 +912,7 @@ struct FormatGroupedLastArgument<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
@@ -898,23 +920,26 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                function.fmt_with_options(
+                FormatFunction::new_with_options(
+                    function,
                     FormatFunctionOptions {
                         cache_mode: FunctionCacheMode::Cache,
                         call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                     },
-                    f,
                 )
+                .fmt(f);
             }
-
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    cache_mode: FunctionCacheMode::Cache,
-                    call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                FormatJsArrowFunctionExpression::new_with_options(
+                    arrow,
+                    FormatJsArrowFunctionExpressionOptions {
+                        cache_mode: FunctionCacheMode::Cache,
+                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                )
+                .fmt(f);
+            }
             _ => self.argument.fmt(f),
         }
     }

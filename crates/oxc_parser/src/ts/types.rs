@@ -380,11 +380,13 @@ impl<'a> ParserImpl<'a> {
             // return parseJSDocFunctionType();
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
-            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False => {
-                self.parse_literal_type_node(/* negative */ false)
-            }
-            kind if kind.is_number() => {
-                self.parse_literal_type_node(/* negative */ false)
+            Kind::Str | Kind::True | Kind::False => self.parse_literal_type(),
+            kind if kind.is_number() => self.parse_literal_type(),
+            Kind::NoSubstitutionTemplate => {
+                let span = self.start_span();
+                let literal = self.parse_template_literal(false);
+                let span = self.end_span(span);
+                self.ast.ts_type_literal_type(span, TSLiteral::TemplateLiteral(self.alloc(literal)))
             }
             Kind::Minus => {
                 let checkpoint = self.checkpoint();
@@ -393,7 +395,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any(); // bump `-`
 
                 if self.cur_kind().is_number() {
-                    self.parse_rest_of_literal_type_node(minus_start_span, /* negative */ true)
+                    self.parse_literal_type_negative(minus_start_span)
                 } else {
                     self.rewind(checkpoint);
                     self.parse_type_reference()
@@ -984,39 +986,28 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_literal_type_node(&mut self, negative: bool) -> TSType<'a> {
+    fn parse_literal_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        if negative {
-            self.bump_any(); // bump `-`
-        }
-
-        self.parse_rest_of_literal_type_node(span, negative)
+        let expression = self.parse_literal_expression();
+        let span = self.end_span(span);
+        let literal = match expression {
+            Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
+            Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
+            Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
+            Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
+            _ => return self.unexpected(),
+        };
+        self.ast.ts_type_literal_type(span, literal)
     }
 
-    fn parse_rest_of_literal_type_node(&mut self, span: u32, negative: bool) -> TSType<'a> {
-        let expression = if self.at(Kind::NoSubstitutionTemplate) {
-            self.parse_template_literal_expression(false)
-        } else {
-            self.parse_literal_expression()
-        };
-
+    fn parse_literal_type_negative(&mut self, span: u32) -> TSType<'a> {
+        let literal_expr = self.parse_literal_expression();
         let span = self.end_span(span);
-        let literal = if negative {
-            match self.ast.expression_unary(span, UnaryOperator::UnaryNegation, expression) {
-                Expression::UnaryExpression(unary_expr) => TSLiteral::UnaryExpression(unary_expr),
-                _ => unreachable!(),
-            }
-        } else {
-            match expression {
-                Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
-                Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
-                Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-                Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
-                Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
-                _ => return self.unexpected(),
-            }
-        };
-
+        let literal = TSLiteral::UnaryExpression(self.ast.alloc_unary_expression(
+            span,
+            UnaryOperator::UnaryNegation,
+            literal_expr,
+        ));
         self.ast.ts_type_literal_type(span, literal)
     }
 
@@ -1024,7 +1015,21 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::Import);
         self.expect(Kind::LParen);
-        let argument = self.parse_ts_type();
+
+        let source = if self.at(Kind::Str) {
+            self.parse_literal_string()
+        } else {
+            // `StringLiteral` is the only valid type for `TSImportType`'s `source` field. So this is an error.
+            // Fallback to parsing a `TSType`, to obtain a good span for the diagnostic.
+            // It's possible for `parse_ts_type` to produce an invalid span. Fallback to the current token span if so.
+            let mut span = self.parse_ts_type().span();
+            if span.end <= span.start {
+                span = self.cur_token().span();
+            }
+            self.error(diagnostics::ts_string_literal_expected(span));
+            self.ast.string_literal(span, "", None)
+        };
+
         let options =
             if self.eat(Kind::Comma) { Some(self.parse_object_expression()) } else { None };
         self.expect(Kind::RParen);
@@ -1033,7 +1038,7 @@ impl<'a> ParserImpl<'a> {
         let type_arguments = self.parse_type_arguments_of_type_reference();
         self.ast.alloc_ts_import_type(
             self.end_span(span),
-            argument,
+            source,
             options,
             qualifier,
             type_arguments,

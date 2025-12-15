@@ -2982,7 +2982,7 @@ impl ESTree for TSImportType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSImportType"));
-        state.serialize_field("argument", &self.argument);
+        state.serialize_field("source", &self.source);
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
@@ -3233,7 +3233,8 @@ impl ESTree for CommentKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Line => JsonSafeString("Line").serialize(serializer),
-            Self::Block => JsonSafeString("Block").serialize(serializer),
+            Self::SingleLineBlock => JsonSafeString("Block").serialize(serializer),
+            Self::MultiLineBlock => JsonSafeString("Block").serialize(serializer),
         }
     }
 }

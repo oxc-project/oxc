@@ -105,6 +105,35 @@ mod test {
         );
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+    }
+
+    #[test]
+    fn test_deserialize_globals() {
+        let config = Oxlintrc::deserialize(&serde_json::json!({
+            "globals": {
+                "foo": "readable",
+                "bar": "writeable",
+                "baz": "off",
+                "qux": true,
+                "quux": false,
+                "corge": "readonly",
+                "grault": "writable"
+            }
+        }));
+        assert!(config.is_ok());
+
+        let Oxlintrc { globals, .. } = config.unwrap();
+        assert!(globals.is_enabled("foo"));
+        assert!(globals.is_enabled("bar"));
+        // Ensure they map to the correct variants
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("bar"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("baz"), Some(&super::GlobalValue::Off));
+        assert_eq!(globals.get("qux"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("quux"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("corge"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("grault"), Some(&super::GlobalValue::Writable));
     }
 
     #[test]
@@ -114,14 +143,14 @@ mod test {
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashMap::default();
         let mut external_rules_for_override = FxHashMap::default();
-        let external_linter_store = ExternalPluginStore::default();
+        let mut external_linter_store = ExternalPluginStore::default();
         config
             .rules
             .override_rules(
                 &mut set,
                 &mut external_rules_for_override,
                 &RULES,
-                &external_linter_store,
+                &mut external_linter_store,
             )
             .unwrap();
 

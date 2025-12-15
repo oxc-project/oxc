@@ -3,20 +3,48 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Require default cases in switch statements.")
-        .with_help("Add a default case.")
+    OxcDiagnostic::warn("Require `default` cases in `switch` statements.")
+        .with_help("Add a `default` case.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct DefaultCase(Box<DefaultCaseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct DefaultCaseConfig {
+    /// A regex pattern used to detect comments that mark the absence
+    /// of a `default` case as intentional.
+    ///
+    /// Default value: `no default`.
+    ///
+    /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\sdefault" }] */
+    ///
+    /// switch (a) {
+    ///   case 1:
+    ///     break;
+    ///   // no default
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
+    ///
+    /// switch (a) {
+    ///   case 1:
+    ///     break;
+    ///   // skip default
+    /// }
+    /// ```
     comment_pattern: Option<Regex>,
 }
 
@@ -42,13 +70,6 @@ declare_oxc_lint!(
     ///
     /// You may optionally include a `// no default` after the last case if there is
     /// no default case. The comment may be in any desired case, such as `// No Default`.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `commentPattern`: `string` (default: `/^no default$/i`) - A regex pattern used to detect comments that mark the absence of a `default` case as intentional.
     ///
     /// Example configuration:
     ///   ```json
@@ -84,33 +105,10 @@ declare_oxc_lint!(
     ///   // no default
     /// }
     /// ```
-    ///
-    /// #### `commentPattern`
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
-    /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
-    /// switch (a) {
-    ///   case 1:
-    ///     break;
-    ///   // no default
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
-    /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
-    /// switch (a) {
-    ///   case 1:
-    ///     break;
-    ///   // skip default
-    /// }
-    /// ```
     DefaultCase,
     eslint,
     restriction,
+    config = DefaultCaseConfig,
 );
 
 impl Rule for DefaultCase {
@@ -173,113 +171,113 @@ fn test() {
         ("switch (a) { case 1: break; case 2: default: break; }", None),
         (
             "switch (a) { case 1: break; default: break;
-			 //no default
-			 }",
+              //no default
+            }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: break;
+                case 1: break;
 
-			//oh-oh
-			 // no default
-			 }",
+            //oh-oh
+             // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// No default
-			 }",
+            // No default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// no deFAUlt
-			 }",
+            // no deFAUlt
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1:
+                case 1:
 
-			// NO DEFAULT
-			 }",
+            // NO DEFAULT
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4;
+                case 1: a = 4;
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4;
+                case 1: a = 4;
 
-			/* no default */
-			 }",
+            /* no default */
+             }",
             None,
         ),
         (
             "switch (a) {
-			    case 1: a = 4; break; break;
+                case 1: a = 4; break; break;
 
-			// no default
-			 }",
+            // no default
+             }",
             None,
         ),
         (
             "switch (a) { // no default
-			 }",
+             }",
             None,
         ),
         ("switch (a) { }", None),
         (
             "switch (a) { case 1: break; default: break; }",
+            Some(serde_json::json!([{ "commentPattern": "default case omitted" }])),
+        ),
+        (
+            "switch (a) { case 1: break;
+             // skip default case
+             }",
+            Some(serde_json::json!([{ "commentPattern": "^skip default" }])),
+        ),
+        (
+            "switch (a) { case 1: break;
+             // skip default case
+             }",
             Some(serde_json::json!([{
-                "commentPattern": "default case omitted"
+                "commentPattern": "^skip\\sdefault" // this is escaped for JSON.
             }])),
         ),
         (
             "switch (a) { case 1: break;
-			 // skip default case
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "^skip default"
-            }])),
+             /*
+            TODO:
+             throw error in default case
+            */
+             }",
+            Some(serde_json::json!([{ "commentPattern": "default" }])),
         ),
         (
             "switch (a) { case 1: break;
-			 /*
-			TODO:
-			 throw error in default case
-			*/
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "default"
-            }])),
-        ),
-        (
-            "switch (a) { case 1: break;
-			//
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": ".?"
-            }])),
+            //
+             }",
+            Some(serde_json::json!([{ "commentPattern": ".?" }])),
         ),
     ];
 
@@ -287,42 +285,36 @@ fn test() {
         ("switch (a) { case 1: break; }", None),
         (
             "switch (a) {
-			 // no default
-			 case 1: break;  }",
+             // no default
+             case 1: break;  }",
             None,
         ),
         (
             "switch (a) { case 1: break;
-			 // no default
-			 // nope
-			  }",
+             // no default
+             // nope
+              }",
             None,
         ),
         (
             "switch (a) { case 1: break;
-			 // no default
-			 }",
-            Some(serde_json::json!([{
-                "commentPattern": "skipped default case"
-            }])),
+             // no default
+             }",
+            Some(serde_json::json!([{ "commentPattern": "skipped default case" }])),
         ),
         (
             "switch (a) {
-			case 1: break;
-			// default omitted intentionally
-			// TODO: add default case
-			}",
-            Some(serde_json::json!([{
-                "commentPattern": "default omitted"
-            }])),
+            case 1: break;
+            // default omitted intentionally
+            // TODO: add default case
+            }",
+            Some(serde_json::json!([{ "commentPattern": "default omitted" }])),
         ),
         (
             "switch (a) {
-			case 1: break;
-			}",
-            Some(serde_json::json!([{
-                "commentPattern": ".?"
-            }])),
+            case 1: break;
+            }",
+            Some(serde_json::json!([{ "commentPattern": ".?" }])),
         ),
     ];
 

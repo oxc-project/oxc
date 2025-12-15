@@ -7,6 +7,7 @@ use crate::{
         prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
+    ir_transform::options::SortImportsOptions,
     write,
 };
 
@@ -71,9 +72,8 @@ pub struct FormatOptions {
     /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
     pub embedded_language_formatting: EmbeddedLanguageFormatting,
 
-    // TODO: `FormatOptions`? Split out as `TransformOptions`?
     /// Sort import statements. By default disabled.
-    pub experimental_sort_imports: Option<SortImports>,
+    pub experimental_sort_imports: Option<SortImportsOptions>,
 }
 
 impl FormatOptions {
@@ -441,6 +441,13 @@ impl QuoteStyle {
         }
     }
 
+    pub fn as_str(self) -> &'static str {
+        match self {
+            QuoteStyle::Double => "\"",
+            QuoteStyle::Single => "'",
+        }
+    }
+
     pub fn as_byte(self) -> u8 {
         self.as_char() as u8
     }
@@ -528,7 +535,7 @@ pub enum QuoteProperties {
     AsNeeded,
     /// Respect the input use of quotes in object properties.
     Preserve,
-    /// If at least one property in an object requires quotes, quote all properties. [**NOT SUPPORTED YET**]
+    /// If at least one property in an object requires quotes, quote all properties.
     Consistent,
 }
 
@@ -688,16 +695,14 @@ impl FormatTrailingCommas {
 }
 
 impl Format<'_> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter) {
         if f.options().trailing_commas.is_none() {
-            return Ok(());
+            return;
         }
 
         if matches!(self, FormatTrailingCommas::ES5) || f.options().trailing_commas.is_all() {
-            write!(f, [if_group_breaks(&token(","))])?;
+            write!(f, [if_group_breaks(&token(","))]);
         }
-
-        Ok(())
     }
 }
 
@@ -976,92 +981,6 @@ impl fmt::Display for EmbeddedLanguageFormatting {
         let s = match self {
             EmbeddedLanguageFormatting::Auto => "Auto",
             EmbeddedLanguageFormatting::Off => "Off",
-        };
-        f.write_str(s)
-    }
-}
-
-// ---
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SortImports {
-    /// Partition imports by newlines.
-    /// Default is `false`.
-    pub partition_by_newline: bool,
-    /// Partition imports by comments.
-    /// Default is `false`.
-    pub partition_by_comment: bool,
-    /// Sort side effects imports.
-    /// Default is `false`.
-    pub sort_side_effects: bool,
-    /// Sort order (asc or desc).
-    /// Default is ascending (asc).
-    pub order: SortOrder,
-    /// Ignore case when sorting.
-    /// Default is `true`.
-    pub ignore_case: bool,
-    /// Whether to insert blank lines between different import groups.
-    /// - `true`: Insert one blank line between groups (default)
-    /// - `false`: No blank lines between groups
-    ///
-    /// NOTE: Cannot be used together with `partition_by_newline: true`.
-    pub newlines_between: bool,
-    /// Groups configuration for organizing imports.
-    /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
-    /// If `None`, uses the default groups.
-    pub groups: Option<Vec<Vec<String>>>,
-}
-
-impl Default for SortImports {
-    fn default() -> Self {
-        Self {
-            partition_by_newline: false,
-            partition_by_comment: false,
-            sort_side_effects: false,
-            order: SortOrder::default(),
-            ignore_case: true,
-            newlines_between: true,
-            groups: None,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum SortOrder {
-    /// Sort in ascending order (A-Z).
-    #[default]
-    Asc,
-    /// Sort in descending order (Z-A).
-    Desc,
-}
-
-impl SortOrder {
-    pub const fn is_asc(self) -> bool {
-        matches!(self, Self::Asc)
-    }
-
-    pub const fn is_desc(self) -> bool {
-        matches!(self, Self::Desc)
-    }
-}
-
-impl FromStr for SortOrder {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "asc" => Ok(Self::Asc),
-            "desc" => Ok(Self::Desc),
-            _ => Err("Value not supported for SortOrder. Supported values are 'asc' and 'desc'."),
-        }
-    }
-}
-
-impl fmt::Display for SortOrder {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            SortOrder::Asc => "ASC",
-            SortOrder::Desc => "DESC",
         };
         f.write_str(s)
     }

@@ -119,6 +119,5 @@ fn test() {
     ];
 
     Tester::new(GoogleFontPreconnect::NAME, GoogleFontPreconnect::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

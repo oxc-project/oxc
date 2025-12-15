@@ -15,11 +15,38 @@ use serde::{Deserialize, Serialize};
 use crate::{
     ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ArrayTypeConfig {
+    /// The array type expected for mutable cases.
+    default: ArrayOption,
+    /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
+    #[schemars(with = "ArrayOption")]
+    readonly: Option<ArrayOption>,
+}
+
+impl std::ops::Deref for ArrayType {
+    type Target = ArrayTypeConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ArrayOption {
+    #[default]
+    Array,
+    ArraySimple,
+    Generic,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -109,61 +136,11 @@ fn array_simple(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct ArrayTypeConfig {
-    /// The array type expected for mutable cases.
-    default: ArrayOption,
-    /// The array type expected for readonly cases. If omitted, the value for `default` will be used.
-    #[schemars(with = "ArrayOption")]
-    readonly: Option<ArrayOption>,
-}
-
-impl std::ops::Deref for ArrayType {
-    type Target = ArrayTypeConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ArrayOption {
-    #[default]
-    Array,
-    ArraySimple,
-    Generic,
-}
-
 impl Rule for ArrayType {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(ArrayTypeConfig {
-            default: value
-                .get(0)
-                .and_then(|v| v.get("default"))
-                .and_then(serde_json::Value::as_str)
-                .map_or_else(
-                    || ArrayOption::Array,
-                    |s| match s {
-                        "array" => ArrayOption::Array,
-                        "generic" => ArrayOption::Generic,
-                        _ => ArrayOption::ArraySimple,
-                    },
-                ),
-            readonly: value
-                .get(0)
-                .and_then(|v| v.get("readonly"))
-                .and_then(serde_json::Value::as_str)
-                .map_or_else(
-                    || None,
-                    |s| match s {
-                        "array" => Some(ArrayOption::Array),
-                        "generic" => Some(ArrayOption::Generic),
-                        _ => Some(ArrayOption::ArraySimple),
-                    },
-                ),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<ArrayType>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -197,6 +174,15 @@ impl Rule for ArrayType {
             AstKind::TSAsExpression(ts_as_expression) => {
                 check(
                     &ts_as_expression.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
+            }
+            // for example: const arr = [] as const satisfies readonly string[];
+            AstKind::TSSatisfiesExpression(ts_satisfies_expression) => {
+                check(
+                    &ts_satisfies_expression.type_annotation,
                     self.default_config(),
                     self.readonly_config(),
                     ctx,
@@ -988,6 +974,15 @@ const instance = new MyClass<number>(42);",
             "let z: readonly factories.User[] = [];",
             Some(serde_json::json!([{"readonly":"array-simple"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
     ];
 
     let fail = vec![
@@ -1477,6 +1472,23 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         ),
         (
             "type MakeArrays<T> = { [K in keyof T]: T[K][] };",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly SupportedDomainName[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
+        (
+            "const arr = [] as const satisfies string[];",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
     ];
@@ -2125,6 +2137,27 @@ export const test9 = testFn<ReadonlyArray<number>>([]);",
             "function testFn<T>(param: T) { return param; }
 export const test9 = testFn<readonly number[]>([]);",
             Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly SupportedDomainName[];",
+            "const arr = [] as const satisfies ReadonlyArray<SupportedDomainName>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
+        (
+            "const arr = [] as const satisfies string[];",
+            "const arr = [] as const satisfies Array<string>;",
+            Some(serde_json::json!([{"default":"generic"}])),
         ),
     ];
 

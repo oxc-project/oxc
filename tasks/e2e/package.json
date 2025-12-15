@@ -4,18 +4,21 @@
   "scripts": {
     "test": "vitest run --dir ./test && pnpm -r test run"
   },
+  "dependencies": {
+    "@types/supertest": "^6.0.3"
+  },
   "devDependencies": {
     "alpinejs": "^3.14.9",
-    "antd": "^5.25.2",
+    "antd": "^6.0.0",
     "axios": "^1.7.8",
     "classnames": "^2.5.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
-    "es-toolkit": "^1.38.0",
+    "es-toolkit": "1.40.0",
     "fs-require": "^1.6.0",
     "happy-dom": "^20.0.0",
-    "immer": "^10.1.1",
+    "immer": "^11.0.0",
     "jquery": "^3.7.1",
     "lit": "github:lit/dist#v3.3.1",
     "lodash": "^4.17.21",
@@ -29,16 +32,13 @@
     "preact": "^10.26.7",
     "qs": "^6.13.1",
     "ramda": "^0.32.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "rxjs": "^7.8.2",
     "solid-js": "^1.9.7",
     "terser": "^5.39.2",
     "vitest": "^4.0.1",
     "vue": "^3.5.14",
     "yup": "^1.6.1"
-  },
-  "dependencies": {
-    "@types/supertest": "^6.0.3"
   }
 }

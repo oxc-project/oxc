@@ -24,7 +24,10 @@ pub struct NoUnreachable;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements
+    /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.
+    ///
+    /// This rule can be disabled for TypeScript code if `allowUnreachableCode: false` is configured
+    /// in the `tsconfig.json`, as the TypeScript compiler enforces this check.
     ///
     /// ### Why is this bad?
     ///

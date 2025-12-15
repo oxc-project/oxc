@@ -3,8 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic {
     let diagnostic = OxcDiagnostic::warn(format!(
@@ -23,7 +28,7 @@ fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoPlusplus {
     /// Whether to allow `++` and `--` in for loop afterthoughts.
@@ -90,13 +95,9 @@ declare_oxc_lint!(
 
 impl Rule for NoPlusplus {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_for_loop_afterthoughts: obj
-                .and_then(|v| v.get("allowForLoopAfterthoughts"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoPlusplus>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1,19 +1,19 @@
 // oxlint-disable typescript/restrict-template-expressions
 
-import type { Plugin } from '#oxlint';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'utf16-plugin',
+    name: "utf16-plugin",
   },
   rules: {
-    'no-debugger': {
+    "no-debugger": {
       create(context) {
         return {
           Program(program) {
             context.report({
               message:
-                'program:\n' +
+                "program:\n" +
                 `start/end: [${program.start},${program.end}]\n` +
                 `range: [${program.range}]\n` +
                 `loc: [${JSON.stringify(program.loc)}]`,
@@ -23,7 +23,7 @@ const plugin: Plugin = {
           DebuggerStatement(debuggerStatement) {
             context.report({
               message:
-                'debugger:\n' +
+                "debugger:\n" +
                 `start/end: [${debuggerStatement.start},${debuggerStatement.end}]\n` +
                 `range: [${debuggerStatement.range}]\n` +
                 `loc: [${JSON.stringify(debuggerStatement.loc)}]`,

@@ -5,7 +5,7 @@ var topLevelVar = 3;
 function topLevelFunction() {
   function innerFunction() {
     function nestedFunction() {
-      'use strict';
+      "use strict";
     }
   }
   return Object;

@@ -1,52 +1,52 @@
-import type { ESTree, Plugin, Visitor } from '#oxlint';
+import type { ESTree, Plugin, Visitor } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'selectors',
+    name: "selectors",
   },
   rules: {
     check: {
       create(context) {
         const keys = [
           // Wildcard
-          '*',
+          "*",
           // Node type
-          'Identifier',
+          "Identifier",
           // Attributes
-          'Identifier[name=a]',
-          'Identifier[name=d]',
+          "Identifier[name=a]",
+          "Identifier[name=d]",
           // :matches
-          ':matches(Identifier, FunctionDeclaration)',
-          ':matches(Identifier[name=a], FunctionDeclaration[id.name=foo])',
+          ":matches(Identifier, FunctionDeclaration)",
+          ":matches(Identifier[name=a], FunctionDeclaration[id.name=foo])",
           // :not
-          ':not(Identifier)',
+          ":not(Identifier)",
           // class
-          ':function',
+          ":function",
           // Child
-          'Property > Identifier',
-          'ObjectExpression > Identifier', // does not match
-          'ObjectExpression > Property > Identifier',
-          'ObjectExpression > Property > Identifier[name=a]',
-          'ObjectExpression > Property > Identifier[name=b]', // does not match
-          'ArrayExpression > Identifier',
-          'ArrayExpression > Identifier[name=c]',
-          'Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier',
-          'Program > FunctionDeclaration',
+          "Property > Identifier",
+          "ObjectExpression > Identifier", // does not match
+          "ObjectExpression > Property > Identifier",
+          "ObjectExpression > Property > Identifier[name=a]",
+          "ObjectExpression > Property > Identifier[name=b]", // does not match
+          "ArrayExpression > Identifier",
+          "ArrayExpression > Identifier[name=c]",
+          "Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier",
+          "Program > FunctionDeclaration",
           // Descendent
-          'ObjectExpression Identifier',
-          'ObjectExpression ArrayExpression',
-          'ArrayExpression Identifier',
-          'ArrayExpression Identifier[name=b]',
+          "ObjectExpression Identifier",
+          "ObjectExpression ArrayExpression",
+          "ArrayExpression Identifier",
+          "ArrayExpression Identifier[name=b]",
           // Sibling
-          'Identifier ~ Identifier',
-          'Property ~ [type]',
-          'VariableDeclaration ~ FunctionDeclaration',
-          'VariableDeclaration + FunctionDeclaration',
+          "Identifier ~ Identifier",
+          "Property ~ [type]",
+          "VariableDeclaration ~ FunctionDeclaration",
+          "VariableDeclaration + FunctionDeclaration",
           // Combination
-          ':matches(ObjectExpression > SpreadElement, FunctionDeclaration)',
-          ':matches(ObjectExpression > SpreadElement, FunctionDeclaration[id.name=bar])',
+          ":matches(ObjectExpression > SpreadElement, FunctionDeclaration)",
+          ":matches(ObjectExpression > SpreadElement, FunctionDeclaration[id.name=bar])",
           // Wildcard
-          '*:exit',
+          "*:exit",
         ];
 
         const visitor: Visitor = {};
@@ -58,19 +58,19 @@ const plugin: Plugin = {
           };
         }
 
-        visitor['Program:exit'] = (program) => {
+        visitor["Program:exit"] = (program) => {
           const visitLog = visits
             .map(({ key, node }) => {
               const { type } = node;
               let nodeDescription = type;
-              if (type === 'Identifier') {
+              if (type === "Identifier") {
                 nodeDescription += `(${node.name})`;
-              } else if (type === 'FunctionDeclaration') {
+              } else if (type === "FunctionDeclaration") {
                 nodeDescription += `(${node.id?.name})`;
               }
               return `${key}: ${nodeDescription}`;
             })
-            .join('\n');
+            .join("\n");
 
           context.report({
             message: `\n${visitLog}`,

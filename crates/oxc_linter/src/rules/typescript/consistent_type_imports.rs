@@ -12,12 +12,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
@@ -36,7 +38,7 @@ fn some_imports_are_only_types_diagnostic(span: Span, type_imports: &str) -> Oxc
     OxcDiagnostic::warn(format!("Imports {type_imports} are only used as type.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentTypeImports(Box<ConsistentTypeImportsConfig>);
 
 impl Deref for ConsistentTypeImports {
@@ -47,55 +49,45 @@ impl Deref for ConsistentTypeImports {
     }
 }
 
-/// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
-#[derive(Default, Debug, Clone)]
+// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeImportsConfig {
-    disallow_type_annotations: DisallowTypeAnnotations,
+    /// Disallow using `import()` in type annotations, like `type T = import('foo')`
+    disallow_type_annotations: bool,
+    /// Control how type imports are added when auto-fixing.
     fix_style: FixStyle,
+    /// Control whether to enforce type imports or value imports.
     prefer: Prefer,
 }
 
-// The default of `disallowTypeAnnotations` is `true`.
-#[derive(Debug, Clone, Copy)]
-struct DisallowTypeAnnotations(bool);
-
-impl DisallowTypeAnnotations {
-    fn new(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Default for DisallowTypeAnnotations {
+impl Default for ConsistentTypeImportsConfig {
     fn default() -> Self {
-        Self(true)
-    }
-}
-impl From<bool> for DisallowTypeAnnotations {
-    #[inline]
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for DisallowTypeAnnotations {
-    type Target = bool;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        Self {
+            disallow_type_annotations: true,
+            fix_style: FixStyle::SeparateTypeImports,
+            prefer: Prefer::TypeImports,
+        }
     }
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum FixStyle {
+    /// Will add the type keyword after the import keyword `import type { A } from '...'`
     #[default]
     SeparateTypeImports,
+    /// Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
     InlineTypeImports,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum Prefer {
+    /// Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.
     #[default]
     TypeImports,
+    /// Will enforce that you always use `import Foo from '...'`
     NoTypeImports,
 }
 
@@ -106,7 +98,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// inconsistent usage of type imports can make the code harder to read and understand.
+    /// Inconsistent usage of type imports can make the code harder to read and understand.
     ///
     /// ### Examples
     ///
@@ -122,33 +114,6 @@ declare_oxc_lint!(
     /// ```ts
     /// import type { Foo } from 'Foo';
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///     "typescript/consistent-type-imports": [
-    ///         "error",
-    ///         {
-    ///             "prefer": "type-imports",
-    ///             "fixStyle": "separate-type-imports",
-    ///             "disallowTypeAnnotations": true
-    ///         }
-    ///     ]
-    /// }
-    /// ```
-    ///
-    /// - `prefer`: Control whether to enforce type imports or value imports
-    ///   - `"type-imports"` (default): Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators
-    ///   - `"no-type-imports"`: Will enforce that you always use `import Foo from '...'`
-    ///
-    /// - `fixStyle`: Determines how type imports are added when auto-fixing
-    ///   - `"separate-type-imports"` (default): Will add the type keyword after the import keyword `import type { A } from '...'`
-    ///   - `"inline-type-imports"`: Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
-    ///
-    /// - `disallowTypeAnnotations`: Disallow using `import()` in type annotations
-    ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
-    ///   - `false`: Allows `import()` type annotations
     ///
     /// #### Examples with `"prefer": "type-imports"` (default)
     ///
@@ -202,43 +167,20 @@ declare_oxc_lint!(
     ConsistentTypeImports,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    config = ConsistentTypeImportsConfig,
 );
 
 impl Rule for ConsistentTypeImports {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_object).map_or(
-            ConsistentTypeImportsConfig::default(),
-            |config| {
-                let disallow_type_annotations = config
-                    .get("disallowTypeAnnotations")
-                    .and_then(serde_json::Value::as_bool)
-                    .map(DisallowTypeAnnotations::new)
-                    .unwrap_or_default();
-                let fix_style = config.get("fixStyle").and_then(serde_json::Value::as_str).map_or(
-                    FixStyle::SeparateTypeImports,
-                    |fix_style| match fix_style {
-                        "inline-type-imports" => FixStyle::InlineTypeImports,
-                        _ => FixStyle::SeparateTypeImports,
-                    },
-                );
-                let prefer = config.get("prefer").and_then(serde_json::Value::as_str).map_or(
-                    Prefer::TypeImports,
-                    |prefer| match prefer {
-                        "no-type-imports" => Prefer::NoTypeImports,
-                        _ => Prefer::TypeImports,
-                    },
-                );
-
-                ConsistentTypeImportsConfig { disallow_type_annotations, fix_style, prefer }
-            },
-        );
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<ConsistentTypeImports>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if *self.disallow_type_annotations {
-            //  `import()` type annotations are forbidden.
+        if self.disallow_type_annotations {
+            // `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
             if let AstKind::TSImportType(import_type) = node.kind() {
                 ctx.diagnostic(no_import_type_annotations_diagnostic(import_type.span));

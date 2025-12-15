@@ -1,4 +1,4 @@
-import type { Plugin, Rule } from '#oxlint';
+import type { Plugin, Rule } from "#oxlint";
 
 const rule: Rule = {
   create(context) {
@@ -8,7 +8,7 @@ const rule: Rule = {
       VariableDeclaration(node) {
         const variables = sourceCode.getDeclaredVariables(node);
         context.report({
-          message: `getDeclaredVariables(): ${variables.map((v) => v.name).join(', ')}`,
+          message: `getDeclaredVariables(): ${variables.map((v) => v.name).join(", ")}`,
           node,
         });
       },
@@ -25,8 +25,8 @@ const rule: Rule = {
             `getScope(${node.id?.name}):\n` +
             `type: ${scope.type}\n` +
             `isStrict: ${scope.isStrict}\n` +
-            `variables: [${scope.variables.map((v) => v.name).join(', ')}]\n` +
-            `through: [${scope.through.map((r) => r.identifier.name).join(', ')}]\n` +
+            `variables: [${scope.variables.map((v) => v.name).join(", ")}]\n` +
+            `through: [${scope.through.map((r) => r.identifier.name).join(", ")}]\n` +
             `upper type: ${scope.upper?.type}`,
           node,
         });
@@ -36,7 +36,7 @@ const rule: Rule = {
 };
 
 const plugin: Plugin = {
-  meta: { name: 'scope-plugin' },
+  meta: { name: "scope-plugin" },
   rules: { scope: rule },
 };
 

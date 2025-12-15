@@ -142,6 +142,5 @@ fn test() {
     ];
 
     Tester::new(JsxNoNewArrayAsProp::NAME, JsxNoNewArrayAsProp::PLUGIN, pass, fail)
-        .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

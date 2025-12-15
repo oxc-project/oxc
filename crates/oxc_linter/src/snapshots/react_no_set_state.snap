@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-react(no-set-state): Do not use setState
+  ⚠ eslint-plugin-react(no-set-state): Do not use `setState`.
    ╭─[no_set_state.tsx:4:16]
  3 │                       componentDidUpdate: function() {
  4 │                         this.setState({
@@ -9,7 +9,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                           name: this.props.name.toUpperCase()
    ╰────
 
-  ⚠ eslint-plugin-react(no-set-state): Do not use setState
+  ⚠ eslint-plugin-react(no-set-state): Do not use `setState`.
    ╭─[no_set_state.tsx:4:16]
  3 │                       someMethod: function() {
  4 │                         this.setState({
@@ -17,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                           name: this.props.name.toUpperCase()
    ╰────
 
-  ⚠ eslint-plugin-react(no-set-state): Do not use setState
+  ⚠ eslint-plugin-react(no-set-state): Do not use `setState`.
    ╭─[no_set_state.tsx:4:16]
  3 │                       someMethod() {
  4 │                         this.setState({
@@ -25,7 +25,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                           name: this.props.name.toUpperCase()
    ╰────
 
-  ⚠ eslint-plugin-react(no-set-state): Do not use setState
+  ⚠ eslint-plugin-react(no-set-state): Do not use `setState`.
    ╭─[no_set_state.tsx:4:16]
  3 │                       someMethod = () => {
  4 │                         this.setState({
@@ -33,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                           name: this.props.name.toUpperCase()
    ╰────
 
-  ⚠ eslint-plugin-react(no-set-state): Do not use setState
+  ⚠ eslint-plugin-react(no-set-state): Do not use `setState`.
    ╭─[no_set_state.tsx:4:48]
  3 │                       render() {
  4 │                         return <div onMouseEnter={() => this.setState({dropdownIndex: index})} />;

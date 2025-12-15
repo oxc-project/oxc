@@ -2,7 +2,7 @@
 
 exports[`config_file > auto discovery > nested 1`] = `
 "--------------------
-arguments: --check
+arguments: --check !*.{json,jsonc}
 working directory: fixtures/config_file/nested
 exit code: 1
 --- STDOUT ---------
@@ -19,7 +19,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 exports[`config_file > auto discovery > nested_deep 1`] = `
 "--------------------
-arguments: --check
+arguments: --check !*.{json,jsonc}
 working directory: fixtures/config_file/nested/deep
 exit code: 1
 --- STDOUT ---------
@@ -36,7 +36,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 exports[`config_file > auto discovery > root 1`] = `
 "--------------------
-arguments: --check
+arguments: --check !*.{json,jsonc}
 working directory: fixtures/config_file
 exit code: 1
 --- STDOUT ---------
@@ -53,7 +53,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 exports[`config_file > explicit config 1`] = `
 "--------------------
-arguments: --check --config ./fmt.json
+arguments: --check !*.{json,jsonc} --config ./fmt.json
 working directory: fixtures/config_file
 exit code: 1
 --- STDOUT ---------
@@ -67,7 +67,7 @@ Finished in <variable>ms on 1 files using 1 threads.
 
 --------------------
 --------------------
-arguments: --check --config ./fmt.jsonc
+arguments: --check !*.{json,jsonc} --config ./fmt.jsonc
 working directory: fixtures/config_file
 exit code: 1
 --- STDOUT ---------

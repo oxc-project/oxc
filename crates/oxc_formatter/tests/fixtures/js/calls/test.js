@@ -27,3 +27,21 @@ test(code.replace((c) => ""), () => {});
 expect(content)
   .toMatch(`props: /*@__PURE__*/_mergeDefaults(['foo', 'bar', 'baz'], {
 })`)
+
+
+// https://github.com/oxc-project/oxc/issues/16521
+string().required().test('foobarbazqux', async (value, { createError }) => {
+  //
+})
+
+const schema = object({
+  foo: string().required().test('foobarbazqux', async (value, { createError }) => {
+    //
+  }),
+});
+
+global().longcalllongcall().property
+  .test
+  .only('foobarbazqux', async () => {
+    //
+  })

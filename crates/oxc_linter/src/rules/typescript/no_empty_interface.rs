@@ -3,12 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {
@@ -20,10 +21,12 @@ fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoEmptyInterface {
     /// When set to `true`, allows empty interfaces that extend a single interface.
+    #[serde(alias = "allow_single_extends")]
+    // for backwards-compatibility, we made a mistake in the naming previously
     allow_single_extends: bool,
 }
 
@@ -63,12 +66,9 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyInterface {
     fn from_configuration(value: Value) -> Self {
-        let allow_single_extends =
-            value.get(0).map_or(Self::default().allow_single_extends, |config| {
-                config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
-            });
-
-        Self { allow_single_extends }
+        serde_json::from_value::<DefaultRuleConfig<NoEmptyInterface>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -124,7 +124,19 @@ fn test() {
 
 			interface Bar extends Foo {}
 			      ",
-            Some(serde_json::json!([{ "allow_single_extends": true }])),
+            Some(serde_json::json!([{ "allowSingleExtends": true }])),
+        ),
+        (
+            "
+			interface Foo {
+			  props: string;
+			}
+
+			interface Bar extends Foo {}
+
+			class Bar {}
+			      ",
+            Some(serde_json::json!([{ "allowSingleExtends": true }])),
         ),
         (
             "
@@ -153,7 +165,7 @@ fn test() {
 
 			class Baz {}
 			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         (
             "
@@ -165,7 +177,19 @@ fn test() {
 
 			class Bar {}
 			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
+        ),
+        (
+            "
+			interface Foo {
+			  props: string;
+			}
+
+			interface Bar extends Foo {}
+
+			const bar = class Bar {};
+			      ",
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         (
             "
@@ -187,7 +211,7 @@ fn test() {
 
 			interface Bar extends Foo {}
 			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         ("interface Foo extends Array<number> {}", None),
         ("interface Foo extends Array<number | {}> {}", None),

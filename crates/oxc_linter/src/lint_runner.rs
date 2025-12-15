@@ -222,7 +222,7 @@ impl LintRunner {
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(files, self.directives_store.map(), tx_error)?;
+            type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
         } else {
             drop(tx_error);
         }
@@ -236,14 +236,13 @@ impl LintRunner {
     pub fn run_source(
         &self,
         file: &Arc<OsStr>,
-        source_text: String,
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Vec<Message> {
         let mut messages = self.lint_service.run_source(file_system, vec![Arc::clone(file)]);
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =
-                match type_aware_linter.lint_source(file, source_text, self.directives_store.map())
+                match type_aware_linter.lint_source(file, file_system, self.directives_store.map())
                 {
                     Ok(msgs) => msgs,
                     Err(err) => {

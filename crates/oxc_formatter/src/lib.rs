@@ -16,8 +16,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
 pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::ir_transform::options::*;
 pub use crate::options::*;
-pub use crate::service::{oxfmtrc::Oxfmtrc, parse_utils::*};
+pub use crate::service::{oxfmtrc::OxfmtOptions, oxfmtrc::Oxfmtrc, parse_utils::*};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatContext, Formatted},
@@ -84,8 +85,7 @@ impl<'a> Formatter<'a> {
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
-        )
-        .unwrap();
+        );
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.

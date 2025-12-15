@@ -1,18 +1,12 @@
-use std::{
-    ffi::OsString,
-    io::BufWriter,
-    process::{ExitCode, Termination},
-};
+use std::ffi::OsString;
 
 use napi_derive::napi;
 
 use crate::{
-    command::format_command,
-    format::FormatRunner,
-    init::{init_miette, init_tracing},
+    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
+    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     lsp::run_lsp,
-    prettier_plugins::{JsFormatEmbeddedCb, create_external_formatter},
-    result::CliRunResult,
+    stdin::StdinRunner,
 };
 
 // NAPI based JS CLI entry point.
@@ -22,18 +16,27 @@ use crate::{
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
-/// 2. `format_embedded_cb`: Callback to format embedded code in templates
+/// 2. `setup_config_cb`: Callback to setup Prettier config
+/// 3. `format_embedded_cb`: Callback to format embedded code in templates
+/// 4. `format_file_cb`: Callback to format files
 ///
-/// Returns `true` if formatting succeeded without errors, `false` otherwise.
+/// Returns a tuple of `[mode, exitCode]`:
+/// - `mode`: If main logic will run in JS side, use this to indicate which mode
+/// - `exitCode`: If main logic already ran in Rust side, return the exit code
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn format(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> bool {
-    format_impl(args, format_embedded_cb).await.report() == ExitCode::SUCCESS
-}
-
-/// Run the formatter.
-async fn format_impl(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) -> CliRunResult {
+pub async fn run_cli(
+    args: Vec<String>,
+    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
+    setup_config_cb: JsSetupConfigCb,
+    #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
+    format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(
+        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+    )]
+    format_file_cb: JsFormatFileCb,
+) -> (String, Option<u8>) {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
@@ -42,34 +45,49 @@ async fn format_impl(args: Vec<String>, format_embedded_cb: JsFormatEmbeddedCb) 
         Ok(cmd) => cmd,
         Err(e) => {
             e.print_message(100);
-            return if e.exit_code() == 0 {
-                CliRunResult::None
-            } else {
-                CliRunResult::InvalidOptionConfig
-            };
+            // `bpaf` returns exit_code 0 for --help/--version, non-0 for parse errors
+            let exit_code = u8::from(e.exit_code() != 0);
+            return ("cli".to_string(), Some(exit_code));
         }
     };
 
-    // Handle LSP mode
-    if command.misc_options.lsp {
-        run_lsp().await;
-        return CliRunResult::None;
+    match command.mode {
+        Mode::Init => ("init".to_string(), None),
+        Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
+        Mode::Lsp => {
+            run_lsp().await;
+            ("lsp".to_string(), Some(0))
+        }
+        Mode::Stdin(_) => {
+            init_tracing();
+            init_miette();
+
+            let result = StdinRunner::new(command)
+                // Create external formatter from JS callback
+                .with_external_formatter(Some(ExternalFormatter::new(
+                    setup_config_cb,
+                    format_embedded_cb,
+                    format_file_cb,
+                )))
+                .run();
+
+            ("stdin".to_string(), Some(result.exit_code()))
+        }
+        Mode::Cli(_) => {
+            init_tracing();
+            init_miette();
+            init_rayon(command.runtime_options.threads);
+
+            let result = FormatRunner::new(command)
+                // Create external formatter from JS callback
+                .with_external_formatter(Some(ExternalFormatter::new(
+                    setup_config_cb,
+                    format_embedded_cb,
+                    format_file_cb,
+                )))
+                .run();
+
+            ("cli".to_string(), Some(result.exit_code()))
+        }
     }
-
-    // Otherwise, CLI mode
-    init_tracing();
-    init_miette();
-
-    command.handle_threads();
-
-    // Create external formatter from JS callback
-    let external_formatter = create_external_formatter(format_embedded_cb);
-
-    // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-    // See `https://github.com/rust-lang/rust/issues/60673`.
-    let mut stdout = BufWriter::new(std::io::stdout());
-    let mut stderr = BufWriter::new(std::io::stderr());
-    FormatRunner::new(command)
-        .with_external_formatter(Some(external_formatter))
-        .run(&mut stdout, &mut stderr)
 }

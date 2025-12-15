@@ -2318,7 +2318,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        visitor.enter_scope(ScopeFlags::With, &it.scope_id);
         visitor.visit_statement(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -4164,7 +4164,7 @@ pub mod walk_mut {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type(&mut it.argument);
+        visitor.visit_string_literal(&mut it.source);
         if let Some(options) = &mut it.options {
             visitor.visit_object_expression(options);
         }

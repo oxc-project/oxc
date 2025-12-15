@@ -1,0 +1,19 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      {
+        "considerDefaultExhaustiveForUnions": true
+      }
+    ],
+    "typescript/no-base-to-string": [
+      "error",
+      {
+        "ignoredTypeNames": ["Error", "RegExp", "URL", "URLSearchParams", "CustomStringifiable"]
+      }
+    ]
+  }
+}

@@ -277,7 +277,7 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -327,6 +327,18 @@ impl CliRunner {
             }
 
             return CliRunResult::None;
+        }
+
+        // Send JS plugins config to JS side
+        if let Some(external_linter) = &external_linter {
+            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            if let Err(err) = res {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to setup external plugin options: {err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
         }
 
         let files_to_lint = paths
@@ -1411,5 +1423,37 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/tsgolint_tsconfig_extends_config_err".into())
             .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_rule_options() {
+        // Test that rule options are correctly passed to tsgolint
+        // See: https://github.com/oxc-project/oxc/issues/16182
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/tsgolint_rule_options".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_fix() {
+        Tester::test_fix_with_args(
+            "fixtures/tsgolint_fix/fix.ts",
+            "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
+// The type assertion `as string` is unnecessary because str is already a string
+const str: string = 'hello';
+const redundant = str as string;
+
+export { redundant };
+",
+            "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
+// The type assertion `as string` is unnecessary because str is already a string
+const str: string = 'hello';
+const redundant = str;
+
+export { redundant };
+",
+            &["--type-aware", "-D", "no-unnecessary-type-assertion"],
+        );
     }
 }

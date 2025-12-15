@@ -12,39 +12,43 @@
 // 2. Skip the fixtures which are marked "SKIP_babel7plugins_babel8core"
 //    (or maybe don't - what does this option mean?)
 
-import { transformFileAsync } from '@babel/core';
-import { readdir, readFile, rename, writeFile } from 'fs/promises';
-import { extname, join as pathJoin } from 'path';
+import { transformFileAsync } from "@babel/core";
+import { readdir, readFile, rename, writeFile } from "fs/promises";
+import { extname, join as pathJoin } from "path";
 
 const PACKAGES = [
-  'babel-plugin-transform-class-properties',
-  'babel-plugin-transform-private-methods',
-  'babel-plugin-transform-private-property-in-object',
-  'babel-plugin-transform-logical-assignment-operators',
-  'babel-plugin-transform-explicit-resource-management',
+  "babel-plugin-transform-class-properties",
+  "babel-plugin-transform-private-methods",
+  "babel-plugin-transform-private-property-in-object",
+  "babel-plugin-transform-logical-assignment-operators",
+  "babel-plugin-transform-explicit-resource-management",
 ];
-const FILTER_OUT_PRESETS = ['env'];
-const FILTER_OUT_PLUGINS = ['transform-classes', 'transform-block-scoping', 'transform-destructuring'];
+const FILTER_OUT_PRESETS = ["env"];
+const FILTER_OUT_PLUGINS = [
+  "transform-classes",
+  "transform-block-scoping",
+  "transform-destructuring",
+];
 
 const CLASS_PLUGINS = [
-  'transform-class-properties',
-  'transform-private-methods',
-  'transform-private-property-in-object',
+  "transform-class-properties",
+  "transform-private-methods",
+  "transform-private-property-in-object",
 ];
 
-const PACKAGES_PATH = pathJoin(import.meta.dirname, '../coverage/babel/packages');
+const PACKAGES_PATH = pathJoin(import.meta.dirname, "../coverage/babel/packages");
 
 // These fixtures transform incorrectly by Babel. Haven't figured out why yet.
 const IGNORED_FIXTURES = [
-  'compile-to-class/constructor-collision-ignores-types',
-  'compile-to-class/constructor-collision-ignores-types-loose',
+  "compile-to-class/constructor-collision-ignores-types",
+  "compile-to-class/constructor-collision-ignores-types-loose",
 ];
 
 // Copied from `@babel/helper-transform-fixture-test-runner`
-const EXTERNAL_HELPERS_VERSION = '7.100.0';
+const EXTERNAL_HELPERS_VERSION = "7.100.0";
 
 for (const packageName of PACKAGES) {
-  const dirPath = pathJoin(PACKAGES_PATH, packageName, 'test/fixtures');
+  const dirPath = pathJoin(PACKAGES_PATH, packageName, "test/fixtures");
   // oxlint-disable-next-line no-await-in-loop
   await updateDir(dirPath, {}, false);
 }
@@ -73,7 +77,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
       dirFiles.push(filename);
     } else {
       const ext = extname(filename),
-        type = ext === '' ? filename : filename.slice(0, -ext.length);
+        type = ext === "" ? filename : filename.slice(0, -ext.length);
       if (Object.hasOwn(filenames, type)) filenames[type] = filename;
     }
   }
@@ -81,11 +85,11 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   // Update options, save to file, and merge options with parent
   if (filenames.options) {
     const path = pathJoin(dirPath, filenames.options);
-    const localOptions = JSON.parse(await readFile(path, 'utf8'));
+    const localOptions = JSON.parse(await readFile(path, "utf8"));
     if (updateOptions(localOptions)) {
       hasChangedOptions = true;
       await backupFile(path);
-      await writeFile(path, JSON.stringify(localOptions, null, 2) + '\n');
+      await writeFile(path, JSON.stringify(localOptions, null, 2) + "\n");
     }
     options = { ...options, ...localOptions };
   }
@@ -96,7 +100,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
       outputPath = pathJoin(dirPath, filenames.output);
 
     const transformedCode = await transform(inputPath, options);
-    const originalTransformedCode = await readFile(outputPath, 'utf8');
+    const originalTransformedCode = await readFile(outputPath, "utf8");
 
     if (transformedCode.trim() !== originalTransformedCode.trim()) {
       await backupFile(outputPath);
@@ -132,8 +136,8 @@ function updateOptions(options) {
     if (options[key].length === 0) delete options[key];
   }
 
-  filter('presets', FILTER_OUT_PRESETS);
-  filter('plugins', FILTER_OUT_PLUGINS);
+  filter("presets", FILTER_OUT_PRESETS);
+  filter("plugins", FILTER_OUT_PLUGINS);
   if (ensureAllClassPluginsEnabled(options)) {
     hasChangedOptions = true;
   }
@@ -143,13 +147,13 @@ function updateOptions(options) {
 
 // Ensure all class plugins are enabled if any of class related plugins are enabled
 function ensureAllClassPluginsEnabled(options) {
-  let plugins = options.plugins;
+  const { plugins } = options;
   if (!plugins) return false;
 
-  let already_enabled = [];
+  const already_enabled = [];
   let pluginOptions;
   plugins.forEach((plugin) => {
-    let pluginName = getName(plugin);
+    const pluginName = getName(plugin);
     if (CLASS_PLUGINS.includes(pluginName)) {
       if (Array.isArray(plugin) && plugin[1]) {
         // Store options for the plugin, so that we can ensure all plugins are
@@ -206,19 +210,22 @@ async function transform(inputPath, options) {
   }
 
   if (options.presets) {
-    options.presets = options.presets.map((preset) => prefixName(preset, 'preset'));
+    options.presets = options.presets.map((preset) => prefixName(preset, "preset"));
   }
 
-  options.plugins = (options.plugins || []).map((plugin) => prefixName(plugin, 'plugin'));
+  options.plugins = (options.plugins || []).map((plugin) => prefixName(plugin, "plugin"));
 
   let addExternalHelpersPlugin = true;
-  if (Object.hasOwn(options, 'externalHelpers')) {
+  if (Object.hasOwn(options, "externalHelpers")) {
     if (!options.externalHelpers) addExternalHelpersPlugin = false;
     delete options.externalHelpers;
   }
 
   if (addExternalHelpersPlugin) {
-    options.plugins.push(['@babel/plugin-external-helpers', { helperVersion: EXTERNAL_HELPERS_VERSION }]);
+    options.plugins.push([
+      "@babel/plugin-external-helpers",
+      { helperVersion: EXTERNAL_HELPERS_VERSION },
+    ]);
   }
 
   const { code } = await transformFileAsync(inputPath, options);

@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear -y
   # Node.js related init
   pnpm install
 
@@ -60,7 +60,6 @@ lint:
 fmt:
   -cargo shear --fix # remove all unused dependencies
   cargo fmt
-  dprint fmt
   node --run fmt
 
 [unix]
@@ -170,7 +169,6 @@ new-react-perf-rule name: (new-rule name "react-perf")
 new-n-rule name: (new-rule name "n")
 new-promise-rule name: (new-rule name "promise")
 new-vitest-rule name: (new-rule name "vitest")
-new-regexp-rule name: (new-rule name "regexp")
 new-vue-rule name: (new-rule name "vue")
 
 # Alias for backward compatibility
@@ -244,16 +242,18 @@ watch-playground:
 
 # Generate website documentation, intended for updating the oxc-project.github.io site.
 # Path should be the path to your clone of https://github.com/oxc-project/oxc-project.github.io
-# When testing changes to the website documentation, you may also want to run `dprint fmt --staged`
+# When testing changes to the website documentation, you may also want to run `pnpm run fmt`
 # in the website directory.
 website path:
-  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
-  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
-  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_linter rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
+  cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
+  cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
+  cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 
 # Generate linter schema json for `npm/oxlint/configuration_schema.json`
 linter-schema-json:
-  cargo run -p website -- linter-schema-json > npm/oxlint/configuration_schema.json
+  cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

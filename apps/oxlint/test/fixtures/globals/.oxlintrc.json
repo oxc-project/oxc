@@ -1,0 +1,29 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "globals-plugin/globals": "error"
+  },
+  "globals": {
+    "React": "readonly",
+    "process": "writable",
+    "console": "readonly",
+    "window": "off",
+    "foo": "writeable",
+    "bar": "readable",
+    "baz": true,
+    "qux": false
+  },
+  "overrides": [
+    {
+      "files": ["files/nested/**"],
+      "globals": {
+        "React": "writable",
+        "process": "off",
+        "customGlobal": "readonly"
+      }
+    }
+  ]
+}

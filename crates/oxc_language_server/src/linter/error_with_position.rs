@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::borrow::Cow;
 
-use tower_lsp_server::lsp_types::{
+use tower_lsp_server::ls_types::{
     self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
     NumberOrString, Position, Range, Uri,
 };
@@ -12,36 +12,34 @@ use oxc_linter::{Fix, Message, PossibleFixes};
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
     pub diagnostic: Diagnostic,
-    pub fixed_content: PossibleFixContent,
-}
-
-#[derive(Debug, Clone)]
-pub struct FixedContent {
-    pub message: Option<String>,
-    pub code: String,
-    pub range: Range,
+    pub code_action: Option<LinterCodeAction>,
 }
 
 #[derive(Debug, Clone, Default)]
-pub enum PossibleFixContent {
-    #[default]
-    None,
-    Single(FixedContent),
-    Multiple(Vec<FixedContent>),
+pub struct LinterCodeAction {
+    pub range: Range,
+    pub fixed_content: Vec<FixedContent>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FixedContent {
+    pub message: String,
+    pub code: String,
+    pub range: Range,
 }
 
 // clippy: the source field is checked and assumed to be less than 4GB, and
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    message: &Message,
+    mut message: Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
 ) -> DiagnosticReport {
     let severity = match message.error.severity {
-        Severity::Error => Some(lsp_types::DiagnosticSeverity::ERROR),
-        _ => Some(lsp_types::DiagnosticSeverity::WARNING),
+        Severity::Error => Some(ls_types::DiagnosticSeverity::ERROR),
+        _ => Some(ls_types::DiagnosticSeverity::WARNING),
     };
 
     let related_information = message.error.labels.as_ref().map(|spans| {
@@ -53,10 +51,10 @@ pub fn message_to_lsp_diagnostic(
                 let end_position =
                     offset_to_position(rope, offset + span.len() as u32, source_text);
 
-                lsp_types::DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
+                ls_types::DiagnosticRelatedInformation {
+                    location: ls_types::Location {
                         uri: uri.clone(),
-                        range: lsp_types::Range::new(start_position, end_position),
+                        range: ls_types::Range::new(start_position, end_position),
                     },
                     message: span
                         .label()
@@ -75,7 +73,8 @@ pub fn message_to_lsp_diagnostic(
         .error
         .url
         .as_ref()
-        .map(|url| CodeDescription { href: Uri::from_str(url).ok().unwrap() });
+        .and_then(|url| url.parse().ok())
+        .map(|href| CodeDescription { href });
 
     let diagnostic_message = match &message.error.help {
         Some(help) => {
@@ -89,6 +88,16 @@ pub fn message_to_lsp_diagnostic(
         None => message.error.message.to_string(),
     };
 
+    // 1) Use `fixed_content.message` if it exists
+    // 2) Try to parse the report diagnostic message
+    // 3) Fallback to "Fix this problem"
+    let alternative_fix_title: Cow<'static, str> =
+        if let Some(code) = diagnostic_message.split(':').next() {
+            format!("Fix this {code} problem").into()
+        } else {
+            std::borrow::Cow::Borrowed("Fix this problem")
+        };
+
     let diagnostic = Diagnostic {
         range,
         severity,
@@ -101,16 +110,25 @@ pub fn message_to_lsp_diagnostic(
         data: None,
     };
 
+    let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
-    let fixed_content = match &message.fixes {
-        PossibleFixes::None => PossibleFixContent::None,
+    match &mut message.fixes {
+        PossibleFixes::None => {}
         PossibleFixes::Single(fix) => {
-            PossibleFixContent::Single(fix_to_fixed_content(fix, rope, source_text))
+            if fix.message.is_none() {
+                fix.message = Some(alternative_fix_title);
+            }
+            fixed_content.push(fix_to_fixed_content(fix, rope, source_text));
         }
-        PossibleFixes::Multiple(fixes) => PossibleFixContent::Multiple(
-            fixes.iter().map(|fix| fix_to_fixed_content(fix, rope, source_text)).collect(),
-        ),
-    };
+        PossibleFixes::Multiple(fixes) => {
+            fixed_content.extend(fixes.iter_mut().map(|fix| {
+                if fix.message.is_none() {
+                    fix.message = Some(alternative_fix_title.clone());
+                }
+                fix_to_fixed_content(fix, rope, source_text)
+            }));
+        }
+    }
 
     // Add ignore fixes
     let error_offset = message.span.start;
@@ -120,11 +138,14 @@ pub fn message_to_lsp_diagnostic(
     // and attaching a ignore comment would not ignore the error.
     // This is because the ignore comment would need to be placed before the error offset, which is not possible.
     if error_offset == section_offset && message.span.end == section_offset {
-        return DiagnosticReport { diagnostic, fixed_content };
+        return DiagnosticReport {
+            diagnostic,
+            code_action: Some(LinterCodeAction { range, fixed_content }),
+        };
     }
 
-    let fixed_content = add_ignore_fixes(
-        fixed_content,
+    add_ignore_fixes(
+        &mut fixed_content,
         &message.error.code,
         error_offset,
         section_offset,
@@ -132,15 +153,26 @@ pub fn message_to_lsp_diagnostic(
         source_text,
     );
 
-    DiagnosticReport { diagnostic, fixed_content }
+    let code_action = if fixed_content.is_empty() {
+        None
+    } else {
+        Some(LinterCodeAction { range, fixed_content })
+    };
+
+    DiagnosticReport { diagnostic, code_action }
 }
 
 fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedContent {
     let start_position = offset_to_position(rope, fix.span.start, source_text);
     let end_position = offset_to_position(rope, fix.span.end, source_text);
 
+    debug_assert!(
+        fix.message.is_some(),
+        "Fix message should be present. `message_to_lsp_diagnostic` should modify fixes to include messages."
+    );
+
     FixedContent {
-        message: fix.message.as_ref().map(std::string::ToString::to_string),
+        message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
     }
@@ -156,7 +188,7 @@ pub fn generate_inverted_diagnostics(
             continue;
         };
         let related_information = Some(vec![DiagnosticRelatedInformation {
-            location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            location: ls_types::Location { uri: uri.clone(), range: d.diagnostic.range },
             message: "original diagnostic".to_string(),
         }]);
         for r in related_info {
@@ -180,7 +212,7 @@ pub fn generate_inverted_diagnostics(
                     tags: None,
                     data: None,
                 },
-                fixed_content: PossibleFixContent::None,
+                code_action: None,
             });
         }
     }
@@ -197,44 +229,28 @@ pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Positi
 /// If the existing fixes already contain an "remove unused disable directive" fix,
 /// then no ignore fixes will be added.
 fn add_ignore_fixes(
-    fixes: PossibleFixContent,
+    fixes: &mut Vec<FixedContent>,
     code: &OxcCode,
     error_offset: u32,
     section_offset: u32,
     rope: &Rope,
     source_text: &str,
-) -> PossibleFixContent {
+) {
     // do not append ignore code actions when the error is the ignore action
-    if matches!(fixes, PossibleFixContent::Single(ref fix) if fix.message.as_ref().is_some_and(|message| message.starts_with("remove unused disable directive")))
-    {
-        return fixes;
-    }
-
-    let mut new_fixes: Vec<FixedContent> = vec![];
-    if let PossibleFixContent::Single(fix) = fixes {
-        new_fixes.push(fix);
-    } else if let PossibleFixContent::Multiple(existing_fixes) = fixes {
-        new_fixes.extend(existing_fixes);
+    if fixes.len() == 1 && fixes[0].message.starts_with("remove unused disable directive") {
+        return;
     }
 
     if let Some(rule_name) = code.number.as_ref() {
         // TODO: doesn't support disabling multiple rules by name for a given line.
-        new_fixes.push(disable_for_this_line(
+        fixes.push(disable_for_this_line(
             rule_name,
             error_offset,
             section_offset,
             rope,
             source_text,
         ));
-        new_fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
-    }
-
-    if new_fixes.is_empty() {
-        PossibleFixContent::None
-    } else if new_fixes.len() == 1 {
-        PossibleFixContent::Single(new_fixes.remove(0))
-    } else {
-        PossibleFixContent::Multiple(new_fixes)
+        fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
     }
 }
 
@@ -277,7 +293,7 @@ fn disable_for_this_line(
 
     let position = offset_to_position(rope, insert_offset, source_text);
     FixedContent {
-        message: Some(format!("Disable {rule_name} for this line")),
+        message: format!("Disable {rule_name} for this line"),
         code: format!(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         ),
@@ -300,7 +316,7 @@ fn disable_for_this_section(
     let position = offset_to_position(rope, insert_offset, source_text);
 
     FixedContent {
-        message: Some(format!("Disable {rule_name} for this whole file")),
+        message: format!("Disable {rule_name} for this whole file"),
         code: content,
         range: Range::new(position, position),
     }

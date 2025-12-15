@@ -1,8 +1,8 @@
 {
-  "private": true,
   "name": "lint_rules",
-  "main": "./src/main.mjs",
   "version": "0.0.0",
+  "private": true,
+  "main": "./src/main.mjs",
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
@@ -16,7 +16,6 @@
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-perf": "^3.3.3",
-    "eslint-plugin-regexp": "latest",
     "eslint-plugin-unicorn": "latest",
     "eslint-plugin-vitest": "latest",
     "eslint-plugin-vue": "latest"

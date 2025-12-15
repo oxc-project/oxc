@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # Clone submodules in parallel for faster setup
-# Usage: ./clone-parallel.sh [test262] [babel] [typescript] [prettier] [acorn-test262] [node-compat-table]
+# Usage: ./clone-parallel.sh [test262] [babel] [typescript] [prettier] [estree-conformance] [node-compat-table]
 # Arguments: "true" or "false" for each submodule
 
 set -euo pipefail
 
 # Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
-TEST262_SHA="c125a8dc610bb0f03366d342dc2f1f41712f0caa"
-BABEL_SHA="c92c4919771105140015167f25f7bacac77c90d9"
-TYPESCRIPT_SHA="cc2610fd347127c28609b4fca6fa9d55ee5063c6"
-PRETTIER_SHA="d7fe2da97d575310059d2fc2f8d5de21240b65df"
-ACORN_TEST262_SHA="fd0b12cb7c3d427b06304481c86340083358078d"
+# NOTE: Prettier version is now pinned to v3.7.3 (not updated by workflow above), Update manually as needed
+TEST262_SHA="947fee33f81e261afd4fc6020b2a1d3ac23efa60"
+BABEL_SHA="84d21e4e129468b62ca5e05f8029c18d785f3345"
+TYPESCRIPT_SHA="0a071327153b4c386dfcab19a584e0d6224d1354"
+PRETTIER_SHA="fdfa6701767f5140a85902ecc9fb6444f5b4e3f8"
+ESTREE_CONFORMANCE_SHA="e0aa1b46e2da9b30fb86d429166f6ea4b61999ec"
 NODE_COMPAT_TABLE_SHA="499beb6f1daa36f10c26b85a7f3ec3b3448ded23"
 
 # Default values for which submodules to clone
@@ -19,7 +20,7 @@ TEST262=${1:-true}
 BABEL=${2:-true}
 TYPESCRIPT=${3:-true}
 PRETTIER=${4:-true}
-ACORN_TEST262=${5:-true}
+ESTREE_CONFORMANCE=${5:-true}
 NODE_COMPAT_TABLE=${6:-true}
 
 # Array to store background process PIDs
@@ -81,8 +82,8 @@ clone_repo "$TEST262" "tc39/test262" "tasks/coverage/test262" "$TEST262_SHA" "te
 clone_repo "$BABEL" "babel/babel" "tasks/coverage/babel" "$BABEL_SHA" "babel"
 clone_repo "$TYPESCRIPT" "microsoft/TypeScript" "tasks/coverage/typescript" "$TYPESCRIPT_SHA" "typescript"
 clone_repo "$PRETTIER" "prettier/prettier" "tasks/prettier_conformance/prettier" "$PRETTIER_SHA" "prettier"
-clone_repo "$ACORN_TEST262" "oxc-project/acorn-test262" "tasks/coverage/acorn-test262" "$ACORN_TEST262_SHA" "acorn-test262"
-clone_repo "$NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "tasks/coverage/node-compat-table" "$NODE_COMPAT_TABLE_SHA" "node-compat-table"
+clone_repo "$ESTREE_CONFORMANCE" "oxc-project/estree-conformance" "tasks/coverage/estree-conformance" "$ESTREE_CONFORMANCE_SHA" "estree-conformance"
+clone_repo "$NODE_COMPAT_TABLE" "compat-table/node-compat-table" "tasks/coverage/node-compat-table" "$NODE_COMPAT_TABLE_SHA" "node-compat-table"
 
 # Wait for all background processes to complete
 echo "Waiting for all clone operations to complete..."

@@ -1,4 +1,4 @@
-import type { Plugin, Node } from '#oxlint';
+import type { Plugin, Node } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -12,10 +12,10 @@ const SPAN: Node = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'parser-services-plugin',
+    name: "parser-services-plugin",
   },
   rules: {
-    'check-parser-services': {
+    "check-parser-services": {
       create(context) {
         context.report({
           message: `typeof context.sourceCode.parserServices: ${typeof context.sourceCode.parserServices}`,

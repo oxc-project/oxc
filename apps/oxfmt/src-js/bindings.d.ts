@@ -5,8 +5,12 @@
  *
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
- * 2. `format_embedded_cb`: Callback to format embedded code in templates
+ * 2. `setup_config_cb`: Callback to setup Prettier config
+ * 3. `format_embedded_cb`: Callback to format embedded code in templates
+ * 4. `format_file_cb`: Callback to format files
  *
- * Returns `true` if formatting succeeded without errors, `false` otherwise.
+ * Returns a tuple of `[mode, exitCode]`:
+ * - `mode`: If main logic will run in JS side, use this to indicate which mode
+ * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
-export declare function format(args: Array<string>, formatEmbeddedCb: JsFormatEmbeddedCb): Promise<boolean>
+export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>): Promise<[string, number | undefined | null]>

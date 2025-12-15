@@ -26,16 +26,19 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from './source_code.js';
-import { report } from './report.js';
-import { settings, initSettings } from './settings.js';
-import { debugAssertIsNonNull } from '../utils/asserts.js';
+import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
+import { report } from "./report.ts";
+import { settings, initSettings } from "./settings.ts";
+import visitorKeys from "../generated/keys.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { EMPTY_GLOBALS, Globals, globals, initGlobals } from "./globals.ts";
 
-import type { Options, RuleDetails } from './load.ts';
-import type { Diagnostic } from './report.ts';
-import type { Settings } from './settings.ts';
-import type { SourceCode } from './source_code.ts';
-import type { ModuleKind } from '../generated/types.d.ts';
+import type { RuleDetails } from "./load.ts";
+import type { Options } from "./options.ts";
+import type { Diagnostic } from "./report.ts";
+import type { Settings } from "./settings.ts";
+import type { SourceCode } from "./source_code.ts";
+import type { ModuleKind, Program } from "../generated/types.d.ts";
 
 const { freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
@@ -66,7 +69,69 @@ export function resetFileContext(): void {
 }
 
 // ECMAScript version. This matches ESLint's default.
-const ECMA_VERSION = 2026;
+export const ECMA_VERSION = 2026;
+const ECMA_VERSION_NUMBER = 17;
+
+// Supported ECMAScript versions. This matches ESLint's default.
+const SUPPORTED_ECMA_VERSIONS = freeze([3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+
+// Singleton object for parser's `Syntax` property. Generated lazily.
+let Syntax: Record<string, string> | null = null;
+
+// Singleton object for parser.
+const PARSER = freeze({
+  /**
+   * Parser name.
+   */
+  name: "oxc",
+
+  /**
+   * Parser version.
+   */
+  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
+  version: "0.0.0",
+
+  /**
+   * Parse code into an AST.
+   * @param code - Code to parse
+   * @param options? - Parser options
+   * @returns AST
+   */
+  // oxlint-disable-next-line no-unused-vars
+  parse(code: string, options?: Record<string, unknown>): Program {
+    throw new Error("`context.languageOptions.parser.parse` not implemented yet."); // TODO
+  },
+
+  /**
+   * Visitor keys for AST nodes.
+   */
+  VisitorKeys: visitorKeys,
+
+  /**
+   * Ast node types.
+   */
+  get Syntax(): Readonly<Record<string, string>> {
+    // Construct lazily, as it's probably rarely used
+    if (Syntax === null) {
+      Syntax = ObjectCreate(null);
+      for (const key in visitorKeys) {
+        Syntax![key] = key;
+      }
+      freeze(Syntax);
+    }
+    return Syntax!;
+  },
+
+  /**
+   * Latest ECMAScript version supported by parser.
+   */
+  latestEcmaVersion: ECMA_VERSION_NUMBER,
+
+  /**
+   * ECMAScript versions supported by parser.
+   */
+  supportedEcmaVersions: SUPPORTED_ECMA_VERSIONS,
+});
 
 // Singleton object for parser options.
 // TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
@@ -86,7 +151,7 @@ const PARSER_OPTIONS = freeze({
 });
 
 // Singleton object for language options.
-const LANGUAGE_OPTIONS = freeze({
+const LANGUAGE_OPTIONS = {
   /**
    * Source type of the file being linted.
    */
@@ -108,9 +173,7 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Parser used to parse the file being linted.
    */
-  get parser(): Record<string, unknown> {
-    throw new Error('`context.languageOptions.parser` not implemented yet.'); // TODO
-  },
+  parser: PARSER,
 
   /**
    * Parser options used to parse the file being linted.
@@ -121,19 +184,39 @@ const LANGUAGE_OPTIONS = freeze({
   /**
    * Globals defined for the file being linted.
    */
-  // ESLint has `globals` as `null`, not empty object, if no globals are defined.
-  get globals(): Record<string, 'readonly' | 'writable' | 'off'> | null {
-    // TODO: Get globals from Rust side.
-    // Note: ESLint's type is "writable", whereas Oxlint's is "writeable" (misspelled with extra "e").
-    // Probably we should fix that on Rust side (while still allowing "writeable").
-    return null;
+  get globals(): Readonly<Globals> | null {
+    if (globals === null) initGlobals();
+    debugAssertIsNonNull(globals);
+
+    // ESLint has `globals` as `null`, not empty object, if no globals are defined
+    return globals === EMPTY_GLOBALS ? null : globals;
   },
-});
+};
+
+// In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
+// This is to allow changing the ECMAScript version in conformance tests.
+// Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
+let ecmaVersion = ECMA_VERSION;
+
+export function setEcmaVersion(version: number): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
+  ecmaVersion = version;
+}
+
+if (CONFORMANCE) {
+  Object.defineProperty(LANGUAGE_OPTIONS, "ecmaVersion", {
+    get(): number {
+      return ecmaVersion;
+    },
+  });
+}
+
+freeze(LANGUAGE_OPTIONS);
 
 /**
  * Language options used when parsing a file.
  */
-export type LanguageOptions = typeof LANGUAGE_OPTIONS;
+export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 
 // Singleton object for file-specific properties.
 //
@@ -168,7 +251,7 @@ const FILE_CONTEXT = freeze({
    */
   get filename(): string {
     // Note: If we change this implementation, also change `getFilename` method below
-    if (filePath === null) throw new Error('Cannot access `context.filename` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.filename` in `createOnce`");
     return filePath;
   },
 
@@ -178,7 +261,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.filename` property instead.
    */
   getFilename(): string {
-    if (filePath === null) throw new Error('Cannot call `context.getFilename` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot call `context.getFilename` in `createOnce`");
     return filePath;
   },
 
@@ -188,7 +271,9 @@ const FILE_CONTEXT = freeze({
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename(): string {
     // Note: If we change this implementation, also change `getPhysicalFilename` method below
-    if (filePath === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    if (filePath === null) {
+      throw new Error("Cannot access `context.physicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 
@@ -198,7 +283,9 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.physicalFilename` property instead.
    */
   getPhysicalFilename(): string {
-    if (filePath === null) throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`');
+    if (filePath === null) {
+      throw new Error("Cannot call `context.getPhysicalFilename` in `createOnce`");
+    }
     return filePath;
   },
 
@@ -228,7 +315,7 @@ const FILE_CONTEXT = freeze({
    */
   get sourceCode(): SourceCode {
     // Note: If we change this implementation, also change `getSourceCode` method below
-    if (filePath === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.sourceCode` in `createOnce`");
     return SOURCE_CODE;
   },
 
@@ -238,7 +325,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `context.sourceCode` property instead.
    */
   getSourceCode(): SourceCode {
-    if (filePath === null) throw new Error('Cannot call `context.getSourceCode` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot call `context.getSourceCode` in `createOnce`");
     return SOURCE_CODE;
   },
 
@@ -246,7 +333,9 @@ const FILE_CONTEXT = freeze({
    * Language options used when parsing this file.
    */
   get languageOptions(): LanguageOptions {
-    if (filePath === null) throw new Error('Cannot access `context.languageOptions` in `createOnce`');
+    if (filePath === null) {
+      throw new Error("Cannot access `context.languageOptions` in `createOnce`");
+    }
     return LANGUAGE_OPTIONS;
   },
 
@@ -254,7 +343,7 @@ const FILE_CONTEXT = freeze({
    * Settings for the file being linted.
    */
   get settings(): Readonly<Settings> {
-    if (filePath === null) throw new Error('Cannot access `context.settings` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.settings` in `createOnce`");
 
     if (settings === null) initSettings();
     debugAssertIsNonNull(settings);
@@ -279,7 +368,7 @@ const FILE_CONTEXT = freeze({
    * @deprecated Use `languageOptions.parserOptions` instead.
    */
   get parserOptions(): Record<string, unknown> {
-    if (filePath === null) throw new Error('Cannot access `context.parserOptions` in `createOnce`');
+    if (filePath === null) throw new Error("Cannot access `context.parserOptions` in `createOnce`");
     return PARSER_OPTIONS;
   },
 
@@ -289,7 +378,7 @@ const FILE_CONTEXT = freeze({
    */
   get parserPath(): string {
     // TODO: Implement this?
-    throw new Error('`context.parserPath` is unsupported at present (and deprecated)');
+    throw new Error("`context.parserPath` is unsupported at present (and deprecated)");
   },
 });
 
@@ -354,12 +443,13 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
     get id(): string {
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
       // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
-      if (filePath === null) throw new Error('Cannot access `context.id` in `createOnce`');
+      if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
       return fullRuleName;
     },
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {
-      if (filePath === null) throw new Error('Cannot access `context.options` in `createOnce`');
+      if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
+      debugAssertIsNonNull(ruleDetails.options);
       return ruleDetails.options;
     },
     /**

@@ -13,10 +13,11 @@ use serde::{Deserialize, Serialize};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
-pub struct SortKeys(Box<SortKeysOptions>);
+pub struct SortKeys(Box<SortKeysConfig>);
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+/// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
 pub enum SortOrder {
     Desc,
     #[default]
@@ -26,8 +27,6 @@ pub enum SortOrder {
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortKeysOptions {
-    /// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
-    sort_order: SortOrder,
     /// Whether the sort comparison is case-sensitive (A < a when true).
     case_sensitive: bool,
     /// Use natural sort order so that, for example, "a2" comes before "a10".
@@ -42,7 +41,6 @@ impl Default for SortKeysOptions {
     fn default() -> Self {
         // we follow the eslint defaults
         Self {
-            sort_order: SortOrder::Asc,
             case_sensitive: true,
             natural: false,
             min_keys: 2,
@@ -51,11 +49,16 @@ impl Default for SortKeysOptions {
     }
 }
 
-impl std::ops::Deref for SortKeys {
-    type Target = SortKeysOptions;
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(default)]
+pub struct SortKeysConfig(SortOrder, SortKeysOptions);
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl SortKeys {
+    fn sort_order(&self) -> &SortOrder {
+        &(*self.0).0
+    }
+    fn options(&self) -> &SortKeysOptions {
+        &(*self.0).1
     }
 }
 
@@ -94,7 +97,7 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = SortKeysOptions
+    config = SortKeysConfig
 );
 
 impl Rule for SortKeys {
@@ -130,20 +133,19 @@ impl Rule for SortKeys {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(SortKeysOptions {
+        Self(Box::new(SortKeysConfig(
             sort_order,
-            case_sensitive,
-            natural,
-            min_keys,
-            allow_line_separated_groups,
-        }))
+            SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
+        )))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            if dec.properties.len() < self.min_keys {
+            let options = self.options();
+            if dec.properties.len() < options.min_keys {
                 return;
             }
+            let sort_order = self.sort_order().clone();
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
@@ -157,7 +159,7 @@ impl Rule for SortKeys {
                     }
                     ObjectPropertyKind::ObjectProperty(obj) => {
                         let Some(key) = obj.key.static_name() else { continue };
-                        if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
+                        if i != dec.properties.len() - 1 && options.allow_line_separated_groups {
                             let text_between = extract_text_between_spans(
                                 source_text,
                                 prop.span(),
@@ -175,7 +177,7 @@ impl Rule for SortKeys {
                 }
             }
 
-            if !self.case_sensitive {
+            if !options.case_sensitive {
                 for group in &mut property_groups {
                     *group = group
                         .iter()
@@ -186,13 +188,13 @@ impl Rule for SortKeys {
 
             let mut sorted_property_groups = property_groups.clone();
             for group in &mut sorted_property_groups {
-                if self.natural {
+                if options.natural {
                     natural_sort(group);
                 } else {
                     alphanumeric_sort(group);
                 }
 
-                if self.sort_order == SortOrder::Desc {
+                if sort_order == SortOrder::Desc {
                     group.reverse();
                 }
             }
@@ -242,24 +244,11 @@ impl Rule for SortKeys {
                     && property_groups.len() == 1
                     && !property_groups[0].iter().any(|s| s.starts_with('<'))
                 {
-                    // Build full text slices for each property spanning from the start of the
-                    // property to the start of the next property (or the end of the last one).
-                    // This preserves commas and formatting attached to each property so that
-                    // reordering produces syntactically-correct output.
-                    let mut prop_texts: Vec<String> = Vec::with_capacity(props.len());
-
-                    for i in 0..props.len() {
-                        let start = props[i].1.start;
-                        let end =
-                            if i + 1 < props.len() { props[i + 1].1.start } else { props[i].1.end };
-                        prop_texts.push(ctx.source_range(Span::new(start, end)).to_string());
-                    }
-
                     // Prepare keys for comparison according to options
                     let keys_for_cmp: Vec<String> = props
                         .iter()
                         .map(|(k, _)| {
-                            if self.case_sensitive {
+                            if options.case_sensitive {
                                 k.clone()
                             } else {
                                 k.cow_to_ascii_lowercase().to_string()
@@ -270,12 +259,12 @@ impl Rule for SortKeys {
                     // Compute the sorted key order using the same helpers as the main rule
                     // so the autofix ordering matches the diagnostic ordering.
                     let mut sorted_keys = keys_for_cmp.clone();
-                    if self.natural {
+                    if options.natural {
                         natural_sort(&mut sorted_keys);
                     } else {
                         alphanumeric_sort(&mut sorted_keys);
                     }
-                    if self.sort_order == SortOrder::Desc {
+                    if sort_order == SortOrder::Desc {
                         sorted_keys.reverse();
                     }
 
@@ -296,37 +285,48 @@ impl Rule for SortKeys {
                         }
                     }
 
-                    // Build sorted text by concatenating the full property snippets.
-                    // When moving snippets that used to be non-last (and thus include a
-                    // trailing comma) to the end, we must remove their trailing comma so
-                    // the resulting object doesn't end up with an extra comma before `}`.
-                    // Also normalize separators between properties to `, ` for clarity.
-                    let mut sorted_text = String::new();
-                    let trim_end_commas = |s: &str| -> String {
-                        let s = s.trim_end();
-                        let mut trimmed = s.to_string();
+                    // Build sorted text by concatenating the property values with
+                    // preserved separators. We extract the separator (comma + whitespace)
+                    // from between original properties and reuse them to maintain
+                    // formatting (e.g., newlines between properties).
 
-                        // remove a single trailing comma if present
-                        if trimmed.ends_with(',') {
-                            trimmed.pop();
-                            trimmed = trimmed.trim_end().to_string();
+                    // Extract separators between consecutive properties in the original order.
+                    // separator[i] is the text between property i and property i+1.
+                    let mut separators: Vec<String> = Vec::with_capacity(props.len());
+                    for i in 0..props.len() {
+                        if i + 1 < props.len() {
+                            let sep_start = props[i].1.end;
+                            let sep_end = props[i + 1].1.start;
+                            separators
+                                .push(ctx.source_range(Span::new(sep_start, sep_end)).to_string());
+                        } else {
+                            // Last property has no separator after it
+                            separators.push(String::new());
                         }
-                        trimmed
-                    };
+                    }
+
+                    // Get the property text (just the property itself, not including trailing separator)
+                    let prop_only_texts: Vec<String> =
+                        props.iter().map(|(_, span)| ctx.source_range(*span).to_string()).collect();
+
+                    let mut sorted_text = String::new();
 
                     for (pos, &idx) in indices.iter().enumerate() {
                         let is_last_in_new = pos + 1 == indices.len();
-                        let part = &prop_texts[idx];
 
-                        if is_last_in_new {
-                            // Ensure last property does not end with a comma or extra space
-                            sorted_text.push_str(&trim_end_commas(part));
-                        } else {
-                            // For non-last properties, ensure there is exactly ", " after the
-                            // property (regardless of how it appeared originally).
-                            let trimmed = trim_end_commas(part);
-                            sorted_text.push_str(&trimmed);
-                            sorted_text.push_str(", ");
+                        // Add the property text
+                        sorted_text.push_str(&prop_only_texts[idx]);
+
+                        if !is_last_in_new {
+                            // Use separator from original position `pos` (not `idx`) to maintain
+                            // the same spacing pattern as the original code.
+                            // If original separator is empty/missing, fall back to ", ".
+                            let sep = if pos < separators.len() && !separators[pos].is_empty() {
+                                &separators[pos]
+                            } else {
+                                ", "
+                            };
+                            sorted_text.push_str(sep);
                         }
                     }
 
@@ -1190,6 +1190,32 @@ fn test() {
         ("var obj = {c:1, a:2, b:3}", "var obj = {a:2, b:3, c:1}"),
         // Mixed types
         ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
+        // Multi-line formatting should be preserved (issue #16391)
+        (
+            "const obj = {
+    val: 'germany',
+    key: 'de',
+    id: 123,
+}",
+            "const obj = {
+    id: 123,
+    key: 'de',
+    val: 'germany',
+}",
+        ),
+        // Multi-line with different indentation
+        (
+            "var obj = {
+  c: 1,
+  a: 2,
+  b: 3
+}",
+            "var obj = {
+  a: 2,
+  b: 3,
+  c: 1
+}",
+        ),
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

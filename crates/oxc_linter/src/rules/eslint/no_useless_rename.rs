@@ -6,8 +6,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -17,10 +22,10 @@ fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUselessRename(Box<NoUselessRenameConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUselessRenameConfig {
     /// When set to `true`, allows using the same name in destructurings.
@@ -71,22 +76,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessRename {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoUselessRenameConfig {
-            ignore_destructuring: obj
-                .and_then(|v| v.get("ignoreDestructuring"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-            ignore_import: obj
-                .and_then(|v| v.get("ignoreImport"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-            ignore_export: obj
-                .and_then(|v| v.get("ignoreExport"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<NoUselessRename>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

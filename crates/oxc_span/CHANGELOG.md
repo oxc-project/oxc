@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.100.0] - 2025-12-01
+
+### ⚡ Performance
+
+- cc2f352 span: Add `#[inline]` to `Atom` methods (#16311) (overlookmotel)
+- ffca070 span: Add `#[repr(transparent)]` to `Atom` (#16310) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 🚀 Features
+
+- 6cff132 span: Add `Span::merge_within` method (#15869) (sapphi-red)
+
 ## [0.97.0] - 2025-11-11
 
 ### 📚 Documentation

@@ -1,16 +1,14 @@
 use std::{fmt::Write, path::PathBuf};
 
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position,
-        Range, Uri,
-    },
+use tower_lsp_server::ls_types::{
+    CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position, Range,
+    Uri,
 };
 
 use crate::{
+    ToolRestartChanges,
     linter::{ServerLinterBuilder, server_linter::ServerLinter},
-    tool::Tool,
+    tool::{DiagnosticResult, Tool},
 };
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
@@ -22,6 +20,34 @@ pub fn get_file_path(relative_file_path: &str) -> PathBuf {
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
     Uri::from_file_path(get_file_path(relative_file_path))
         .expect("failed to convert file path to URL")
+}
+
+fn get_snapshot_from_diagnostic_result(diagnostic_result: &DiagnosticResult) -> String {
+    if diagnostic_result.is_empty() {
+        return "No diagnostics / Files are ignored".to_string();
+    }
+
+    diagnostic_result
+        .iter()
+        .map(|(uri, diagnostics)| {
+            let mut result = String::new();
+            let _ = writeln!(result, "File URI: {}", get_snapshot_safe_uri(uri));
+            for diagnostic in diagnostics {
+                let _ = writeln!(result, "{}", get_snapshot_from_diagnostic(diagnostic));
+            }
+            result
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn get_snapshot_safe_uri(uri: &Uri) -> String {
+    let mut safe_uri = uri.to_string();
+    let start = safe_uri.find("file://").expect("file:// protocol not found in URI");
+    let end = safe_uri.find("oxc_language_server").expect("oxc_language_server not found in URI");
+    safe_uri
+        .replace_range(start + "file://".len()..end + "oxc_language_server".len(), "<variable>");
+    safe_uri
 }
 
 fn get_snapshot_from_diagnostic(diagnostic: &Diagnostic) -> String {
@@ -47,16 +73,7 @@ fn get_snapshot_from_diagnostic(diagnostic: &Diagnostic) -> String {
                         .unwrap();
                     // replace everything between `file://` and `oxc_language_server` with `<variable>`, to avoid
                     // the absolute path causing snapshot test failures in different environments
-                    let mut location = info.location.uri.to_string();
-                    let start =
-                        location.find("file://").expect("file:// protocol not found in URI");
-                    let end = location
-                        .find("oxc_language_server")
-                        .expect("oxc_language_server not found in URI");
-                    location.replace_range(
-                        start + "file://".len()..end + "oxc_language_server".len(),
-                        "<variable>",
-                    );
+                    let location = get_snapshot_safe_uri(&info.location.uri);
 
                     write!(result, "\nrelated_information[{i}].location.uri: {location:?}",)
                         .unwrap();
@@ -101,6 +118,7 @@ fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
 
     let mut result = String::new();
     let _ = writeln!(result, "Title: {}", code_action.title);
+    let _ = writeln!(result, "Is Preferred: {:?}", code_action.is_preferred);
     let _ = writeln!(
         result,
         "{}",
@@ -129,17 +147,17 @@ fn get_snapshot_from_code_action_or_command(action_or_command: &CodeActionOrComm
     }
 }
 
-fn get_snapshot_from_report(report: FileResult) -> String {
-    let Some(diagnostics) = report.diagnostic else {
-        return "File is ignored".to_string();
-    };
+fn get_snapshot_from_report(report: &FileResult) -> String {
+    if report.diagnostic.is_empty() {
+        return "No diagnostics / Files are ignored".to_string();
+    }
 
     format!(
         "########## Diagnostic Reports
 {}
 ########### Code Actions/Commands
 {}",
-        diagnostics.iter().map(get_snapshot_from_diagnostic).collect::<Vec<_>>().join("\n"),
+        get_snapshot_from_diagnostic_result(&report.diagnostic),
         report
             .actions
             .iter()
@@ -156,7 +174,7 @@ pub struct Tester<'t> {
 }
 
 struct FileResult {
-    diagnostic: Option<Vec<Diagnostic>>,
+    diagnostic: DiagnosticResult,
     actions: Vec<CodeActionOrCommand>,
 }
 
@@ -166,12 +184,17 @@ impl Tester<'_> {
     }
 
     fn create_linter(&self) -> ServerLinter {
-        let absolute_path = std::env::current_dir()
-            .expect("could not get current dir")
-            .join(self.relative_root_dir);
-        let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
+        ServerLinterBuilder::build(
+            &Self::get_root_uri(self.relative_root_dir),
+            self.options.clone(),
+        )
+    }
 
-        ServerLinterBuilder::build(&uri, self.options.clone())
+    pub fn get_root_uri(relative_root_dir: &str) -> Uri {
+        let absolute_path =
+            std::env::current_dir().expect("could not get current dir").join(relative_root_dir);
+
+        Uri::from_file_path(absolute_path).expect("could not convert current dir to uri")
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
@@ -196,9 +219,9 @@ impl Tester<'_> {
 
             let _ = write!(
                 snapshot_result,
-                "########## \nfile: {}/{relative_file_path}\n----------\n{}\n",
+                "########## \nLinted file: {}/{relative_file_path}\n----------\n{}\n",
                 self.relative_root_dir,
-                get_snapshot_from_report(reports)
+                get_snapshot_from_report(&reports)
             );
         }
 
@@ -212,5 +235,20 @@ impl Tester<'_> {
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot_result);
         });
+    }
+
+    pub fn get_watcher_patterns(&self) -> Vec<String> {
+        self.create_linter().get_watcher_patterns(self.options.clone())
+    }
+
+    pub fn handle_configuration_change(
+        &self,
+        new_options: serde_json::Value,
+    ) -> ToolRestartChanges {
+        self.create_linter().handle_configuration_change(
+            &Self::get_root_uri(self.relative_root_dir),
+            &self.options,
+            new_options,
+        )
     }
 }

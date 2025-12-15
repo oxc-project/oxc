@@ -383,7 +383,6 @@ fn test() {
     ];
 
     Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }

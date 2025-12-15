@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Node, Plugin, Rule, Scope } from '#oxlint';
+import type { Node, Plugin, Rule, Scope } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -31,7 +31,7 @@ const rule: Rule = {
                 const name = s.block?.id?.name;
                 return name ? `${s.type}(${name})` : `${s.type}`;
               })
-              .join('\n- '),
+              .join("\n- "),
           node: SPAN,
         });
 
@@ -39,36 +39,36 @@ const rule: Rule = {
         assert.equal(acquiredScope, scopeManager.globalScope);
       },
       VariableDeclaration(node) {
-        if (node.declarations[0].id.type === 'ObjectPattern') {
+        if (node.declarations[0].id.type === "ObjectPattern") {
           const variables = context.sourceCode.scopeManager.getDeclaredVariables(node);
           context.report({
             message: `VariableDeclaration declares ${variables.length} variables: ${variables
               .map((v) => v.name)
-              .join(', ')}.`,
+              .join(", ")}.`,
             node: node,
           });
         }
       },
       FunctionDeclaration(node) {
-        if (node.id && node.id.name === 'topLevelFunction') {
+        if (node.id && node.id.name === "topLevelFunction") {
           const topLevelFunctionScope = context.sourceCode.scopeManager.acquire(node)!;
           assert.equal(topLevelFunctionScope.upper, moduleScope);
           context.report({
             message: `topLevelFunction has ${topLevelFunctionScope.variables.length} local variables: ${topLevelFunctionScope?.variables
               .map((v) => v.name)
-              .join(', ')}. Child scopes: ${topLevelFunctionScope.childScopes.length}.`,
+              .join(", ")}. Child scopes: ${topLevelFunctionScope.childScopes.length}.`,
             node: topLevelFunctionScope.block,
           });
         }
       },
       TSModuleDeclaration(node) {
-        if (node.id.type === 'Identifier' && node.id.name === 'TopLevelModule') {
+        if (node.id.type === "Identifier" && node.id.name === "TopLevelModule") {
           const topLevelModuleScope = context.sourceCode.scopeManager.acquire(node)!;
           assert.equal(topLevelModuleScope.upper, moduleScope);
           context.report({
             message: `TopLevelModule has ${topLevelModuleScope.variables.length} local variables: ${topLevelModuleScope?.variables
               .map((v) => v.name)
-              .join(', ')}. Child scopes: ${topLevelModuleScope.childScopes.length}.`,
+              .join(", ")}. Child scopes: ${topLevelModuleScope.childScopes.length}.`,
             node: topLevelModuleScope.block,
           });
         }
@@ -76,16 +76,16 @@ const rule: Rule = {
       StaticBlock(node) {
         const staticBlockScope = context.sourceCode.scopeManager.acquire(node)!;
         const upperBlock = staticBlockScope.upper!.block;
-        assert('type' in upperBlock);
-        assert(upperBlock.type === 'ClassDeclaration');
-        assert('id' in upperBlock);
-        assert(typeof upperBlock.id === 'object' && upperBlock.id !== null);
-        assert('name' in upperBlock.id);
-        assert.equal(upperBlock.id.name, 'TestClass');
+        assert("type" in upperBlock);
+        assert(upperBlock.type === "ClassDeclaration");
+        assert("id" in upperBlock);
+        assert(typeof upperBlock.id === "object" && upperBlock.id !== null);
+        assert("name" in upperBlock.id);
+        assert.equal(upperBlock.id.name, "TestClass");
         context.report({
           message: `TestClass static block has ${staticBlockScope.variables.length} local variables: ${staticBlockScope?.variables
             .map((v) => v.name)
-            .join(', ')}. Child scopes: ${staticBlockScope.childScopes.length}.`,
+            .join(", ")}. Child scopes: ${staticBlockScope.childScopes.length}.`,
           node: node,
         });
       },
@@ -95,7 +95,7 @@ const rule: Rule = {
         context.report({
           message: `LabeledStatement's block has ${labeledStatementScope.variables.length} local variables: ${labeledStatementScope?.variables
             .map((v) => v.name)
-            .join(', ')}. Child scopes: ${labeledStatementScope.childScopes.length}.`,
+            .join(", ")}. Child scopes: ${labeledStatementScope.childScopes.length}.`,
           node: node,
         });
       },
@@ -105,7 +105,7 @@ const rule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'scope-manager-plugin',
+    name: "scope-manager-plugin",
   },
   rules: {
     scope: rule,

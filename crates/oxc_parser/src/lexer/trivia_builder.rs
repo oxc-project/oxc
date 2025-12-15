@@ -59,8 +59,14 @@ impl TriviaBuilder {
         self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
     }
 
-    pub fn add_block_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Block), source_text);
+    pub fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+    ) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -328,7 +334,7 @@ mod test {
         let expected = [
             Comment {
                 span: Span::new(9, 24),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -344,7 +350,7 @@ mod test {
             },
             Comment {
                 span: Span::new(54, 69),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
@@ -352,7 +358,7 @@ mod test {
             },
             Comment {
                 span: Span::new(76, 92),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::None,
@@ -392,7 +398,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(20, 35),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -400,7 +406,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(42, 58),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::Trailing,
@@ -425,7 +431,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(1, 13),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -433,7 +439,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(14, 26),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,

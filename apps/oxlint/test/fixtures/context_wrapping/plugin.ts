@@ -1,4 +1,4 @@
-import type { Plugin, Rule, Context, Diagnostic, Node } from '#oxlint';
+import type { Plugin, Rule, Context, Diagnostic, Node } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -10,16 +10,23 @@ const SPAN: Node = {
   },
 };
 
-function createWrappedReportFunction(context: Context, prefix: string): (diagnostic: Diagnostic) => void {
+function createWrappedReportFunction(
+  context: Context,
+  prefix: string,
+): (diagnostic: Diagnostic) => void {
   const { report } = context;
-  return (diagnostic: Diagnostic) => report({ ...diagnostic, message: `${prefix}: ${diagnostic.message}` });
+  return (diagnostic: Diagnostic) =>
+    report({ ...diagnostic, message: `${prefix}: ${diagnostic.message}` });
 }
 
 const baseRule: Rule = {
   create(context) {
     context.report({ message: `id: ${context.id}`, node: SPAN });
     context.report({ message: `filename: ${context.filename}`, node: SPAN });
-    context.report({ message: `source text: ${JSON.stringify(context.sourceCode.text)}`, node: SPAN });
+    context.report({
+      message: `source text: ${JSON.stringify(context.sourceCode.text)}`,
+      node: SPAN,
+    });
 
     return {
       Identifier(node) {
@@ -31,15 +38,15 @@ const baseRule: Rule = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'wrapped-context',
+    name: "wrapped-context",
   },
   rules: {
     // Two different forms of context wrapping
-    'wrapped-rule': {
+    "wrapped-rule": {
       create(context) {
         const wrappedContext = Object.create(context, {
           report: {
-            value: createWrappedReportFunction(context, 'wrapped 1'),
+            value: createWrappedReportFunction(context, "wrapped 1"),
             writable: false,
           },
         });
@@ -47,11 +54,11 @@ const plugin: Plugin = {
         return baseRule.create(wrappedContext);
       },
     },
-    'wrapped-rule2': {
+    "wrapped-rule2": {
       create(context) {
         const wrappedContext = Object.create(Object.getPrototypeOf(context));
         Object.assign(wrappedContext, context);
-        wrappedContext.report = createWrappedReportFunction(context, 'wrapped 2');
+        wrappedContext.report = createWrappedReportFunction(context, "wrapped 2");
 
         return baseRule.create(wrappedContext);
       },

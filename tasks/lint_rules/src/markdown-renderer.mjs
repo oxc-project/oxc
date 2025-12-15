@@ -1,6 +1,6 @@
 /**
  * @typedef {({ name: string } & import("./oxlint-rules.mjs").RuleEntry)} RuleEntryView
- * @typedef {{ isImplemented: number; isNotSupported: number; total: number }} CounterView
+ * @typedef {{ isImplemented: number; isNotSupported: number; isPendingFix: number; total: number }} CounterView
  */
 
 /** @param {{ npm: string[]; }} props */
@@ -9,7 +9,7 @@ const renderIntroduction = ({ npm }) => `
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
 
-This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
+This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
 `;
 
 /**
@@ -22,17 +22,22 @@ This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
  * }} props
  */
 const renderCounters = ({ counters: { recommended, notRecommended, deprecated } }) => {
-  const recommendedTodos = recommended.total - (recommended.isImplemented + recommended.isNotSupported);
-  const notRecommendedTodos = notRecommended.total - (notRecommended.isImplemented + notRecommended.isNotSupported);
+  const recommendedTodos =
+    recommended.total - (recommended.isImplemented + recommended.isNotSupported);
+  const notRecommendedTodos =
+    notRecommended.total - (notRecommended.isImplemented + notRecommended.isNotSupported);
 
   const countersList = [
     `- ${recommendedTodos}/${recommended.total} recommended rules are remaining as TODO`,
+    recommended.isPendingFix > 0 && `  - ${recommended.isPendingFix} of which have pending fixes`,
     recommendedTodos === 0 && `  - All done! 🎉`,
     `- ${notRecommendedTodos}/${notRecommended.total} not recommended rules are remaining as TODO`,
+    notRecommended.isPendingFix > 0 &&
+      `  - ${notRecommended.isPendingFix} of which have pending fixes`,
     notRecommendedTodos === 0 && `  - All done! 🎉`,
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 
   return `
 There are ${recommended.total + notRecommended.total}(+ ${deprecated.total} deprecated) rules.
@@ -62,18 +67,25 @@ Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_
 const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ## ${title}
 
-<details ${defaultOpen ? 'open' : ''}>
+<details ${defaultOpen ? "open" : ""}>
 <summary>
-  ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
+  ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
 </summary>
 
-| Status | Name | Docs |
-| :----: | :--- | :--- |
+| Status | Name |
+| :----: | :--- |
 ${views
-  .map((v) => `| ${v.isImplemented ? '✨' : ''}${v.isNotSupported ? '🚫' : ''} | ${v.name} | ${v.docsUrl} |`)
-  .join('\n')}
+  .map((v) => {
+    let status = "";
+    if (v.isImplemented) status += "✅";
+    if (v.isNotSupported) status += "🚫";
+    if (v.isPendingFix) status += "⏳";
+    const name = v.docsUrl ? `[${v.name}](${v.docsUrl})` : v.name;
+    return `| ${status} | ${name} |`;
+  })
+  .join("\n")}
 
-✨ = Implemented, 🚫 = No need to implement
+✅ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
 
 </details>
 `;
@@ -91,9 +103,9 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     notRecommended: [],
   };
   const counters = {
-    deprecated: { isImplemented: 0, isNotSupported: 0, total: 0 },
-    recommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
-    notRecommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
+    deprecated: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
+    recommended: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
+    notRecommended: { isImplemented: 0, isNotSupported: 0, isPendingFix: 0, total: 0 },
   };
 
   for (const [name, entry] of ruleEntries) {
@@ -122,33 +134,54 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
 
     if (entry.isImplemented) counterRef.isImplemented++;
     else if (entry.isNotSupported) counterRef.isNotSupported++;
+    if (entry.isPendingFix && entry.isImplemented) counterRef.isPendingFix++;
     counterRef.total++;
   }
+
+  const sortedViews = sortViews(views);
 
   return [
     renderIntroduction({ npm: pluginMeta.npm }),
     renderCounters({ counters }),
     renderGettingStarted({ pluginName }),
-    0 < views.recommended.length &&
+    0 < sortedViews.recommended.length &&
       renderRulesList({
-        title: 'Recommended rules',
+        title: "Recommended rules",
         counters: counters.recommended,
-        views: views.recommended,
+        views: sortedViews.recommended,
       }),
-    0 < views.notRecommended.length &&
+    0 < sortedViews.notRecommended.length &&
       renderRulesList({
-        title: 'Not recommended rules',
+        title: "Not recommended rules",
         counters: counters.notRecommended,
-        views: views.notRecommended,
+        views: sortedViews.notRecommended,
       }),
-    0 < views.deprecated.length &&
+    0 < sortedViews.deprecated.length &&
       renderRulesList({
-        title: 'Deprecated rules',
+        title: "Deprecated rules",
         counters: counters.deprecated,
-        views: views.deprecated,
+        views: sortedViews.deprecated,
         defaultOpen: false,
       }),
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 };
+
+/** @param {Record<string, RuleEntryView[]>} views */
+function sortViews(views) {
+  const copy = { ...views };
+
+  /** @param {string} name */
+  const unprefix = (name) => name.split("/").pop() || "";
+
+  /**
+   * @param {RuleEntryView} a
+   * @param {RuleEntryView} b
+   */
+  const byRuleName = (a, b) => unprefix(a.name).localeCompare(unprefix(b.name));
+
+  for (const key in views) copy[key] = views[key].toSorted(byRuleName);
+
+  return copy;
+}

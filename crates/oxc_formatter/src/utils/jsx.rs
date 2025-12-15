@@ -10,7 +10,6 @@ use oxc_ast::ast::*;
 use crate::QuoteStyle;
 use crate::formatter::Comments;
 use crate::{
-    FormatResult,
     ast_nodes::AstNode,
     format_args,
     formatter::{Formatter, prelude::*},
@@ -88,27 +87,27 @@ pub enum WrapState {
 pub struct JsxSpace;
 
 impl<'a> Format<'a> for JsxSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
             [
                 if_group_breaks(&format_args!(JsxRawSpace, soft_line_break())),
                 if_group_fits_on_line(&space())
             ]
-        )
+        );
     }
 }
 
 pub struct JsxRawSpace;
 
 impl<'a> Format<'a> for JsxRawSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let jsx_space = match f.options().quote_style {
             QuoteStyle::Double => r#"{" "}"#,
             QuoteStyle::Single => "{' '}",
         };
 
-        write!(f, [token(jsx_space)])
+        write!(f, [token(jsx_space)]);
     }
 }
 
@@ -187,12 +186,6 @@ impl PartialEq for JsxChild<'_, '_> {
 
 impl Eq for JsxChild<'_, '_> {}
 
-impl JsxChild<'_, '_> {
-    pub const fn is_any_line(&self) -> bool {
-        matches!(self, Self::EmptyLine | Self::Newline)
-    }
-}
-
 /// A word in a Jsx Text. A word is string sequence that isn't separated by any JSX whitespace.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct JsxWord<'a> {
@@ -210,8 +203,8 @@ impl<'a> JsxWord<'a> {
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text_without_whitespace(self.text)])
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [text_without_whitespace(self.text)]);
     }
 }
 

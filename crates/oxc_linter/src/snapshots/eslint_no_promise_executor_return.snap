@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:18]
+ 1 │ new Promise(r => r(1))
+   ·                  ────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:34]
+ 1 │ new Promise((resolve, reject) => resolve(1))
+   ·                                  ──────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { return 1; })
+   ·                                    ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:42]
+ 1 │ new Promise(function (resolve, reject) { return 1; })
+   ·                                          ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:48]
+ 1 │ new Promise((resolve, reject) => { if (true) { return 1; } })
+   ·                                                ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:46]
+ 1 │ new Promise((resolve, reject) => { if (true) return 1; })
+   ·                                              ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { return resolve; })
+   ·                                    ───────────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { return foo(); })
+   ·                                    ─────────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { return resolve(1); })
+   ·                                    ──────────────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { return reject(new Error('fail')); })
+   ·                                    ─────────────────────────────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:40]
+ 1 │ new Promise((resolve, reject) => { { { return 1; } } })
+   ·                                        ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:42]
+ 1 │ new Promise((resolve, reject) => { try { return 1; } catch(e) {} })
+   ·                                          ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:28]
+ 1 │ new Promise((resolve) => { return void resolve(1); })
+   ·                            ───────────────────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:48]
+ 1 │ new Promise((resolve) => { switch(x) { case 1: return 1; } })
+   ·                                                ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:42]
+ 1 │ new Promise((resolve) => { while(true) { return 1; } })
+   ·                                          ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.
+
+  ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
+   ╭─[no_promise_executor_return.tsx:1:38]
+ 1 │ new Promise((resolve) => { for(;;) { return 1; } })
+   ·                                      ─────────
+   ╰────
+  help: Use `resolve()` or `reject()` instead of returning a value.

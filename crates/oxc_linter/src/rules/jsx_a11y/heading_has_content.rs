@@ -3,11 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
 };
 
@@ -19,10 +20,10 @@ fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct HeadingHasContentConfig {
     /// Additional custom component names to treat as heading elements.
@@ -74,15 +75,9 @@ const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(HeadingHasContentConfig {
-            components: value
-                .get(0)
-                .and_then(|v| v.get("components"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                }),
-        }))
+        serde_json::from_value::<DefaultRuleConfig<HeadingHasContent>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -182,7 +177,5 @@ fn test() {
         (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
     ];
 
-    Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail).test_and_snapshot();
 }

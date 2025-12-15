@@ -165,6 +165,5 @@ fn test() {
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::PLUGIN, pass, fail)
-        .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

@@ -18,8 +18,8 @@
 //! ### Leading Comment Formatting ([`FormatLeadingComments`])
 //! ```rust,ignore
 //! // In AST node formatting:
-//! write!(f, [format_leading_comments(node.span)])?;
-//! write!(f, [node])?;
+//! write!(f, [format_leading_comments(node.span)]);
+//! write!(f, [node]);
 //! ```
 //!
 //! **Implementation**:
@@ -31,8 +31,8 @@
 //! ### Trailing Comment Formatting ([`FormatTrailingComments`])
 //! ```rust,ignore
 //! // In AST node formatting:
-//! write!(f, [node])?;
-//! write!(f, [format_trailing_comments(enclosing, preceding, following)])?;
+//! write!(f, [node]);
+//! write!(f, [format_trailing_comments(enclosing, preceding, following)]);
 //! ```
 //!
 //! **Implementation**:
@@ -48,7 +48,7 @@
 //!     "{",
 //!     format_dangling_comments(container.span).with_block_indent(),
 //!     "}"
-//! ])?;
+//! ]);
 //! ```
 //!
 //! **Implementation**:
@@ -56,12 +56,14 @@
 //! 2. Applies indentation based on container type (block, soft, none)
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
+use oxc_allocator::StringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::write;
 
-use super::{Argument, GroupId, SourceText, prelude::*};
+use super::prelude::*;
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -76,21 +78,16 @@ use super::{Argument, GroupId, SourceText, prelude::*};
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-#[expect(clippy::suspicious_operation_groupings)]
-// `current.span.end == next.span.start` is correct, which checks whether the next comment starts exactly where the current comment ends.
-fn should_nestle_adjacent_doc_comments(
-    current: &Comment,
-    next: &Comment,
-    source_text: SourceText,
-) -> bool {
+fn should_nestle_adjacent_doc_comments(current: &Comment, next: &Comment) -> bool {
     matches!(current.content, CommentContent::Jsdoc)
         && matches!(next.content, CommentContent::Jsdoc)
+        && current.is_multiline_block()
+        && next.is_multiline_block()
         && current.span.end == next.span.start
-        && source_text.contains_newline(current.span)
-        && source_text.contains_newline(next.span)
 }
 
 /// Formats the leading comments of `node`
+#[inline]
 pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a> {
     FormatLeadingComments::Node(span)
 }
@@ -103,60 +100,66 @@ pub enum FormatLeadingComments<'a> {
 }
 
 impl<'a> Format<'a> for FormatLeadingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
                 f.context_mut().comments_mut().increment_printed_count();
-                write!(f, comment)?;
+                write!(f, comment);
 
                 match comment.kind {
-                    CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
-                        0 => {
-                            let should_nestle =
-                                leading_comments_iter.peek().is_some_and(|next_comment| {
-                                    should_nestle_adjacent_doc_comments(
-                                        comment,
-                                        next_comment,
-                                        f.source_text(),
-                                    )
-                                });
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                        match f.source_text().lines_after(comment.span.end) {
+                            0 => {
+                                let should_nestle =
+                                    leading_comments_iter.peek().is_some_and(|next_comment| {
+                                        should_nestle_adjacent_doc_comments(comment, next_comment)
+                                    });
 
-                            write!(f, [maybe_space(!should_nestle)])?;
-                        }
-                        1 => {
-                            if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
-                                write!(f, [soft_line_break_or_space()])?;
-                            } else {
-                                write!(f, [hard_line_break()])?;
+                                write!(f, [maybe_space(!should_nestle)]);
                             }
+                            1 => {
+                                if f.source_text().get_lines_before(comment.span, f.comments()) == 0
+                                {
+                                    write!(f, [soft_line_break_or_space()]);
+                                } else {
+                                    write!(f, [hard_line_break()]);
+                                }
+                            }
+                            _ => write!(f, [empty_line()]),
                         }
-                        _ => write!(f, [empty_line()])?,
-                    },
+                    }
                     CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
-                        0 | 1 => write!(f, [hard_line_break()])?,
-                        _ => write!(f, [empty_line()])?,
+                        0 | 1 => write!(f, [hard_line_break()]),
+                        _ => write!(f, [empty_line()]),
                     },
                 }
             }
-
-            Ok(())
         }
 
         match self {
             Self::Node(span) => {
                 let leading_comments = f.context().comments().comments_before(span.start);
-                format_leading_comments_impl(leading_comments, f)
+                if leading_comments.is_empty() {
+                    return;
+                }
+                format_leading_comments_impl(leading_comments, f);
             }
-            Self::Comments(comments) => format_leading_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+                format_leading_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the trailing comments of `node`.
+#[inline]
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
@@ -174,11 +177,11 @@ pub enum FormatTrailingComments<'a> {
 }
 
 impl<'a> Format<'a> for FormatTrailingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_trailing_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             let mut total_lines_before = 0;
             let mut previous_comment: Option<&Comment> = None;
 
@@ -189,7 +192,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                    should_nestle_adjacent_doc_comments(previous_comment, comment, f.source_text())
+                    should_nestle_adjacent_doc_comments(previous_comment, comment)
                 });
 
                 // This allows comments at the end of nested structures:
@@ -221,33 +224,31 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                                     //    * docs
                                     //   */ [> still on the same line <]
                                     if previous_comment.copied().is_some_and(Comment::is_line) {
-                                        write!(f, [hard_line_break()])?;
+                                        write!(f, [hard_line_break()]);
                                     } else {
-                                        write!(f, [space()])?;
+                                        write!(f, [space()]);
                                     }
                                 }
-                                1 => write!(f, [hard_line_break()])?,
-                                _ => write!(f, [empty_line()])?,
+                                1 => write!(f, [hard_line_break()]),
+                                _ => write!(f, [empty_line()]),
                             }
 
-                            write!(f, [comment])
+                            write!(f, [comment]);
                         }))]
-                    )?;
+                    );
                 } else {
                     let content =
                         format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
 
                     if comment.is_line() {
-                        write!(f, [line_suffix(&content), expand_parent()])?;
+                        write!(f, [line_suffix(&content), expand_parent()]);
                     } else {
-                        write!(f, [content])?;
+                        write!(f, [content]);
                     }
                 }
 
                 previous_comment = Some(comment);
             }
-
-            Ok(())
         }
 
         match self {
@@ -258,14 +259,25 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                     *following_span,
                 );
 
-                format_trailing_comments_impl(comments, f)
+                if comments.is_empty() {
+                    return;
+                }
+
+                format_trailing_comments_impl(comments, f);
             }
-            Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
+            Self::Comments(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+
+                format_trailing_comments_impl(*comments, f);
+            }
         }
     }
 }
 
 /// Formats the dangling comments of `node`.
+#[inline]
 pub const fn format_dangling_comments<'a>(span: Span) -> FormatDanglingComments<'a> {
     FormatDanglingComments::Node { span, indent: DanglingIndentMode::None }
 }
@@ -337,12 +349,12 @@ impl FormatDanglingComments<'_> {
 }
 
 impl<'a> Format<'a> for FormatDanglingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         fn format_dangling_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             indent: DanglingIndentMode,
             f: &mut Formatter<'_, 'a>,
-        ) -> FormatResult<()> {
+        ) {
             // Write all comments up to the first skipped token trivia or the token
             let format_dangling_comments = format_once(|f| {
                 let mut previous_comment: Option<&Comment> = None;
@@ -351,11 +363,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                     f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                        should_nestle_adjacent_doc_comments(
-                            previous_comment,
-                            comment,
-                            f.source_text(),
-                        )
+                        should_nestle_adjacent_doc_comments(previous_comment, comment)
                     });
 
                     write!(
@@ -365,7 +373,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                                 .then_some(hard_line_break()),
                             comment
                         ]
-                    )?;
+                    );
 
                     previous_comment = Some(comment);
                 }
@@ -373,110 +381,69 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 if matches!(indent, DanglingIndentMode::Soft)
                     && previous_comment.copied().is_some_and(Comment::is_line)
                 {
-                    write!(f, [hard_line_break()])?;
+                    write!(f, [hard_line_break()]);
                 }
-
-                Ok(())
             });
 
             match indent {
                 DanglingIndentMode::Block => {
-                    write!(f, [block_indent(&format_dangling_comments)])
+                    write!(f, [block_indent(&format_dangling_comments)]);
                 }
                 DanglingIndentMode::Soft => {
-                    write!(f, [group(&soft_block_indent(&format_dangling_comments))])
+                    write!(f, [group(&soft_block_indent(&format_dangling_comments))]);
                 }
                 DanglingIndentMode::None => {
-                    write!(f, [format_dangling_comments])
+                    write!(f, [format_dangling_comments]);
                 }
             }
         }
 
         match self {
-            FormatDanglingComments::Node { span, indent } => format_dangling_comments_impl(
-                f.context().comments().comments_before(span.end),
-                *indent,
-                f,
-            ),
+            FormatDanglingComments::Node { span, indent } => {
+                let dangling_comments = f.context().comments().comments_before(span.end);
+                if dangling_comments.is_empty() {
+                    return;
+                }
+                format_dangling_comments_impl(dangling_comments, *indent, f);
+            }
             FormatDanglingComments::Comments { comments, indent } => {
-                format_dangling_comments_impl(*comments, *indent, f)
+                if comments.is_empty() {
+                    return;
+                }
+                format_dangling_comments_impl(*comments, *indent, f);
             }
         }
     }
 }
 
-/// Formats the given token only if the group does break and otherwise retains the token's skipped token trivia.
-#[expect(unused)]
-pub fn format_only_if_breaks<'content, 'ast, Content>(
-    span: Span,
-    content: &'content Content,
-) -> FormatOnlyIfBreaks<'content, 'ast>
-where
-    Content: Format<'ast>,
-{
-    FormatOnlyIfBreaks { span, content: Argument::new(content), group_id: None }
-}
-
-/// Formats a token with its skipped token trivia that only gets printed if its enclosing
-/// group does break but otherwise gets omitted from the formatted output.
-pub struct FormatOnlyIfBreaks<'content, 'ast> {
-    #[expect(unused)]
-    span: Span,
-    content: Argument<'content, 'ast>,
-    group_id: Option<GroupId>,
-}
-
-impl FormatOnlyIfBreaks<'_, '_> {
-    #[expect(unused)]
-    pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
-        self.group_id = group_id;
-        self
-    }
-}
-
-impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        write!(f, if_group_breaks(&self.content).with_group_id(self.group_id))?;
-        // TODO: unsupported yet
-        // if f.comments().has_skipped(self.span) {
-        //     // Print the trivia otherwise
-        //     write!(
-        //         f,
-        //         if_group_fits_on_line(&format_skipped_token_trivia(self.span))
-        //             .with_group_id(self.group_id)
-        //     )?;
-        // }
-        Ok(())
-    }
-}
 impl<'a> Format<'a> for Comment {
-    #[expect(clippy::cast_possible_truncation)]
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.source_text().text_for(&self.span).trim_end();
-        if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let content = f.source_text().text_for(&self.span);
+        if self.is_multiline_block() {
+            let mut lines = LineTerminatorSplitter::new(content);
+            if is_alignable_comment(content) {
+                // `unwrap` is safe because `content` contains at least one line.
+                let first_line = lines.next().unwrap();
+                write!(f, [text(first_line.trim_end())]);
 
-            let mut lines = source_text.lines();
+                // Indent the remaining lines by one space so that all `*` are aligned.
+                for line in lines {
+                    write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+            } else {
+                // Normalize line endings `\r\n` to `\n`
+                let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                // `unwrap` is safe because `content` contains at least one line.
+                string.push_str(lines.next().unwrap().trim_end());
 
-            // `is_alignable_comment` only returns `true` for multiline comments
-            let first_line = lines.next().unwrap();
-            write!(f, [text(first_line.trim_end())])?;
-
-            source_offset += first_line.len() as u32;
-
-            // Indent the remaining lines by one space so that all `*` are aligned.
-            write!(
-                f,
-                [&format_once(|f| {
-                    for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())])?;
-                        source_offset += line.len() as u32;
-                    }
-                    Ok(())
-                })]
-            )
+                for str in lines {
+                    string.push('\n');
+                    string.push_str(str);
+                }
+                write!(f, [text(string.into_str())]);
+            }
         } else {
-            write!(f, [text(source_text)])
+            write!(f, [text(content.trim_end())]);
         }
     }
 }
@@ -511,11 +478,6 @@ impl<'a> Format<'a> for Comment {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(source_text: &str) -> bool {
-    if !source_text.contains('\n') {
-        return false;
-    }
-    source_text.lines().enumerate().all(|(index, line)| {
-        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-    })
+pub fn is_alignable_comment(lines: &str) -> bool {
+    LineTerminatorSplitter::new(lines).skip(1).all(|line| line.trim_start().starts_with('*'))
 }

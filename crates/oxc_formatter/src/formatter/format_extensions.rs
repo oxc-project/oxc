@@ -26,7 +26,7 @@ pub trait MemoizeFormat<'a> {
     /// }
     ///
     /// impl Format<SimpleFormatContext> for MyFormat {
-    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
     ///         let value = self.value.get();
     ///         self.value.set(value + 1);
     ///
@@ -34,7 +34,7 @@ pub trait MemoizeFormat<'a> {
     ///     }
     /// }
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let normal = MyFormat::new();
     ///
     /// // Calls `format` for everytime the object gets formatted
@@ -67,7 +67,7 @@ impl<T> MemoizeFormat<'_> for T {}
 #[derive(Debug)]
 pub struct Memoized<'ast, F> {
     inner: F,
-    memory: OnceCell<FormatResult<Option<FormatElement<'ast>>>>,
+    memory: OnceCell<Option<FormatElement<'ast>>>,
 }
 
 impl<'ast, F> Memoized<'ast, F>
@@ -98,7 +98,7 @@ where
     /// }
     ///
     /// impl Format<SimpleFormatContext> for Counter {
-    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
     ///         let current = self.value.get();
     ///
     ///         write!(f, [
@@ -113,7 +113,7 @@ where
     ///     }
     /// }
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let content = format_with(|f| {
     ///     let mut counter = Counter::default().memoized();
     ///     let counter_content = counter.inspect(f)?;
@@ -134,14 +134,13 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<&[FormatElement<'ast>]> {
+    pub fn inspect(&self, f: &mut Formatter<'_, 'ast>) -> &[FormatElement<'ast>] {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
-            Ok(Some(FormatElement::Interned(interned))) => Ok(interned),
-            Ok(Some(other)) => Ok(std::slice::from_ref(other)),
-            Ok(None) => Ok(&[]),
-            Err(error) => Err(*error),
+            Some(FormatElement::Interned(interned)) => interned,
+            Some(other) => std::slice::from_ref(other),
+            None => &[],
         }
     }
 }
@@ -150,17 +149,11 @@ impl<'ast, F> Format<'ast> for Memoized<'ast, F>
 where
     F: Format<'ast>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
-        match result {
-            Ok(Some(elements)) => {
-                f.write_element(elements.clone())?;
-
-                Ok(())
-            }
-            Ok(None) => Ok(()),
-            Err(err) => Err(*err),
+        if let Some(elements) = result {
+            f.write_element(elements.clone());
         }
     }
 }

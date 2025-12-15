@@ -12,7 +12,7 @@
  */
 export function validateSafeBinaryPath(binary: string): boolean {
   // Check for path traversal (including Windows variants)
-  if (binary.includes('..') || binary.includes('.\\')) {
+  if (binary.includes("..") || binary.includes(".\\")) {
     return false;
   }
 
@@ -21,17 +21,17 @@ export function validateSafeBinaryPath(binary: string): boolean {
   // If any of these characters are present, we consider the path unsafe.
   const maliciousPatterns = [
     // linux/macOS
-    '$',
-    '&',
-    ';',
-    '|',
-    '`',
-    '>',
-    '<',
-    '!',
+    "$",
+    "&",
+    ";",
+    "|",
+    "`",
+    ">",
+    "<",
+    "!",
     // windows
-    '%',
-    '^',
+    "%",
+    "^",
   ];
   for (const pattern of maliciousPatterns) {
     if (binary.includes(pattern)) {

@@ -1,6 +1,6 @@
-import { definePlugin } from '#oxlint';
+import { definePlugin } from "#oxlint";
 
-import type { Node, Rule } from '#oxlint';
+import type { Node, Rule } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -55,7 +55,7 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            'before hook:\n' +
+            "before hook:\n" +
             `createOnce call count: ${createOnceCallCount}\n` +
             `this === rule: ${topLevelThis === createOnceRule}\n` +
             `filename: ${context.filename}`,
@@ -67,13 +67,16 @@ const createOnceRule: Rule = {
         visits.push({ fileNum, identNum });
 
         context.report({
-          message: `ident visit fn "${node.name}":\n` + `identNum: ${identNum}\n` + `filename: ${context.filename}`,
+          message:
+            `ident visit fn "${node.name}":\n` +
+            `identNum: ${identNum}\n` +
+            `filename: ${context.filename}`,
           node,
         });
       },
       after() {
         context.report({
-          message: 'after hook:\n' + `identNum: ${identNum}\n` + `filename: ${context.filename}`,
+          message: "after hook:\n" + `identNum: ${identNum}\n` + `filename: ${context.filename}`,
           node: SPAN,
         });
 
@@ -89,7 +92,11 @@ const createOnceRule: Rule = {
 
           if (
             visits.length !== expectedVisits.length ||
-            visits.some((v, i) => v.fileNum !== expectedVisits[i].fileNum || v.identNum !== expectedVisits[i].identNum)
+            visits.some(
+              (v, i) =>
+                v.fileNum !== expectedVisits[i].fileNum ||
+                v.identNum !== expectedVisits[i].identNum,
+            )
           ) {
             context.report({ message: `Unexpected visits: ${JSON.stringify(visits)}`, node: SPAN });
           }
@@ -105,12 +112,12 @@ const createOnceBeforeFalseRule: Rule = {
     return {
       before() {
         context.report({
-          message: 'before hook:\n' + `filename: ${context.filename}`,
+          message: "before hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
 
         // Only visit AST for `files/2.js`
-        return context.filename.endsWith('2.js');
+        return context.filename.endsWith("2.js");
       },
       Identifier(node) {
         context.report({
@@ -120,7 +127,7 @@ const createOnceBeforeFalseRule: Rule = {
       },
       after() {
         context.report({
-          message: 'after hook:\n' + `filename: ${context.filename}`,
+          message: "after hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
@@ -135,7 +142,7 @@ const createOnceBeforeOnlyRule: Rule = {
     return {
       before() {
         context.report({
-          message: 'before hook:\n' + `filename: ${context.filename}`,
+          message: "before hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
@@ -160,7 +167,7 @@ const createOnceAfterOnlyRule: Rule = {
       },
       after() {
         context.report({
-          message: 'after hook:\n' + `filename: ${context.filename}`,
+          message: "after hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
@@ -174,13 +181,13 @@ const createOnceHooksOnlyRule: Rule = {
       // Neither hook should be called, because no AST node visitor functions
       before() {
         context.report({
-          message: 'before hook:\n' + `filename: ${context.filename}`,
+          message: "before hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
       after() {
         context.report({
-          message: 'after hook:\n' + `filename: ${context.filename}`,
+          message: "after hook:\n" + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
@@ -203,15 +210,15 @@ const createOnceNoHooksRule: Rule = {
 
 export default definePlugin({
   meta: {
-    name: 'define-plugin-plugin',
+    name: "define-plugin-plugin",
   },
   rules: {
     create: createRule,
-    'create-once': createOnceRule,
-    'create-once-before-false': createOnceBeforeFalseRule,
-    'create-once-before-only': createOnceBeforeOnlyRule,
-    'create-once-after-only': createOnceAfterOnlyRule,
-    'create-once-hooks-only': createOnceHooksOnlyRule,
-    'create-once-no-hooks': createOnceNoHooksRule,
+    "create-once": createOnceRule,
+    "create-once-before-false": createOnceBeforeFalseRule,
+    "create-once-before-only": createOnceBeforeOnlyRule,
+    "create-once-after-only": createOnceAfterOnlyRule,
+    "create-once-hooks-only": createOnceHooksOnlyRule,
+    "create-once-no-hooks": createOnceNoHooksRule,
   },
 });

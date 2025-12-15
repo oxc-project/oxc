@@ -4,6 +4,187 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.33.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- 320c09f ast, parser, linter, codegen, formatter: [**BREAKING**] Rename `CommentKind::Block` to `CommentKind::SinglelineBlock` (#16501) (Dunqing)
+
+### 🚀 Features
+
+- 5a95f62 linter: Implement `eslint/no-sequences` rule (#16872) (Tu Shaokun)
+- 99c0496 linter/approx-constant: Implement fixer (#16847) (camc314)
+- f5e752c linter/eslint-plugin-vitest: Add no-large-snapshot as vitest compatible jest rule (#16846) (Said Atrahouch)
+- 08bf389 linter/no-regex-spaces: Implement fixer (#16837) (camc314)
+- 652a2bf linter/eslint-plugin-vitest: Add prefer-to-contain as vitest compatible jest rule (#16836) (Said Atrahouch)
+- 55eb0dc linter: Implement `eslint/no-loop-func` rule (#16830) (Tu Shaokun)
+- 8bb67a6 eslint-plugin-jest: Add fix capabilities to prefer to contain rule (#16809) (Said Atrahouch)
+- 1bdaab1 linter/prefer-nullish-coalescing: Add rule (#16778) (camc314)
+- 057b75e linter: Implement eslint/accessor-pairs rule (#16820) (Tu Shaokun)
+- 1f42ad3 linter: Auto-fixer for extra cases in unicorn/prefer-query-selector (#16787) (Hamir Mahal)
+- 67bde85 linter: Implement `no-promise-executor-return` rule (#16779) (Tu Shaokun)
+- 3ffe342 linter: Implement eslint/no-implicit-coercion rule (#16735) (Tu Shaokun)
+- 725a5c0 linter: Implement disallows using this in an exported function rule (#15745) (Rintaro Itokawa)
+- fb4700a linter: Add react/jsx-props-no-spreading rule (#15769) (Mikhail Baev)
+- a1d9bbd linter/eslint-plugin-vitest: Reuse no-mocks-import jest linter rule (#16540) (Said Atrahouch)
+- e1b1bc3 linter: Add react/no-redundant-should-component-update rule (#16147) (Mikhail Baev)
+- 200d17b linter: Add unicorn/prefer-keyboard-event-key rule (#16611) (Rintaro Itokawa)
+- 8550c0f linter: Add unicorn/prefer-default-parameters rule (#16620) (Rintaro Itokawa)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+- 767db50 linter: Promote constructor_super rule from nursery to correctness (#16605) (camc314)
+- 7c7219e linter: Promote no_map_spread rule from nursery to perf (#16604) (camc314)
+
+### 🐛 Bug Fixes
+
+- bb86e0e linter: Fix empty-tags rule logic. (#16873) (connorshea)
+- a998ceb linter/unicorn/prefer-dom-node-dataset: Ignore awaited getAttribute call (#16882) (Kei Sakamoto)
+- d402242 linter: Fix the config option docs for `array-callback-return` rule. (#16854) (connorshea)
+- b16fe64 linter: Fix incorrect `allowNames` config option name in `typescript/no-this-alias` rule. (#16852) (connorshea)
+- 50e0a23 linter: Rewrite constructor-super to use iterative dataflow analysis (#16706) (camc314)
+- cb51c74 linter: Mark consistent-type-definitions fix as dangerous inside declare global blocks (#16745) (camc314)
+- 3895d66 linter/no-invalid-fetch-options: False positive with member expression as method (#16687) (Copilot)
+- 0003958 linter: Jsx-a11y/iframe-has-title recognizes member expressions (#16669) (copilot-swe-agent)
+- 6cddbe7 linter/prefer-at: Wrap expressions in parentheses when needed for member access (#16643) (camc314)
+- 678e43b linter/unicorn: Fix ASI hazard in prefer-spread rule fixer (#16440) (camc314)
+
+### ⚡ Performance
+
+- 9c1be35 linter/approx-constant: Break after first match to avoid extra iterations (#16848) (camc314)
+
+### 📚 Documentation
+
+- 4542e75 linter: Fix typo and add vitest compatibility note to prefer_to_contain rule documentation (#16838) (copilot-swe-agent)
+- e8369ef linter: Improve docs for `react/jsx-no-script-url` rule. (#16817) (connorshea)
+- ba8fe68 linter: Update various rules to note that they can be disabled for TS code. (#16819) (connorshea)
+- bbafba5 linter: Improve the diagnostics for jest/no-confusing-set-timeout rule. (#16815) (connorshea)
+- 2195150 linter: Update docs for no-optional-chaining rule to clarify its safety today (#16727) (connorshea)
+- a2c9d16 linter: Improve eslint/no-loss-of-precision docs. (#16730) (connorshea)
+- 0740016 linter: Add docs for `RuleCommentRule` (#15699) (camc314)
+- 271e1ff linter: Add docs for `DisabledRule` (#15698) (camc314)
+- 397bcd5 linter: Added in the missing jest rules that are compatible with vitest. (#16679) (Said Atrahouch)
+- dc793ad linter: Update no-unsafe-type-assertion to reflect correct rule behavior (#16646) (camc314)
+
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 5c62c16 linter/plugins: Allow JS plugins to access `globals` (#16512) (Arsh)
+- ba7bd51 linter: Implement no-useless-return rule (#16388) (FMP1783)
+- fa605df linter: Fix `arrow-body-style` automatically (#16252) (Hamir Mahal)
+- 9001234 linter: Add fix support for tsgolint diagnostics (#16344) (camc314)
+- 0ec454c linter/plugins: Merge default options into options (#16358) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8933c84 linter: Fix jest/expect-expect rule docs. (#16550) (connorshea)
+- 1c08879 linter: Fix false positive in no-invalid-fetch-options for conditional expressions (#16570) (camc314)
+- a7d435b linter/sort-keys: Preserve multi-line formatting in autofix (#16563) (camc314)
+- a58c76a linter: Fix the `react/jsx-fragments` rule config to take a string argument (#16175) (connorshea)
+- 655341b linter/oxc: Not emit error when the threshold is zero and we haven't detected a barrel file (#16455) (Said Atrahouch)
+- b9f359f linter/no-var: Expand fix span to prevent conflicts with other rules (#16445) (camc314)
+- c6778f3 linter: Preserve original quote style in no-hex-escape fixer (#16410) (camc314)
+- 3ad913b linter: Improve rule docs page autofix description (#16281) (Hamir Mahal)
+- 0b7e00c linter: Handle keyword unary expressions in yoda rule fix (#16402) (camc314)
+- 723a7e5 linter: Prevent invalid BigInt literal fix for exponential notation (#16401) (camc314)
+- 2589fb1 linter: Fix prefer_expect_resolves fixer for member expressions (#16393) (camc314)
+- 428c7cd linter: Wrap logical expressions in parentheses when fixing no-extra-boolean-cast (#16363) (camc314)
+- 3903567 linter: Skip prefer-string-raw in type annotations and .d.ts files (#16382) (camc314)
+- d490daa linter/func-names: Use centralized reserved keyword check and fix ancestor traversal (#16362) (camc314)
+- d846c53 tsgolint: Use `expect` when sending diagnostics (#16341) (camc314)
+- f5d0ebb linter/func-names: Avoid suggesting reserved keywords as function names (#16352) (camc314)
+- d268135 linter/no-console-spaces: Preserve escape sequences in fixer output (#16349) (camc314)
+- b02c21a linter/valid-title: Preserve escape sequences in fixer output (#16348) (camc314)
+- 2373b76 linter/no-untyped-mock-factory: Fix fixer producing invalid syntax when newline exists after opening paren (#16351) (camc314)
+
+### ⚡ Performance
+
+- 5017db8 linter/plugins: Reduce calls to `Path::to_string_lossy` (#16429) (overlookmotel)
+- 194e357 linter: Use `SmallVec` for rule options (#16400) (Copilot)
+- e31b2bd linter: Only clone config if required (#16350) (overlookmotel)
+- 3026086 linter: Avoid cloning rule options (#16338) (overlookmotel)
+
+### 📚 Documentation
+
+- fef77af linter: Fix `jsx-a11y/img-redundant-alt` configuration option names. (#16552) (connorshea)
+- c0766df linter: Add config option docs for `unicorn/filename-case` rule. (#16280) (connorshea)
+- 514c724 linter: Fix the name of the IIFEs config option in eslint/max-lines-per-function (#16554) (connorshea)
+- 4d94438 linter/rules: Correct arrow body style options in documentation (#16509) (GRK)
+- 6bac4ec linter: Pull configuration struct doc comment when rendering config docs (#16288) (connorshea)
+- 041b119 linter: Add config option docs to `jest/consistent-test-it` rule. (#16286) (connorshea)
+
+## [1.31.0] - 2025-12-01
+
+### 🚀 Features
+
+- 4b24825 linter: Implement no-restricted-types rule (#16276) (camc314)
+
+### 🐛 Bug Fixes
+
+- 71271ee linter: Fix `typescript/no-empty-interface` config option casing. (#16282) (connorshea)
+- 385e13e linter: Support both prefer-inline and preferInline for import/no-duplicates (#16275) (copilot-swe-agent)
+- efc08d3 linter: Fix config docs for no-return-assign and unicode-bom rules. (#16260) (connorshea)
+- dc96d3f linter: Correct docs to use string option for import/first rule. (#16264) (connorshea)
+- 15ce491 linter: Correct the default config options for the switch-exhaustiveness-check rule. (#16268) (connorshea)
+- 13f985c linter: Fix casing for unicorn/explicit-length-check config option. (#16269) (connorshea)
+- 42e9dcc linter: Fix docs for `consistent-type-specifier-style` and `consistent-type-definitions` rules. (#16253) (connorshea)
+- 505ceb1 linter: Fix the radix rule docs to correctly render as a string-only config option (#16248) (connorshea)
+- 55fcfba linter: Add considerDefaultExhaustiveForUnions option to switch-exhaustiveness-check (#16204) (camc314)
+- 75249e0 linter/plugins: Handle non-UTF8 file paths (#16157) (overlookmotel)
+- d2b7dcb tsgolint: Improve lsp diagnostic when linting fails (#16115) (camc314)
+- 8810bd5 linter: Prevent conflicting fixes between prefer_number_properties and prefer_numeric_literals (#16113) (camc314)
+- 2da2fc1 linter: Fix prefer-string-raw fixer producing invalid JS for non-ASCII strings (#16102) (camc314)
+- e1c21ca linter/jsx-key: Implement missing options (#15731) (camc314)
+
+### ⚡ Performance
+
+- 714a91a linter/no-restricted-types: Skip running if config is empty (#16278) (camc314)
+
+### 📚 Documentation
+
+- d4a1581 linter: Add a link to MDN for the no-proto rule. (#16213) (connorshea)
+- 6d6e9c9 linter: Improve the docs for oxc/no-async-await rule. (#16181) (connorshea)
+
+## [1.30.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 72660f7 linter: Support auto generate config document for tuple lint option (#15904) (Duc Nghiem Xuan)
+- 6ae232b linter: Expose type errors via tsgolint (#15917) (camc314)
+- 595867a oxlint: Generate markdownDescription fields for oxlint JSON schema. (#15959) (connorshea)
+- a21f9e4 linter: Implement unicorn/prefer-bigint-literals rule (#15923) (Michiel Vrins)
+- 4b9d8d2 linter/type-aware: Include range with tsconfig diagnostics (#15916) (camc314)
+
+### 🐛 Bug Fixes
+
+- 81f5360 linter/prefer-number-properties: Get fixer to replace entire call expr (#15979) (camc314)
+- a8a2032 linter: Support missing `range` for internal diagnostics (#15964) (camc314)
+- 6ab1a20 linter: Fix no_useless_spread producing invalid syntax when removing empty object spreads (#15905) (camc314)
+- be4b6df linter: Unicorn/prefer-string-replace-all incorrectly escapes backslashes (#15901) (camc314)
+- b622ef8 linter: Fix `oxc/bad_array_method_on_arguments` rule behavior. (#15854) (connorshea)
+- aa06c3f linter: Recognize NewExpression as value context in no-unused-private-class-members (#15843) (camc314)
+- e89c5ba typescript/prefer-namespace-keyword: Skip nested `TSModuleDeclaration`s (#15806) (overlookmotel)
+- 646d020 linter/exhaustive-dependencies: Prevent is_callee_of_call_expr flag from leaking into nested expressions (#15832) (camc314)
+- 50307c1 linter/jest: Ignore `expect` identifier in argument position (#15785) (camc314)
+
+### ⚡ Performance
+
+- a49f704 linter/typescript: Avoid searching source text unless required (#15805) (overlookmotel)
+
+### 📚 Documentation
+
+- ceffa5a linter: Add config option docs for various rules. (#16024) (connorshea)
+- 9a0ed13 linter: Fix config option docs for eslint/operator-assignment rule. (#16030) (connorshea)
+- 0b18005 linter: Add config docs generation for rules with Regex arguments (#15978) (connorshea)
+- 48d18e0 linter: Improve diagnostic message for promise/catch-or-return rule (#15980) (connorshea)
+- 6c72e84 linter: Use backticks for code elements across more rule diagnostics (#15958) (connorshea)
+- 1487271 linter: Add config option docs for `jsdoc/require-param` and `jsdoc/require-returns` rules (#15857) (connorshea)
+- 9b7b083 linter: Fix error in `curly` `"all"` example (#15801) (camc314)
+- 65a3520 linter: Improve diagnostic for consistent-type-definitions rule. (#15752) (connorshea)
+
 ## [1.29.0] - 2025-11-17
 
 ### 🚀 Features

@@ -182,7 +182,7 @@ import {
   JSDocNullableType,
   JSDocNonNullableType,
   JSDocUnknownType,
-} from './constructors.js';
+} from "./constructors.js";
 
 export { walkProgram };
 
@@ -1268,7 +1268,9 @@ function walkAssignmentTargetMaybeDefault(pos, ast, visitors) {
       walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
       return;
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`,
+      );
   }
 }
 
@@ -2768,7 +2770,9 @@ function walkExportDefaultDeclarationKind(pos, ast, visitors) {
       walkBoxTSInterfaceDeclaration(pos + 8, ast, visitors);
       return;
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`,
+      );
   }
 }
 
@@ -4390,10 +4394,10 @@ function walkTSImportType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSType(pos + 8, ast, visitors);
-  walkOptionBoxObjectExpression(pos + 24, ast, visitors);
-  walkOptionTSImportTypeQualifier(pos + 32, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 48, ast, visitors);
+  walkStringLiteral(pos + 8, ast, visitors);
+  walkOptionBoxObjectExpression(pos + 56, ast, visitors);
+  walkOptionTSImportTypeQualifier(pos + 64, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 80, ast, visitors);
 
   if (exit !== null) exit(node);
 }

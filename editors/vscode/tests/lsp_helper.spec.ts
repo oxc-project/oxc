@@ -1,5 +1,5 @@
 import { strictEqual } from 'assert';
-import { runExecutable } from '../client/lsp_helper';
+import { runExecutable } from '../client/tools/lsp_helper';
 
 suite('runExecutable', () => {
   const originalPlatform = process.platform;

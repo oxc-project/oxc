@@ -607,6 +607,12 @@ impl Gen for CatchClause<'_> {
             p.print_str(")");
         }
         p.print_soft_space();
+        p.print_comments_at(self.body.span.start);
+        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
+        if !p.options.minify && p.print_next_indent_as_space {
+            p.print_hard_space();
+            p.print_next_indent_as_space = false;
+        }
         p.print_block_statement(&self.body, ctx);
     }
 }
@@ -750,9 +756,9 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end.as_ref().is_none_or(|comments| {
-                comments.iter().all(|c| !c.preceded_by_newline() && !c.followed_by_newline())
-            })
+            comments_at_end
+                .as_ref()
+                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };
@@ -2202,6 +2208,9 @@ impl GenExpr for NewExpression<'_> {
             p.print_str("new");
             p.print_soft_space();
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
+            if let Some(type_parameters) = &self.type_arguments {
+                type_parameters.print(p, ctx);
+            }
 
             // Omit the "()" when minifying, but only when safe to do so
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
@@ -3512,7 +3521,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import(");
-        self.argument.print(p, ctx);
+        p.print_string_literal(&self.source, false);
         if let Some(options) = &self.options {
             p.print_str(", ");
             options.print_expr(p, Precedence::Lowest, ctx);

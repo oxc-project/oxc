@@ -6,13 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::outermost_paren_parent,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn resolve(span: Span, preferred: &str) -> OxcDiagnostic {
@@ -27,10 +28,10 @@ fn reject(span: Span, preferred: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUselessPromiseResolveReject(Box<NoUselessPromiseResolveRejectOptions>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUselessPromiseResolveRejectOptions {
     /// If set to `true`, allows the use of `Promise.reject` in async functions and promise callbacks.
@@ -66,14 +67,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessPromiseResolveReject {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-
-        let allow_reject = config
-            .and_then(|c| c.get("allowReject"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        Self(Box::new(NoUselessPromiseResolveRejectOptions { allow_reject }))
+        serde_json::from_value::<DefaultRuleConfig<NoUselessPromiseResolveReject>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/tsgolint/no-floating-promises/index.ts
+Linted file: fixtures/linter/tsgolint/no-floating-promises/index.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/tsgolint/no-floating-promises/index.ts
 
 code: "eslint(no-unused-expressions)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html"
@@ -71,9 +72,11 @@ related_information[0].location.range: Range { start: Position { line: 13, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-unused-expressions for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -91,6 +94,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-unused-expressions for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -108,6 +112,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -125,6 +130,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -142,6 +148,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -159,6 +166,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -176,6 +184,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -193,6 +202,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -210,6 +220,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -227,6 +238,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -244,6 +256,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -261,6 +274,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -278,6 +292,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -295,6 +310,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -312,6 +328,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -329,6 +346,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Promises must be awaited.
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -346,6 +364,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -363,6 +382,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -380,6 +400,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -397,6 +418,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

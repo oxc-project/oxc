@@ -5,6 +5,9 @@
   "scripts": {
     "vitest": "vitest"
   },
+  "dependencies": {
+    "@babel/plugin-transform-typescript": "^7.26.3"
+  },
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/plugin-external-helpers": "^7.25.9",
@@ -13,16 +16,13 @@
     "@babel/plugin-transform-async-to-generator": "^7.25.9",
     "@babel/plugin-transform-class-properties": "^7.25.9",
     "@babel/plugin-transform-class-static-block": "^7.26.0",
+    "@babel/plugin-transform-explicit-resource-management": "^7.25.9",
     "@babel/plugin-transform-exponentiation-operator": "^7.25.9",
     "@babel/plugin-transform-logical-assignment-operators": "^7.25.9",
-    "@babel/plugin-transform-explicit-resource-management": "^7.25.9",
     "@babel/plugin-transform-optional-chaining": "^7.25.9",
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@oxc-project/runtime": "link:../../npm/runtime",
     "reflect-metadata": "^0.2.2"
-  },
-  "dependencies": {
-    "@babel/plugin-transform-typescript": "^7.26.3"
   }
 }
