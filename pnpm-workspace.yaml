@@ -15,7 +15,7 @@ catalog:
   cross-env: ^10.1.0
   publint: 0.3.15
   rolldown: 1.0.0-beta.54
-  tsdown: 0.17.4
+  tsdown: 0.18.0
   typescript: 5.9.3
   vitest: 4.0.15
 
