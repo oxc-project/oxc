@@ -16,7 +16,7 @@
     "eslint": "^9.39.1",
     "oxfmt": "^0.18.0",
     "oxlint": "^1.33.0",
-    "oxlint-tsgolint": "0.9.0",
+    "oxlint-tsgolint": "0.9.1",
     "publint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
