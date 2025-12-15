@@ -309,7 +309,8 @@ impl<'a> Normalize {
             return;
         }
         let Some(ident) = new_expr.callee.get_identifier_reference() else {
-            if let Expression::ClassExpression(class_expr) = new_expr.callee.get_inner_expression() {
+            if let Expression::ClassExpression(class_expr) = new_expr.callee.get_inner_expression()
+            {
                 fn has_side_effect<'a>(
                     class_expr: &oxc_allocator::Box<'a, Class<'a>>,
                     ctx: &mut TraverseCtx<'a>,
@@ -323,21 +324,17 @@ impl<'a> Normalize {
                             return true;
                         }
                         if let ClassElement::MethodDefinition(method_def) = element
-                            && let Some(name) = method_def.key.static_name()
-                                && name == "constructor"
-                                && let Some(body) = &method_def.value.body {
-                                    // will throw a ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
-                                    if class_expr.super_class.is_some()
-                                        && body.statements.is_empty()
-                                    {
-                                        return true;
-                                    }
-                                    let result = body
-                                        .statements
-                                        .iter()
-                                        .any(|stmt| stmt.may_have_side_effects(&ctx));
-                                    return result;
-                                }
+                            && method_def.kind.is_constructor()
+                            && let Some(body) = &method_def.value.body
+                        {
+                            // will throw a ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
+                            if class_expr.super_class.is_some() && body.statements.is_empty() {
+                                return true;
+                            }
+                            let result =
+                                body.statements.iter().any(|stmt| stmt.may_have_side_effects(&ctx));
+                            return result;
+                        }
                         false
                     });
                     if body_have_side_effect {
@@ -373,9 +370,10 @@ impl<'a> Normalize {
                             }
                             if let Some(symbol_id) =
                                 ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                                && ctx.scoping().no_side_effects().contains(&symbol_id) {
-                                    return false;
-                                }
+                                && ctx.scoping().no_side_effects().contains(&symbol_id)
+                            {
+                                return false;
+                            }
                         }
                         true
                     } else {
