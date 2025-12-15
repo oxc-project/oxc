@@ -509,7 +509,8 @@ expression: json
             }
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "OxlintOverrides": {
       "type": "array",
