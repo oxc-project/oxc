@@ -37,6 +37,28 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::camelcase::Camelcase {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::AssignmentTargetPropertyIdentifier,
+        AstType::AssignmentTargetPropertyProperty,
+        AstType::BindingProperty,
+        AstType::ExportAllDeclaration,
+        AstType::FormalParameter,
+        AstType::Function,
+        AstType::ImportDefaultSpecifier,
+        AstType::ImportNamespaceSpecifier,
+        AstType::ImportSpecifier,
+        AstType::LabeledStatement,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PrivateIdentifier,
+        AstType::PropertyDefinition,
+        AstType::VariableDeclarator,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUseThis {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AccessorProperty,

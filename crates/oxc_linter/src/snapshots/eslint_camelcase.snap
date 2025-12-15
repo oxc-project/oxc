@@ -1,0 +1,240 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(camelcase): Identifier 'first_name' is not in camel case.
+   ╭─[camelcase.tsx:1:1]
+ 1 │ first_name = "Nicholas"
+   · ──────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier '__private_first_name' is not in camel case.
+   ╭─[camelcase.tsx:1:1]
+ 1 │ __private_first_name = "Patrick"
+   · ────────────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:10]
+ 1 │ function foo_bar(){}
+   ·          ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:5]
+ 1 │ obj.foo_bar = function(){};
+   ·     ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:1]
+ 1 │ bar_baz.foo = function(){};
+   · ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:13]
+ 1 │ var foo = { bar_baz: boom.bam_pow }
+   ·             ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:10]
+ 1 │ var o = {bar_baz: 1}
+   ·          ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'a_b' is not in camel case.
+   ╭─[camelcase.tsx:1:5]
+ 1 │ obj.a_b = 2;
+   ·     ───
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'category_id' is not in camel case.
+   ╭─[camelcase.tsx:1:7]
+ 1 │ var { category_id } = query;
+   ·       ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'category_id' is not in camel case.
+   ╭─[camelcase.tsx:1:20]
+ 1 │ var { category_id: category_id } = query;
+   ·                    ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'category_id' is not in camel case.
+   ╭─[camelcase.tsx:1:7]
+ 1 │ var { category_id = 1 } = query;
+   ·       ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ import no_camelcased from "external-module";
+   ·        ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:13]
+ 1 │ import * as no_camelcased from "external-module";
+   ·             ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:10]
+ 1 │ import { no_camelcased } from "external-module";
+   ·          ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camel_cased' is not in camel case.
+   ╭─[camelcase.tsx:1:27]
+ 1 │ import { no_camelcased as no_camel_cased } from "external module";
+   ·                           ──────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camel_cased' is not in camel case.
+   ╭─[camelcase.tsx:1:24]
+ 1 │ import { camelCased as no_camel_cased } from "external module";
+   ·                        ──────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:22]
+ 1 │ import { camelCased, no_camelcased } from "external-module";
+   ·                      ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'snake_cased' is not in camel case.
+   ╭─[camelcase.tsx:1:13]
+ 1 │ export * as snake_cased from 'mod'
+   ·             ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:16]
+ 1 │ function foo({ no_camelcased }) {};
+   ·                ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:16]
+ 1 │ function foo({ no_camelcased = 'default value' }) {};
+   ·                ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:14]
+ 1 │ const { bar: no_camelcased } = foo;
+   ·              ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'my_default' is not in camel case.
+   ╭─[camelcase.tsx:1:25]
+ 1 │ function foo({ value_1: my_default }) {}
+   ·                         ──────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:30]
+ 1 │ function foo({ isCamelcased: no_camelcased }) {};
+   ·                              ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:12]
+ 1 │ var { foo: bar_baz = 1 } = quz;
+   ·            ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'no_camelcased' is not in camel case.
+   ╭─[camelcase.tsx:1:9]
+ 1 │ const { no_camelcased = false } = bar;
+   ·         ─────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'not_ignored_foo' is not in camel case.
+   ╭─[camelcase.tsx:1:1]
+ 1 │ not_ignored_foo = 0;
+   · ───────────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'snake_case' is not in camel case.
+   ╭─[camelcase.tsx:1:11]
+ 1 │ class C { snake_case; }
+   ·           ──────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'snake_case' is not in camel case.
+   ╭─[camelcase.tsx:1:11]
+ 1 │ class C { #snake_case; foo() { this.#snake_case; } }
+   ·           ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'snake_case' is not in camel case.
+   ╭─[camelcase.tsx:1:37]
+ 1 │ class C { #snake_case; foo() { this.#snake_case; } }
+   ·                                     ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'snake_case' is not in camel case.
+   ╭─[camelcase.tsx:1:11]
+ 1 │ class C { #snake_case() {} }
+   ·           ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:5]
+ 1 │ var foo_bar = {};
+   ·     ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:5]
+ 1 │ var foo_bar = [];
+   ·     ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:4]
+ 1 │ ({ foo_bar } = obj);
+   ·    ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:9]
+ 1 │ ({ key: bar_baz } = obj);
+   ·         ───────
+   ╰────
+  help: Rename this identifier to use camelCase.

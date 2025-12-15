@@ -44,6 +44,7 @@ pub(crate) mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod camelcase;
     pub mod class_methods_use_this;
     pub mod constructor_super;
     pub mod curly;
@@ -688,6 +689,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
+    eslint::camelcase,
     eslint::class_methods_use_this,
     eslint::constructor_super,
     eslint::curly,
