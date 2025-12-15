@@ -565,14 +565,13 @@ impl Extensions {
 
         // For ROOT packages, don't extract extensions - dots are part of package names
         // Exception: if pathGroupOverrides explicitly enforces validation
-        let is_path_group_action_enforce =
-            matches!(path_group_action, Some(PathGroupAction::Enforce));
-        let written_extension =
-            if is_root_package_import(module_name) && !is_path_group_action_enforce {
-                None
-            } else {
-                get_file_extension_from_module_name(&CompactStr::new(module_name))
-            };
+        let written_extension = if is_root_package_import(module_name)
+            && !matches!(path_group_action, Some(PathGroupAction::Enforce))
+        {
+            None
+        } else {
+            get_file_extension_from_module_name(&CompactStr::new(module_name))
+        };
 
         self.validate_extension(
             ctx,
