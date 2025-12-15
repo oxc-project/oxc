@@ -901,3 +901,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ──────
    ╰────
   help: Replace `T[K][]` with `Array<T[K]>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
+   ╭─[array_type.ts:1:35]
+ 1 │ const arr = [] as const satisfies readonly string[];
+   ·                                   ─────────────────
+   ╰────
+  help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'readonly SupportedDomainName[]' is forbidden. Use 'ReadonlyArray<SupportedDomainName>' instead.
+   ╭─[array_type.ts:1:35]
+ 1 │ const arr = [] as const satisfies readonly SupportedDomainName[];
+   ·                                   ──────────────────────────────
+   ╰────
+  help: Replace `readonly SupportedDomainName[]` with `ReadonlyArray<SupportedDomainName>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead.
+   ╭─[array_type.ts:1:35]
+ 1 │ const arr = [] as const satisfies ReadonlyArray<string>;
+   ·                                   ─────────────────────
+   ╰────
+  help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:35]
+ 1 │ const arr = [] as const satisfies string[];
+   ·                                   ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.

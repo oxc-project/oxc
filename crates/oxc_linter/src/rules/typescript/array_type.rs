@@ -179,6 +179,15 @@ impl Rule for ArrayType {
                     ctx,
                 );
             }
+            // for example: const arr = [] as const satisfies readonly string[];
+            AstKind::TSSatisfiesExpression(ts_satisfies_expression) => {
+                check(
+                    &ts_satisfies_expression.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
+            }
             AstKind::TSTypeReference(ts_type_reference)
                 if outermost_paren_parent(node, ctx).is_some_and(|x| match x.kind() {
                     AstKind::TSTypeAliasDeclaration(TSTypeAliasDeclaration {
@@ -965,6 +974,15 @@ const instance = new MyClass<number>(42);",
             "let z: readonly factories.User[] = [];",
             Some(serde_json::json!([{"readonly":"array-simple"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
     ];
 
     let fail = vec![
@@ -1454,6 +1472,23 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         ),
         (
             "type MakeArrays<T> = { [K in keyof T]: T[K][] };",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly SupportedDomainName[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
+        (
+            "const arr = [] as const satisfies string[];",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
     ];
@@ -2102,6 +2137,27 @@ export const test9 = testFn<ReadonlyArray<number>>([]);",
             "function testFn<T>(param: T) { return param; }
 export const test9 = testFn<readonly number[]>([]);",
             Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
+        (
+            "const arr = [] as const satisfies readonly string[];",
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies readonly SupportedDomainName[];",
+            "const arr = [] as const satisfies ReadonlyArray<SupportedDomainName>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const arr = [] as const satisfies ReadonlyArray<string>;",
+            "const arr = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"array"}])),
+        ),
+        (
+            "const arr = [] as const satisfies string[];",
+            "const arr = [] as const satisfies Array<string>;",
+            Some(serde_json::json!([{"default":"generic"}])),
         ),
     ];
 
