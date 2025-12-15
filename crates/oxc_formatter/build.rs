@@ -9,6 +9,26 @@ use std::{
 use oxc_span::SourceType;
 
 fn main() {
+    // NOTE: Adding this is necessary to generate `Oxfmtrc` (defined in `oxc_formatter`) TS types from `apps/oxfmt`.
+    //
+    // But it triggers the following warning during build:
+    // ```
+    // warning: oxc_formatter: cargo:rustc-cdylib-link-arg was specified in the build script of oxc_formatter, but that package does not contain a cdylib target
+    //
+    // Allowing this was an unintended change in the 1.50 release, and may become an error in the future. For more information, see <https://github.com/rust-lang/cargo/issues/9562>.
+    // ```
+    //
+    // To avoid this, `Oxfmtrc` should be moved to `apps/oxfmt`.
+    // But currently,
+    // - `oxc_language_server` depends on `Oxfmtrc`
+    // - apps/oxfmt` also depends on `oxc_language_server`
+    // So moving `Oxfmtrc` to `apps/oxfmt` would create a cyclic dependency...
+    //
+    // We need to remove `Oxfmtrc` dependency from `oxc_language_server` first.
+    // Or, create new crate `oxc_oxfmtrc` to hold `Oxfmtrc` and let both `oxc_language_server` and `apps/oxfmt` depend on it.
+    #[cfg(feature = "napi")]
+    napi_build::setup();
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("generated_tests.rs");
     let mut f = File::create(&dest_path).unwrap();

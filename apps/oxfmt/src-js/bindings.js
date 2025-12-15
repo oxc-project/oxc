@@ -575,5 +575,14 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { runCli } = nativeBinding
+const { ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, ObjectWrapConfig, QuotePropsConfig, SortOrderConfig, TrailingCommaConfig, Severity, format, runCli } = nativeBinding
+export { ArrowParensConfig }
+export { EmbeddedLanguageFormattingConfig }
+export { EndOfLineConfig }
+export { ObjectWrapConfig }
+export { QuotePropsConfig }
+export { SortOrderConfig }
+export { TrailingCommaConfig }
+export { Severity }
+export { format }
 export { runCli }

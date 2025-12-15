@@ -19,7 +19,8 @@ export async function setupConfig(configJSON: string, numThreads: number): Promi
     prettierConfig: JSON.parse(configJSON),
   };
 
-  if (pool) throw new Error("`setupConfig()` has already been called");
+  // Just ignore if already initialized
+  if (pool) return [];
 
   // Initialize worker pool for parallel Prettier formatting
   // Pass config via workerData so all workers get it on initialization

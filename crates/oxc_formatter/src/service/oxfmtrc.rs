@@ -1,5 +1,7 @@
 use std::path::Path;
 
+#[cfg(feature = "napi")]
+use napi_derive::napi;
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
@@ -12,12 +14,19 @@ use crate::{
 };
 
 /// Configuration options for the Oxfmt.
+///
 /// Most options are the same as Prettier's options.
 /// See also <https://prettier.io/docs/options>
-/// But some options are our own extensions.
-// All fields are typed as `Option` to distinguish between user-specified values and defaults.
+///
+/// In addition, some options are our own extensions.
+// NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
+// NOTE: `enum` fields are exported as `string_enum` in TS, and their use is enforced from the API.
+// e.g. `{ endOfLine: EndOfLineConfig.Lf }` instead of `{ endOfLine: "lf" }`.
+// Although we can expose them as simple string union types using the `ts_type` attribute,
+// but when we actually call the API, it results in an error due to validation on the NAPI side...
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct Oxfmtrc {
     /// Use tabs for indentation or spaces. (Default: `false`)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -66,12 +75,13 @@ pub struct Oxfmtrc {
 
     // NOTE: These experimental options are not yet supported.
     // Just be here to report error if they are used.
+    // Using Option<bool> instead of Option<serde_json::Value> for NAPI compatibility.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_operator_position: Option<serde_json::Value>,
+    pub experimental_operator_position: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_ternaries: Option<serde_json::Value>,
+    pub experimental_ternaries: Option<bool>,
 
     /// Control whether formats quoted code embedded in the file. (Default: `"auto"`)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -94,6 +104,7 @@ pub struct Oxfmtrc {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum EndOfLineConfig {
     #[default]
     Lf,
@@ -103,6 +114,7 @@ pub enum EndOfLineConfig {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum QuotePropsConfig {
     #[default]
     AsNeeded,
@@ -112,6 +124,7 @@ pub enum QuotePropsConfig {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum TrailingCommaConfig {
     #[default]
     All,
@@ -121,6 +134,7 @@ pub enum TrailingCommaConfig {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum ArrowParensConfig {
     #[default]
     Always,
@@ -129,6 +143,7 @@ pub enum ArrowParensConfig {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum ObjectWrapConfig {
     #[default]
     Preserve,
@@ -138,6 +153,7 @@ pub enum ObjectWrapConfig {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum EmbeddedLanguageFormattingConfig {
     Auto,
     // Disable by default at alpha release, synced with `options.rs`
@@ -147,6 +163,7 @@ pub enum EmbeddedLanguageFormattingConfig {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
+#[cfg_attr(feature = "napi", napi(object))]
 pub struct SortImportsConfig {
     #[serde(default)]
     pub partition_by_newline: bool,
@@ -222,6 +239,7 @@ where
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "napi", napi(string_enum))]
 pub enum SortOrderConfig {
     #[default]
     Asc,
