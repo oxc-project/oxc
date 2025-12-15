@@ -109,25 +109,32 @@ impl Rule for NoSequences {
 }
 
 impl NoSequences {
-    /// Check if the sequence expression is in a for loop's init or update position
+    /// Check if the sequence expression is in a for loop's init or update position.
+    /// This walks up the parent chain, skipping ParenthesizedExpression nodes,
+    /// to handle cases like `for ((a, b);;)`.
     fn is_in_for_loop_init_or_update(node: &AstNode, ctx: &LintContext) -> bool {
         let nodes = ctx.nodes();
-        let parent = nodes.parent_node(node.id());
+        let mut cur = nodes.parent_node(node.id());
 
-        // Check if the parent is a ForStatement and this is in init or update
-        if let AstKind::ForStatement(for_stmt) = parent.kind() {
+        // Skip through ParenthesizedExpression nodes
+        while matches!(cur.kind(), AstKind::ParenthesizedExpression(_)) {
+            cur = nodes.parent_node(cur.id());
+        }
+
+        // Check if we've reached a ForStatement
+        if let AstKind::ForStatement(for_stmt) = cur.kind() {
             let node_span = node.span();
 
-            // Check if in init position
+            // Check if in init position (compare with outermost span)
             if let Some(init) = &for_stmt.init
-                && init.span() == node_span
+                && init.span().contains_inclusive(node_span)
             {
                 return true;
             }
 
             // Check if in update position
             if let Some(update) = &for_stmt.update
-                && update.span() == node_span
+                && update.span().contains_inclusive(node_span)
             {
                 return true;
             }
@@ -136,25 +143,33 @@ impl NoSequences {
         false
     }
 
-    /// Check if the sequence expression is allowed due to parentheses
+    /// Check if the sequence expression is allowed due to parentheses.
+    /// Counts parentheses depth and checks if enough parentheses exist
+    /// for positions that grammatically require them.
     fn is_allowed_by_parentheses(node: &AstNode, ctx: &LintContext) -> bool {
         let nodes = ctx.nodes();
-        let parent = nodes.parent_node(node.id());
+        let mut cur = nodes.parent_node(node.id());
+        let mut paren_depth = 0;
 
-        // Check if wrapped in parentheses
-        let is_wrapped_once = matches!(parent.kind(), AstKind::ParenthesizedExpression(_));
+        // Count consecutive ParenthesizedExpression depth
+        while matches!(cur.kind(), AstKind::ParenthesizedExpression(_)) {
+            paren_depth += 1;
+            cur = nodes.parent_node(cur.id());
+        }
 
-        if !is_wrapped_once {
+        // If not wrapped in any parentheses, not allowed
+        if paren_depth == 0 {
             return false;
         }
 
-        // For most cases, single parentheses are enough
-        // But for grammar positions that require parentheses (if, while, do-while, switch, with),
-        // we need double parentheses
-        let grandparent = nodes.parent_node(parent.id());
-
+        // Check if this is a position that requires extra parentheses:
+        // - IfStatement test
+        // - WhileStatement test
+        // - DoWhileStatement test
+        // - SwitchStatement discriminant
+        // - WithStatement object
         let requires_extra_parens = matches!(
-            grandparent.kind(),
+            cur.kind(),
             AstKind::IfStatement(_)
                 | AstKind::WhileStatement(_)
                 | AstKind::DoWhileStatement(_)
@@ -162,13 +177,21 @@ impl NoSequences {
                 | AstKind::WithStatement(_)
         );
 
-        if !requires_extra_parens {
-            return true;
-        }
+        // Also check for ArrowFunctionExpression body
+        // In oxc's AST: SequenceExpr -> ParenthesizedExpr -> ExpressionStatement -> FunctionBody -> ArrowFunctionExpr
+        let is_arrow_body = matches!(cur.kind(), AstKind::ExpressionStatement(_))
+            && matches!(
+                nodes.parent_node(nodes.parent_node(cur.id()).id()).kind(),
+                AstKind::ArrowFunctionExpression(arrow) if arrow.expression
+            );
 
-        // Need double parentheses for these cases
-        // Check if grandparent is also a ParenthesizedExpression
-        matches!(grandparent.kind(), AstKind::ParenthesizedExpression(_))
+        if requires_extra_parens || is_arrow_body {
+            // Need at least 2 levels of parentheses for these cases
+            paren_depth >= 2
+        } else {
+            // Single parentheses is enough for other cases
+            true
+        }
     }
 }
 
@@ -177,22 +200,34 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // For loop init and update are allowed
+        // For loop init and update are always allowed (even with allowInParentheses: false)
         ("for (i = 0, j = 10; i < j; i++, j--) {}", None),
         ("for (a = 0, b = 10; a < b; a++, b--) foo();", None),
+        // For loop with parentheses around init/update - still allowed
+        ("for ((a, b);;);", None),
+        ("for (;; (a, b));", None),
+        (
+            "for ((a, b);;);",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
         // Wrapped in parentheses (default allowInParentheses: true)
         ("foo = (doSomething(), val);", None),
         ("(0, eval)(\"doSomething();\");", None),
         ("a = ((b, c), d);", None),
-        // Double parentheses for conditions
+        // Double parentheses for conditions (grammar positions require extra parens)
         ("do {} while (((doSomething(), !!test)));", None),
         ("while (((a, b))) {}", None),
         ("if (((a, b))) {}", None),
         ("switch (((a, b))) {}", None),
-        // Arrow function with parentheses (single is enough since body doesn't require parens)
-        ("const fn = (x) => (log(), x);", None),
+        // With statement with double parentheses
+        ("with (((a, b))) {}", None),
+        // Arrow function body requires double parentheses
+        ("const fn = (x) => ((log(), x));", None),
         // With allowInParentheses: true (explicit)
-        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": true }]))),
+        (
+            "foo = (doSomething(), val);",
+            Some(serde_json::json!([{ "allowInParentheses": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -205,8 +240,15 @@ fn test() {
         ("while ((a, b)) {}", None),
         ("if ((a, b)) {}", None),
         ("switch ((a, b)) {}", None),
+        // With statement with single parentheses (needs double)
+        ("with ((a, b)) {}", None),
+        // Arrow function body with single parentheses (needs double per ESLint)
+        ("const fn = (x) => (log(), x);", None),
         // With allowInParentheses: false, even parenthesized sequences are errors
-        ("foo = (doSomething(), val);", Some(serde_json::json!([{ "allowInParentheses": false }]))),
+        (
+            "foo = (doSomething(), val);",
+            Some(serde_json::json!([{ "allowInParentheses": false }])),
+        ),
         (
             "(0, eval)(\"doSomething();\");",
             Some(serde_json::json!([{ "allowInParentheses": false }])),
