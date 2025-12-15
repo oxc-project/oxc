@@ -154,3 +154,139 @@ source: crates/oxc_linter/src/tester.rs
  15 │                 });
     ╰────
   help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:1:1]
+ 1 │ setup();
+   · ───────
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:3:10]
+ 2 │                    describe('some tests', () => {
+ 3 │                   setup();
+   ·                   ───────
+ 4 │                    });
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:2:11]
+ 1 │ 
+ 2 │                    let { setup } = require('./test-utils');
+   ·                    ────────────────────────────────────────
+ 3 │ 
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:5:10]
+ 4 │                    describe('some tests', () => {
+ 5 │                   setup();
+   ·                   ───────
+ 6 │                    });
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:3:11]
+ 2 │                  describe('some tests', () => {
+ 3 │                    setup();
+   ·                    ───────
+ 4 │ 
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:10:10]
+  9 │                    describe('more tests', () => {
+ 10 │                   setup();
+    ·                   ───────
+ 11 │ 
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:2:11]
+ 1 │ 
+ 2 │                    let consoleErrorSpy = vi.spyOn(console, 'error');
+   ·                    ─────────────────────────────────────────────────
+ 3 │ 
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:5:10]
+ 4 │                    describe('when loading cities from the api', () => {
+ 5 │                   let consoleWarnSpy = vi.spyOn(console, 'warn');
+   ·                   ───────────────────────────────────────────────
+ 6 │                    });
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:5:10]
+ 4 │                    describe('when loading cities from the api', () => {
+ 5 │                   let consoleWarnSpy = vi.spyOn(console, 'warn');
+   ·                   ───────────────────────────────────────────────
+ 6 │                    });
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:1:1]
+ 1 │ let value = 1
+   · ─────────────
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:1:1]
+ 1 │ let consoleErrorSpy, consoleWarnSpy = vi.spyOn(console, 'error');
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+   ╭─[require_hook.tsx:1:1]
+ 1 │ let consoleErrorSpy = vi.spyOn(console, 'error'), consoleWarnSpy;
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:17:11]
+ 16 │ 
+ 17 │                    initializeCityDatabase();
+    ·                    ────────────────────────
+ 18 │ 
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:51:11]
+ 50 │ 
+ 51 │                    clearCityDatabase();
+    ·                    ───────────────────
+ 52 │                  
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:32:10]
+ 31 │                    describe('when loading cities from the api', () => {
+ 32 │                   let consoleWarnSpy = vi.spyOn(console, 'warn');
+    ·                   ───────────────────────────────────────────────
+ 33 │ 
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:34:10]
+ 33 │ 
+ 34 │                   loadCities.mockResolvedValue(['Wellington', 'London']);
+    ·                   ──────────────────────────────────────────────────────
+ 35 │ 
+    ╰────
+  help: This should be done within a hook
