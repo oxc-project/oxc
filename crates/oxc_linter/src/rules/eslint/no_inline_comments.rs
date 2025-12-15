@@ -105,12 +105,7 @@ impl Rule for NoInlineComments {
 
             // Check for JSX empty expression exception
             // Comments inside {/* comment */} are allowed if they're the only content
-            if is_jsx_expression_comment(
-                &jsx_empty_expr_spans,
-                comment_span,
-                preamble,
-                postamble,
-            ) {
+            if is_jsx_expression_comment(&jsx_empty_expr_spans, comment_span, preamble, postamble) {
                 continue;
             }
 
