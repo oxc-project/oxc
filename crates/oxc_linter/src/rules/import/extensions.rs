@@ -253,6 +253,79 @@ impl ExtensionsConfig {
             (false, _) => self.is_always(ext_str),
         }
     }
+
+    /// Build configuration from JSON value with optional default rule.
+    ///
+    /// This function dynamically parses extension configurations from JSON, supporting
+    /// both individual extension fields (js, jsx, ts, tsx, json, etc.) and arbitrary
+    /// custom extensions.
+    pub fn from_json_value(value: &serde_json::Value, default: Option<ExtensionRule>) -> Self {
+        // If default is IgnorePackages, convert to "always" with ignorePackages: true
+        // This matches ESLint's behavior where "ignorePackages" string converts to this config
+        let (default, default_ignore_packages) =
+            if matches!(default, Some(ExtensionRule::IgnorePackages)) {
+                (Some(ExtensionRule::Always), true)
+            } else {
+                (default, false)
+            };
+
+        let ignore_packages =
+            value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(default_ignore_packages);
+        let check_type_imports =
+            value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
+
+        // Parse pathGroupOverrides if present
+        let path_group_overrides = value
+            .get("pathGroupOverrides")
+            .and_then(Value::as_array)
+            .map(|overrides| {
+                overrides
+                    .iter()
+                    .filter_map(|override_val| {
+                        serde_json::from_value::<PathGroupOverride>(override_val.clone()).ok()
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        // Pre-allocate HashMap with estimated capacity for better performance
+        let capacity = if let Some(obj) = value.as_object() {
+            // Estimate: most fields are extension configs, reserve space
+            obj.len()
+        } else {
+            0
+        };
+
+        let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
+
+        // Process known extensions from the configuration
+        if let Some(obj) = value.as_object() {
+            for (key, val) in obj {
+                // Skip non-extension config fields
+                if matches!(
+                    key.as_str(),
+                    "ignorePackages" | "checkTypeImports" | "pattern" | "pathGroupOverrides"
+                ) {
+                    continue;
+                }
+
+                // Parse extension rule from string value
+                if let Some(rule_str) = val.as_str()
+                    && let Some(rule) = ExtensionRule::from_str(rule_str)
+                {
+                    extensions.insert(key.clone(), rule);
+                }
+            }
+        }
+
+        Self {
+            ignore_packages,
+            require_extension: default,
+            check_type_imports,
+            extensions,
+            path_group_overrides,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -336,20 +409,20 @@ impl Rule for Extensions {
             if let Some(val) = value.get(1) {
                 let root = val.get("pattern").unwrap_or(val);
 
-                let config = build_config(root, default);
+                let config = ExtensionsConfig::from_json_value(root, default);
 
                 Self(Box::new(config))
             } else {
-                let config = build_config(&value, default);
+                let config = ExtensionsConfig::from_json_value(&value, default);
 
                 Self(Box::new(config))
             }
         } else if let Some(first_obj) = value.get(0) {
             // First element is not a string, but is present (e.g., [{ "json": "always" }])
-            let config = build_config(first_obj, None);
+            let config = ExtensionsConfig::from_json_value(first_obj, None);
             Self(Box::new(config))
         } else {
-            let config = build_config(&value, None);
+            let config = ExtensionsConfig::from_json_value(&value, None);
             Self(Box::new(config))
         }
     }
@@ -389,79 +462,6 @@ impl Rule for Extensions {
                 );
             }
         }
-    }
-}
-
-/// Build configuration from JSON value with optional default rule.
-///
-/// This function dynamically parses extension configurations from JSON, supporting
-/// both individual extension fields (js, jsx, ts, tsx, json, etc.) and arbitrary
-/// custom extensions.
-fn build_config(value: &serde_json::Value, default: Option<ExtensionRule>) -> ExtensionsConfig {
-    // If default is IgnorePackages, convert to "always" with ignorePackages: true
-    // This matches ESLint's behavior where "ignorePackages" string converts to this config
-    let (default, default_ignore_packages) =
-        if matches!(default, Some(ExtensionRule::IgnorePackages)) {
-            (Some(ExtensionRule::Always), true)
-        } else {
-            (default, false)
-        };
-
-    let ignore_packages =
-        value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(default_ignore_packages);
-    let check_type_imports =
-        value.get("checkTypeImports").and_then(Value::as_bool).unwrap_or_default();
-
-    // Parse pathGroupOverrides if present
-    let path_group_overrides = value
-        .get("pathGroupOverrides")
-        .and_then(Value::as_array)
-        .map(|overrides| {
-            overrides
-                .iter()
-                .filter_map(|override_val| {
-                    serde_json::from_value::<PathGroupOverride>(override_val.clone()).ok()
-                })
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-
-    // Pre-allocate HashMap with estimated capacity for better performance
-    let capacity = if let Some(obj) = value.as_object() {
-        // Estimate: most fields are extension configs, reserve space
-        obj.len()
-    } else {
-        0
-    };
-
-    let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
-
-    // Process known extensions from the configuration
-    if let Some(obj) = value.as_object() {
-        for (key, val) in obj {
-            // Skip non-extension config fields
-            if matches!(
-                key.as_str(),
-                "ignorePackages" | "checkTypeImports" | "pattern" | "pathGroupOverrides"
-            ) {
-                continue;
-            }
-
-            // Parse extension rule from string value
-            if let Some(rule_str) = val.as_str()
-                && let Some(rule) = ExtensionRule::from_str(rule_str)
-            {
-                extensions.insert(key.clone(), rule);
-            }
-        }
-    }
-
-    ExtensionsConfig {
-        ignore_packages,
-        require_extension: default,
-        check_type_imports,
-        extensions,
-        path_group_overrides,
     }
 }
 
