@@ -227,6 +227,11 @@
           "scope": "window",
           "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
         },
+        "oxc.path.tsgolint": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one."
+        },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
@@ -294,7 +299,8 @@
       "restrictedConfigurations": [
         "oxc.path.server",
         "oxc.path.oxlint",
-        "oxc.path.oxfmt"
+        "oxc.path.oxfmt",
+        "oxc.path.tsgolint"
       ]
     }
   },
