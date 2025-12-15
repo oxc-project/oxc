@@ -109,6 +109,7 @@ pub(crate) mod eslint {
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
     pub mod no_import_assign;
+    pub mod no_inline_comments;
     pub mod no_inner_declarations;
     pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
@@ -710,6 +711,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_implicit_coercion,
+    eslint::no_inline_comments,
     eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
