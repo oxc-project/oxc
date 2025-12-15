@@ -320,7 +320,7 @@ fn test() {
         ),
         (
             r#"import(/* webpackChunkName: "my-chunk-name" */ './locale/en');"#,
-            Some(serde_json::json!([{ "ignorePattern": "webpackChunkName" }])),
+            Some(serde_json::json!([{ "ignorePattern": "(?:webpackChunkName):\\s.+" }])),
         ),
         (
             "var foo = 2; // Note: This comment is legal.",
@@ -335,141 +335,93 @@ fn test() {
         ("foo(); // global foo", None),
         ("foo(); // globals foo", None),
         ("var foo; // exported foo", None),
-        (
-            "/* something */ var a = 2;",
-            Some(serde_json::json!([{ "ignorePattern": "otherthing" }])),
-        ),
+        ("/* something */ var a = 2;", Some(serde_json::json!([{ "ignorePattern": "otherthing" }]))),
         ("var a = 3; //A comment inline with code", None),
         ("var a = 3; // someday use eslint-disable-line here", None),
-        (
-            "var a = 3; // other line comment",
-            Some(serde_json::json!([{ "ignorePattern": "something" }])),
-        ),
-        (
-            "var a = 4;
+        ("var a = 3; // other line comment", Some(serde_json::json!([{ "ignorePattern": "something" }]))),
+        ("var a = 4;
 			/**A
 			 * block
 			 * comment
 			 * inline
 			 * between
-			 * code*/ var foo = a;",
-            None,
-        ),
-        ("var a = \n			{/**/}", None),
-        (
-            "var a = (
+			 * code*/ var foo = a;", None),
+("var a =
+			{/**/}", None),
+("var a = (
 			                <div>{/* comment */}</div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>{// comment
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>{/* comment */
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>{/*
 			                       * comment
 			                       */
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>{/*
 			                       * comment
 			                       */}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>{/*
 			                       * comment
 			                       */}</div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {/*
 			                  * comment
 			                  */}</div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                 /*
 			                  * comment
 			                  */}</div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                /* comment */}</div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {b/* comment */}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {/* comment */b}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {// comment
 			                    b
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {/* comment */
 			                    b
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {/*
 			                  * comment
@@ -477,41 +429,29 @@ fn test() {
 			                    b
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    b// comment
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    /* comment */b
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    b/* comment */
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    b
@@ -519,61 +459,43 @@ fn test() {
 			                 * comment
 			                 */}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    b
 			                /* comment */}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    { /* this is an empty object literal, not braces for js code! */ }
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    {// comment
 			                    }
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    {
 			                    /* comment */}
 			                }
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                { /* two comments on the same line... */ /* ...are not allowed, same as with a non-JSX code */}
 			                </div>
-			            )",
-            None,
-        ),
-        (
-            "var a = (
+			            )", None),
+("var a = (
 			                <div>
 			                {
 			                    /* overlapping
@@ -581,12 +503,8 @@ fn test() {
 			                       lines */
 			                }
 			                </div>
-			            )",
-            None,
-        ),
+			            )", None)
     ];
 
-    Tester::new(NoInlineComments::NAME, NoInlineComments::PLUGIN, pass, fail)
-        .with_snapshot_suffix("jsx")
-        .test_and_snapshot();
+    Tester::new(NoInlineComments::NAME, NoInlineComments::PLUGIN, pass, fail).test_and_snapshot();
 }
