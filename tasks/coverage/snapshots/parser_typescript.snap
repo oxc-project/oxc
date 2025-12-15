@@ -1,9 +1,9 @@
-commit: c21f73fd
+commit: 0a071327
 
 parser_typescript Summary:
-AST Parsed     : 9832/9833 (99.99%)
-Positive Passed: 9823/9833 (99.90%)
-Negative Passed: 1486/2547 (58.34%)
+AST Parsed     : 9839/9840 (99.99%)
+Positive Passed: 9830/9840 (99.90%)
+Negative Passed: 1486/2549 (58.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -344,6 +344,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInt
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalNamedImports2.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/esmNoSynthesizedDefault.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/excessPropertyCheckIntersectionWithRecursiveType.ts
@@ -665,6 +667,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleKeywordDeprecated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleProperty2.ts
 

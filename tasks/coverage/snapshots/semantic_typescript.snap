@@ -1,8 +1,8 @@
-commit: c21f73fd
+commit: 0a071327
 
 semantic_typescript Summary:
-AST Parsed     : 6159/6159 (100.00%)
-Positive Passed: 2662/6159 (43.22%)
+AST Parsed     : 6164/6164 (100.00%)
+Positive Passed: 2664/6164 (43.22%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -2793,6 +2793,17 @@ after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m1":
 after transform: SymbolId(0): Span { start: 10, end: 12 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithUnicodeNames.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüß才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüßAbcd123":
+after transform: SymbolId(0): SymbolFlags(ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüß才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}राüışğİliيونيكودöÄüßAbcd123":
+after transform: SymbolId(0): Span { start: 10, end: 173 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientClass.ts
@@ -12852,10 +12863,6 @@ Unresolved reference IDs mismatch for "WeakMap":
 after transform: [ReferenceId(5), ReferenceId(9), ReferenceId(108), ReferenceId(109), ReferenceId(110)]
 rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(7)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/eventEmitterPatternWithRecordOfFunction.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7)]
@@ -13846,7 +13853,7 @@ Symbol flags mismatch for "Midori":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Midori":
-after transform: SymbolId(0): Span { start: 9, end: 15 }
+after transform: SymbolId(0): Span { start: 12, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/functionMergedWithModule.ts
@@ -14372,6 +14379,29 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Array", "Generator", "IteratorResult", "ReadonlyArray", "Symbol"]
 rebuilt        : ["fn", "offer"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall3.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["gen", "runPromise", "traverse"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(15), ScopeId(17)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "runPromise":
+after transform: SymbolId(16) "runPromise"
+rebuilt        : <None>
+Reference symbol mismatch for "gen":
+after transform: SymbolId(20) "gen"
+rebuilt        : <None>
+Reference symbol mismatch for "traverse":
+after transform: SymbolId(24) "traverse"
+rebuilt        : <None>
+Reference symbol mismatch for "gen":
+after transform: SymbolId(20) "gen"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Generator", "IteratorResult", "Promise", "ReadonlyArray", "Symbol"]
+rebuilt        : ["gen", "runPromise", "traverse"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceConditionalType1.ts
 Bindings mismatch:
@@ -20293,10 +20323,10 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 101, end: 102 }
+after transform: SymbolId(0): Span { start: 104, end: 105 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 101, end: 102 }, Span { start: 227, end: 228 }]
+after transform: SymbolId(0): [Span { start: 104, end: 105 }, Span { start: 233, end: 234 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleNoEmit.ts
@@ -20524,13 +20554,13 @@ Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
-after transform: SymbolId(0): Span { start: 7, end: 8 }
+after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "X":
 after transform: SymbolId(6): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "X":
-after transform: SymbolId(6): Span { start: 210, end: 211 }
+after transform: SymbolId(6): Span { start: 213, end: 214 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt.ts
@@ -20855,7 +20885,7 @@ Symbol flags mismatch for "Variables":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Variables":
-after transform: SymbolId(0): Span { start: 7, end: 16 }
+after transform: SymbolId(0): Span { start: 10, end: 19 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/namespaces1.ts
@@ -21512,13 +21542,13 @@ Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
-after transform: SymbolId(0): Span { start: 7, end: 8 }
+after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "b":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "b":
-after transform: SymbolId(2): Span { start: 45, end: 46 }
+after transform: SymbolId(2): Span { start: 51, end: 52 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedObjectRest.ts
@@ -25739,6 +25769,64 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnInfiniteInt
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(1): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypeInferenceContextualParameterTypesInGenerator1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Rpcs", "gen", "layerServerHandlers"]
+rebuilt        : ScopeId(0): ["layerServerHandlers"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "Rpcs":
+after transform: SymbolId(31) "Rpcs"
+rebuilt        : <None>
+Reference symbol mismatch for "gen":
+after transform: SymbolId(2) "gen"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Generator", "String"]
+rebuilt        : ["Rpcs", "String", "gen"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypeInferenceContextualTypeIgnoreAnyUnknown1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["inner1", "inner2", "outer1", "outer2", "result1", "result2"]
+rebuilt        : ScopeId(0): ["result1", "result2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+Reference symbol mismatch for "inner1":
+after transform: SymbolId(4) "inner1"
+rebuilt        : <None>
+Reference symbol mismatch for "outer1":
+after transform: SymbolId(0) "outer1"
+rebuilt        : <None>
+Reference symbol mismatch for "inner1":
+after transform: SymbolId(4) "inner1"
+rebuilt        : <None>
+Reference symbol mismatch for "outer2":
+after transform: SymbolId(2) "outer2"
+rebuilt        : <None>
+Reference symbol mismatch for "inner1":
+after transform: SymbolId(4) "inner1"
+rebuilt        : <None>
+Reference symbol mismatch for "inner2":
+after transform: SymbolId(12) "inner2"
+rebuilt        : <None>
+Reference symbol mismatch for "outer1":
+after transform: SymbolId(0) "outer1"
+rebuilt        : <None>
+Reference symbol mismatch for "inner2":
+after transform: SymbolId(12) "inner2"
+rebuilt        : <None>
+Reference symbol mismatch for "outer2":
+after transform: SymbolId(2) "outer2"
+rebuilt        : <None>
+Reference symbol mismatch for "inner2":
+after transform: SymbolId(12) "inner2"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["inner1", "inner2", "outer1", "outer2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/returnTypeInferenceNotTooBroad.ts
 Bindings mismatch:
@@ -30447,10 +30535,10 @@ Symbol flags mismatch for "M":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
-after transform: SymbolId(0): Span { start: 7, end: 8 }
+after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "M":
-after transform: SymbolId(0): [Span { start: 7, end: 8 }, Span { start: 61, end: 62 }]
+after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 67, end: 68 }]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unionCallMixedTypeParameterPresence.ts

@@ -1,8 +1,8 @@
-commit: c0cf5277
+commit: 947fee33
 
 parser_test262 Summary:
-AST Parsed     : 46429/46437 (99.98%)
-Positive Passed: 46421/46437 (99.97%)
+AST Parsed     : 46445/46453 (99.98%)
+Positive Passed: 46437/46453 (99.97%)
 Negative Passed: 4579/4581 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
 
