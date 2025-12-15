@@ -361,7 +361,7 @@ impl Rule for Extensions {
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     continue;
                 };
-                if ident.name.as_str() == "require" && !call_expr.arguments.is_empty() {
+                if ident.name.as_str() == "require" {
                     for argument in &call_expr.arguments {
                         if let Argument::StringLiteral(s) = argument {
                             self.process_import(
