@@ -22,6 +22,16 @@ const { freeze } = Object,
  */
 export type Options = JsonValue[];
 
+/**
+ * Schema describing valid options for a rule.
+ * `schema` property of `RuleMeta`.
+ *
+ * `false` opts out of schema validation. This is not recommended, as it increases the chance of bugs and mistakes.
+ */
+// TODO: Make this more precise.
+// TODO: Use this to validate options in configs.
+export type RuleOptionsSchema = Record<string, unknown> | unknown[] | false;
+
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
