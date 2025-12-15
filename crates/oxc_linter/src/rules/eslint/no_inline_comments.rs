@@ -197,8 +197,8 @@ fn get_comment_context(source_text: &str, comment_span: Span) -> (&str, &str) {
 }
 
 /// Checks if a comment is inside a JSX expression container and is the only content
-/// This allows patterns like: {/* comment */} or { /* comment */ }
-/// But NOT: {/* comment */}</div> (where </div> is on the same line)
+/// This allows patterns like: `{/* comment */}` or `{ /* comment */ }`
+/// But NOT: `{/* comment */}</div>` (where `</div>` is on the same line)
 fn is_jsx_expression_comment(
     jsx_empty_expr_spans: &[Span],
     comment_span: Span,
@@ -208,7 +208,7 @@ fn is_jsx_expression_comment(
     // For JSX expression comments to be allowed:
     // - preamble should be empty or just "{" (not ending with other content before {)
     // - postamble should be empty or just "}" (not having content after })
-    // This means `{/* comment */}` alone on a line is OK, but `{/* comment */}</div>` is NOT
+    // This means `{/* comment */}` alone on a line is OK, but `{/* comment */}</div>` is not
 
     // Check preamble: should be empty or end with just "{"
     let preamble_valid = preamble.is_empty() || preamble == "{";
