@@ -123,38 +123,40 @@ impl PathGroupOverride {
 /// 3. **Combined** (array): `["always", { "js": "never" }]` or `[{ "js": "always" }]`
 ///
 /// **Default behavior (no configuration)**: All imports pass. Unconfigured file extensions are ignored to avoid false positives.
-///
-/// **ignorePackages option**:
-/// - A boolean option (not per-extension) that exempts package imports from the "always" rule
-/// - Can be set in the config object: `["always", { "ignorePackages": true }]`
-/// - Legacy shorthand: `["ignorePackages"]` is equivalent to `["always", { "ignorePackages": true }]`
-/// - **Default: `false`** (matches ESLint behavior)
-/// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
-/// - **With "never"**: This option has no effect; extensions are still forbidden on package imports
-/// - Example: `["always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
-///
-/// **pathGroupOverrides option** (bespoke import specifiers):
-/// - Array of pattern-action pairs for custom import protocols (monorepo tools, custom resolvers)
-/// - Each override has: `{ "pattern": "<glob-pattern>", "action": "enforce" | "ignore" }`
-/// - **Pattern matching**: Uses glob patterns (`*`, `**`, `{a,b}`) to match import specifiers
-/// - **Actions**:
-///   - `"enforce"`: Apply normal extension validation (respect global/per-extension rules)
-///   - `"ignore"`: Skip all extension validation for matching imports
-/// - **Precedence**: First matching pattern wins
-/// - Example: `["always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
-///   - Allows `import { x } from 'rootverse+debug:src'` without extension
-///   - Still requires extensions for standard imports
-///
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
-    /// Whether to ignore package imports (e.g., 'react', 'lodash') when enforcing extension rules.
+    /// Whether to ignore package imports when enforcing extension rules.
+    ///
+    /// A boolean option (not per-extension) that exempts package imports from the "always" rule.
+    /// Can be set in the config object: `["always", { "ignorePackages": true }]`
+    /// Legacy shorthand: `["ignorePackages"]` is equivalent to `["always", { "ignorePackages": true }]`
+    ///
+    /// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
+    /// - **With "never"**: This option has no effect; extensions are still forbidden on package imports
+    ///
+    /// Example: `["always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
     ignore_packages: bool,
     require_extension: Option<ExtensionRule>,
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
     extensions: FxHashMap<String, ExtensionRule>,
-    /// Path group overrides for import specifiers.
+    /// Path group overrides for bespoke import specifiers.
+    ///
+    /// Array of pattern-action pairs for custom import protocols (monorepo tools, custom resolvers).
+    /// Each override has: `{ "pattern": "<glob-pattern>", "action": "enforce" | "ignore" }`
+    ///
+    /// **Pattern matching**: Uses glob patterns (`*`, `**`, `{a,b}`) to match import specifiers.
+    ///
+    /// **Actions**:
+    /// - `"enforce"`: Apply normal extension validation (respect global/per-extension rules)
+    /// - `"ignore"`: Skip all extension validation for matching imports
+    ///
+    /// **Precedence**: First matching pattern wins.
+    ///
+    /// Example: `["always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
+    /// - Allows `import { x } from 'rootverse+debug:src'` without extension
+    /// - Still requires extensions for standard imports
     path_group_overrides: Vec<PathGroupOverride>,
 }
 
