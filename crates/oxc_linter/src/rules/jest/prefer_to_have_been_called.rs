@@ -113,19 +113,14 @@ impl PreferToHaveBeenCalled {
 
         ctx.diagnostic_with_fix(prefer_to_have_been_called_diagnostic(call_expr.span), |fixer| {
             // check if there is a `not` modifier
-            let has_not =
-                parsed_expect_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+            let binding = parsed_expect_call.modifiers();
+            let not_modifier = binding.iter().find(|modifier| modifier.is_name_equal("not"));
 
-            if has_not {
+            if let Some(not_modifier) = not_modifier {
                 // if has `not` modifier, remove not and replace with toHaveBeenCalled()
                 // need to find the position of not and replace to the end of the method call
-                let not_start = parsed_expect_call
-                    .modifiers()
-                    .iter()
-                    .find(|modifier| modifier.is_name_equal("not"))
-                    .unwrap()
-                    .span
-                    .start;
+                let not_start = not_modifier.span.start;
+
 
                 let call_end = call_expr.span.end;
                 let replace_span = Span::new(not_start, call_end);
