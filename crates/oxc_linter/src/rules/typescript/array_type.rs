@@ -179,6 +179,15 @@ impl Rule for ArrayType {
                     ctx,
                 );
             }
+            // for example: [] as const satisfies readonly string[];
+            AstKind::TSSatisfiesExpression(ts_satisfies_expression) => {
+                check(
+                    &ts_satisfies_expression.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
+            }
             AstKind::TSTypeReference(ts_type_reference)
                 if outermost_paren_parent(node, ctx).is_some_and(|x| match x.kind() {
                     AstKind::TSTypeAliasDeclaration(TSTypeAliasDeclaration {
@@ -965,6 +974,15 @@ const instance = new MyClass<number>(42);",
             "let z: readonly factories.User[] = [];",
             Some(serde_json::json!([{"readonly":"array-simple"}])),
         ),
+        // TSSatisfiesExpression
+        (
+            "const x = [] as const satisfies string[];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "const x = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
     ];
 
     let fail = vec![
@@ -1455,6 +1473,20 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         (
             "type MakeArrays<T> = { [K in keyof T]: T[K][] };",
             Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        // TSSatisfiesExpression - https://github.com/oxc-project/oxc/issues/16897
+        (
+            "const x = [] as const satisfies readonly string[];",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const x = [] as const satisfies Array<string>;",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        // nested: only outer Array<string[]> should be reported, inner string[] is correct
+        (
+            "const x = [] satisfies Array<string[]>;",
+            Some(serde_json::json!([{"default":"array"}])),
         ),
     ];
 
@@ -2102,6 +2134,23 @@ export const test9 = testFn<ReadonlyArray<number>>([]);",
             "function testFn<T>(param: T) { return param; }
 export const test9 = testFn<readonly number[]>([]);",
             Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        // TSSatisfiesExpression - https://github.com/oxc-project/oxc/issues/16897
+        (
+            "const x = [] as const satisfies readonly string[];",
+            "const x = [] as const satisfies ReadonlyArray<string>;",
+            Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}])),
+        ),
+        (
+            "const x = [] as const satisfies Array<string>;",
+            "const x = [] as const satisfies string[];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        // nested: only outer Array<string[]> should be fixed
+        (
+            "const x = [] satisfies Array<string[]>;",
+            "const x = [] satisfies string[][];",
+            Some(serde_json::json!([{"default":"array"}])),
         ),
     ];
 

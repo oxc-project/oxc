@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 394
 ---
   ⚠ typescript-eslint(array-type): Array type using 'factories.User[]' is forbidden. Use 'Array<factories.User>' instead.
    ╭─[array_type.ts:1:8]
@@ -901,3 +902,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ──────
    ╰────
   help: Replace `T[K][]` with `Array<T[K]>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
+   ╭─[array_type.ts:1:33]
+ 1 │ const x = [] as const satisfies readonly string[];
+   ·                                 ─────────────────
+   ╰────
+  help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:1:33]
+ 1 │ const x = [] as const satisfies Array<string>;
+   ·                                 ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string[]>' is forbidden. Use 'string[][]' instead.
+   ╭─[array_type.ts:1:24]
+ 1 │ const x = [] satisfies Array<string[]>;
+   ·                        ───────────────
+   ╰────
+  help: Replace `Array<string[]>` with `string[][]`.
