@@ -203,7 +203,9 @@ impl ExtensionsConfig {
     /// Used for lenient behavior when module resolution is unavailable.
     #[inline]
     pub fn has_any_never_rules(&self) -> bool {
-        self.is_never("js")
+        // Fast path: if global rule is Never, all extensions default to Never
+        matches!(self.require_extension, Some(ExtensionRule::Never))
+            || self.is_never("js")
             || self.is_never("jsx")
             || self.is_never("ts")
             || self.is_never("tsx")
