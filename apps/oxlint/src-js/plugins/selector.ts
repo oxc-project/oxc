@@ -259,7 +259,7 @@ export function wrapVisitFnWithSelectorMatch(
       esqueryMatches(
         node as unknown as EsqueryNode,
         esquerySelector,
-        // @ts-expect-error: our TS types don't align perfectly with estree
+        // @ts-expect-error - Our TS types don't align perfectly with estree
         ancestors,
         ESQUERY_OPTIONS,
       )

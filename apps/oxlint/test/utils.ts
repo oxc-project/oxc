@@ -162,7 +162,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 const PATH_REGEXP = new RegExp(
-  // @ts-expect-error `RegExp.escape` is new in NodeJS v24
+  // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
   `(?<=^|[\\s\\('"\`])${RegExp.escape(REPO_ROOT_PATH)}(${RegExp.escape(pathSep)}[^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   "g",
 );
