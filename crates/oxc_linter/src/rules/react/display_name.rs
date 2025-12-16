@@ -507,7 +507,7 @@ fn is_react_component_node<'a>(
                 if let Some(innermost) = find_innermost_function_with_jsx(expr, ctx) {
                     let inner_has_name = match innermost {
                         InnermostFunction::Function(func) => func.id.is_some(),
-                        InnermostFunction::ArrowFunction(_) => false,
+                        InnermostFunction::ArrowFunction => false,
                     };
 
                     // Only treat as HOF if inner function is unnamed

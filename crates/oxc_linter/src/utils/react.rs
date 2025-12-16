@@ -370,8 +370,8 @@ pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
 #[derive(Debug)]
 pub enum InnermostFunction<'a> {
     Function(&'a Function<'a>),
-    #[expect(dead_code, reason = "False positive: field is read in pattern matching")]
-    ArrowFunction(&'a ArrowFunctionExpression<'a>),
+    /// Arrow functions never have an id, so we don't need to store the reference
+    ArrowFunction,
 }
 
 pub fn find_innermost_function_with_jsx<'a>(
@@ -400,7 +400,7 @@ pub fn find_innermost_function_with_jsx<'a>(
         Expression::ArrowFunctionExpression(arrow_func) => {
             // Check if this arrow function contains JSX
             if expression_contains_jsx(expr) {
-                Some(InnermostFunction::ArrowFunction(arrow_func))
+                Some(InnermostFunction::ArrowFunction)
             } else {
                 // Check if this arrow function returns another function that contains JSX
                 if arrow_func.expression {
