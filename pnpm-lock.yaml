@@ -107,12 +107,18 @@ importers:
       '@types/estree':
         specifier: ^1.0.8
         version: 1.0.8
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
       '@types/json-stable-stringify-without-jsonify':
         specifier: ^1.0.2
         version: 1.0.2
       '@typescript-eslint/scope-manager':
         specifier: 8.48.1
         version: 8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
+      ajv:
+        specifier: ^6.12.6
+        version: 6.12.6
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0

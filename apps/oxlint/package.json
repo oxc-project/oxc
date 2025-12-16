@@ -25,8 +25,10 @@
   "devDependencies": {
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
+    "@types/json-schema": "^7.0.15",
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
     "@typescript-eslint/scope-manager": "8.48.1",
+    "ajv": "^6.12.6",
     "cross-env": "catalog:",
     "eslint": "^9.36.0",
     "esquery": "^1.6.0",

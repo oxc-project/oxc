@@ -1,11 +1,11 @@
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
-import { DEFAULT_OPTIONS } from "./options.ts";
+import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
-import type { Options } from "./options.ts";
+import type { Options, SchemaValidator } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
 import type { SetNullable } from "../utils/types.ts";
@@ -56,6 +56,7 @@ interface RuleDetailsBase {
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
+  readonly optionsSchemaValidator: SchemaValidator | null;
   // Updated for each file
   ruleIndex: number;
   options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
@@ -146,7 +147,8 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
       messages: Record<string, string> | null = null,
-      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS;
+      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
+      schemaValidator: SchemaValidator | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
@@ -159,13 +161,18 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
         isFixable = true;
       }
 
+      // If `schema` provided, compile schema to validator for applying schema defaults to options
+      schemaValidator = compileSchema(ruleMeta.schema);
+
+      // Get default options
       const inputDefaultOptions = ruleMeta.defaultOptions;
       if (inputDefaultOptions != null) {
-        // TODO: Validate against provided options schema
         if (!Array.isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
 
+        // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
+        // and does not validate against schema
         if (inputDefaultOptions.length !== 0) {
           // Serialize to JSON and deserialize again.
           // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
@@ -178,6 +185,13 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
               `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
             );
           }
+
+          // Apply defaults from schema, if schema was provided.
+          // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
+          // but that's what ESLint does, so it's OK.
+          // TODO: Throw if `rule.meta.schema == null` (only `false` is allowed when `defaultOptions` is provided)
+          // TODO: Throw if validation errors
+          if (schemaValidator !== null) schemaValidator(defaultOptions);
 
           deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
         }
@@ -200,6 +214,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
       isFixable,
       messages,
       defaultOptions,
+      optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
       options: null,
       visitor: null,
