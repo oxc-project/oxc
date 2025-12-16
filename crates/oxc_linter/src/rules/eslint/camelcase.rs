@@ -666,10 +666,7 @@ fn test() {
             "const [foo_bar, bar_baz] = arr;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
         ),
-        (
-            "const [foo_bar = 1] = arr;",
-            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ),
+        ("const [foo_bar = 1] = arr;", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
         // NOTE: Known ESLint compatibility gaps (not currently checked):
         // - ignoreDestructuring + later use: ESLint checks variable usage after destructuring
         // - ignoreGlobals option: not implemented
