@@ -1944,7 +1944,6 @@ version = "0.18.0"
 dependencies = [
  "cow-utils",
  "insta",
- "json-strip-comments",
  "natord",
  "oxc-schemars",
  "oxc_allocator",
@@ -1999,6 +1998,7 @@ dependencies = [
  "futures",
  "ignore",
  "insta",
+ "json-strip-comments",
  "log",
  "oxc_allocator",
  "oxc_data_structures",

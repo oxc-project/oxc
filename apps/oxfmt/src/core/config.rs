@@ -2,7 +2,10 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-use oxc_formatter::{FormatOptions, OxfmtOptions, Oxfmtrc};
+use oxc_formatter::{
+    FormatOptions,
+    oxfmtrc::{OxfmtOptions, Oxfmtrc},
+};
 
 use super::utils;
 

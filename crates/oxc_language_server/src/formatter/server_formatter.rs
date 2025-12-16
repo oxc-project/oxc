@@ -5,8 +5,8 @@ use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, OxfmtOptions, Oxfmtrc, enable_jsx_source_type, get_parse_options,
-    get_supported_source_type,
+    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
+    oxfmtrc::{OxfmtOptions, Oxfmtrc},
 };
 use oxc_parser::Parser;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -70,7 +70,7 @@ impl ToolBuilder for ServerFormatterBuilder {
 impl ServerFormatterBuilder {
     fn get_config(root_path: &Path, config_path: Option<&String>) -> Oxfmtrc {
         if let Some(config) = Self::search_config_file(root_path, config_path) {
-            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
+            if let Ok(oxfmtrc) = Self::from_file(&config) {
                 oxfmtrc
             } else {
                 warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
@@ -84,6 +84,26 @@ impl ServerFormatterBuilder {
             Oxfmtrc::default()
         }
     }
+
+    /// # Errors
+    /// Returns error if:
+    /// - file cannot be found or read
+    /// - file content is not valid JSONC
+    /// - deserialization fails for string enum values
+    fn from_file(path: &Path) -> Result<Oxfmtrc, String> {
+        let mut string = std::fs::read_to_string(path)
+            // Do not include OS error, it differs between platforms
+            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
+
+        // JSONC support - strip comments
+        json_strip_comments::strip(&mut string)
+            .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
+
+        // NOTE: String enum deserialization errors are handled here
+        serde_json::from_str(&string)
+            .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
+    }
+
     fn get_options(oxfmtrc: Oxfmtrc) -> (FormatOptions, OxfmtOptions) {
         match oxfmtrc.into_options() {
             Ok(opts) => opts,

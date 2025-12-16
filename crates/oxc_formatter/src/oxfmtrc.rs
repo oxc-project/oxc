@@ -1,4 +1,9 @@
-use std::path::Path;
+//! This file handles the `Oxfmtrc` struct, which ideally should be defined under `apps/oxfmt`.
+//!
+//! The reason it is not done so at this time is that `oxc_language_server` uses this struct,
+//! and `apps/oxfmt` also depends on `oxc_language_server`, creating a circular reference.
+//!
+//! While it is possible to define a separate crate for `Oxfmtrc`, we compromise with this method for now.
 
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -8,14 +13,16 @@ use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas, default_groups, default_internal_patterns,
+    TrailingCommas,
 };
 
 /// Configuration options for the Oxfmt.
+///
 /// Most options are the same as Prettier's options.
 /// See also <https://prettier.io/docs/options>
-/// But some options are our own extensions.
-// All fields are typed as `Option` to distinguish between user-specified values and defaults.
+///
+/// In addition, some options are our own extensions.
+// NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
@@ -68,10 +75,10 @@ pub struct Oxfmtrc {
     // Just be here to report error if they are used.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_operator_position: Option<serde_json::Value>,
+    pub experimental_operator_position: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_ternaries: Option<serde_json::Value>,
+    pub experimental_ternaries: Option<bool>,
 
     /// Control whether formats quoted code embedded in the file. (Default: `"auto"`)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -92,74 +99,74 @@ pub struct Oxfmtrc {
 
 // ---
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum EndOfLineConfig {
-    #[default]
     Lf,
     Crlf,
     Cr,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum QuotePropsConfig {
-    #[default]
     AsNeeded,
     Consistent,
     Preserve,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum TrailingCommaConfig {
-    #[default]
     All,
     Es5,
     None,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ArrowParensConfig {
-    #[default]
     Always,
     Avoid,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ObjectWrapConfig {
-    #[default]
     Preserve,
     Collapse,
     Always,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum EmbeddedLanguageFormattingConfig {
     Auto,
-    // Disable by default at alpha release, synced with `options.rs`
-    #[default]
     Off,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
-    #[serde(default)]
-    pub partition_by_newline: bool,
-    #[serde(default)]
-    pub partition_by_comment: bool,
-    #[serde(default)]
-    pub sort_side_effects: bool,
+    /// Partition imports by newlines. (Default: `false`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_newline: Option<bool>,
+    /// Partition imports by comments. (Default: `false`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_comment: Option<bool>,
+    /// Sort side-effect imports. (Default: `false`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_side_effects: Option<bool>,
+    /// Sort order. (Default: `"asc"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<SortOrderConfig>,
-    #[serde(default = "default_true")]
-    pub ignore_case: bool,
-    #[serde(default = "default_true")]
-    pub newlines_between: bool,
+    /// Ignore case when sorting. (Default: `true`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_case: Option<bool>,
+    /// Add newlines between import groups. (Default: `true`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub newlines_between: Option<bool>,
+    /// Glob patterns to identify internal imports.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub internal_pattern: Option<Vec<String>>,
     /// Custom groups configuration for organizing imports.
@@ -167,10 +174,6 @@ pub struct SortImportsConfig {
     /// Accepts both `string` and `string[]` as group elements.
     #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
     pub groups: Option<Vec<Vec<String>>>,
-}
-
-fn default_true() -> bool {
-    true
 }
 
 /// Custom deserializer for groups field to support both `string` and `string[]` as group elements
@@ -220,10 +223,9 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrderConfig {
-    #[default]
     Asc,
     Desc,
 }
@@ -248,27 +250,9 @@ impl Default for OxfmtOptions {
 // ---
 
 impl Oxfmtrc {
-    // TODO: Since `oxc_language_server/ServerFormatterBuilder` is the only user of this,
-    // use `Oxfmtrc` directly and remove.
-    /// # Errors
-    /// Returns error if:
-    /// - file cannot be found or read
-    /// - file content is not valid JSONC
-    /// - deserialization fails for string enum values
-    pub fn from_file(path: &Path) -> Result<Self, String> {
-        let mut string = std::fs::read_to_string(path)
-            // Do not include OS error, it differs between platforms
-            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
-
-        // JSONC support - strip comments
-        json_strip_comments::strip(&mut string)
-            .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
-
-        // NOTE: String enum deserialization errors are handled here
-        serde_json::from_str(&string)
-            .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
-    }
-
+    /// Converts the `Oxfmtrc` into `FormatOptions` and `OxfmtOptions`.
+    /// With resolving default values for unspecified options.
+    ///
     /// # Errors
     /// Returns error if any option value is invalid
     pub fn into_options(self) -> Result<(FormatOptions, OxfmtOptions), String> {
@@ -282,6 +266,7 @@ impl Oxfmtrc {
             return Err("Unsupported option: `experimentalTernaries`".to_string());
         }
 
+        // All values are based on defaults from `FormatOptions::default()`
         let mut format_options = FormatOptions::default();
 
         // [Prettier] useTabs: boolean
@@ -395,33 +380,52 @@ impl Oxfmtrc {
 
         // Below are our own extensions
 
-        if let Some(sort_imports_config) = self.experimental_sort_imports {
-            // `partition_by_newline: true` and `newlines_between` cannot be used together
-            if sort_imports_config.partition_by_newline && sort_imports_config.newlines_between {
+        if let Some(config) = self.experimental_sort_imports {
+            let mut sort_imports = SortImportsOptions::default();
+
+            if let Some(v) = config.partition_by_newline {
+                sort_imports.partition_by_newline = v;
+            }
+            if let Some(v) = config.partition_by_comment {
+                sort_imports.partition_by_comment = v;
+            }
+            if let Some(v) = config.sort_side_effects {
+                sort_imports.sort_side_effects = v;
+            }
+            if let Some(v) = config.order {
+                sort_imports.order = match v {
+                    SortOrderConfig::Asc => SortOrder::Asc,
+                    SortOrderConfig::Desc => SortOrder::Desc,
+                };
+            }
+            if let Some(v) = config.ignore_case {
+                sort_imports.ignore_case = v;
+            }
+            if let Some(v) = config.newlines_between {
+                sort_imports.newlines_between = v;
+            }
+            if let Some(v) = config.internal_pattern {
+                sort_imports.internal_pattern = v;
+            }
+            if let Some(v) = config.groups {
+                sort_imports.groups = v;
+            }
+
+            // `partition_by_newline: true` and `newlines_between: true` cannot be used together
+            if sort_imports.partition_by_newline && sort_imports.newlines_between {
                 return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
             }
 
-            format_options.experimental_sort_imports = Some(SortImportsOptions {
-                partition_by_newline: sort_imports_config.partition_by_newline,
-                partition_by_comment: sort_imports_config.partition_by_comment,
-                sort_side_effects: sort_imports_config.sort_side_effects,
-                order: sort_imports_config.order.map_or(SortOrder::default(), |o| match o {
-                    SortOrderConfig::Asc => SortOrder::Asc,
-                    SortOrderConfig::Desc => SortOrder::Desc,
-                }),
-                ignore_case: sort_imports_config.ignore_case,
-                newlines_between: sort_imports_config.newlines_between,
-                internal_pattern: sort_imports_config
-                    .internal_pattern
-                    .unwrap_or_else(default_internal_patterns),
-                groups: sort_imports_config.groups.unwrap_or_else(default_groups),
-            });
+            format_options.experimental_sort_imports = Some(sort_imports);
         }
 
-        let oxfmt_options = OxfmtOptions {
-            ignore_patterns: self.ignore_patterns.unwrap_or_default(),
-            sort_package_json: self.experimental_sort_package_json.unwrap_or(true),
-        };
+        let mut oxfmt_options = OxfmtOptions::default();
+        if let Some(patterns) = self.ignore_patterns {
+            oxfmt_options.ignore_patterns = patterns;
+        }
+        if let Some(sort_package_json) = self.experimental_sort_package_json {
+            oxfmt_options.sort_package_json = sort_package_json;
+        }
 
         Ok((format_options, oxfmt_options))
     }
