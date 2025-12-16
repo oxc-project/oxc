@@ -320,6 +320,24 @@ fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
     call.callee_name().is_some_and(|name| name == "createContext")
 }
 
+/// Check if a class extends React.Component or React.PureComponent
+fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
+    class.super_class.as_ref().is_some_and(|super_class| {
+        if let Some(member_expr) = super_class.as_member_expression()
+            && let Expression::Identifier(ident) = member_expr.object()
+        {
+            return ident.name == "React"
+                && member_expr
+                    .static_property_name()
+                    .is_some_and(|name| name == "Component" || name == "PureComponent");
+        }
+        if let Some(ident_reference) = super_class.get_identifier_reference() {
+            return ident_reference.name == "Component" || ident_reference.name == "PureComponent";
+        }
+        false
+    })
+}
+
 /// Check if a symbol has a displayName assignment via semantic references
 fn has_display_name_via_semantic(
     symbol_id: SymbolId,
@@ -796,24 +814,7 @@ fn check_class_component(
                 });
             }
 
-            // Check if extends React.Component
-            let extends_react_component = class.super_class.as_ref().is_some_and(|super_class| {
-                if let Some(member_expr) = super_class.as_member_expression()
-                    && let Expression::Identifier(ident) = member_expr.object()
-                {
-                    return ident.name == "React"
-                        && member_expr
-                            .static_property_name()
-                            .is_some_and(|name| name == "Component" || name == "PureComponent");
-                }
-                if let Some(ident_reference) = super_class.get_identifier_reference() {
-                    return ident_reference.name == "Component"
-                        || ident_reference.name == "PureComponent";
-                }
-                false
-            });
-
-            if extends_react_component {
+            if extends_react_component(class) {
                 return Some(ReactComponentInfo { span, is_context: false, name: None });
             }
         }
@@ -823,24 +824,7 @@ fn check_class_component(
             return Some(ReactComponentInfo { span, is_context: false, name: None });
         }
 
-        // Check if extends React.Component
-        let extends_react_component = class.super_class.as_ref().is_some_and(|super_class| {
-            if let Some(member_expr) = super_class.as_member_expression()
-                && let Expression::Identifier(ident) = member_expr.object()
-            {
-                return ident.name == "React"
-                    && member_expr
-                        .static_property_name()
-                        .is_some_and(|name| name == "Component" || name == "PureComponent");
-            }
-            if let Some(ident_reference) = super_class.get_identifier_reference() {
-                return ident_reference.name == "Component"
-                    || ident_reference.name == "PureComponent";
-            }
-            false
-        });
-
-        if extends_react_component {
+        if extends_react_component(class) {
             return Some(ReactComponentInfo { span, is_context: false, name: None });
         }
     }
