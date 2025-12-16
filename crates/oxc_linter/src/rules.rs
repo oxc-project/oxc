@@ -340,6 +340,7 @@ pub(crate) mod jest {
     pub mod prefer_to_be;
     pub mod prefer_to_contain;
     pub mod prefer_to_have_been_called;
+    pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_hook;
@@ -921,6 +922,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_to_be,
     jest::prefer_to_contain,
     jest::prefer_to_have_been_called,
+    jest::prefer_to_have_been_called_times,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_hook,
