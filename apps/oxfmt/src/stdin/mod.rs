@@ -77,9 +77,10 @@ impl StdinRunner {
             };
 
         // TODO: Plugins support
-        if let Err(err) =
+        // Use `block_in_place()` to avoid nested async runtime access
+        if let Err(err) = tokio::task::block_in_place(|| {
             external_formatter.setup_config(&external_config.to_string(), num_of_threads)
-        {
+        }) {
             utils::print_and_flush(
                 stderr,
                 &format!("Failed to setup external formatter config.\n{err}\n"),
@@ -97,8 +98,7 @@ impl StdinRunner {
         let source_formatter = SourceFormatter::new(num_of_threads, format_options)
             .with_external_formatter(Some(external_formatter), oxfmt_options.sort_package_json);
 
-        // Run formatting in a blocking task within tokio runtime
-        // This is needed because external formatter uses `tokio::runtime::Handle::current()`
+        // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| source_formatter.format(&strategy, &source_text)) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
