@@ -6731,12 +6731,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ╰── It can not be redeclared here
    ╰────
 
-  × Unexpected token
+  × Only string literals are allowed as module attribute values.
    ╭─[typescript/tests/cases/compiler/importAssertionNonstring.ts:1:52]
  1 │ import * as thing1 from "./mod.mjs" assert {field: 0};
    ·                                                    ─
  2 │ 
    ╰────
+  help: Wrap this with quotes
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
@@ -19890,12 +19891,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ import * as f from "./first" with {
    ╰────
 
-  × Unexpected token
+  × Only string literals are allowed as module attribute values.
    ╭─[typescript/tests/cases/conformance/importAttributes/importAttributes6.ts:1:51]
  1 │ import * as thing1 from "./mod.mjs" with { field: 0 };
    ·                                                   ─
  2 │ import * as thing2 from "./mod.mjs" with { field: `a` };
    ╰────
+  help: Wrap this with quotes
 
   × Expected `(` but found `;`
    ╭─[typescript/tests/cases/conformance/importDefer/dynamicImportDeferInvalidStandalone.ts:1:13]

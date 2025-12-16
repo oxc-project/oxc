@@ -1145,3 +1145,10 @@ pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
     ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
         .with_label(span)
 }
+
+#[cold]
+pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
+        .with_label(span)
+        .with_help("Wrap this with quotes")
+}
