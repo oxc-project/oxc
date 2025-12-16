@@ -197,13 +197,19 @@ impl Rule for CapitalizedComments {
 
     fn run_once(&self, ctx: &LintContext) {
         let source_text = ctx.source_text();
-        let comments: Vec<&Comment> = ctx.semantic().comments().iter().collect();
+        let comments = ctx.semantic().comments();
 
-        for (i, comment) in comments.iter().enumerate() {
-            // Skip shebang comments
-            if comment.span.start == 0 && source_text.starts_with("#!") {
-                continue;
-            }
+        // Skip shebang comment if present
+        let comments_iter = comments
+            .iter()
+            .skip_while(|c| c.span.start == 0 && source_text.starts_with("#!"));
+
+        // Iterate with (prev, current) pairs to check consecutive comments
+        let iter = std::iter::once(None)
+            .chain(comments_iter.clone().map(Some))
+            .zip(comments_iter);
+
+        for (prev_comment, comment) in iter {
 
             let config = if comment.is_line() { &self.line_config } else { &self.block_config };
 
@@ -240,8 +246,7 @@ impl Rule for CapitalizedComments {
 
             // Check ignoreConsecutiveComments
             if config.ignore_consecutive_comments
-                && i > 0
-                && is_consecutive_comment(source_text, comments[i - 1], comment)
+                && prev_comment.is_some_and(|prev| is_consecutive_comment(source_text, prev, comment))
             {
                 continue;
             }
