@@ -669,9 +669,9 @@ fn has_component_methods_in_object(
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
             && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
             && obj_prop.method
+            && ignore_transpiler_name
             && is_react_component_name(&ident.name)
             && matches!(&obj_prop.value, Expression::FunctionExpression(f) if function_contains_jsx(f))
-            && ignore_transpiler_name
         {
             return true;
         }
@@ -733,9 +733,9 @@ fn is_anonymous_export_component(
         }
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             if let Some(name) = &func.id
+                && ignore_transpiler_name
                 && is_react_component_name(&name.name)
                 && function_contains_jsx(func)
-                && ignore_transpiler_name
             {
                 return Some(ReactComponentInfo {
                     span: export.span,
