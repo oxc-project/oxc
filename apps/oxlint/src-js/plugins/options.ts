@@ -14,7 +14,7 @@ import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import type { Writable } from "type-fest";
 import type { JsonValue } from "./json.ts";
 
-const { freeze } = Object,
+const { freeze, hasOwn } = Object,
   { isArray } = Array,
   { min } = Math;
 
@@ -189,12 +189,12 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   //
   // `defaultValue` is not from JSON, so we can't use a simple `for..in` loop over `defaultValue`.
   // That would also pick up enumerable properties from prototype of `defaultValue`.
-  // `configValue` *is* from JSON, so simple `key in configValue` check is fine.
   //
   // A malicious plugin could potentially get up to mischief here (prototype pollution?) if `defaultValue` is a `Proxy`.
   // But plugins are executable code, so they have far easier ways to do that. No point in defending against it here.
   for (const key of Object.keys(defaultValue)) {
-    if (key in configValue) {
+    // `hasOwn` not `in`, in case `key` is `"__proto__"`
+    if (hasOwn(configValue, key)) {
       // `key` is an own property of both `configValue` and `defaultValue`, so must be an own property of `merged` too.
       // Therefore, we don't need special handling for if `key` is `"__proto__"`.
       // All the property reads and writes here will affect only the owned properties of these objects,
