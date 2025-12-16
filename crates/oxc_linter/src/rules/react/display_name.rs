@@ -315,6 +315,11 @@ fn extract_member_expression_path(expr: &Expression) -> String {
     }
 }
 
+/// Check if a call expression is a createContext call
+fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
+    call.callee_name().is_some_and(|name| name == "createContext")
+}
+
 /// Check if a symbol has a displayName assignment via semantic references
 fn has_display_name_via_semantic(
     symbol_id: SymbolId,
@@ -363,8 +368,7 @@ fn check_context_assignment_references(
         for ancestor_kind in ctx.nodes().ancestor_kinds(ref_node.id()) {
             if let AstKind::AssignmentExpression(assign) = ancestor_kind
                 && let Expression::CallExpression(call) = &assign.right
-                && let Some(callee_name) = call.callee_name()
-                && callee_name == "createContext"
+                && is_create_context_call(call)
             {
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
             }
@@ -397,8 +401,7 @@ fn is_react_component_node<'a>(
 
             // Check for createContext
             if let Some(Expression::CallExpression(call)) = &decl.init
-                && let Some(callee_name) = call.callee_name()
-                && callee_name == "createContext"
+                && is_create_context_call(call)
             {
                 if check_context_objects {
                     return Some(ReactComponentInfo {
@@ -930,7 +933,7 @@ fn is_module_exports_component<'a>(
                                 name: None,
                             });
                         }
-                    } else if callee_name == "createContext" && check_context_objects {
+                    } else if is_create_context_call(call) && check_context_objects {
                         return Some(ReactComponentInfo {
                             span: assign.span,
                             is_context: true,
