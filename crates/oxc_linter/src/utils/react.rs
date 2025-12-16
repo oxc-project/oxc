@@ -3,14 +3,16 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, JSXAttributeItem,
-        JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXMemberExpression, JSXMemberExpressionObject, JSXOpeningElement, Statement,
-        StaticMemberExpression,
+        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
+        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression,
+        JSXMemberExpressionObject, JSXOpeningElement, Statement, StaticMemberExpression,
     },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{LintContext, OxlintSettings};
 
@@ -449,19 +451,57 @@ pub fn contains_jsx(expr: &Expression) -> bool {
     }
 }
 
-/// Checks if a function contains JSX in its return statements
-pub fn function_contains_jsx(func: &Function) -> bool {
-    if let Some(body) = &func.body {
-        for stmt in &body.statements {
-            if let Statement::ReturnStatement(ret_stmt) = stmt
-                && let Some(expr) = &ret_stmt.argument
-                && contains_jsx(expr)
-            {
-                return true;
-            }
+/// Visitor that searches for JSX elements within a function body.
+/// Stops at nested function boundaries to avoid detecting JSX from child components.
+struct JsxFinder {
+    found: bool,
+}
+
+impl JsxFinder {
+    fn new() -> Self {
+        Self { found: false }
+    }
+}
+
+impl<'a> Visit<'a> for JsxFinder {
+    fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
+        self.found = true;
+        // Don't walk children - we found what we need
+    }
+
+    fn visit_jsx_fragment(&mut self, _frag: &JSXFragment<'a>) {
+        self.found = true;
+    }
+
+    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        if crate::utils::is_create_element_call(call) {
+            self.found = true;
+        }
+        if !self.found {
+            walk::walk_call_expression(self, call);
         }
     }
+
+    // Don't recurse into nested functions - they're separate components
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+}
+
+/// Checks if a function contains JSX anywhere in its body.
+/// This uses a visitor pattern to handle JSX in if/else blocks, try/catch,
+/// loops, and other control flow constructs.
+pub fn function_contains_jsx(func: &Function) -> bool {
+    if let Some(body) = &func.body {
+        return function_body_contains_jsx(body);
+    }
     false
+}
+
+/// Checks if a function body contains JSX anywhere.
+fn function_body_contains_jsx(body: &FunctionBody) -> bool {
+    let mut finder = JsxFinder::new();
+    finder.visit_function_body(body);
+    finder.found
 }
 
 /// Checks if a function-like expression (function or arrow function) contains JSX
@@ -469,26 +509,7 @@ pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
         Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.expression {
-                // Expression-bodied arrow function: () => <div />
-                if arrow_func.body.statements.len() == 1
-                    && let Statement::ExpressionStatement(expr_stmt) =
-                        &arrow_func.body.statements[0]
-                {
-                    return contains_jsx(&expr_stmt.expression);
-                }
-            } else {
-                // Block-bodied arrow function: () => { return <div /> }
-                for stmt in &arrow_func.body.statements {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt
-                        && let Some(expr) = &ret_stmt.argument
-                        && contains_jsx(expr)
-                    {
-                        return true;
-                    }
-                }
-            }
-            false
+            function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,
     }
