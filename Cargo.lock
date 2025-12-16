@@ -2229,6 +2229,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_compat",
  "oxc_formatter",
  "oxc_linter",
  "oxc_napi",
