@@ -9,8 +9,6 @@ import type { Node as EsqueryNode } from "estree";
 import type { Node } from "./types.ts";
 import type { VisitFn } from "./visitor.ts";
 
-const ObjectKeys = Object.keys;
-
 const { matches: esqueryMatches, parse: esqueryParse } = esquery;
 
 type NodeTypeId = number;
@@ -19,7 +17,7 @@ type NodeTypeId = number;
 const ESQUERY_OPTIONS: ESQueryOptions = {
   nodeTypeKey: "type",
   visitorKeys,
-  fallback: (node: EsqueryNode) => ObjectKeys(node).filter(filterKey),
+  fallback: (node: EsqueryNode) => Object.keys(node).filter(filterKey),
   matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
 };
 const filterKey = (key: string) => key !== "parent" && key !== "range" && key !== "loc";

@@ -24,10 +24,6 @@ import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
 import type { ParseOptions } from "./parse.ts";
 
-const { hasOwn } = Object,
-  { isArray } = Array,
-  jsonStringify = JSON.stringify;
-
 // ------------------------------------------------------------------------------
 // `describe` and `it` functions
 // ------------------------------------------------------------------------------
@@ -555,18 +551,21 @@ function assertInvalidTestCaseMessageIsCorrect(
   messages: Record<string, string> | null,
 ): void {
   // Check `message` property
-  if (hasOwn(error, "message")) {
+  if (Object.hasOwn(error, "message")) {
     // Check `message` property
     assert(
-      !hasOwn(error, "messageId"),
+      !Object.hasOwn(error, "messageId"),
       "Error should not specify both `message` and a `messageId`",
     );
-    assert(!hasOwn(error, "data"), "Error should not specify both `data` and `message`");
+    assert(!Object.hasOwn(error, "data"), "Error should not specify both `data` and `message`");
     assertMessageMatches(diagnostic.message, error.message!);
     return;
   }
 
-  assert(hasOwn(error, "messageId"), "Test error must specify either a `messageId` or `message`");
+  assert(
+    Object.hasOwn(error, "messageId"),
+    "Test error must specify either a `messageId` or `message`",
+  );
 
   // Check `messageId` property
   assert(
@@ -575,7 +574,7 @@ function assertInvalidTestCaseMessageIsCorrect(
   );
 
   const messageId: string = error.messageId!;
-  if (!hasOwn(messages, messageId)) {
+  if (!Object.hasOwn(messages, messageId)) {
     const legalMessageIds = `[${Object.keys(messages)
       .map((key) => `'${key}'`)
       .join(", ")}]`;
@@ -607,7 +606,7 @@ function assertInvalidTestCaseMessageIsCorrect(
     );
   }
 
-  if (hasOwn(error, "data")) {
+  if (Object.hasOwn(error, "data")) {
     // If data was provided, then directly compare the returned message to a synthetic
     // interpolated message using the same message ID and data provided in the test
     const rehydratedMessage = replacePlaceholders(ruleMessage, error.data!);
@@ -644,12 +643,12 @@ function assertInvalidTestCaseLocationIsCorrect(
 
   const columnOffset = test.eslintCompat === true ? 1 : 0;
 
-  if (hasOwn(error, "line")) {
+  if (Object.hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
     expectedLocation.line = error.line;
   }
 
-  if (hasOwn(error, "column")) {
+  if (Object.hasOwn(error, "column")) {
     actualLocation.column = diagnostic.column + columnOffset;
     expectedLocation.column = error.column;
   }
@@ -666,7 +665,7 @@ function assertInvalidTestCaseLocationIsCorrect(
     diagnostic.endLine === diagnostic.line &&
     diagnostic.endColumn === diagnostic.column;
 
-  if (hasOwn(error, "endLine")) {
+  if (Object.hasOwn(error, "endLine")) {
     if (error.endLine === undefined && canVoidEndLocation) {
       actualLocation.endLine = undefined;
     } else {
@@ -675,7 +674,7 @@ function assertInvalidTestCaseLocationIsCorrect(
     expectedLocation.endLine = error.endLine;
   }
 
-  if (hasOwn(error, "endColumn")) {
+  if (Object.hasOwn(error, "endColumn")) {
     if (error.endColumn === undefined && canVoidEndLocation) {
       actualLocation.endColumn = undefined;
     } else {
@@ -1068,7 +1067,7 @@ function setupOptions(test: TestCase): number {
   // Serialize to JSON and pass to `setOptions`
   let allOptionsJson: string;
   try {
-    allOptionsJson = jsonStringify({ options: allOptions, ruleIds: allRuleIds });
+    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
   } catch (err) {
     throw new Error(`Failed to serialize options: ${err}`);
   }
@@ -1130,7 +1129,7 @@ function getTestName(test: TestCase): string {
  * @throws {*} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
-  if (hasOwn(test, "before")) runHook(test, test.before, "before");
+  if (Object.hasOwn(test, "before")) runHook(test, test.before, "before");
 }
 
 /**
@@ -1140,7 +1139,7 @@ function runBeforeHook(test: TestCase): void {
  * @throws {*} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
-  if (hasOwn(test, "after")) runHook(test, test.after, "after");
+  if (Object.hasOwn(test, "after")) runHook(test, test.after, "after");
 }
 
 /**
@@ -1216,7 +1215,7 @@ function assertInvalidTestCaseIsWellFormed(
       `Did not specify errors for an invalid test of rule \`${ruleName}\``,
     );
     assert(
-      isArray(errors),
+      Array.isArray(errors),
       `Invalid 'errors' property for invalid test of rule \`${ruleName}\`:` +
         `expected a number or an array but got ${errors === null ? "null" : typeof errors}`,
     );
@@ -1224,7 +1223,7 @@ function assertInvalidTestCaseIsWellFormed(
   }
 
   // `output` is optional, but if it exists it must be a string or `null`
-  if (hasOwn(test, "output")) {
+  if (Object.hasOwn(test, "output")) {
     assert(
       test.output === null || typeof test.output === "string",
       "Test property `output`, if specified, must be a string or null. " +
@@ -1247,16 +1246,16 @@ function assertTestCaseCommonPropertiesAreWellFormed(test: TestCase): void {
   if (test.name) {
     assert(typeof test.name === "string", "Optional test case property `name` must be a string");
   }
-  if (hasOwn(test, "only")) {
+  if (Object.hasOwn(test, "only")) {
     assert(typeof test.only === "boolean", "Optional test case property `only` must be a boolean");
   }
-  if (hasOwn(test, "filename")) {
+  if (Object.hasOwn(test, "filename")) {
     assert(
       typeof test.filename === "string",
       "Optional test case property `filename` must be a string",
     );
   }
-  if (hasOwn(test, "options")) {
+  if (Object.hasOwn(test, "options")) {
     assert(Array.isArray(test.options), "Optional test case property `options` must be an array");
   }
 }
@@ -1330,7 +1329,7 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
     typeof value === "string" ||
     typeof value === "boolean" ||
     typeof value === "number" ||
-    (typeof value === "object" && (value.constructor === Object || isArray(value)))
+    (typeof value === "object" && (value.constructor === Object || Array.isArray(value)))
   );
 }
 

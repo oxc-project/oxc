@@ -10,10 +10,6 @@ import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
 import type { SetNullable } from "../utils/types.ts";
 
-const ObjectKeys = Object.keys,
-  { isArray } = Array,
-  { stringify: JSONStringify, parse: JSONParse } = JSON;
-
 /**
  * Linter plugin, comprising multiple rules
  */
@@ -140,7 +136,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = ObjectKeys(rules);
+  const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
@@ -166,7 +162,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
       const inputDefaultOptions = ruleMeta.defaultOptions;
       if (inputDefaultOptions != null) {
         // TODO: Validate against provided options schema
-        if (!isArray(inputDefaultOptions)) {
+        if (!Array.isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
 
@@ -176,7 +172,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
           // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
           // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
           try {
-            defaultOptions = JSONParse(JSONStringify(inputDefaultOptions)) as Options;
+            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
           } catch (err) {
             throw new Error(
               `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
@@ -237,7 +233,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
       // and if not, skip calling into JS entirely. In that case, the `before` hook won't get called.
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
-      if (ObjectKeys(visitor).length === 0) {
+      if (Object.keys(visitor).length === 0) {
         beforeHook = neverRunBeforeHook;
         afterHook = null;
       }

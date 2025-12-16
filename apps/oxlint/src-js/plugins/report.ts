@@ -12,8 +12,6 @@ import type { Fix, FixFn } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
 import type { LineColumn, Ranged } from "./location.ts";
 
-const { hasOwn, keys: ObjectKeys } = Object;
-
 /**
  * Diagnostic object.
  * Passed to `Context#report()`.
@@ -95,7 +93,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   let { message, messageId } = getMessage(diagnostic, ruleDetails);
 
   // Interpolate placeholders {{key}} with data values
-  if (hasOwn(diagnostic, "data")) {
+  if (Object.hasOwn(diagnostic, "data")) {
     const { data } = diagnostic;
     if (data != null) message = replacePlaceholders(message, data);
   }
@@ -103,7 +101,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
 
-  if (hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
+  if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
     // Can be any of:
     // * `{ start: { line, column }, end: { line, column } }`
@@ -113,7 +111,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
     // * `{ line, column }`
     if (typeof loc !== "object") throw new TypeError("`loc` must be an object if provided");
 
-    if (hasOwn(loc, "start")) {
+    if (Object.hasOwn(loc, "start")) {
       typeAssertIs<LocationWithOptionalEnd>(loc);
       start = getOffsetFromLineColumn(loc.start);
       end = loc.end == null ? start : getOffsetFromLineColumn(loc.end);
@@ -174,7 +172,7 @@ function getMessage(
   diagnostic: Diagnostic,
   ruleDetails: RuleDetails,
 ): { message: string; messageId: string | null } {
-  if (hasOwn(diagnostic, "messageId")) {
+  if (Object.hasOwn(diagnostic, "messageId")) {
     const { messageId } = diagnostic;
     if (messageId != null) {
       return {
@@ -184,7 +182,7 @@ function getMessage(
     }
   }
 
-  if (hasOwn(diagnostic, "message")) {
+  if (Object.hasOwn(diagnostic, "message")) {
     const { message } = diagnostic;
     if (typeof message === "string") return { message, messageId: null };
     if (message != null) throw new TypeError("`message` must be a string");
@@ -208,9 +206,9 @@ function resolveMessageFromMessageId(messageId: string, ruleDetails: RuleDetails
     );
   }
 
-  if (!hasOwn(messages, messageId)) {
+  if (!Object.hasOwn(messages, messageId)) {
     throw new Error(
-      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${ObjectKeys(messages)
+      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${Object.keys(messages)
         .map((msg) => `'${msg}'`)
         .join(", ")}`,
     );
