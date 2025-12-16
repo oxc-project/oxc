@@ -74,7 +74,7 @@ let it: ItFn = typeof globalObj.it === "function" ? globalObj.it : defaultIt;
 
 // `it.only` function. Can be overwritten via `RuleTester.it` or `RuleTester.itOnly` setters.
 let itOnly: ItFn | null =
-  it !== defaultIt && typeof it.only === "function" ? Function.bind.call(it.only, it) : null;
+  it !== defaultIt && typeof it.only === "function" ? it.only.bind(it) : null;
 
 /**
  * Get `it` function.
@@ -349,7 +349,7 @@ export class RuleTester {
   static set it(value: ItFn) {
     it = value;
     if (typeof it.only === "function") {
-      itOnly = Function.bind.call(it.only, it);
+      itOnly = it.only.bind(it);
     } else {
       itOnly = null;
     }
