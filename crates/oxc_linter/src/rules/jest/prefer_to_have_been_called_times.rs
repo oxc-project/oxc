@@ -30,9 +30,8 @@ pub struct PreferToHaveBeenCalledTimes;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// In order to have a better failure message, toHaveBeenCalledTimes should be used
-    /// instead of directly checking the length of mock.calls.
-    /// https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/prefer-to-have-been-called-times.md
+    /// In order to have a better failure message, [`toHaveBeenCalledTimes` should be used
+    /// instead of directly checking the length of `mock.calls`](https://github.com/jest-community/eslint-plugin-jest/blob/v29.5.0/docs/rules/prefer-to-have-been-called-times.md).
     ///
     /// ### Why is this bad?
     ///
