@@ -1,18 +1,24 @@
 use std::ffi::OsString;
+use std::path::PathBuf;
 
 use napi_derive::napi;
 
+use oxc_formatter::oxfmtrc::Oxfmtrc;
+use oxc_napi::OxcError;
+use serde_json::{Value, from_value};
+
 use crate::{
     cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
-    core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
+    core::{
+        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb, SourceFormatter,
+    },
     lsp::run_lsp,
     stdin::StdinRunner,
 };
 
-// NAPI based JS CLI entry point.
-// For pure Rust CLI entry point, see `main.rs`.
-
-/// NAPI entry point.
+/// NAPI based JS CLI entry point.
+/// For pure Rust CLI entry point, see `main.rs`.
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
@@ -88,6 +94,99 @@ pub async fn run_cli(
                 .run();
 
             ("cli".to_string(), Some(result.exit_code()))
+        }
+    }
+}
+
+// ---
+
+#[napi(object)]
+pub struct FormatResult {
+    /// The formatted code.
+    pub code: String,
+    /// Parse and format errors.
+    pub errors: Vec<OxcError>,
+}
+
+/// NAPI based format API entry point.
+///
+/// Since it internally uses `await prettier.format()` in JS side, `formatSync()` cannot be provided.
+#[expect(clippy::allow_attributes)]
+#[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[napi]
+pub async fn format(
+    filename: String,
+    source_text: String,
+    options: Option<Value>,
+    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
+    setup_config_cb: JsSetupConfigCb,
+    #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
+    format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(
+        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+    )]
+    format_file_cb: JsFormatFileCb,
+) -> FormatResult {
+    let num_of_threads = 1;
+
+    let external_formatter =
+        ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
+
+    // Determine format strategy from file path
+    let Ok(entry) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+        return FormatResult {
+            code: source_text,
+            errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
+        };
+    };
+
+    // `core::config::load_config()` equivalent
+    // Deserialize options from JSON Value to Oxfmtrc
+    let oxfmtrc: Oxfmtrc = match options {
+        Some(value) => match from_value(value) {
+            Ok(config) => config,
+            Err(err) => {
+                return FormatResult {
+                    code: source_text,
+                    errors: vec![OxcError::new(format!("Invalid options: {err}"))],
+                };
+            }
+        },
+        None => Oxfmtrc::default(),
+    };
+    let (format_options, oxfmt_options) = match oxfmtrc.into_options() {
+        Ok(opts) => opts,
+        Err(err) => {
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Invalid options: {err}"))],
+            };
+        }
+    };
+    let mut external_config = Value::Object(serde_json::Map::new());
+    Oxfmtrc::populate_prettier_config(&format_options, &mut external_config);
+
+    // TODO: Plugins support
+    // Use `block_in_place()` to avoid nested async runtime access
+    if let Err(err) = tokio::task::block_in_place(|| {
+        external_formatter.setup_config(&external_config.to_string(), num_of_threads)
+    }) {
+        return FormatResult {
+            code: source_text,
+            errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
+        };
+    }
+
+    // Create formatter and format
+    let formatter = SourceFormatter::new(num_of_threads, format_options)
+        .with_external_formatter(Some(external_formatter), oxfmt_options.sort_package_json);
+
+    // Use `block_in_place()` to avoid nested async runtime access
+    match tokio::task::block_in_place(|| formatter.format(&entry, &source_text)) {
+        CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
+        CoreFormatResult::Error(diagnostics) => {
+            let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
+            FormatResult { code: source_text, errors }
         }
     }
 }
