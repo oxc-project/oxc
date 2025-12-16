@@ -60,7 +60,7 @@ use super::{
 ///  }
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Oxlintrc {
     /// Enabled built-in plugins for Oxlint.
@@ -214,8 +214,26 @@ impl Oxlintrc {
             .extensions
             .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
 
-        // Inject markdownDescription fields for better editor support (e.g., VS Code)
         let mut json = serde_json::to_value(&schema).unwrap();
+
+        // inject "$schema" at the root for editor support without changing the struct
+        if let serde_json::Value::Object(map) = &mut json {
+            let props = map
+                .entry("properties")
+                .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+            if let serde_json::Value::Object(props) = props {
+                props.insert(
+                    "$schema".to_string(),
+                    serde_json::json!({
+                        "type": "string",
+                        "description": "Schema URI for editor tooling",
+                        "markdownDescription": "Schema URI for editor tooling"
+                    }),
+                );
+            }
+        }
+
+        // Inject markdown descriptions for better editor support
         Self::inject_markdown_descriptions(&mut json);
 
         serde_json::to_string_pretty(&json).unwrap()

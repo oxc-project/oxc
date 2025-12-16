@@ -132,8 +132,14 @@ expression: json
           "$ref": "#/definitions/OxlintSettings"
         }
       ]
+    },
+    "$schema": {
+      "type": "string",
+      "description": "Schema URI for editor tooling",
+      "markdownDescription": "Schema URI for editor tooling"
     }
   },
+  "additionalProperties": false,
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
