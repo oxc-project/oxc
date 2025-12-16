@@ -91,17 +91,6 @@ export function setOptions(optionsJson: string): void {
 }
 
 /**
- * Initialize `allOptions` to 1-element array.
- * The first element is irrelevant and never accessed.
- *
- * This function is only used in `RuleTester`.
- * Main linter process uses `setOptions` instead.
- */
-export function initAllOptions(): void {
-  allOptions = [DEFAULT_OPTIONS];
-}
-
-/**
  * Merge user-provided options from config with rule's default options.
  *
  * Config options take precedence over default options.
@@ -123,7 +112,7 @@ export function initAllOptions(): void {
  * @param defaultOptions - Default options from `rule.meta.defaultOptions`
  * @returns Merged options
  */
-export function mergeOptions(
+function mergeOptions(
   configOptions: Options,
   defaultOptions: Readonly<Options>,
 ): Readonly<Options> {

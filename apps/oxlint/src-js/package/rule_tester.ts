@@ -9,20 +9,14 @@
 
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
-import stringify from "json-stable-stringify-without-jsonify";
+import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetFile } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import {
-  allOptions,
-  initAllOptions,
-  mergeOptions,
-  DEFAULT_OPTIONS_ID,
-} from "../plugins/options.ts";
+import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
 import { parse } from "./parse.ts";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
@@ -31,7 +25,8 @@ import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
 import type { ParseOptions } from "./parse.ts";
 
 const { hasOwn } = Object,
-  { isArray } = Array;
+  { isArray } = Array,
+  jsonStringify = JSON.stringify;
 
 // ------------------------------------------------------------------------------
 // `describe` and `it` functions
@@ -932,26 +927,12 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
   }
 
-  // Initialize `allOptions` if not already initialized
-  if (allOptions === null) initAllOptions();
-  debugAssertIsNonNull(allOptions);
-
   try {
+    // Register plugin. This adds rule to `registeredRules` array.
     registerPlugin(plugin, null);
 
-    // Get options.
-    // * If no options provided, use default options for the rule with `optionsId: DEFAULT_OPTIONS_ID`.
-    // * If options provided, merge them with default options for the rule.
-    //   Push merged options to `allOptions`, and use `optionsId: 1` (the index within `allOptions`).
-    debugAssert(allOptions.length === 1);
-
-    let optionsId = DEFAULT_OPTIONS_ID;
-    const testOptions = test.options;
-    if (testOptions != null) {
-      const { defaultOptions } = registeredRules[0];
-      allOptions.push(mergeOptions(testOptions, defaultOptions));
-      optionsId = 1;
-    }
+    // Set up options
+    const optionsId = setupOptions(test);
 
     // Parse file into buffer
     parse(filename, test.code, parseOptions);
@@ -989,7 +970,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   } finally {
     // Reset state
     registeredRules.length = 0;
-    allOptions.length = 1;
+    if (allOptions !== null) allOptions.length = 1;
     diagnostics.length = 0;
     resetFile();
   }
@@ -1053,6 +1034,47 @@ function getParseOptions(test: TestCase): ParseOptions {
   }
 
   return parseOptions;
+}
+
+/**
+ * Set up options for the test case.
+ *
+ * In linter, all options for all rules are sent over from Rust as a JSON string,
+ * and `setOptions` is called to merge them with the default options for each rule.
+ * The merged options are stored in a global variable `allOptions`.
+ *
+ * This function builds a JSON string in same format as Rust does, and calls `setOptions` with it.
+ *
+ * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
+ *
+ * @param test - Test case
+ * @returns Options ID to pass to `lintFileImpl`
+ */
+function setupOptions(test: TestCase): number {
+  // Initial entries for default options
+  const allOptions: Options[] = [[]],
+    allRuleIds: number[] = [0];
+
+  // If options are provided for test case, add them to `allOptions`
+  let optionsId = DEFAULT_OPTIONS_ID;
+
+  const testOptions = test.options;
+  if (testOptions != null) {
+    allOptions.push(testOptions);
+    allRuleIds.push(0);
+    optionsId = 1;
+  }
+
+  // Serialize to JSON and pass to `setOptions`
+  let allOptionsJson: string;
+  try {
+    allOptionsJson = jsonStringify({ options: allOptions, ruleIds: allRuleIds });
+  } catch (err) {
+    throw new Error(`Failed to serialize options: ${err}`);
+  }
+  setOptions(allOptionsJson);
+
+  return optionsId;
 }
 
 /**
@@ -1254,7 +1276,7 @@ function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>):
   // `languageOptions.parserOptions`.
   if (!isSerializable(test)) return;
 
-  const serializedTestCase = stringify(test, {
+  const serializedTestCase = stableJsonStringify(test, {
     replacer(key, value) {
       // `this` is the currently stringified object --> only ignore top-level properties
       return test !== this || !DUPLICATION_IGNORED_PROPS.has(key) ? value : undefined;
