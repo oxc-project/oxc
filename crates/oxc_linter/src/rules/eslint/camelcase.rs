@@ -23,19 +23,33 @@ enum PropertiesOption {
     Never,
 }
 
-/// Pre-compiled allow pattern (either literal string or regex)
+/// Pre-compiled allow pattern
+/// ESLint treats each entry as both a literal string AND a regex pattern:
+/// `allow.some(entry => name === entry || name.match(new RegExp(entry, "u")))`
 #[derive(Debug, Clone)]
-enum AllowPattern {
-    Literal(String),
-    Regex(Regex),
+struct AllowPattern {
+    literal: String,
+    regex: Option<Regex>,
 }
 
 impl AllowPattern {
+    fn new(pattern: String) -> Self {
+        // Try to compile as regex (ESLint uses Unicode flag)
+        let regex = Regex::new(&pattern).ok();
+        Self { literal: pattern, regex }
+    }
+
     fn matches(&self, name: &str) -> bool {
-        match self {
-            AllowPattern::Literal(s) => s == name,
-            AllowPattern::Regex(re) => re.is_match(name),
+        // ESLint: name === entry || name.match(new RegExp(entry, "u"))
+        if name == self.literal {
+            return true;
         }
+        if let Some(ref re) = self.regex
+            && re.is_match(name)
+        {
+            return true;
+        }
+        false
     }
 }
 
@@ -65,18 +79,7 @@ struct CamelcaseRuntime {
 
 impl From<CamelcaseConfig> for CamelcaseRuntime {
     fn from(config: CamelcaseConfig) -> Self {
-        let allow_patterns = config
-            .allow
-            .into_iter()
-            .map(|pattern| {
-                if pattern.starts_with('^') || pattern.ends_with('$') {
-                    Regex::new(&pattern)
-                        .map_or_else(|_| AllowPattern::Literal(pattern), AllowPattern::Regex)
-                } else {
-                    AllowPattern::Literal(pattern)
-                }
-            })
-            .collect();
+        let allow_patterns = config.allow.into_iter().map(AllowPattern::new).collect();
 
         Self {
             properties: config.properties,
@@ -144,17 +147,41 @@ impl Rule for Camelcase {
 
             // Destructuring patterns in variable declarations
             AstKind::BindingProperty(prop) => {
-                // Skip if ignoreDestructuring is enabled
-                if self.0.ignore_destructuring {
+                // Get the local binding name
+                let local_name = match &prop.value.kind {
+                    BindingPatternKind::BindingIdentifier(ident) => Some(&ident.name),
+                    BindingPatternKind::AssignmentPattern(pattern) => {
+                        if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
+                            Some(&ident.name)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                };
+
+                let Some(local_name) = local_name else {
                     return;
+                };
+
+                // ESLint ignoreDestructuring: only skip when local name equals property name
+                // e.g., { category_id } or { category_id: category_id } -> skip
+                // but { category_id: categoryId } -> still check categoryId
+                if self.0.ignore_destructuring {
+                    let key_name = match &prop.key {
+                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
+                        _ => None,
+                    };
+                    if key_name == Some(local_name.as_str()) {
+                        return;
+                    }
                 }
 
-                // Check the value (the local binding name)
+                // Check the local binding name
                 match &prop.value.kind {
                     BindingPatternKind::BindingIdentifier(ident) => {
                         self.check_name(&ident.name, ident.span, ctx);
                     }
-                    // Handle destructuring with default value: { category_id = 1 }
                     BindingPatternKind::AssignmentPattern(pattern) => {
                         if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
                             self.check_name(&ident.name, ident.span, ctx);
@@ -244,25 +271,29 @@ impl Rule for Camelcase {
 
             // Import declarations
             AstKind::ImportSpecifier(specifier) => {
+                // ESLint ignoreImports: only skip when local name equals imported name
+                // e.g., import { snake_case } -> skip (local === imported)
+                // but import { snake_case as local_name } -> still check local_name
                 if self.0.ignore_imports {
-                    return;
+                    let imported_name = specifier.imported.name();
+                    if specifier.local.name.as_str() == imported_name.as_str() {
+                        return;
+                    }
                 }
 
-                // Always check the local name (the name used in current scope)
+                // Check the local name (the name used in current scope)
                 self.check_name(&specifier.local.name, specifier.local.span, ctx);
             }
 
+            // Default imports: import foo_bar from 'mod'
+            // No "imported" name to compare, so ignoreImports doesn't apply
             AstKind::ImportDefaultSpecifier(specifier) => {
-                if self.0.ignore_imports {
-                    return;
-                }
                 self.check_name(&specifier.local.name, specifier.local.span, ctx);
             }
 
+            // Namespace imports: import * as foo_bar from 'mod'
+            // No "imported" name to compare, so ignoreImports doesn't apply
             AstKind::ImportNamespaceSpecifier(specifier) => {
-                if self.0.ignore_imports {
-                    return;
-                }
                 self.check_name(&specifier.local.name, specifier.local.span, ctx);
             }
 
@@ -275,9 +306,19 @@ impl Rule for Camelcase {
                 }
             }
 
+            // Named exports: export { foo_bar } or export { foo as bar_baz }
+            AstKind::ExportSpecifier(specifier) => {
+                // Check the exported name (the name visible to importers)
+                if let Some(name) = specifier.exported.identifier_name() {
+                    self.check_name(name.as_str(), specifier.exported.span(), ctx);
+                }
+            }
+
             // Destructuring assignment (not declaration): ({ foo_bar } = obj)
-            // For shorthand: { foo_bar } = obj
+            // For shorthand: { foo_bar } = obj - this is always local === key
             AstKind::AssignmentTargetPropertyIdentifier(ident) => {
+                // Shorthand destructuring: local name always equals property name
+                // ESLint ignoreDestructuring skips this case
                 if self.0.ignore_destructuring {
                     return;
                 }
@@ -286,10 +327,33 @@ impl Rule for Camelcase {
 
             // For renamed: { key: foo_bar } = obj - check foo_bar
             AstKind::AssignmentTargetPropertyProperty(prop) => {
-                if self.0.ignore_destructuring {
+                // Get the local binding name
+                let local_name =
+                    if let oxc_ast::ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
+                        ident,
+                    ) = &prop.binding
+                    {
+                        Some(ident.name.as_str())
+                    } else {
+                        None
+                    };
+
+                let Some(local_name) = local_name else {
                     return;
+                };
+
+                // ESLint ignoreDestructuring: only skip when local name equals property name
+                if self.0.ignore_destructuring {
+                    let key_name = match &prop.name {
+                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
+                        _ => None,
+                    };
+                    if key_name == Some(local_name) {
+                        return;
+                    }
                 }
-                // Check the binding target if it's a simple identifier
+
+                // Check the binding target
                 if let oxc_ast::ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
                     ident,
                 ) = &prop.binding
@@ -298,9 +362,23 @@ impl Rule for Camelcase {
                 }
             }
 
-            // Labels
+            // Labels - both definition and references
             AstKind::LabeledStatement(stmt) => {
                 self.check_name(&stmt.label.name, stmt.label.span, ctx);
+            }
+
+            // break label_name;
+            AstKind::BreakStatement(stmt) => {
+                if let Some(label) = &stmt.label {
+                    self.check_name(&label.name, label.span, ctx);
+                }
+            }
+
+            // continue label_name;
+            AstKind::ContinueStatement(stmt) => {
+                if let Some(label) = &stmt.label {
+                    self.check_name(&label.name, label.span, ctx);
+                }
             }
 
             _ => {}
@@ -458,9 +536,23 @@ fn test() {
             "class C { snake_case; #snake_case; #snake_case2() {} }",
             Some(serde_json::json!([{ "properties": "never" }])),
         ),
-        // ignoreDestructuring applies to destructuring assignments too
+        // ignoreDestructuring applies to destructuring assignments too (only shorthand/same-name)
         ("({ foo_bar } = obj);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
-        ("({ key: bar_baz } = obj);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
+        // ESLint: ignoreDestructuring only skips when local === property name
+        // { category_id: camelCase } -> camelCase is valid, so pass
+        (
+            "var { category_id: camelCase } = query;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        // ignoreImports only skips when local === imported (ESLint behavior)
+        // import { snake_case as camelCase } -> camelCase is valid, so pass
+        (
+            r#"import { snake_case as camelCase } from "mod";"#,
+            Some(serde_json::json!([{ "ignoreImports": true }])),
+        ),
+        // allow patterns work as regex even without ^/$
+        ("foo_bar = 0;", Some(serde_json::json!([{ "allow": ["foo.*"] }]))),
+        ("get_user_id = 0;", Some(serde_json::json!([{ "allow": ["_id"] }]))),
     ];
 
     let fail = vec![
@@ -502,6 +594,22 @@ fn test() {
         // Destructuring assignments (not declarations)
         ("({ foo_bar } = obj);", None),
         ("({ key: bar_baz } = obj);", None),
+        // ESLint ignoreDestructuring: renamed destructuring should still report
+        // { category_id: other_name } -> other_name should be checked (not equal to key)
+        (
+            "var { category_id: other_name } = query;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        (
+            "({ key: other_name } = obj);",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        // ESLint ignoreImports: renamed imports should still report
+        // import { snake_case as other_snake } -> other_snake should be checked
+        (
+            r#"import { snake_case as other_snake } from "mod";"#,
+            Some(serde_json::json!([{ "ignoreImports": true }])),
+        ),
     ];
 
     Tester::new(Camelcase::NAME, Camelcase::PLUGIN, pass, fail).test_and_snapshot();

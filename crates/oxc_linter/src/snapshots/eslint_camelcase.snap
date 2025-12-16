@@ -238,3 +238,24 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────
    ╰────
   help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'other_name' is not in camel case.
+   ╭─[camelcase.tsx:1:20]
+ 1 │ var { category_id: other_name } = query;
+   ·                    ──────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'other_name' is not in camel case.
+   ╭─[camelcase.tsx:1:9]
+ 1 │ ({ key: other_name } = obj);
+   ·         ──────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'other_snake' is not in camel case.
+   ╭─[camelcase.tsx:1:24]
+ 1 │ import { snake_case as other_snake } from "mod";
+   ·                        ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
