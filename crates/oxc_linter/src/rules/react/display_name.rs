@@ -364,7 +364,7 @@ fn check_context_assignment_references(
             if let AstKind::AssignmentExpression(assign) = ancestor_kind
                 && let Expression::CallExpression(call) = &assign.right
                 && let Some(callee_name) = call.callee_name()
-                && (callee_name == "createContext" || callee_name.ends_with(".createContext"))
+                && callee_name == "createContext"
             {
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
             }
@@ -398,7 +398,7 @@ fn is_react_component_node<'a>(
             // Check for createContext
             if let Some(Expression::CallExpression(call)) = &decl.init
                 && let Some(callee_name) = call.callee_name()
-                && (callee_name == "createContext" || callee_name.ends_with(".createContext"))
+                && callee_name == "createContext"
             {
                 if check_context_objects {
                     return Some(ReactComponentInfo {
@@ -930,10 +930,7 @@ fn is_module_exports_component<'a>(
                                 name: None,
                             });
                         }
-                    } else if (callee_name == "createContext"
-                        || callee_name.ends_with(".createContext"))
-                        && check_context_objects
-                    {
+                    } else if callee_name == "createContext" && check_context_objects {
                         return Some(ReactComponentInfo {
                             span: assign.span,
                             is_context: true,
