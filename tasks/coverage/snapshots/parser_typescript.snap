@@ -3565,6 +3565,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ─────
  5 │ }
    ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/castOfYield.ts:4:19]

@@ -18439,6 +18439,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  17 │ var g = function*() { yield 3 + yield 4; };
     ·                                 ─────
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/generators/yield-weak-binding.js:17:38]
@@ -20146,6 +20147,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ─────
  19 │ };
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/object/method-definition/yield-weak-binding.js:18:25]
@@ -28309,6 +28311,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ─────
  19 │ }
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/definition/methods-gen-yield-weak-binding.js:18:25]
@@ -37727,6 +37730,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  17 │ function* g() { yield 3 + yield 4; }
     ·                           ─────
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/generators/yield-weak-binding.js:17:32]
@@ -38481,6 +38485,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·     ─────
  26 │ }
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/let-newline-yield-in-generator-function.js:25:10]

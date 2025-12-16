@@ -481,9 +481,17 @@ pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
-        .with_label(span1)
+pub fn identifier_generator(x0: &str, span1: Span, looks_like_expression: bool) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
+            .with_label(span1);
+    if looks_like_expression {
+        diagnostic.with_help(format!(
+            "Wrap this in parentheses if you want to use a `{x0}` expression here"
+        ))
+    } else {
+        diagnostic
+    }
 }
 
 #[cold]
