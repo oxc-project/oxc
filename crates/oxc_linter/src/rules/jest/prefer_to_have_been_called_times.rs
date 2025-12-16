@@ -90,24 +90,20 @@ impl PreferToHaveBeenCalledTimes {
         call_expr: &CallExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        // only proceed if there is a matcher
         let Some(matcher) = parsed_expect_call.matcher() else {
             return;
         };
 
-        // only change `toHaveLength` matcher
         let is_wanted_matcher = matcher.is_name_equal("toHaveLength");
         if !is_wanted_matcher {
             return;
         }
 
-        // argument to the matcher
         let matcher_argument = parsed_expect_call.args.first();
         if matcher_argument.is_none() {
             return;
         }
 
-        // argument to the `expect`
         let expect_argument = parsed_expect_call.head.parent.and_then(|parent| {
             if let Expression::CallExpression(parent) = parent {
                 let expect_argument = parent.arguments.first();
@@ -152,7 +148,6 @@ impl PreferToHaveBeenCalledTimes {
                     return fixer.noop();
                 };
 
-                // 从 expect_argument_mem_expr 中提取方法名
                 let method_text = Self::build_expect_argument(expect_argument_mem_expr, fixer);
 
                 let code = format!(
@@ -179,14 +174,10 @@ impl PreferToHaveBeenCalledTimes {
     ) -> &'a str {
         if let Some(mem_expr) = expect_argument_mem_expr
             && mem_expr.static_property_name().unwrap().eq("calls")
+            && let Some(expr) = mem_expr.object().as_member_expression()
+            && expr.static_property_name() == Some("mock")
         {
-            // get text before mock
-            if let expr @ match_member_expression!(Expression) = mem_expr.object() {
-                let inner_mem_expr = expr.to_member_expression();
-                if inner_mem_expr.static_property_name().unwrap().eq("mock") {
-                    return fixer.source_range(inner_mem_expr.object().span());
-                }
-            }
+            return fixer.source_range(expr.object().span());
         }
         ""
     }
