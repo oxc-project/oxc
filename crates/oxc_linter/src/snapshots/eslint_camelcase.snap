@@ -287,3 +287,24 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────
    ╰────
   help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ const [foo_bar, bar_baz] = arr;
+   ·        ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'bar_baz' is not in camel case.
+   ╭─[camelcase.tsx:1:17]
+ 1 │ const [foo_bar, bar_baz] = arr;
+   ·                 ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ const [foo_bar = 1] = arr;
+   ·        ───────
+   ╰────
+  help: Rename this identifier to use camelCase.

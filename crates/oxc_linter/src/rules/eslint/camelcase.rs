@@ -417,14 +417,12 @@ impl Camelcase {
     }
 
     /// Check a binding pattern for camelCase violations (used for array destructuring)
+    /// Note: ignoreDestructuring does NOT apply to array destructuring because
+    /// array elements have no "property name" to compare against (only indices).
+    /// ESLint always checks array destructuring bindings regardless of ignoreDestructuring.
     fn check_binding_pattern(&self, pattern: &oxc_ast::ast::BindingPattern, ctx: &LintContext) {
         match &pattern.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
-                // For array destructuring, there's no "property name" to compare
-                // so ignoreDestructuring skips all array element bindings
-                if self.0.ignore_destructuring {
-                    return;
-                }
                 self.check_name(&ident.name, ident.span, ctx);
             }
             BindingPatternKind::AssignmentPattern(assign) => {
@@ -595,23 +593,12 @@ fn test() {
         ("foo_bar = 0;", Some(serde_json::json!([{ "allow": ["foo.*"] }]))),
         ("get_user_id = 0;", Some(serde_json::json!([{ "allow": ["_id"] }]))),
         // Rest element in destructuring with ignoreDestructuring
+        // Rest elements have no "property name" to compare, so they're skipped
         (
             "const { category_id, ...other_props } = obj;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
         ),
-        // Array destructuring with ignoreDestructuring
-        (
-            "const [foo_bar, bar_baz] = arr;",
-            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ),
-        ("const [foo_bar = 1] = arr;", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
     ];
-
-    // Test cases to verify current gaps (should fail but currently pass - known limitations)
-    // These are documented as ESLint compatibility gaps:
-    // 1. Rest element without ignoreDestructuring - should report other_props
-    // 2. Array destructuring - should report foo_bar
-    // 3. ignoreDestructuring + later use - ESLint reports but we don't (scope analysis needed)
 
     let fail = vec![
         (r#"first_name = "Nicholas""#, None),
@@ -674,9 +661,18 @@ fn test() {
         ("const [foo_bar] = arr;", None),
         ("const [first, second_item] = arr;", None),
         ("const [foo_bar = 1] = arr;", None), // with default value
-                                              // NOTE: Known ESLint compatibility gaps (not currently checked):
-                                              // - ignoreDestructuring + later use: ESLint checks variable usage after destructuring
-                                              // - ignoreGlobals option: not implemented
+        // Array destructuring is NOT skipped by ignoreDestructuring (no property name to compare)
+        (
+            "const [foo_bar, bar_baz] = arr;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        (
+            "const [foo_bar = 1] = arr;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        // NOTE: Known ESLint compatibility gaps (not currently checked):
+        // - ignoreDestructuring + later use: ESLint checks variable usage after destructuring
+        // - ignoreGlobals option: not implemented
     ];
 
     Tester::new(Camelcase::NAME, Camelcase::PLUGIN, pass, fail).test_and_snapshot();
