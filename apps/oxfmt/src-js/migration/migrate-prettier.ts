@@ -106,10 +106,12 @@ export async function runMigratePrettier() {
 
   // Migrate `ignorePatterns` from `.prettierignore`
   const ignores = await resolvePrettierIgnore(cwd);
-  if (0 < ignores.length) {
-    oxfmtrc.ignorePatterns = ignores;
+  if (ignores.length > 0) {
     console.log("Migrated ignore patterns from `.prettierignore`");
   }
+  // Keep ignorePatterns at the bottom
+  delete oxfmtrc.ignorePatterns;
+  oxfmtrc.ignorePatterns = ignores;
 
   const jsonStr = JSON.stringify(oxfmtrc, null, 2);
 
