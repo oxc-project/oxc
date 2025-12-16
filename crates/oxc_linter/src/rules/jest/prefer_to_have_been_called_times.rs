@@ -35,7 +35,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// This rule triggers a warning if toHaveLength is used to assert the number of times a mock is called.
+    /// This rule triggers a warning if `toHaveLength` is used to assert the number of times a mock is called.
     ///
     /// ### Examples
     ///
