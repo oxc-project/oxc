@@ -55,7 +55,7 @@ fn is_valid_describe_chain<T: AsRef<str>>(modifiers: &[T]) -> bool {
 fn is_valid_it_chain<T: AsRef<str>>(modifiers: &[T]) -> bool {
     for (i, modifier) in modifiers.iter().enumerate() {
         match modifier.as_ref() {
-            "each" => {
+            "each" | "for" => {
                 // each must be at the end
                 if i != modifiers.len() - 1 {
                     return false;
@@ -150,6 +150,8 @@ mod tests {
         assert!(is_valid_vitest_call(&["test"]));
         assert!(is_valid_vitest_call(&["it", "concurrent"]));
         assert!(is_valid_vitest_call(&["it", "each"]));
+        assert!(is_valid_vitest_call(&["it", "for"]));
+        assert!(is_valid_vitest_call(&["test", "for"]));
         assert!(is_valid_vitest_call(&["it", "extend"]));
         assert!(is_valid_vitest_call(&["it", "fails"]));
         assert!(is_valid_vitest_call(&["it", "only"]));
