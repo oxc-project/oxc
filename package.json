@@ -13,7 +13,7 @@
     "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.7.1",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "oxfmt": "^0.18.0",
     "oxlint": "^1.33.0",
     "oxlint-tsgolint": "0.9.1",

@@ -70,6 +70,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^5.0.0",
     "@napi-rs/wasm-runtime": "catalog:",
+    "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.44.0",
     "@vitest/browser": "4.0.15",
     "@vitest/browser-playwright": "4.0.15",

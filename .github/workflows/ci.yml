@@ -196,10 +196,8 @@ jobs:
           pnpm run test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run test
         working-directory: tasks/e2e
+        run: pnpm run test
       - if: steps.filter.outputs.src == 'true'
         run: |
           git diff --exit-code # Must commit everything
