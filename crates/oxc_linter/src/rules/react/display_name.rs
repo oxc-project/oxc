@@ -4,8 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, ClassElement, Expression, ObjectExpression, ObjectPropertyKind,
-        PropertyKey, Statement,
+        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        ObjectPropertyKind, PropertyKey, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -692,7 +692,7 @@ fn is_anonymous_export_component<'a>(
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
-        oxc_ast::ast::ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
+        ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
             if func.expression {
                 if func.body.statements.len() == 1
                     && let Statement::ExpressionStatement(expr_stmt) = &func.body.statements[0]
@@ -719,7 +719,7 @@ fn is_anonymous_export_component<'a>(
                 }
             }
         }
-        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionExpression(func) => {
+        ExportDefaultDeclarationKind::FunctionExpression(func) => {
             if let Some(body) = &func.body {
                 for stmt in &body.statements {
                     if let Statement::ReturnStatement(ret_stmt) = stmt
@@ -738,7 +738,7 @@ fn is_anonymous_export_component<'a>(
                 }
             }
         }
-        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+        ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
             if let Some(name) = &func.id
                 && is_react_component_name(&name.name)
                 && function_contains_jsx(func)
@@ -751,7 +751,7 @@ fn is_anonymous_export_component<'a>(
                 });
             }
         }
-        oxc_ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+        ExportDefaultDeclarationKind::ClassDeclaration(class) => {
             return check_class_component(class, export.span, ignore_transpiler_name);
         }
         _ => {}
