@@ -15,6 +15,7 @@ use oxc_semantic::{AstNode, Reference, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    ast_util::iter_outer_expressions,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
@@ -259,30 +260,47 @@ fn is_display_name_assignment_for_reference(
 
     let reference_node = ctx.nodes().get_node(reference.node_id());
 
-    // Walk up to find if this is part of: Component.displayName = ...
-    for ancestor_kind in ctx.nodes().ancestor_kinds(reference_node.id()) {
-        if let AstKind::AssignmentExpression(assign) = ancestor_kind
-            && let AssignmentTarget::StaticMemberExpression(member) = &assign.left
-            && member.property.name == "displayName"
-        {
-            // Check if the object matches the component
-            if let Expression::Identifier(ident) = &member.object {
-                if let Some(name) = component_name {
-                    return ident.name == name;
-                }
-            } else if let Expression::StaticMemberExpression(_) = &member.object {
-                // Handle nested case like: Namespace.Component.displayName
-                // We need to extract the full path and compare
-                if let Some(name) = component_name {
-                    let path = extract_member_expression_path(&member.object);
-                    return path == name;
-                }
-            }
-            return true;
-        }
+    // Only consider IdentifierReference nodes
+    if !matches!(reference_node.kind(), AstKind::IdentifierReference(_)) {
+        return false;
     }
 
-    false
+    // Use limited parent walking - we only need to check 2 levels:
+    // IdentifierReference -> StaticMemberExpression -> AssignmentExpression
+    let mut parents = iter_outer_expressions(ctx.nodes(), reference_node.id());
+
+    // First parent should be StaticMemberExpression with .displayName
+    let Some(AstKind::StaticMemberExpression(member)) = parents.next() else {
+        return false;
+    };
+
+    if member.property.name != "displayName" {
+        return false;
+    }
+
+    // Second parent should be AssignmentExpression with the member on the left side
+    let Some(AstKind::AssignmentExpression(assign)) = parents.next() else {
+        return false;
+    };
+
+    // Verify this is the left-hand side of the assignment
+    if !assign.left.span().contains_inclusive(reference_node.span()) {
+        return false;
+    }
+
+    // If component_name is provided, verify the object matches
+    if let Some(name) = component_name {
+        if let Expression::Identifier(ident) = &member.object {
+            return ident.name == name;
+        } else if let Expression::StaticMemberExpression(_) = &member.object {
+            // Handle nested case like: Namespace.Component.displayName
+            let path = extract_member_expression_path(&member.object);
+            return path == name;
+        }
+        return false;
+    }
+
+    true
 }
 
 /// Extract the full path from a member expression (e.g., "Namespace.Component")
