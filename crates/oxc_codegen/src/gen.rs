@@ -1054,11 +1054,19 @@ impl Gen for ExportSpecifier<'_> {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
+        if p.has_comment(self.local.span().start) {
+            p.print_comments_at(self.local.span().start);
+            p.print_indent();
+        }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
         let exported_name = get_module_export_name(&self.exported, p);
         if local_name != exported_name {
             p.print_str(" as ");
+            if p.has_comment(self.exported.span().start) {
+                p.print_comments_at(self.exported.span().start);
+                p.print_indent();
+            }
             self.exported.print(p, ctx);
         }
     }
