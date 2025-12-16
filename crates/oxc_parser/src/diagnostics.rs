@@ -428,7 +428,9 @@ pub fn for_await(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Cannot use new with dynamic import").with_label(span)
+    OxcDiagnostic::error("Cannot use new with dynamic import")
+        .with_label(span)
+        .with_help("Wrap this with parenthesis")
 }
 
 #[cold]
