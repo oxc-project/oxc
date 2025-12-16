@@ -1,10 +1,11 @@
 use lazy_regex::{Regex, RegexBuilder};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::Comment;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -42,7 +43,8 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum CapitalizeOption {
     #[default]
     Always,
@@ -78,12 +80,29 @@ struct CommentConfigJson {
     ignore_consecutive_comments: Option<bool>,
 }
 
+impl CommentConfigJson {
+    fn into_comment_config(self, base: &CommentConfigJson) -> CommentConfig {
+        let pattern = self.ignore_pattern.as_ref().or(base.ignore_pattern.as_ref());
+        CommentConfig {
+            ignore_pattern: pattern
+                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok()),
+            ignore_inline_comments: self
+                .ignore_inline_comments
+                .or(base.ignore_inline_comments)
+                .unwrap_or(false),
+            ignore_consecutive_comments: self
+                .ignore_consecutive_comments
+                .or(base.ignore_consecutive_comments)
+                .unwrap_or(false),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct OptionsJson {
-    ignore_pattern: Option<String>,
-    ignore_inline_comments: Option<bool>,
-    ignore_consecutive_comments: Option<bool>,
+    #[serde(flatten)]
+    base: CommentConfigJson,
     line: Option<CommentConfigJson>,
     block: Option<CommentConfigJson>,
 }
@@ -121,76 +140,18 @@ declare_oxc_lint!(
 
 impl Rule for CapitalizedComments {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let arr = value.as_array();
-
-        // Parse capitalize option (first element)
-        let capitalize = arr
-            .and_then(|arr| arr.first())
-            .and_then(|v| v.as_str())
-            .map(|s| match s {
-                "never" => CapitalizeOption::Never,
-                _ => CapitalizeOption::Always,
-            })
-            .unwrap_or_default();
-
-        // Parse options object (second element)
-        let options: Option<OptionsJson> =
-            arr.and_then(|arr| arr.get(1)).and_then(|v| serde_json::from_value(v.clone()).ok());
-
-        let (line_config, block_config) = if let Some(opts) = options {
-            // Build base config from top-level options
-            // ESLint uses ^\s*(?:pattern) for prefix matching on normalized text
-            let base_ignore_pattern = opts
-                .ignore_pattern
-                .as_ref()
-                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok());
-            let base_ignore_inline = opts.ignore_inline_comments.unwrap_or(false);
-            let base_ignore_consecutive = opts.ignore_consecutive_comments.unwrap_or(false);
-
-            // Build line config (merge with line-specific options)
-            let line_config = CommentConfig {
-                ignore_pattern: opts
-                    .line
-                    .as_ref()
-                    .and_then(|l| l.ignore_pattern.as_ref())
-                    .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok())
-                    .or_else(|| base_ignore_pattern.clone()),
-                ignore_inline_comments: opts
-                    .line
-                    .as_ref()
-                    .and_then(|l| l.ignore_inline_comments)
-                    .unwrap_or(base_ignore_inline),
-                ignore_consecutive_comments: opts
-                    .line
-                    .as_ref()
-                    .and_then(|l| l.ignore_consecutive_comments)
-                    .unwrap_or(base_ignore_consecutive),
-            };
-
-            // Build block config (merge with block-specific options)
-            let block_config = CommentConfig {
-                ignore_pattern: opts
-                    .block
-                    .as_ref()
-                    .and_then(|b| b.ignore_pattern.as_ref())
-                    .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok())
-                    .or(base_ignore_pattern),
-                ignore_inline_comments: opts
-                    .block
-                    .as_ref()
-                    .and_then(|b| b.ignore_inline_comments)
-                    .unwrap_or(base_ignore_inline),
-                ignore_consecutive_comments: opts
-                    .block
-                    .as_ref()
-                    .and_then(|b| b.ignore_consecutive_comments)
-                    .unwrap_or(base_ignore_consecutive),
-            };
-
-            (line_config, block_config)
-        } else {
-            (CommentConfig::default(), CommentConfig::default())
+        let Some(arr) = value.as_array() else {
+            return Self::default();
         };
+
+        let capitalize =
+            arr.first().and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+
+        let options: OptionsJson =
+            arr.get(1).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+
+        let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
+        let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);
 
         Self(Box::new(CapitalizedCommentsConfig { capitalize, line_config, block_config }))
     }
@@ -200,17 +161,13 @@ impl Rule for CapitalizedComments {
         let comments = ctx.semantic().comments();
 
         // Skip shebang comment if present
-        let comments_iter = comments
-            .iter()
-            .skip_while(|c| c.span.start == 0 && source_text.starts_with("#!"));
+        let comments_iter =
+            comments.iter().skip_while(|c| c.span.start == 0 && source_text.starts_with("#!"));
 
         // Iterate with (prev, current) pairs to check consecutive comments
-        let iter = std::iter::once(None)
-            .chain(comments_iter.clone().map(Some))
-            .zip(comments_iter);
+        let iter = std::iter::once(None).chain(comments_iter.clone().map(Some)).zip(comments_iter);
 
         for (prev_comment, comment) in iter {
-
             let config = if comment.is_line() { &self.line_config } else { &self.block_config };
 
             // Get the comment content (without the // or /* */)
@@ -246,7 +203,8 @@ impl Rule for CapitalizedComments {
 
             // Check ignoreConsecutiveComments
             if config.ignore_consecutive_comments
-                && prev_comment.is_some_and(|prev| is_consecutive_comment(source_text, prev, comment))
+                && prev_comment
+                    .is_some_and(|prev| is_consecutive_comment(source_text, prev, comment))
             {
                 continue;
             }
@@ -255,47 +213,32 @@ impl Rule for CapitalizedComments {
             // - A letter is "uppercase" if it differs from its lowercase form
             // - A letter is "lowercase" if it differs from its uppercase form
             // - Letters with no case distinction (CJK, Hebrew, Arabic, etc.) are skipped
-            let letter_str = first_letter.to_string();
-            let lower = first_letter.to_lowercase().to_string();
-            let upper = first_letter.to_uppercase().to_string();
+            let lower = first_letter.to_lowercase().collect::<String>();
+            let upper = first_letter.to_uppercase().collect::<String>();
 
             // Skip letters with no case distinction (e.g., CJK characters)
             if lower == upper {
                 continue;
             }
 
-            let is_uppercase = letter_str != lower;
-            let needs_fix = match self.capitalize {
-                CapitalizeOption::Always => !is_uppercase,
-                CapitalizeOption::Never => is_uppercase,
+            let is_uppercase = first_letter.is_uppercase();
+            let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
+                CapitalizeOption::Always if !is_uppercase => ("lowercase", "uppercase", upper),
+                CapitalizeOption::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                _ => continue,
             };
 
-            if needs_fix {
-                let (wrong_case, correct_case) = if self.capitalize == CapitalizeOption::Always {
-                    ("lowercase", "uppercase")
-                } else {
-                    ("uppercase", "lowercase")
-                };
+            // Calculate the span for the first letter
+            #[expect(clippy::cast_possible_truncation)]
+            let letter_start = comment.content_span().start + first_letter_offset as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let letter_end = letter_start + first_letter.len_utf8() as u32;
+            let letter_span = Span::new(letter_start, letter_end);
 
-                // Calculate the span for the first letter
-                #[expect(clippy::cast_possible_truncation)]
-                let letter_start = comment.content_span().start + first_letter_offset as u32;
-                #[expect(clippy::cast_possible_truncation)]
-                let letter_end = letter_start + first_letter.len_utf8() as u32;
-                let letter_span = Span::new(letter_start, letter_end);
-
-                ctx.diagnostic_with_fix(
-                    capitalized_comments_diagnostic(comment.span, wrong_case, correct_case),
-                    |fixer| {
-                        let fixed_letter = if self.capitalize == CapitalizeOption::Always {
-                            first_letter.to_uppercase().to_string()
-                        } else {
-                            first_letter.to_lowercase().to_string()
-                        };
-                        fixer.replace(letter_span, fixed_letter)
-                    },
-                );
-            }
+            ctx.diagnostic_with_fix(
+                capitalized_comments_diagnostic(comment.span, wrong_case, correct_case),
+                |fixer| fixer.replace(letter_span, fixed_letter.clone()),
+            );
         }
     }
 }
@@ -307,14 +250,14 @@ impl Rule for CapitalizedComments {
 /// - "* description" -> "description"
 /// - "\n * line1\n * line2" -> "line1\n line2"
 fn normalize_comment_text(content: &str) -> String {
+    use itertools::Itertools;
     content
         .lines()
         .map(|line| {
             let trimmed = line.trim_start();
             // Remove leading * and following whitespace
-            if let Some(rest) = trimmed.strip_prefix('*') { rest.trim_start() } else { trimmed }
+            trimmed.strip_prefix('*').map_or(trimmed, str::trim_start)
         })
-        .collect::<Vec<_>>()
         .join("\n")
 }
 
@@ -331,9 +274,8 @@ fn find_first_letter(content: &str) -> Option<(usize, char)> {
         if c.is_alphabetic() {
             return Some((whitespace_len + extra_offset + i, c));
         }
-        // Non-letter, non-whitespace character - check if it's something that should stop us
-        if !c.is_whitespace() && !c.is_alphabetic() {
-            // If it's a digit or special char at the start, the whole comment is "non-cased"
+        // Non-letter, non-whitespace character (digit or special char) means comment is "non-cased"
+        if !c.is_whitespace() {
             return None;
         }
     }
@@ -341,34 +283,25 @@ fn find_first_letter(content: &str) -> Option<(usize, char)> {
 }
 
 /// Check if the comment content is a directive comment that should be ignored
-fn is_directive_comment(normalized: &str) -> bool {
-    let trimmed = normalized.trim_start();
+fn is_directive_comment(content: &str) -> bool {
+    let trimmed = content.trim_start();
 
     // Check known directive prefixes
-    for directive in DIRECTIVES {
-        if trimmed.starts_with(directive) {
-            return true;
-        }
+    if DIRECTIVES.iter().any(|d| trimmed.starts_with(d)) {
+        return true;
     }
 
     // Check if it looks like a URL (any scheme://)
     // This matches ESLint's behavior which uses a general pattern
-    if let Some(colon_pos) = trimmed.find(':') {
-        // Check if there's "://" after the colon and the scheme is alphanumeric
-        if trimmed.get(colon_pos..colon_pos + 3) == Some("://") {
+    trimmed.find(':').is_some_and(|colon_pos| {
+        trimmed.get(colon_pos..colon_pos + 3) == Some("://") && {
             let scheme = &trimmed[..colon_pos];
-            // Scheme must be non-empty and contain only alphanumeric, +, -, .
-            if !scheme.is_empty()
+            !scheme.is_empty()
                 && scheme
                     .chars()
                     .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '-' || c == '.')
-            {
-                return true;
-            }
         }
-    }
-
-    false
+    })
 }
 
 /// Check if a comment is inline (has code on the same line before AND after it)
