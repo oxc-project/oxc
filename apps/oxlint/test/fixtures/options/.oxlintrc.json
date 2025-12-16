@@ -21,7 +21,8 @@
         "overrideDefault": 12,
         "nested": {
           "fromConfig": 13,
-          "overrideDefault": 14
+          "overrideDefault": 14,
+          "fromConfigObject": { "objectKey": 17 }
         }
       },
       15,

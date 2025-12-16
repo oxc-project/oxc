@@ -14,10 +14,6 @@ import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import type { Writable } from "type-fest";
 import type { JsonValue } from "./json.ts";
 
-const { freeze } = Object,
-  { isArray } = Array,
-  { min } = Math;
-
 /**
  * Options for a rule on a file.
  */
@@ -58,8 +54,8 @@ export function setOptions(optionsJson: string): void {
 
   // Validate
   if (DEBUG) {
-    assert(isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
-    assert(isArray(ruleIds), `ruleIds must be an array, got ${typeof allOptions}`);
+    assert(Array.isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
+    assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof allOptions}`);
     assert.strictEqual(
       allOptions.length,
       ruleIds.length,
@@ -67,7 +63,7 @@ export function setOptions(optionsJson: string): void {
     );
 
     for (const options of allOptions) {
-      assert(isArray(options), `Elements of options must be arrays, got ${typeof options}`);
+      assert(Array.isArray(options), `Elements of options must be arrays, got ${typeof options}`);
     }
 
     for (const ruleId of ruleIds) {
@@ -88,17 +84,6 @@ export function setOptions(optionsJson: string): void {
       registeredRules[ruleIds[i]].defaultOptions,
     );
   }
-}
-
-/**
- * Initialize `allOptions` to 1-element array.
- * The first element is irrelevant and never accessed.
- *
- * This function is only used in `RuleTester`.
- * Main linter process uses `setOptions` instead.
- */
-export function initAllOptions(): void {
-  allOptions = [DEFAULT_OPTIONS];
 }
 
 /**
@@ -123,7 +108,7 @@ export function initAllOptions(): void {
  * @param defaultOptions - Default options from `rule.meta.defaultOptions`
  * @returns Merged options
  */
-export function mergeOptions(
+function mergeOptions(
   configOptions: Options,
   defaultOptions: Readonly<Options>,
 ): Readonly<Options> {
@@ -136,27 +121,27 @@ export function mergeOptions(
   const merged = [];
 
   const defaultOptionsLength = defaultOptions.length,
-    ruleOptionsLength = configOptions.length,
-    bothLength = min(defaultOptionsLength, ruleOptionsLength);
+    configOptionsLength = configOptions.length,
+    bothLength = Math.min(defaultOptionsLength, configOptionsLength);
 
   let i = 0;
   for (; i < bothLength; i++) {
     merged.push(mergeValues(configOptions[i], defaultOptions[i]));
   }
 
-  if (defaultOptionsLength > ruleOptionsLength) {
+  if (defaultOptionsLength > configOptionsLength) {
     for (; i < defaultOptionsLength; i++) {
       merged.push(defaultOptions[i]);
     }
   } else {
-    for (; i < ruleOptionsLength; i++) {
+    for (; i < configOptionsLength; i++) {
       const prop = configOptions[i];
       deepFreezeValue(prop);
       merged.push(prop);
     }
   }
 
-  return freeze(merged);
+  return Object.freeze(merged);
 }
 
 /**
@@ -171,13 +156,13 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   if (configValue === null || typeof configValue !== "object") return configValue;
 
   // If config value is an array, it wins
-  if (isArray(configValue)) {
+  if (Array.isArray(configValue)) {
     deepFreezeArray(configValue);
     return configValue;
   }
 
   // If default value is a primitive or an array, config value wins (it's an object)
-  if (defaultValue === null || typeof defaultValue !== "object" || isArray(defaultValue)) {
+  if (defaultValue === null || typeof defaultValue !== "object" || Array.isArray(defaultValue)) {
     deepFreezeObject(configValue);
     return configValue;
   }
@@ -185,16 +170,11 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   // Both are objects (not arrays)
   const merged = { ...defaultValue, ...configValue };
 
-  // Symbol properties are not possible in JSON, so no need to handle them here.
-  //
-  // `defaultValue` is not from JSON, so we can't use a simple `for..in` loop over `defaultValue`.
-  // That would also pick up enumerable properties from prototype of `defaultValue`.
-  // `configValue` *is* from JSON, so simple `key in configValue` check is fine.
-  //
-  // A malicious plugin could potentially get up to mischief here (prototype pollution?) if `defaultValue` is a `Proxy`.
-  // But plugins are executable code, so they have far easier ways to do that. No point in defending against it here.
-  for (const key of Object.keys(defaultValue)) {
-    if (key in configValue) {
+  // Symbol properties and circular references are not possible in JSON, so no need to handle them here.
+  // `configValue` is from JSON, so we can use a simple `for..in` loop over `configValue`.
+  for (const key in configValue) {
+    // `Object.hasOwn` not `in`, in case `key` is `"__proto__"`
+    if (Object.hasOwn(defaultValue, key)) {
       // `key` is an own property of both `configValue` and `defaultValue`, so must be an own property of `merged` too.
       // Therefore, we don't need special handling for if `key` is `"__proto__"`.
       // All the property reads and writes here will affect only the owned properties of these objects,
@@ -205,5 +185,5 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
     }
   }
 
-  return freeze(merged);
+  return Object.freeze(merged);
 }

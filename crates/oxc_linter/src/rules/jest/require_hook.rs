@@ -9,7 +9,6 @@ use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::borrow::Cow;
 
 use crate::{
     context::LintContext,
@@ -256,7 +255,7 @@ impl RequireHook {
                 return;
             };
 
-            if !(is_valid_vitest_call(&[Cow::Borrowed(fn_type)])
+            if !(is_valid_vitest_call(&[fn_type])
                 || name.starts_with("jest.")
                 || name.starts_with("vi.")
                 || self.allowed_function_calls.contains(&name))

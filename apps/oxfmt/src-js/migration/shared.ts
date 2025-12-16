@@ -17,7 +17,7 @@ export async function createBlankOxfmtrcFile(cwd: string) {
   const config: Record<string, unknown> = {
     // Add `$schema` field at the top if schema file exists in `node_modules`
     $schema: schemaPath,
-    // `ignorePatterns` is included to make visible and preferred over `.prettierignore`
+    // `ignorePatterns` is included to make it visible and preferred over `.prettierignore`
     ignorePatterns: [],
   };
 

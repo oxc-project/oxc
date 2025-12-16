@@ -38,7 +38,7 @@ import pluginReactPerf from "eslint-plugin-react-perf";
 import pluginNext from "@next/eslint-plugin-next";
 // https://github.com/eslint-community/eslint-plugin-promise/blob/v7.1.0/index.js
 import pluginPromise from "eslint-plugin-promise";
-// https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
+// https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
 import pluginVitest from "eslint-plugin-vitest";
 // https://github.com/vuejs/eslint-plugin-vue
 import pluginVue from "eslint-plugin-vue";

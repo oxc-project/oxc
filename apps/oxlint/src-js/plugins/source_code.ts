@@ -29,8 +29,6 @@ import type { Token } from "./tokens.ts";
 import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
-const { max } = Math;
-
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
@@ -224,7 +222,7 @@ export const SOURCE_CODE = Object.freeze({
     const { range } = node;
     let start = range[0],
       end = range[1];
-    if (beforeCount) start = max(start - beforeCount, 0);
+    if (beforeCount) start = Math.max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
     return sourceText.slice(start, end);
   },

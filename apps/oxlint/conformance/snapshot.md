@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   277 | 100.0% |
-| Fully passing     |   216 |  78.0% |
-| Partially passing |    60 |  21.7% |
+| Fully passing     |   217 |  78.3% |
+| Partially passing |    59 |  21.3% |
 | Fully failing     |     1 |   0.4% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 29765 | 100.0% |
-| Passing     | 28670 |  96.3% |
-| Failing     |   988 |   3.3% |
+| Passing     | 28671 |  96.3% |
+| Failing     |   987 |   3.3% |
 | Skipped     |   107 |   0.4% |
 
 ## Fully Passing Rules
@@ -187,6 +187,7 @@
 - `no-unused-private-class-members` (39 tests)
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
+- `no-useless-computed-key` (96 tests)
 - `no-useless-concat` (20 tests)
 - `no-useless-constructor` (49 tests) (1 skipped)
 - `no-useless-escape` (288 tests)
@@ -289,7 +290,6 @@
 - `no-unused-vars` - 340 / 436 (78.0%)
 - `no-use-before-define` - 323 / 347 (93.1%)
 - `no-useless-backreference` - 188 / 190 (98.9%)
-- `no-useless-computed-key` - 95 / 96 (99.0%)
 - `padding-line-between-statements` - 364 / 624 (58.3%)
 - `prefer-const` - 136 / 138 (98.6%)
 - `prefer-exponentiation-operator` - 164 / 167 (98.2%)
@@ -97462,45 +97462,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-useless-computed-key`
-
-Pass: 95 / 96 (99.0%)
-Fail: 1 / 96 (1.0%)
-Skip: 0 / 96 (0.0%)
-
-#### no-useless-computed-key > invalid
-
-```js
-class Foo { ['x']() {} }
-```
-
-```json
-{
-  "output": "class Foo { 'x'() {} }",
-  "options": [
-    {}
-  ],
-  "errors": [
-    {
-      "messageId": "unnecessarilyComputedProperty",
-      "data": {
-        "property": "'x'"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
 
 

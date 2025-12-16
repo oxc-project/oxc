@@ -2,14 +2,17 @@
   "name": "e2e",
   "private": true,
   "scripts": {
-    "test": "vitest run --dir ./test && pnpm -r test run"
-  },
-  "dependencies": {
-    "@types/supertest": "^6.0.3"
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/testing": "^11.0.1",
+    "@oxc-project/runtime": "link:../../npm/runtime",
+    "@types/supertest": "^6.0.3",
     "alpinejs": "^3.14.9",
-    "antd": "^6.0.0",
+    "antd": "^6.1.1",
     "axios": "^1.7.8",
     "classnames": "^2.5.1",
     "d3": "^7.9.0",
@@ -32,10 +35,12 @@
     "preact": "^10.26.7",
     "qs": "^6.13.1",
     "ramda": "^0.32.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "=19.2.3",
+    "react-dom": "=19.2.3",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "solid-js": "^1.9.7",
+    "supertest": "^7",
     "terser": "^5.39.2",
     "vitest": "^4.0.1",
     "vue": "^3.5.14",

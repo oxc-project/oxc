@@ -33,6 +33,7 @@ oxc_parser = { workspace = true, optional = true }
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"], optional = true }
+json-strip-comments = { workspace = true }
 log = { workspace = true }
 papaya = { workspace = true }
 rustc-hash = { workspace = true }

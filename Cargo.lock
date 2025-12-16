@@ -1451,6 +1451,8 @@ dependencies = [
  "napi-sys",
  "nohash-hasher",
  "rustc-hash",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -1944,7 +1946,6 @@ version = "0.18.0"
 dependencies = [
  "cow-utils",
  "insta",
- "json-strip-comments",
  "natord",
  "oxc-schemars",
  "oxc_allocator",
@@ -1999,6 +2000,7 @@ dependencies = [
  "futures",
  "ignore",
  "insta",
+ "json-strip-comments",
  "log",
  "oxc_allocator",
  "oxc_data_structures",
@@ -2229,6 +2231,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_compat",
  "oxc_formatter",
  "oxc_linter",
  "oxc_napi",
@@ -2538,6 +2541,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_language_server",
+ "oxc_napi",
  "oxc_parser",
  "oxc_span",
  "phf",

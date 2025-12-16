@@ -6120,6 +6120,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ new import("foo");
    ·     ─────────────
    ╰────
+  help: Wrap this with parenthesis
 
   × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/multiple-args/input.js:1:1]
@@ -6158,6 +6159,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ new import("foo");
    ·     ─────────────
    ╰────
+  help: Wrap this with parenthesis
 
   × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:1]
@@ -8831,17 +8833,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                         ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Only string literals are allowed as module attribute values.
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/valid-syntax-export-with-invalid-value/input.js:1:63]
  1 │ export { default } from "foo.json" with { type: "json", lazy: true, startAtLine: 1 };
    ·                                                               ────
    ╰────
+  help: Wrap this with quotes
 
-  × Unexpected token
+  × Only string literals are allowed as module attribute values.
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/valid-syntax-with-invalid-value/input.js:1:55]
  1 │ import foo from "foo.json" with { type: "json", lazy: true, startAtLine: 1 };
    ·                                                       ────
    ╰────
+  help: Wrap this with quotes
 
   × Identifier `f` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-duplicate-using-bindings/input.js:3:17]

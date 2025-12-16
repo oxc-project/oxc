@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 53/53 (100.00%)
-Positive Passed: 53/53 (100.00%)
-Negative Passed: 121/121 (100.00%)
+AST Parsed     : 54/54 (100.00%)
+Positive Passed: 54/54 (100.00%)
+Negative Passed: 122/122 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -344,6 +344,20 @@ Negative Passed: 121/121 (100.00%)
  12 │ let?.method();
     · ───
     ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/minus-yield-100.js:1:27]
+ 1 │ export function* foo() { -yield 100 }
+   ·                           ─────
+   ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/minus-yield-100.js:1:32]
+ 1 │ export function* foo() { -yield 100 }
+   ·                                ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected `:` but found `EOF`
    ╭─[misc/fail/missing-conditional-alternative-type.ts:2:1]

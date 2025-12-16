@@ -31,6 +31,7 @@ oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
+oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -49,7 +50,7 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)
-napi = { workspace = true, features = ["async"], optional = true }
+napi = { workspace = true, features = ["async", "serde-json"], optional = true }
 napi-derive = { workspace = true, optional = true }
 
 [build-dependencies]

@@ -2,9 +2,6 @@
  * Methods and types related to JSON.
  */
 
-const { isArray } = Array,
-  { freeze } = Object;
-
 /**
  * A JSON value.
  */
@@ -27,7 +24,7 @@ export type JsonObject = { [key: string]: JsonValue };
 export function deepFreezeJsonValue(value: JsonValue): undefined {
   if (value === null || typeof value !== "object") return;
 
-  if (isArray(value)) {
+  if (Array.isArray(value)) {
     deepFreezeJsonArray(value);
   } else {
     deepFreezeJsonObject(value);
@@ -48,7 +45,7 @@ export function deepFreezeJsonObject(obj: JsonObject): undefined {
   for (const key in obj) {
     deepFreezeJsonValue(obj[key]);
   }
-  freeze(obj);
+  Object.freeze(obj);
 }
 
 /**
@@ -63,5 +60,5 @@ export function deepFreezeJsonArray(arr: JsonValue[]): undefined {
   for (let i = 0, len = arr.length; i !== len; i++) {
     deepFreezeJsonValue(arr[i]);
   }
-  freeze(arr);
+  Object.freeze(arr);
 }

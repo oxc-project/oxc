@@ -4,9 +4,6 @@
 
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-const { freeze } = Object,
-  { isArray } = Array;
-
 /**
  * Globals for the file being linted.
  *
@@ -55,11 +52,11 @@ export function initGlobals(): void {
 
     // Freeze the globals object, to prevent any mutation of `globals` by plugins.
     // No need to deep freeze since all keys are just strings.
-    freeze(globals);
+    Object.freeze(globals);
   }
 
   debugAssertIsNonNull(globals);
-  debugAssert(typeof globals === "object" && !isArray(globals));
+  debugAssert(typeof globals === "object" && !Array.isArray(globals));
 }
 
 /**
