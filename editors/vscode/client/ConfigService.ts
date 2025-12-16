@@ -99,10 +99,6 @@ export class ConfigService implements IDisposable {
     return this.searchBinaryPath(this.vsCodeConfig.binPathOxfmt, "oxfmt");
   }
 
-  public async getTsGoLintServerBinPath(): Promise<string | undefined> {
-    return this.searchBinaryPath(this.vsCodeConfig.binPathTsGoLint, "tsgolint");
-  }
-
   private async searchBinaryPath(
     settingsBinary: string | undefined,
     defaultPattern: string,
