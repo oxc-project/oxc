@@ -434,12 +434,13 @@ jobs:
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          path: .
+          path: ./release-artifacts
           pattern: rust-*
           merge-multiple: true
 
       - name: Remove rust- prefix from filenames
         run: |
+          cd release-artifacts
           for file in rust-*; do
             mv "$file" "${file#rust-}"
           done
@@ -455,9 +456,7 @@ jobs:
           tag_name: apps_v${{ needs.check.outputs.oxlint_version }}
           target_commitish: ${{ github.sha }}
           fail_on_unmatched_files: true
-          files: |
-            oxfmt-*
-            oxlint-*
+          files: ./release-artifacts/*
 
       - name: Turn off draft on github release
         env:
