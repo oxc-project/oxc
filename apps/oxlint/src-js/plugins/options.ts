@@ -136,20 +136,20 @@ export function mergeOptions(
   const merged = [];
 
   const defaultOptionsLength = defaultOptions.length,
-    ruleOptionsLength = configOptions.length,
-    bothLength = min(defaultOptionsLength, ruleOptionsLength);
+    configOptionsLength = configOptions.length,
+    bothLength = min(defaultOptionsLength, configOptionsLength);
 
   let i = 0;
   for (; i < bothLength; i++) {
     merged.push(mergeValues(configOptions[i], defaultOptions[i]));
   }
 
-  if (defaultOptionsLength > ruleOptionsLength) {
+  if (defaultOptionsLength > configOptionsLength) {
     for (; i < defaultOptionsLength; i++) {
       merged.push(defaultOptions[i]);
     }
   } else {
-    for (; i < ruleOptionsLength; i++) {
+    for (; i < configOptionsLength; i++) {
       const prop = configOptions[i];
       deepFreezeValue(prop);
       merged.push(prop);
