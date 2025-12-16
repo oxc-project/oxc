@@ -197,12 +197,9 @@ impl Rule for DisplayName {
             let program = ctx.nodes().program();
             for stmt in &program.body {
                 if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
-                    if let Some(component_info) = is_anonymous_export_component(
-                        export,
-                        ctx,
-                        &mut version_cache,
-                        ignore_transpiler_name,
-                    ) {
+                    if let Some(component_info) =
+                        is_anonymous_export_component(export, ignore_transpiler_name)
+                    {
                         components_to_report.push((component_info.span, component_info.is_context));
                     }
                     break; // Only one export default per module
@@ -223,8 +220,6 @@ impl Rule for DisplayName {
                         // Handle: module.exports = () => <div />
                         if let Some(component_info) = is_module_exports_component(
                             assign,
-                            ctx,
-                            &mut version_cache,
                             ignore_transpiler_name,
                             check_context_objects,
                         ) {
@@ -685,10 +680,8 @@ fn has_component_methods_in_object(
 }
 
 /// Handle anonymous export default components
-fn is_anonymous_export_component<'a>(
-    export: &oxc_ast::ast::ExportDefaultDeclaration<'a>,
-    _ctx: &LintContext<'a>,
-    _version_cache: &mut VersionCache,
+fn is_anonymous_export_component(
+    export: &oxc_ast::ast::ExportDefaultDeclaration,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
@@ -833,10 +826,8 @@ fn check_class_component(
 }
 
 /// Handle module.exports assignments
-fn is_module_exports_component<'a>(
-    assign: &oxc_ast::ast::AssignmentExpression<'a>,
-    _ctx: &LintContext<'a>,
-    _version_cache: &mut VersionCache,
+fn is_module_exports_component(
+    assign: &oxc_ast::ast::AssignmentExpression,
     ignore_transpiler_name: bool,
     check_context_objects: bool,
 ) -> Option<ReactComponentInfo> {
