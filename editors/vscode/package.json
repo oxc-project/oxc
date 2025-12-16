@@ -301,7 +301,7 @@
       "restrictedConfigurations": [
         "oxc.path.server",
         "oxc.path.oxlint",
-        "oxc.path.oxfmt",
+        "oxc.path.oxfmt"
       ]
     }
   },
