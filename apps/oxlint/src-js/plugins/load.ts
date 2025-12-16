@@ -11,7 +11,8 @@ import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.t
 import type { SetNullable } from "../utils/types.ts";
 
 const ObjectKeys = Object.keys,
-  { isArray } = Array;
+  { isArray } = Array,
+  { stringify: JSONStringify, parse: JSONParse } = JSON;
 
 /**
  * Linter plugin, comprising multiple rules
@@ -164,17 +165,25 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
       const inputDefaultOptions = ruleMeta.defaultOptions;
       if (inputDefaultOptions != null) {
-        // TODO: Validate is JSON-serializable, and validate against provided options schema
+        // TODO: Validate against provided options schema
         if (!isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
 
         if (inputDefaultOptions.length !== 0) {
-          // TODO: This isn't quite safe, as `defaultOptions` isn't from JSON, and `deepFreezeJsonArray`
-          // assumes it is. We should perform options merging on Rust side instead, and also validate
-          // `defaultOptions` against options schema.
-          deepFreezeJsonArray(inputDefaultOptions);
-          defaultOptions = inputDefaultOptions;
+          // Serialize to JSON and deserialize again.
+          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
+          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+          try {
+            defaultOptions = JSONParse(JSONStringify(inputDefaultOptions)) as Options;
+          } catch (err) {
+            throw new Error(
+              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+            );
+          }
+
+          deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
         }
       }
 

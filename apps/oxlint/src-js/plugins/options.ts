@@ -174,11 +174,7 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   // Both are objects (not arrays)
   const merged = { ...defaultValue, ...configValue };
 
-  // Symbol properties are not possible in JSON, so no need to handle them here.
-  //
-  // A malicious plugin could potentially get up to mischief here (prototype pollution?) if `defaultValue` is a `Proxy`.
-  // But plugins are executable code, so they have far easier ways to do that. No point in defending against it here.
-  //
+  // Symbol properties and circular references are not possible in JSON, so no need to handle them here.
   // `configValue` is from JSON, so we can use a simple `for..in` loop over `configValue`.
   for (const key in configValue) {
     // `hasOwn` not `in`, in case `key` is `"__proto__"`
