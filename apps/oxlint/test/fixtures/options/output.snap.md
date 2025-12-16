@@ -53,7 +53,10 @@
   |     "nested": {
   |       "fromDefault": 3,
   |       "overrideDefault": 14,
-  |       "fromConfig": 13
+  |       "fromConfig": 13,
+  |       "fromConfigObject": {
+  |         "objectKey": 17
+  |       }
   |     },
   |     "fromConfig": 11
   |   },
