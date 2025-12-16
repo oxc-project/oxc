@@ -217,10 +217,8 @@ impl Rule for DisplayName {
                 let node = ctx.nodes().get_node(reference.node_id());
 
                 // Walk up to find if this is part of module.exports assignment
-                for ancestor_id in ctx.nodes().ancestor_ids(node.id()) {
-                    let ancestor = ctx.nodes().get_node(ancestor_id);
-
-                    if let AstKind::AssignmentExpression(assign) = ancestor.kind() {
+                for ancestor_kind in ctx.nodes().ancestor_kinds(node.id()) {
+                    if let AstKind::AssignmentExpression(assign) = ancestor_kind {
                         // Handle: module.exports = () => <div />
                         if let Some(component_info) = is_module_exports_component(
                             assign,
@@ -262,10 +260,8 @@ fn is_display_name_assignment_for_reference(
     let reference_node = ctx.nodes().get_node(reference.node_id());
 
     // Walk up to find if this is part of: Component.displayName = ...
-    for ancestor_id in ctx.nodes().ancestor_ids(reference_node.id()) {
-        let ancestor = ctx.nodes().get_node(ancestor_id);
-
-        if let AstKind::AssignmentExpression(assign) = ancestor.kind()
+    for ancestor_kind in ctx.nodes().ancestor_kinds(reference_node.id()) {
+        if let AstKind::AssignmentExpression(assign) = ancestor_kind
             && let AssignmentTarget::StaticMemberExpression(member) = &assign.left
             && member.property.name == "displayName"
         {
@@ -346,10 +342,8 @@ fn check_context_assignment_references(
         let ref_node = ctx.nodes().get_node(reference.node_id());
 
         // Walk up to find the assignment expression
-        for ancestor_id in ctx.nodes().ancestor_ids(ref_node.id()) {
-            let ancestor = ctx.nodes().get_node(ancestor_id);
-
-            if let AstKind::AssignmentExpression(assign) = ancestor.kind()
+        for ancestor_kind in ctx.nodes().ancestor_kinds(ref_node.id()) {
+            if let AstKind::AssignmentExpression(assign) = ancestor_kind
                 && let Expression::CallExpression(call) = &assign.right
                 && let Some(callee_name) = call.callee_name()
                 && (callee_name == "createContext" || callee_name.ends_with(".createContext"))
@@ -357,7 +351,7 @@ fn check_context_assignment_references(
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
             }
 
-            if matches!(ancestor.kind(), AstKind::AssignmentExpression(_)) {
+            if matches!(ancestor_kind, AstKind::AssignmentExpression(_)) {
                 break; // Found assignment, no need to check further ancestors
             }
         }
