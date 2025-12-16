@@ -118,11 +118,10 @@ export default class LinterTool implements ToolInterface {
 
     context.subscriptions.push(restartCommand, toggleEnable, applyAllFixesFile);
 
-    const tsgolintPath = await configService.getTsGoLintServerBinPath();
     const run: Executable = runExecutable(
       binaryPath,
       configService.vsCodeConfig.nodePath,
-      tsgolintPath,
+      configService.vsCodeConfig.binPathTsGoLint,
     );
     const serverOptions: ServerOptions = {
       run,
