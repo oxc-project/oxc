@@ -39,10 +39,12 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
 
 impl RuleRunner for crate::rules::eslint::camelcase::Camelcase {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrayPattern,
         AstType::AssignmentExpression,
         AstType::AssignmentTargetPropertyIdentifier,
         AstType::AssignmentTargetPropertyProperty,
         AstType::BindingProperty,
+        AstType::BindingRestElement,
         AstType::BreakStatement,
         AstType::ContinueStatement,
         AstType::ExportAllDeclaration,

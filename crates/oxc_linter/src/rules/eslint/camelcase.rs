@@ -191,6 +191,27 @@ impl Rule for Camelcase {
                 }
             }
 
+            // Rest element in destructuring: { ...other_props } or [...rest]
+            AstKind::BindingRestElement(rest) => {
+                // Get the binding name from the rest element's argument
+                if let BindingPatternKind::BindingIdentifier(ident) = &rest.argument.kind {
+                    // Check if we should skip due to ignoreDestructuring
+                    // Rest elements don't have a "property name" to compare, so they're
+                    // only skipped when ignoreDestructuring is true (ESLint behavior)
+                    if self.0.ignore_destructuring {
+                        return;
+                    }
+                    self.check_name(&ident.name, ident.span, ctx);
+                }
+            }
+
+            // Array destructuring: const [foo_bar, bar_baz] = arr;
+            AstKind::ArrayPattern(pattern) => {
+                for element in pattern.elements.iter().flatten() {
+                    self.check_binding_pattern(element, ctx);
+                }
+            }
+
             // Function declarations: function foo_bar() {}
             AstKind::Function(func) => {
                 if let Some(ident) = &func.id {
@@ -395,6 +416,26 @@ impl Camelcase {
         ctx.diagnostic(camelcase_diagnostic(name, span));
     }
 
+    /// Check a binding pattern for camelCase violations (used for array destructuring)
+    fn check_binding_pattern(&self, pattern: &oxc_ast::ast::BindingPattern, ctx: &LintContext) {
+        match &pattern.kind {
+            BindingPatternKind::BindingIdentifier(ident) => {
+                // For array destructuring, there's no "property name" to compare
+                // so ignoreDestructuring skips all array element bindings
+                if self.0.ignore_destructuring {
+                    return;
+                }
+                self.check_name(&ident.name, ident.span, ctx);
+            }
+            BindingPatternKind::AssignmentPattern(assign) => {
+                // Handle default values: const [foo_bar = 1] = arr;
+                self.check_binding_pattern(&assign.left, ctx);
+            }
+            // ObjectPattern and ArrayPattern are handled by their own AstKind handlers
+            _ => {}
+        }
+    }
+
     /// Check if a name is acceptable (either camelCase or in the allow list)
     fn is_good_name(&self, name: &str) -> bool {
         // Check pre-compiled allow patterns first
@@ -553,7 +594,24 @@ fn test() {
         // allow patterns work as regex even without ^/$
         ("foo_bar = 0;", Some(serde_json::json!([{ "allow": ["foo.*"] }]))),
         ("get_user_id = 0;", Some(serde_json::json!([{ "allow": ["_id"] }]))),
+        // Rest element in destructuring with ignoreDestructuring
+        (
+            "const { category_id, ...other_props } = obj;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        // Array destructuring with ignoreDestructuring
+        (
+            "const [foo_bar, bar_baz] = arr;",
+            Some(serde_json::json!([{ "ignoreDestructuring": true }])),
+        ),
+        ("const [foo_bar = 1] = arr;", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
     ];
+
+    // Test cases to verify current gaps (should fail but currently pass - known limitations)
+    // These are documented as ESLint compatibility gaps:
+    // 1. Rest element without ignoreDestructuring - should report other_props
+    // 2. Array destructuring - should report foo_bar
+    // 3. ignoreDestructuring + later use - ESLint reports but we don't (scope analysis needed)
 
     let fail = vec![
         (r#"first_name = "Nicholas""#, None),
@@ -610,6 +668,15 @@ fn test() {
             r#"import { snake_case as other_snake } from "mod";"#,
             Some(serde_json::json!([{ "ignoreImports": true }])),
         ),
+        // Rest element in destructuring (without ignoreDestructuring) - should report
+        ("const { foo, ...other_props } = obj;", None),
+        // Array destructuring - should report
+        ("const [foo_bar] = arr;", None),
+        ("const [first, second_item] = arr;", None),
+        ("const [foo_bar = 1] = arr;", None), // with default value
+                                              // NOTE: Known ESLint compatibility gaps (not currently checked):
+                                              // - ignoreDestructuring + later use: ESLint checks variable usage after destructuring
+                                              // - ignoreGlobals option: not implemented
     ];
 
     Tester::new(Camelcase::NAME, Camelcase::PLUGIN, pass, fail).test_and_snapshot();

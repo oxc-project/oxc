@@ -259,3 +259,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────
    ╰────
   help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'other_props' is not in camel case.
+   ╭─[camelcase.tsx:1:17]
+ 1 │ const { foo, ...other_props } = obj;
+   ·                 ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ const [foo_bar] = arr;
+   ·        ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'second_item' is not in camel case.
+   ╭─[camelcase.tsx:1:15]
+ 1 │ const [first, second_item] = arr;
+   ·               ───────────
+   ╰────
+  help: Rename this identifier to use camelCase.
+
+  ⚠ eslint(camelcase): Identifier 'foo_bar' is not in camel case.
+   ╭─[camelcase.tsx:1:8]
+ 1 │ const [foo_bar = 1] = arr;
+   ·        ───────
+   ╰────
+  help: Rename this identifier to use camelCase.
