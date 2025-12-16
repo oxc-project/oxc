@@ -10,7 +10,7 @@
  * 4. `format_file_cb`: Callback to format files
  *
  * Returns a tuple of `[mode, exitCode]`:
- * - `mode`: "cli" | "lsp" | "init"
- * - `exitCode`: exit code (0, 1, 2) for "cli" mode, `undefined` for other modes
+ * - `mode`: If main logic will run in JS side, use this to indicate which mode
+ * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
 export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>): Promise<[string, number | undefined | null]>

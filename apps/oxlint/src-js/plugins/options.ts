@@ -11,6 +11,7 @@ import {
 } from "./json.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
+import type { Writable } from "type-fest";
 import type { JsonValue } from "./json.ts";
 
 const { freeze } = Object,
@@ -21,6 +22,16 @@ const { freeze } = Object,
  * Options for a rule on a file.
  */
 export type Options = JsonValue[];
+
+/**
+ * Schema describing valid options for a rule.
+ * `schema` property of `RuleMeta`.
+ *
+ * `false` opts out of schema validation. This is not recommended, as it increases the chance of bugs and mistakes.
+ */
+// TODO: Make this more precise.
+// TODO: Use this to validate options in configs.
+export type RuleOptionsSchema = Record<string, unknown> | unknown[] | false;
 
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
@@ -72,7 +83,8 @@ export function setOptions(optionsJson: string): void {
   // `mergeOptions` also deep-freezes the options.
   for (let i = 1, len = allOptions.length; i < len; i++) {
     allOptions[i] = mergeOptions(
-      allOptions[i] as Options, // `allOptions`' type is `Readonly`, but the array is mutable at present
+      // `allOptions`' type is `Readonly`, but the array is mutable at present
+      allOptions[i] as Writable<(typeof allOptions)[number]>,
       registeredRules[ruleIds[i]].defaultOptions,
     );
   }
@@ -95,7 +107,7 @@ export function initAllOptions(): void {
  * Config options take precedence over default options.
  *
  * Returned options are deep frozen.
- * `ruleOptions` may be frozen in place (or partially frozen) too.
+ * `configOptions` may be frozen in place (or partially frozen) too.
  * `defaultOptions` must already be deep frozen before calling this function.
  *
  * Follows the same merging logic as ESLint's `getRuleOptions`.

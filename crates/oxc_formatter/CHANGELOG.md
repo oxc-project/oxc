@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.18.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- 320c09f ast, parser, linter, codegen, formatter: [**BREAKING**] Rename `CommentKind::Block` to `CommentKind::SinglelineBlock` (#16501) (Dunqing)
+
+### 🚀 Features
+
+- afd6c44 oxfmt: Support `quoteProps: consistent` in `Oxfmtrc` (#16721) (leaysgur)
+- 686f2b7 formatter: Support `consistent` quote props (#16677) (Dunqing)
+- 28e0682 oxfmt: Enable experimental `package.json` sorting by default (#16593) (leaysgur)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- a0efc41 formatter: Incorrect formatting for member chain call with an empty arguments call argument (#16875) (Dunqing)
+- e973965 formatter: Incorrect indentation of long assignment pattern in object (#16709) (Dunqing)
+- 2a63d74 formatter: Should not insert a semicolon for non-property signatures when no semicolon is set (#16700) (Dunqing)
+- 2495a39 formatter/sort-imports: Do not move leading comment if empty line found (#16676) (leaysgur)
+- 0d5da26 formatter: Disable layout assertions on some 32-bit platforms (#16625) (Dunqing)
+
+### ⚡ Performance
+
+- c7db70b formatter: Optimize formatting of JSX element/fragment with a single child (#16631) (Dunqing)
+- 4843475 formatter: Do not write elements to the flat buffer if the layout is multline (#16630) (Dunqing)
+
+### 📚 Documentation
+
+- 8babdf9 oxfmt: Improve docs for `.oxfmtrc.jsonc` config fields and add markdownDescription fields to JSON Schema (#16587) (connorshea)
+
 ## [0.17.0] - 2025-12-08
 
 ### 🚀 Features

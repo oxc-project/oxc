@@ -461,6 +461,11 @@ impl RuleRunner for crate::rules::eslint::no_import_assign::NoImportAssign {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::no_inline_comments::NoInlineComments {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::eslint::no_inner_declarations::NoInnerDeclarations {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Function, AstType::VariableDeclaration]));
@@ -697,6 +702,12 @@ impl RuleRunner for crate::rules::eslint::no_self_assign::NoSelfAssign {
 impl RuleRunner for crate::rules::eslint::no_self_compare::NoSelfCompare {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::eslint::no_sequences::NoSequences {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::SequenceExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1471,6 +1482,11 @@ impl RuleRunner for crate::rules::jest::prefer_to_be::PreferToBe {
 }
 
 impl RuleRunner for crate::rules::jest::prefer_to_contain::PreferToContain {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
+impl RuleRunner for crate::rules::jest::prefer_to_have_been_called::PreferToHaveBeenCalled {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
@@ -2521,6 +2537,7 @@ impl RuleRunner for crate::rules::typescript::array_type::ArrayType {
         AstType::TSConditionalType,
         AstType::TSIndexedAccessType,
         AstType::TSMappedType,
+        AstType::TSSatisfiesExpression,
         AstType::TSTypeAliasDeclaration,
         AstType::TSTypeAnnotation,
         AstType::TSTypeParameterInstantiation,

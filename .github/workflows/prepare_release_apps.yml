@@ -84,12 +84,23 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: Triggering Ecosystem CI https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/ci.yml
+          body: |
+            Triggering Ecosystem CI
+            oxlint https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
+            oxfmt https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
 
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxlint-ci.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/oxc-ecosystem-ci
+          workflow: oxfmt-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'

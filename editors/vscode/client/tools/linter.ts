@@ -24,7 +24,6 @@ import {
   ServerOptions,
 } from "vscode-languageclient/node";
 
-import { join } from "node:path";
 import { OxcCommands } from "../commands";
 import { ConfigService } from "../ConfigService";
 import StatusBarItemHandler from "../StatusBarItemHandler";
@@ -61,8 +60,8 @@ export default class LinterTool implements ToolInterface {
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {
-    const bin = configService.getUserServerBinPath();
-    if (workspace.isTrusted && bin) {
+    const bin = await configService.getOxlintServerBinPath();
+    if (bin) {
       try {
         await fsPromises.access(bin);
         return bin;
@@ -70,12 +69,7 @@ export default class LinterTool implements ToolInterface {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-    const ext = process.platform === "win32" ? ".exe" : "";
-    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-    return (
-      process.env.SERVER_PATH_DEV ??
-      join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
-    );
+    return process.env.SERVER_PATH_DEV;
   }
 
   async activate(

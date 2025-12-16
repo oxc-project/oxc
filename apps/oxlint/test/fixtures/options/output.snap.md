@@ -34,6 +34,17 @@
    : ^
    `----
 
+  x options-plugin(empty-default-options):
+  | options: [
+  |   "from-config",
+  |   42
+  | ]
+  | isDeepFrozen: true
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
   x options-plugin(merge-options):
   | options: [
   |   {
@@ -116,6 +127,14 @@
    : ^
    `----
 
+  x options-plugin(empty-default-options):
+  | options: []
+  | isDeepFrozen: true
+   ,-[files/nested/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x options-plugin(merge-options):
   | options: [
   |   {
@@ -162,7 +181,7 @@
    : ^
    `----
 
-Found 0 warnings and 8 errors.
+Found 0 warnings and 10 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

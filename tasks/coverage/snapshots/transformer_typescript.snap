@@ -1,8 +1,8 @@
-commit: c21f73fd
+commit: 0a071327
 
 transformer_typescript Summary:
-AST Parsed     : 9833/9833 (100.00%)
-Positive Passed: 9831/9833 (99.98%)
+AST Parsed     : 9840/9840 (100.00%)
+Positive Passed: 9838/9840 (99.98%)
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor2.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts

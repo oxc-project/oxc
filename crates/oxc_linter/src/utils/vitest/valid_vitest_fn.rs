@@ -75,6 +75,7 @@ static VALID_VITEST_FN_CALL_CHAINS: phf::Set<&'static str> = phf::phf_set![
     "describe.concurrent.todo.shuffle",
     "describe.concurrent.todo.skip",
     "describe.each",
+    "describe.for",
     "describe.only",
     "describe.only.concurrent",
     "describe.only.concurrent.each",

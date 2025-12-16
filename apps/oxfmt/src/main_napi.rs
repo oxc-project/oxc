@@ -6,6 +6,7 @@ use crate::{
     cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
     core::{ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb},
     lsp::run_lsp,
+    stdin::StdinRunner,
 };
 
 // NAPI based JS CLI entry point.
@@ -20,8 +21,8 @@ use crate::{
 /// 4. `format_file_cb`: Callback to format files
 ///
 /// Returns a tuple of `[mode, exitCode]`:
-/// - `mode`: "cli" | "lsp" | "init"
-/// - `exitCode`: exit code (0, 1, 2) for "cli" mode, `undefined` for other modes
+/// - `mode`: If main logic will run in JS side, use this to indicate which mode
+/// - `exitCode`: If main logic already ran in Rust side, return the exit code
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
@@ -55,19 +56,36 @@ pub async fn run_cli(
         Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
         Mode::Lsp => {
             run_lsp().await;
-            ("lsp".to_string(), None)
+            ("lsp".to_string(), Some(0))
+        }
+        Mode::Stdin(_) => {
+            init_tracing();
+            init_miette();
+
+            let result = StdinRunner::new(command)
+                // Create external formatter from JS callback
+                .with_external_formatter(Some(ExternalFormatter::new(
+                    setup_config_cb,
+                    format_embedded_cb,
+                    format_file_cb,
+                )))
+                .run();
+
+            ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
             init_tracing();
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            // Create external formatter from JS callback
-            let external_formatter =
-                ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
-
-            let result =
-                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = FormatRunner::new(command)
+                // Create external formatter from JS callback
+                .with_external_formatter(Some(ExternalFormatter::new(
+                    setup_config_cb,
+                    format_embedded_cb,
+                    format_file_cb,
+                )))
+                .run();
 
             ("cli".to_string(), Some(result.exit_code()))
         }

@@ -109,6 +109,7 @@ pub(crate) mod eslint {
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
     pub mod no_import_assign;
+    pub mod no_inline_comments;
     pub mod no_inner_declarations;
     pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
@@ -145,6 +146,7 @@ pub(crate) mod eslint {
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
+    pub mod no_sequences;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
@@ -337,6 +339,7 @@ pub(crate) mod jest {
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
     pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_hook;
@@ -709,6 +712,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_implicit_coercion,
+    eslint::no_inline_comments,
     eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
@@ -792,6 +796,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
+    eslint::no_sequences,
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
@@ -915,6 +920,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_strict_equal,
     jest::prefer_to_be,
     jest::prefer_to_contain,
+    jest::prefer_to_have_been_called,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_hook,

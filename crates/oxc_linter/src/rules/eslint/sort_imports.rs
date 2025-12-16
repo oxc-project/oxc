@@ -458,22 +458,22 @@ fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Cow<'
 
 // Calculates number of lines between two nodes. It is assumed that the given `left` span appears before
 // the given `right` span in the source code. Lines are counted from the end of the `left` span till the
-// start of the `right` span. If the given span are on the same line, or `right` span is appears before `left` span,
-// it returns `0`.
+// start of the `right` span. If the given span are on the same or consecutive lines, or `right` span is
+// appears before `left` span, it returns `0`.
 fn get_number_of_lines_between(left: Span, right: Span, ctx: &LintContext) -> usize {
     if left.end >= right.start {
         return 0;
     }
     let between_span = Span::new(left.end, right.start);
-    let count = ctx.source_range(between_span).lines().count();
+    let count = ctx.source_range(between_span).chars().filter(|c| *c == '\n').count();
 
-    // In same line
-    if count < 2 {
+    if count < 1 {
         return 0;
     }
 
-    // In different lines, need to subtract 2 because the count includes the first and last line.
-    count - 2
+    // In different lines, need to subtract 1, because we need new line 2 time to have 1 line
+    // between node
+    count - 1
 }
 
 #[test]
@@ -582,6 +582,13 @@ fn test() {
             "import b from 'b';
 
             import a from 'a';",
+            Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
+        ),
+        // No leading whitespaces - issue #15990
+        (
+            "import b from 'b';
+
+import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (

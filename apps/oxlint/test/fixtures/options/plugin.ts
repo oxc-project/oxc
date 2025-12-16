@@ -26,6 +26,7 @@ const plugin: Plugin = {
         return {};
       },
     },
+
     options: {
       create(context) {
         context.report({
@@ -37,6 +38,7 @@ const plugin: Plugin = {
         return {};
       },
     },
+
     "default-options": {
       meta: {
         defaultOptions: [
@@ -57,6 +59,7 @@ const plugin: Plugin = {
         return {};
       },
     },
+
     "merge-options": {
       meta: {
         defaultOptions: [
@@ -65,6 +68,21 @@ const plugin: Plugin = {
           { fromDefault: 6 },
           7,
         ],
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
+
+    "empty-default-options": {
+      meta: {
+        defaultOptions: [],
       },
       create(context) {
         context.report({

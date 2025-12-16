@@ -505,7 +505,8 @@
             }
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "OxlintOverrides": {
       "type": "array",
