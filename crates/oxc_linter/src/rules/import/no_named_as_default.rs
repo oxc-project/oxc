@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefault,
     import,
-    suspicious
+    suspicious,
+    suggestion
 );
 
 impl Rule for NoNamedAsDefault {
@@ -72,11 +73,47 @@ impl Rule for NoNamedAsDefault {
 
             let import_name = import_entry.local_name.name();
             if remote_module_record.exported_bindings.contains_key(import_name) {
-                ctx.diagnostic(no_named_as_default_diagnostic(
-                    *import_span,
-                    import_name,
-                    import_entry.module_request.name(),
-                ));
+                if let Some(brace_offset) = ctx.find_next_token_within(
+                    import_span.end,
+                    import_entry.statement_span.end,
+                    "{",
+                ) {
+                    // `import foo, { bar }` -> `import { foo, bar }`
+                    let open_brace_pos: u32 = import_span.end + brace_offset;
+                    ctx.diagnostic_with_suggestion(
+                        no_named_as_default_diagnostic(
+                            *import_span,
+                            import_name,
+                            import_entry.module_request.name(),
+                        ),
+                        |fixer| {
+                            fixer.replace(
+                                Span::new(import_span.start, open_brace_pos + 1),
+                                format!("{{ {import_name},"),
+                            )
+                        },
+                    );
+                } else if ctx
+                    .find_next_token_within(import_span.end, import_entry.statement_span.end, "*")
+                    .is_some()
+                {
+                    // `import foo, * as ns` - no fix
+                    ctx.diagnostic(no_named_as_default_diagnostic(
+                        *import_span,
+                        import_name,
+                        import_entry.module_request.name(),
+                    ));
+                } else {
+                    // `import foo` -> `import { foo }`
+                    ctx.diagnostic_with_suggestion(
+                        no_named_as_default_diagnostic(
+                            *import_span,
+                            import_name,
+                            import_entry.module_request.name(),
+                        ),
+                        |fixer| fixer.replace(*import_span, format!("{{ {import_name} }}")),
+                    );
+                }
             }
         }
     }
@@ -98,6 +135,8 @@ fn test() {
     let fail = vec![
         r#"import foo from "./bar";"#,
         r#"import foo, { foo as bar } from "./bar";"#,
+        // Namespace import: reports error but no auto-fix
+        r#"import foo, * as bar from "./bar";"#,
         // unsupported syntax
         // r#"export default, { foo as bar } from "./bar";"#,
         // r#"import foo from "./malformed.js""#,
@@ -105,7 +144,26 @@ fn test() {
         r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
     ];
 
+    let fix = vec![
+        // Simple default imports get transformed to named imports
+        (r#"import foo from "./bar";"#, r#"import { foo } from "./bar";"#),
+        (
+            r#"import foo from "./export-default-string-and-named""#,
+            r#"import { foo } from "./export-default-string-and-named""#,
+        ),
+        // Combined imports: default import coalesces with named imports
+        (
+            r#"import foo, { foo as bar } from "./bar";"#,
+            r#"import { foo, foo as bar } from "./bar";"#,
+        ),
+        (
+            r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
+            r#"import { foo, foo as bar } from "./export-default-string-and-named""#,
+        ),
+    ];
+
     Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();
