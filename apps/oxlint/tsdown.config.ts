@@ -204,7 +204,7 @@ const GLOBALS = new Set([
 /**
  * Create a plugin to replace usage of properties of globals with global vars defined in `utils/globals.ts`.
  *
- * This more performant, due to reduced property lookups, and minifies better.
+ * This is more performant, due to reduced property lookups, and minifies better.
  *
  * ```ts
  * // Original code

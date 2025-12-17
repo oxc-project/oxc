@@ -14,17 +14,18 @@
     "build-napi-test": "pnpm run build-napi",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "tsc && vitest --dir test run"
+    "test": "vitest --dir test run"
   },
   "dependencies": {
     "prettier": "3.7.4",
     "tinypool": "2.0.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "catalog:",
+    "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "execa": "^9.6.0",
     "tsdown": "catalog:",
-    "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

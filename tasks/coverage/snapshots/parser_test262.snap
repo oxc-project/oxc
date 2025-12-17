@@ -23839,70 +23839,70 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·         ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js:21:9]
  20 │ 
  21 │ /(?<a>a)\k<ab>/u;
     ·         ──────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2.js:21:9]
  20 │ 
  21 │ /(?<a>a)\k<ab>/;
     ·         ──────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js:21:10]
  20 │ 
  21 │ /(?<ab>a)\k<a>/u;
     ·          ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3.js:21:10]
  20 │ 
  21 │ /(?<ab>a)\k<a>/;
     ·          ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js:21:2]
  20 │ 
  21 │ /\k<a>(?<ab>a)/u;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4.js:21:2]
  20 │ 
  21 │ /\k<a>(?<ab>a)/;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-5.js:21:2]
  20 │ 
  21 │ /\k<a>(?<b>x)/;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-u.js:21:9]
  20 │ 
  21 │ /(?<a>.)\k<b>/u;
     ·         ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js:21:2]
  20 │ 
  21 │ /\k<a>/u;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname.js:21:9]
  20 │ 
  21 │ /(?<a>.)\k<b>/;
@@ -24000,14 +24000,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js:16:2]
  15 │ 
  16 │ /\k(?<a>.)/;
     ·  ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js:16:9]
  15 │ 
  16 │ /(?<a>.)\k/u;
@@ -24021,7 +24021,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ─
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js:16:2]
  15 │ 
  16 │ /\k/u;
@@ -24035,7 +24035,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname.js:16:9]
  15 │ 
  16 │ /(?<a>.)\k/;

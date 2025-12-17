@@ -33,11 +33,14 @@
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
-    "test": "tsc && vitest run --dir ./test"
+    "build-wasm": "pnpm run build-wasm-dev --release",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "test": "vitest run --dir ./test"
   },
   "devDependencies": {
+    "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
-    "typescript": "catalog:",
+    "publint": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

@@ -39,10 +39,6 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: vscode
 
-      - name: Type-Check VSCode
-        working-directory: editors/vscode
-        run: pnpm run type-check
-
       - name: Build Language Server
         working-directory: editors/vscode
         run: pnpm run server:build:debug

@@ -28,6 +28,9 @@ const plugin: Plugin = {
     },
 
     options: {
+      meta: {
+        schema: false,
+      },
       create(context) {
         context.report({
           message:
@@ -48,6 +51,7 @@ const plugin: Plugin = {
           { toBe: false, notToBe: true },
           { deep: [{ deeper: { evenDeeper: [{ soDeep: { soSoDeep: true } }] } }] },
         ],
+        schema: false,
       },
       create(context) {
         context.report({
@@ -68,6 +72,7 @@ const plugin: Plugin = {
           { fromDefault: 6 },
           7,
         ],
+        schema: false,
       },
       create(context) {
         context.report({
@@ -82,6 +87,103 @@ const plugin: Plugin = {
 
     "empty-default-options": {
       meta: {
+        defaultOptions: [],
+        schema: false,
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
+
+    // Rule with schema defaults only (no `defaultOptions`)
+    "schema-defaults": {
+      meta: {
+        schema: [
+          {
+            type: "object",
+            default: {},
+            properties: {
+              fromSchema: { type: "number", default: 10 },
+              overrideSchema: { type: "number", default: 20 },
+            },
+            additionalProperties: true,
+          },
+          {
+            type: "string",
+            default: "schema-default-string",
+          },
+        ],
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
+
+    // Rule with both schema defaults AND `defaultOptions`.
+    // Order: `defaultOptions` merged first, then schema defaults applied after.
+    "schema-and-default-options": {
+      meta: {
+        schema: [
+          {
+            type: "object",
+            default: {},
+            properties: {
+              fromSchema: { type: "number", default: 10 },
+              overrideSchemaByDefaultOptions: { type: "number", default: 20 },
+              overrideSchemaByConfig: { type: "number", default: 30 },
+              overrideBothByConfig: { type: "number", default: 40 },
+            },
+            additionalProperties: true,
+          },
+        ],
+        defaultOptions: [
+          {
+            fromDefaultOptions: 51,
+            overrideDefaultOptionsByConfig: 61,
+            overrideSchemaByDefaultOptions: 21,
+            overrideBothByConfig: 41,
+          },
+        ],
+      },
+      create(context) {
+        context.report({
+          message:
+            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+          node: SPAN,
+        });
+        return {};
+      },
+    },
+
+    // Rule with both schema defaults AND `defaultOptions`, with `defaultOptions` empty
+    "schema-and-empty-default-options": {
+      meta: {
+        schema: [
+          {
+            type: "object",
+            default: {},
+            properties: {
+              fromSchema: { type: "number", default: 10 },
+              overrideSchemaByDefaultOptions: { type: "number", default: 20 },
+              overrideSchemaByConfig: { type: "number", default: 30 },
+              overrideBothByConfig: { type: "number", default: 40 },
+            },
+            additionalProperties: true,
+          },
+        ],
         defaultOptions: [],
       },
       create(context) {

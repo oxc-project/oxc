@@ -10095,7 +10095,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  18 │ ];
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
    ╭─[typescript/tests/cases/compiler/regularExpressionGroupNameSuggestions.ts:1:24]
  1 │ const regex = /(?<foo>)\k<Foo>/;
    ·                        ───────

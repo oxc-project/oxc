@@ -407,11 +407,10 @@ export interface Context extends FileContext {
 
 /**
  * Create `Context` object for a rule.
- * @param fullRuleName - Full rule name, including plugin name e.g. `my-plugin/my-rule`
  * @param ruleDetails - `RuleDetails` object
  * @returns `Context` object
  */
-export function createContext(fullRuleName: string, ruleDetails: RuleDetails): Readonly<Context> {
+export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
   // Create `Context` object for rule.
   //
   // All properties are enumerable, to support a pattern which some ESLint plugins use:
@@ -442,7 +441,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
       // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
       if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
-      return fullRuleName;
+      return ruleDetails.fullName;
     },
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {

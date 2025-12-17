@@ -20,6 +20,7 @@ fn no_inline_comments_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoInlineComments(Box<NoInlineCommentsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoInlineCommentsConfig {
     /// A regex pattern to ignore certain inline comments.
     ///

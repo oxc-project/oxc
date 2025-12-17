@@ -5,21 +5,15 @@
     "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+    "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
     "lint": "oxlint -c oxlintrc.json --deny-warnings --type-aware --type-check --report-unused-disable-directives"
   },
   "devDependencies": {
-    "@arethetypeswrong/core": "0.18.2",
-    "@napi-rs/cli": "catalog:",
-    "emnapi": "1.7.1",
-    "eslint": "^9.39.2",
     "oxfmt": "^0.18.0",
     "oxlint": "^1.33.0",
-    "oxlint-tsgolint": "0.9.1",
-    "publint": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "oxlint-tsgolint": "0.9.1"
   },
   "packageManager": "pnpm@10.24.0"
 }
