@@ -14,9 +14,7 @@ use crate::{LintPlugins, utils::read_to_string};
 use super::{
     categories::OxlintCategories,
     env::OxlintEnv,
-    external_plugins::{
-        ExternalPluginEntry, deserialize_external_plugins, external_plugins_schema,
-    },
+    external_plugins::{ExternalPluginEntry, external_plugins_schema},
     globals::OxlintGlobals,
     overrides::OxlintOverrides,
     rules::OxlintRules,
@@ -81,12 +79,7 @@ pub struct Oxlintrc {
     ///
     /// Note: JS plugins are experimental and not subject to semver.
     /// They are not supported in language server at present.
-    #[serde(
-        rename = "jsPlugins",
-        default,
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "deserialize_external_plugins"
-    )]
+    #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
     pub categories: OxlintCategories,
