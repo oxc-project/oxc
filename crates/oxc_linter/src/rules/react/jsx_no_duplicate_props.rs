@@ -4,13 +4,16 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use std::borrow::Cow;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn jsx_no_duplicate_props_diagnostic(prop_name: &str, span1: Span, span2: Span) -> OxcDiagnostic {
@@ -21,8 +24,20 @@ fn jsx_no_duplicate_props_diagnostic(prop_name: &str, span1: Span, span2: Span) 
     .with_labels([span1, span2])
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxNoDuplicateProps;
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct JsxNoDuplicateProps {
+    // If set to `true`, the rule will consider props duplicates even if
+    // they use different casing.
+    //
+    // For example, with `ignoreCase` set to `true`, the following code would be considered
+    // to have duplicate props:
+    //
+    // ```jsx
+    // <InputField inputProps="foo" InputProps="bar" />;
+    // ```
+    ignore_case: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,16 +64,23 @@ declare_oxc_lint!(
     /// ```
     JsxNoDuplicateProps,
     react,
-    correctness
+    correctness,
+    config = JsxNoDuplicateProps,
 );
 
 impl Rule for JsxNoDuplicateProps {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<JsxNoDuplicateProps>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else {
             return;
         };
 
-        let mut props: FxHashMap<Atom, Span> = FxHashMap::default();
+        let mut props: FxHashMap<Cow<'a, str>, Span> = FxHashMap::default();
 
         for attr in &jsx_opening_elem.attributes {
             let JSXAttributeItem::Attribute(jsx_attr) = attr else {
@@ -69,7 +91,14 @@ impl Rule for JsxNoDuplicateProps {
                 continue;
             };
 
-            if let Some(old_span) = props.insert(ident.name, ident.span) {
+            let ident_name: Cow<'a, str> = if self.ignore_case {
+                // Use ASCII lowercase to avoid allocating unless needed
+                Cow::Owned(ident.name.as_str().to_ascii_lowercase())
+            } else {
+                Cow::Borrowed(ident.name.as_str())
+            };
+
+            if let Some(old_span) = props.insert(ident_name, ident.span) {
                 ctx.diagnostic(jsx_no_duplicate_props_diagnostic(
                     ident.name.as_str(),
                     old_span,
@@ -105,6 +134,7 @@ fn test() {
 
     let fail = vec![
         ("<App a a />;", None),
+        ("<App a a />;", Some(serde_json::json!([{ "ignoreCase": false }]))), // default config
         ("<App A b c A />;", None),
         (r#"<App a="a" b="b" a="a" />;"#, None),
         (r#"<App a="a" {...this.props} b="b" a="a" />;"#, None),
@@ -122,6 +152,14 @@ fn test() {
             />;
         "#,
             None,
+        ),
+        ("<App a a />;", Some(serde_json::json!([{ "ignoreCase": true }]))), // still fails even if they're the same case and ignoreCase is true.
+        ("<App A a />;", Some(serde_json::json!([{ "ignoreCase": true }]))),
+        ("<App a b c A />;", Some(serde_json::json!([{ "ignoreCase": true }]))),
+        (r#"<App A="a" b="b" B="B" />;"#, Some(serde_json::json!([{ "ignoreCase": true }]))),
+        (
+            r#"<App inputProps="foo" InputProps="bar" />;"#,
+            Some(serde_json::json!([{ "ignoreCase": true }])),
         ),
     ];
 
