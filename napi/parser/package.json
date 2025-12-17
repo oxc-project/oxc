@@ -61,7 +61,7 @@
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
-    "test": "tsc && pnpm run test-node run",
+    "test": "pnpm run test-node run",
     "test-node": "vitest --dir ./test",
     "test-browser": "vitest -c vitest.config.browser.ts",
     "bench": "vitest bench --run ./bench.bench.js"
@@ -81,7 +81,6 @@
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "tinypool": "^2.0.0",
-    "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

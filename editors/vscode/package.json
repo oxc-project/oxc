@@ -42,8 +42,7 @@
     "test:single-folder": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=single-folder vscode-test",
     "test:multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=multi-root vscode-test",
     "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
-    "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test",
-    "type-check": "tsc --noEmit"
+    "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"
   },
   "contributes": {
     "commands": [
@@ -281,9 +280,8 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "catalog:",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.54",
-    "tinyglobby": "^0.2.15",
-    "typescript": "catalog:"
+    "rolldown": "catalog:",
+    "tinyglobby": "^0.2.15"
   },
   "engines": {
     "vscode": "^1.93.0"

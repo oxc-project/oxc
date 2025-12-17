@@ -83,9 +83,6 @@ importers:
       tsdown:
         specifier: 'catalog:'
         version: 0.18.0(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       vitest:
         specifier: 'catalog:'
         version: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
@@ -184,14 +181,11 @@ importers:
         specifier: ^0.10.0
         version: 0.10.7
       rolldown:
-        specifier: 1.0.0-beta.54
+        specifier: 'catalog:'
         version: 1.0.0-beta.54
       tinyglobby:
         specifier: ^0.2.15
         version: 0.2.15
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   napi/minify:
     devDependencies:
@@ -204,9 +198,6 @@ importers:
       publint:
         specifier: 'catalog:'
         version: 0.3.15
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       vitest:
         specifier: 'catalog:'
         version: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
@@ -250,9 +241,6 @@ importers:
       tinypool:
         specifier: ^2.0.0
         version: 2.0.0
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       vitest:
         specifier: 'catalog:'
         version: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
@@ -281,9 +269,6 @@ importers:
       publint:
         specifier: 'catalog:'
         version: 0.3.15
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       vitest:
         specifier: 'catalog:'
         version: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
