@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use rustc_hash::FxHashSet;
-use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{InstanceType, Metadata, ObjectValidation, Schema, SchemaObject, SubschemaValidation},
+};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// External plugin entry containing the plugin specifier and optional custom name
@@ -21,10 +24,6 @@ impl JsonSchema for ExternalPluginEntry {
     }
 
     fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
-        use schemars::schema::{
-            InstanceType, Metadata, ObjectValidation, SchemaObject, SubschemaValidation,
-        };
-
         // Schema represents: string | { name: string, specifier: string }
         let string_schema = SchemaObject {
             instance_type: Some(InstanceType::String.into()),
