@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn max_statements_diagnostic(span: Span, count: usize, max: i32) -> OxcDiagnostic {
+fn max_statements_diagnostic(span: Span, count: usize, max: usize) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Function has too many statements ({count}). Maximum allowed is {max}."
     ))
@@ -22,9 +22,9 @@ fn max_statements_diagnostic(span: Span, count: usize, max: i32) -> OxcDiagnosti
 #[schemars(untagged, rename_all = "camelCase")]
 enum MaxLineConfig {
     #[serde(rename = "max")]
-    Max(i32),
+    Max(usize),
     #[serde(rename = "maximum")]
-    Maximum(i32),
+    Maximum(usize),
 }
 
 impl Default for MaxLineConfig {
@@ -50,7 +50,7 @@ struct TopLevelFunctionInfo {
 
 #[derive(Debug, Default, Clone)]
 pub struct MaxStatements {
-    max: i32,
+    max: usize,
     ignore_top_level_functions: bool,
     top_level_functions: Arc<Mutex<Vec<TopLevelFunctionInfo>>>,
 }
@@ -110,8 +110,8 @@ impl Rule for MaxStatements {
             serde_json::from_value::<MaxStatementsConfig>(value.clone())
                 .or_else(|_| {
                     // [number, {ignoreTopLevelFunctions}]
-                    serde_json::from_value::<(i32, ConfigElement1)>(value.clone())
-                        .map(|(n, c1)| MaxStatementsConfig(MaxLineConfig::Max(n as i32), c1))
+                    serde_json::from_value::<(usize, ConfigElement1)>(value.clone())
+                        .map(|(n, c1)| MaxStatementsConfig(MaxLineConfig::Max(n), c1))
                 })
                 .or_else(|_| {
                     // [{max,maximum}]
@@ -120,8 +120,8 @@ impl Rule for MaxStatements {
                 })
                 .or_else(|_| {
                     // config: [number]
-                    serde_json::from_value::<(i32,)>(value.clone()).map(|(n,)| {
-                        MaxStatementsConfig(MaxLineConfig::Max(n as i32), ConfigElement1::default())
+                    serde_json::from_value::<(usize,)>(value.clone()).map(|(n,)| {
+                        MaxStatementsConfig(MaxLineConfig::Max(n), ConfigElement1::default())
                     })
                 })
                 .or_else(|_| {
@@ -131,7 +131,7 @@ impl Rule for MaxStatements {
 
         let config = config.unwrap();
 
-        Self::new(config)
+        Self::new(&config)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -140,12 +140,12 @@ impl Rule for MaxStatements {
                 self.top_level_functions.lock().unwrap().clear();
             }
             _ => self.check_and_fix(node, ctx),
-        };
+        }
     }
 }
 
 impl MaxStatements {
-    fn new(config: MaxStatementsConfig) -> Self {
+    fn new(config: &MaxStatementsConfig) -> Self {
         Self {
             max: match config.0 {
                 MaxLineConfig::Max(n) | MaxLineConfig::Maximum(n) => n,
@@ -156,7 +156,6 @@ impl MaxStatements {
     }
 
     fn check_is_top_level_function<'a>(
-        &self,
         node: &oxc_semantic::AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
@@ -165,11 +164,9 @@ impl MaxStatements {
         let parent = nodes.get_node(parent_id);
 
         match parent.kind() {
-            AstKind::Function(_) => false,
-            AstKind::ArrowFunctionExpression(_) => false,
             AstKind::Program(_) => true,
-            AstKind::Class(_) => false,
-            _ => self.check_is_top_level_function(&parent, ctx),
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_) => false,
+            _ => Self::check_is_top_level_function(parent, ctx),
         }
     }
 
@@ -260,7 +257,7 @@ impl MaxStatements {
             AstKind::ArrowFunctionExpression(expr) => {
                 let statements_count = self.count_statements_recursive(&expr.body.statements);
 
-                let is_top_level = self.check_is_top_level_function(node, ctx);
+                let is_top_level = Self::check_is_top_level_function(node, ctx);
 
                 if self.ignore_top_level_functions && is_top_level {
                     self.top_level_functions.lock().unwrap().push(TopLevelFunctionInfo {
@@ -274,11 +271,11 @@ impl MaxStatements {
                     return;
                 }
 
-                if statements_count as i32 > max_lines {
+                if statements_count > max_lines {
                     let span = expr.span();
                     let diagnostic = max_statements_diagnostic(span, statements_count, max_lines);
                     ctx.diagnostic(diagnostic);
-                };
+                }
             }
             AstKind::Function(func) => {
                 let Some(body) = func.body.as_ref() else {
@@ -287,7 +284,7 @@ impl MaxStatements {
 
                 let statements_count = self.count_statements_recursive(&body.statements);
 
-                let is_top_level = self.check_is_top_level_function(node, ctx);
+                let is_top_level = Self::check_is_top_level_function(node, ctx);
 
                 if self.ignore_top_level_functions && is_top_level {
                     self.top_level_functions.lock().unwrap().push(TopLevelFunctionInfo {
@@ -302,14 +299,14 @@ impl MaxStatements {
                     return;
                 }
 
-                if statements_count as i32 > max_lines {
+                if statements_count > max_lines {
                     let span = func.span();
                     let diagnostic = max_statements_diagnostic(span, statements_count, max_lines);
                     ctx.diagnostic(diagnostic);
-                };
+                }
             }
             _ => {}
-        };
+        }
     }
 
     fn diagnostic_top_level_function(&self, ctx: &LintContext) {
@@ -320,7 +317,7 @@ impl MaxStatements {
         }
 
         top_level_functions.iter_mut().for_each(|func_info| {
-            if func_info.count as i32 > self.max && func_info.done_diagnostic == false {
+            if func_info.count > self.max && !func_info.done_diagnostic {
                 func_info.done_diagnostic = true;
                 let diagnostic =
                     max_statements_diagnostic(func_info.span, func_info.count, self.max);
