@@ -1,0 +1,6 @@
+{
+  "name": "plugins",
+  "devDependencies": {
+    "eslint": "catalog:"
+  }
+}
