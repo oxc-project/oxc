@@ -52,6 +52,7 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
+  readonly fullName: string;
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
@@ -144,6 +145,8 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
+    const fullRuleName = `${pluginName}/${ruleName}`;
+
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
       messages: Record<string, string> | null = null,
@@ -209,6 +212,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
+      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
@@ -223,7 +227,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     };
 
     // Create `Context` object for rule. This will be re-used for every file.
-    const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
+    const context = createContext(ruleDetails);
     (ruleDetails as Writable<RuleDetails>).context = context;
 
     if ("createOnce" in rule) {
