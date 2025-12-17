@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeName},
@@ -92,8 +93,7 @@ impl Rule for JsxNoDuplicateProps {
             };
 
             let ident_name: Cow<'a, str> = if self.ignore_case {
-                // Use ASCII lowercase to avoid allocating unless needed
-                Cow::Owned(ident.name.as_str().to_ascii_lowercase())
+                ident.name.as_str().cow_to_ascii_lowercase()
             } else {
                 Cow::Borrowed(ident.name.as_str())
             };
