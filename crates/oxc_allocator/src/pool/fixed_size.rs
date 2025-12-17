@@ -5,7 +5,7 @@ use std::{
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
-        Mutex,
+        Condvar, Mutex,
         atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
@@ -47,45 +47,109 @@ pub struct FixedSizeAllocatorPool {
     allocators: Mutex<Vec<FixedSizeAllocator>>,
     /// ID to assign to next `Allocator` that's created
     next_id: AtomicU32,
+    /// Maximum number of allocators this pool will create.
+    /// Once this limit is reached, [`get`](Self::get) will block until an allocator
+    /// is returned to the pool via [`add`](Self::add).
+    capacity_limit: usize,
+    /// Condition variable used to signal when an allocator is returned to the pool.
+    /// Threads blocked in [`get`](Self::get) waiting for an allocator will be woken
+    /// when [`add`](Self::add) returns one to the pool.
+    available: Condvar,
+    /// `true` if allocator creation has failed.
+    /// Once set, no further attempts to create allocators will be made, since they would
+    /// also fail.
+    allocation_failed: AtomicBool,
 }
 
 impl FixedSizeAllocatorPool {
     /// Create a new [`FixedSizeAllocatorPool`] for use across the specified number of threads.
+    ///
+    /// The pool eagerly creates one allocator during construction. In total, it will create
+    /// at most `max(thread_count, 1)` allocators (including this initial allocator). If all
+    /// allocators are in use when [`get`](Self::get) is called, it will block until one is
+    /// returned to the pool via [`add`](Self::add).
+    ///
+    /// Passing `thread_count == 0` is equivalent to a pool that may use exactly one allocator
+    /// in total (the one created during construction).
     pub fn new(thread_count: usize) -> FixedSizeAllocatorPool {
-        // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
-        // in case not all threads end up being used (e.g. language server without `import` plugin)
-        let allocators = Vec::with_capacity(thread_count);
-        FixedSizeAllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
+        let max_allocator_count = thread_count.max(1);
+        let mut allocators = Vec::with_capacity(max_allocator_count);
+        let Ok(allocator) = FixedSizeAllocator::try_new(0) else {
+            panic!("Failed to create initial fixed-size allocator for the pool");
+        };
+        allocators.push(allocator);
+
+        FixedSizeAllocatorPool {
+            allocators: Mutex::new(allocators),
+            next_id: AtomicU32::new(1),
+            available: Condvar::new(),
+            capacity_limit: max_allocator_count,
+            allocation_failed: AtomicBool::new(false),
+        }
     }
 
     /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
     ///
     /// # Panics
-    /// Panics if the underlying mutex is poisoned.
+    /// * Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> Allocator {
-        let fixed_size_allocator = {
-            let mut allocators = self.allocators.lock().unwrap();
-            allocators.pop()
-        };
+        fn into_allocator(allocator: FixedSizeAllocator) -> Allocator {
+            // SAFETY: `FixedSizeAllocator` is just a wrapper around `ManuallyDrop<Allocator>`,
+            // and is `#[repr(transparent)]`, so the 2 are equivalent.
+            let allocator =
+                unsafe { mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(allocator) };
+            ManuallyDrop::into_inner(allocator)
+        }
 
-        let fixed_size_allocator = fixed_size_allocator.unwrap_or_else(|| {
-            // Each allocator needs to have a unique ID, but the order those IDs are assigned in
-            // doesn't matter, so `Ordering::Relaxed` is fine
-            let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        {
+            let maybe_allocator = self.allocators.lock().unwrap().pop();
+            if let Some(allocator) = maybe_allocator {
+                return into_allocator(allocator);
+            }
+        }
+
+        if let Some(Ok(allocator)) = self.create_new_allocator() {
+            return into_allocator(allocator);
+        }
+
+        loop {
+            let mut maybe_allocator = self.available.wait(self.allocators.lock().unwrap()).unwrap();
+            if let Some(allocator) = maybe_allocator.pop() {
+                return into_allocator(allocator);
+            }
+        }
+    }
+
+    fn create_new_allocator(&self) -> Option<Result<FixedSizeAllocator, AllocError>> {
+        // If a previous allocation attempt failed, don't try again - it will also fail.
+        if self.allocation_failed.load(Ordering::Relaxed) {
+            return None;
+        }
+
+        loop {
+            let id = self.next_id.load(Ordering::Relaxed);
+
+            if id as usize >= self.capacity_limit {
+                return None;
+            }
+
             // Protect against IDs wrapping around.
             // TODO: Does this work? Do we need it anyway?
             assert!(id < u32::MAX, "Created too many allocators");
-            FixedSizeAllocator::try_new(id).unwrap()
-        });
 
-        // Unwrap `FixedSizeAllocator`.
-        // `add` method will wrap it again, before returning it to pool, ensuring it gets dropped properly.
-        // SAFETY: `FixedSizeAllocator` is just a wrapper around `ManuallyDrop<Allocator>`,
-        // and is `#[repr(transparent)]`, so the 2 are equivalent.
-        let allocator = unsafe {
-            mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(fixed_size_allocator)
-        };
-        ManuallyDrop::into_inner(allocator)
+            // Try to claim this ID. If another thread got there first, retry with new ID.
+            if self
+                .next_id
+                .compare_exchange_weak(id, id + 1, Ordering::Relaxed, Ordering::Relaxed)
+                .is_ok()
+            {
+                let result = FixedSizeAllocator::try_new(id);
+                if result.is_err() {
+                    self.allocation_failed.store(true, Ordering::Relaxed);
+                }
+                return Some(result);
+            }
+        }
     }
 
     /// Add an [`Allocator`] to the pool.
@@ -104,6 +168,7 @@ impl FixedSizeAllocatorPool {
 
         let mut allocators = self.allocators.lock().unwrap();
         allocators.push(fixed_size_allocator);
+        self.available.notify_one();
     }
 }
 
