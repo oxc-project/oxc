@@ -44,7 +44,7 @@ export type JsLoadPluginCb =
 
 /** JS callback to setup configs. */
 export type JsSetupConfigsCb =
-  ((arg: string) => void)
+  ((arg: string) => string | null)
 
 /**
  * NAPI entry point.

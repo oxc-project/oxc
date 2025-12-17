@@ -5,7 +5,6 @@ use napi::{
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
 };
-use tokio::task::block_in_place;
 
 use oxc_formatter::EmbeddedFormatterCallback;
 
@@ -126,24 +125,32 @@ impl ExternalFormatter {
 
 // ---
 
+// NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
+//
+// When called from `rayon` worker threads (Mode::Cli), this works fine.
+// Because `rayon` threads are separate from the `tokio` runtime.
+//
+// However, in cases like `--stdin-filepath` or Node.js API calls,
+// where already inside an async context (the `napi`'s `async` function),
+// calling `block_on` directly would cause issues with nested async runtime access.
+//
+// Therefore, `block_in_place()` is used at the call site
+// to temporarily convert the current async task into a blocking context.
+
 /// Wrap JS `setupConfig` callback as a normal Rust function.
-// NOTE: Use `block_in_place()` because this is called from a sync context, unlike the others
 fn wrap_setup_config(cb: JsSetupConfigCb) -> SetupConfigCallback {
     Arc::new(move |config_json: &str, num_threads: usize| {
-        block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                #[expect(clippy::cast_possible_truncation)]
-                let status = cb
-                    .call_async(FnArgs::from((config_json.to_string(), num_threads as u32)))
-                    .await;
-                match status {
-                    Ok(promise) => match promise.await {
-                        Ok(languages) => Ok(languages),
-                        Err(err) => Err(format!("JS setupConfig promise rejected: {err}")),
-                    },
-                    Err(err) => Err(format!("Failed to call JS setupConfig callback: {err}")),
-                }
-            })
+        block_on(async {
+            #[expect(clippy::cast_possible_truncation)]
+            let status =
+                cb.call_async(FnArgs::from((config_json.to_string(), num_threads as u32))).await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(languages) => Ok(languages),
+                    Err(err) => Err(format!("JS setupConfig promise rejected: {err}")),
+                },
+                Err(err) => Err(format!("Failed to call JS setupConfig callback: {err}")),
+            }
         })
     })
 }

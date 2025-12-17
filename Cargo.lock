@@ -935,7 +935,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c7ed2f2edad8a14c8186b847909a41fbb9c3eafa44f88bd891114ed5019da09"
 dependencies = [
- "hashbrown 0.16.0",
+ "hashbrown 0.16.1",
 ]
 
 [[package]]
@@ -971,9 +971,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5419bdc4f6a9207fbeba6d11b604d481addf78ecd10c11ad51e76c2f6482748d"
+checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
 dependencies = [
  "allocator-api2",
  "equivalent",
@@ -1192,7 +1192,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6717a8d2a5a929a1a2eb43a12812498ed141a0bcfb7e8f7844fbdbe4303bba9f"
 dependencies = [
  "equivalent",
- "hashbrown 0.16.0",
+ "hashbrown 0.16.1",
  "rayon",
  "serde",
  "serde_core",
@@ -1387,9 +1387,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34080505efa8e45a4b816c349525ebe327ceaa8559756f0356cba97ef3bf7432"
+checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "ls-types"
@@ -1451,6 +1451,8 @@ dependencies = [
  "napi-sys",
  "nohash-hasher",
  "rustc-hash",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -1628,7 +1630,7 @@ checksum = "9c6901729fa79e91a0913333229e9ca5dc725089d1c363b2f4b4760709dc4a52"
 
 [[package]]
 name = "oxc"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1706,11 +1708,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
- "hashbrown 0.16.0",
+ "hashbrown 0.16.1",
  "oxc_ast_macros",
  "oxc_data_structures",
  "oxc_estree",
@@ -1721,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -1736,7 +1738,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -1780,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1815,7 +1817,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "itertools",
@@ -1827,7 +1829,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -1849,7 +1851,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_compat"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "cow-utils",
  "oxc-browserslist",
@@ -1902,14 +1904,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "ropey",
 ]
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1918,7 +1920,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1931,7 +1933,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "dragonbox_ecma",
  "itoa",
@@ -1940,11 +1942,10 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cow-utils",
  "insta",
- "json-strip-comments",
  "natord",
  "oxc-schemars",
  "oxc_allocator",
@@ -1975,7 +1976,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "insta",
@@ -1993,12 +1994,13 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "1.32.0"
+version = "1.33.0"
 dependencies = [
  "env_logger",
  "futures",
  "ignore",
  "insta",
+ "json-strip-comments",
  "log",
  "oxc_allocator",
  "oxc_data_structures",
@@ -2016,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.32.0"
+version = "1.33.0"
 dependencies = [
  "bitflags",
  "constcat",
@@ -2089,7 +2091,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "itertools",
  "oxc_allocator",
@@ -2105,7 +2107,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2132,7 +2134,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minify_napi"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2171,7 +2173,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -2185,7 +2187,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -2208,7 +2210,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2229,6 +2231,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_compat",
  "oxc_formatter",
  "oxc_linter",
  "oxc_napi",
@@ -2258,9 +2261,10 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
+ "insta",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
@@ -2310,7 +2314,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "insta",
  "itertools",
@@ -2349,7 +2353,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2362,7 +2366,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -2435,7 +2439,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2449,7 +2453,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "base64",
  "compact_str",
@@ -2480,7 +2484,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_plugins"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2507,7 +2511,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.102.0"
+version = "0.103.0"
 dependencies = [
  "itoa",
  "oxc_allocator",
@@ -2523,7 +2527,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2538,6 +2542,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_language_server",
+ "oxc_napi",
  "oxc_parser",
  "oxc_span",
  "phf",
@@ -2552,7 +2557,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.32.0"
+version = "1.33.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -3254,11 +3259,10 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 
 [[package]]
 name = "sort-package-json"
-version = "0.0.2"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07eac91e6c27ebf2b42a291197117005983a7f5e4e18af93e55ad1777e1c5801"
+checksum = "d853e18df0c75ebb11549231584272b74426645bf68bde8d03f3cc8c369b81e2"
 dependencies = [
- "ignore",
  "serde_json",
 ]
 
@@ -3599,9 +3603,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.3.20"
+version = "0.3.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2054a14f5307d601f88daf0553e1cbf472acc4f2c51afab632431cdcd72124d5"
+checksum = "2f30143827ddab0d256fd843b7a66d164e9f271cfa0dde49142c5ca0ca291f1e"
 dependencies = [
  "nu-ansi-term",
  "sharded-slab",

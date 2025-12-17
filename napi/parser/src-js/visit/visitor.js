@@ -76,7 +76,7 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
-} from "../../generated/visit/type_ids.js";
+} from "../generated/visit/type_ids.js";
 
 const { isArray } = Array;
 

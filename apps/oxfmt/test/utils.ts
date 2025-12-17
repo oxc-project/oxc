@@ -3,12 +3,22 @@ import { join, relative } from "node:path";
 import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { execa } from "execa";
+import type { Result } from "execa";
 
 // NOTE: TS's ESNext is not yet reached to ES2025...
 declare global {
   interface RegExpConstructor {
     escape(str: string): string;
   }
+}
+
+export function runCli(cwd: string, args: string[]) {
+  const cliPath = join(import.meta.dirname, "..", "dist", "cli.js");
+  return execa("node", [cliPath, ...args], {
+    cwd,
+    reject: false,
+    timeout: 5000,
+  });
 }
 
 // Test function for running the CLI with various arguments
@@ -62,27 +72,6 @@ ${afterContent}
 
 // ---
 
-export type RunResult = {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-};
-
-export async function runCli(cwd: string, args: string[]): Promise<RunResult> {
-  const cliPath = join(import.meta.dirname, "..", "dist", "cli.js");
-
-  const result = await execa("node", [cliPath, ...args], {
-    cwd,
-    reject: false,
-  });
-
-  return {
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode ?? -1,
-  };
-}
-
 function normalizeOutput(output: string, cwd: string): string {
   let normalized = output;
 
@@ -103,11 +92,7 @@ function normalizeOutput(output: string, cwd: string): string {
   return normalized;
 }
 
-function formatSnapshot(
-  cwd: string,
-  args: string[],
-  { stdout, stderr, exitCode }: RunResult,
-): string {
+function formatSnapshot(cwd: string, args: string[], { stdout, stderr, exitCode }: Result): string {
   const testsRoot = join(import.meta.dirname);
   const relativeDir = relative(testsRoot, cwd) || ".";
 
@@ -115,11 +100,11 @@ function formatSnapshot(
 --------------------
 arguments: ${args.join(" ")}
 working directory: ${relativeDir}
-exit code: ${exitCode}
+exit code: ${exitCode ?? -1}
 --- STDOUT ---------
-${stdout}
+${String(stdout)}
 --- STDERR ---------
-${stderr}
+${String(stderr)}
 --------------------
 `.trim();
 }

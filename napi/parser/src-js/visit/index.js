@@ -15,7 +15,7 @@ export class Visitor {
   constructor(visitor) {
     if (walkProgram === null) {
       const require = createRequire(import.meta.url);
-      ({ walkProgram } = require("../../generated/visit/walk.js"));
+      ({ walkProgram } = require("../generated/visit/walk.js"));
       ({
         addVisitorToCompiled,
         createCompiledVisitor,

@@ -11,7 +11,6 @@ const keys = [
   'typeAware',
   'disableNestedConfig',
   'fixKind',
-  'fmt.experimental',
   'fmt.configPath',
   // deprecated
   'flags'
@@ -48,7 +47,6 @@ suite('WorkspaceConfig', () => {
     strictEqual(config.typeAware, false);
     strictEqual(config.disableNestedConfig, false);
     strictEqual(config.fixKind, "safe_fix");
-    strictEqual(config.formattingExperimental, false);
     strictEqual(config.formattingConfigPath, null);
   });
 
@@ -74,7 +72,6 @@ suite('WorkspaceConfig', () => {
       config.updateTypeAware(true),
       config.updateDisableNestedConfig(true),
       config.updateFixKind(FixKind.DangerousFix),
-      config.updateFormattingExperimental(true),
       config.updateFormattingConfigPath('./oxfmt.json'),
     ]);
 
@@ -87,7 +84,6 @@ suite('WorkspaceConfig', () => {
     strictEqual(wsConfig.get('typeAware'), true);
     strictEqual(wsConfig.get('disableNestedConfig'), true);
     strictEqual(wsConfig.get('fixKind'), 'dangerous_fix');
-    strictEqual(wsConfig.get('fmt.experimental'), true);
     strictEqual(wsConfig.get('fmt.configPath'), './oxfmt.json');
   });
 
@@ -102,7 +98,6 @@ suite('WorkspaceConfig', () => {
       config.updateTypeAware(true),
       config.updateDisableNestedConfig(true),
       config.updateFixKind(FixKind.DangerousFix),
-      config.updateFormattingExperimental(true),
       config.updateFormattingConfigPath('./oxfmt.json'),
     ]);
 
@@ -115,7 +110,6 @@ suite('WorkspaceConfig', () => {
     strictEqual(lsConfig.typeAware, true);
     strictEqual(lsConfig.disableNestedConfig, true);
     strictEqual(lsConfig.fixKind, 'dangerous_fix');
-    strictEqual(lsConfig['fmt.experimental'], true);
     strictEqual(lsConfig['fmt.configPath'], './oxfmt.json');
   });
 
@@ -130,7 +124,6 @@ suite('WorkspaceConfig', () => {
       config.updateTypeAware(true),
       config.updateDisableNestedConfig(true),
       config.updateFixKind(FixKind.DangerousFix),
-      config.updateFormattingExperimental(true),
       config.updateFormattingConfigPath('./oxfmt.json'),
     ]);
 
@@ -148,13 +141,11 @@ suite('WorkspaceConfig', () => {
   test('toOxfmtConfig method', async () => {
     const config = new WorkspaceConfig(WORKSPACE_FOLDER);
 
-    await Promise.all([
-      config.updateFormattingExperimental(true),
-      config.updateFormattingConfigPath('./oxfmt.json'),
-    ]);
+    await config.updateFormattingConfigPath('./oxfmt.json');
 
     const oxfmtConfig = config.toOxfmtConfig();
 
+    // @ts-expect-error -- deprecated setting, kept for backward compatibility
     strictEqual(oxfmtConfig['fmt.experimental'], true);
     strictEqual(oxfmtConfig['fmt.configPath'], './oxfmt.json');
   });

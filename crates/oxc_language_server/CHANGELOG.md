@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.33.0] - 2025-12-15
+
+### ⚡ Performance
+
+- 5eb8b14 lsp: Avoid one clone in code actions request (#16543) (Sysix)
+
 ## [1.32.0] - 2025-12-08
 
 ### 🐛 Bug Fixes

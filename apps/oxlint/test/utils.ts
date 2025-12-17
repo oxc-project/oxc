@@ -162,7 +162,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 const PATH_REGEXP = new RegExp(
-  // @ts-expect-error `RegExp.escape` is new in NodeJS v24
+  // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
   `(?<=^|[\\s\\('"\`])${RegExp.escape(REPO_ROOT_PATH)}(${RegExp.escape(pathSep)}[^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   "g",
 );
@@ -204,9 +204,11 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
   // Shorten paths in output with `<root>`, `<fixtures>`, or `<fixture>`.
   lines = lines.flatMap((line) => {
     // Handle stack trace lines.
+    // e.g. ` at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
+    // e.g. ` at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
     // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
-    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    const match = line.match(/^(\s*\|?\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       let [, preamble, at] = match;
       if (!at.startsWith(FIXTURES_URL)) return [];

@@ -2,7 +2,7 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
-} from "../../generated/lazy/type_ids.js";
+} from "../generated/lazy/type_ids.js";
 
 // Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
 let getVisitorsArrTemp;

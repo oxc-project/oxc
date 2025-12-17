@@ -6,9 +6,9 @@
 
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
-| Total rules       |   259 | 100.0% |
-| Fully passing     |   193 |  74.5% |
-| Partially passing |    65 |  25.1% |
+| Total rules       |   277 | 100.0% |
+| Fully passing     |   218 |  78.7% |
+| Partially passing |    58 |  20.9% |
 | Fully failing     |     1 |   0.4% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -17,16 +17,19 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 26416 | 100.0% |
-| Passing     | 25330 |  95.9% |
-| Failing     |  1086 |   4.1% |
+| Total tests | 29765 | 100.0% |
+| Passing     | 28673 |  96.3% |
+| Failing     |   985 |   3.3% |
+| Skipped     |   107 |   0.4% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
 - `array-bracket-newline` (209 tests)
+- `array-bracket-spacing` (143 tests) (4 skipped)
 - `array-element-newline` (155 tests)
 - `arrow-body-style` (87 tests)
+- `arrow-parens` (109 tests) (21 skipped)
 - `arrow-spacing` (42 tests)
 - `block-spacing` (101 tests)
 - `brace-style` (168 tests)
@@ -35,17 +38,21 @@
 - `class-methods-use-this` (156 tests)
 - `comma-spacing` (173 tests)
 - `comma-style` (96 tests)
+- `computed-property-spacing` (125 tests)
 - `curly` (216 tests)
 - `default-case-last` (37 tests)
 - `default-case` (23 tests)
 - `default-param-last` (96 tests)
 - `dot-location` (78 tests)
+- `dot-notation` (69 tests)
+- `eol-last` (35 tests)
 - `eqeqeq` (68 tests)
 - `for-direction` (72 tests)
 - `func-name-matching` (193 tests)
 - `func-names` (109 tests)
 - `func-style` (120 tests)
 - `function-call-argument-newline` (58 tests)
+- `function-paren-newline` (177 tests) (2 skipped)
 - `generator-star-spacing` (201 tests)
 - `global-require` (22 tests)
 - `grouped-accessor-pairs` (150 tests)
@@ -54,9 +61,12 @@
 - `id-length` (181 tests)
 - `id-match` (98 tests)
 - `implicit-arrow-linebreak` (62 tests)
+- `indent-legacy` (317 tests)
+- `indent` (1090 tests) (14 skipped)
 - `init-declarations` (81 tests)
 - `jsx-quotes` (18 tests)
 - `key-spacing` (153 tests)
+- `keyword-spacing` (1078 tests) (9 skipped)
 - `line-comment-position` (38 tests)
 - `linebreak-style` (12 tests)
 - `lines-between-class-members` (112 tests)
@@ -72,6 +82,7 @@
 - `multiline-comment-style` (110 tests)
 - `multiline-ternary` (144 tests)
 - `new-cap` (80 tests)
+- `new-parens` (42 tests) (1 skipped)
 - `newline-after-var` (117 tests)
 - `newline-before-return` (93 tests)
 - `newline-per-chained-call` (37 tests)
@@ -108,6 +119,7 @@
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
+- `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
 - `no-extra-semi` (53 tests)
 - `no-floating-decimal` (8 tests)
@@ -158,6 +170,7 @@
 - `no-self-assign` (85 tests)
 - `no-self-compare` (21 tests)
 - `no-sequences` (42 tests)
+- `no-spaced-func` (28 tests)
 - `no-sparse-arrays` (6 tests)
 - `no-template-curly-in-string` (22 tests)
 - `no-ternary` (4 tests)
@@ -165,7 +178,9 @@
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
 - `no-underscore-dangle` (116 tests)
+- `no-unexpected-multiline` (56 tests) (4 skipped)
 - `no-unmodified-loop-condition` (37 tests)
+- `no-unneeded-ternary` (47 tests) (2 skipped)
 - `no-unsafe-finally` (28 tests)
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
@@ -173,14 +188,21 @@
 - `no-unused-private-class-members` (39 tests)
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
+- `no-useless-computed-key` (96 tests)
 - `no-useless-concat` (20 tests)
+- `no-useless-constructor` (49 tests) (1 skipped)
 - `no-useless-escape` (288 tests)
+- `no-useless-rename` (163 tests) (1 skipped)
+- `no-var` (52 tests) (1 skipped)
 - `no-void` (12 tests)
 - `no-warning-comments` (61 tests)
 - `no-whitespace-before-property` (192 tests)
 - `no-with` (2 tests)
 - `nonblock-statement-body-position` (48 tests)
+- `object-curly-newline` (144 tests) (8 skipped)
+- `object-curly-spacing` (178 tests) (2 skipped)
 - `object-property-newline` (75 tests)
+- `object-shorthand` (262 tests) (2 skipped)
 - `one-var-declaration-per-line` (38 tests)
 - `one-var` (296 tests)
 - `operator-assignment` (119 tests)
@@ -197,6 +219,7 @@
 - `preserve-caught-error` (49 tests)
 - `quote-props` (104 tests)
 - `quotes` (113 tests)
+- `require-await` (38 tests) (2 skipped)
 - `require-yield` (15 tests)
 - `rest-spread-spacing` (82 tests)
 - `semi-spacing` (62 tests)
@@ -204,7 +227,10 @@
 - `sort-imports` (61 tests)
 - `sort-keys` (215 tests)
 - `sort-vars` (61 tests)
+- `space-before-blocks` (161 tests) (2 skipped)
+- `space-before-function-paren` (75 tests) (1 skipped)
 - `space-in-parens` (139 tests)
+- `space-infix-ops` (74 tests) (7 skipped)
 - `space-unary-ops` (112 tests)
 - `spaced-comment` (99 tests)
 - `switch-colon-spacing` (46 tests)
@@ -221,31 +247,26 @@
 
 - `block-scoped-var` - 97 / 106 (91.5%)
 - `camelcase` - 187 / 204 (91.7%)
-- `comma-dangle` - 257 / 267 (96.3%)
-- `computed-property-spacing` - 123 / 125 (98.4%)
+- `comma-dangle` - 265 / 267 (99.3%)
 - `consistent-this` - 23 / 26 (88.5%)
-- `dot-notation` - 68 / 69 (98.6%)
-- `eol-last` - 29 / 35 (82.9%)
 - `func-call-spacing` - 137 / 151 (90.7%)
 - `id-blacklist` - 120 / 131 (91.6%)
 - `id-denylist` - 132 / 143 (92.3%)
-- `indent-legacy` - 299 / 317 (94.3%)
-- `indent` - 1076 / 1090 (98.7%)
 - `lines-around-comment` - 198 / 199 (99.5%)
 - `lines-around-directive` - 231 / 239 (96.7%)
-- `logical-assignment-operators` - 272 / 304 (89.5%)
+- `logical-assignment-operators` - 276 / 304 (90.8%)
 - `no-alert` - 36 / 42 (85.7%)
 - `no-array-constructor` - 145 / 146 (99.3%)
 - `no-catch-shadow` - 1 / 8 (12.5%)
 - `no-constant-binary-expression` - 225 / 260 (86.5%)
 - `no-constant-condition` - 305 / 307 (99.3%)
 - `no-eval` - 76 / 101 (75.2%)
-- `no-extra-parens` - 1067 / 1072 (99.5%)
+- `no-extra-parens` - 1068 / 1072 (99.6%)
 - `no-global-assign` - 12 / 18 (66.7%)
 - `no-implicit-globals` - 153 / 245 (62.4%)
 - `no-implied-eval` - 83 / 138 (60.1%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `no-lone-blocks` - 47 / 50 (94.0%)
+- `no-lone-blocks` - 49 / 50 (98.0%)
 - `no-misleading-character-class` - 185 / 190 (97.4%)
 - `no-multiple-empty-lines` - 45 / 46 (97.8%)
 - `no-native-reassign` - 12 / 18 (66.7%)
@@ -260,7 +281,6 @@
 - `no-setter-return` - 161 / 164 (98.2%)
 - `no-shadow-restricted-names` - 43 / 44 (97.7%)
 - `no-shadow` - 300 / 308 (97.4%)
-- `no-spaced-func` - 16 / 28 (57.1%)
 - `no-sync` - 8 / 10 (80.0%)
 - `no-tabs` - 0 / 11 (0.0%)
 - `no-trailing-spaces` - 53 / 54 (98.1%)
@@ -270,20 +290,19 @@
 - `no-unused-vars` - 340 / 436 (78.0%)
 - `no-use-before-define` - 323 / 347 (93.1%)
 - `no-useless-backreference` - 188 / 190 (98.9%)
-- `no-useless-computed-key` - 95 / 96 (99.0%)
 - `padding-line-between-statements` - 364 / 624 (58.3%)
-- `prefer-const` - 134 / 138 (97.1%)
-- `prefer-exponentiation-operator` - 161 / 167 (96.4%)
+- `prefer-const` - 136 / 138 (98.6%)
+- `prefer-exponentiation-operator` - 164 / 167 (98.2%)
 - `prefer-named-capture-group` - 54 / 57 (94.7%)
 - `prefer-object-has-own` - 91 / 92 (98.9%)
-- `prefer-object-spread` - 80 / 87 (92.0%)
+- `prefer-object-spread` - 82 / 87 (94.3%)
 - `prefer-regex-literals` - 239 / 251 (95.2%)
 - `radix` - 33 / 54 (61.1%)
 - `require-unicode-regexp` - 76 / 79 (96.2%)
-- `semi` - 284 / 308 (92.2%)
+- `semi` - 307 / 308 (99.7%)
 - `strict` - 106 / 126 (84.1%)
 - `symbol-description` - 6 / 8 (75.0%)
-- `unicode-bom` - 2 / 7 (28.6%)
+- `unicode-bom` - 4 / 7 (57.1%)
 - `valid-typeof` - 53 / 54 (98.1%)
 
 ## Rules with Failures Detail
@@ -292,6 +311,7 @@
 
 Pass: 97 / 106 (91.5%)
 Fail: 9 / 106 (8.5%)
+Skip: 0 / 106 (0.0%)
 
 #### block-scoped-var > invalid
 
@@ -672,6 +692,7 @@ AssertionError [ERR_ASSERTION]: Should have 6 errors but had 0: []
 
 Pass: 187 / 204 (91.7%)
 Fail: 17 / 204 (8.3%)
+Skip: 0 / 204 (0.0%)
 
 #### camelcase > valid
 
@@ -1453,231 +1474,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 2: [
 ### `comma-dangle`
 
 Pass: 257 / 267 (96.3%)
-Fail: 10 / 267 (3.7%)
-
-#### comma-dangle > valid
-
-```js
-function foo({a}: {a: string,}) {}
-```
-
-```json
-{
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo({a,}: {a: string}) {}
-```
-
-```json
-{
-  "options": [
-    "always"
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo(a): {b: boolean,} {}
-```
-
-```json
-{
-  "options": [
-    {
-      "functions": "never"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > valid
-
-```js
-function foo(a,): {b: boolean} {}
-```
-
-```json
-{
-  "options": [
-    {
-      "functions": "always"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo({a}: {a: string,}) {}
-```
-
-```json
-{
-  "output": "function foo({a,}: {a: string,}) {}",
-  "options": [
-    "always"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "missing"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo({a,}: {a: string}) {}
-```
-
-```json
-{
-  "output": "function foo({a}: {a: string}) {}",
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo(a): {b: boolean,} {}
-```
-
-```json
-{
-  "output": "function foo(a,): {b: boolean,} {}",
-  "options": [
-    {
-      "functions": "always"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "missing"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### comma-dangle > invalid
-
-```js
-function foo(a,): {b: boolean} {}
-```
-
-```json
-{
-  "output": "function foo(a): {b: boolean} {}",
-  "options": [
-    {
-      "functions": "never"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
+Fail: 2 / 267 (0.7%)
+Skip: 8 / 267 (3.0%)
 
 #### comma-dangle > invalid
 
@@ -1787,317 +1585,11 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-### `computed-property-spacing`
-
-Pass: 123 / 125 (98.4%)
-Fail: 2 / 125 (1.6%)
-
-#### computed-property-spacing > invalid
-
-```js
-A = class { [ a ](){} get [ b ](){} set [ c ](foo){} static [ d ](){} static get [ e ](){} static set [ f ](bar){} }
-```
-
-```json
-{
-  "output": "A = class { [a](){} get [b](){} set [c](foo){} static [d](){} static get [e](){} static set [f](bar){} }",
-  "options": [
-    "never",
-    {}
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 14,
-      "endLine": 1,
-      "endColumn": 15
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 16,
-      "endLine": 1,
-      "endColumn": 17
-    },
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 28,
-      "endLine": 1,
-      "endColumn": 29
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 30,
-      "endLine": 1,
-      "endColumn": 31
-    },
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 42,
-      "endLine": 1,
-      "endColumn": 43
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 44,
-      "endLine": 1,
-      "endColumn": 45
-    },
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 62,
-      "endLine": 1,
-      "endColumn": 63
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 64,
-      "endLine": 1,
-      "endColumn": 65
-    },
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 83,
-      "endLine": 1,
-      "endColumn": 84
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 85,
-      "endLine": 1,
-      "endColumn": 86
-    },
-    {
-      "messageId": "unexpectedSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 104,
-      "endLine": 1,
-      "endColumn": 105
-    },
-    {
-      "messageId": "unexpectedSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 106,
-      "endLine": 1,
-      "endColumn": 107
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 12 errors but had 0: []
-
-0 !== 12
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### computed-property-spacing > invalid
-
-```js
-class A { [a](){} get [b](){} set [c](foo){} static [d](){} static get [e](){} static set [f](bar){} }
-```
-
-```json
-{
-  "output": "class A { [ a ](){} get [ b ](){} set [ c ](foo){} static [ d ](){} static get [ e ](){} static set [ f ](bar){} }",
-  "options": [
-    "always",
-    {}
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6
-  },
-  "errors": [
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 11,
-      "endLine": 1,
-      "endColumn": 12
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 13,
-      "endLine": 1,
-      "endColumn": 14
-    },
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 23,
-      "endLine": 1,
-      "endColumn": 24
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 25,
-      "endLine": 1,
-      "endColumn": 26
-    },
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 35,
-      "endLine": 1,
-      "endColumn": 36
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 37,
-      "endLine": 1,
-      "endColumn": 38
-    },
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 53,
-      "endLine": 1,
-      "endColumn": 54
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 55,
-      "endLine": 1,
-      "endColumn": 56
-    },
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 72,
-      "endLine": 1,
-      "endColumn": 73
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 74,
-      "endLine": 1,
-      "endColumn": 75
-    },
-    {
-      "messageId": "missingSpaceAfter",
-      "data": {
-        "tokenValue": "["
-      },
-      "line": 1,
-      "column": 91,
-      "endLine": 1,
-      "endColumn": 92
-    },
-    {
-      "messageId": "missingSpaceBefore",
-      "data": {
-        "tokenValue": "]"
-      },
-      "line": 1,
-      "column": 93,
-      "endLine": 1,
-      "endColumn": 94
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 12 errors but had 0: []
-
-0 !== 12
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `consistent-this`
 
 Pass: 23 / 26 (88.5%)
 Fail: 3 / 26 (11.5%)
+Skip: 0 / 26 (0.0%)
 
 #### consistent-this > valid
 
@@ -2210,226 +1702,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-### `dot-notation`
-
-Pass: 68 / 69 (98.6%)
-Fail: 1 / 69 (1.4%)
-
-#### dot-notation > invalid
-
-```js
-let?.true
-```
-
-```json
-{
-  "output": "let?.[\"true\"]",
-  "options": [
-    {
-      "allowKeywords": false
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2020
-  },
-  "errors": [
-    {
-      "messageId": "useBrackets",
-      "data": {
-        "key": "true"
-      }
-    }
-  ]
-}
-```
-
-Error: Parsing failed
-    at parse (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-### `eol-last`
-
-Pass: 29 / 35 (82.9%)
-Fail: 6 / 35 (17.1%)
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-```
-
-```json
-{
-  "output": "var a = 123;\n",
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-   
-```
-
-```json
-{
-  "output": "var a = 123;\n   \n",
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 2,
-      "column": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-```
-
-```json
-{
-  "output": "var a = 123;\n",
-  "options": [
-    "unix"
-  ],
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-   
-```
-
-```json
-{
-  "output": "var a = 123;\n   \n",
-  "options": [
-    "unix"
-  ],
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 2,
-      "column": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-```
-
-```json
-{
-  "output": "var a = 123;\r\n",
-  "options": [
-    "windows"
-  ],
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
-#### eol-last > invalid
-
-```js
-var a = 123;
-   
-```
-
-```json
-{
-  "output": "var a = 123;\r\n   \r\n",
-  "options": [
-    "windows"
-  ],
-  "errors": [
-    {
-      "messageId": "missing",
-      "line": 2,
-      "column": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkBadEOF (apps/oxlint/conformance/submodules/eslint/lib/rules/eol-last.js:97:14)
-
-
 ### `func-call-spacing`
 
 Pass: 137 / 151 (90.7%)
 Fail: 14 / 151 (9.3%)
+Skip: 0 / 151 (0.0%)
 
 #### func-call-spacing > invalid
 
@@ -2823,6 +2100,7 @@ RangeError: Invalid column number (column -1 requested).
 
 Pass: 120 / 131 (91.6%)
 Fail: 11 / 131 (8.4%)
+Skip: 0 / 131 (0.0%)
 
 #### id-blacklist > valid
 
@@ -3289,6 +2567,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 132 / 143 (92.3%)
 Fail: 11 / 143 (7.7%)
+Skip: 0 / 143 (0.0%)
 
 #### id-denylist > valid
 
@@ -3751,2619 +3030,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `indent-legacy`
-
-Pass: 299 / 317 (94.3%)
-Fail: 18 / 317 (5.7%)
-
-#### indent-legacy > invalid
-
-```js
-if (a) {
-  var b = c;
-  var d = e
-    * f;
-    var e = f; // <-
-// NO ERROR: DON'T VALIDATE EMPTY OR COMMENT ONLY LINES
-  function g() {
-    if (h) {
-      var i = j;
-      } // <-
-    } // <-
-
-  while (k) l++;
-  while (m) {
-  n--; // ->
-    } // <-
-
-  do {
-    o = p +
-  q; // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-    o = p +
-    q;
-    } while(r); // <-
-
-  for (var s in t) {
-    u++;
-  }
-
-    for (;;) { // <- Fix this when issue #3737 gets resolved
-      v++; // <-
-  }
-
-  if ( w ) {
-    x++;
-  } else if (y) {
-      z++; // <-
-    aa++;
-    } else { // <-
-  bb++; // ->
-} // ->
-}
-
-/**/var b; // NO ERROR: single line multi-line comments followed by code is OK
-/*
- *
- */ var b; // ERROR: multi-line comments followed by code is not OK
-
-var arr = [
-  a,
-  b,
-  c,
-  function (){
-    d
-    }, // <-
-  {},
-  {
-    a: b,
-    c: d,
-    d: e
-  },
-  [
-    f,
-    g,
-    h,
-    i
-  ],
-  [j]
-];
-
-var obj = {
-  a: {
-    b: {
-      c: d,
-      e: f,
-      g: h +
-    i // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-    }
-  },
-  g: [
-    h,
-    i,
-    j,
-    k
-  ]
-};
-
-var arrObject = {a:[
-  a,
-  b, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE
-  c
-]};
-
-var objArray = [{
-  a: b,
-  b: c, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE
-  c: d
-}];
-
-var arrArray = [[
-  a,
-  b, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE
-  c
-]];
-
-var objObject = {a:{
-  a: b,
-  b: c, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE
-  c: d
-}};
-
-
-switch (a) {
-  case 'a':
-  var a = 'b'; // ->
-    break;
-  case 'b':
-    var a = 'b';
-    break;
-  case 'c':
-      var a = 'b'; // <-
-    break;
-  case 'd':
-    var a = 'b';
-  break; // ->
-  case 'f':
-    var a = 'b';
-    break;
-  case 'g':     {
-    var a = 'b';
-    break;
-  }
-  case 'z':
-  default:
-      break; // <-
-}
-
-a.b('hi')
-   .c(a.b()) // <-
-   .d(); // <-
-
-if ( a ) {
-  if ( b ) {
-d.e(f) // ->
-  .g() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-  .h(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-
-    i.j(m)
-      .k() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-      .l(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-
-      n.o(p) // <-
-        .q() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-        .r(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-  }
-}
-
-var a = b,
-  c = function () {
-  h = i; // ->
-    j = k;
-      l = m; // <-
-  },
-  e = {
-    f: g,
-    n: o,
-    p: q
-  },
-  r = [
-    s,
-    t,
-    u
-  ];
-
-var a = function () {
-b = c; // ->
-  d = e;
-    f = g; // <-
-};
-
-function c(a, b) {
-  if (a || (a &&
-            b)) { // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS
-    return d;
-  }
-}
-
-if ( a
-  || b ) {
-var x; // ->
-  var c,
-    d = function(a,
-                  b) {
-    a; // ->
-      b;
-        c; // <-
-    }
-}
-
-
-a({
-  d: 1
-});
-
-a(
-1
-);
-
-a(
-  b({
-    d: 1
-  })
-);
-
-a(
-  b(
-    c({
-      d: 1,
-      e: 1,
-      f: 1
-    })
-  )
-);
-
-a({ d: 1 });
-
-aa(
-   b({ // NO ERROR: aligned with previous opening paren
-     c: d,
-     e: f,
-     f: g
-   })
-);
-
-aaaaaa(
-  b,
-  c,
-  {
-    d: a
-  }
-);
-
-a(b, c,
-  d, e,
-    f, g  // NO ERROR: alignment of arguments of callExpression not checked
-  );  // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing
-
-a(
-  ); // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing
-
-aaaaaa(
-  b,
-  c, {
-    d: a
-  }, {
-    e: f
-  }
-);
-
-a.b()
-  .c(function(){
-    var a;
-  }).d.e;
-
-if (a == 'b') {
-  if (c && d) e = f
-  else g('h').i('j')
-}
-
-a = function (b, c) {
-  return a(function () {
-    var d = e
-    var f = g
-    var h = i
-
-    if (!j) k('l', (m = n))
-    if (o) p
-    else if (q) r
-  })
-}
-
-var a = function() {
-  "b"
-    .replace(/a/, "a")
-    .replace(/bc?/, function(e) {
-      return "b" + (e.f === 2 ? "c" : "f");
-    })
-    .replace(/d/, "d");
-};
-
-$(b)
-  .on('a', 'b', function() { $(c).e('f'); })
-  .on('g', 'h', function() { $(i).j('k'); });
-
-a
-  .b('c',
-           'd'); // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing
-
-a
-  .b('c', [ 'd', function(e) {
-    e++;
-  }]);
-
-var a = function() {
-      a++;
-    b++; // <-
-        c++; // <-
-    },
-    b;
-
-var b = [
-      a,
-      b,
-      c
-    ],
-    c;
-
-var c = {
-      a: 1,
-      b: 2,
-      c: 3
-    },
-    d;
-
-// holes in arrays indentation
-x = [
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1
-];
-
-try {
-  a++;
-    b++; // <-
-c++; // ->
-} catch (d) {
-  e++;
-    f++; // <-
-g++; // ->
-} finally {
-  h++;
-    i++; // <-
-j++; // ->
-}
-
-if (array.some(function(){
-  return true;
-})) {
-a++; // ->
-  b++;
-    c++; // <-
-}
-
-var a = b.c(function() {
-      d++;
-    }),
-    e;
-
-switch (true) {
-  case (a
-  && b):
-case (c // ->
-&& d):
-    case (e // <-
-    && f):
-  case (g
-&& h):
-      var i = j; // <-
-    var k = l;
-  var m = n; // ->
-}
-
-if (a) {
-  b();
-}
-else {
-c(); // ->
-  d();
-    e(); // <-
-}
-
-if (a) b();
-else {
-c(); // ->
-  d();
-    e(); // <-
-}
-
-if (a) {
-  b();
-} else c();
-
-if (a) {
-  b();
-}
-else c();
-
-a();
-
-if( "very very long multi line" +
-      "with weird indentation" ) {
-  b();
-a(); // ->
-    c(); // <-
-}
-
-a( "very very long multi line" +
-    "with weird indentation", function() {
-  b();
-a(); // ->
-    c(); // <-
-});
-
-a = function(content, dom) {
-  b();
-    c(); // <-
-d(); // ->
-};
-
-a = function(content, dom) {
-      b();
-        c(); // <-
-    d(); // ->
-    };
-
-a = function(content, dom) {
-    b(); // ->
-    };
-
-a = function(content, dom) {
-b(); // ->
-    };
-
-a('This is a terribly long description youll ' +
-  'have to read', function () {
-  b();
-  c();
-});
-
-if (
-  array.some(function(){
-    return true;
-  })
-) {
-a++; // ->
-  b++;
-    c++; // <-
-}
-
-function c(d) {
-  return {
-    e: function(f, g) {
-    }
-  };
-}
-
-function a(b) {
-  switch(x) {
-    case 1:
-      if (foo) {
-        return 5;
-      }
-  }
-}
-
-function a(b) {
-  switch(x) {
-    case 1:
-      c;
-  }
-}
-
-function a(b) {
-  switch(x) {
-    case 1: c;
-  }
-}
-
-function test() {
-  var a = 1;
-  {
-    a();
-  }
-}
-
-{
-  a();
-}
-
-function a(b) {
-  switch(x) {
-    case 1:
-        {
-        a();
-      }
-      break;
-    default:
-      {
-        b();
-        }
-  }
-}
-
-switch (a) {
-  default:
-    if (b)
-      c();
-}
-
-function test(x) {
-  switch (x) {
-    case 1:
-      return function() {
-        var a = 5;
-        return a;
-      };
-  }
-}
-
-switch (a) {
-  default:
-    if (b)
-      c();
-}
-
-```
-
-```json
-{
-  "output": "if (a) {\n  var b = c;\n  var d = e\n    * f;\n  var e = f; // <-\n// NO ERROR: DON'T VALIDATE EMPTY OR COMMENT ONLY LINES\n  function g() {\n    if (h) {\n      var i = j;\n    } // <-\n  } // <-\n\n  while (k) l++;\n  while (m) {\n    n--; // ->\n  } // <-\n\n  do {\n    o = p +\n  q; // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n    o = p +\n    q;\n  } while(r); // <-\n\n  for (var s in t) {\n    u++;\n  }\n\n  for (;;) { // <- Fix this when issue #3737 gets resolved\n      v++; // <-\n    }\n\n  if ( w ) {\n    x++;\n  } else if (y) {\n    z++; // <-\n    aa++;\n  } else { // <-\n    bb++; // ->\n  } // ->\n}\n\n/**/var b; // NO ERROR: single line multi-line comments followed by code is OK\n/*\n *\n*/ var b; // ERROR: multi-line comments followed by code is not OK\n\nvar arr = [\n  a,\n  b,\n  c,\n  function (){\n    d\n  }, // <-\n  {},\n  {\n    a: b,\n    c: d,\n    d: e\n  },\n  [\n    f,\n    g,\n    h,\n    i\n  ],\n  [j]\n];\n\nvar obj = {\n  a: {\n    b: {\n      c: d,\n      e: f,\n      g: h +\n    i // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n    }\n  },\n  g: [\n    h,\n    i,\n    j,\n    k\n  ]\n};\n\nvar arrObject = {a:[\n  a,\n  b, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE\n  c\n]};\n\nvar objArray = [{\n  a: b,\n  b: c, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE\n  c: d\n}];\n\nvar arrArray = [[\n  a,\n  b, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE\n  c\n]];\n\nvar objObject = {a:{\n  a: b,\n  b: c, // NO ERROR: INDENT ONCE WHEN MULTIPLE INDENTED EXPRESSIONS ARE ON SAME LINE\n  c: d\n}};\n\n\nswitch (a) {\n  case 'a':\n    var a = 'b'; // ->\n    break;\n  case 'b':\n    var a = 'b';\n    break;\n  case 'c':\n    var a = 'b'; // <-\n    break;\n  case 'd':\n    var a = 'b';\n    break; // ->\n  case 'f':\n    var a = 'b';\n    break;\n  case 'g':     {\n    var a = 'b';\n    break;\n  }\n  case 'z':\n  default:\n    break; // <-\n}\n\na.b('hi')\n  .c(a.b()) // <-\n  .d(); // <-\n\nif ( a ) {\n  if ( b ) {\n    d.e(f) // ->\n  .g() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n  .h(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n\n    i.j(m)\n      .k() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n      .l(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n\n    n.o(p) // <-\n        .q() // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n        .r(); // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n  }\n}\n\nvar a = b,\n  c = function () {\n    h = i; // ->\n    j = k;\n    l = m; // <-\n  },\n  e = {\n    f: g,\n    n: o,\n    p: q\n  },\n  r = [\n    s,\n    t,\n    u\n  ];\n\nvar a = function () {\n  b = c; // ->\n  d = e;\n  f = g; // <-\n};\n\nfunction c(a, b) {\n  if (a || (a &&\n            b)) { // NO ERROR: DON'T VALIDATE MULTILINE STATEMENTS\n    return d;\n  }\n}\n\nif ( a\n  || b ) {\n  var x; // ->\n  var c,\n    d = function(a,\n                  b) {\n      a; // ->\n      b;\n      c; // <-\n    }\n}\n\n\na({\n  d: 1\n});\n\na(\n1\n);\n\na(\n  b({\n    d: 1\n  })\n);\n\na(\n  b(\n    c({\n      d: 1,\n      e: 1,\n      f: 1\n    })\n  )\n);\n\na({ d: 1 });\n\naa(\n   b({ // NO ERROR: aligned with previous opening paren\n     c: d,\n     e: f,\n     f: g\n   })\n);\n\naaaaaa(\n  b,\n  c,\n  {\n    d: a\n  }\n);\n\na(b, c,\n  d, e,\n    f, g  // NO ERROR: alignment of arguments of callExpression not checked\n  );  // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing\n\na(\n  ); // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing\n\naaaaaa(\n  b,\n  c, {\n    d: a\n  }, {\n    e: f\n  }\n);\n\na.b()\n  .c(function(){\n    var a;\n  }).d.e;\n\nif (a == 'b') {\n  if (c && d) e = f\n  else g('h').i('j')\n}\n\na = function (b, c) {\n  return a(function () {\n    var d = e\n    var f = g\n    var h = i\n\n    if (!j) k('l', (m = n))\n    if (o) p\n    else if (q) r\n  })\n}\n\nvar a = function() {\n  \"b\"\n    .replace(/a/, \"a\")\n    .replace(/bc?/, function(e) {\n      return \"b\" + (e.f === 2 ? \"c\" : \"f\");\n    })\n    .replace(/d/, \"d\");\n};\n\n$(b)\n  .on('a', 'b', function() { $(c).e('f'); })\n  .on('g', 'h', function() { $(i).j('k'); });\n\na\n  .b('c',\n           'd'); // NO ERROR: this has nothing to do with indentation, this is CallExpression spacing\n\na\n  .b('c', [ 'd', function(e) {\n    e++;\n  }]);\n\nvar a = function() {\n    a++;\n    b++; // <-\n    c++; // <-\n  },\n  b;\n\nvar b = [\n    a,\n    b,\n    c\n  ],\n  c;\n\nvar c = {\n    a: 1,\n    b: 2,\n    c: 3\n  },\n  d;\n\n// holes in arrays indentation\nx = [\n  1,\n  1,\n  1,\n  1,\n  1,\n  1,\n  1,\n  1,\n  1,\n  1\n];\n\ntry {\n  a++;\n  b++; // <-\n  c++; // ->\n} catch (d) {\n  e++;\n  f++; // <-\n  g++; // ->\n} finally {\n  h++;\n  i++; // <-\n  j++; // ->\n}\n\nif (array.some(function(){\n  return true;\n})) {\n  a++; // ->\n  b++;\n  c++; // <-\n}\n\nvar a = b.c(function() {\n    d++;\n  }),\n  e;\n\nswitch (true) {\n  case (a\n  && b):\n  case (c // ->\n&& d):\n  case (e // <-\n    && f):\n  case (g\n&& h):\n    var i = j; // <-\n    var k = l;\n    var m = n; // ->\n}\n\nif (a) {\n  b();\n}\nelse {\n  c(); // ->\n  d();\n  e(); // <-\n}\n\nif (a) b();\nelse {\n  c(); // ->\n  d();\n  e(); // <-\n}\n\nif (a) {\n  b();\n} else c();\n\nif (a) {\n  b();\n}\nelse c();\n\na();\n\nif( \"very very long multi line\" +\n      \"with weird indentation\" ) {\n  b();\n  a(); // ->\n  c(); // <-\n}\n\na( \"very very long multi line\" +\n    \"with weird indentation\", function() {\n  b();\n  a(); // ->\n  c(); // <-\n});\n\na = function(content, dom) {\n  b();\n  c(); // <-\n  d(); // ->\n};\n\na = function(content, dom) {\n  b();\n  c(); // <-\n  d(); // ->\n};\n\na = function(content, dom) {\n  b(); // ->\n};\n\na = function(content, dom) {\n  b(); // ->\n};\n\na('This is a terribly long description youll ' +\n  'have to read', function () {\n  b();\n  c();\n});\n\nif (\n  array.some(function(){\n    return true;\n  })\n) {\n  a++; // ->\n  b++;\n  c++; // <-\n}\n\nfunction c(d) {\n  return {\n    e: function(f, g) {\n    }\n  };\n}\n\nfunction a(b) {\n  switch(x) {\n    case 1:\n      if (foo) {\n        return 5;\n      }\n  }\n}\n\nfunction a(b) {\n  switch(x) {\n    case 1:\n      c;\n  }\n}\n\nfunction a(b) {\n  switch(x) {\n    case 1: c;\n  }\n}\n\nfunction test() {\n  var a = 1;\n  {\n    a();\n  }\n}\n\n{\n  a();\n}\n\nfunction a(b) {\n  switch(x) {\n    case 1:\n      {\n          a();\n        }\n      break;\n    default:\n      {\n        b();\n      }\n  }\n}\n\nswitch (a) {\n  default:\n    if (b)\n      c();\n}\n\nfunction test(x) {\n  switch (x) {\n    case 1:\n      return function() {\n        var a = 5;\n        return a;\n      };\n  }\n}\n\nswitch (a) {\n  default:\n    if (b)\n      c();\n}\n",
-  "options": [
-    2,
-    {
-      "SwitchCase": 1,
-      "MemberExpression": 1
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 5
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 10
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 11
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 15
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 16
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 23
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 29
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 31
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 36
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 38
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 39
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 40
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 1
-      },
-      "line": 46
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 54
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 114
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 120
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 124
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 134
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 3
-      },
-      "line": 138
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 3
-      },
-      "line": 139
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 0
-      },
-      "line": 143
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 151
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 159
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 161
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 175
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 177
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 189
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 4
-      },
-      "line": 193
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 8
-      },
-      "line": 195
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 304
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 8
-      },
-      "line": 306
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 307
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 308
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 311
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 312
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 313
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 314
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 315
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 318
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 319
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 320
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 321
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 322
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 326
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 327
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 328
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 329
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 330
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 331
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 332
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 333
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 334
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 1
-      },
-      "line": 335
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 340
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 341
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 344
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 345
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 348
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 349
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 355
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 357
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 361
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 362
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 363
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 368
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 370
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 374
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 376
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 383
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 385
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 390
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 392
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 409
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 410
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 416
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 417
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 422
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 423
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 6
-      },
-      "line": 427
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 8
-      },
-      "line": 428
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 429
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 430
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 433
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 434
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 437
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 438
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 0
-      },
-      "line": 451
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 453
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 8
-      },
-      "line": 499
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "10 spaces",
-        "actual": 8
-      },
-      "line": 500
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 6
-      },
-      "line": 501
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 8
-      },
-      "line": 506
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var test = {
-      a: 1,
-    b: 2
-    };
-
-```
-
-```json
-{
-  "output": "var test = {\n  a: 1,\n  b: 2\n};\n",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 6
-      },
-      "line": 2
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var x = [
-         'a',
-         'b',
-         'c'
-  ];
-```
-
-```json
-{
-  "output": "var x = [\n    'a',\n    'b',\n    'c'\n];",
-  "options": [
-    4
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6
-  },
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 9
-      },
-      "line": 2
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 9
-      },
-      "line": 3
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 9
-      },
-      "line": 4
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 2
-      },
-      "line": 5
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var a = new Test({
-      a: 1
-  }),
-    b = 4;
-
-```
-
-```json
-{
-  "output": "var a = new Test({\n        a: 1\n    }),\n    b = 4;\n",
-  "options": [
-    4
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 6
-      },
-      "line": 2
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var a = new Test({
-      a: 1
-    }),
-    b = 4;
-const c = new Test({
-      a: 1
-    }),
-    d = 4;
-
-```
-
-```json
-{
-  "output": "var a = new Test({\n      a: 1\n    }),\n    b = 4;\nconst c = new Test({\n    a: 1\n  }),\n  d = 4;\n",
-  "options": [
-    2,
-    {
-      "VariableDeclarator": {
-        "var": 2
-      }
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6
-  },
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 6
-      },
-      "line": 6
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 7
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 8
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var abc = 5,
-    c = 2,
-    xyz = 
-     {
-       a: 1,
-        b: 2
-     };
-```
-
-```json
-{
-  "output": "var abc = 5,\n    c = 2,\n    xyz = \n    {\n      a: 1,\n      b: 2\n    };",
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 2,
-      "SwitchCase": 1
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 5
-      },
-      "line": 4
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 7
-      },
-      "line": 5
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 8
-      },
-      "line": 6
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 5
-      },
-      "line": 7
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var abc = 
-     {
-       a: 1,
-        b: 2
-     };
-```
-
-```json
-{
-  "output": "var abc = \n    {\n      a: 1,\n      b: 2\n    };",
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 2,
-      "SwitchCase": 1
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 5
-      },
-      "line": 2
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 7
-      },
-      "line": 3
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "6 spaces",
-        "actual": 8
-      },
-      "line": 4
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 5
-      },
-      "line": 5
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var path     = require('path')
- , crypto    = require('crypto')
-;
-
-```
-
-```json
-{
-  "output": "var path     = require('path')\n , crypto    = require('crypto')\n ;\n",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "1 space",
-        "actual": 0
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var a = 1
-   ,b = 2
-;
-```
-
-```json
-{
-  "output": "var a = 1\n   ,b = 2\n   ;",
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "3 spaces",
-        "actual": 0
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-if (foo) bar();
-else if (baz) {
-    foobar();
-     } else if (boop) {
-       qux();
-     }
-```
-
-```json
-{
-  "output": "if (foo) bar();\nelse if (baz) {\n  foobar();\n} else if (boop) {\n       qux();\n     }",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 5
-      },
-      "line": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-function foo() {
-  bar();
-		}
-```
-
-```json
-{
-  "output": "function foo() {\n  bar();\n}",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": "2 tabs"
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-function foo() {
-  return (
-    1
-    )
-}
-```
-
-```json
-{
-  "output": "function foo() {\n  return (\n    1\n  )\n}",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": "4"
-      },
-      "line": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-function foo() {
-  return (
-    1
-    );
-}
-```
-
-```json
-{
-  "output": "function foo() {\n  return (\n    1\n  );\n}",
-  "options": [
-    2
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "2 spaces",
-        "actual": "4"
-      },
-      "line": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-return (
-    foo
-    );
-```
-
-```json
-{
-  "output": "return (\n    foo\n);",
-  "languageOptions": {
-    "parserOptions": {
-      "ecmaFeatures": {
-        "globalReturn": true
-      }
-    }
-  },
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-return (
-    foo
-    )
-```
-
-```json
-{
-  "output": "return (\n    foo\n)",
-  "languageOptions": {
-    "parserOptions": {
-      "ecmaFeatures": {
-        "globalReturn": true
-      }
-    }
-  },
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-foo('bar',
-        /** comment */{
-        ok: true    });
-```
-
-```json
-{
-  "output": "foo('bar',\n    /** comment */{\n        ok: true    });",
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 8
-      },
-      "line": 2
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-var foo = [
-           bar,
-  baz
-          ]
-```
-
-```json
-{
-  "output": "var foo = [\n    bar,\n    baz\n]",
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 11
-      },
-      "line": 2
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "4 spaces",
-        "actual": 2
-      },
-      "line": 3
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 10
-      },
-      "line": 4
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-#### indent-legacy > invalid
-
-```js
-echo = spawn('cmd.exe',
-            ['foo', 'bar',
-             'baz']);
-```
-
-```json
-{
-  "output": "echo = spawn('cmd.exe',\n             ['foo', 'bar',\n             'baz']);",
-  "options": [
-    2,
-    {
-      "ArrayExpression": "first",
-      "CallExpression": {
-        "arguments": "first"
-      }
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "expected": "13 spaces",
-        "actual": 12
-      },
-      "line": 2
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/indent-legacy.js:389:12)
-
-
-### `indent`
-
-Pass: 1076 / 1090 (98.7%)
-Fail: 14 / 1090 (1.3%)
-
-#### indent > valid
-
-```js
-interface Foo {
-    bar: string;
-    baz: number;
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-namespace Foo {
-    const bar = 3,
-        baz = 2;
-
-    if (true) {
-        const bax = 3;
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-abstract class Foo {
-    public bar() {
-        let aaa = 4,
-            boo;
-
-        if (true) {
-            boo = 3;
-        }
-
-        boo = 3 + 2;
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-function foo() {
-    function bar() {
-        abstract class X {
-            public baz() {
-                if (true) {
-                    qux();
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-namespace Unknown {
-    function foo() {
-        function bar() {
-            abstract class X {
-                public baz() {
-                    if (true) {
-                        qux();
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-type httpMethod = 'GET'
-  | 'POST'
-  | 'PUT';
-```
-
-```json
-{
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 0
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > valid
-
-```js
-type httpMethod = 'GET'
-| 'POST'
-| 'PUT';
-```
-
-```json
-{
-  "options": [
-    2,
-    {
-      "VariableDeclarator": 1
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-namespace Foo {
-    const bar = 3,
-    baz = 2;
-
-    if (true) {
-    const bax = 3;
-    }
-}
-```
-
-```json
-{
-  "output": "namespace Foo {\n    const bar = 3,\n        baz = 2;\n\n    if (true) {\n        const bax = 3;\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 6
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-abstract class Foo {
-    public bar() {
-        let aaa = 4,
-        boo;
-
-        if (true) {
-        boo = 3;
-        }
-
-    boo = 3 + 2;
-    }
-}
-```
-
-```json
-{
-  "output": "abstract class Foo {\n    public bar() {\n        let aaa = 4,\n            boo;\n\n        if (true) {\n            boo = 3;\n        }\n\n        boo = 3 + 2;\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 4
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 7
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 10
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-function foo() {
-    function bar() {
-        abstract class X {
-        public baz() {
-        if (true) {
-        qux();
-        }
-        }
-        }
-    }
-}
-```
-
-```json
-{
-  "output": "function foo() {\n    function bar() {\n        abstract class X {\n            public baz() {\n                if (true) {\n                    qux();\n                }\n            }\n        }\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 4
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "16 spaces",
-        "actual": 8
-      },
-      "line": 5
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "20 spaces",
-        "actual": 8
-      },
-      "line": 6
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "16 spaces",
-        "actual": 8
-      },
-      "line": 7
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "12 spaces",
-        "actual": 8
-      },
-      "line": 8
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-namespace Unknown {
-    function foo() {
-    function bar() {
-            abstract class X {
-                public baz() {
-                    if (true) {
-                    qux();
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-```json
-{
-  "output": "namespace Unknown {\n    function foo() {\n        function bar() {\n            abstract class X {\n                public baz() {\n                    if (true) {\n                        qux();\n                    }\n                }\n            }\n        }\n    }\n}",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "8 spaces",
-        "actual": 4
-      },
-      "line": 3
-    },
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "24 spaces",
-        "actual": 20
-      },
-      "line": 7
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-({
-    foo
-    }: bar) => baz
-```
-
-```json
-{
-  "output": "({\n    foo\n}: bar) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-([
-    foo
-    ]: bar) => baz
-```
-
-```json
-{
-  "output": "([\n    foo\n]: bar) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### indent > invalid
-
-```js
-({
-    foo
-    }: {}) => baz
-```
-
-```json
-{
-  "output": "({\n    foo\n}: {}) => baz",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "wrongIndentation",
-      "data": {
-        "expected": "0 spaces",
-        "actual": 4
-      },
-      "line": 3
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `lines-around-comment`
 
 Pass: 198 / 199 (99.5%)
 Fail: 1 / 199 (0.5%)
+Skip: 0 / 199 (0.0%)
 
 #### lines-around-comment > invalid
 
@@ -6402,6 +3073,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 231 / 239 (96.7%)
 Fail: 8 / 239 (3.3%)
+Skip: 0 / 239 (0.0%)
 
 #### lines-around-directive > valid
 
@@ -6806,7 +3478,8 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 ### `logical-assignment-operators`
 
 Pass: 272 / 304 (89.5%)
-Fail: 32 / 304 (10.5%)
+Fail: 28 / 304 (9.2%)
+Skip: 4 / 304 (1.3%)
 
 #### logical-assignment-operators > valid
 
@@ -7760,160 +4433,11 @@ TypeError: Cannot convert object to primitive value
     at apps/oxlint/dist/lint.js
 
 
-#### logical-assignment-operators > invalid
-
-```js
-a ||= b as number;
-```
-
-```json
-{
-  "output": "a = a || (b as number);",
-  "options": [
-    "never"
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "data": {
-        "operator": "||="
-      }
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-a.b.c || (a.b.c = d as number)
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "a.b.c ||= d as number"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-a.b.c || (a.b.c = (d as number))
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "a.b.c ||= (d as number)"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### logical-assignment-operators > invalid
-
-```js
-(a.b.c || (a.b.c = d)) as number
-```
-
-```json
-{
-  "output": null,
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "logical",
-      "data": {
-        "operator": "||="
-      },
-      "suggestions": [
-        {
-          "messageId": "convertLogical",
-          "data": {
-            "operator": "||="
-          },
-          "output": "(a.b.c ||= d) as number"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-alert`
 
 Pass: 36 / 42 (85.7%)
 Fail: 6 / 42 (14.3%)
+Skip: 0 / 42 (0.0%)
 
 #### no-alert > valid
 
@@ -8125,6 +4649,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 145 / 146 (99.3%)
 Fail: 1 / 146 (0.7%)
+Skip: 0 / 146 (0.0%)
 
 #### no-array-constructor > valid
 
@@ -8169,6 +4694,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 1 / 8 (12.5%)
 Fail: 7 / 8 (87.5%)
+Skip: 0 / 8 (0.0%)
 
 #### no-catch-shadow > valid
 
@@ -8343,6 +4869,7 @@ TypeError: Cannot convert object to primitive value
 
 Pass: 225 / 260 (86.5%)
 Fail: 35 / 260 (13.5%)
+Skip: 0 / 260 (0.0%)
 
 #### no-constant-binary-expression > invalid
 
@@ -9279,6 +5806,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 305 / 307 (99.3%)
 Fail: 2 / 307 (0.7%)
+Skip: 0 / 307 (0.0%)
 
 #### no-constant-condition > valid
 
@@ -9349,6 +5877,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 76 / 101 (75.2%)
 Fail: 25 / 101 (24.8%)
+Skip: 0 / 101 (0.0%)
 
 #### no-eval > valid
 
@@ -10143,7 +6672,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 ### `no-extra-parens`
 
 Pass: 1067 / 1072 (99.5%)
-Fail: 5 / 1072 (0.5%)
+Fail: 4 / 1072 (0.4%)
+Skip: 1 / 1072 (0.1%)
 
 #### no-extra-parens > valid
 
@@ -10278,31 +6808,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-#### no-extra-parens > valid
-
-```js
-const x = (1 satisfies number).toFixed();
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-global-assign`
 
 Pass: 12 / 18 (66.7%)
 Fail: 6 / 18 (33.3%)
+Skip: 0 / 18 (0.0%)
 
 #### no-global-assign > invalid
 
@@ -11663,6 +8173,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 153 / 245 (62.4%)
 Fail: 92 / 245 (37.6%)
+Skip: 0 / 245 (0.0%)
 
 #### no-implicit-globals > valid
 
@@ -16695,6 +13206,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 3: [
 
 Pass: 83 / 138 (60.1%)
 Fail: 55 / 138 (39.9%)
+Skip: 0 / 138 (0.0%)
 
 #### no-implied-eval > invalid
 
@@ -53534,6 +50046,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 279 / 280 (99.6%)
 Fail: 1 / 280 (0.4%)
+Skip: 0 / 280 (0.0%)
 
 #### no-irregular-whitespace > valid
 
@@ -53571,7 +50084,8 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ### `no-lone-blocks`
 
 Pass: 47 / 50 (94.0%)
-Fail: 3 / 50 (6.0%)
+Fail: 1 / 50 (2.0%)
+Skip: 2 / 50 (4.0%)
 
 #### no-lone-blocks > valid
 
@@ -53615,60 +50129,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-#### no-lone-blocks > valid
-
-```js
-
-{
-  using x = makeDisposable();
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {},
-    "ecmaVersion": 2022
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### no-lone-blocks > valid
-
-```js
-
-{
-  await using x = makeDisposable();
-}
-```
-
-```json
-{
-  "languageOptions": {
-    "parser": {},
-    "ecmaVersion": 2022
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `no-misleading-character-class`
 
 Pass: 185 / 190 (97.4%)
 Fail: 5 / 190 (2.6%)
+Skip: 0 / 190 (0.0%)
 
 #### no-misleading-character-class > valid
 
@@ -53857,6 +50322,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 45 / 46 (97.8%)
 Fail: 1 / 46 (2.2%)
+Skip: 0 / 46 (0.0%)
 
 #### no-multiple-empty-lines > invalid
 
@@ -53897,6 +50363,7 @@ RangeError: Line number out of range (line 3 requested). Line numbers should be 
 
 Pass: 12 / 18 (66.7%)
 Fail: 6 / 18 (33.3%)
+Skip: 0 / 18 (0.0%)
 
 #### no-native-reassign > invalid
 
@@ -55257,6 +51724,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 12 / 14 (85.7%)
 Fail: 2 / 14 (14.3%)
+Skip: 0 / 14 (0.0%)
 
 #### no-new-native-nonconstructor > invalid
 
@@ -55314,6 +51782,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 5 / 7 (71.4%)
 Fail: 2 / 7 (28.6%)
+Skip: 0 / 7 (0.0%)
 
 #### no-new-symbol > invalid
 
@@ -55371,6 +51840,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 9 / 11 (81.8%)
 Fail: 2 / 11 (18.2%)
+Skip: 0 / 11 (0.0%)
 
 #### no-new-wrappers > valid
 
@@ -55451,6 +51921,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 73 / 107 (68.2%)
 Fail: 34 / 107 (31.8%)
+Skip: 0 / 107 (0.0%)
 
 #### no-obj-calls > valid
 
@@ -61273,6 +57744,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 55 / 56 (98.2%)
 Fail: 1 / 56 (1.8%)
+Skip: 0 / 56 (0.0%)
 
 #### no-object-constructor > valid
 
@@ -61317,6 +57789,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 51 / 75 (68.0%)
 Fail: 24 / 75 (32.0%)
+Skip: 0 / 75 (0.0%)
 
 #### no-redeclare > valid
 
@@ -64579,6 +61052,7 @@ AssertionError [ERR_ASSERTION]: Should have 3 errors but had 0: []
 
 Pass: 143 / 166 (86.1%)
 Fail: 23 / 166 (13.9%)
+Skip: 0 / 166 (0.0%)
 
 #### no-restricted-globals > invalid
 
@@ -80836,6 +77310,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 253 / 254 (99.6%)
 Fail: 1 / 254 (0.4%)
+Skip: 0 / 254 (0.0%)
 
 #### no-restricted-imports > valid
 
@@ -80890,6 +77365,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 161 / 164 (98.2%)
 Fail: 3 / 164 (1.8%)
+Skip: 0 / 164 (0.0%)
 
 #### no-setter-return > valid
 
@@ -81006,6 +77482,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 43 / 44 (97.7%)
 Fail: 1 / 44 (2.3%)
+Skip: 0 / 44 (0.0%)
 
 #### no-shadow-restricted-names > invalid
 
@@ -81041,6 +77518,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 300 / 308 (97.4%)
 Fail: 8 / 308 (2.6%)
+Skip: 0 / 308 (0.0%)
 
 #### no-shadow > invalid
 
@@ -84880,310 +81358,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `no-spaced-func`
-
-Pass: 16 / 28 (57.1%)
-Fail: 12 / 28 (42.9%)
-
-#### no-spaced-func > invalid
-
-```js
-f ();
-```
-
-```json
-{
-  "output": "f();",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f (a, b);
-```
-
-```json
-{
-  "output": "f(a, b);",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f
-();
-```
-
-```json
-{
-  "output": "f();",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f.b ();
-```
-
-```json
-{
-  "output": "f.b();",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction",
-      "column": 3
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f.b().c ();
-```
-
-```json
-{
-  "output": "f.b().c();",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction",
-      "column": 7
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f() ()
-```
-
-```json
-{
-  "output": "f()()",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-(function() {} ())
-```
-
-```json
-{
-  "output": "(function() {}())",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-var f = new Foo ()
-```
-
-```json
-{
-  "output": "var f = new Foo()",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f ( (0) )
-```
-
-```json
-{
-  "output": "f( (0) )",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f(0) (1)
-```
-
-```json
-{
-  "output": "f(0)(1)",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-(f) (0)
-```
-
-```json
-{
-  "output": "(f)(0)",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
-#### no-spaced-func > invalid
-
-```js
-f ();
- t   ();
-```
-
-```json
-{
-  "output": "f();\n t();",
-  "errors": [
-    {
-      "messageId": "noSpacedFunction"
-    },
-    {
-      "messageId": "noSpacedFunction"
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at detectOpenSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/no-spaced-func.js:86:13)
-
-
 ### `no-sync`
 
 Pass: 8 / 10 (80.0%)
 Fail: 2 / 10 (20.0%)
+Skip: 0 / 10 (0.0%)
 
 #### no-sync > invalid
 
@@ -85257,6 +81436,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 0 / 11 (0.0%)
 Fail: 11 / 11 (100.0%)
+Skip: 0 / 11 (0.0%)
 
 #### no-tabs > valid
 
@@ -85580,6 +81760,7 @@ TypeError: sourceCode.getLines is not a function
 
 Pass: 53 / 54 (98.1%)
 Fail: 1 / 54 (1.9%)
+Skip: 0 / 54 (0.0%)
 
 #### no-trailing-spaces > valid
 
@@ -85624,6 +81805,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 
 Pass: 54 / 94 (57.4%)
 Fail: 40 / 94 (42.6%)
+Skip: 0 / 94 (0.0%)
 
 #### no-undef > valid
 
@@ -95517,6 +91699,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 4: [
 
 Pass: 37 / 53 (69.8%)
 Fail: 16 / 53 (30.2%)
+Skip: 0 / 53 (0.0%)
 
 #### no-undefined > invalid
 
@@ -95938,6 +92121,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 120 / 124 (96.8%)
 Fail: 4 / 124 (3.2%)
+Skip: 0 / 124 (0.0%)
 
 #### no-unused-expressions > invalid
 
@@ -96069,6 +92253,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
 
 Pass: 340 / 436 (78.0%)
 Fail: 96 / 436 (22.0%)
+Skip: 0 / 436 (0.0%)
 
 #### no-unused-vars > valid
 
@@ -100130,6 +96315,7 @@ AssertionError [ERR_ASSERTION]: Hydrated message "'a' is assigned a value but ne
 
 Pass: 323 / 347 (93.1%)
 Fail: 24 / 347 (6.9%)
+Skip: 0 / 347 (0.0%)
 
 #### no-use-before-define > invalid
 
@@ -100897,6 +97083,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 188 / 190 (98.9%)
 Fail: 2 / 190 (1.1%)
+Skip: 0 / 190 (0.0%)
 
 #### no-useless-backreference > valid
 
@@ -100970,48 +97157,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at apps/oxlint/dist/index.js
 
 
-### `no-useless-computed-key`
-
-Pass: 95 / 96 (99.0%)
-Fail: 1 / 96 (1.0%)
-
-#### no-useless-computed-key > invalid
-
-```js
-class Foo { ['x']() {} }
-```
-
-```json
-{
-  "output": "class Foo { 'x'() {} }",
-  "options": [
-    {}
-  ],
-  "errors": [
-    {
-      "messageId": "unnecessarilyComputedProperty",
-      "data": {
-        "property": "'x'"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `padding-line-between-statements`
 
 Pass: 364 / 624 (58.3%)
 Fail: 260 / 624 (41.7%)
+Skip: 0 / 624 (0.0%)
 
 #### padding-line-between-statements > invalid
 
@@ -111331,7 +107481,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 ### `prefer-const`
 
 Pass: 134 / 138 (97.1%)
-Fail: 4 / 138 (2.9%)
+Fail: 2 / 138 (1.4%)
+Skip: 2 / 138 (1.4%)
 
 #### prefer-const > valid
 
@@ -111364,68 +107515,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-#### prefer-const > valid
-
-```js
-let { name, ...otherStuff } = obj; otherStuff = {};
-```
-
-```json
-{
-  "options": [
-    {
-      "destructuring": "all"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  }
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-const > invalid
-
-```js
-let { name, ...otherStuff } = obj; otherStuff = {};
-```
-
-```json
-{
-  "output": null,
-  "options": [
-    {
-      "destructuring": "any"
-    }
-  ],
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useConst",
-      "data": {
-        "name": "name"
-      },
-      "column": 7
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
 
 
 #### prefer-const > invalid
@@ -111467,7 +107556,8 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 ### `prefer-exponentiation-operator`
 
 Pass: 161 / 167 (96.4%)
-Fail: 6 / 167 (3.6%)
+Fail: 3 / 167 (1.8%)
+Skip: 3 / 167 (1.8%)
 
 #### prefer-exponentiation-operator > valid
 
@@ -111570,91 +107660,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a, b as any)
-```
-
-```json
-{
-  "output": "a**(b as any)",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a as any, b)
-```
-
-```json
-{
-  "output": "(a as any)**b",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-exponentiation-operator > invalid
-
-```js
-Math.pow(a, b) as any
-```
-
-```json
-{
-  "output": "(a**b) as any",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useExponentiation"
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `prefer-named-capture-group`
 
 Pass: 54 / 57 (94.7%)
 Fail: 3 / 57 (5.3%)
+Skip: 0 / 57 (0.0%)
 
 #### prefer-named-capture-group > invalid
 
@@ -111798,6 +107808,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 91 / 92 (98.9%)
 Fail: 1 / 92 (1.1%)
+Skip: 0 / 92 (0.0%)
 
 #### prefer-object-has-own > valid
 
@@ -111836,7 +107847,8 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ### `prefer-object-spread`
 
 Pass: 80 / 87 (92.0%)
-Fail: 7 / 87 (8.0%)
+Fail: 5 / 87 (5.7%)
+Skip: 2 / 87 (2.3%)
 
 #### prefer-object-spread > invalid
 
@@ -112007,68 +108019,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-#### prefer-object-spread > invalid
-
-```js
-const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());
-```
-
-```json
-{
-  "output": "const obj = { ...getObject()};",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### prefer-object-spread > invalid
-
-```js
-Object.assign<{}, A>({}, foo);
-```
-
-```json
-{
-  "output": "({ ...foo});",
-  "languageOptions": {
-    "parser": {}
-  },
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-Error: Custom parsers are not supported
-    at getParseOptions (apps/oxlint/dist/index.js)
-    at lint (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
 ### `prefer-regex-literals`
 
 Pass: 239 / 251 (95.2%)
 Fail: 12 / 251 (4.8%)
+Skip: 0 / 251 (0.0%)
 
 #### prefer-regex-literals > valid
 
@@ -112510,6 +108465,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 33 / 54 (61.1%)
 Fail: 21 / 54 (38.9%)
+Skip: 0 / 54 (0.0%)
 
 #### radix > valid
 
@@ -113143,6 +109099,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 76 / 79 (96.2%)
 Fail: 3 / 79 (3.8%)
+Skip: 0 / 79 (0.0%)
 
 #### require-unicode-regexp > invalid
 
@@ -114421,671 +110378,9 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 ### `semi`
 
-Pass: 284 / 308 (92.2%)
-Fail: 24 / 308 (7.8%)
-
-#### semi > invalid
-
-```js
-import * as utils from './utils'
-```
-
-```json
-{
-  "output": "import * as utils from './utils';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 33
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-import { square, diag } from 'lib'
-```
-
-```json
-{
-  "output": "import { square, diag } from 'lib';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 35
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-import { default as foo } from 'lib'
-```
-
-```json
-{
-  "output": "import { default as foo } from 'lib';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 37
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-import 'src/mylib'
-```
-
-```json
-{
-  "output": "import 'src/mylib';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 19
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-import theDefault, { named1, named2 } from 'src/mylib'
-```
-
-```json
-{
-  "output": "import theDefault, { named1, named2 } from 'src/mylib';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 55
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-let x = 5
-```
-
-```json
-{
-  "output": "let x = 5;",
-  "languageOptions": {
-    "ecmaVersion": 6
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 10
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-var x = 5
-```
-
-```json
-{
-  "output": "var x = 5;",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 10
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-var x = 5, y
-```
-
-```json
-{
-  "output": "var x = 5, y;",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 13
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-debugger
-```
-
-```json
-{
-  "output": "debugger;",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 9
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-foo()
-```
-
-```json
-{
-  "output": "foo();",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 6
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-var foo = {
- bar: baz
-}
-```
-
-```json
-{
-  "output": "var foo = {\n bar: baz\n};",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 3,
-      "column": 2
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-throw new Error('foo')
-```
-
-```json
-{
-  "output": "throw new Error('foo');",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 23
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-do{}while(true)
-```
-
-```json
-{
-  "output": "do{}while(true);",
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 16
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export * from 'foo'
-```
-
-```json
-{
-  "output": "export * from 'foo';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 20
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export { foo } from 'foo'
-```
-
-```json
-{
-  "output": "export { foo } from 'foo';",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 26
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-var foo = 0;export { foo }
-```
-
-```json
-{
-  "output": "var foo = 0;export { foo };",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 27
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export var foo
-```
-
-```json
-{
-  "output": "export var foo;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 15
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export let foo
-```
-
-```json
-{
-  "output": "export let foo;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 15
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export const FOO = 42
-```
-
-```json
-{
-  "output": "export const FOO = 42;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 22
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export default foo || bar
-```
-
-```json
-{
-  "output": "export default foo || bar;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 26
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export default (foo) => foo.bar()
-```
-
-```json
-{
-  "output": "export default (foo) => foo.bar();",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 34
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export default foo = 42
-```
-
-```json
-{
-  "output": "export default foo = 42;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 24
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
-
-#### semi > invalid
-
-```js
-export default foo += 42
-```
-
-```json
-{
-  "output": "export default foo += 42;",
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "missingSemi",
-      "line": 1,
-      "column": 25
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/conformance/submodules/eslint/lib/rules/semi.js:158:12)
-
+Pass: 307 / 308 (99.7%)
+Fail: 1 / 308 (0.3%)
+Skip: 0 / 308 (0.0%)
 
 #### semi > invalid
 
@@ -115147,6 +110442,7 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
 
 Pass: 106 / 126 (84.1%)
 Fail: 20 / 126 (15.9%)
+Skip: 0 / 126 (0.0%)
 
 #### strict > valid
 
@@ -116083,6 +111379,7 @@ AssertionError [ERR_ASSERTION]: messageId 'function' does not match expected mes
 
 Pass: 6 / 8 (75.0%)
 Fail: 2 / 8 (25.0%)
+Skip: 0 / 8 (0.0%)
 
 #### symbol-description > invalid
 
@@ -116138,8 +111435,9 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 ### `unicode-bom`
 
-Pass: 2 / 7 (28.6%)
-Fail: 5 / 7 (71.4%)
+Pass: 4 / 7 (57.1%)
+Fail: 3 / 7 (42.9%)
+Skip: 0 / 7 (0.0%)
 
 #### unicode-bom > valid
 
@@ -116155,70 +111453,27 @@ Fail: 5 / 7 (71.4%)
 }
 ```
 
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkUnicodeBOM (apps/oxlint/conformance/submodules/eslint/lib/rules/unicode-bom.js:49:14)
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/unicode-bom',
+    message: 'Expected Unicode BOM (Byte Order Mark).',
+    messageId: 'expected',
+    severity: 1,
+    nodeType: null,
+    line: 1,
+    column: 0,
+    endLine: 1,
+    endColumn: 0,
+    suggestions: null
+  }
+]
 
+1 !== 0
 
-#### unicode-bom > invalid
-
-```js
-var a = 123;
-```
-
-```json
-{
-  "output": "﻿var a = 123;",
-  "options": [
-    "always"
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkUnicodeBOM (apps/oxlint/conformance/submodules/eslint/lib/rules/unicode-bom.js:49:14)
-
-
-#### unicode-bom > invalid
-
-```js
- // here's a comment 
-var a = 123;
-```
-
-```json
-{
-  "output": "﻿ // here's a comment \nvar a = 123;",
-  "options": [
-    "always"
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-TypeError: Expected `loc` to be an object with integer `line` and `column` properties
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at checkUnicodeBOM (apps/oxlint/conformance/submodules/eslint/lib/rules/unicode-bom.js:49:14)
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
 
 
 #### unicode-bom > invalid
@@ -116286,6 +111541,7 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 Pass: 53 / 54 (98.1%)
 Fail: 1 / 54 (1.9%)
+Skip: 0 / 54 (0.0%)
 
 #### valid-typeof > invalid
 
