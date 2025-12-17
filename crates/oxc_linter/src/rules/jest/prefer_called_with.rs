@@ -55,6 +55,7 @@ declare_oxc_lint!(
     PreferCalledWith,
     jest,
     style,
+    fix
 );
 
 impl Rule for PreferCalledWith {
@@ -90,9 +91,14 @@ impl PreferCalledWith {
             && let Some(matcher_name) = matcher_property.name()
         {
             if matcher_name == "toBeCalled" {
-                ctx.diagnostic(use_to_be_called_with(matcher_property.span));
+                ctx.diagnostic_with_fix(use_to_be_called_with(matcher_property.span), |fixer| {
+                    fixer.replace(matcher_property.span, "toBeCalledWith")
+                });
             } else if matcher_name == "toHaveBeenCalled" {
-                ctx.diagnostic(use_have_been_called_with(matcher_property.span));
+                ctx.diagnostic_with_fix(
+                    use_have_been_called_with(matcher_property.span),
+                    |fixer| fixer.replace(matcher_property.span, "toHaveBeenCalledWith"),
+                );
             }
         }
     }
@@ -124,7 +130,14 @@ fn test() {
         ("expect(fn).toHaveBeenCalled();", None),
     ];
 
+    let fix = vec![
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
+        ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
+        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+    ];
+
     Tester::new(PreferCalledWith::NAME, PreferCalledWith::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }
