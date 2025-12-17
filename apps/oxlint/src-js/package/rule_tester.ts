@@ -118,10 +118,7 @@ interface Config {
  */
 interface LanguageOptions {
   sourceType?: SourceType;
-  globals?: Record<
-    string,
-    boolean | "true" | "writable" | "writeable" | "false" | "readonly" | "readable" | "off" | null
-  >;
+  globals?: Globals;
   parserOptions?: ParserOptions;
 }
 
@@ -146,6 +143,27 @@ interface LanguageOptionsInternal extends LanguageOptions {
  * - `'commonjs'` is only supported in ESLint compatibility mode.
  */
 type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+
+/**
+ * Value of a property in `globals` object.
+ *
+ * Note: `null` only supported in ESLint compatibility mode.
+ */
+type GlobalValue =
+  | boolean
+  | "true"
+  | "writable"
+  | "writeable"
+  | "false"
+  | "readonly"
+  | "readable"
+  | "off"
+  | null;
+
+/**
+ * Globals object.
+ */
+type Globals = Record<string, GlobalValue>;
 
 /**
  * Parser options config.
@@ -862,6 +880,7 @@ function mergeLanguageOptions(
       localLanguageOptions.parserOptions,
       baseLanguageOptions.parserOptions,
     ),
+    globals: mergeGlobals(localLanguageOptions.globals, baseLanguageOptions.globals),
   };
 }
 
@@ -904,6 +923,21 @@ function mergeEcmaFeatures(
 }
 
 /**
+ * Merge globals from test case / config onto globals from base config.
+ * @param localGlobals - Globals from test case / config
+ * @param baseGlobals - Globals from base config
+ * @returns Merged globals
+ */
+function mergeGlobals(
+  localGlobals?: Globals | null,
+  baseGlobals?: Globals | null,
+): Globals | undefined {
+  if (localGlobals == null) return baseGlobals ?? undefined;
+  if (baseGlobals == null) return localGlobals;
+  return { ...baseGlobals, ...localGlobals };
+}
+
+/**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
@@ -940,10 +974,12 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     // This is not supported outside of conformance tests.
     if (CONFORMANCE) setEcmaVersionContext(test);
 
+    // Get globals and settings
+    const globalsJSON: string = getGlobalsJson(test);
+    const settingsJSON = "{}"; // TODO
+
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    const settingsJSON = "{}"; // TODO
-    const globalsJSON = "{}"; // TODO
     lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
@@ -1033,6 +1069,66 @@ function getParseOptions(test: TestCase): ParseOptions {
   }
 
   return parseOptions;
+}
+
+/**
+ * Get globals as JSON for test case.
+ *
+ * Normalizes values to "readonly", "writable", or "off", same as Rust side does.
+ *
+ * `null` is only supported in ESLint compatibility mode.
+ *
+ * @param test - Test case
+ * @returns Globals as JSON string
+ */
+function getGlobalsJson(test: TestCase): string {
+  const globals = test.languageOptions?.globals;
+  if (globals == null) return "{}";
+
+  // Normalize values to `readonly`, `writable`, or `off` - same as Rust side does
+  const cloned = { ...globals },
+    eslintCompat = !!test.eslintCompat;
+
+  for (const key in cloned) {
+    let value = cloned[key];
+
+    switch (value) {
+      case "readonly":
+      case "writable":
+      case "off":
+        continue;
+
+      case "writeable":
+      case "true":
+      case true:
+        value = "writable";
+        break;
+
+      case "readable":
+      case "false":
+      case false:
+        value = "readonly";
+        break;
+
+      // ESLint treats `null` as `readonly` (undocumented).
+      // https://github.com/eslint/eslint/blob/ba71baa87265888b582f314163df1d727441e2f1/lib/languages/js/source-code/source-code.js#L119-L149
+      // But Oxlint (Rust code) doesn't support it, so we don't support it here either unless in ESLint compatibility mode.
+      case null:
+        if (eslintCompat) {
+          value = "readonly";
+          break;
+        }
+
+      default:
+        throw new Error(
+          `'${value}' is not a valid configuration for a global (use 'readonly', 'writable', or 'off')`,
+        );
+    }
+
+    cloned[key] = value;
+  }
+
+  return JSON.stringify(cloned);
 }
 
 /**

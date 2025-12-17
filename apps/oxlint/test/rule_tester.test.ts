@@ -2812,4 +2812,226 @@ describe("RuleTester", () => {
       });
     });
   });
+
+  describe("globals", () => {
+    const globalReporterRule: Rule = {
+      create(context) {
+        return {
+          Program(node) {
+            context.report({
+              message: `globals: ${JSON.stringify(context.languageOptions.globals)}`,
+              node,
+            });
+          },
+        };
+      },
+    };
+
+    it("is empty object if no globals defined", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", globalReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            errors: [
+              {
+                message: "globals: {}",
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    describe("set", () => {
+      it("globally", () => {
+        RuleTester.setDefaultConfig({
+          languageOptions: {
+            globals: {
+              read: "readonly",
+              write: "writable",
+              disabled: "off",
+            },
+          },
+        });
+
+        const tester = new RuleTester();
+        tester.run("no-foo", globalReporterRule, {
+          valid: [],
+          invalid: [
+            {
+              code: "",
+              errors: [
+                {
+                  message: 'globals: {"read":"readonly","write":"writable","disabled":"off"}',
+                },
+              ],
+            },
+          ],
+        });
+        expect(runCases()).toEqual([null]);
+      });
+
+      it("in `RuleTester` options", () => {
+        const tester = new RuleTester({
+          languageOptions: {
+            globals: {
+              read: "readonly",
+              write: "writable",
+              disabled: "off",
+            },
+          },
+        });
+
+        tester.run("no-foo", globalReporterRule, {
+          valid: [],
+          invalid: [
+            {
+              code: "",
+              errors: [
+                {
+                  message: 'globals: {"read":"readonly","write":"writable","disabled":"off"}',
+                },
+              ],
+            },
+          ],
+        });
+        expect(runCases()).toEqual([null]);
+      });
+
+      it("in test case", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", globalReporterRule, {
+          valid: [],
+          invalid: [
+            {
+              code: "",
+              languageOptions: {
+                globals: {},
+              },
+              errors: [
+                {
+                  message: "globals: {}",
+                },
+              ],
+            },
+            {
+              code: "",
+              languageOptions: {
+                globals: {
+                  read: "readonly",
+                  write: "writable",
+                  disabled: "off",
+                },
+              },
+              errors: [
+                {
+                  message: 'globals: {"read":"readonly","write":"writable","disabled":"off"}',
+                },
+              ],
+            },
+          ],
+        });
+        expect(runCases()).toEqual([null, null]);
+      });
+    });
+
+    it("merged between global config, config, and test case", () => {
+      RuleTester.setDefaultConfig({
+        languageOptions: {
+          globals: {
+            globalConfig: "readonly",
+            globalConfigOverriddenByConfig: "readonly",
+            globalConfigOverriddenByTestCase: "readonly",
+            globalConfigOverriddenByBoth: "readonly",
+          },
+        },
+      });
+
+      const tester = new RuleTester({
+        languageOptions: {
+          globals: {
+            config: "writable",
+            globalConfigOverriddenByConfig: "writable",
+            globalConfigOverriddenByBoth: "writable",
+            configOverriddenByTestCase: "writable",
+          },
+        },
+      });
+
+      tester.run("no-foo", globalReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            languageOptions: {
+              globals: {
+                testCase: "off",
+                globalConfigOverriddenByTestCase: "off",
+                globalConfigOverriddenByBoth: "off",
+                configOverriddenByTestCase: "off",
+              },
+            },
+            errors: [
+              {
+                message: `globals: ${JSON.stringify({
+                  globalConfig: "readonly",
+                  globalConfigOverriddenByConfig: "writable",
+                  globalConfigOverriddenByTestCase: "off",
+                  globalConfigOverriddenByBoth: "off",
+                  config: "writable",
+                  configOverriddenByTestCase: "off",
+                  testCase: "off",
+                })}`,
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("normalizes values", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", globalReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            languageOptions: {
+              globals: {
+                writable: "writable",
+                writeable: "writeable",
+                true: true,
+                trueStr: "true",
+                readonly: "readonly",
+                readable: "readable",
+                false: false,
+                falseStr: "false",
+                off: "off",
+              },
+            },
+            errors: [
+              {
+                message: `globals: ${JSON.stringify({
+                  writable: "writable",
+                  writeable: "writable",
+                  true: "writable",
+                  trueStr: "writable",
+                  readonly: "readonly",
+                  readable: "readonly",
+                  false: "readonly",
+                  falseStr: "readonly",
+                  off: "off",
+                })}`,
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+  });
 });
