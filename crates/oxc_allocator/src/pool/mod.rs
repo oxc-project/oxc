@@ -66,7 +66,8 @@ impl AllocatorPool {
     ///
     /// # Panics
     ///
-    /// Panics if the underlying mutex is poisoned.
+    /// * Panics if the underlying mutex is poisoned.
+    /// * Panics if a new allocator needs to be created but memory allocation fails
     pub fn get(&self) -> AllocatorGuard<'_> {
         let allocator = match &self.0 {
             AllocatorPoolInner::Standard(pool) => pool.get(),
