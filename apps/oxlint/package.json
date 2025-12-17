@@ -29,6 +29,7 @@
     "@types/estree": "^1.0.8",
     "@types/json-schema": "^7.0.15",
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
+    "@types/node": "catalog:",
     "@typescript-eslint/scope-manager": "8.48.1",
     "ajv": "^6.12.6",
     "cross-env": "catalog:",

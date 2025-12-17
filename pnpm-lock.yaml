@@ -94,7 +94,7 @@ importers:
         version: 0.18.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
+        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@types/esquery':
         specifier: ^1.5.4
         version: 1.5.4
@@ -107,6 +107,9 @@ importers:
       '@types/json-stable-stringify-without-jsonify':
         specifier: ^1.0.2
         version: 1.0.2
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.1.0
       '@typescript-eslint/scope-manager':
         specifier: 8.48.1
         version: 8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
@@ -148,7 +151,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.15(@types/node@25.0.2)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
+        version: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)
 
   editors/vscode:
     dependencies:
