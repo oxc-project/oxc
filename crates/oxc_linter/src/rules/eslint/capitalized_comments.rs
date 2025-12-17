@@ -17,7 +17,6 @@ const DIRECTIVES: &[&str] = &[
     "oxlint-enable",
     "eslint-env",
     "eslint ",
-    "oxlint ",
     "jshint",
     "jscs",
     "istanbul",
