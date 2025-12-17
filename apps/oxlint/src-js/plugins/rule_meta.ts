@@ -1,4 +1,4 @@
-import type { Options } from "./options.ts";
+import type { Options, RuleOptionsSchema } from "./options.ts";
 
 /**
  * Rule metadata.
@@ -83,16 +83,6 @@ export interface RuleDocs {
    */
   [key: string]: unknown;
 }
-
-/**
- * Schema describing valid options for a rule.
- * `schema` property of `RuleMeta`.
- *
- * `false` opts out of schema validation. This is not recommended, as it increases the chance of bugs and mistakes.
- */
-// TODO: Make this more precise.
-// TODO: Use this to validate options in configs.
-export type RuleOptionsSchema = Record<string, unknown> | unknown[] | false;
 
 /**
  * Info about deprecation of a rule, and possible replacements.

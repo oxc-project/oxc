@@ -18,16 +18,21 @@ impl<'a> PeepholeOptimizations {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
-        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
-            // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
-            if decl.kind.is_using() {
-                return false;
-            }
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                return ctx.scoping().symbol_is_unused(symbol_id);
-            }
+        // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
+        if decl.kind.is_using() {
+            return false;
         }
-        false
+        match &decl.id.kind {
+            BindingPatternKind::BindingIdentifier(ident) => {
+                if let Some(symbol_id) = ident.symbol_id.get() {
+                    return ctx.scoping().symbol_is_unused(symbol_id);
+                }
+                false
+            }
+            BindingPatternKind::ArrayPattern(ident) => ident.is_empty(),
+            BindingPatternKind::ObjectPattern(ident) => ident.is_empty(),
+            BindingPatternKind::AssignmentPattern(_) => false,
+        }
     }
 
     pub fn remove_unused_variable_declaration(
@@ -97,6 +102,73 @@ impl<'a> PeepholeOptimizations {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()
             && ctx.source_type().is_script()
     }
+
+    /// Remove unused specifiers from import declarations.
+    ///
+    /// Since we don't know if an import has side effects, we convert imports
+    /// with all unused specifiers to side-effect-only imports (`import 'x'`)
+    /// rather than removing them entirely.
+    ///
+    /// ## Example
+    ///
+    /// Input:
+    /// ```js
+    /// import a from 'a'
+    /// import { b } from 'b'
+    ///
+    /// if (false) {
+    ///   console.log(b)
+    /// }
+    /// ```
+    ///
+    /// Output:
+    /// ```js
+    /// import 'a'
+    /// import 'b'
+    /// ```
+    pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+            return;
+        }
+
+        if ctx.scoping().root_scope_flags().contains_direct_eval() {
+            return;
+        }
+
+        debug_assert!(!ctx.source_type().is_script(), "imports are not allowed in script mode");
+
+        let Statement::ImportDeclaration(import_decl) = stmt else { return };
+
+        if import_decl.phase.is_some() {
+            return;
+        }
+
+        let Some(specifiers) = &mut import_decl.specifiers else {
+            return;
+        };
+
+        let original_len = specifiers.len();
+
+        specifiers.retain(|specifier| {
+            let local = match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
+            };
+
+            let symbol_id = local.symbol_id();
+            !ctx.scoping().symbol_is_unused(symbol_id)
+        });
+
+        if specifiers.len() != original_len {
+            ctx.state.changed = true;
+        }
+
+        if specifiers.is_empty() {
+            import_decl.specifiers = None;
+            ctx.state.changed = true;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -117,6 +189,13 @@ mod test {
         test_options("var x", "", &options);
         test_options("var x = 1", "", &options);
         test_options("var x = foo", "foo", &options);
+        test_options("var [] = []", "", &options);
+        test_options("var [] = [1]", "", &options);
+        test_options("var [] = [foo]", "foo", &options);
+        test_options("var {} = {}", "", &options);
+        test_options("var {} = { a: 1 }", "", &options);
+        test_options("var {} = { foo }", "foo", &options);
+        test_options("var {} = { foo: { a } }", "a", &options);
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
         test_same_options("using x = foo", &options);
@@ -182,6 +261,7 @@ mod test {
 
         // decorators
         test_same_options("class C { @dec foo() {} }", &options);
+        test_same_options("@dec class C {}", &options);
 
         // TypeError
         test_same_options("class C extends (() => {}) {}", &options);
@@ -195,5 +275,74 @@ mod test {
         test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
 
         test_options_source_type("class C {}", "class C {}", source_type, &options);
+    }
+
+    #[test]
+    fn remove_unused_import_specifiers() {
+        let options = CompressOptions::smallest();
+
+        test_options("import a from 'a'", "import 'a';", &options);
+        test_options("import a from 'a'; foo()", "import 'a'; foo();", &options);
+
+        test_options("import { a } from 'a'", "import 'a';", &options);
+        test_options("import { a, b } from 'a'", "import 'a';", &options);
+
+        test_options("import * as a from 'a'", "import 'a';", &options);
+
+        test_options("import a, { b } from 'a'", "import 'a';", &options);
+        test_options("import a, * as b from 'a'", "import 'a';", &options);
+
+        test_same_options("import a from 'a'; foo(a);", &options);
+        test_same_options("import { a } from 'a'; foo(a);", &options);
+        test_same_options("import * as a from 'a'; foo(a);", &options);
+        test_same_options("import a, { b } from 'a'; foo(a, b);", &options);
+
+        test_options(
+            "import { a, b } from 'a'; foo(a);",
+            "import { a } from 'a'; foo(a);",
+            &options,
+        );
+        test_options(
+            "import { a, b, c } from 'a'; foo(b);",
+            "import { b } from 'a'; foo(b);",
+            &options,
+        );
+        test_options("import a, { b } from 'a'; foo(a);", "import a from 'a'; foo(a);", &options);
+        test_options(
+            "import a, { b } from 'a'; foo(b);",
+            "import { b } from 'a'; foo(b);",
+            &options,
+        );
+
+        test_options(
+            "import a from 'a'; import { b } from 'b'; if (false) { console.log(b) }",
+            "import 'a'; import 'b';",
+            &options,
+        );
+
+        test_same_options("import 'a';", &options);
+
+        test_options("import {} from 'a'", "import 'a';", &options);
+
+        test_options(
+            "import a from 'a' with { type: 'json' }",
+            "import 'a' with { type: 'json' };",
+            &options,
+        );
+        test_options(
+            "import {} from 'a' with { type: 'json' }",
+            "import 'a' with { type: 'json' };",
+            &options,
+        );
+
+        test_options("import { a as b } from 'a'", "import 'a';", &options);
+        test_same_options("import { a as b } from 'a'; foo(b);", &options);
+
+        test_same_options("import { a } from 'a'; export { a };", &options);
+        // Keep imports when direct eval is present
+        test_same_options("import { a } from 'a'; eval('a');", &options);
+        test_same_options("import a from 'a'; eval('a');", &options);
+        test_same_options("import * as a from 'a'; eval('a');", &options);
+        test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
     }
 }

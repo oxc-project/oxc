@@ -9,8 +9,6 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import type { Comment, Node, NodeOrToken } from "./types.ts";
 import type { Span } from "./location.ts";
 
-const { max, min } = Math;
-
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
  */
@@ -389,11 +387,11 @@ export function getTokens(
     }
   }
 
-  sliceStart = max(0, sliceStart - beforeCount);
-  sliceEnd = min(sliceEnd + afterCount, tokensLength);
+  sliceStart = Math.max(0, sliceStart - beforeCount);
+  sliceEnd = Math.min(sliceEnd + afterCount, tokensLength);
 
   if (typeof filter !== "function") {
-    return tokenList.slice(sliceStart, min(sliceStart + (count ?? sliceEnd), sliceEnd));
+    return tokenList.slice(sliceStart, Math.min(sliceStart + (count ?? sliceEnd), sliceEnd));
   }
 
   const allTokens: TokenOrComment[] = [];
@@ -584,7 +582,7 @@ export function getFirstTokens(
 
   if (typeof filter !== "function") {
     if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: TokenOrComment[] = [];
@@ -773,7 +771,7 @@ export function getLastTokens(
 
   if (typeof filter !== "function") {
     if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
+    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const lastTokens: TokenOrComment[] = [];
@@ -920,7 +918,7 @@ export function getTokensBefore(
   // Maximum number of tokens to return
   const count =
     typeof countOptions === "number"
-      ? max(0, countOptions)
+      ? Math.max(0, countOptions)
       : typeof countOptions === "object" && countOptions !== null
         ? countOptions.count
         : null;
@@ -1246,12 +1244,12 @@ export function getTokensBetween(
   }
 
   // Apply padding
-  sliceStart = max(0, sliceStart - padding);
+  sliceStart = Math.max(0, sliceStart - padding);
   sliceEnd += padding;
 
   if (typeof filter !== "function") {
     if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
   }
 
   const tokensBetween: TokenOrComment[] = [];
@@ -1442,7 +1440,7 @@ export function getFirstTokensBetween(
 
   if (typeof filter !== "function") {
     if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, min(sliceStart + count, sliceEnd));
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
   }
 
   const firstTokens: TokenOrComment[] = [];
@@ -1634,7 +1632,7 @@ export function getLastTokensBetween(
   // Fast path for the common case
   if (typeof filter !== "function") {
     if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(max(sliceStart, sliceEnd - count), sliceEnd);
+    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd);
   }
 
   const tokensBetween: TokenOrComment[] = [];

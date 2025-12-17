@@ -3,9 +3,7 @@
     "name": "MemberExpressionLiterals",
     "es": "ES5",
     "babel": "transform-member-expression-literals",
-    "features": [
-      "Object/array literal extensions / Reserved words as property names"
-    ],
+    "features": ["Object/array literal extensions / Reserved words as property names"],
     "targets": {
       "chrome": "7",
       "opera": "12",
@@ -27,9 +25,7 @@
     "name": "PropertyLiterals",
     "es": "ES5",
     "babel": "transform-property-literals",
-    "features": [
-      "Object/array literal extensions / Reserved words as property names"
-    ],
+    "features": ["Object/array literal extensions / Reserved words as property names"],
     "targets": {
       "chrome": "7",
       "opera": "12",
@@ -51,9 +47,7 @@
     "name": "ReservedWords",
     "es": "ES5",
     "babel": "transform-reserved-words",
-    "features": [
-      "Miscellaneous / Unreserved words"
-    ],
+    "features": ["Miscellaneous / Unreserved words"],
     "targets": {
       "chrome": "13",
       "opera": "10.50",
@@ -99,9 +93,7 @@
   {
     "name": "TemplateLiterals",
     "babel": "transform-template-literals",
-    "features": [
-      "template literals"
-    ],
+    "features": ["template literals"],
     "es": "ES2015",
     "targets": {
       "chrome": "62",
@@ -120,9 +112,7 @@
   {
     "name": "Literals",
     "babel": "transform-literals",
-    "features": [
-      "Unicode code point escapes"
-    ],
+    "features": ["Unicode code point escapes"],
     "es": "ES2015",
     "targets": {
       "chrome": "44",
@@ -142,9 +132,7 @@
   {
     "name": "FunctionName",
     "babel": "transform-function-name",
-    "features": [
-      "function \"name\" property"
-    ],
+    "features": ["function \"name\" property"],
     "es": "ES2015",
     "targets": {
       "chrome": "51",
@@ -194,9 +182,7 @@
   {
     "name": "BlockScopedFunctions",
     "babel": "transform-block-scoped-functions",
-    "features": [
-      "block-level function declaration"
-    ],
+    "features": ["block-level function declaration"],
     "es": "ES2015",
     "targets": {
       "chrome": "41",
@@ -240,9 +226,7 @@
   {
     "name": "ObjectSuper",
     "babel": "transform-object-super",
-    "features": [
-      "super"
-    ],
+    "features": ["super"],
     "es": "ES2015",
     "targets": {
       "chrome": "46",
@@ -261,9 +245,7 @@
   {
     "name": "ShorthandProperties",
     "babel": "transform-shorthand-properties",
-    "features": [
-      "object literal extensions / shorthand properties"
-    ],
+    "features": ["object literal extensions / shorthand properties"],
     "es": "ES2015",
     "targets": {
       "chrome": "43",
@@ -283,9 +265,7 @@
   {
     "name": "DuplicateKeys",
     "babel": "transform-duplicate-keys",
-    "features": [
-      "miscellaneous / duplicate property names in strict mode"
-    ],
+    "features": ["miscellaneous / duplicate property names in strict mode"],
     "es": "ES2015",
     "targets": {
       "chrome": "42",
@@ -304,9 +284,7 @@
   {
     "name": "ComputedProperties",
     "babel": "transform-computed-properties",
-    "features": [
-      "object literal extensions / computed properties"
-    ],
+    "features": ["object literal extensions / computed properties"],
     "es": "ES2015",
     "targets": {
       "chrome": "44",
@@ -326,9 +304,7 @@
   {
     "name": "ForOf",
     "babel": "transform-for-of",
-    "features": [
-      "for..of loops"
-    ],
+    "features": ["for..of loops"],
     "es": "ES2015",
     "targets": {
       "chrome": "51",
@@ -370,9 +346,7 @@
   {
     "name": "UnicodeEscapes",
     "babel": "transform-unicode-escapes",
-    "features": [
-      "Unicode code point escapes"
-    ],
+    "features": ["Unicode code point escapes"],
     "es": "ES2015",
     "targets": {
       "chrome": "44",
@@ -416,11 +390,7 @@
   {
     "name": "Spread",
     "babel": "transform-spread",
-    "features": [
-      "spread syntax for iterable objects",
-      "class",
-      "super"
-    ],
+    "features": ["spread syntax for iterable objects", "class", "super"],
     "es": "ES2015",
     "targets": {
       "chrome": "46",
@@ -439,10 +409,7 @@
   {
     "name": "Destructuring",
     "babel": "transform-destructuring",
-    "features": [
-      "destructuring, assignment",
-      "destructuring, declarations"
-    ],
+    "features": ["destructuring, assignment", "destructuring, declarations"],
     "es": "ES2015",
     "targets": {
       "chrome": "51",
@@ -461,11 +428,7 @@
   {
     "name": "BlockScoping",
     "babel": "transform-block-scoping",
-    "features": [
-      "const",
-      "let",
-      "generators"
-    ],
+    "features": ["const", "let", "generators"],
     "es": "ES2015",
     "targets": {
       "chrome": "50",
@@ -484,9 +447,7 @@
   {
     "name": "TypeofSymbol",
     "babel": "transform-typeof-symbol",
-    "features": [
-      "Symbol / typeof support"
-    ],
+    "features": ["Symbol / typeof support"],
     "es": "ES2015",
     "targets": {
       "chrome": "38",
@@ -506,10 +467,7 @@
   {
     "name": "NewTarget",
     "babel": "transform-new-target",
-    "features": [
-      "new.target",
-      "arrow functions / lexical \"new.target\" binding"
-    ],
+    "features": ["new.target", "arrow functions / lexical \"new.target\" binding"],
     "es": "ES2015",
     "targets": {
       "chrome": "46",
@@ -528,9 +486,7 @@
   {
     "name": "Regenerator",
     "babel": "transform-regenerator",
-    "features": [
-      "generators"
-    ],
+    "features": ["generators"],
     "es": "ES2015",
     "targets": {
       "chrome": "50",
@@ -549,9 +505,7 @@
   {
     "name": "ExponentiationOperator",
     "babel": "transform-exponentiation-operator",
-    "features": [
-      "exponentiation (**) operator"
-    ],
+    "features": ["exponentiation (**) operator"],
     "es": "ES2016",
     "targets": {
       "chrome": "52",
@@ -571,9 +525,7 @@
   {
     "name": "AsyncToGenerator",
     "babel": "transform-async-to-generator",
-    "features": [
-      "async functions"
-    ],
+    "features": ["async functions"],
     "es": "ES2017",
     "targets": {
       "chrome": "55",
@@ -592,9 +544,7 @@
   {
     "name": "AsyncGeneratorFunctions",
     "babel": "transform-async-generator-functions",
-    "features": [
-      "Asynchronous Iterators"
-    ],
+    "features": ["Asynchronous Iterators"],
     "es": "ES2018",
     "targets": {
       "chrome": "63",
@@ -613,9 +563,7 @@
   {
     "name": "ObjectRestSpread",
     "babel": "transform-object-rest-spread",
-    "features": [
-      "object rest/spread properties"
-    ],
+    "features": ["object rest/spread properties"],
     "es": "ES2018",
     "targets": {
       "chrome": "60",
@@ -634,9 +582,7 @@
   {
     "name": "DotallRegex",
     "babel": "transform-dotall-regex",
-    "features": [
-      "s (dotAll) flag for regular expressions"
-    ],
+    "features": ["s (dotAll) flag for regular expressions"],
     "es": "ES2018",
     "targets": {
       "chrome": "62",
@@ -656,9 +602,7 @@
   {
     "name": "UnicodePropertyRegex",
     "babel": "transform-unicode-property-regex",
-    "features": [
-      "RegExp Unicode Property Escapes / basic"
-    ],
+    "features": ["RegExp Unicode Property Escapes / basic"],
     "es": "ES2018",
     "targets": {
       "chrome": "64",
@@ -677,9 +621,7 @@
   {
     "name": "NamedCapturingGroupsRegex",
     "babel": "transform-named-capturing-groups-regex",
-    "features": [
-      "RegExp named capture groups"
-    ],
+    "features": ["RegExp named capture groups"],
     "es": "ES2018",
     "targets": {
       "chrome": "64",
@@ -698,9 +640,7 @@
   {
     "name": "LookbehindRegex",
     "babel": null,
-    "features": [
-      "RegExp Lookbehind Assertions"
-    ],
+    "features": ["RegExp Lookbehind Assertions"],
     "es": "ES2018",
     "targets": {
       "chrome": "62",
@@ -719,9 +659,7 @@
   {
     "name": "JsonStrings",
     "babel": "transform-json-strings",
-    "features": [
-      "JSON superset"
-    ],
+    "features": ["JSON superset"],
     "es": "ES2019",
     "targets": {
       "chrome": "66",
@@ -741,9 +679,7 @@
   {
     "name": "OptionalCatchBinding",
     "babel": "transform-optional-catch-binding",
-    "features": [
-      "optional catch binding"
-    ],
+    "features": ["optional catch binding"],
     "es": "ES2019",
     "targets": {
       "chrome": "66",
@@ -762,9 +698,7 @@
   {
     "name": "NullishCoalescingOperator",
     "babel": "transform-nullish-coalescing-operator",
-    "features": [
-      "nullish coalescing operator (??)"
-    ],
+    "features": ["nullish coalescing operator (??)"],
     "es": "ES2020",
     "targets": {
       "chrome": "80",
@@ -784,9 +718,7 @@
   {
     "name": "OptionalChaining",
     "babel": "transform-optional-chaining",
-    "features": [
-      "optional chaining operator (?.)"
-    ],
+    "features": ["optional chaining operator (?.)"],
     "es": "ES2020",
     "targets": {
       "chrome": "91",
@@ -805,9 +737,7 @@
   {
     "name": "BigInt",
     "babel": null,
-    "features": [
-      "BigInt / basic functionality"
-    ],
+    "features": ["BigInt / basic functionality"],
     "es": "ES2020",
     "targets": {
       "chrome": "67",
@@ -827,9 +757,7 @@
   {
     "name": "NumericSeparator",
     "babel": "transform-numeric-separator",
-    "features": [
-      "numeric separators"
-    ],
+    "features": ["numeric separators"],
     "es": "ES2021",
     "targets": {
       "chrome": "75",
@@ -849,9 +777,7 @@
   {
     "name": "LogicalAssignmentOperators",
     "babel": "transform-logical-assignment-operators",
-    "features": [
-      "Logical Assignment"
-    ],
+    "features": ["Logical Assignment"],
     "es": "ES2021",
     "targets": {
       "chrome": "85",
@@ -870,9 +796,7 @@
   {
     "name": "ClassStaticBlock",
     "babel": "transform-class-static-block",
-    "features": [
-      "Class static initialization blocks"
-    ],
+    "features": ["Class static initialization blocks"],
     "es": "ES2022",
     "targets": {
       "chrome": "94",
@@ -891,9 +815,7 @@
   {
     "name": "PrivatePropertyInObject",
     "babel": "transform-private-property-in-object",
-    "features": [
-      "Ergonomic brand checks for private fields"
-    ],
+    "features": ["Ergonomic brand checks for private fields"],
     "es": "ES2022",
     "targets": {
       "chrome": "91",
@@ -937,9 +859,7 @@
   {
     "name": "PrivateMethods",
     "babel": "transform-private-methods",
-    "features": [
-      "private class methods"
-    ],
+    "features": ["private class methods"],
     "es": "ES2022",
     "targets": {
       "chrome": "84",
@@ -958,9 +878,7 @@
   {
     "name": "MatchIndicesRegex",
     "babel": null,
-    "features": [
-      "RegExp Match Indices (`hasIndices` / `d` flag) / constructor supports it"
-    ],
+    "features": ["RegExp Match Indices (`hasIndices` / `d` flag) / constructor supports it"],
     "es": "ES2022",
     "targets": {
       "chrome": "90",
@@ -1003,9 +921,7 @@
   {
     "name": "DuplicateNamedCapturingGroupsRegex",
     "babel": "transform-duplicate-named-capturing-groups-regex",
-    "features": [
-      "Duplicate named capturing groups"
-    ],
+    "features": ["Duplicate named capturing groups"],
     "es": "ES2025",
     "targets": {
       "chrome": "126",
@@ -1021,9 +937,7 @@
   {
     "name": "RegexpModifiers",
     "babel": "transform-regexp-modifiers",
-    "features": [
-      "RegExp Pattern Modifiers"
-    ],
+    "features": ["RegExp Pattern Modifiers"],
     "es": "ES2025",
     "targets": {
       "chrome": "125",
@@ -1038,9 +952,7 @@
   {
     "name": "ExplicitResourceManagement",
     "babel": "transform-explicit-resource-management",
-    "features": [
-      "Explicit Resource Management"
-    ],
+    "features": ["Explicit Resource Management"],
     "es": "ES2026",
     "targets": {
       "chrome": "134",

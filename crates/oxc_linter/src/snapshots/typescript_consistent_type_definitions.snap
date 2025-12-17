@@ -240,3 +240,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Replace `type T =  { x: number; };` with `interface T { x: number; }`.
+
+  ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
+   ╭─[consistent_type_definitions.tsx:1:1]
+ 1 │ type foo = ({});
+   · ────
+   ╰────
+  help: Replace `type foo = ({});` with `interface foo {}`.
+
+  ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
+   ╭─[consistent_type_definitions.tsx:1:1]
+ 1 │ type foo = (({}));
+   · ────
+   ╰────
+  help: Replace `type foo = (({}));` with `interface foo {}`.
+
+  ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
+   ╭─[consistent_type_definitions.tsx:1:1]
+ 1 │ type foo = ({ x: number });
+   · ────
+   ╰────
+  help: Replace `type foo = ({ x: number });` with `interface foo { x: number }`.

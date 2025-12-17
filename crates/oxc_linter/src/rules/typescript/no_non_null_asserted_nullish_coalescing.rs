@@ -10,6 +10,12 @@ use crate::{
     rule::Rule,
 };
 
+fn no_non_null_asserted_nullish_coalescing_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("'Disallow non-null assertions in the left operand of a nullish coalescing operator")
+        .with_help("The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.")
+        .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertedNullishCoalescing;
 
@@ -61,12 +67,6 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn no_non_null_asserted_nullish_coalescing_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("'Disallow non-null assertions in the left operand of a nullish coalescing operator")
-        .with_help("The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.")
-        .with_label(span)
-}
-
 impl Rule for NoNonNullAssertedNullishCoalescing {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
@@ -85,6 +85,7 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         ctx.source_type().is_typescript()
     }
 }
+
 fn has_assignment_before_node(
     symbol_id: SymbolId,
     ctx: &LintContext,

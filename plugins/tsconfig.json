@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "target": "ESNext",
+    "allowImportingTsExtensions": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true
+  }
+}

@@ -81,7 +81,7 @@ impl Generator for RawTransferGenerator {
 
         outputs.extend([
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/constants.js"),
                 code: constants_js.clone(),
             },
             Output::Javascript {
@@ -196,6 +196,41 @@ fn generate_deserializers(
         }}
     ");
 
+    // Type definition for deserialize.js (linter variant)
+    #[rustfmt::skip]
+    let code_type_definition_linter = "
+        import type { Program } from './types.d.ts';
+        import type { Location as SourceLocation } from '../plugins/location.ts';
+
+        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+        type GetLoc = (node: { range: [number, number] }) => SourceLocation;
+
+        export declare function deserializeProgramOnly(
+            buffer: BufferWithArrays,
+            sourceText: string,
+            sourceByteLen: number,
+            getLoc: GetLoc
+        ): Program;
+
+        export declare function resetBuffer(): void;
+    ".to_string();
+
+    // Type definition for deserialize variants (parser)
+    #[rustfmt::skip]
+    let code_type_definition_parser = "
+        import type * as ESTree from '@oxc-project/types';
+
+        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+
+        export declare function deserialize(
+            buffer: BufferWithArrays,
+            sourceText: string,
+            sourceByteLen: number
+        ): ESTree.Program;
+
+        export declare function resetBuffer(): void;
+    ".to_string();
+
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
@@ -245,7 +280,7 @@ fn generate_deserializers(
                 for range in [false, true] {
                     for parent in [false, true] {
                         self.variant_paths.push(format!(
-                            "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{}{}{}.js",
+                            "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.js",
                             if is_ts { "ts" } else { "js" },
                             if range { "_range" } else { "" },
                             if parent { "_parent" } else { "" },
@@ -287,7 +322,33 @@ fn generate_deserializers(
     let mut generator = VariantGen { variant_paths: vec![] };
     let codes = generator.generate(&code);
 
-    generator.variant_paths.into_iter().zip(codes).collect()
+    let mut outputs: Vec<(String, String)> =
+        generator.variant_paths.into_iter().zip(codes).collect();
+
+    // Add type definition files for parser variants
+    for is_ts in [false, true] {
+        for range in [false, true] {
+            for parent in [false, true] {
+                outputs.push((
+                    format!(
+                        "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.d.ts",
+                        if is_ts { "ts" } else { "js" },
+                        if range { "_range" } else { "" },
+                        if parent { "_parent" } else { "" },
+                    ),
+                    code_type_definition_parser.clone(),
+                ));
+            }
+        }
+    }
+
+    // Add type definition file for linter
+    outputs.push((
+        format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.d.ts"),
+        code_type_definition_linter,
+    ));
+
+    outputs
 }
 
 /// Type of deserializer in which some code appears.

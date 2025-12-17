@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use self::return_checker::{StatementReturnStatus, check_function_body};
@@ -14,7 +15,7 @@ use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {
@@ -33,14 +34,14 @@ fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ArrayCallbackReturn {
     /// When set to true, rule will also report forEach callbacks that return a value.
     check_for_each: bool,
     /// When set to true, allows callbacks of methods that require a return value to
     /// implicitly return undefined with a return statement containing no expression.
-    allow_implicit_return: bool,
+    allow_implicit: bool,
 }
 
 declare_oxc_lint!(
@@ -81,15 +82,9 @@ declare_oxc_lint!(
 
 impl Rule for ArrayCallbackReturn {
     fn from_configuration(value: Value) -> Self {
-        let (check_for_each, allow_implicit_return) =
-            value.get(0).map_or((false, false), |config| {
-                (
-                    config.get("checkForEach").and_then(Value::as_bool).unwrap_or_default(),
-                    config.get("allowImplicit").and_then(Value::as_bool).unwrap_or_default(),
-                )
-            });
-
-        Self { check_for_each, allow_implicit_return }
+        serde_json::from_value::<DefaultRuleConfig<ArrayCallbackReturn>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -117,7 +112,7 @@ impl Rule for ArrayCallbackReturn {
                 check_function_body(function_body)
             };
 
-            match (array_method, self.check_for_each, self.allow_implicit_return) {
+            match (array_method, self.check_for_each, self.allow_implicit) {
                 ("forEach", false, _) => (),
                 ("forEach", true, _) => {
                     if return_status.may_return_explicit() {

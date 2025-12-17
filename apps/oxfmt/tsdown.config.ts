@@ -7,6 +7,7 @@ export default defineConfig({
   platform: "node",
   target: "node20",
   dts: true,
+  attw: { profile: "esm-only" },
   clean: true,
   outDir: "dist",
   shims: false,

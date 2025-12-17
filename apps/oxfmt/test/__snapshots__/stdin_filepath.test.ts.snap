@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`--stdin-filepath > should fail for unsupported file type 1`] = `
+{
+  "exitCode": 1,
+  "stdout": "",
+}
+`;
+
+exports[`--stdin-filepath > should format GraphQL code from stdin 1`] = `
+{
+  "exitCode": 0,
+  "stdout": "{
+  user(id: 1) {
+    name
+  }
+}",
+}
+`;
+
+exports[`--stdin-filepath > should format TS code from stdin 1`] = `
+{
+  "exitCode": 0,
+  "stdout": "const x: number = 1;",
+}
+`;

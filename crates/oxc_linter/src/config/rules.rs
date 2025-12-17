@@ -147,6 +147,11 @@ fn transform_rule_and_plugin_name<'a>(
     rule_name: &'a str,
     plugin_name: &'a str,
 ) -> (&'a str, &'a str) {
+    // Special case: vitest/no-restricted-vi-methods is implemented by jest/no-restricted-jest-methods
+    if plugin_name == "vitest" && rule_name == "no-restricted-vi-methods" {
+        return ("no-restricted-jest-methods", "jest");
+    }
+
     let plugin_name = match plugin_name {
         "vitest" if is_jest_rule_adapted_to_vitest(rule_name) => "jest",
         "unicorn" if rule_name == "no-negated-condition" => "eslint",

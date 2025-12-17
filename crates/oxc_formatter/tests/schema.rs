@@ -1,6 +1,6 @@
 use std::fs;
 
-use oxc_formatter::Oxfmtrc;
+use oxc_formatter::oxfmtrc::Oxfmtrc;
 use project_root::get_project_root;
 
 // NOTE: This test generates the JSON schema for the `.oxfmtrc.json` configuration file

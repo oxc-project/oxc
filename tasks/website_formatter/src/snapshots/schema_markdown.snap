@@ -7,9 +7,11 @@ search: false
 ---
 
 # Configuration options for the Oxfmt.
+
 Most options are the same as Prettier's options.
 See also <https://prettier.io/docs/options>
-But some options are our own extensions.
+
+In addition, some options are our own extensions.
 
 
 ## arrowParens
@@ -81,11 +83,10 @@ type: `string[]`
 
 ### experimentalSortImports.ignoreCase
 
-type: `boolean`
-
-default: `true`
+type: `boolean | null`
 
 
+Ignore case when sorting. (Default: `true`)
 
 
 ### experimentalSortImports.internalPattern
@@ -93,16 +94,15 @@ default: `true`
 type: `string[]`
 
 
-
+Glob patterns to identify internal imports.
 
 
 ### experimentalSortImports.newlinesBetween
 
-type: `boolean`
-
-default: `true`
+type: `boolean | null`
 
 
+Add newlines between import groups. (Default: `true`)
 
 
 ### experimentalSortImports.order
@@ -110,34 +110,31 @@ default: `true`
 type: `string | null`
 
 
-
+Sort order. (Default: `"asc"`)
 
 
 ### experimentalSortImports.partitionByComment
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Partition imports by comments. (Default: `false`)
 
 
 ### experimentalSortImports.partitionByNewline
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Partition imports by newlines. (Default: `false`)
 
 
 ### experimentalSortImports.sortSideEffects
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Sort side-effect imports. (Default: `false`)
 
 
 ## experimentalSortPackageJson

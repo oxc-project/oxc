@@ -1,6 +1,6 @@
 mod sort_imports;
 
-use oxc_formatter::{FormatOptions, Oxfmtrc};
+use oxc_formatter::{FormatOptions, oxfmtrc::Oxfmtrc};
 
 pub fn assert_format(code: &str, config_json: &str, expected: &str) {
     // NOTE: Strip leading single `\n` for better test case readability.

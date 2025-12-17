@@ -39,12 +39,14 @@ pub struct NoThisAliasConfig {
     /// Whether to allow destructuring of `this` to local variables.
     allow_destructuring: bool,
     /// An array of variable names that are allowed to alias `this`.
-    allow_names: FxHashSet<CompactStr>,
+    #[serde(alias = "allowNames")]
+    // Note: allowedNames is the config option used in the original ESLint rule, we typo'd it as allowNames.
+    allowed_names: FxHashSet<CompactStr>,
 }
 
 impl Default for NoThisAliasConfig {
     fn default() -> Self {
-        Self { allow_destructuring: true, allow_names: FxHashSet::default() }
+        Self { allow_destructuring: true, allowed_names: FxHashSet::default() }
     }
 }
 
@@ -58,7 +60,7 @@ impl std::ops::Deref for NoThisAlias {
 
 impl NoThisAlias {
     fn is_allowed(&self, name: &str) -> bool {
-        self.allow_names.contains(name)
+        self.allowed_names.contains(name)
     }
 }
 
@@ -79,9 +81,8 @@ declare_oxc_lint!(
 impl Rule for NoThisAlias {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
-        let allowed_names: FxHashSet<CompactStr> = value
-            .get(0)
-            .and_then(|v| v.get("allowNames"))
+        let allowed_names: FxHashSet<CompactStr> = obj
+            .and_then(|v| v.get("allowedNames").or_else(|| v.get("allowNames")))
             .and_then(Value::as_array)
             .unwrap_or(&vec![])
             .iter()
@@ -94,7 +95,7 @@ impl Rule for NoThisAlias {
                 .and_then(|v| v.get("allowDestructuring"))
                 .and_then(Value::as_bool)
                 .unwrap_or(true),
-            allow_names: allowed_names,
+            allowed_names,
         }))
     }
 
@@ -185,6 +186,8 @@ fn test() {
         ("const [foo] = this;", Some(serde_json::json!([{ "allowDestructuring": true }]))),
         ("const [foo, bar] = this;", Some(serde_json::json!([{ "allowDestructuring": true }]))),
         // allow list
+        ("const self = this;", Some(serde_json::json!([{ "allowedNames": vec!["self"] }]))),
+        // alternative key for backwards compatibility
         ("const self = this;", Some(serde_json::json!([{ "allowNames": vec!["self"] }]))),
     ];
 
@@ -234,6 +237,10 @@ fn test() {
           }",
             Some(serde_json::json!([{ "allowDestructuring": false }])),
         ),
+        // allow something else but not self
+        ("const self = this;", Some(serde_json::json!([{ "allowedNames": vec!["bar"] }]))),
+        // alternative key for backwards compatibility
+        ("const self = this;", Some(serde_json::json!([{ "allowNames": vec!["bar"] }]))),
     ];
 
     Tester::new(NoThisAlias::NAME, NoThisAlias::PLUGIN, pass, fail).test_and_snapshot();

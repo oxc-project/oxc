@@ -1,9 +1,24 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone)]
-pub struct RequireArraySortCompare;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct RequireArraySortCompare(Box<RequireArraySortCompareConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RequireArraySortCompareConfig {
+    /// Whether to ignore arrays in which all elements are strings.
+    pub ignore_string_arrays: bool,
+}
+
+impl Default for RequireArraySortCompareConfig {
+    fn default() -> Self {
+        Self { ignore_string_arrays: true }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -59,6 +74,17 @@ declare_oxc_lint!(
     typescript,
     correctness,
     pending,
+    config = RequireArraySortCompareConfig,
 );
 
-impl Rule for RequireArraySortCompare {}
+impl Rule for RequireArraySortCompare {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<RequireArraySortCompare>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

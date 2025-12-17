@@ -8,6 +8,12 @@
       {
         "considerDefaultExhaustiveForUnions": true
       }
+    ],
+    "typescript/no-base-to-string": [
+      "error",
+      {
+        "ignoredTypeNames": ["Error", "RegExp", "URL", "URLSearchParams", "CustomStringifiable"]
+      }
     ]
   }
 }

@@ -2,20 +2,16 @@ use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    rule::{DefaultRuleConfig, Rule},
-    utils::default_true,
-};
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.
-    #[serde(default = "default_true")]
     pub allow_default_case_for_exhaustive_switch: bool,
     /// Whether to consider `default` cases exhaustive for union types.
     /// When true, a switch statement with a `default` case is considered exhaustive
@@ -29,6 +25,17 @@ pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to require default cases on switches over union types that are not exhaustive.
     /// When true, switches with non-exhaustive union types must have a default case.
     pub require_default_for_non_union: bool,
+}
+
+impl Default for SwitchExhaustivenessCheckConfig {
+    fn default() -> Self {
+        Self {
+            allow_default_case_for_exhaustive_switch: true,
+            consider_default_exhaustive_for_unions: false,
+            default_case_comment_pattern: None,
+            require_default_for_non_union: false,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -132,11 +139,9 @@ declare_oxc_lint!(
 
 impl Rule for SwitchExhaustivenessCheck {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<SwitchExhaustivenessCheckConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<SwitchExhaustivenessCheck>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.103.0] - 2025-12-15
+
+### 🐛 Bug Fixes
+
+- 99c022e transformer: Revert "fix(transformer): validate JSX pragma values and reject invalid identifiers" (#16793) (Copilot)
+- 853c20d transformer: Validate JSX pragma values and reject invalid identifiers (#16675) (Copilot)
+
 ## [0.99.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES

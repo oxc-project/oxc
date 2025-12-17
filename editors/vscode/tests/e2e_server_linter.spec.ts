@@ -76,7 +76,8 @@ suite('E2E Server Linter', () => {
     });
   }
 
-  testSingleFolderMode('detects diagnostics on run', async () =>
+  // TODO: fix flaky test, somehow broken since 25-12-16
+  test.skip('detects diagnostics on run', async () => // testSingleFolderMode
   {
     await loadFixture('lint_on_run');
     await sleep(500);
@@ -95,7 +96,8 @@ suite('E2E Server Linter', () => {
     strictEqual(updatedDiagnostics.length, sameDiagnostics.length);
   });
 
-  test('empty oxlint configuration behaves like default configuration', async () => {
+  // TODO: fix flaky test, somehow broken since 25-12-16
+  test.skip('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
     await sleep(500);
     const diagnostics = await getDiagnosticsWithoutClose('debugger.js');

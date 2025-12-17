@@ -697,11 +697,7 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                &format_with(|f| {
-                    if let Some(return_type) = &arrow.return_type() {
-                        group(&FormatNodeWithoutTrailingComments(return_type)).fmt(f);
-                    }
-                })
+                arrow.return_type().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

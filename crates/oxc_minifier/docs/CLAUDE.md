@@ -138,6 +138,7 @@ cargo run -p oxc_minifier --example minifier test.js --twice
    - Preserve semantics
 
 3. **Test thoroughly**
+
    ```bash
    cargo test -p oxc_minifier
    cargo coverage

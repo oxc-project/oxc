@@ -21,7 +21,6 @@ import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 import { walkProgram } from '../generated/walk.js';
 */
 
-// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { walkProgram } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
@@ -195,6 +194,7 @@ export function lintFileImpl(
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
     if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
     walkProgram(ast, compiledVisitor);
 
     // Lazy implementation

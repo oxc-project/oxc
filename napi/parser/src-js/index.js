@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { parse as parseBinding, parseSync as parseSyncBinding } from "./bindings.js";
 import { wrap } from "./wrap.js";
 
-export { default as visitorKeys } from "../generated/visit/keys.js";
+export { default as visitorKeys } from "./generated/visit/keys.js";
 export { Visitor } from "./visit/index.js";
 
 export {

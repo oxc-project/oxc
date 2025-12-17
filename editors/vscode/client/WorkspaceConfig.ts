@@ -86,29 +86,15 @@ export interface WorkspaceConfigInterface {
   flags: Record<string, string>;
 
   /**
-   * Enable formatting experiment
-   * `oxc.fmt.experimental`
-   *
-   * @default false
-   */
-  ["fmt.experimental"]: boolean;
-
-  /**
    * Path to an oxfmt configuration file
    * `oxc.fmt.configPath`
    */
   ["fmt.configPath"]?: string | null;
 }
 
-export type OxlintWorkspaceConfigInterface = Omit<
-  WorkspaceConfigInterface,
-  "fmt.experimental" | "fmt.configPath"
->;
+export type OxlintWorkspaceConfigInterface = Omit<WorkspaceConfigInterface, "fmt.configPath">;
 
-export type OxfmtWorkspaceConfigInterface = Pick<
-  WorkspaceConfigInterface,
-  "fmt.experimental" | "fmt.configPath"
->;
+export type OxfmtWorkspaceConfigInterface = Pick<WorkspaceConfigInterface, "fmt.configPath">;
 
 export class WorkspaceConfig {
   private _configPath: string | null = null;
@@ -118,7 +104,6 @@ export class WorkspaceConfig {
   private _typeAware: boolean = false;
   private _disableNestedConfig: boolean = false;
   private _fixKind: FixKind = FixKind.SafeFix;
-  private _formattingExperimental: boolean = false;
   private _formattingConfigPath: string | null = null;
 
   constructor(private readonly workspace: WorkspaceFolder) {
@@ -157,7 +142,6 @@ export class WorkspaceConfig {
     this._typeAware = this.configuration.get<boolean>("typeAware") ?? false;
     this._disableNestedConfig = disableNestedConfig ?? false;
     this._fixKind = fixKind ?? FixKind.SafeFix;
-    this._formattingExperimental = this.configuration.get<boolean>("fmt.experimental") ?? false;
     this._formattingConfigPath = this.configuration.get<string | null>("fmt.configPath") ?? null;
   }
 
@@ -188,9 +172,6 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fixKind`, this.workspace)) {
-      return true;
-    }
-    if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.experimental`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.configPath`, this.workspace)) {
@@ -278,19 +259,6 @@ export class WorkspaceConfig {
     return this.configuration.update("fixKind", value, ConfigurationTarget.WorkspaceFolder);
   }
 
-  get formattingExperimental(): boolean {
-    return this._formattingExperimental;
-  }
-
-  updateFormattingExperimental(value: boolean): PromiseLike<void> {
-    this._formattingExperimental = value;
-    return this.configuration.update(
-      "fmt.experimental",
-      value,
-      ConfigurationTarget.WorkspaceFolder,
-    );
-  }
-
   get formattingConfigPath(): string | null {
     return this._formattingConfigPath;
   }
@@ -326,7 +294,8 @@ export class WorkspaceConfig {
 
   public toOxfmtConfig(): OxfmtWorkspaceConfigInterface {
     return {
-      ["fmt.experimental"]: this.formattingExperimental,
+      // @ts-expect-error -- deprecated setting, kept for backward compatibility
+      ["fmt.experimental"]: true,
       ["fmt.configPath"]: this.formattingConfigPath ?? null,
     };
   }

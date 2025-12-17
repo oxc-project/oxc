@@ -1,5 +1,5 @@
 import os from "node:os";
-import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../../generated/constants.js";
+import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../generated/constants.js";
 import {
   getBufferOffset,
   parseRaw as parseRawBinding,

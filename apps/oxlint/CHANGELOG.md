@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.33.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- e654c13 linter/plugins: [**BREAKING**] Do not export `NodeOrToken` type (#16806) (overlookmotel)
+- f814c82 linter/plugins: [**BREAKING**] Use TypeScript parser directly for getting tokens (#16805) (overlookmotel)
+
+### 🚀 Features
+
+- 1bdaab1 linter/prefer-nullish-coalescing: Add rule (#16778) (camc314)
+- 2b73b14 linter/plugins: Support `parserOptions.ecmaFeatures.jsx` option in `RuleTester` (#16690) (overlookmotel)
+- 563eab7 linter/plugins: Add `parserOptions.lang` option to `RuleTester` (#16688) (overlookmotel)
+- e39f487 linter/plugins: Add `ignoreNonFatalErrors` option to `RuleTester` (#16672) (overlookmotel)
+- 4cf1353 linter/plugins: `RuleTester` support `languageOptions.sourceType` (#16660) (overlookmotel)
+- 8c8b6d9 linter/plugins: Add `languageOptions` types to `RuleTester` config types (#16642) (overlookmotel)
+- 554250e linter/plugins: `RuleTester` parser support options (#16641) (overlookmotel)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+- 767db50 linter: Promote constructor_super rule from nursery to correctness (#16605) (camc314)
+
+### 🐛 Bug Fixes
+
+- eccffcf linter/plugins: `report()` accept `loc` with no `end` (#16859) (overlookmotel)
+- d3208dc parser: Parse `let?.x` (#16840) (Copilot)
+- 3302fcb linter/plugins: Sort visitors in order of specificity (#16834) (overlookmotel)
+- 36c9097 linter/plugins: `RuleTester` sort diagnostics before comparing to errors (#16741) (overlookmotel)
+- 32e23f7 linter/plugins: Correct punctuation in error message (#16718) (overlookmotel)
+- 6832464 linter/plugins: Do not escape tab or CR in test case names in `RuleTester` (#16712) (overlookmotel)
+
+### ⚡ Performance
+
+- 6b1a7b5 linter/plugins: Store specificity in a single integer (#16835) (overlookmotel)
+- 3b7d345 linter/plugins: Use `start` and `end` instead of `range` in tokens methods (#16808) (overlookmotel)
+- 4f9d17f linter/plugins: Remove unnecessary check (#16750) (overlookmotel)
+- a5dc4c6 oxlint: Run e2e tests concurrently (#16651) (camc314)
+- 0241b9a linter/plugins: Remove code for renaming global values (#16610) (overlookmotel)
+
+### 📚 Documentation
+
+- 32b641a linter/plugins: Fix typo in JSDoc comment (#16699) (overlookmotel)
+
 ## [1.32.0] - 2025-12-08
 
 ### 🚀 Features

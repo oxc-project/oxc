@@ -350,6 +350,7 @@ impl Tool for ServerLinter {
         let patterns = {
             if old_option.config_path == new_options.config_path
                 && old_option.use_nested_configs() == new_options.use_nested_configs()
+                && old_option.type_aware == new_options.type_aware
             {
                 None
             } else {
@@ -384,6 +385,11 @@ impl Tool for ServerLinter {
 
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
+
+        if options.type_aware {
+            watchers.push("**/tsconfig*.json".to_string());
+        }
+
         watchers
     }
 
@@ -840,6 +846,21 @@ mod test_watchers {
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
         }
+
+        #[test]
+        fn test_linter_with_type_aware() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/default",
+                json!({
+                    "typeAware": true
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "**/tsconfig*.json".to_string());
+        }
     }
 
     mod handle_configuration_change {
@@ -878,6 +899,19 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_lint_type_aware_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        "typeAware": true
+                    }));
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/tsconfig*.json".to_string());
         }
     }
 }

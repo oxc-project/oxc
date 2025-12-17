@@ -90,8 +90,21 @@ impl Rule for PreferDomNodeDataset {
                     return;
                 }
             }
-            "getAttribute" | "removeAttribute" | "hasAttribute" => {
+            "removeAttribute" | "hasAttribute" => {
                 if call_expr.arguments.len() != 1 {
+                    return;
+                }
+            }
+            "getAttribute" => {
+                if call_expr.arguments.len() != 1 {
+                    return;
+                }
+
+                // Playwright's `Locator#getAttribute()` returns a promise.
+                // https://playwright.dev/docs/api/class-locator#locator-get-attribute
+                // https://github.com/sindresorhus/eslint-plugin-unicorn/pull/2334
+                if matches!(ctx.nodes().parent_node(node.id()).kind(), AstKind::AwaitExpression(_))
+                {
                     return;
                 }
             }
@@ -193,6 +206,7 @@ fn test() {
         r#"element.getAttribute("foo-unicorn");"#,
         r#"element.getAttribute("data");"#,
         r#"element.getAttribute("stylý");"#,
+        r#"await page.locator("text=Hello").getAttribute("data-foo")"#,
     ];
 
     let fail = vec![
@@ -256,6 +270,7 @@ fn test() {
         r##"element.querySelector("#selector").getAttribute("data-AllowAccess");"##,
         r#"optional?.element.getAttribute("data-unicorn");"#,
         r#"element.getAttribute("data-unicorn").toString()"#,
+        r#"(await promise).getAttribute("data-foo")"#,
     ];
 
     Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::PLUGIN, pass, fail)

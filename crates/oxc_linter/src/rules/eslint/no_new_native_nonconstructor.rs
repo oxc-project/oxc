@@ -15,7 +15,10 @@ pub struct NoNewNativeNonconstructor;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `new` operators with global non-constructor functions (`Symbol`, `BigInt`)
+    /// Disallow `new` operators with global non-constructor functions (`Symbol`, `BigInt`).
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///

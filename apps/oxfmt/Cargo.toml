@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.17.0"
+version = "0.18.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -31,6 +31,7 @@ oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
+oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -43,13 +44,13 @@ phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
-sort-package-json = "0.0.2"
+sort-package-json = "0.0.5"
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)
-napi = { workspace = true, features = ["async"], optional = true }
+napi = { workspace = true, features = ["async", "serde-json"], optional = true }
 napi-derive = { workspace = true, optional = true }
 
 [build-dependencies]

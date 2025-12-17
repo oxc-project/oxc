@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.33.0] - 2025-12-15
+
+### 🚀 Features
+
+- a082040 editor: Adjust oxlint oxfmt config file editor supporting (#16616) (Liang Mi)
+
 ## [1.32.0] - 2025-12-08
 
 ### 🚀 Features

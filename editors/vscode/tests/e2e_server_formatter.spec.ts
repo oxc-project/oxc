@@ -14,13 +14,11 @@ import {
 
 suiteSetup(async () => {
   await activateExtension();
-  await workspace.getConfiguration('oxc').update('fmt.experimental', true);
   await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
   await workspace.saveAll();
 });
 
 teardown(async () => {
-  await workspace.getConfiguration('oxc').update('fmt.experimental', undefined);
   await workspace.getConfiguration('oxc').update('fmt.configPath', undefined);
   await workspace.getConfiguration('editor').update('defaultFormatter', undefined);
   await workspace.saveAll();
@@ -32,8 +30,7 @@ suite('E2E Server Formatter', () => {
       return;
     }
 
-    test('formats code with `oxc.fmt.experimental`', async () => {
-      await workspace.getConfiguration('oxc').update('fmt.experimental', true);
+    test('formats code', async () => {
       await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
       await workspace.saveAll();
       await loadFixture('formatting');
@@ -53,7 +50,6 @@ suite('E2E Server Formatter', () => {
 
     test('formats code with `oxc.fmt.configPath`', async () => {
       await loadFixture('formatting_with_config');
-      await workspace.getConfiguration('oxc').update('fmt.experimental', true);
       await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
       await workspace.getConfiguration('oxc').update('fmt.configPath', './fixtures/formatter.json');
       await workspace.saveAll();

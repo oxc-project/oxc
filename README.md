@@ -26,7 +26,7 @@ Oxc is part of [VoidZero](https://voidzero.dev/)'s vision for a unified, high-pe
 
 For more information, check out our website at [oxc.rs](https://oxc.rs).
 
-<sub>* Oxidation is the chemical process that creates rust</sub>
+<sub>\* Oxidation is the chemical process that creates rust</sub>
 
 ## 🏗️ Design Principles
 

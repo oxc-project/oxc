@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("A future version of React will block javascript: URLs as a security precaution.")
-        .with_help("Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.")
+    OxcDiagnostic::warn("React 19 disallows `javascript:` URLs as a security precaution.")
+        .with_help("Use event handlers instead if you can.")
         .with_label(span)
 }
 
@@ -47,13 +47,17 @@ impl std::ops::Deref for JsxNoScriptUrl {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow usage of `javascript:` URLs
+    /// Disallow usage of `javascript:` URLs.
     ///
     /// ### Why is this bad?
     ///
-    /// URLs starting with `javascript:` are a dangerous attack surface because it’s easy to accidentally include unsanitized output in a tag like `<a href>` and create a security hole.
-    /// In React 16.9 any URLs starting with `javascript:` scheme log a warning.
-    /// In a future major release, React will throw an error if it encounters a `javascript:` URL.
+    /// URLs starting with `javascript:` are a dangerous attack surface because it’s easy to accidentally
+    /// include unsanitized output in a tag like `<a href>` and create a security hole.
+    ///
+    /// Starting in React 16.9, any URLs starting with `javascript:` log a warning.
+    ///
+    /// In React 19, `javascript:` URLs are
+    /// [disallowed entirely](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#other-breaking-changes).
     ///
     /// ### Examples
     ///
@@ -187,7 +191,7 @@ fn test() {
         ("<a href />", None, None),
         (
             r#"<Foo other="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
@@ -227,23 +231,23 @@ v	ascript:"></a>"#,
         ),
         (
             r#"<Foo to="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<Foo href="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<a href="javascript:void(0)"></a>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<Foo to="javascript:"></Foo>"#,
             Some(
-                serde_json::json!([        [{ "name": "Bar", "props": ["to", "href"] }],        { "includeFromSettings": true },      ]),
+                serde_json::json!([ [{ "name": "Bar", "props": ["to", "href"] }], { "includeFromSettings": true } ]),
             ),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": "to" }]}}}),
@@ -264,7 +268,7 @@ v	ascript:"></a>"#,
 			      </div>
 			    "#,
             Some(
-                serde_json::json!([        [{ "name": "Bar", "props": ["link"] }],        { "includeFromSettings": true },      ]),
+                serde_json::json!([ [{ "name": "Bar", "props": ["link"] }], { "includeFromSettings": true } ]),
             ),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": ["to", "href"] }]}} }),
@@ -277,7 +281,7 @@ v	ascript:"></a>"#,
 			        <Bar link="javascript:"></Bar>
 			      </div>
 			    "#,
-            Some(serde_json::json!([        [{ "name": "Bar", "props": ["link"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Bar", "props": ["link"] }] ])),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": ["to", "href"] }]}} }),
             ),

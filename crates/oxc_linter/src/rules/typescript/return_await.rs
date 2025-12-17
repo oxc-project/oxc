@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ReturnAwait(Box<ReturnAwaitOption>);
 
 impl Default for ReturnAwait {
@@ -38,7 +38,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are different patterns for returning awaited values from async functions. Sometimes you want to await before returning (to handle errors in the current function), and sometimes you want to return the Promise directly (for better performance). This rule helps enforce consistency.
+    /// There are different patterns for returning awaited values from async functions.
+    /// Sometimes you want to await before returning (to handle errors in the current
+    /// function), and sometimes you want to return the Promise directly (for better
+    /// performance). This rule helps enforce consistency.
     ///
     /// ### Examples
     ///
@@ -102,11 +105,9 @@ declare_oxc_lint!(
 
 impl Rule for ReturnAwait {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<ReturnAwaitOption>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<ReturnAwait>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

@@ -4,11 +4,6 @@ import type { RuleDetails } from "./load.ts";
 import type { Range, Ranged } from "./location.ts";
 import type { Diagnostic } from "./report.ts";
 
-const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
-  { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
-  { ownKeys } = Reflect,
-  IteratorSymbol = Symbol.iterator;
-
 // Type of `fix` function.
 // `fix` can return a single fix, an array of fixes, or any iterator that yields fixes.
 // e.g. `(function*() { yield fix1; yield fix2; })()`
@@ -101,13 +96,13 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
   if (!fixes) return null;
 
   // `fixes` can be any iterator, not just an array e.g. `fix: function*() { yield fix1; yield fix2; }`
-  if (IteratorSymbol in fixes) {
+  if (Symbol.iterator in fixes) {
     let isCloned = false;
 
     // Check prototype instead of using `Array.isArray()`, to ensure it is a native `Array`,
     // not a subclass which may have overridden `toJSON()` in a way which could make `JSON.stringify()` throw
-    if (getPrototypeOf(fixes) !== ArrayPrototype || hasOwn(fixes, "toJSON")) {
-      fixes = ArrayFrom(fixes);
+    if (Object.getPrototypeOf(fixes) !== Array.prototype || Object.hasOwn(fixes, "toJSON")) {
+      fixes = Array.from(fixes);
       isCloned = true;
     }
 
@@ -176,12 +171,12 @@ function validateAndConformFix(fix: unknown): Fix {
 
   // If `fix` is already well-formed, return it as-is.
   // Note: `ownKeys(fix).length === 2` rules out `fix` having a custom `toJSON` method.
-  const fixPrototype = getPrototypeOf(fix);
+  const fixPrototype = Object.getPrototypeOf(fix);
   if (
-    (fixPrototype === ObjectPrototype || fixPrototype === null) &&
-    ownKeys(fix).length === 2 &&
-    getPrototypeOf(range) === ArrayPrototype &&
-    !hasOwn(range, "toJSON") &&
+    (fixPrototype === Object.prototype || fixPrototype === null) &&
+    Reflect.ownKeys(fix).length === 2 &&
+    Object.getPrototypeOf(range) === Array.prototype &&
+    !Object.hasOwn(range, "toJSON") &&
     range.length === 2 &&
     typeof text === "string"
   ) {

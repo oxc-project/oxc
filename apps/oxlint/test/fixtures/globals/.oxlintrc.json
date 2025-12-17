@@ -1,7 +1,5 @@
 {
-  "jsPlugins": [
-    "./plugin.ts"
-  ],
+  "jsPlugins": ["./plugin.ts"],
   "categories": {
     "correctness": "off"
   },
@@ -12,13 +10,15 @@
     "React": "readonly",
     "process": "writable",
     "console": "readonly",
-    "window": "off"
+    "window": "off",
+    "foo": "writeable",
+    "bar": "readable",
+    "baz": true,
+    "qux": false
   },
   "overrides": [
     {
-      "files": [
-        "files/nested/**"
-      ],
+      "files": ["files/nested/**"],
       "globals": {
         "React": "writable",
         "process": "off",

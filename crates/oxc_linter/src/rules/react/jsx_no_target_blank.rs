@@ -16,25 +16,25 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
-.with_help("add rel=`noreferrer` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` to the element")
+        .with_label(span)
 }
 
 fn target_blank_without_noopener(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
-.with_help("add rel=`noreferrer` or rel=`noopener` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` or rel=`noopener` to the element")
+        .with_label(span)
 }
 
 fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
-.with_help("add rel=`noreferrer` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` to the element")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
@@ -144,6 +144,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoTargetBlank {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<JsxNoTargetBlank>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
             let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
@@ -232,36 +238,6 @@ impl Rule for JsxNoTargetBlank {
                     }
                 }
             }
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            enforce_dynamic_links: value
-                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
-                .map_or(EnforceDynamicLinksEnum::Always, |str| {
-                    if str == "always" {
-                        EnforceDynamicLinksEnum::Always
-                    } else {
-                        EnforceDynamicLinksEnum::Never
-                    }
-                }),
-            warn_on_spread_attributes: value
-                .and_then(|val| {
-                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            links: value
-                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            forms: value
-                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-            allow_referrer: value
-                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
         }
     }
 

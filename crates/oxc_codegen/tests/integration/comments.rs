@@ -26,6 +26,11 @@ fn unit() {
         "function foo() { return /*i18n*/ {} }",
         "function foo() {\n\treturn (\t/*i18n*/ {});\n}\n",
     );
+
+    test_same("export { /** @deprecated */ parseAst } from \"rolldown/parseAst\";\n");
+    test_same("export { /** @deprecated */ parseAst };\n");
+    test_same("export { parseAst as /** @deprecated */ b } from \"rolldown/parseAst\";\n");
+    test_same("export { parseAst as /** @deprecated */ b };\n");
 }
 
 pub mod jsdoc {

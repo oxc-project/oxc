@@ -28,10 +28,13 @@ declare_oxc_lint!(
     ///
     /// Requires calling `super()` before using `this` or `super`.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
     /// In the constructor of derived classes, if `this`/`super` are used before `super()` calls,
-    /// it raises a ReferenceError.
+    /// it raises a `ReferenceError`.
     ///
     /// ### Examples
     ///

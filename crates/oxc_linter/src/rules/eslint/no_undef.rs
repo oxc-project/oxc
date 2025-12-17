@@ -30,9 +30,13 @@ declare_oxc_lint!(
     ///
     /// Disallow the use of undeclared variables.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
-    /// It is most likely a potential ReferenceError caused by a misspelling of a variable or parameter name.
+    /// It is most likely a potential ReferenceError caused by a misspelling
+    /// of a variable or parameter name.
     ///
     /// ### Examples
     ///

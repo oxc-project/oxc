@@ -1,17 +1,14 @@
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
-import { DEFAULT_OPTIONS } from "./options.ts";
+import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
-import type { Options } from "./options.ts";
+import type { Options, SchemaValidator } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
 import type { SetNullable } from "../utils/types.ts";
-
-const ObjectKeys = Object.keys,
-  { isArray } = Array;
 
 /**
  * Linter plugin, comprising multiple rules
@@ -55,10 +52,15 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
+  readonly fullName: string;
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
+  // Function to validate options against schema.
+  // `false` means validation is disabled. Rule accepts any options.
+  // `null` means no validator provided. Rule does not accept any options.
+  readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
   options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
@@ -139,17 +141,20 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = ObjectKeys(rules);
+  const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
+    const fullRuleName = `${pluginName}/${ruleName}`;
+
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
       messages: Record<string, string> | null = null,
-      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS;
+      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
+      schemaValidator: SchemaValidator | false | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
@@ -162,17 +167,49 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
         isFixable = true;
       }
 
+      // If `schema` provided, compile schema to validator for applying schema defaults to options
+      schemaValidator = compileSchema(ruleMeta.schema);
+
+      // Get default options
       const inputDefaultOptions = ruleMeta.defaultOptions;
       if (inputDefaultOptions != null) {
-        // TODO: Validate is JSON-serializable, and validate against provided options schema
-        if (!isArray(inputDefaultOptions)) {
+        if (!Array.isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
-        // TODO: This isn't quite safe, as `defaultOptions` isn't from JSON, and `deepFreezeJsonArray`
-        // assumes it is. We should perform options merging on Rust side instead, and also validate
-        // `defaultOptions` against options schema.
-        deepFreezeJsonArray(inputDefaultOptions);
-        defaultOptions = inputDefaultOptions;
+
+        // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
+        // and does not validate against schema
+        if (inputDefaultOptions.length !== 0) {
+          // Serialize to JSON and deserialize again.
+          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
+          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+          try {
+            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
+          } catch (err) {
+            throw new Error(
+              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+            );
+          }
+
+          // Validate default options against schema, if schema was provided.
+          // This also applies any defaults from schema.
+          // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
+          // but that's what ESLint does, so it's OK.
+          if (schemaValidator === null) {
+            throw new Error(
+              `Rule ${fullRuleName}:\n` +
+                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
+                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+            );
+          }
+          // Note: `defaultOptions` is not frozen yet
+          if (schemaValidator !== false) {
+            schemaValidator(defaultOptions as Writable<typeof defaultOptions>, fullRuleName);
+          }
+
+          deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
+        }
       }
 
       // Extract messages for messageId support
@@ -187,11 +224,13 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
+      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
       messages,
       defaultOptions,
+      optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
       options: null,
       visitor: null,
@@ -200,7 +239,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     };
 
     // Create `Context` object for rule. This will be re-used for every file.
-    const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
+    const context = createContext(ruleDetails);
     (ruleDetails as Writable<RuleDetails>).context = context;
 
     if ("createOnce" in rule) {
@@ -225,7 +264,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
       // and if not, skip calling into JS entirely. In that case, the `before` hook won't get called.
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
-      if (ObjectKeys(visitor).length === 0) {
+      if (Object.keys(visitor).length === 0) {
         beforeHook = neverRunBeforeHook;
         afterHook = null;
       }

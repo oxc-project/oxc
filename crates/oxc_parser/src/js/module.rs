@@ -336,6 +336,11 @@ impl<'a> ParserImpl<'a> {
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
         };
         self.expect(Kind::Colon);
+        if !self.at(Kind::Str) {
+            return self.fatal_error(diagnostics::import_attribute_value_must_be_string_literal(
+                self.cur_token().span(),
+            ));
+        }
         let value = self.parse_literal_string();
         self.ast.import_attribute(self.end_span(span), key, value)
     }

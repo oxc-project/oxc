@@ -9,7 +9,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
@@ -35,14 +35,13 @@ impl Default for MaxExpects {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// As more assertions are made, there is a possible tendency for the test to be
-    /// more likely to mix multiple objectives. To avoid this, this rule reports when
-    /// the maximum number of assertions is exceeded.
+    /// This rule enforces a maximum number of `expect()` calls in a single test.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule enforces a maximum number of `expect()` calls.
-    /// The following patterns are considered warnings (with the default max of 5):
+    /// Tests with many different assertions are likely mixing multiple objectives.
+    /// It is generally better to have a single objective per test to ensure that when a test fails,
+    /// the problem is easy to identify.
     ///
     /// ### Examples
     ///
@@ -85,11 +84,9 @@ declare_oxc_lint!(
 
 impl Rule for MaxExpects {
     fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
+        serde_json::from_value::<DefaultRuleConfig<MaxExpects>>(value)
             .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

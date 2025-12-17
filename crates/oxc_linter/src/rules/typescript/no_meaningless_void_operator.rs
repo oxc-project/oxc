@@ -1,9 +1,18 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoMeaninglessVoidOperator;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoMeaninglessVoidOperator(Box<NoMeaninglessVoidOperatorConfig>);
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct NoMeaninglessVoidOperatorConfig {
+    /// Whether to check `void` applied to expressions of type `never`.
+    pub check_never: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -51,6 +60,17 @@ declare_oxc_lint!(
     typescript,
     correctness,
     pending,
+    config = NoMeaninglessVoidOperatorConfig,
 );
 
-impl Rule for NoMeaninglessVoidOperator {}
+impl Rule for NoMeaninglessVoidOperator {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoMeaninglessVoidOperator>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Configure Vitest plugin rules.
 ///
-/// See [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s
+/// See [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s
 /// configuration for a full reference.
 #[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema, PartialEq, Eq)]
 pub struct VitestPluginSettings {

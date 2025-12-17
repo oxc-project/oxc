@@ -97,7 +97,9 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
         if status == Status::Ok {
             match rx.recv() {
                 // Setup succeeded
-                Ok(Ok(())) => Ok(()),
+                Ok(Ok(None)) => Ok(()),
+                // Setup failed
+                Ok(Ok(Some(err))) => Err(err),
                 // `setupConfigs` threw an error - should be impossible because it should be infallible
                 Ok(Err(err)) => Err(format!("`setupConfigs` threw an error: {err}")),
                 // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`

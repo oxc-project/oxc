@@ -335,7 +335,7 @@ impl CliRunner {
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
-                    &format!("Failed to setup external plugin options: {err}\n"),
+                    &format!("Failed to setup JS plugin options:\n{err}\n"),
                 );
                 return CliRunResult::InvalidOptionConfig;
             }
@@ -1150,6 +1150,16 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/disable_eslint_and_unicorn_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
+    }
+
+    #[test]
+    // Test to ensure that a vitest rule based on the jest rule is
+    // handled correctly when it has a different name.
+    // e.g. `vitest/no-restricted-vi-methods` vs `jest/no-restricted-jest-methods`
+    fn test_disable_vitest_rules() {
+        let args =
+            &["-c", ".oxlintrc-vitest.json", "--report-unused-disable-directives", "test.js"];
+        Tester::new().with_cwd("fixtures/disable_vitest_rules".into()).test_and_snapshot(args);
     }
 
     #[test]

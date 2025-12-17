@@ -24,7 +24,10 @@ pub struct NoDupeClassMembers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow duplicate class members
+    /// Disallow duplicate class members.
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///

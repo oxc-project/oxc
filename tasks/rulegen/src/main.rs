@@ -82,9 +82,9 @@ const PROMISE_RULES_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/rules";
 
 const VITEST_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/tests";
+    "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/tests";
 const VITEST_RULES_PATH: &str =
-    "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/src/rules";
+    "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/src/rules";
 
 const VUE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";

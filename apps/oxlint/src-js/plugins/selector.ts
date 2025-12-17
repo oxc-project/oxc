@@ -1,14 +1,13 @@
 import esquery from "esquery";
 import visitorKeys from "../generated/keys.ts";
 import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
-// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { ancestors } from "../generated/walk.js";
+import { debugAssert } from "../utils/asserts.ts";
 
 import type { ESQueryOptions, Selector as EsquerySelector } from "esquery";
 import type { Node as EsqueryNode } from "estree";
-import type { Node, VisitFn } from "./types.ts";
-
-const ObjectKeys = Object.keys;
+import type { Node } from "./types.ts";
+import type { VisitFn } from "./visitor.ts";
 
 const { matches: esqueryMatches, parse: esqueryParse } = esquery;
 
@@ -18,10 +17,54 @@ type NodeTypeId = number;
 const ESQUERY_OPTIONS: ESQueryOptions = {
   nodeTypeKey: "type",
   visitorKeys,
-  fallback: (node: EsqueryNode) => ObjectKeys(node).filter(filterKey),
+  fallback: (node: EsqueryNode) => Object.keys(node).filter(filterKey),
   matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
 };
 const filterKey = (key: string) => key !== "parent" && key !== "range" && key !== "loc";
+
+// Specificity is a combination of:
+//
+// 1. Identifier count
+// 2. Attribute count
+// 3. Exit flag (set for exit visit fns)
+//
+// ESLint stores identifier count and attribute count in separate properties.
+// As an optimization, we store them together in a single integer.
+// This makes sorting an array of visit fns by specificity faster.
+//
+// Attribute count takes precedence in sorting, so goes in the higher bits.
+//
+// V8 stores small integers ("SMI"s) inline in objects, instead of on heap.
+// When V8 pointer compression is enabled, SMIs are 31-bit signed integers.
+// Here we're using signed integers, so are limited to 30 bits.
+//
+// We use:
+// * 15 bits for identifier count (32767 max)
+// * 14 bits for attribute count (16383 max)
+// * 1 bit for exit flag.
+//
+// It seems inconceivable that a selector could exceed these limits.
+const IDENTIFIER_COUNT_BITS = 15;
+const ATTRIBUTE_COUNT_BITS = 14;
+
+const IDENTIFIER_COUNT_SHIFT = 0;
+const ATTRIBUTE_COUNT_SHIFT = IDENTIFIER_COUNT_BITS;
+const EXIT_FLAG_SHIFT = IDENTIFIER_COUNT_BITS + ATTRIBUTE_COUNT_BITS;
+
+export const IDENTIFIER_COUNT_INCREMENT = 1 << IDENTIFIER_COUNT_SHIFT;
+const ATTRIBUTE_COUNT_INCREMENT = 1 << ATTRIBUTE_COUNT_SHIFT;
+export const EXIT_FLAG = 1 << EXIT_FLAG_SHIFT;
+
+const IDENTIFIER_COUNT_MAX = (1 << IDENTIFIER_COUNT_BITS) - 1;
+const ATTRIBUTE_COUNT_MAX = (1 << ATTRIBUTE_COUNT_BITS) - 1;
+
+function identifierCount(specificity: number): number {
+  return (specificity >> IDENTIFIER_COUNT_SHIFT) & IDENTIFIER_COUNT_MAX;
+}
+
+function attributeCount(specificity: number): number {
+  return (specificity >> ATTRIBUTE_COUNT_SHIFT) & ATTRIBUTE_COUNT_MAX;
+}
 
 // Parsed selector.
 interface Selector {
@@ -34,10 +77,9 @@ interface Selector {
   // * `:matches(FunctionExpression, FunctionDeclaration)` is not complex.
   // Primarily this exists to make simple `:matches` faster.
   isComplex: boolean;
-  // Number of attributes in selector. Used for calculating selector's specificity.
-  attributeCount: number;
-  // Number of identifiers in selector. Used for calculating selector's specificity.
-  identifierCount: number;
+  // Specificity of selector.
+  // See comment above `IDENTIFIER_COUNT_BITS` for more details.
+  specificity: number;
 }
 
 // Cache of parsed `Selector`s.
@@ -63,8 +105,7 @@ export function parseSelector(key: string): Selector {
     typeIds: null,
     esquerySelector,
     isComplex: false,
-    attributeCount: 0,
-    identifierCount: 0,
+    specificity: 0,
   };
   selector.typeIds = analyzeSelector(esquerySelector, selector);
 
@@ -85,7 +126,7 @@ export function parseSelector(key: string): Selector {
  * It returns an array of node type IDs which the selector may match.
  *
  * @param esquerySelector - `EsquerySelector` to analyse.
- * @param selector - `Selector` which has its `isSimple`, `attributeCount`, and `identifierCount` updated.
+ * @param selector - `Selector` which has its `isComplex` and `specificity` properties updated.
  * @returns Array of node type IDs the selector matches, or `null` if it matches all nodes.
  */
 function analyzeSelector(
@@ -94,11 +135,12 @@ function analyzeSelector(
 ): NodeTypeId[] | null {
   switch (esquerySelector.type) {
     case "identifier": {
-      selector.identifierCount++;
+      debugAssert(identifierCount(selector.specificity) < IDENTIFIER_COUNT_MAX);
+      selector.specificity += IDENTIFIER_COUNT_INCREMENT;
 
       const typeId = NODE_TYPE_IDS_MAP.get(esquerySelector.value);
       // If the type is invalid, just treat this selector as not matching any types.
-      // But still increment `identifierCount`.
+      // But still increment identifier count.
       // This matches ESLint's behavior.
       return typeId === undefined ? EMPTY_TYPE_IDS_ARRAY : [typeId];
     }
@@ -166,7 +208,8 @@ function analyzeSelector(
     case "nth-child":
     case "nth-last-child":
       selector.isComplex = true;
-      selector.attributeCount++;
+      debugAssert(attributeCount(selector.specificity) < ATTRIBUTE_COUNT_MAX);
+      selector.specificity += ATTRIBUTE_COUNT_INCREMENT;
       return null;
 
     case "child":
@@ -211,7 +254,12 @@ export function wrapVisitFnWithSelectorMatch(
 ): VisitFn {
   return (node: Node) => {
     if (
-      esqueryMatches(node as unknown as EsqueryNode, esquerySelector, ancestors, ESQUERY_OPTIONS)
+      esqueryMatches(
+        node as unknown as EsqueryNode,
+        esquerySelector,
+        ancestors as unknown as EsqueryNode[],
+        ESQUERY_OPTIONS,
+      )
     ) {
       visitFn(node);
     }

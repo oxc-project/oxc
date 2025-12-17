@@ -196,10 +196,21 @@ impl DisableDirectives {
                 // Check if this rule should be disabled
                 let rule_matches = match &interval.val {
                     DisabledRule::All { .. } => true,
-                    // Our rule name currently does not contain the prefix.
-                    // For example, this will match `@typescript-eslint/no-var-requires` given
-                    // our rule_name is `no-var-requires`.
-                    DisabledRule::Single { rule_name: name, .. } => name.contains(rule_name),
+                    // `rule_name` does not contain the prefix.
+                    // - `vitest/foobar` will be just `foobar`.
+                    // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
+                    //
+                    // This enables matching rules across different plugins that share the same
+                    // rule name, such as jest<->vitest rules and eslint<->typescript rules.
+                    DisabledRule::Single { rule_name: name, .. } => {
+                        if name.contains(rule_name) {
+                            return true;
+                        }
+
+                        // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
+                        return name == "vitest/no-restricted-vi-methods"
+                            && rule_name == "no-restricted-jest-methods";
+                    }
                 };
 
                 if !rule_matches {
@@ -360,7 +371,7 @@ impl DisableDirectivesBuilder {
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
             {
-                rule_name_start += 14; // eslint-disable is 14 bytes
+                rule_name_start += 14; // eslint-disable and oxlint-disable are each 14 bytes
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {

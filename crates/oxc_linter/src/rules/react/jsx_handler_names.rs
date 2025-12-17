@@ -26,7 +26,7 @@ fn bad_handler_name_diagnostic(
         } else {
             "Bad handler name".to_string()
         },
-)
+    )
         .with_help(format!(
             "Handler function for {prop_key} prop key must be a camelCase name beginning with \'{handler_prefix}\' only"
         ))

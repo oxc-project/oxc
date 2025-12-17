@@ -21,3 +21,24 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
+
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:12]
+ 1 │ expect(fn).toBeCalled();
+   ·            ──────────
+   ╰────
+  help: Prefer toBeCalledWith(/* expected args */)
+
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:21]
+ 1 │ expect(fn).resolves.toBeCalled();
+   ·                     ──────────
+   ╰────
+  help: Prefer toBeCalledWith(/* expected args */)
+
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:12]
+ 1 │ expect(fn).toHaveBeenCalled();
+   ·            ────────────────
+   ╰────
+  help: Prefer toHaveBeenCalledWith(/* expected args */)

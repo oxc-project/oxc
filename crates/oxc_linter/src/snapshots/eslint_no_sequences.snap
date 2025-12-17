@@ -1,0 +1,156 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:2]
+ 1 │ 1, 2;
+   ·  ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:6]
+ 1 │ a = 1, 2
+   ·      ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:27]
+ 1 │ do {} while (doSomething(), !!test);
+   ·                           ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:21]
+ 1 │ for (; doSomething(), !!test; );
+   ·                     ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:18]
+ 1 │ if (doSomething(), !!test);
+   ·                  ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:22]
+ 1 │ switch (doSomething(), val) {}
+   ·                      ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:21]
+ 1 │ while (doSomething(), !!test);
+   ·                     ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:20]
+ 1 │ with (doSomething(), val) {}
+   ·                    ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:20]
+ 1 │ a => (doSomething(), a)
+   ·                    ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:4]
+ 1 │ (1), 2
+   ·    ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:6]
+ 1 │ ((1)) , (2)
+   ·      ───
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:10]
+ 1 │ while((1) , 2);
+   ·          ───
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:13]
+ 1 │ var foo = (1, 2);
+   ·             ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:3]
+ 1 │ (0,eval)("foo()");
+   ·   ─
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:10]
+ 1 │ foo(a, (b, c), d);
+   ·          ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:28]
+ 1 │ do {} while ((doSomething(), !!test));
+   ·                            ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:22]
+ 1 │ for (; (doSomething(), !!test); );
+   ·                      ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:19]
+ 1 │ if ((doSomething(), !!test));
+   ·                   ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:23]
+ 1 │ switch ((doSomething(), val)) {}
+   ·                       ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:22]
+ 1 │ while ((doSomething(), !!test));
+   ·                      ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:21]
+ 1 │ with ((doSomething(), val)) {}
+   ·                     ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.
+
+  ⚠ eslint(no-sequences): Unexpected use of comma operator
+   ╭─[no_sequences.tsx:1:21]
+ 1 │ a => ((doSomething(), a))
+   ·                     ──
+   ╰────
+  help: Do not use the comma operator. If you intended to write a sequence, wrap it in parentheses.

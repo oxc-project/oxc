@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     rule::{DefaultRuleConfig, Rule},
-    utils::{LibFrom, LibSpecifier, NameSpecifier, TypeOrValueSpecifier, default_true},
+    utils::{LibFrom, LibSpecifier, NameSpecifier, TypeOrValueSpecifier},
 };
 
 fn default_restrict_template_allow() -> Vec<TypeOrValueSpecifier> {
@@ -18,28 +18,23 @@ fn default_restrict_template_allow() -> Vec<TypeOrValueSpecifier> {
     })]
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RestrictTemplateExpressions(Box<RestrictTemplateExpressionsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RestrictTemplateExpressionsConfig {
     /// Whether to allow `any` typed values in template expressions.
-    #[serde(default = "default_true")]
     pub allow_any: bool,
     /// Whether to allow array types in template expressions.
     pub allow_array: bool,
     /// Whether to allow boolean types in template expressions.
-    #[serde(default = "default_true")]
     pub allow_boolean: bool,
     /// Whether to allow nullish types (`null` or `undefined`) in template expressions.
-    #[serde(default = "default_true")]
     pub allow_nullish: bool,
     /// Whether to allow number and bigint types in template expressions.
-    #[serde(default = "default_true")]
     pub allow_number: bool,
     /// Whether to allow RegExp values in template expressions.
-    #[serde(default = "default_true")]
     pub allow_reg_exp: bool,
     /// Whether to allow `never` type in template expressions.
     pub allow_never: bool,
@@ -133,11 +128,9 @@ declare_oxc_lint!(
 
 impl Rule for RestrictTemplateExpressions {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<RestrictTemplateExpressionsConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<RestrictTemplateExpressions>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

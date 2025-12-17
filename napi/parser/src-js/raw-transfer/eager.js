@@ -71,7 +71,7 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
   let deserializeThis = deserializers[deserializerIndex];
   if (deserializeThis === null) {
     deserializeThis = deserializers[deserializerIndex] = require(
-      `../../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
+      `../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
     ).deserialize;
   }
 

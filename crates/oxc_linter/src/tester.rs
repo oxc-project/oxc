@@ -1,6 +1,7 @@
 use std::{
     env,
     ffi::OsStr,
+    fmt::Write,
     path::{Path, PathBuf},
     sync::Arc,
     sync::mpsc,
@@ -167,6 +168,20 @@ impl<S: Into<String>> From<(S, (S, S))> for ExpectFixTestCase {
             expected: vec![
                 ExpectFix { expected: value.1.0.into(), kind: ExpectFixKind::Any },
                 ExpectFix { expected: value.1.1.into(), kind: ExpectFixKind::Any },
+            ],
+            rule_config: None,
+        }
+    }
+}
+
+impl<S: Into<String>> From<(S, (S, S, S))> for ExpectFixTestCase {
+    fn from(value: (S, (S, S, S))) -> Self {
+        Self {
+            source: value.0.into(),
+            expected: vec![
+                ExpectFix { expected: value.1.0.into(), kind: ExpectFixKind::Any },
+                ExpectFix { expected: value.1.1.into(), kind: ExpectFixKind::Any },
+                ExpectFix { expected: value.1.2.into(), kind: ExpectFixKind::Any },
             ],
             rule_config: None,
         }
@@ -369,10 +384,28 @@ impl Tester {
         self
     }
 
+    #[expect(clippy::print_stdout)]
     pub fn test(&mut self) {
-        self.test_pass();
-        self.test_fail();
-        self.test_fix();
+        let failed = self.test_pass();
+        let passed = self.test_fail();
+        let fix_failures = self.test_fix();
+
+        if !failed.is_empty() {
+            println!("{}", format_test_failures("expected to pass, but failed", &failed));
+        }
+        if !passed.is_empty() {
+            println!("{}", format_test_failures("expected to fail, but passed", &passed));
+        }
+        if !fix_failures.is_empty() {
+            println!("{}", format_fix_failures(&fix_failures));
+        }
+
+        assert!(
+            failed.is_empty() && passed.is_empty() && fix_failures.is_empty(),
+            "Some tests failed for rule {}/{} (see output above)",
+            self.plugin_name,
+            self.rule_name
+        );
     }
 
     pub fn test_and_snapshot(&mut self) {
@@ -398,53 +431,46 @@ impl Tester {
         });
     }
 
-    fn test_pass(&mut self) {
+    fn test_pass(&mut self) -> Vec<TestFailure> {
+        // output index is used to track position in `self.snapshot`, which accumulates all diagnostics
+        // but we only want to show the diagnostic for this test case
+        let mut output_index = 0;
+        let mut failed = vec![];
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
             let result =
                 self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None, 0);
             let passed = result == TestResult::Passed;
-            let config = rule_config.map_or_else(
-                || "\n\n------------------------\n".to_string(),
-                |v| {
-                    format!(
-                        "\n-------- rule config --------\n{}",
-                        serde_json::to_string_pretty(&v).unwrap()
-                    )
-                },
-            );
-            assert!(
-                passed,
-                "expected test to pass, but it failed:\n\n-------- source --------\n\n{source}\n\n-------- error --------\n{}{config}\n",
-                self.snapshot
-            );
+            if !passed {
+                failed.push(TestFailure::ExpectedToPass {
+                    source,
+                    rule_config,
+                    diagnostic: self.snapshot[output_index..].to_string(),
+                });
+            }
+            output_index = self.snapshot.len();
         }
+        failed
     }
 
-    fn test_fail(&mut self) {
+    fn test_fail(&mut self) -> Vec<TestFailure> {
+        let mut passed = vec![];
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
             let result =
                 self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None, 0);
             let failed = result == TestResult::Failed;
-            let config = rule_config.map_or_else(
-                || "\n\n------------------------".to_string(),
-                |v| {
-                    format!(
-                        "\n-------- rule config --------\n{}",
-                        serde_json::to_string_pretty(&v).unwrap()
-                    )
-                },
-            );
-            assert!(
-                failed,
-                "expected test to fail, but it passed:\n\n-------- source --------\n\n{source}{config}\n",
-            );
+            if !failed {
+                passed.push(TestFailure::ExpectedToFail { source, rule_config });
+            }
         }
+        passed
     }
 
     #[expect(clippy::cast_possible_truncation)] // there are no rules with over 255 different possible fixes
-    fn test_fix(&mut self) {
+    fn test_fix(&mut self) -> Vec<FixFailure> {
+        let mut failures = vec![];
+
         // If auto-fixes are reported, make sure some fix test cases are provided
-        let rule = self.find_rule();
+        let rule: &RuleEnum = self.find_rule();
         let Some(fix_test_cases) = self.expect_fix.clone() else {
             assert!(
                 !rule.fix().has_fix(),
@@ -452,7 +478,7 @@ impl Tester {
                 rule.plugin_name(),
                 rule.name()
             );
-            return;
+            return failures;
         };
 
         for fix in fix_test_cases {
@@ -461,16 +487,34 @@ impl Tester {
                 let result =
                     self.run(&source, config.clone(), None, None, expect.kind, index as u8);
                 match result {
-                    TestResult::Fixed(fixed_str) => assert_eq!(
-                        expect.expected, fixed_str,
-                        r#"Expected "{source}" to be fixed into "{}""#,
-                        expect.expected
-                    ),
-                    TestResult::Passed => panic!("Expected a fix, but test passed: {source}"),
-                    TestResult::Failed => panic!("Expected a fix, but test failed: {source}"),
+                    TestResult::Fixed(fixed_str) => {
+                        if expect.expected != fixed_str {
+                            failures.push(FixFailure {
+                                source: source.clone(),
+                                expected: expect.expected.clone(),
+                                actual: fixed_str,
+                            });
+                        }
+                    }
+                    TestResult::Passed => {
+                        failures.push(FixFailure {
+                            source: source.clone(),
+                            expected: expect.expected.clone(),
+                            actual: String::from("<test passed, no fix applied>"),
+                        });
+                    }
+                    TestResult::Failed => {
+                        failures.push(FixFailure {
+                            source: source.clone(),
+                            expected: expect.expected.clone(),
+                            actual: String::from("<test failed, no fix applied>"),
+                        });
+                    }
                 }
             }
         }
+
+        failures
     }
 
     fn run(
@@ -574,4 +618,142 @@ impl Tester {
                 panic!("Rule in plugin {} not found: {}", &self.plugin_name, &self.rule_name)
             })
     }
+}
+
+struct FixFailure {
+    /// Test source code
+    source: String,
+    /// Expected source code after fix
+    expected: String,
+    /// Actual source code after fix
+    actual: String,
+}
+
+enum TestFailure {
+    ExpectedToPass {
+        /// Test source code
+        source: String,
+        /// Rule configuration used in the test
+        rule_config: Option<Value>,
+        /// Error/diagnostic output produced by the test
+        diagnostic: String,
+    },
+    ExpectedToFail {
+        /// Test source code
+        source: String,
+        /// Rule configuration used in the test
+        rule_config: Option<Value>,
+    },
+}
+
+/// Format source code for display in test failure output.
+/// If the source has more than `max_lines` lines, it will be truncated.
+/// Otherwise, multi-line sources are displayed with proper indentation.
+fn format_test_source(source: &str, max_lines: usize) -> String {
+    let lines: Vec<&str> = source.lines().collect();
+    let line_count = lines.len();
+
+    if line_count <= 1 {
+        // Single line: display inline
+        source.to_string()
+    } else if line_count <= max_lines {
+        // Multi-line but within limit: display with indentation
+        let mut result = String::new();
+        for (i, line) in lines.iter().enumerate() {
+            if i == 0 {
+                result.push_str("| ");
+            } else {
+                result.push_str("      │ ");
+            }
+            result.push_str(line);
+            result.push('\n');
+        }
+        result
+    } else {
+        // Too many lines: truncate with summary
+        let mut result = String::new();
+        for (i, line) in lines.iter().take(max_lines).enumerate() {
+            if i == 0 {
+                result.push_str("| ");
+            } else {
+                result.push_str("      │ ");
+            }
+            result.push_str(line);
+            result.push('\n');
+        }
+        writeln!(result, "      │ ... ({} more line(s))", line_count - max_lines).unwrap();
+        result
+    }
+}
+
+/// Format a code block for display, showing inline for single lines or with pipes for multi-line.
+fn format_code_block(output: &mut String, code: &str) {
+    let lines: Vec<&str> = code.lines().collect();
+    if lines.len() <= 1 {
+        // Single line: display inline
+        let _ = writeln!(output, "{code}");
+    } else {
+        // Multi-line: display with pipes
+        let _ = writeln!(output);
+        for line in lines {
+            let _ = writeln!(output, "      │ {line}");
+        }
+    }
+}
+
+fn format_test_failures(reason: &str, failures: &[TestFailure]) -> String {
+    let count = failures.len();
+    let mut output = String::new();
+    let _ =
+        writeln!(output, "\n{count} test case{} {reason}:\n", if count == 1 { "" } else { "s" });
+
+    for (index, failure) in failures.iter().enumerate() {
+        match failure {
+            TestFailure::ExpectedToPass { diagnostic, rule_config, source } => {
+                let formatted_source = format_test_source(source, 10);
+                let _ = writeln!(output, "  {:>2}. {formatted_source}", index + 1);
+                let _ = writeln!(
+                    output,
+                    "      Diagnostic:\n{}",
+                    diagnostic.cow_replace('\n', "\n      ")
+                );
+                if let Some(config) = &rule_config {
+                    // Format config compactly on one line if possible
+                    let config_str = serde_json::to_string(config).unwrap_or_default();
+                    let _ = writeln!(output, "      config: {config_str}");
+                }
+            }
+            TestFailure::ExpectedToFail { rule_config, source } => {
+                let formatted_source = format_test_source(source, 10);
+                let _ = writeln!(output, "  {:>2}. {formatted_source}", index + 1);
+                if let Some(config) = &rule_config {
+                    // Format config compactly on one line if possible
+                    let config_str = serde_json::to_string(config).unwrap_or_default();
+                    let _ = writeln!(output, "      config: {config_str}");
+                }
+            }
+        }
+    }
+    output
+}
+
+fn format_fix_failures(failures: &[FixFailure]) -> String {
+    let count = failures.len();
+    let mut output = String::new();
+    let _ = writeln!(
+        output,
+        "\n{count} fix{} did not produce expected output:\n",
+        if count == 1 { "" } else { "es" }
+    );
+
+    for (index, failure) in failures.iter().enumerate() {
+        let _ = write!(output, "  {:>2}.    Input: ", index + 1);
+        format_code_block(&mut output, &failure.source);
+        let _ = write!(output, "      Expected: ");
+        format_code_block(&mut output, &failure.expected);
+        let _ = write!(output, "        Actual: ");
+        format_code_block(&mut output, &failure.actual);
+        let _ = writeln!(output);
+    }
+    output
 }

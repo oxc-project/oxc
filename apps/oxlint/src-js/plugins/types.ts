@@ -25,9 +25,6 @@ export type VisitorWithHooks = Visitor & {
   after?: AfterHook;
 };
 
-// Visit function for a specific AST node type.
-export type VisitFn = (node: Node) => void;
-
 // AST node type.
 export interface Node extends Span {}
 
@@ -37,17 +34,6 @@ export type NodeOrToken = Node | Token | Comment;
 export interface Comment extends Span {
   type: "Line" | "Block";
   value: string;
-}
-
-// Element of compiled visitor array.
-// * `VisitFn | null` for leaf nodes.
-// * `EnterExit | null` for non-leaf nodes.
-export type CompiledVisitorEntry = VisitFn | EnterExit | null;
-
-// Enter+exit pair, for non-leaf nodes in compiled visitor.
-export interface EnterExit {
-  enter: VisitFn | null;
-  exit: VisitFn | null;
 }
 
 // Buffer with typed array views of itself stored as properties.

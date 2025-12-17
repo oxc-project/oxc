@@ -62,9 +62,9 @@ suite('code actions', () => {
     );
     strictEqual(quickFixes.length, 3);
     deepStrictEqual(
-      quickFixes.map(({ edit: _edit, kind: _kind, ...fix }) => ({
-        ...fix,
-      })),
+      quickFixes.map(({ edit: _edit, kind: _kind, ...fix }) => {
+        return fix
+      }),
       [
         {
           isPreferred: true,

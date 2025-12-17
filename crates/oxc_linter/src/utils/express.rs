@@ -101,3 +101,8 @@ const COMMON_ERROR_NAMES: [&str; 4] = ["e", "err", "error", "exception"];
 fn is_error_param(param: &FormalParameter) -> bool {
     param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(&id.as_str()))
 }
+
+#[test]
+fn test_array_is_sorted() {
+    assert!(ROUTER_HANDLER_METHOD_NAMES.is_sorted());
+}

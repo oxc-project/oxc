@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 394
 ---
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.tsx:1:9]
@@ -420,3 +421,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────
    ╰────
   help: Access the `.dataset` object directly: `element.dataset.unicorn`
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+   ╭─[prefer_dom_node_dataset.tsx:1:17]
+ 1 │ (await promise).getAttribute("data-foo")
+   ·                 ────────────
+   ╰────
+  help: Access the `.dataset` object directly: `element.dataset.foo`

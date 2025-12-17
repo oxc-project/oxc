@@ -14,4 +14,12 @@ switch (day) {
     break;
 }
 
-export { result };
+// Test no-base-to-string with ignoredTypeNames option
+// CustomStringifiable is in the ignoredTypeNames list, so this should NOT error
+declare class CustomStringifiable {
+  value: string;
+}
+declare const custom: CustomStringifiable;
+const customStr = custom.toString();
+
+export { result, customStr };

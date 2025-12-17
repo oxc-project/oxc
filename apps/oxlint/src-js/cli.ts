@@ -36,10 +36,11 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
  * Delegates to `setupConfigs`, which was lazy-loaded by `loadPluginWrapper`.
  *
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ * @returns `null` if success, or error message string
  */
-function setupConfigsWrapper(optionsJSON: string): void {
+function setupConfigsWrapper(optionsJSON: string): string | null {
   debugAssertIsNonNull(setupConfigs);
-  setupConfigs(optionsJSON);
+  return setupConfigs(optionsJSON);
 }
 
 /**

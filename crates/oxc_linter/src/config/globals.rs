@@ -155,6 +155,10 @@ mod test {
         assert!(globals.is_enabled("foo"));
         assert!(globals.is_enabled("bar"));
         assert!(!globals.is_enabled("baz"));
+
+        assert_eq!(globals.get("foo"), Some(&GlobalValue::Readonly));
+        assert_eq!(globals.get("bar"), Some(&GlobalValue::Writable));
+        assert_eq!(globals.get("baz"), Some(&GlobalValue::Off));
     }
 
     #[test]
@@ -165,6 +169,9 @@ mod test {
         });
         assert!(globals.is_enabled("foo"));
         assert!(globals.is_enabled("bar"));
+        // Ensure they map to the correct variants
+        assert_eq!(globals.get("foo"), Some(&GlobalValue::Readonly));
+        assert_eq!(globals.get("bar"), Some(&GlobalValue::Writable));
     }
 
     #[test]
@@ -175,6 +182,9 @@ mod test {
         });
         assert!(globals.is_enabled("foo"));
         assert!(globals.is_enabled("bar"));
+
+        assert_eq!(globals.get("foo"), Some(&GlobalValue::Writable));
+        assert_eq!(globals.get("bar"), Some(&GlobalValue::Readonly));
     }
 
     #[test]

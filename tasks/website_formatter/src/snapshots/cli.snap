@@ -13,8 +13,12 @@ search: false
 ## Mode Options:
 - **`    --init`** &mdash; 
   Initialize `.oxfmtrc.json` with default values
+- **`    --migrate`**=_`SOURCE`_ &mdash; 
+  Migrate configuration to `.oxfmtrc.json` from specified source Available sources: prettier
 - **`    --lsp`** &mdash; 
   Start language server protocol (LSP) server
+- **`    --stdin-filepath`**=_`PATH`_ &mdash; 
+  Specify the file name to use to infer which parser to use
 
 
 

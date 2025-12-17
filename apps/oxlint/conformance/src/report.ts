@@ -29,11 +29,17 @@ export function generateReport(results: RuleResult[]): string {
   // Categorize rules
   const loadErrorRules: RuleResult[] = [],
     noTestRules: RuleResult[] = [],
-    passingRules: RuleResult[] = [],
-    failingRules: { ruleName: string; testCount: number; failingTests: TestResult[] }[] = [];
+    passingRules: { ruleName: string; testCount: number; skippedCount: number }[] = [],
+    failingRules: {
+      ruleName: string;
+      testCount: number;
+      skippedCount: number;
+      failingTests: TestResult[];
+    }[] = [];
   let fullyFailingRuleCount = 0,
     totalTestCount = 0,
-    failingTestCount = 0;
+    failingTestCount = 0,
+    skippedTestCount = 0;
 
   for (const result of results) {
     if (result.isLoadError) {
@@ -41,7 +47,7 @@ export function generateReport(results: RuleResult[]): string {
       continue;
     }
 
-    const { tests } = result,
+    const { ruleName, tests } = result,
       testCount = tests.length;
     if (testCount === 0) {
       noTestRules.push(result);
@@ -50,9 +56,21 @@ export function generateReport(results: RuleResult[]): string {
 
     totalTestCount += testCount;
 
-    const failingTests = tests.filter((test) => !test.isPassed);
+    const failingTests = [];
+    let ruleSkippedCount = 0;
+    for (const test of tests) {
+      if (test.isPassed) continue;
+      if (test.isSkipped) {
+        ruleSkippedCount++;
+      } else {
+        failingTests.push(test);
+      }
+    }
+
+    skippedTestCount += ruleSkippedCount;
+
     if (failingTests.length === 0) {
-      passingRules.push(result);
+      passingRules.push({ ruleName, testCount, skippedCount: ruleSkippedCount });
       continue;
     }
 
@@ -63,8 +81,9 @@ export function generateReport(results: RuleResult[]): string {
     }
 
     failingRules.push({
-      ruleName: result.ruleName,
+      ruleName,
       testCount,
+      skippedCount: ruleSkippedCount,
       failingTests,
     });
   }
@@ -93,7 +112,7 @@ export function generateReport(results: RuleResult[]): string {
     loadErrorRuleCount = loadErrorRules.length,
     fullyPassingRuleCount = passingRules.length,
     partiallyPassingRuleCount = failingRules.length - fullyFailingRuleCount,
-    passingTestCount = totalTestCount - failingTestCount,
+    passingTestCount = totalTestCount - failingTestCount - skippedTestCount,
     noTestsRuleCount = noTestRules.length;
 
   function countAndPercent(count: number, total: number): string {
@@ -123,6 +142,7 @@ export function generateReport(results: RuleResult[]): string {
     | Total tests | ${countAndPercent(totalTestCount, totalTestCount)} |
     | Passing     | ${countAndPercent(passingTestCount, totalTestCount)} |
     | Failing     | ${countAndPercent(failingTestCount, totalTestCount)} |
+    | Skipped     | ${countAndPercent(skippedTestCount, totalTestCount)} |
 
   `);
 
@@ -132,7 +152,9 @@ export function generateReport(results: RuleResult[]): string {
     line("No rules fully passing");
   } else {
     for (const rule of passingRules) {
-      line(`- \`${rule.ruleName}\` (${rule.tests.length} tests)`);
+      let out = `- \`${rule.ruleName}\` (${rule.testCount} tests)`;
+      if (rule.skippedCount > 0) out += ` (${rule.skippedCount} skipped)`;
+      line(out);
     }
   }
   lineBreak();
@@ -154,15 +176,16 @@ export function generateReport(results: RuleResult[]): string {
     line("## Rules with Failures Detail\n");
 
     for (const rule of failingRules) {
-      const { testCount, failingTests } = rule,
+      const { testCount, failingTests, skippedCount } = rule,
         failedCount = failingTests.length,
-        passedCount = testCount - failedCount;
+        passedCount = testCount - failedCount - skippedCount;
 
       block(`
         ### \`${rule.ruleName}\`
 
         Pass: ${formatProportion(passedCount, testCount)}
         Fail: ${formatProportion(failedCount, testCount)}
+        Skip: ${formatProportion(skippedCount, testCount)}
 
       `);
 

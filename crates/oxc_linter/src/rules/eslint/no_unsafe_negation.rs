@@ -40,6 +40,9 @@ declare_oxc_lint!(
     /// Disallows negating the left operand of relational operators to prevent logical errors
     /// caused by misunderstanding operator precedence or accidental use of negation.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
     /// Negating the left operand of relational operators can result in unexpected behavior due to

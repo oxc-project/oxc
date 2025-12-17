@@ -1,9 +1,33 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoBaseToString;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoBaseToString(Box<NoBaseToStringConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct NoBaseToStringConfig {
+    /// A list of type names to ignore when checking for unsafe toString usage.
+    /// These types are considered safe to call toString on even if they don't
+    /// provide a custom implementation.
+    pub ignored_type_names: Vec<String>,
+}
+
+impl Default for NoBaseToStringConfig {
+    fn default() -> Self {
+        Self {
+            ignored_type_names: vec![
+                "Error".to_string(),
+                "RegExp".to_string(),
+                "URL".to_string(),
+                "URLSearchParams".to_string(),
+            ],
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,6 +73,17 @@ declare_oxc_lint!(
     typescript,
     correctness,
     pending,
+    config = NoBaseToStringConfig,
 );
 
-impl Rule for NoBaseToString {}
+impl Rule for NoBaseToString {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoBaseToString>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

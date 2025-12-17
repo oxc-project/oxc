@@ -2,7 +2,11 @@ import Tinypool from "tinypool";
 import type { WorkerData, FormatEmbeddedCodeArgs, FormatFileArgs } from "./prettier-worker.ts";
 
 // Worker pool for parallel Prettier formatting
+// Used by each exported function
 let pool: Tinypool | null = null;
+
+type SetupResult = string[];
+let setupCache: SetupResult | null = null;
 
 // ---
 
@@ -13,13 +17,16 @@ let pool: Tinypool | null = null;
  * @param numThreads - Number of worker threads to use (same as Rayon thread count)
  * @returns Array of loaded plugin's `languages` info
  * */
-export async function setupConfig(configJSON: string, numThreads: number): Promise<string[]> {
+export async function setupConfig(configJSON: string, numThreads: number): Promise<SetupResult> {
+  // NOTE: When called from CLI, it's only called once at the beginning.
+  // However, when called via API, like `format(fileName, code)`, it may be called multiple times.
+  // Therefore, allow it by returning cached result.
+  if (setupCache !== null) return setupCache;
+
   const workerData: WorkerData = {
     // SAFETY: Always valid JSON constructed by Rust side
     prettierConfig: JSON.parse(configJSON),
   };
-
-  if (pool) throw new Error("`setupConfig()` has already been called");
 
   // Initialize worker pool for parallel Prettier formatting
   // Pass config via workerData so all workers get it on initialization
@@ -34,7 +41,9 @@ export async function setupConfig(configJSON: string, numThreads: number): Promi
   // - Read `plugins` field
   // - Load plugins dynamically and parse `languages` field
   // - Map file extensions and filenames to Prettier parsers
-  return [];
+  setupCache = [];
+
+  return setupCache;
 }
 
 // ---
