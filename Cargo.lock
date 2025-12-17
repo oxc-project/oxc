@@ -3775,6 +3775,7 @@ checksum = "051eb1abcf10076295e815102942cc58f9d5e3b4560e46e53c21e8ff6f3af7b1"
 name = "vscode_docs"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "serde",
  "serde_json",
 ]

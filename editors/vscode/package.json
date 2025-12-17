@@ -191,8 +191,9 @@
           "type": "object",
           "scope": "resource",
           "default": {},
-          "markdownDeprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead.",
-          "markdownDescription": "Specific Oxlint flags to pass to the language server."
+          "markdownDescription": "Specific Oxlint flags to pass to the language server.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead."
         },
         "oxc.fmt.experimental": {
           "type": "boolean",

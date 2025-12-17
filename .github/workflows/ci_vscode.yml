@@ -42,7 +42,10 @@ jobs:
           cache-key: vscode
 
       - name: Check VSCode README is up-to-date
-        run: cargo run -p vscode_docs check
+        run: |
+          cargo run -p vscode_docs update
+          pnpm fmt
+          git diff --exit-code
 
       - name: Build Language Server
         working-directory: editors/vscode

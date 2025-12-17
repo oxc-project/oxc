@@ -13,5 +13,6 @@ name = "vscode_docs"
 doctest = false
 
 [dependencies]
+cow-utils = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

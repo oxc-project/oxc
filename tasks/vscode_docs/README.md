@@ -30,7 +30,8 @@ This will be used in CI to verify that the README is always in sync with the pac
 
 ## Features
 
-- Automatically excludes deprecated fields (marked with `deprecated: true` or `markdownDeprecationMessage`)
-- Generates proper markdown table with Key, Default Value, Possible Values, and Description columns
+- Includes deprecated fields in a separate section with an empty row separator
+- Generates properly formatted markdown tables with Key, Default Value, Possible Values, and Description columns
+- Runs `just fmt` automatically after generation to ensure consistent formatting
 - Includes FixKind enum values if referenced in any configuration
 - Sorts configuration options alphabetically for consistent output
