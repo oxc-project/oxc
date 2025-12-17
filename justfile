@@ -255,6 +255,10 @@ website path:
 linter-schema-json:
   cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
+# Update VSCode extension README configuration section
+vscode-docs:
+  cargo run -p vscode_docs update
+
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:
   cargo binstall cargo-autoinherit
