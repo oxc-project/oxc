@@ -136,23 +136,29 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
-
-        let base_formatter = Formatter::new(&allocator, format_options);
+        let filepath = path.to_string_lossy();
+        let base_formatter = Formatter::new(&allocator, format_options.clone(), &filepath);
 
         #[cfg(feature = "napi")]
         let formatted = {
-            if is_embed_off {
-                base_formatter.format(&ret.program)
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+
+            let embedded_formatter = if format_options.embedded_language_formatting.is_off() {
+                None
             } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
-            }
+                Some(external_formatter.to_embedded_formatter(external_options.clone()))
+            };
+
+            let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
+                Some(&external_formatter.process_tailwind)
+            } else {
+                None
+            };
+
+            base_formatter.format_with_all(&ret.program, embedded_formatter, tailwind_callback)
         };
         #[cfg(not(feature = "napi"))]
         let formatted = {

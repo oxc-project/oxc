@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -32,6 +34,10 @@ pub struct FormatContext<'ast> {
     embedded_formatter: Option<EmbeddedFormatter>,
 
     allocator: &'ast Allocator,
+
+    /// Collected Tailwind CSS class strings from JSX attributes.
+    /// These will be sorted by an external callback and replaced during printing.
+    tailwind_classes: RefCell<Vec<String>>,
 }
 
 impl std::fmt::Debug for FormatContext<'_> {
@@ -65,6 +71,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             embedded_formatter,
             allocator,
+            tailwind_classes: RefCell::new(Vec::new()),
         }
     }
 
@@ -78,6 +85,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             embedded_formatter: None,
             allocator,
+            tailwind_classes: RefCell::new(Vec::new()),
         }
     }
 
@@ -145,5 +153,19 @@ impl<'ast> FormatContext<'ast> {
 
     pub fn allocator(&self) -> &'ast Allocator {
         self.allocator
+    }
+
+    /// Add a Tailwind CSS class string found in JSX attributes.
+    /// Returns the index where the class was stored.
+    pub fn add_tailwind_class(&self, class: String) -> usize {
+        let mut classes = self.tailwind_classes.borrow_mut();
+        let index = classes.len();
+        classes.push(class);
+        index
+    }
+
+    /// Take all collected Tailwind classes, clearing the internal storage.
+    pub fn take_tailwind_classes(&self) -> Vec<String> {
+        std::mem::take(&mut *self.tailwind_classes.borrow_mut())
     }
 }

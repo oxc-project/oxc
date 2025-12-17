@@ -5,6 +5,10 @@ use std::sync::Arc;
 pub type EmbeddedFormatterCallback =
     Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
+/// Callback function type for sorting Tailwind CSS classes.
+/// Takes (filepath, classes) and returns the sorted versions.
+pub type TailwindCallback = Arc<dyn Fn(&str, Vec<String>) -> Vec<String> + Send + Sync>;
+
 /// Formatter for embedded languages in template literals.
 ///
 /// This allows formatting code embedded in template literals like:

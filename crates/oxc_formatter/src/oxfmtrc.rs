@@ -13,7 +13,7 @@ use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas,
+    TailwindcssOptions, TrailingCommas,
 };
 
 /// Configuration options for the Oxfmt.
@@ -95,6 +95,13 @@ pub struct Oxfmtrc {
     /// Experimental: Sort `package.json` keys. (Default: `true`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<bool>,
+
+    /// Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
+    /// When enabled, class strings will be collected and passed to a callback for sorting.
+    /// Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
+    /// (Default: disabled)
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub experimental_tailwindcss: Option<TailwindcssConfig>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -232,6 +239,43 @@ where
 pub enum SortOrderConfig {
     Asc,
     Desc,
+}
+
+/// Configuration for Tailwind CSS class sorting.
+/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+#[expect(clippy::struct_field_names)] // Field names match the plugin's documented options
+pub struct TailwindcssConfig {
+    /// Path to Tailwind config file (v3).
+    /// e.g., `"./tailwind.config.js"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_config: Option<String>,
+
+    /// Path to Tailwind stylesheet (v4).
+    /// e.g., `"./src/app.css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_stylesheet: Option<String>,
+
+    /// List of custom function names whose arguments should be sorted.
+    /// e.g., `["clsx", "cva", "tw"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_functions: Option<Vec<String>>,
+
+    /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
+    /// e.g., `["myClassProp", ":class"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_attributes: Option<Vec<String>>,
+
+    /// Preserve whitespace around classes.
+    /// Defaults to `false`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_preserve_whitespace: Option<bool>,
+
+    /// Preserve duplicate classes.
+    /// Defaults to `false`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tailwind_preserve_duplicates: Option<bool>,
 }
 
 // ---
@@ -424,6 +468,18 @@ impl Oxfmtrc {
             format_options.experimental_sort_imports = Some(sort_imports);
         }
 
+        // [Oxfmt] experimentalTailwindcss: boolean | object
+        if let Some(config) = self.experimental_tailwindcss {
+            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+                tailwind_config: config.tailwind_config,
+                tailwind_stylesheet: config.tailwind_stylesheet,
+                tailwind_functions: config.tailwind_functions,
+                tailwind_attributes: config.tailwind_attributes,
+                tailwind_preserve_whitespace: config.tailwind_preserve_whitespace,
+                tailwind_preserve_duplicates: config.tailwind_preserve_duplicates,
+            });
+        }
+
         let mut oxfmt_options = OxfmtOptions::default();
         if let Some(patterns) = self.ignore_patterns {
             oxfmt_options.ignore_patterns = patterns;
@@ -567,6 +623,7 @@ impl Oxfmtrc {
         obj.remove("insertFinalNewline");
         obj.remove("experimentalSortImports");
         obj.remove("experimentalSortPackageJson");
+        obj.remove("experimentalTailwindcss");
 
         // Any other unknown fields are preserved as-is.
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.

@@ -130,6 +130,67 @@
       ],
       "type": "string"
     },
+    "TailwindcssConfig": {
+      "description": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "markdownDescription": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "properties": {
+        "tailwindAttributes": {
+          "description": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "tailwindConfig": {
+          "description": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
+          "markdownDescription": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tailwindFunctions": {
+          "description": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "tailwindPreserveDuplicates": {
+          "description": "Preserve duplicate classes.\nDefaults to `false`.",
+          "markdownDescription": "Preserve duplicate classes.\nDefaults to `false`.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tailwindPreserveWhitespace": {
+          "description": "Preserve whitespace around classes.\nDefaults to `false`.",
+          "markdownDescription": "Preserve whitespace around classes.\nDefaults to `false`.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tailwindStylesheet": {
+          "description": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
+          "markdownDescription": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "TrailingCommaConfig": {
       "enum": [
         "all",
@@ -213,6 +274,21 @@
         "boolean",
         "null"
       ]
+    },
+    "experimentalTailwindcss": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/TailwindcssConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
+      "markdownDescription": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)"
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",

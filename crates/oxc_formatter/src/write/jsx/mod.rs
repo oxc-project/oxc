@@ -15,7 +15,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter,
+        FormatElement, Formatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
@@ -319,9 +319,42 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        use crate::formatter::format_element::tag::Tag;
+
         write!(f, self.name());
+
         if let Some(value) = &self.value() {
-            write!(f, ["=", value]);
+            // Check if this is a class/className attribute with a string literal
+            // and experimental_tailwindcss is enabled
+            let is_tailwind_class = f.options().experimental_tailwindcss.is_some()
+                && match &**self.name() {
+                    JSXAttributeName::Identifier(ident) => {
+                        let name = ident.name.as_str();
+                        (name == "class" || name == "className")
+                            && matches!(&***value, JSXAttributeValue::StringLiteral(_))
+                    }
+                    JSXAttributeName::NamespacedName(_) => false,
+                };
+
+            if is_tailwind_class {
+                if let JSXAttributeValue::StringLiteral(string_lit) = &***value {
+                    let index = f.context().add_tailwind_class(string_lit.value.to_string());
+                    write!(f, "=");
+                    f.write_element(FormatElement::Token { text: "\"" });
+                    f.write_element(FormatElement::Tag(Tag::StartTailwindClass(index)));
+                    f.write_element(FormatElement::Text {
+                        text: f.context().allocator().alloc_str(string_lit.value.as_str()),
+                        width: crate::formatter::format_element::TextWidth::from_text(
+                            string_lit.value.as_str(),
+                            f.options().indent_width,
+                        ),
+                    });
+                    f.write_element(FormatElement::Tag(Tag::EndTailwindClass));
+                    f.write_element(FormatElement::Token { text: "\"" });
+                }
+            } else {
+                write!(f, ["=", value]);
+            }
         }
     }
 }

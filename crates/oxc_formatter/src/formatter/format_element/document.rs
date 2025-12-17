@@ -162,9 +162,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
         };
 
         write!(f, [ContentArrayStart]);
@@ -479,6 +479,20 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(f, [token("fill(")]);
                         }
 
+                        StartTailwindClass(index) => {
+                            write!(
+                                f,
+                                [
+                                    token("tailwind_class("),
+                                    text(
+                                        f.context().allocator().alloc_str(&std::format!("{index}")),
+                                    ),
+                                    token(","),
+                                    space(),
+                                ]
+                            );
+                        }
+
                         StartEntry => {
                             // handled after the match for all start tags
                         }
@@ -492,7 +506,8 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
-                        | EndDedent(_) => {
+                        | EndDedent(_)
+                        | EndTailwindClass => {
                             write!(f, [ContentArrayEnd, token(")")]);
                         }
                     }

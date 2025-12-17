@@ -16,7 +16,9 @@ mod write;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
-pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::embedded_formatter::{
+    EmbeddedFormatter, EmbeddedFormatterCallback, TailwindCallback,
+};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::service::*;
@@ -32,12 +34,14 @@ use self::formatter::prelude::tag::Label;
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
+    source_text: &'a str,
+    filepath: &'a str,
     options: FormatOptions,
 }
 
 impl<'a> Formatter<'a> {
-    pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
-        Self { allocator, options }
+    pub fn new(allocator: &'a Allocator, options: FormatOptions, filepath: &'a str) -> Self {
+        Self { allocator, source_text: "", filepath, options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
@@ -48,7 +52,7 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
-        self.format_impl(program, None)
+        self.format_impl(program, None, None)
     }
 
     #[inline]
@@ -57,13 +61,33 @@ impl<'a> Formatter<'a> {
         program: &'a Program<'a>,
         embedded_formatter: EmbeddedFormatter,
     ) -> Formatted<'a> {
-        self.format_impl(program, Some(embedded_formatter))
+        self.format_impl(program, Some(embedded_formatter), None)
+    }
+
+    #[inline]
+    pub fn format_with_tailwind(
+        self,
+        program: &'a Program<'a>,
+        tailwind_callback: &TailwindCallback,
+    ) -> Formatted<'a> {
+        self.format_impl(program, None, Some(tailwind_callback))
+    }
+
+    #[inline]
+    pub fn format_with_all(
+        self,
+        program: &'a Program<'a>,
+        embedded_formatter: Option<EmbeddedFormatter>,
+        tailwind_callback: Option<&TailwindCallback>,
+    ) -> Formatted<'a> {
+        self.format_impl(program, embedded_formatter, tailwind_callback)
     }
 
     pub fn format_impl(
         self,
         program: &'a Program<'a>,
         embedded_formatter: Option<EmbeddedFormatter>,
+        tailwind_callback: Option<&TailwindCallback>,
     ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
@@ -92,6 +116,15 @@ impl<'a> Formatter<'a> {
             )
         {
             *formatted.document_mut() = transformed_document;
+        }
+
+        // Call tailwind callback to sort classes if provided
+        if let Some(callback) = tailwind_callback {
+            let classes = formatted.context().take_tailwind_classes();
+            if !classes.is_empty() {
+                let sorted = callback(self.filepath, classes);
+                formatted.set_sorted_tailwind_classes(sorted);
+            }
         }
 
         formatted

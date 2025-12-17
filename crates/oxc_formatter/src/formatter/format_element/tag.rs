@@ -62,6 +62,12 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Marks content as a Tailwind CSS class string that should be sorted.
+    /// The usize is an index into the collected tailwind classes array.
+    /// During printing, the enclosed Text content will be replaced with the sorted value.
+    StartTailwindClass(usize),
+    EndTailwindClass,
 }
 
 impl Tag {
@@ -79,6 +85,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
+                | Tag::StartTailwindClass(_)
         )
     }
 
@@ -90,9 +97,9 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
         };
 
         match self {
@@ -106,6 +113,7 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
+            StartTailwindClass(_) | EndTailwindClass => TagKind::TailwindClass,
         }
     }
 }
@@ -125,6 +133,7 @@ pub enum TagKind {
     Entry,
     LineSuffix,
     Labelled,
+    TailwindClass,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]

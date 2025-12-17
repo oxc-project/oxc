@@ -74,6 +74,42 @@ pub struct FormatOptions {
 
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImportsOptions>,
+
+    /// Enable Tailwind CSS class sorting in JSX class/className attributes.
+    /// When enabled, class strings will be collected and passed to a callback for sorting.
+    /// Defaults to None (disabled).
+    pub experimental_tailwindcss: Option<TailwindcssOptions>,
+}
+
+/// Options for Tailwind CSS class sorting.
+/// These options are passed to the `prettier-plugin-tailwindcss` for configuration.
+/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+#[derive(Debug, Default, Clone)]
+#[expect(clippy::struct_field_names)] // Field names match the plugin's documented options
+pub struct TailwindcssOptions {
+    /// Path to Tailwind config file (v3).
+    /// e.g., `"./tailwind.config.js"`
+    pub tailwind_config: Option<String>,
+
+    /// Path to Tailwind stylesheet (v4).
+    /// e.g., `"./src/app.css"`
+    pub tailwind_stylesheet: Option<String>,
+
+    /// List of custom function names whose arguments should be sorted.
+    /// e.g., `["clsx", "cva", "tw"]`
+    pub tailwind_functions: Option<Vec<String>>,
+
+    /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
+    /// e.g., `["myClassProp", ":class"]`
+    pub tailwind_attributes: Option<Vec<String>>,
+
+    /// Preserve whitespace around classes.
+    /// Defaults to `false`.
+    pub tailwind_preserve_whitespace: Option<bool>,
+
+    /// Preserve duplicate classes.
+    /// Defaults to `false`.
+    pub tailwind_preserve_duplicates: Option<bool>,
 }
 
 impl FormatOptions {
@@ -97,6 +133,7 @@ impl FormatOptions {
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
+            experimental_tailwindcss: None,
         }
     }
 
@@ -123,7 +160,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
-        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)
+        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)?;
+        writeln!(f, "Experimental tailwindcss: {:?}", self.experimental_tailwindcss)
     }
 }
 

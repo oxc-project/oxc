@@ -1,5 +1,5 @@
 import { format as napiFormat } from "./bindings";
-import { resolvePlugins, formatEmbeddedCode, formatFile } from "./libs/prettier";
+import { resolvePlugins, formatEmbeddedCode, formatFile, processTailwindClasses } from "./libs/prettier";
 
 // napi-JS `oxfmt` API entry point
 // See also `format()` function in `./src/main_napi.rs`
@@ -18,6 +18,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+    (filepath, classes) => processTailwindClasses({ filepath, classes, options }),
   );
 }
 
@@ -92,6 +93,12 @@ export type FormatOptions = {
   experimentalSortImports?: SortImportsOptions;
   /** Experimental: Sort `package.json` keys. (Default: `true`) */
   experimentalSortPackageJson?: boolean;
+  /**
+   * Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
+   * Pass `true` to enable with defaults, or an object with options from `prettier-plugin-tailwindcss`.
+   * (Default: disabled)
+   */
+  experimentalTailwindcss?: boolean | TailwindcssOptions;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
@@ -118,4 +125,23 @@ export type SortImportsOptions = {
    * Accepts both `string` and `string[]` as group elements.
    */
   groups?: (string | string[])[];
+};
+
+/**
+ * Configuration options for Tailwind CSS class sorting.
+ * See https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
+ */
+export type TailwindcssOptions = {
+  /** Path to Tailwind config file (v3). e.g., `"./tailwind.config.js"` */
+  tailwindConfig?: string;
+  /** Path to Tailwind stylesheet (v4). e.g., `"./src/app.css"` */
+  tailwindStylesheet?: string;
+  /** List of custom function names whose arguments should be sorted. e.g., `["clsx", "cva", "tw"]` */
+  tailwindFunctions?: string[];
+  /** List of additional HTML/JSX attributes to sort (beyond `class` and `className`). e.g., `["myClassProp", ":class"]` */
+  tailwindAttributes?: string[];
+  /** Preserve whitespace around classes. (Default: `false`) */
+  tailwindPreserveWhitespace?: boolean;
+  /** Preserve duplicate classes. (Default: `false`) */
+  tailwindPreserveDuplicates?: boolean;
 };

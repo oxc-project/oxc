@@ -40,7 +40,7 @@ pub struct Printer<'a> {
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(options: PrinterOptions) -> Self {
+    pub fn new(options: PrinterOptions, sorted_tailwind_classes: &'a [String]) -> Self {
         let (indent_char, indent_width) = match options.indent_style() {
             IndentStyle::Tab => (code_buffer::IndentChar::Tab, 1),
             IndentStyle::Space => {
@@ -48,7 +48,7 @@ impl<'a> Printer<'a> {
             }
         };
         let buffer = CodeBuffer::with_indent(indent_char, indent_width);
-        Self { options, state: PrinterState::new(buffer) }
+        Self { options, state: PrinterState::new(buffer, sorted_tailwind_classes) }
     }
 
     /// Prints the passed in element as well as all its content
@@ -88,9 +88,9 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
         };
 
         let args = stack.top();
@@ -103,7 +103,14 @@ impl<'a> Printer<'a> {
 
             FormatElement::Token { text } => self.print_text(Text::Token(text)),
             FormatElement::Text { text, width } => {
-                self.print_text(Text::Text { text, width: *width });
+                // If we're inside a TailwindClass tag, use the sorted replacement
+                if let Some(replacement) = self.state.tailwind_replacement.take() {
+                    let replacement_width =
+                        TextWidth::from_text(replacement, self.options.indent_width());
+                    self.print_text(Text::Text { text: replacement, width: replacement_width });
+                } else {
+                    self.print_text(Text::Text { text, width: *width });
+                }
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -247,8 +254,19 @@ impl<'a> Printer<'a> {
             FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
                 stack.push(tag.kind(), args);
             }
+            FormatElement::Tag(StartTailwindClass(index)) => {
+                // Set replacement text for the next Text element
+                self.state.tailwind_replacement =
+                    self.state.sorted_tailwind_classes.get(*index).map(String::as_str);
+                stack.push(TagKind::TailwindClass, args);
+            }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill
+                | EndTailwindClass),
             ) => {
                 stack.pop(tag.kind())?;
             }
@@ -706,12 +724,17 @@ struct PrinterState<'a> {
     fits_indent_stack: Vec<Indention>,
     fits_stack_tem_indent: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
+    /// Sorted Tailwind CSS classes for lookup during printing
+    sorted_tailwind_classes: &'a [String],
+    /// Current tailwind class replacement (set when inside StartTailwindClass tag)
+    tailwind_replacement: Option<&'a str>,
 }
 
-impl PrinterState<'_> {
-    pub fn new(buffer: CodeBuffer) -> Self {
+impl<'a> PrinterState<'a> {
+    pub fn new(buffer: CodeBuffer, sorted_tailwind_classes: &'a [String]) -> Self {
         Self {
             buffer,
+            sorted_tailwind_classes,
             // Initialize `measured_group_fits` to true to indicate that groups are initially assumed to fit.
             measured_group_fits: true,
             ..Default::default()
@@ -950,9 +973,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
         };
 
         let args = self.stack.top();
@@ -1136,11 +1159,18 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
+            FormatElement::Tag(
+                tag @ (StartFill | StartLabelled(_) | StartEntry | StartTailwindClass(_)),
+            ) => {
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill
+                | EndTailwindClass),
             ) => {
                 self.stack.pop(tag.kind())?;
             }
@@ -1328,7 +1358,7 @@ mod tests {
     ) -> Printed {
         let formatted = crate::format!(FormatContext::dummy(allocator), [root]);
 
-        Printer::new(options).print(formatted.document()).expect("Document to be valid")
+        Printer::new(options, &[]).print(formatted.document()).expect("Document to be valid")
     }
 
     #[test]
@@ -1600,6 +1630,7 @@ two lines`,
             PrinterOptions::default()
                 .with_indent_style(IndentStyle::Tab)
                 .with_print_width(PrintWidth::new(10)),
+            &[],
         )
         .print(&document)
         .unwrap();

@@ -102,3 +102,94 @@ export async function formatFile({
   options.filepath = fileName;
   return prettierCache.format(code, options);
 }
+
+// ---
+// Tailwind CSS class sorting support
+// ---
+
+// Import types only to avoid runtime error if plugin is not installed
+import type { PluginOptions, TransformerEnv } from "prettier-plugin-tailwindcss";
+
+// Cache tailwind plugin functions for tree-shaking support
+let cachedGetTailwindConfig: typeof import("prettier-plugin-tailwindcss").getTailwindConfig;
+let cachedSortClasses: typeof import("prettier-plugin-tailwindcss").sortClasses;
+let tailwindInitialized = false;
+let tailwindContext: Awaited<ReturnType<typeof cachedGetTailwindConfig>> | null = null;
+
+/**
+ * Configuration options for Tailwind CSS class sorting.
+ */
+export interface TailwindOptions {
+  tailwindConfig?: string;
+  tailwindStylesheet?: string;
+  tailwindFunctions?: string[];
+  tailwindAttributes?: string[];
+  tailwindPreserveWhitespace?: boolean;
+  tailwindPreserveDuplicates?: boolean;
+}
+
+export interface ProcessTailwindClassesArgs {
+  filepath: string;
+  classes: string[];
+  options?: { experimentalTailwindcss?: boolean | TailwindOptions };
+}
+
+/**
+ * Process Tailwind CSS classes found in JSX attributes.
+ * @param args - Object containing filepath, classes, and options
+ * @returns Array of sorted class strings (same order/length as input)
+ */
+export async function processTailwindClasses({
+  filepath,
+  classes,
+  options,
+}: ProcessTailwindClassesArgs): Promise<string[]> {
+  // Extract tailwind options from format options
+  const tailwindOptions =
+    options?.experimentalTailwindcss && typeof options.experimentalTailwindcss === "object"
+      ? options.experimentalTailwindcss
+      : {};
+
+  // Initialize tailwind plugin lazily on first call
+  if (!tailwindInitialized) {
+    tailwindInitialized = true;
+    try {
+      // Dynamic import with destructuring for tree-shaking
+      ({ getTailwindConfig: cachedGetTailwindConfig, sortClasses: cachedSortClasses } =
+        await import("prettier-plugin-tailwindcss"));
+
+      // Build config options with filepath
+      const configOptions: Partial<PluginOptions & { filepath?: string }> = {
+        filepath,
+        ...tailwindOptions,
+      };
+
+      // Load Tailwind context
+      tailwindContext = await cachedGetTailwindConfig(configOptions);
+    } catch {
+      // Plugin not installed or failed to initialize - sorting will be skipped
+      tailwindContext = null;
+    }
+  }
+
+  // If context not available, return original classes
+  if (!tailwindContext) {
+    return classes;
+  }
+
+  // Create transformer env with options
+  const env: TransformerEnv = {
+    context: tailwindContext,
+    options: tailwindOptions,
+  };
+
+  // Sort all classes
+  return classes.map((classStr) => {
+    try {
+      return cachedSortClasses(classStr, { env });
+    } catch {
+      // Failed to sort, return original
+      return classStr;
+    }
+  });
+}

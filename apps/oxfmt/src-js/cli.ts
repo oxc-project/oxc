@@ -1,5 +1,10 @@
 import { runCli } from "./bindings";
-import { initExternalFormatter, formatEmbeddedCode, formatFile } from "./cli/worker-proxy";
+import {
+  initExternalFormatter,
+  formatEmbeddedCode,
+  formatFile,
+  processTailwindClasses,
+} from "./cli/worker-proxy";
 
 // napi-JS `oxfmt` CLI entry point
 // See also `run_cli()` function in `./src/main_napi.rs`
@@ -14,6 +19,7 @@ void (async () => {
     initExternalFormatter,
     formatEmbeddedCode,
     formatFile,
+    processTailwindClasses,
   );
 
   // Migration modes are handled by JS

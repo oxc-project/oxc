@@ -60,11 +60,13 @@ use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, p
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
+    /// Sorted Tailwind CSS classes (populated after callback)
+    sorted_tailwind_classes: Vec<String>,
 }
 
 impl<'a> Formatted<'a> {
     pub fn new(document: Document<'a>, context: FormatContext<'a>) -> Self {
-        Self { document, context }
+        Self { document, context, sorted_tailwind_classes: Vec::new() }
     }
 
     /// Returns the context used during formatting.
@@ -85,20 +87,32 @@ impl<'a> Formatted<'a> {
     pub fn into_document(self) -> Document<'a> {
         self.document
     }
+
+    /// Sets the sorted Tailwind CSS classes.
+    pub fn set_sorted_tailwind_classes(&mut self, sorted: Vec<String>) {
+        self.sorted_tailwind_classes = sorted;
+    }
+
+    /// Returns a reference to the sorted Tailwind CSS classes.
+    pub fn sorted_tailwind_classes(&self) -> &[String] {
+        &self.sorted_tailwind_classes
+    }
 }
 
 impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
 
-        let printed = Printer::new(print_options).print(&self.document)?;
+        let printed =
+            Printer::new(print_options, &self.sorted_tailwind_classes).print(&self.document)?;
 
         Ok(printed)
     }
 
     pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-        let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
+        let printed = Printer::new(print_options, &self.sorted_tailwind_classes)
+            .print_with_indent(&self.document, indent)?;
 
         Ok(printed)
     }
