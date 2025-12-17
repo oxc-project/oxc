@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parse, parseSync } from "../src-js/wasm.js";
+import { parse, parseSync } from "../dist/wasm.js";
 
 test("parseSync", () => {
   const result = parseSync("test.js", "ok");

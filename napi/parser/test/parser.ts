@@ -3,11 +3,11 @@
  * to expose hidden `experimentalRawTransfer`, `experimentalLazy`, and `experimentalParent` options.
  */
 
-import * as parser from "../src-js/index.js";
+import * as parser from "#oxc-parser";
 
-import type { ParserOptions as OriginalParserOptions } from "../src-js/index.js";
+import type { ParserOptions as OriginalParserOptions } from "#oxc-parser";
 
-export type * from "../src-js/index.js";
+export type * from "#oxc-parser";
 
 interface ExperimentalParserOptions {
   experimentalRawTransfer?: boolean;
