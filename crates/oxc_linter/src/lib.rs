@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
 use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
@@ -148,10 +148,15 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+        self.run_with_disable_directives(path, context_sub_hosts, allocator, None).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
+    ///
+    /// # Parameters
+    /// - `js_allocator_pool`: Optional pool of fixed-size allocators for copying AST before JS transfer.
+    ///   When `Some`, the AST will be copied into a fixed-size allocator before passing to JS plugins,
+    ///   allowing the main allocator to be a standard (non-fixed-size) allocator.
     ///
     /// # Panics
     /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
@@ -160,6 +165,7 @@ impl Linter {
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
@@ -350,7 +356,13 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
+            self.run_external_rules(
+                &external_rules,
+                path,
+                &mut ctx_host,
+                allocator,
+                js_allocator_pool,
+            );
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -382,64 +394,153 @@ impl Linter {
         (diagnostics, disable_directives)
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn run_external_rules<'a>(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
     ) {
         if external_rules.is_empty() {
             return;
         }
 
-        // `external_linter` always exists when `external_rules` is not empty
-        let external_linter = self.external_linter.as_ref().unwrap();
+        // If js_allocator_pool is provided, use clone-into-fixed-allocator approach
+        if let Some(js_pool) = js_allocator_pool {
+            self.clone_into_fixed_size_allocator_and_run_external_rules(
+                external_rules,
+                path,
+                ctx_host,
+                js_pool,
+            );
+            return;
+        }
 
-        let (program_offset, source_text, span_converter) = {
-            // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
-            //
-            // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
-            // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
-            // an immutable `&` ref to an AST node.
-            // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
-            //
-            // So instead we get a pointer to `Program`.
-            // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
-            // has no provenance for mutation, so can't be converted to `&mut Program`.
-            // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
-            // which does allow mutation.
-            //
-            // We then drop `Semantic`, after which no references to any AST nodes remain.
-            // We can then safety convert the pointer to `&mut Program`.
-            //
-            // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-            // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
-            // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
-            // which ensure they are in same allocation.
-            // However, we have no static guarantee of this, so strictly speaking it's unsound.
-            // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
-            // sketchy behavior.
-            let ctx_host = Rc::get_mut(ctx_host).unwrap();
-            let semantic = mem::take(ctx_host.semantic_mut());
-            let program_addr = NonNull::from(semantic.nodes().program()).addr();
-            let mut program_ptr =
-                allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
-            drop(semantic);
-            // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-            // so can get a mutable reference to `Program` without aliasing violations.
-            let program = unsafe { program_ptr.as_mut() };
+        // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
+        //
+        // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
+        // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
+        // an immutable `&` ref to an AST node.
+        // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
+        //
+        // So instead we get a pointer to `Program`.
+        // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
+        // has no provenance for mutation, so can't be converted to `&mut Program`.
+        // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
+        // which does allow mutation.
+        //
+        // We then drop `Semantic`, after which no references to any AST nodes remain.
+        // We can then safety convert the pointer to `&mut Program`.
+        //
+        // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
+        // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+        // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
+        // which ensure they are in same allocation.
+        // However, we have no static guarantee of this, so strictly speaking it's unsound.
+        // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
+        // sketchy behavior.
+        let ctx_host = Rc::get_mut(ctx_host).unwrap();
+        let semantic = mem::take(ctx_host.semantic_mut());
+        let program_addr = NonNull::from(semantic.nodes().program()).addr();
+        let mut program_ptr =
+            allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        drop(semantic);
+        // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
+        // so can get a mutable reference to `Program` without aliasing violations.
+        let program = unsafe { program_ptr.as_mut() };
 
-            // Convert spans to UTF-16
-            let span_converter = Utf8ToUtf16::new(program.source_text);
-            span_converter.convert_program(program);
-            span_converter.convert_comments(&mut program.comments);
+        self.convert_and_call_external_linter(external_rules, path, ctx_host, allocator, program);
+    }
 
-            // Get offset of `Program` within buffer (bottom 32 bits of pointer)
-            let program_offset = ptr::from_ref(program) as u32;
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    fn run_external_rules<'a>(
+        &self,
+        _external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        _path: &Path,
+        _ctx_host: &mut Rc<ContextHost<'a>>,
+        _allocator: &'a Allocator,
+        _js_allocator_pool: Option<&AllocatorPool>,
+    ) {
+        // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
+    }
 
-            (program_offset, program.source_text, span_converter)
+    /// Clone AST into a fixed-size allocator and run external rules.
+    ///
+    /// This copies the AST and source text from the standard allocator into a fixed-size
+    /// allocator before passing to JS plugins. This allows using standard allocators for
+    /// parsing/linting while still supporting JS plugin raw transfer.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn clone_into_fixed_size_allocator_and_run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &mut Rc<ContextHost<'_>>,
+        js_allocator_pool: &AllocatorPool,
+    ) {
+        let js_allocator = js_allocator_pool.get();
+
+        // Get the original source text and program from semantic
+        let ctx_host_ref = Rc::get_mut(ctx_host).unwrap();
+        let semantic = mem::take(ctx_host_ref.semantic_mut());
+        let original_program = semantic.nodes().program();
+        let original_source_text = original_program.source_text;
+
+        // Copy source text to the START of the fixed-size allocator.
+        // This is critical - the JS deserializer expects source text at offset 0.
+        // SAFETY: The js_allocator is from a fixed-size allocator pool, which wraps the allocator
+        // in a custom Drop that doesn't actually drop it (it returns it to the pool), so the
+        // memory remains valid. This matches the safety requirements of `alloc_bytes_start`.
+        let new_source_text: &str = unsafe {
+            let bytes = original_source_text.as_bytes();
+            let ptr = js_allocator.alloc_bytes_start(bytes.len());
+            ptr::copy_nonoverlapping(bytes.as_ptr(), ptr.as_ptr(), bytes.len());
+            std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), bytes.len()))
         };
+
+        // Clone Program into fixed-size allocator.
+        // We need to allocate the Program struct ITSELF in the allocator, not just its contents.
+        // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
+        let program: &mut Program<'_> = {
+            let mut program = original_program.clone_in(&js_allocator);
+            program.source_text = new_source_text;
+            js_allocator.alloc(program)
+        };
+
+        // Drop semantic now that we've copied what we need
+        drop(semantic);
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host_ref,
+            &js_allocator,
+            program,
+        );
+    }
+
+    /// Convert spans to UTF-16, write metadata, call external linter, and process diagnostics.
+    ///
+    /// This is the common code path shared by both `run_external_rules` and
+    /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    fn convert_and_call_external_linter(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost<'_>,
+        allocator: &Allocator,
+        program: &mut Program<'_>,
+    ) {
+        let source_text = program.source_text;
+
+        // Convert spans to UTF-16
+        let span_converter = Utf8ToUtf16::new(source_text);
+        span_converter.convert_program(program);
+        span_converter.convert_comments(&mut program.comments);
+
+        // Get offset of `Program` within buffer (bottom 32 bits of pointer)
+        let program_offset = ptr::from_ref(program) as u32;
 
         // Write offset of `Program` in metadata at end of buffer
         let metadata = RawTransferMetadata::new(program_offset);
@@ -469,6 +570,9 @@ impl Linter {
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
             "{}".to_string()
         });
+
+        // `external_linter` always exists when `external_rules` is not empty
+        let external_linter = self.external_linter.as_ref().unwrap();
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
