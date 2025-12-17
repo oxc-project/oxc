@@ -57,7 +57,10 @@ interface RuleDetailsBase {
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
-  readonly optionsSchemaValidator: SchemaValidator | null;
+  // Function to validate options against schema.
+  // `false` means validation is disabled. Rule accepts any options.
+  // `null` means no validator provided. Rule does not accept any options.
+  readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
   options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
@@ -151,7 +154,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     let isFixable = false,
       messages: Record<string, string> | null = null,
       defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
-      schemaValidator: SchemaValidator | null = null;
+      schemaValidator: SchemaValidator | false | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
@@ -189,12 +192,21 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
             );
           }
 
-          // Apply defaults from schema, if schema was provided.
+          // Validate default options against schema, if schema was provided.
+          // This also applies any defaults from schema.
           // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
           // but that's what ESLint does, so it's OK.
-          // TODO: Throw if `rule.meta.schema == null` (only `false` is allowed when `defaultOptions` is provided)
-          // TODO: Throw if validation errors
-          if (schemaValidator !== null) schemaValidator(defaultOptions);
+          if (schemaValidator === null) {
+            throw new Error(
+              `Rule ${fullRuleName}:\n` +
+                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
+                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+            );
+          }
+          // Note: `defaultOptions` is not frozen yet
+          if (schemaValidator !== false) {
+            schemaValidator(defaultOptions as Writable<typeof defaultOptions>, fullRuleName);
+          }
 
           deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
         }

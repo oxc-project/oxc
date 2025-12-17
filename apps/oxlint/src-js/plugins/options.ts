@@ -15,8 +15,6 @@ import type { Writable } from "type-fest";
 import type { JsonValue } from "./json.ts";
 import type { RuleDetails } from "./load.ts";
 
-export type SchemaValidator = Ajv.ValidateFunction;
-
 // =================================================================================================
 // Options types and constants
 // =================================================================================================
@@ -36,6 +34,14 @@ export type Options = JsonValue[];
  * - `false` - Opts out of schema validation (not recommended).
  */
 export type RuleOptionsSchema = JSONSchema4 | JSONSchema4[] | false;
+
+/**
+ * Schema validator function.
+ * Does not return anything. Throws an error if validation fails.
+ * Should be passed full name of the rule, in form `<plugin>/<rule>`. This is used in error messages.
+ * `options` maybe be mutated if schema contains default values.
+ */
+export type SchemaValidator = (options: Options, ruleName: string) => void;
 
 // Default rule options
 export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
@@ -78,34 +84,29 @@ AJV.addMetaSchema(metaSchema);
 // Ajv internal API
 (AJV._opts as { defaultMeta: string }).defaultMeta = metaSchema.id;
 
-// Schema for rules with no options.
-// Currently this is unused because we don't support options validation, but leaving it here for when we do.
-// oxlint-disable-next-line no-unused-vars
-const NO_OPTIONS_SCHEMA: JSONSchema4 = {
-  type: "array",
-  minItems: 0,
-  maxItems: 0,
-};
-
 /**
  * Compile a rule's schema into a validator function.
  *
- * This should be called once when loading a rule, and the returned validator stored in `RuleDetails`.
+ * Returned validator function will throw if validation fails.
  *
- * ESLint allows array shorthand: `schema: [item1, item2]` which means options[0] must match `item1`, etc.
+ * This function should be called once when loading a rule, and the returned validator stored in `RuleDetails`.
+ *
+ * ESLint allows array shorthand: `schema: [item1, item2]` which means `options[0]` must match `item1`, etc.
  * This function converts that to a proper JSON Schema, before compiling it.
  *
  * Based on ESLint's `getRuleOptionsSchema`:
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L177-L210
  *
  * @param schema - Rule's schema from `meta.schema`
- * @returns Compiled AJV validator, or `null` if no schema
+ * @returns Compiled AJV validator, or `null` if no options accepted, or `false` if validation is disabled
  */
 export function compileSchema(
   schema: RuleOptionsSchema | null | undefined,
-): SchemaValidator | null {
-  // `null`, `undefined`, or `false` means no schema validation
-  if (schema == null || schema === false) return null;
+): SchemaValidator | false | null {
+  // `null` or `undefined` means no validator provided. Rule does not accept any options.
+  // `false` means validation is disabled. Rule accepts any options.
+  if (schema == null) return null;
+  if (schema === false) return false;
 
   // TODO: Does AJV already do this validation?
   if (typeof schema !== "object") {
@@ -113,7 +114,7 @@ export function compileSchema(
   }
 
   if (Array.isArray(schema)) {
-    // TODO: Once we support options validation, we should return `NO_OPTIONS_SCHEMA` instead of `null`
+    // If schema is empty array, return `null`, indicating that rule does not accept any options
     if (schema.length === 0) return null;
 
     schema = {
@@ -124,7 +125,47 @@ export function compileSchema(
     };
   }
 
-  return AJV.compile(schema);
+  const validate = AJV.compile(schema);
+  return wrapSchemaValidator(validate);
+}
+
+/**
+ * Wrap AJV validator function to throw if validation fails.
+ * @param validate - AJV validator function
+ * @returns Wrapped validator function, which throws if validation fails
+ */
+function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
+  return (options: Options, ruleName: string): void => {
+    validate(options);
+
+    if (!validate.errors) return;
+
+    // Copied from https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L609-L634
+    // The code doesn't match AJV's types, but we use the same version of AJV as ESLint, so assuming it's OK.
+    // We cast `error` to `any` to avoid TS errors.
+    throw new Error(
+      `Options validation failed for rule '${ruleName}':\n` +
+        `Options:\n${JSON.stringify(options, null, 2)}\n` +
+        `Errors:\n` +
+        validate.errors
+          .map((error: any) => {
+            if (
+              error.keyword === "additionalProperties" &&
+              error.schema === false &&
+              typeof error.parentSchema?.properties === "object" &&
+              typeof error.params?.additionalProperty === "string"
+            ) {
+              const expectedProperties = Object.keys(error.parentSchema.properties).map(
+                (property) => `"${property}"`,
+              );
+              return `\tValue ${JSON.stringify(error.data)} ${error.message}.\n\t\tUnexpected property "${error.params.additionalProperty}". Expected properties: ${expectedProperties.join(", ")}.`;
+            }
+
+            return `\tValue ${JSON.stringify(error.data)} ${error.message}.`;
+          })
+          .join("\n"),
+    );
+  };
 }
 
 // =================================================================================================
@@ -135,6 +176,7 @@ export function compileSchema(
  * Set all external rule options.
  * Called once from Rust after config building, before any linting occurs.
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ * @throws `Error` if options fail validation
  */
 export function setOptions(optionsJson: string): void {
   const details = JSON.parse(optionsJson);
@@ -208,8 +250,13 @@ export function setOptions(optionsJson: string): void {
  * @param configOptions - Options from config (may be mutated by AJV)
  * @param ruleDetails - Rule details
  * @returns Processed options (deep frozen)
+ * @throws `Error` if options fail validation
  */
 function processOptions(configOptions: Options, ruleDetails: RuleDetails): Readonly<Options> {
+  // Throw if no schema validator provided
+  const validator = ruleDetails.optionsSchemaValidator;
+  if (validator === null) throw new Error(`Rule '${ruleDetails.fullName}' does not accept options`);
+
   // Merge with `defaultOptions` first
   const { defaultOptions } = ruleDetails;
 
@@ -224,11 +271,7 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
   // `mergeOptions` cloned `defaultOptions`, so mutations made by AJV validation won't affect `defaultOptions`
   // (and `defaultOptions` is frozen anyway, so it can't be mutated).
   // `configOptions` may be mutated, but that's OK, because we only use it once.
-  //
-  // We ignore validation errors - we only care about applying defaults.
-  // TODO: Pass validation errors back to Rust.
-  const validator = ruleDetails.optionsSchemaValidator;
-  if (validator !== null) validator(options);
+  if (validator !== false) validator(options, ruleDetails.fullName);
 
   deepFreezeJsonArray(options);
   return options;

@@ -28,6 +28,9 @@ const plugin: Plugin = {
     },
 
     options: {
+      meta: {
+        schema: false,
+      },
       create(context) {
         context.report({
           message:
@@ -48,6 +51,7 @@ const plugin: Plugin = {
           { toBe: false, notToBe: true },
           { deep: [{ deeper: { evenDeeper: [{ soDeep: { soSoDeep: true } }] } }] },
         ],
+        schema: false,
       },
       create(context) {
         context.report({
@@ -68,6 +72,7 @@ const plugin: Plugin = {
           { fromDefault: 6 },
           7,
         ],
+        schema: false,
       },
       create(context) {
         context.report({
@@ -83,6 +88,7 @@ const plugin: Plugin = {
     "empty-default-options": {
       meta: {
         defaultOptions: [],
+        schema: false,
       },
       create(context) {
         context.report({
@@ -106,7 +112,7 @@ const plugin: Plugin = {
               fromSchema: { type: "number", default: 10 },
               overrideSchema: { type: "number", default: 20 },
             },
-            additionalProperties: false,
+            additionalProperties: true,
           },
           {
             type: "string",

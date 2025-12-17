@@ -60,7 +60,7 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
     // Arguments
     String, // Options array, as JSON string
     // Return value
-    (), // `void`
+    Option<String>, // `None` for success, or `Some` containing error message
     // Arguments (repeated)
     String,
     // Error status
