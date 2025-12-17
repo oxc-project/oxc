@@ -18,6 +18,148 @@ pub struct ExternalPluginEntry {
     pub name: Option<String>,
 }
 
+/// Custom deserializer for external plugins
+/// Supports:
+/// - Array of strings: `["plugin1", "plugin2"]`
+/// - Array of objects: `[{ "name": "alias", "specifier": "plugin" }]`
+/// - Mixed array: `["plugin1", { "name": "alias", "specifier": "plugin2" }]`
+pub fn deserialize_external_plugins<'de, D>(
+    deserializer: D,
+) -> Result<Option<FxHashSet<ExternalPluginEntry>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::{Error, SeqAccess, Visitor};
+    use std::fmt;
+
+    struct PluginSetVisitor;
+
+    impl<'de> Visitor<'de> for PluginSetVisitor {
+        type Value = Option<FxHashSet<ExternalPluginEntry>>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("null or an array of plugin entries")
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            let mut plugins = FxHashSet::default();
+
+            while let Some(entry) = seq.next_element::<ExternalPluginEntry>()? {
+                plugins.insert(entry);
+            }
+
+            Ok(Some(plugins))
+        }
+    }
+
+    deserializer.deserialize_any(PluginSetVisitor)
+}
+
+impl<'de> Deserialize<'de> for ExternalPluginEntry {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct PluginObject {
+            name: String,
+            specifier: String,
+        }
+
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum PluginEntry {
+            String(String),
+            Object(PluginObject),
+        }
+
+        let entry = PluginEntry::deserialize(deserializer)?;
+
+        Ok(match entry {
+            PluginEntry::String(specifier) => {
+                ExternalPluginEntry { config_dir: PathBuf::default(), specifier, name: None }
+            }
+            PluginEntry::Object(obj) => ExternalPluginEntry {
+                config_dir: PathBuf::default(),
+                specifier: obj.specifier,
+                name: Some(obj.name),
+            },
+        })
+    }
+}
+
+impl Serialize for ExternalPluginEntry {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum PluginEntry<'a> {
+            String(&'a str),
+            Object { name: &'a str, specifier: &'a str },
+        }
+
+        if let Some(ref alias_name) = self.name {
+            PluginEntry::Object { name: alias_name.as_str(), specifier: self.specifier.as_str() }
+                .serialize(serializer)
+        } else {
+            PluginEntry::String(&self.specifier).serialize(serializer)
+        }
+    }
+}
+
+/// Custom JSON schema generator for external plugins that includes uniqueItems constraint
+pub fn external_plugins_schema(generator: &mut SchemaGenerator) -> Schema {
+    use schemars::schema::{ArrayValidation, InstanceType, SchemaObject, SubschemaValidation};
+
+    let entry_schema = generator.subschema_for::<ExternalPluginEntry>();
+
+    let array_schema = SchemaObject {
+        instance_type: Some(InstanceType::Array.into()),
+        array: Some(Box::new(ArrayValidation {
+            items: Some(entry_schema.into()),
+            unique_items: Some(true),
+            ..Default::default()
+        })),
+        ..Default::default()
+    };
+
+    SchemaObject {
+        subschemas: Some(Box::new(SubschemaValidation {
+            any_of: Some(vec![
+                SchemaObject {
+                    instance_type: Some(InstanceType::Null.into()),
+                    ..Default::default()
+                }
+                .into(),
+                array_schema.into(),
+            ]),
+            ..Default::default()
+        })),
+        ..Default::default()
+    }
+    .into()
+}
+
 impl JsonSchema for ExternalPluginEntry {
     fn schema_name() -> String {
         "ExternalPluginEntry".to_string()
@@ -106,148 +248,6 @@ impl JsonSchema for ExternalPluginEntry {
             ..Default::default()
         }
         .into()
-    }
-}
-
-impl<'de> Deserialize<'de> for ExternalPluginEntry {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
-        struct PluginObject {
-            name: String,
-            specifier: String,
-        }
-
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum PluginEntry {
-            String(String),
-            Object(PluginObject),
-        }
-
-        let entry = PluginEntry::deserialize(deserializer)?;
-
-        Ok(match entry {
-            PluginEntry::String(specifier) => {
-                ExternalPluginEntry { config_dir: PathBuf::default(), specifier, name: None }
-            }
-            PluginEntry::Object(obj) => ExternalPluginEntry {
-                config_dir: PathBuf::default(),
-                specifier: obj.specifier,
-                name: Some(obj.name),
-            },
-        })
-    }
-}
-
-/// Custom deserializer for external plugins
-/// Supports:
-/// - Array of strings: `["plugin1", "plugin2"]`
-/// - Array of objects: `[{ "name": "alias", "specifier": "plugin" }]`
-/// - Mixed array: `["plugin1", { "name": "alias", "specifier": "plugin2" }]`
-pub fn deserialize_external_plugins<'de, D>(
-    deserializer: D,
-) -> Result<Option<FxHashSet<ExternalPluginEntry>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::{Error, SeqAccess, Visitor};
-    use std::fmt;
-
-    struct PluginSetVisitor;
-
-    impl<'de> Visitor<'de> for PluginSetVisitor {
-        type Value = Option<FxHashSet<ExternalPluginEntry>>;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("null or an array of plugin entries")
-        }
-
-        fn visit_none<E>(self) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            Ok(None)
-        }
-
-        fn visit_unit<E>(self) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            Ok(None)
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            let mut plugins = FxHashSet::default();
-
-            while let Some(entry) = seq.next_element::<ExternalPluginEntry>()? {
-                plugins.insert(entry);
-            }
-
-            Ok(Some(plugins))
-        }
-    }
-
-    deserializer.deserialize_any(PluginSetVisitor)
-}
-
-/// Custom JSON schema generator for external plugins that includes uniqueItems constraint
-pub fn external_plugins_schema(generator: &mut SchemaGenerator) -> Schema {
-    use schemars::schema::{ArrayValidation, InstanceType, SchemaObject, SubschemaValidation};
-
-    let entry_schema = generator.subschema_for::<ExternalPluginEntry>();
-
-    let array_schema = SchemaObject {
-        instance_type: Some(InstanceType::Array.into()),
-        array: Some(Box::new(ArrayValidation {
-            items: Some(entry_schema.into()),
-            unique_items: Some(true),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-
-    SchemaObject {
-        subschemas: Some(Box::new(SubschemaValidation {
-            any_of: Some(vec![
-                SchemaObject {
-                    instance_type: Some(InstanceType::Null.into()),
-                    ..Default::default()
-                }
-                .into(),
-                array_schema.into(),
-            ]),
-            ..Default::default()
-        })),
-        ..Default::default()
-    }
-    .into()
-}
-
-impl Serialize for ExternalPluginEntry {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        #[derive(Serialize)]
-        #[serde(untagged)]
-        enum PluginEntry<'a> {
-            String(&'a str),
-            Object { name: &'a str, specifier: &'a str },
-        }
-
-        if let Some(ref alias_name) = self.name {
-            PluginEntry::Object { name: alias_name.as_str(), specifier: self.specifier.as_str() }
-                .serialize(serializer)
-        } else {
-            PluginEntry::String(&self.specifier).serialize(serializer)
-        }
     }
 }
 
