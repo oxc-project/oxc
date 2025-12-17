@@ -293,7 +293,7 @@ fn needs_space_after_property(span: Span, _property_name: &str, ctx: &LintContex
 
     let rest = &source[end..];
 
-    // If the next non-whitespace character starts an identifier-like token,
+    // If the next character starts an identifier-like token,
     // we need a space to avoid merging tokens
     let next_char = rest.chars().next();
     matches!(next_char, Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$')
