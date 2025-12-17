@@ -7,13 +7,13 @@ const conf = workspace.getConfiguration('oxc');
 
 suite('ConfigService', () => {
   setup(async () => {
-    const keys = ['path.server', 'path.oxlint', 'path.oxfmt'];
+    const keys = ['path.server', 'path.oxlint', 'path.oxfmt', 'path.tsgolint'];
 
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
   teardown(async () => {
-    const keys = ['path.server', 'path.oxlint', 'path.oxfmt'];
+    const keys = ['path.server', 'path.oxlint', 'path.oxfmt', 'path.tsgolint'];
 
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });

@@ -1,13 +1,16 @@
 import { LogOutputChannel, window } from "vscode";
 import { Executable, MessageType, ShowMessageParams } from "vscode-languageclient/node";
 
-export function runExecutable(path: string, nodePath?: string): Executable {
+export function runExecutable(path: string, nodePath?: string, tsgolintPath?: string): Executable {
   const serverEnv: Record<string, string> = {
     ...process.env,
     RUST_LOG: process.env.RUST_LOG || "info",
   };
   if (nodePath) {
     serverEnv.PATH = `${nodePath}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}`;
+  }
+  if (tsgolintPath) {
+    serverEnv.OXLINT_TSGOLINT_PATH = tsgolintPath;
   }
   const isNode = path.endsWith(".js") || path.endsWith(".cjs") || path.endsWith(".mjs");
 
