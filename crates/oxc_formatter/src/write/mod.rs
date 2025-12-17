@@ -1025,15 +1025,77 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        use crate::formatter::format_element::tag::Tag;
+
         let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
-        FormatLiteralStringToken::new(
-            f.source_text().text_for(self),
-            /* jsx */
-            is_jsx,
-            StringLiteralParentKind::Expression,
-        )
-        .fmt(f);
+
+        // Check if this is a string literal argument to a tailwind function
+        let is_tailwind_function_arg =
+            if let Some(tailwind_options) = &f.options().experimental_tailwindcss {
+                if let AstNodes::CallExpression(call) = self.parent {
+                    is_tailwind_function_call(&call.callee, tailwind_options)
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+        if is_tailwind_function_arg {
+            let index = f.context().add_tailwind_class(self.value.to_string());
+            let quote = if is_jsx {
+                f.options().jsx_quote_style.as_char()
+            } else {
+                f.options().quote_style.as_char()
+            };
+            let quote_str = if quote == '"' { "\"" } else { "'" };
+            f.write_element(FormatElement::Token { text: quote_str });
+            f.write_element(FormatElement::Tag(Tag::StartTailwindClass(index)));
+            f.write_element(FormatElement::Text {
+                text: f.context().allocator().alloc_str(self.value.as_str()),
+                width: crate::formatter::format_element::TextWidth::from_text(
+                    self.value.as_str(),
+                    f.options().indent_width,
+                ),
+            });
+            f.write_element(FormatElement::Tag(Tag::EndTailwindClass));
+            f.write_element(FormatElement::Token { text: quote_str });
+        } else {
+            FormatLiteralStringToken::new(
+                f.source_text().text_for(self),
+                /* jsx */
+                is_jsx,
+                StringLiteralParentKind::Expression,
+            )
+            .fmt(f);
+        }
     }
+}
+
+/// Check if a callee expression is a tailwind function (e.g., `clsx`, `cn`, `tw`)
+fn is_tailwind_function_call(
+    callee: &Expression<'_>,
+    tailwind_options: &crate::options::TailwindcssOptions,
+) -> bool {
+    let Some(functions) = &tailwind_options.tailwind_functions else {
+        return false;
+    };
+
+    let callee_name = match callee {
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        // Handle member expressions like `clsx.default` or `cn.clsx`
+        Expression::StaticMemberExpression(member) => {
+            // Check the object name (e.g., `clsx` in `clsx.default`)
+            if let Expression::Identifier(ident) = &member.object {
+                Some(ident.name.as_str())
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+
+    callee_name.is_some_and(|name| functions.iter().any(|f| f == name))
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {

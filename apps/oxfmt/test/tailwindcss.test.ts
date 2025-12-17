@@ -7,7 +7,7 @@ describe("Tailwind CSS Sorting", () => {
     const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
 
     const result = await format("test.tsx", input, {
-      experimentalTailwindcss: true,
+      experimentalTailwindcss: {},
     });
 
     // After sorting, flex should come before p-4 (display before spacing)
@@ -37,7 +37,7 @@ const A = (
 );`;
 
     const result = await format("test.tsx", input, {
-      experimentalTailwindcss: true,
+      experimentalTailwindcss: {},
     });
 
     // Both className attributes should be sorted (display utilities before spacing)
@@ -50,7 +50,7 @@ const A = (
     const input = `const A = <div class="p-4 flex">Hello</div>;`;
 
     const result = await format("test.tsx", input, {
-      experimentalTailwindcss: true,
+      experimentalTailwindcss: {},
     });
 
     expect(result.code).toContain('class="flex p-4"');
@@ -72,17 +72,13 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  // FAILED: tailwindAttributes is not yet implemented in the Rust formatter.
-  // The option is accepted and passed to the plugin config, but the Rust code
-  // currently only detects `class` and `className` attributes for sorting.
-  // TODO: Implement custom attribute detection in jsx/mod.rs
-  test.fails("should respect tailwindAttributes option for custom attributes", async () => {
+  test("should respect tailwindAttributes option for custom attributes", async () => {
     // By default, only 'class' and 'className' are sorted
     const input = `const A = <div myClassProp="p-4 flex">Hello</div>;`;
 
     // Without tailwindAttributes, custom attribute should NOT be sorted
     const resultWithoutOption = await format("test.tsx", input, {
-      experimentalTailwindcss: true,
+      experimentalTailwindcss: {},
     });
     expect(resultWithoutOption.code).toContain('myClassProp="p-4 flex"');
 
@@ -96,12 +92,7 @@ const A = (
     expect(resultWithOption.errors).toStrictEqual([]);
   });
 
-  // FAILED: tailwindFunctions is not yet implemented in the Rust formatter.
-  // The option is accepted and passed to the plugin config, but the Rust code
-  // currently only detects string literals in `class`/`className` attributes,
-  // not function call arguments like clsx(), cva(), etc.
-  // TODO: Implement function call detection in jsx/mod.rs
-  test.fails("should respect tailwindFunctions option for custom functions", async () => {
+  test("should respect tailwindFunctions option for custom functions", async () => {
     // Test with clsx function call
     const input = `const A = <div className={clsx("p-4 flex")}>Hello</div>;`;
 
@@ -117,9 +108,7 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  // FAILED: tailwindFunctions is not yet implemented in the Rust formatter.
-  // See above test for details.
-  test.fails("should handle multiple tailwindFunctions", async () => {
+  test("should handle multiple tailwindFunctions", async () => {
     const input = `
 const A = (
   <div className={clsx("p-4 flex")}>
