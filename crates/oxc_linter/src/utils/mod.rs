@@ -275,18 +275,13 @@ fn read_to_arena_bytes_unknown_size(mut file: File, allocator: &Allocator) -> io
 mod test {
     use crate::utils::{TYPESCRIPT_COMPATIBLE_ESLINT_RULES, VITEST_COMPATIBLE_JEST_RULES};
 
-    // These two lists need to be alphabetized for binary_search to work.
     #[test]
     fn test_typescript_rules_list_is_alphabetized() {
-        let mut rules = TYPESCRIPT_COMPATIBLE_ESLINT_RULES.iter().collect::<Vec<_>>();
-        rules.sort();
-        assert_eq!(rules, TYPESCRIPT_COMPATIBLE_ESLINT_RULES.iter().collect::<Vec<_>>());
+        assert!(TYPESCRIPT_COMPATIBLE_ESLINT_RULES.is_sorted());
     }
 
     #[test]
     fn test_vitest_rules_list_is_alphabetized() {
-        let mut rules = VITEST_COMPATIBLE_JEST_RULES.iter().collect::<Vec<_>>();
-        rules.sort();
-        assert_eq!(rules, VITEST_COMPATIBLE_JEST_RULES.iter().collect::<Vec<_>>());
+        assert!(VITEST_COMPATIBLE_JEST_RULES.is_sorted());
     }
 }

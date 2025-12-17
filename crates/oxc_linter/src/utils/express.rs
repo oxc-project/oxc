@@ -104,8 +104,5 @@ fn is_error_param(param: &FormalParameter) -> bool {
 
 #[test]
 fn test_array_is_sorted() {
-    let mut sorted_methods = ROUTER_HANDLER_METHOD_NAMES.to_vec();
-    sorted_methods.sort_unstable();
-
-    assert_eq!(sorted_methods, ROUTER_HANDLER_METHOD_NAMES);
+    assert!(ROUTER_HANDLER_METHOD_NAMES.is_sorted());
 }

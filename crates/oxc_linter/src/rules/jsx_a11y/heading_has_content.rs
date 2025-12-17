@@ -183,8 +183,5 @@ fn test() {
 #[test]
 // This needs to be sorted or else binary_search will not work correctly.
 fn test_headers_is_alphabetized() {
-    let mut sorted_headers = DEFAULT_COMPONENTS;
-    sorted_headers.sort_unstable();
-
-    assert_eq!(sorted_headers, DEFAULT_COMPONENTS);
+    assert!(DEFAULT_COMPONENTS.is_sorted());
 }
