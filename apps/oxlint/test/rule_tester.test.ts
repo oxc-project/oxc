@@ -3000,6 +3000,7 @@ describe("RuleTester", () => {
         invalid: [
           {
             code: "",
+            eslintCompat: true,
             languageOptions: {
               globals: {
                 writable: "writable",
@@ -3010,6 +3011,7 @@ describe("RuleTester", () => {
                 readable: "readable",
                 false: false,
                 falseStr: "false",
+                null: null,
                 off: "off",
               },
             },
@@ -3024,6 +3026,7 @@ describe("RuleTester", () => {
                   readable: "readonly",
                   false: "readonly",
                   falseStr: "readonly",
+                  null: "readonly",
                   off: "off",
                 })}`,
               },
@@ -3032,6 +3035,54 @@ describe("RuleTester", () => {
         ],
       });
       expect(runCases()).toEqual([null]);
+    });
+
+    describe("throws on invalid values", () => {
+      it("other string", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", globalReporterRule, {
+          valid: [
+            {
+              code: "",
+              languageOptions: {
+                globals: {
+                  // @ts-expect-error - intentionally invalid value
+                  invalid: "invalid",
+                },
+              },
+            },
+          ],
+          invalid: [],
+        });
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: 'invalid' is not a valid configuration for a global (use 'readonly', 'writable', or 'off')],
+          ]
+        `);
+      });
+
+      it("`null` when not in ESLint compatibility mode", () => {
+        // Note: `null` being accepted in ESLint compatibility mode is tested above
+        const tester = new RuleTester();
+        tester.run("no-foo", globalReporterRule, {
+          valid: [
+            {
+              code: "",
+              languageOptions: {
+                globals: {
+                  null: null,
+                },
+              },
+            },
+          ],
+          invalid: [],
+        });
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [Error: 'null' is not a valid configuration for a global (use 'readonly', 'writable', or 'off')],
+          ]
+        `);
+      });
     });
   });
 });
