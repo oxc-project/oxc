@@ -30,5 +30,8 @@ phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
+[dev-dependencies]
+insta = { workspace = true }
+
 [package.metadata.cargo-shear]
 ignored-paths = ["src/generated/derive_get_address.rs"]

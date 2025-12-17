@@ -21,6 +21,8 @@
     "tinypool": "2.0.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "catalog:",
+    "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "execa": "^9.6.0",
     "tsdown": "catalog:",

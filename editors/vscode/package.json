@@ -198,8 +198,10 @@
         "oxc.fmt.experimental": {
           "type": "boolean",
           "scope": "resource",
-          "default": false,
-          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+          "default": true,
+          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "The formatter is now stable, this setting has no effect."
         },
         "oxc.fmt.configPath": {
           "type": [

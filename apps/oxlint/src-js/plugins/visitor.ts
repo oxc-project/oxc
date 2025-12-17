@@ -93,8 +93,6 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node, Visitor } from "./types.ts";
 
-const ObjectKeys = Object.keys;
-
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
 
@@ -231,7 +229,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   }
 
   // Exit if is empty visitor
-  const keys = ObjectKeys(visitor),
+  const keys = Object.keys(visitor),
     keysLen = keys.length;
   if (keysLen === 0) return;
 

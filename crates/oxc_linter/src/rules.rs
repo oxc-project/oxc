@@ -45,6 +45,7 @@ pub(crate) mod eslint {
     pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod camelcase;
+    pub mod capitalized_comments;
     pub mod class_methods_use_this;
     pub mod constructor_super;
     pub mod curly;
@@ -340,6 +341,8 @@ pub(crate) mod jest {
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
     pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called;
+    pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_hook;
@@ -690,6 +693,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::arrow_body_style,
     eslint::block_scoped_var,
     eslint::camelcase,
+    eslint::capitalized_comments,
     eslint::class_methods_use_this,
     eslint::constructor_super,
     eslint::curly,
@@ -921,6 +925,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_strict_equal,
     jest::prefer_to_be,
     jest::prefer_to_contain,
+    jest::prefer_to_have_been_called,
+    jest::prefer_to_have_been_called_times,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_hook,

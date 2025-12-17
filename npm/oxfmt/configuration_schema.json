@@ -58,21 +58,31 @@
           ]
         },
         "ignoreCase": {
-          "default": true,
-          "type": "boolean"
+          "description": "Ignore case when sorting. (Default: `true`)",
+          "markdownDescription": "Ignore case when sorting. (Default: `true`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "internalPattern": {
+          "description": "Glob patterns to identify internal imports.",
           "items": {
             "type": "string"
           },
+          "markdownDescription": "Glob patterns to identify internal imports.",
           "type": [
             "array",
             "null"
           ]
         },
         "newlinesBetween": {
-          "default": true,
-          "type": "boolean"
+          "description": "Add newlines between import groups. (Default: `true`)",
+          "markdownDescription": "Add newlines between import groups. (Default: `true`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "order": {
           "anyOf": [
@@ -82,19 +92,33 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Sort order. (Default: `\"asc\"`)",
+          "markdownDescription": "Sort order. (Default: `\"asc\"`)"
         },
         "partitionByComment": {
-          "default": false,
-          "type": "boolean"
+          "description": "Partition imports by comments. (Default: `false`)",
+          "markdownDescription": "Partition imports by comments. (Default: `false`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "partitionByNewline": {
-          "default": false,
-          "type": "boolean"
+          "description": "Partition imports by newlines. (Default: `false`)",
+          "markdownDescription": "Partition imports by newlines. (Default: `false`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "sortSideEffects": {
-          "default": false,
-          "type": "boolean"
+          "description": "Sort side-effect imports. (Default: `false`)",
+          "markdownDescription": "Sort side-effect imports. (Default: `false`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -115,8 +139,8 @@
       "type": "string"
     }
   },
-  "description": "Configuration options for the Oxfmt.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\nBut some options are our own extensions.",
-  "markdownDescription": "Configuration options for the Oxfmt.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\nBut some options are our own extensions.",
+  "description": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
+  "markdownDescription": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
   "properties": {
     "arrowParens": {
       "anyOf": [

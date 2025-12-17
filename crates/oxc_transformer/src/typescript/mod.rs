@@ -81,6 +81,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         } else {
             program.source_type = program.source_type.with_javascript(true);
             self.namespace.enter_program(program, ctx);
+            self.module.enter_program(program, ctx);
         }
     }
 

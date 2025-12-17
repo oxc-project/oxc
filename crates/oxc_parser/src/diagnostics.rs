@@ -428,7 +428,9 @@ pub fn for_await(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Cannot use new with dynamic import").with_label(span)
+    OxcDiagnostic::error("Cannot use new with dynamic import")
+        .with_label(span)
+        .with_help("Wrap this with parenthesis")
 }
 
 #[cold]
@@ -479,9 +481,17 @@ pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
-        .with_label(span1)
+pub fn identifier_generator(x0: &str, span1: Span, looks_like_expression: bool) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
+            .with_label(span1);
+    if looks_like_expression {
+        diagnostic.with_help(format!(
+            "Wrap this in parentheses if you want to use a `{x0}` expression here"
+        ))
+    } else {
+        diagnostic
+    }
 }
 
 #[cold]
@@ -1144,4 +1154,11 @@ pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
 pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
     ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
         .with_label(span)
+}
+
+#[cold]
+pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
+        .with_label(span)
+        .with_help("Wrap this with quotes")
 }

@@ -335,7 +335,7 @@ impl CliRunner {
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
-                    &format!("Failed to setup external plugin options: {err}\n"),
+                    &format!("Failed to setup JS plugin options:\n{err}\n"),
                 );
                 return CliRunResult::InvalidOptionConfig;
             }

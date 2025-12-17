@@ -33,7 +33,7 @@ pub use self::{
 /// List of Jest rules that have Vitest equivalents.
 // When adding a new rule to this list, please ensure oxlint-migrate is also updated.
 // See https://github.com/oxc-project/oxlint-migrate/blob/2c336c67d75adb09a402ae66fb3099f1dedbe516/scripts/constants.ts
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 38] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 40] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -59,10 +59,12 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 38] = [
     "prefer-each",
     "prefer-equality-matcher",
     "prefer-expect-resolves",
+    "require-hook",
     "prefer-hooks-in-order",
     "prefer-hooks-on-top",
     "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
+    "prefer-spy-on",
     "prefer-strict-equal",
     "prefer-to-be",
     "prefer-to-contain",

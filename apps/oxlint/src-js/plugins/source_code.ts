@@ -2,7 +2,6 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.t
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
-// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
@@ -29,8 +28,6 @@ import type { Ranged } from "./location.ts";
 import type { Token } from "./tokens.ts";
 import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
-
-const { max } = Math;
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
@@ -83,6 +80,7 @@ export function initSourceText(): void {
 export function initAst(): void {
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
 
   ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
   debugAssertIsNonNull(ast);
@@ -224,7 +222,7 @@ export const SOURCE_CODE = Object.freeze({
     const { range } = node;
     let start = range[0],
       end = range[1];
-    if (beforeCount) start = max(start - beforeCount, 0);
+    if (beforeCount) start = Math.max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
     return sourceText.slice(start, end);
   },

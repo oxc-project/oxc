@@ -110,6 +110,7 @@ node_modules
       const oxfmtrc = JSON.parse(content);
 
       expect(oxfmtrc.ignorePatterns).toEqual(["dist", "node_modules", "*.min.js"]);
+      expect(Object.keys(oxfmtrc).at(-1)).toBe("ignorePatterns"); // `ignorePatterns` should be last
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }

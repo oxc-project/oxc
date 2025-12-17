@@ -55,9 +55,8 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .indirect_export_entries
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            )
-            .collect::<std::vec::Vec<_>>();
-        if default_exports.len() > 1 {
+            );
+        if default_exports.clone().count() > 1 {
             errors.push(
                 OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
             );

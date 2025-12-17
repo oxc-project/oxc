@@ -2,9 +2,6 @@
  * Methods and types related to JSON.
  */
 
-const { isArray } = Array,
-  { freeze } = Object;
-
 /**
  * A JSON value.
  */
@@ -27,7 +24,7 @@ export type JsonObject = { [key: string]: JsonValue };
 export function deepFreezeJsonValue(value: JsonValue): undefined {
   if (value === null || typeof value !== "object") return;
 
-  if (isArray(value)) {
+  if (Array.isArray(value)) {
     deepFreezeJsonArray(value);
   } else {
     deepFreezeJsonObject(value);
@@ -48,7 +45,7 @@ export function deepFreezeJsonObject(obj: JsonObject): undefined {
   for (const key in obj) {
     deepFreezeJsonValue(obj[key]);
   }
-  freeze(obj);
+  Object.freeze(obj);
 }
 
 /**
@@ -63,5 +60,50 @@ export function deepFreezeJsonArray(arr: JsonValue[]): undefined {
   for (let i = 0, len = arr.length; i !== len; i++) {
     deepFreezeJsonValue(arr[i]);
   }
-  freeze(arr);
+  Object.freeze(arr);
+}
+
+/**
+ * Deep clone a JSON value, recursively cloning all nested objects and arrays.
+ * @param value - The value to deep clone
+ * @returns Cloned value
+ */
+export function deepCloneJsonValue(value: JsonValue): JsonValue {
+  if (value === null || typeof value !== "object") return value;
+
+  if (Array.isArray(value)) return deepCloneJsonArray(value);
+  return deepCloneJsonObject(value);
+}
+
+/**
+ * Deep clone a JSON object, recursively cloning all nested objects and arrays.
+ * @param obj - The object to deep clone
+ * @returns Cloned object
+ */
+export function deepCloneJsonObject(obj: JsonObject): JsonObject {
+  // Circular references are not possible in JSON, so no need to handle them here.
+  // Symbol properties are not possible in JSON, so no need to handle them here.
+  // All properties are enumerable own properties, so can use simple `for..in` loop.
+  // Clone `obj` into `cloned` first, so then don't have to handle if object has a key called `__proto__`.
+  const cloned = { ...obj };
+  for (const key in obj) {
+    const value = obj[key];
+    if (typeof value !== "object" || value === null) continue;
+    cloned[key] = Array.isArray(value) ? deepCloneJsonArray(value) : deepCloneJsonObject(value);
+  }
+  return cloned;
+}
+
+/**
+ * Deep clone a JSON array, recursively cloning all nested objects and arrays.
+ * @param arr - The array to deep clone
+ * @returns Cloned array
+ */
+export function deepCloneJsonArray(arr: JsonValue[]): JsonValue[] {
+  // Circular references are not possible in JSON, so no need to handle them here
+  const cloned = [];
+  for (let i = 0, len = arr.length; i !== len; i++) {
+    cloned.push(deepCloneJsonValue(arr[i]));
+  }
+  return cloned;
 }

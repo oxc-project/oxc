@@ -1,7 +1,6 @@
 import esquery from "esquery";
 import visitorKeys from "../generated/keys.ts";
 import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
-// @ts-expect-error - TODO: We need to generate `.d.ts` file for this module
 import { ancestors } from "../generated/walk.js";
 import { debugAssert } from "../utils/asserts.ts";
 
@@ -9,8 +8,6 @@ import type { ESQueryOptions, Selector as EsquerySelector } from "esquery";
 import type { Node as EsqueryNode } from "estree";
 import type { Node } from "./types.ts";
 import type { VisitFn } from "./visitor.ts";
-
-const ObjectKeys = Object.keys;
 
 const { matches: esqueryMatches, parse: esqueryParse } = esquery;
 
@@ -20,7 +17,7 @@ type NodeTypeId = number;
 const ESQUERY_OPTIONS: ESQueryOptions = {
   nodeTypeKey: "type",
   visitorKeys,
-  fallback: (node: EsqueryNode) => ObjectKeys(node).filter(filterKey),
+  fallback: (node: EsqueryNode) => Object.keys(node).filter(filterKey),
   matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
 };
 const filterKey = (key: string) => key !== "parent" && key !== "range" && key !== "loc";
@@ -257,7 +254,12 @@ export function wrapVisitFnWithSelectorMatch(
 ): VisitFn {
   return (node: Node) => {
     if (
-      esqueryMatches(node as unknown as EsqueryNode, esquerySelector, ancestors, ESQUERY_OPTIONS)
+      esqueryMatches(
+        node as unknown as EsqueryNode,
+        esquerySelector,
+        ancestors as unknown as EsqueryNode[],
+        ESQUERY_OPTIONS,
+      )
     ) {
       visitFn(node);
     }

@@ -64,7 +64,6 @@ async function fsRequire(code: string, format: "cjs" | "esm" | "iife") {
     const mockedWindow = {} as (typeof globalThis)["window"];
     globalThis.window = mockedWindow;
     fsRequire("/index.js");
-    // @ts-expect-error - ignore
     delete globalThis.window;
     return mockedWindow;
   }

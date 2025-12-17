@@ -87,13 +87,14 @@ impl FormatRunner {
         // - Parse returned `languages`
         // - Allow its `extensions` and `filenames` in `walk.rs`
         // - Pass `parser` to `SourceFormatter`
+        // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        if let Err(err) = self
-            .external_formatter
-            .as_ref()
-            .expect("External formatter must be set when `napi` feature is enabled")
-            .setup_config(&external_config.to_string(), num_of_threads)
-        {
+        if let Err(err) = tokio::task::block_in_place(|| {
+            self.external_formatter
+                .as_ref()
+                .expect("External formatter must be set when `napi` feature is enabled")
+                .setup_config(&external_config.to_string(), num_of_threads)
+        }) {
             utils::print_and_flush(
                 stderr,
                 &format!("Failed to setup external formatter config.\n{err}\n"),
