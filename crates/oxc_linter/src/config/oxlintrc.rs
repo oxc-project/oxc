@@ -270,11 +270,18 @@ impl Oxlintrc {
         }
     }
 
-    /// Merges two [Oxlintrc] files together
-    /// [Self] takes priority over `other`
+    /// Merges two [Oxlintrc] files together.
+    ///
+    /// [Self] takes priority over `other` - if both configs define the same property,
+    /// the value from [Self] wins.
+    ///
+    /// For example, if `self` has `{ "rules": { "no-console": "error" } }` and `other` has
+    /// `{ "rules": { "no-console": "warn", "no-debugger": "error" } }`, the result will be
+    /// `{ "rules": { "no-console": "error", "no-debugger": "error" } }` (self's `"no-console"`
+    /// setting wins).
     #[must_use]
-    pub fn merge(&self, other: &Oxlintrc) -> Oxlintrc {
-        let mut categories = other.categories.clone();
+    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+        let mut categories = other.categories;
         categories.extend(self.categories.iter());
 
         let rules = self
@@ -297,7 +304,7 @@ impl Oxlintrc {
         let env = self.env.clone();
         let globals = self.globals.clone();
 
-        let mut overrides = other.overrides.clone();
+        let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
 
         let plugins = match (self.plugins, other.plugins) {
