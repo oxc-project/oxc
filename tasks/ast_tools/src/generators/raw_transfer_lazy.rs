@@ -37,15 +37,15 @@ impl Generator for RawTransferLazyGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/constructors.js"),
                 code: constructors,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/walk.js"),
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/type_ids.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/type_ids.js"),
                 code: node_type_ids_map,
             },
         ]
@@ -157,8 +157,8 @@ fn generate(
     let constructors = &state.constructors;
     #[rustfmt::skip]
     let constructors = format!("
-        import {{ constructorError, TOKEN }} from '../../src-js/raw-transfer/lazy-common.js';
-        import {{ NodeArray }} from '../../src-js/raw-transfer/node-array.js';
+        import {{ constructorError, TOKEN }} from '../raw-transfer/lazy-common.js';
+        import {{ NodeArray }} from '../raw-transfer/node-array.js';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
