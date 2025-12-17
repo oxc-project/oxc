@@ -212,7 +212,7 @@ impl Runtime {
         // If an external linter is used (JS plugins), we must use fixed-size allocators,
         // for compatibility with raw transfer
         let allocator_pool = if linter.has_external_linter() {
-            AllocatorPool::new_fixed_size(thread_count)
+            AllocatorPool::new_fixed_size(thread_count, None)
         } else {
             AllocatorPool::new(thread_count)
         };

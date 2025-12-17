@@ -3,7 +3,7 @@ use std::{
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
-        Mutex,
+        Condvar, Mutex,
         atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
@@ -18,6 +18,43 @@ use crate::{
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
 
+/// Capacity limiter for a pool that blocks when the maximum capacity is reached.
+struct CapacityLimit {
+    /// Maximum number of items that can be created
+    max_count: u32,
+    /// Condition variable to signal when an item is returned to the pool
+    available: Condvar,
+}
+
+impl CapacityLimit {
+    /// Create a new [`CapacityLimit`] with the given maximum count.
+    fn new(max_count: u32) -> Self {
+        Self { max_count, available: Condvar::new() }
+    }
+
+    /// Check if the pool is at capacity.
+    fn is_at_capacity(&self, current_count: u32) -> bool {
+        current_count >= self.max_count
+    }
+
+    /// Wait for an item to become available and return it.
+    ///
+    /// This method blocks until an item is returned to the pool.
+    fn wait_for_item<T>(&self, mut items: std::sync::MutexGuard<'_, Vec<T>>) -> T {
+        loop {
+            items = self.available.wait(items).unwrap();
+            if let Some(item) = items.pop() {
+                return item;
+            }
+        }
+    }
+
+    /// Notify one waiting thread that an item is available.
+    fn notify_available(&self) {
+        self.available.notify_one();
+    }
+}
+
 /// A thread-safe pool for reusing [`Allocator`] instances, that uses fixed-size allocators,
 /// suitable for use with raw transfer.
 pub struct FixedSizeAllocatorPool {
@@ -25,36 +62,36 @@ pub struct FixedSizeAllocatorPool {
     allocators: Mutex<Vec<FixedSizeAllocator>>,
     /// ID to assign to next `Allocator` that's created
     next_id: AtomicU32,
+    /// Capacity limiter. `None` means no limit (default).
+    capacity_limit: Option<CapacityLimit>,
 }
 
 impl FixedSizeAllocatorPool {
     /// Create a new [`FixedSizeAllocatorPool`] for use across the specified number of threads.
-    pub fn new(thread_count: usize) -> FixedSizeAllocatorPool {
+    ///
+    /// If `max_count` is `Some`, the pool will block when trying to get an allocator
+    /// if the maximum number of allocators has been reached, waiting until one is returned.
+    /// If `max_count` is `None`, there is no limit on the number of allocators.
+    pub fn new(thread_count: usize, max_count: Option<u32>) -> FixedSizeAllocatorPool {
         // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
         // in case not all threads end up being used (e.g. language server without `import` plugin)
         let allocators = Vec::with_capacity(thread_count);
-        FixedSizeAllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
+        FixedSizeAllocatorPool {
+            allocators: Mutex::new(allocators),
+            next_id: AtomicU32::new(0),
+            capacity_limit: max_count.map(CapacityLimit::new),
+        }
     }
 
     /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
     ///
+    /// If `max_count` was set and the maximum number of allocators has been reached,
+    /// this method will block until an allocator is returned to the pool.
+    ///
     /// # Panics
     /// Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> Allocator {
-        let fixed_size_allocator = {
-            let mut allocators = self.allocators.lock().unwrap();
-            allocators.pop()
-        };
-
-        let fixed_size_allocator = fixed_size_allocator.unwrap_or_else(|| {
-            // Each allocator needs to have a unique ID, but the order those IDs are assigned in
-            // doesn't matter, so `Ordering::Relaxed` is fine
-            let id = self.next_id.fetch_add(1, Ordering::Relaxed);
-            // Protect against IDs wrapping around.
-            // TODO: Does this work? Do we need it anyway?
-            assert!(id < u32::MAX, "Created too many allocators");
-            FixedSizeAllocator::new(id)
-        });
+        let fixed_size_allocator = self.get_impl();
 
         // Unwrap `FixedSizeAllocator`.
         // `add` method will wrap it again, before returning it to pool, ensuring it gets dropped properly.
@@ -64,6 +101,32 @@ impl FixedSizeAllocatorPool {
             mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(fixed_size_allocator)
         };
         ManuallyDrop::into_inner(allocator)
+    }
+
+    fn get_impl(&self) -> FixedSizeAllocator {
+        let mut allocators = self.allocators.lock().unwrap();
+
+        // Try to get an allocator from the pool
+        if let Some(alloc) = allocators.pop() {
+            return alloc;
+        }
+
+        // Check if we're at maximum capacity
+        if let Some(capacity_limit) = &self.capacity_limit {
+            let current_count = self.next_id.load(Ordering::Relaxed);
+            if capacity_limit.is_at_capacity(current_count) {
+                // At maximum capacity - wait for an item to be returned
+                return capacity_limit.wait_for_item(allocators);
+            }
+        }
+
+        // Create a new allocator.
+        // Each allocator needs to have a unique ID, but the order those IDs are assigned in
+        // doesn't matter, so `Ordering::Relaxed` is fine.
+        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        // Protect against IDs wrapping around.
+        assert!(id < u32::MAX, "Created too many allocators");
+        FixedSizeAllocator::new(id)
     }
 
     /// Add an [`Allocator`] to the pool.
@@ -80,8 +143,15 @@ impl FixedSizeAllocatorPool {
             FixedSizeAllocator { allocator: ManuallyDrop::new(allocator) };
         fixed_size_allocator.reset();
 
-        let mut allocators = self.allocators.lock().unwrap();
-        allocators.push(fixed_size_allocator);
+        {
+            let mut allocators = self.allocators.lock().unwrap();
+            allocators.push(fixed_size_allocator);
+        }
+
+        // Notify one waiting thread that an allocator is available (if capacity is limited)
+        if let Some(capacity_limit) = &self.capacity_limit {
+            capacity_limit.notify_available();
+        }
     }
 }
 

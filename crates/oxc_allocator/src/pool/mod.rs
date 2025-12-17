@@ -46,16 +46,24 @@ impl AllocatorPool {
 
     /// Create a new [`AllocatorPool`] for use across the specified number of threads,
     /// which uses fixed-size allocators (suitable for raw transfer).
+    ///
+    /// If `max_count` is `Some`, the pool will block when trying to get an allocator
+    /// if the maximum number of allocators has been reached, waiting until one is returned.
+    /// If `max_count` is `None`, there is no limit on the number of allocators.
     #[cfg(feature = "fixed_size")]
-    pub fn new_fixed_size(thread_count: usize) -> AllocatorPool {
+    pub fn new_fixed_size(thread_count: usize, max_count: Option<u32>) -> AllocatorPool {
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
         {
-            Self(AllocatorPoolInner::FixedSize(FixedSizeAllocatorPool::new(thread_count)))
+            Self(AllocatorPoolInner::FixedSize(FixedSizeAllocatorPool::new(
+                thread_count,
+                max_count,
+            )))
         }
 
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         {
             let _thread_count = thread_count; // Avoid unused vars lint warning
+            let _max_count = max_count; // Avoid unused vars lint warning
             panic!("Fixed size allocators are only supported on 64-bit little-endian platforms");
         }
     }
