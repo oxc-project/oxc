@@ -187,12 +187,14 @@ pub(crate) mod js;
 pub(crate) mod jsx;
 pub(crate) mod literal;
 pub(crate) mod macros;
+pub(crate) mod token;
 pub(crate) mod ts;
 
 pub use comment::*;
 pub use js::*;
 pub use jsx::*;
 pub use literal::*;
+pub use token::*;
 pub use ts::*;
 
 use macros::inherit_variants;

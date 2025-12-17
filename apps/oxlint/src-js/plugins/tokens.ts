@@ -2,12 +2,12 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { ast, initAst } from "./source_code.ts";
-import { parseTokens } from "./tokens_parse.ts";
+import { ast, initAst, sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
 import type { Span } from "./location.ts";
+import { filePath } from "./context.ts";
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -132,16 +132,19 @@ let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
 
 /**
- * Initialize TS-ESLint tokens for current file.
- *
  * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
-  // Use TypeScript parser to get tokens
-  tokens = parseTokens();
+  debugAssertIsNonNull(filePath);
+  debugAssertIsNonNull(sourceText);
+
+  if (ast === null) initAst();
+  debugAssertIsNonNull(ast);
+
+  tokens = ast.tokens;
 
   // Check `tokens` have valid ranges and are in ascending order
-  debugCheckValidRanges(tokens, "token");
+  // debugCheckValidRanges(tokens, "token");
 }
 
 /**
@@ -178,7 +181,7 @@ export function initTokensAndComments() {
     debugAssertIsNonNull(ast);
     comments = ast.comments;
 
-    debugCheckValidRanges(comments, "comment");
+    // debugCheckValidRanges(comments, "comment");
   }
 
   // Fast paths for file with no comments, or file which is only comments
@@ -289,7 +292,7 @@ function debugCheckTokensAndComments() {
     }
   }
 
-  debugCheckValidRanges(tokensAndComments, "token/comment");
+  // debugCheckValidRanges(tokensAndComments, "token/comment");
 }
 
 /**

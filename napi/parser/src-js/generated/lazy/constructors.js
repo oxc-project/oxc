@@ -36,19 +36,19 @@ export class Program {
 
   get sourceType() {
     const internal = this.#internal;
-    return new SourceType(internal.pos + 124, internal.ast);
+    return new SourceType(internal.pos + 148, internal.ast);
   }
 
   get hashbang() {
     const internal = this.#internal;
-    return constructOptionHashbang(internal.pos + 48, internal.ast);
+    return constructOptionHashbang(internal.pos + 72, internal.ast);
   }
 
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return (internal.$body = constructVecStatement(internal.pos + 96, internal.ast));
+    return (internal.$body = constructVecStatement(internal.pos + 120, internal.ast));
   }
 
   toJSON() {
@@ -11794,6 +11794,68 @@ export class Comment {
 
 const DebugComment = class Comment {};
 
+export class Token {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $type: void 0, $flags: void 0, $pattern: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get type() {
+    const internal = this.#internal,
+      cached = internal.$type;
+    if (cached !== void 0) return cached;
+    return (internal.$type = constructStr(internal.pos + 8, internal.ast));
+  }
+
+  get flags() {
+    const internal = this.#internal,
+      cached = internal.$flags;
+    if (cached !== void 0) return cached;
+    return (internal.$flags = constructOptionStr(internal.pos + 24, internal.ast));
+  }
+
+  get pattern() {
+    const internal = this.#internal,
+      cached = internal.$pattern;
+    if (cached !== void 0) return cached;
+    return (internal.$pattern = constructOptionStr(internal.pos + 40, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      start: this.start,
+      end: this.end,
+      type: this.type,
+      flags: this.flags,
+      pattern: this.pattern,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugToken.prototype);
+  }
+}
+
+const DebugToken = class Token {};
+
 export class NameSpan {
   #internal;
 
@@ -12277,7 +12339,7 @@ export class RawTransferData {
     const cached = nodes.get(pos + 1);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $comments: void 0, $errors: void 0 };
+    this.#internal = { pos, ast, $comments: void 0, $tokens: void 0, $errors: void 0 };
     nodes.set(pos + 1, this);
   }
 
@@ -12290,25 +12352,33 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return (internal.$comments = constructVecComment(internal.pos + 128, internal.ast));
+    return (internal.$comments = constructVecComment(internal.pos + 152, internal.ast));
+  }
+
+  get tokens() {
+    const internal = this.#internal,
+      cached = internal.$tokens;
+    if (cached !== void 0) return cached;
+    return (internal.$tokens = constructVecToken(internal.pos + 176, internal.ast));
   }
 
   get module() {
     const internal = this.#internal;
-    return new EcmaScriptModule(internal.pos + 152, internal.ast);
+    return new EcmaScriptModule(internal.pos + 200, internal.ast);
   }
 
   get errors() {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return (internal.$errors = constructVecError(internal.pos + 256, internal.ast));
+    return (internal.$errors = constructVecError(internal.pos + 304, internal.ast));
   }
 
   toJSON() {
     return {
       program: this.program,
       comments: this.comments,
+      tokens: this.tokens,
       module: this.module,
       errors: this.errors,
     };
@@ -12667,6 +12737,16 @@ function constructVecComment(pos, ast) {
 
 function constructComment(pos, ast) {
   return new Comment(pos, ast);
+}
+
+function constructVecToken(pos, ast) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 56, constructToken, ast);
+}
+
+function constructToken(pos, ast) {
+  return new Token(pos, ast);
 }
 
 function constructOptionHashbang(pos, ast) {

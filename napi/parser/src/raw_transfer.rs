@@ -12,8 +12,10 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::{Allocator, FromIn, Vec as ArenaVec},
+    ast::ast::Token,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
+    span::Atom,
 };
 use oxc_napi::get_source_type;
 
@@ -225,6 +227,7 @@ unsafe fn parse_raw_impl(
         let ret = parse_impl(&allocator, source_type, source_text, &options);
         let mut program = ret.program;
         let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
+        let tokens = ret.tokens;
         let mut module_record = ret.module_record;
 
         // Convert errors.
@@ -264,11 +267,27 @@ unsafe fn parse_raw_impl(
             }
         }
 
+        let tokens: ArenaVec<'_, Token<'_>> = if let Some(tokens) = tokens {
+            ArenaVec::from_iter_in(
+                tokens.into_iter().filter_map(|token| {
+                    token.kind().to_tseslint_type().map(|ty| Token {
+                        span: token.span(),
+                        r#type: Atom::from_in(ty, &allocator),
+                        flags: None,
+                        pattern: None,
+                    })
+                }),
+                &allocator,
+            )
+        } else {
+            ArenaVec::new_in(&allocator)
+        };
+
         // Convert module record
         let module = EcmaScriptModule::from_in(module_record, &allocator);
 
         // Write `RawTransferData` to arena, and return pointer to it
-        let data = RawTransferData { program, comments, module, errors };
+        let data = RawTransferData { program, comments, tokens, module, errors };
         let data = allocator.alloc(data);
         ptr::from_ref(data).cast::<u8>()
     };

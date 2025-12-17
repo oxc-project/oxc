@@ -10,16 +10,17 @@ use crate::ast::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 1 bytes
-    assert!(size_of::<Program>() == 128);
+    assert!(size_of::<Program>() == 152);
     assert!(align_of::<Program>() == 8);
     assert!(offset_of!(Program, span) == 0);
-    assert!(offset_of!(Program, source_type) == 124);
+    assert!(offset_of!(Program, source_type) == 148);
     assert!(offset_of!(Program, source_text) == 8);
     assert!(offset_of!(Program, comments) == 24);
-    assert!(offset_of!(Program, hashbang) == 48);
-    assert!(offset_of!(Program, directives) == 72);
-    assert!(offset_of!(Program, body) == 96);
-    assert!(offset_of!(Program, scope_id) == 120);
+    assert!(offset_of!(Program, tokens) == 48);
+    assert!(offset_of!(Program, hashbang) == 72);
+    assert!(offset_of!(Program, directives) == 96);
+    assert!(offset_of!(Program, body) == 120);
+    assert!(offset_of!(Program, scope_id) == 144);
 
     assert!(size_of::<Expression>() == 16);
     assert!(align_of::<Expression>() == 8);
@@ -1621,21 +1622,30 @@ const _: () = {
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, newlines) == 14);
     assert!(offset_of!(Comment, content) == 15);
+
+    // Padding: 0 bytes
+    assert!(size_of::<Token>() == 56);
+    assert!(align_of::<Token>() == 8);
+    assert!(offset_of!(Token, span) == 0);
+    assert!(offset_of!(Token, r#type) == 8);
+    assert!(offset_of!(Token, flags) == 24);
+    assert!(offset_of!(Token, pattern) == 40);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 1 bytes
-    assert!(size_of::<Program>() == 88);
+    assert!(size_of::<Program>() == 104);
     assert!(align_of::<Program>() == 4);
     assert!(offset_of!(Program, span) == 0);
-    assert!(offset_of!(Program, source_type) == 84);
+    assert!(offset_of!(Program, source_type) == 100);
     assert!(offset_of!(Program, source_text) == 8);
     assert!(offset_of!(Program, comments) == 16);
-    assert!(offset_of!(Program, hashbang) == 32);
-    assert!(offset_of!(Program, directives) == 48);
-    assert!(offset_of!(Program, body) == 64);
-    assert!(offset_of!(Program, scope_id) == 80);
+    assert!(offset_of!(Program, tokens) == 32);
+    assert!(offset_of!(Program, hashbang) == 48);
+    assert!(offset_of!(Program, directives) == 64);
+    assert!(offset_of!(Program, body) == 80);
+    assert!(offset_of!(Program, scope_id) == 96);
 
     assert!(size_of::<Expression>() == 8);
     assert!(align_of::<Expression>() == 4);
@@ -3237,6 +3247,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, newlines) == 14);
     assert!(offset_of!(Comment, content) == 15);
+
+    // Padding: 0 bytes
+    assert!(size_of::<Token>() == 32);
+    assert!(align_of::<Token>() == 4);
+    assert!(offset_of!(Token, span) == 0);
+    assert!(offset_of!(Token, r#type) == 8);
+    assert!(offset_of!(Token, flags) == 16);
+    assert!(offset_of!(Token, pattern) == 24);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

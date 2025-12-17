@@ -10,12 +10,13 @@ use crate::raw_transfer_types::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<RawTransferData>() == 280);
+    assert!(size_of::<RawTransferData>() == 328);
     assert!(align_of::<RawTransferData>() == 8);
     assert!(offset_of!(RawTransferData, program) == 0);
-    assert!(offset_of!(RawTransferData, comments) == 128);
-    assert!(offset_of!(RawTransferData, module) == 152);
-    assert!(offset_of!(RawTransferData, errors) == 256);
+    assert!(offset_of!(RawTransferData, comments) == 152);
+    assert!(offset_of!(RawTransferData, tokens) == 176);
+    assert!(offset_of!(RawTransferData, module) == 200);
+    assert!(offset_of!(RawTransferData, errors) == 304);
 
     // Padding: 3 bytes
     assert!(size_of::<RawTransferMetadata>() == 16);
@@ -68,12 +69,13 @@ const _: () = {
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
-    assert!(size_of::<RawTransferData>() == 188);
+    assert!(size_of::<RawTransferData>() == 220);
     assert!(align_of::<RawTransferData>() == 4);
     assert!(offset_of!(RawTransferData, program) == 0);
-    assert!(offset_of!(RawTransferData, comments) == 88);
-    assert!(offset_of!(RawTransferData, module) == 104);
-    assert!(offset_of!(RawTransferData, errors) == 172);
+    assert!(offset_of!(RawTransferData, comments) == 104);
+    assert!(offset_of!(RawTransferData, tokens) == 120);
+    assert!(offset_of!(RawTransferData, module) == 136);
+    assert!(offset_of!(RawTransferData, errors) == 204);
 
     // Padding: 3 bytes
     assert!(size_of::<RawTransferMetadata>() == 16);

@@ -20,6 +20,7 @@ impl<'a> Dummy<'a> for Program<'a> {
             source_type: Dummy::dummy(allocator),
             source_text: Dummy::dummy(allocator),
             comments: Dummy::dummy(allocator),
+            tokens: Dummy::dummy(allocator),
             hashbang: Dummy::dummy(allocator),
             directives: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),

@@ -14,6 +14,7 @@ impl ESTree for RawTransferData<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("program", &self.program);
         state.serialize_field("comments", &self.comments);
+        state.serialize_field("tokens", &self.tokens);
         state.serialize_field("module", &self.module);
         state.serialize_field("errors", &self.errors);
         state.end();

@@ -9,6 +9,7 @@ use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
+use crate::ast::token::*;
 use crate::ast::ts::*;
 
 impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
@@ -20,6 +21,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
             source_type: CloneIn::clone_in(&self.source_type, allocator),
             source_text: CloneIn::clone_in(&self.source_text, allocator),
             comments: CloneIn::clone_in(&self.comments, allocator),
+            tokens: CloneIn::clone_in(&self.tokens, allocator),
             hashbang: CloneIn::clone_in(&self.hashbang, allocator),
             directives: CloneIn::clone_in(&self.directives, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
@@ -33,6 +35,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
             source_type: CloneIn::clone_in_with_semantic_ids(&self.source_type, allocator),
             source_text: CloneIn::clone_in_with_semantic_ids(&self.source_text, allocator),
             comments: CloneIn::clone_in_with_semantic_ids(&self.comments, allocator),
+            tokens: CloneIn::clone_in_with_semantic_ids(&self.tokens, allocator),
             hashbang: CloneIn::clone_in_with_semantic_ids(&self.hashbang, allocator),
             directives: CloneIn::clone_in_with_semantic_ids(&self.directives, allocator),
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
@@ -8009,6 +8012,28 @@ impl<'new_alloc> CloneIn<'new_alloc> for Comment {
             position: CloneIn::clone_in_with_semantic_ids(&self.position, allocator),
             newlines: CloneIn::clone_in_with_semantic_ids(&self.newlines, allocator),
             content: CloneIn::clone_in_with_semantic_ids(&self.content, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for Token<'_> {
+    type Cloned = Token<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Token {
+            span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
+            flags: CloneIn::clone_in(&self.flags, allocator),
+            pattern: CloneIn::clone_in(&self.pattern, allocator),
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Token {
+            span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            r#type: CloneIn::clone_in_with_semantic_ids(&self.r#type, allocator),
+            flags: CloneIn::clone_in_with_semantic_ids(&self.flags, allocator),
+            pattern: CloneIn::clone_in_with_semantic_ids(&self.pattern, allocator),
         }
     }
 }
