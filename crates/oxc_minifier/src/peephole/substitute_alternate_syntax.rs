@@ -1605,13 +1605,13 @@ impl<'a> PeepholeOptimizations {
             Expression::FunctionExpression(f) => {
                 f.params.is_empty()
                     && f.body.as_ref().is_some_and(|body| body.is_empty())
-                    // ignore async/generator if value is not used
+                    // ignore async/generator if a return value is not used
                     && ((!f.r#async && !f.generator) || Self::is_descendant_of_block(ctx))
             }
             Expression::ArrowFunctionExpression(f) => {
                 f.params.is_empty()
                     && f.body.is_empty()
-                    // ignore async if value is not used
+                    // ignore async if a return value is not used
                     && (!f.r#async || Self::is_descendant_of_block(ctx))
             }
             _ => false,
