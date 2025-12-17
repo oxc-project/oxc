@@ -287,6 +287,9 @@ importers:
 
   plugins:
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.1.0
       eslint:
         specifier: 'catalog:'
         version: 9.36.0(jiti@2.6.1)
