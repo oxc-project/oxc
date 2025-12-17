@@ -461,14 +461,20 @@ impl<'a> PeepholeOptimizations {
         ctx: &Ctx<'a, '_>,
     ) -> bool {
         let BindingPatternKind::ObjectPattern(id_kind) = &decl.id.kind else { return false };
-        // if left side of assignment is empty do not process it
-        if id_kind.properties.is_empty() {
+        // do not process if left side of assignment is empty or has rest `{ ...a }`
+        if id_kind.properties.is_empty()
+            || id_kind.rest.is_some()
+            || id_kind.properties.iter().any(|e| e.key.prop_name().is_none())
+        {
             return false;
         }
 
         let Some(Expression::ObjectExpression(init_expr)) = &decl.init else { return false };
-
-        if init_expr.properties.iter().any(|e| e.is_spread() || e.may_have_side_effects(ctx)) {
+        if init_expr
+            .properties
+            .iter()
+            .any(|e| e.is_spread() || e.may_have_side_effects(ctx) || e.prop_name().is_none())
+        {
             return false;
         }
 
@@ -500,73 +506,81 @@ impl<'a> PeepholeOptimizations {
         });
 
         for id_prop in id_kind.properties.drain(..) {
-            let id_prop_name = match id_prop.key {
-                PropertyKey::StaticIdentifier(ident) => ident.name,
-                PropertyKey::Identifier(ident) => ident.name,
-                PropertyKey::StringLiteral(lit) => lit.value,
-                PropertyKey::NumericLiteral(lit) => Atom::from(ctx.ast.str(&lit.to_string())),
-                unk_property => panic!("usuported type {:?}", unk_property), // TODO
+            let id_prop_key = match id_prop.key {
+                PropertyKey::StaticIdentifier(ident) => (ident.name, ident.span),
+                PropertyKey::Identifier(ident) => (ident.name, ident.span),
+                PropertyKey::StringLiteral(lit) => (lit.value, lit.span),
+                // TODO: is this the best way?
+                // PropertyKey::NumericLiteral(lit) => {
+                //     (Atom::from(ctx.ast.str(&lit.to_string())), lit.span)
+                // }
+                _ => return false,
             };
 
-            let init_value = init_expr
-                .properties
-                .iter()
-                .rposition(|init| {
-                    init.prop_name().is_some_and(|name| name.0.eq(id_prop_name.as_str()))
-                })
-                .and_then(|index| init_expr.properties.get_mut(index))
-                .and_then(|mut value| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = &mut value {
-                        if id_prop.value.kind.is_binding_identifier()
-                            || id_prop.value.kind.is_assignment_pattern()
-                        {
-                            let val = prop.value.take_in(ctx.ast);
-                            prop.value = ctx.create_ident_expr(
-                                id_prop.value.span(),
-                                id_prop_name,
-                                id_prop
-                                    .value
-                                    .get_binding_identifier()
-                                    .map(BindingIdentifier::symbol_id),
-                                ReferenceFlags::Read,
-                            );
-                            Some(val)
-                        } else {
-                            let unique = ctx.generate_uid_in_current_scope(
-                                &id_prop_name,
-                                SymbolFlags::ConstVariable,
-                            );
-                            let ident = unique.create_binding_pattern(ctx);
-                            let symbol_id =
-                                ident.get_binding_identifier().map(BindingIdentifier::symbol_id);
+            let prop_index = init_expr.properties.iter().rposition(|init| {
+                init.prop_name().is_some_and(|name| name.0.eq(id_prop_key.0.as_str()))
+            });
 
-                            result.push(ctx.ast.variable_declarator(
-                                SPAN,
-                                decl.kind,
-                                ident,
-                                Option::from(prop.value.take_in(ctx.ast)),
-                                decl.definite,
-                            ));
-
-                            prop.value = ctx.create_ident_expr(
-                                SPAN,
-                                unique.name,
-                                symbol_id,
-                                ReferenceFlags::Read,
-                            );
-
-                            // replace reference for `{ x, x: c } = ....`
-                            Some(ctx.create_ident_expr(
-                                id_prop.value.span(),
-                                unique.name,
-                                symbol_id,
-                                ReferenceFlags::Read,
-                            ))
-                        }
+            let init_value = if let Some(index) = prop_index {
+                if let Some(ObjectPropertyKind::ObjectProperty(prop)) =
+                    init_expr.properties.get_mut(index)
+                {
+                    if id_prop.value.kind.is_binding_identifier()
+                        || id_prop.value.kind.is_assignment_pattern()
+                    {
+                        let val = prop.value.take_in(ctx.ast);
+                        prop.value = ctx.create_ident_expr(
+                            id_prop_key.1,
+                            id_prop_key.0,
+                            id_prop
+                                .value
+                                .get_binding_identifier()
+                                .map(BindingIdentifier::symbol_id),
+                            ReferenceFlags::Read,
+                        );
+                        Some(val)
                     } else {
-                        None
+                        let unique = ctx.generate_uid_in_current_scope(
+                            &id_prop_key.0,
+                            SymbolFlags::ConstVariable,
+                        );
+                        let ident = unique.create_binding_pattern(ctx);
+                        let symbol_id =
+                            ident.get_binding_identifier().map(BindingIdentifier::symbol_id);
+
+                        result.push(ctx.ast.variable_declarator(
+                            SPAN,
+                            decl.kind,
+                            ident,
+                            Option::from(prop.value.take_in(ctx.ast)),
+                            decl.definite,
+                        ));
+
+                        prop.value = ctx.create_ident_expr(
+                            SPAN,
+                            unique.name,
+                            symbol_id,
+                            ReferenceFlags::Read,
+                        );
+
+                        // replace reference for `{ x, x: c } = ....`
+                        Some(ctx.create_ident_expr(
+                            id_prop.value.span(),
+                            unique.name,
+                            symbol_id,
+                            ReferenceFlags::Read,
+                        ))
                     }
-                });
+                } else {
+                    None
+                }
+            } else if id_prop.value.kind.is_assignment_pattern()
+                || id_prop.value.kind.is_binding_identifier()
+            {
+                None
+            } else {
+                Some(ctx.ast.void_0(SPAN))
+            };
 
             result.push(ctx.ast.variable_declarator(
                 id_prop.span,
