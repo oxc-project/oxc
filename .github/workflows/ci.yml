@@ -144,10 +144,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/playground
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
+          pnpm run build-wasm-dev
           git diff --exit-code # Must commit everything
       - name: Test wasi in browser
         if: steps.filter.outputs.src == 'true'
@@ -156,6 +153,7 @@ jobs:
           rm -rf *.wasm
           pnpm exec playwright install chromium
           pnpm run build-wasi
+          pnpm run build-wasm-dev
           pnpm run build-npm-dir
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir

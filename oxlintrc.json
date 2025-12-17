@@ -12,7 +12,7 @@
     "promise",
     "vitest"
   ],
-  "jsPlugins": ["./oxlint-plugin.mts"],
+  "jsPlugins": ["./plugins/oxlint-plugin.mts"],
   "categories": {
     "correctness": "error",
     "perf": "error"
