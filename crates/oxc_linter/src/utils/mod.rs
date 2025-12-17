@@ -278,16 +278,14 @@ mod test {
     // These two lists need to be alphabetized for binary_search to work.
     #[test]
     fn test_typescript_rules_list_is_alphabetized() {
-        let rules = TYPESCRIPT_COMPATIBLE_ESLINT_RULES;
-        let mut rules = rules.iter().collect::<Vec<_>>();
+        let mut rules = TYPESCRIPT_COMPATIBLE_ESLINT_RULES.iter().collect::<Vec<_>>();
         rules.sort();
         assert_eq!(rules, TYPESCRIPT_COMPATIBLE_ESLINT_RULES.iter().collect::<Vec<_>>());
     }
 
     #[test]
     fn test_vitest_rules_list_is_alphabetized() {
-        let rules = VITEST_COMPATIBLE_JEST_RULES;
-        let mut rules = rules.iter().collect::<Vec<_>>();
+        let mut rules = VITEST_COMPATIBLE_JEST_RULES.iter().collect::<Vec<_>>();
         rules.sort();
         assert_eq!(rules, VITEST_COMPATIBLE_JEST_RULES.iter().collect::<Vec<_>>());
     }
