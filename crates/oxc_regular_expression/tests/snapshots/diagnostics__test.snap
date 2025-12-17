@@ -108,7 +108,7 @@ expression: snapshot
 
 # invalid_named_reference
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
    ╭─[/\k<a>/u:1:2]
  1 │ /\k<a>/u
    ·  ─────
