@@ -3,6 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -108,7 +109,7 @@ pub struct OxlintOverride {
         deserialize_with = "deserialize_external_plugins"
     )]
     #[schemars(schema_with = "external_plugins_schema")]
-    pub external_plugins: Option<rustc_hash::FxHashSet<ExternalPluginEntry>>,
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
     #[serde(default)]
     pub rules: OxlintRules,

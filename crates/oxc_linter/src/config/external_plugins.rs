@@ -1,11 +1,18 @@
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 use schemars::{
     JsonSchema, SchemaGenerator,
-    schema::{InstanceType, Metadata, ObjectValidation, Schema, SchemaObject, SubschemaValidation},
+    schema::{
+        ArrayValidation, InstanceType, Metadata, ObjectValidation, Schema, SchemaObject,
+        SubschemaValidation,
+    },
 };
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, SeqAccess, Visitor},
+};
 
 /// External plugin entry containing the plugin specifier and optional custom name
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -29,9 +36,6 @@ pub fn deserialize_external_plugins<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    use serde::de::{Error, SeqAccess, Visitor};
-    use std::fmt;
-
     struct PluginSetVisitor;
 
     impl<'de> Visitor<'de> for PluginSetVisitor {
@@ -129,8 +133,6 @@ impl Serialize for ExternalPluginEntry {
 
 /// Custom JSON schema generator for external plugins that includes uniqueItems constraint
 pub fn external_plugins_schema(generator: &mut SchemaGenerator) -> Schema {
-    use schemars::schema::{ArrayValidation, InstanceType, SchemaObject, SubschemaValidation};
-
     let entry_schema = generator.subschema_for::<ExternalPluginEntry>();
 
     let array_schema = SchemaObject {

@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 
@@ -88,7 +88,7 @@ pub struct Oxlintrc {
         deserialize_with = "deserialize_external_plugins"
     )]
     #[schemars(schema_with = "external_plugins_schema")]
-    pub external_plugins: Option<rustc_hash::FxHashSet<ExternalPluginEntry>>,
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
     pub categories: OxlintCategories,
     /// Example
     ///
