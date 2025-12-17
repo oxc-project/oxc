@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.18.0] - 2025-12-15
+
+### 🚀 Features
+
+- afd6c44 oxfmt: Support `quoteProps: consistent` in `Oxfmtrc` (#16721) (leaysgur)
+- 28e0682 oxfmt: Enable experimental `package.json` sorting by default (#16593) (leaysgur)
+
+### ⚡ Performance
+
+- 6f3aaba oxfmt: Use `worker_threads` by `tinypool` for prettier formatting (#16618) (leaysgur)
+
+### 📚 Documentation
+
+- 8babdf9 oxfmt: Improve docs for `.oxfmtrc.jsonc` config fields and add markdownDescription fields to JSON Schema (#16587) (connorshea)
+
+## [0.17.0] - 2025-12-08
+
+### 🚀 Features
+
+- 7374856 formatter/sort-imports: Support `options.internalPattern` (#16372) (leaysgur)
+
+## [0.16.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 9706a1a oxfmt: Ignore unsupported options (#16085) (leaysgur)
+
+## [0.15.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- a937890 formatter: [**BREAKING**] Default to `lineWidth: 100` (#15933) (leaysgur)
+
+### 🚀 Features
+
+- 7818e22 formatter/sort-imports: Support `options.groups` (#15831) (leaysgur)
+
 ## [0.14.0] - 2025-11-17
 
 ### 🚀 Features

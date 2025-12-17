@@ -95,7 +95,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@0be4756f42223b67aa4b7df5effad59010cbf4b9 # v2.62.51
+        uses: taiki-e/install-action@61e5998d108b2b55a81b9b386c18bd46e4237e4f # v2.63.1
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -104,7 +104,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -145,7 +145,7 @@ jobs:
           archive_name: oxc_language_server-${{ matrix.code-target }}
 
       - name: Upload Binary
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: oxlint-${{ matrix.code-target }}
@@ -157,7 +157,7 @@ jobs:
 
       # For github release
       - name: Upload Binary
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: rust-oxlint-${{ matrix.code-target }}
@@ -174,7 +174,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: .
           pattern: oxlint-*
@@ -190,7 +190,7 @@ jobs:
       - name: Untar from non-windows builds
         run: ls *.gz | xargs -i tar xf {}
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -203,6 +203,9 @@ jobs:
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 
       - run: npm install -g npm@latest # For trusted publishing support
+
+      - name: Check packages exist on npm
+        run: node .github/scripts/check-npm-packages.js "npm/oxlint*"
 
       - name: Publish npm packages as latest
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
@@ -271,7 +274,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@0be4756f42223b67aa4b7df5effad59010cbf4b9 # v2.62.51
+        uses: taiki-e/install-action@61e5998d108b2b55a81b9b386c18bd46e4237e4f # v2.63.1
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -280,7 +283,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -311,7 +314,7 @@ jobs:
           archive_name: rust-oxfmt-${{ matrix.code-target }}
 
       - name: Upload Binary
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: oxfmt-${{ matrix.code-target }}
@@ -321,7 +324,7 @@ jobs:
 
       # For github release
       - name: Upload Binary
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: rust-oxfmt-${{ matrix.code-target }}
@@ -338,7 +341,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: .
           pattern: oxfmt-*
@@ -354,7 +357,7 @@ jobs:
       - name: Untar from non-windows builds
         run: ls *.gz | xargs -i tar xf {}
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
@@ -367,6 +370,9 @@ jobs:
           for package in npm/oxfmt*; do cat $package/package.json ; echo ; done
 
       - run: npm install -g npm@latest # For trusted publishing support
+
+      - name: Check packages exist on npm
+        run: node .github/scripts/check-npm-packages.js "npm/oxfmt*"
 
       - name: Publish npm packages as latest
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
@@ -384,13 +390,13 @@ jobs:
       contents: write # for softprops/action-gh-release@v1.3.1
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           restore-cache: false
           tools: cargo-release-oxc
@@ -426,21 +432,23 @@ jobs:
           git tag oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} ${{ github.sha }}
           git push origin oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} oxfmt_v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          path: .
+          path: ./release-artifacts
           pattern: rust-*
           merge-multiple: true
 
       - name: Remove rust- prefix from filenames
         run: |
+          cd release-artifacts
           for file in rust-*; do
             mv "$file" "${file#rust-}"
           done
           ls
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        id: release
         with:
           body_path: ./target/RELEASE_BODY.md
           draft: true # Must set to true for Enable release immutability https://github.com/softprops/action-gh-release/issues/653
@@ -448,15 +456,18 @@ jobs:
           tag_name: apps_v${{ needs.check.outputs.oxlint_version }}
           target_commitish: ${{ github.sha }}
           fail_on_unmatched_files: true
-          files: |
-            oxfmt-*
-            oxlint-*
+          files: ./release-artifacts/*
 
       - name: Turn off draft on github release
         env:
           OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit apps_v${OXLINT_VERSION} --draft=false
+
+      - uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
+          content: ${{ steps.release.outputs.url }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s

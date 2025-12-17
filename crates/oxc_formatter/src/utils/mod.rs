@@ -13,15 +13,9 @@ pub mod suppressed;
 pub mod typecast;
 pub mod typescript;
 
-use oxc_allocator::Address;
-use oxc_ast::{AstKind, ast::CallExpression};
+use oxc_ast::ast::CallExpression;
 
-use crate::{
-    Format, FormatResult, FormatTrailingCommas,
-    ast_nodes::{AstNode, AstNodes},
-    format_args,
-    formatter::{Formatter, prelude::soft_line_break_or_space},
-};
+use crate::ast_nodes::{AstNode, AstNodes};
 
 /// Tests if expression is a long curried call
 ///

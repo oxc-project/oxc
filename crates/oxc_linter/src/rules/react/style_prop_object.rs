@@ -9,26 +9,27 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::get_declaration_of_variable,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_create_element_call,
 };
 
 fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Style prop value must be an object").with_label(span)
+    OxcDiagnostic::warn("`style` prop value must be an object.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct StylePropObject(Box<StylePropObjectConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct StylePropObjectConfig {
-    /// List of component names on which to allow style prop values of any type.
+    /// List of component names on which to allow `style` prop values of any type.
     allow: Vec<CompactStr>,
 }
 
@@ -145,21 +146,9 @@ fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContex
 
 impl Rule for StylePropObject {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut allow = value
-            .get(0)
-            .and_then(|v| v.get("allow"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(CompactStr::from)
-                    .collect::<Vec<CompactStr>>()
-            })
-            .unwrap_or_default();
-
-        allow.sort_unstable();
-
-        Self(Box::new(StylePropObjectConfig { allow }))
+        serde_json::from_value::<DefaultRuleConfig<StylePropObject>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -206,7 +195,7 @@ impl Rule for StylePropObject {
                     _ => return,
                 };
 
-                if self.allow.binary_search(&name.into()).is_ok() {
+                if self.allow.iter().any(|s| s == name) {
                     return;
                 }
 
@@ -406,6 +395,19 @@ fn test() {
         (
             r#"<MyComponent style="myStyle" />"#,
             Some(serde_json::json!([{ "allow": ["MyComponent"] }])),
+        ),
+        // ensure this works with an unsorted array.
+        (
+            r#"<BazQuxComponent style="myStyle" />"#,
+            Some(
+                serde_json::json!([{ "allow": ["MyComponent", "FooBarComponent", "BazQuxComponent", "AbcComponent"] }]),
+            ),
+        ),
+        (
+            r#"React.createElement(BazQuxComponent, { style: "mySpecialStyle" })"#,
+            Some(
+                serde_json::json!([{ "allow": ["MyComponent", "FooBarComponent", "BazQuxComponent", "AbcComponent"] }]),
+            ),
         ),
         (
             r#"React.createElement(MyComponent, { style: "mySpecialStyle" })"#,

@@ -1,8 +1,8 @@
-commit: fd594a07
+commit: 947fee33
 
 parser_test262 Summary:
-AST Parsed     : 44750/44758 (99.98%)
-Positive Passed: 44750/44758 (99.98%)
+AST Parsed     : 46445/46453 (99.98%)
+Positive Passed: 46437/46453 (99.97%)
 Negative Passed: 4579/4581 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
 
@@ -76,6 +76,534 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  20 │   async() = 1;
     ·   ───────
  21 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:24:15]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script=Beria_Erfe}+$/u,
+    ·               ──────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:29:15]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script=Berf}+$/u,
+    ·               ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:34:11]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{sc=Beria_Erfe}+$/u,
+    ·           ──────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:39:11]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{sc=Berf}+$/u,
+    ·           ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:55:15]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script=Beria_Erfe}+$/u,
+    ·               ──────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:60:15]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script=Berf}+$/u,
+    ·               ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:65:11]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{sc=Beria_Erfe}+$/u,
+    ·           ──────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:70:11]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{sc=Berf}+$/u,
+    ·           ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:23:15]
+ 22 │ testPropertyEscapes(
+ 23 │   /^\p{Script=Sidetic}+$/u,
+    ·               ───────
+ 24 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:28:15]
+ 27 │ testPropertyEscapes(
+ 28 │   /^\p{Script=Sidt}+$/u,
+    ·               ────
+ 29 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:33:11]
+ 32 │ testPropertyEscapes(
+ 33 │   /^\p{sc=Sidetic}+$/u,
+    ·           ───────
+ 34 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:38:11]
+ 37 │ testPropertyEscapes(
+ 38 │   /^\p{sc=Sidt}+$/u,
+    ·           ────
+ 39 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:53:15]
+ 52 │ testPropertyEscapes(
+ 53 │   /^\P{Script=Sidetic}+$/u,
+    ·               ───────
+ 54 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:58:15]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script=Sidt}+$/u,
+    ·               ────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:63:11]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{sc=Sidetic}+$/u,
+    ·           ───────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:68:11]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{sc=Sidt}+$/u,
+    ·           ────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:25:15]
+ 24 │ testPropertyEscapes(
+ 25 │   /^\p{Script=Tai_Yo}+$/u,
+    ·               ──────
+ 26 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:30:15]
+ 29 │ testPropertyEscapes(
+ 30 │   /^\p{Script=Tayo}+$/u,
+    ·               ────
+ 31 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:35:11]
+ 34 │ testPropertyEscapes(
+ 35 │   /^\p{sc=Tai_Yo}+$/u,
+    ·           ──────
+ 36 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:40:11]
+ 39 │ testPropertyEscapes(
+ 40 │   /^\p{sc=Tayo}+$/u,
+    ·           ────
+ 41 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:58:15]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script=Tai_Yo}+$/u,
+    ·               ──────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:63:15]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{Script=Tayo}+$/u,
+    ·               ────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:68:11]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{sc=Tai_Yo}+$/u,
+    ·           ──────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:73:11]
+ 72 │ testPropertyEscapes(
+ 73 │   /^\P{sc=Tayo}+$/u,
+    ·           ────
+ 74 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:24:15]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script=Tolong_Siki}+$/u,
+    ·               ───────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:29:15]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script=Tols}+$/u,
+    ·               ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:34:11]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{sc=Tolong_Siki}+$/u,
+    ·           ───────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:39:11]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{sc=Tols}+$/u,
+    ·           ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:55:15]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script=Tolong_Siki}+$/u,
+    ·               ───────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:60:15]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script=Tols}+$/u,
+    ·               ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:65:11]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{sc=Tolong_Siki}+$/u,
+    ·           ───────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:70:11]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{sc=Tols}+$/u,
+    ·           ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:24:26]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script_Extensions=Beria_Erfe}+$/u,
+    ·                          ──────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:29:26]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script_Extensions=Berf}+$/u,
+    ·                          ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:34:12]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{scx=Beria_Erfe}+$/u,
+    ·            ──────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:39:12]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{scx=Berf}+$/u,
+    ·            ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:55:26]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script_Extensions=Beria_Erfe}+$/u,
+    ·                          ──────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:60:26]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script_Extensions=Berf}+$/u,
+    ·                          ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:65:12]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{scx=Beria_Erfe}+$/u,
+    ·            ──────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:70:12]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{scx=Berf}+$/u,
+    ·            ────
+ 71 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:23:26]
+ 22 │ testPropertyEscapes(
+ 23 │   /^\p{Script_Extensions=Sidetic}+$/u,
+    ·                          ───────
+ 24 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:28:26]
+ 27 │ testPropertyEscapes(
+ 28 │   /^\p{Script_Extensions=Sidt}+$/u,
+    ·                          ────
+ 29 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:33:12]
+ 32 │ testPropertyEscapes(
+ 33 │   /^\p{scx=Sidetic}+$/u,
+    ·            ───────
+ 34 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:38:12]
+ 37 │ testPropertyEscapes(
+ 38 │   /^\p{scx=Sidt}+$/u,
+    ·            ────
+ 39 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:53:26]
+ 52 │ testPropertyEscapes(
+ 53 │   /^\P{Script_Extensions=Sidetic}+$/u,
+    ·                          ───────
+ 54 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:58:26]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script_Extensions=Sidt}+$/u,
+    ·                          ────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:63:12]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{scx=Sidetic}+$/u,
+    ·            ───────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:68:12]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{scx=Sidt}+$/u,
+    ·            ────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:25:26]
+ 24 │ testPropertyEscapes(
+ 25 │   /^\p{Script_Extensions=Tai_Yo}+$/u,
+    ·                          ──────
+ 26 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:30:26]
+ 29 │ testPropertyEscapes(
+ 30 │   /^\p{Script_Extensions=Tayo}+$/u,
+    ·                          ────
+ 31 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:35:12]
+ 34 │ testPropertyEscapes(
+ 35 │   /^\p{scx=Tai_Yo}+$/u,
+    ·            ──────
+ 36 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:40:12]
+ 39 │ testPropertyEscapes(
+ 40 │   /^\p{scx=Tayo}+$/u,
+    ·            ────
+ 41 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:58:26]
+ 57 │ testPropertyEscapes(
+ 58 │   /^\P{Script_Extensions=Tai_Yo}+$/u,
+    ·                          ──────
+ 59 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:63:26]
+ 62 │ testPropertyEscapes(
+ 63 │   /^\P{Script_Extensions=Tayo}+$/u,
+    ·                          ────
+ 64 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:68:12]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\P{scx=Tai_Yo}+$/u,
+    ·            ──────
+ 69 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:73:12]
+ 72 │ testPropertyEscapes(
+ 73 │   /^\P{scx=Tayo}+$/u,
+    ·            ────
+ 74 │   nonMatchSymbols,
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:24:26]
+ 23 │ testPropertyEscapes(
+ 24 │   /^\p{Script_Extensions=Tolong_Siki}+$/u,
+    ·                          ───────────
+ 25 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:29:26]
+ 28 │ testPropertyEscapes(
+ 29 │   /^\p{Script_Extensions=Tols}+$/u,
+    ·                          ────
+ 30 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:34:12]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{scx=Tolong_Siki}+$/u,
+    ·            ───────────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:39:12]
+ 38 │ testPropertyEscapes(
+ 39 │   /^\p{scx=Tols}+$/u,
+    ·            ────
+ 40 │   matchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:55:26]
+ 54 │ testPropertyEscapes(
+ 55 │   /^\P{Script_Extensions=Tolong_Siki}+$/u,
+    ·                          ───────────
+ 56 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:60:26]
+ 59 │ testPropertyEscapes(
+ 60 │   /^\P{Script_Extensions=Tols}+$/u,
+    ·                          ────
+ 61 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:65:12]
+ 64 │ testPropertyEscapes(
+ 65 │   /^\P{scx=Tolong_Siki}+$/u,
+    ·            ───────────
+ 66 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:70:12]
+ 69 │ testPropertyEscapes(
+ 70 │   /^\P{scx=Tols}+$/u,
+    ·            ────
+ 71 │   nonMatchSymbols,
     ╰────
 
 Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
@@ -13079,7 +13607,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
 
   × Invalid Character ` `
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:4]
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.js:29:4]
  28 │ var C = class {
  29 │   # m() {}
     ·    ─
@@ -14724,6 +15252,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ let f = () => new import.defer('./empty_FIXTURE.js');
     ·                   ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-rest-param.js:39:28]
@@ -14746,6 +15275,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ let f = () => new import.source('<module source>');
     ·                   ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-no-rest-param.js:43:29]
@@ -14760,6 +15290,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ let f = () => new import('');
     ·                   ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-no-rest-param.js:42:22]
@@ -14824,6 +15355,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-rest-param.js:40:16]
@@ -14848,6 +15380,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-source-no-rest-param.js:44:17]
@@ -14864,6 +15397,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-rest-param.js:43:10]
@@ -14938,6 +15472,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────────────────────────────
  40 │ });
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-rest-param.js:40:22]
@@ -14962,6 +15497,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ────────────────────────────────
  40 │ });
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-no-rest-param.js:44:23]
@@ -14978,6 +15514,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────
  39 │ });
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-no-rest-param.js:43:16]
@@ -15051,6 +15588,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ (async () => await new import.defer('./empty_FIXTURE.js'))
     ·                        ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-rest-param.js:39:33]
@@ -15073,6 +15611,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ (async () => await new import.source('<module source>'))
     ·                        ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-source-no-rest-param.js:43:34]
@@ -15087,6 +15626,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ (async () => await new import(''))
     ·                        ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-no-rest-param.js:42:27]
@@ -15167,6 +15707,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-rest-param.js:40:22]
@@ -15191,6 +15732,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-no-rest-param.js:44:23]
@@ -15207,6 +15749,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-no-rest-param.js:43:16]
@@ -15273,6 +15816,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-rest-param.js:40:16]
@@ -15297,6 +15841,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-no-rest-param.js:44:17]
@@ -15313,6 +15858,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-no-rest-param.js:43:10]
@@ -15361,6 +15907,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-rest-param.js:40:29]
@@ -15385,6 +15932,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-source-no-rest-param.js:44:30]
@@ -15401,6 +15949,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-no-rest-param.js:43:23]
@@ -15501,6 +16050,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-rest-param.js:40:22]
@@ -15525,6 +16075,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-no-rest-param.js:44:23]
@@ -15541,6 +16092,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·             ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-no-rest-param.js:43:16]
@@ -15615,6 +16167,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-rest-param.js:40:16]
@@ -15639,6 +16192,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-no-rest-param.js:44:17]
@@ -15679,6 +16233,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-rest-param.js:40:16]
@@ -15703,6 +16258,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-source-no-rest-param.js:44:17]
@@ -15719,6 +16275,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-no-rest-param.js:43:10]
@@ -15769,6 +16326,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-rest-param.js:43:10]
@@ -15843,6 +16401,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ } while (false);
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-rest-param.js:40:16]
@@ -15867,6 +16426,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ } while (false);
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-no-rest-param.js:44:17]
@@ -15883,6 +16443,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ } while (false);
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-no-rest-param.js:43:10]
@@ -15964,6 +16525,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  40 │ } else new import.defer('./empty_FIXTURE.js');
     ·            ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-rest-param.js:41:21]
@@ -15986,6 +16548,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  40 │ } else new import.source('<module source>');
     ·            ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-no-rest-param.js:45:22]
@@ -16000,6 +16563,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ } else new import('');
     ·            ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-no-rest-param.js:44:15]
@@ -16064,6 +16628,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  42 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-rest-param.js:42:16]
@@ -16088,6 +16653,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  42 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-source-no-rest-param.js:46:17]
@@ -16104,6 +16670,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  41 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-rest-param.js:45:10]
@@ -16178,6 +16745,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-rest-param.js:40:16]
@@ -16202,6 +16770,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-no-rest-param.js:44:17]
@@ -16218,6 +16787,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-no-rest-param.js:43:10]
@@ -16266,6 +16836,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·              ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-rest-param.js:40:23]
@@ -16290,6 +16861,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·              ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-source-no-rest-param.js:44:24]
@@ -16306,6 +16878,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·              ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-no-rest-param.js:43:17]
@@ -16413,6 +16986,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ if (true) new import.defer('./empty_FIXTURE.js');
     ·               ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-rest-param.js:39:24]
@@ -16435,6 +17009,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ if (true) new import.source('<module source>');
     ·               ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-no-rest-param.js:43:25]
@@ -16449,6 +17024,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ if (true) new import('');
     ·               ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-no-rest-param.js:42:18]
@@ -16513,6 +17089,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-rest-param.js:40:16]
@@ -16537,6 +17114,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  40 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-source-no-rest-param.js:44:17]
@@ -16553,6 +17131,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-rest-param.js:43:10]
@@ -16627,6 +17206,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  42 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-rest-param.js:42:16]
@@ -16651,6 +17231,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  42 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-source-no-rest-param.js:46:17]
@@ -16667,6 +17248,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  41 │ };
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-no-rest-param.js:45:10]
@@ -16748,6 +17330,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ with (new import.defer('./empty_FIXTURE.js')) {}
     ·           ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-rest-param.js:38:20]
@@ -16770,6 +17353,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ with (new import.source('<module source>')) {}
     ·           ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-no-rest-param.js:42:21]
@@ -16784,6 +17368,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ with (new import('')) {}
     ·           ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-no-rest-param.js:41:14]
@@ -16848,6 +17433,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────────────────────────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-rest-param.js:39:16]
@@ -16872,6 +17458,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ────────────────────────────────
  39 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-source-no-rest-param.js:43:17]
@@ -16888,6 +17475,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ──────────
  38 │ }
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-rest-param.js:42:10]
@@ -16961,6 +17549,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  28 │ new import.defer('./empty_FIXTURE.js');
     ·     ──────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-rest-param.js:29:14]
@@ -16983,6 +17572,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  28 │ new import.source('<module source>');
     ·     ────────────────────────────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-source-no-rest-param.js:33:15]
@@ -16997,6 +17587,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │ new import('');
     ·     ──────────
     ╰────
+  help: Wrap this with parenthesis
 
   × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-no-rest-param.js:32:8]
@@ -17848,6 +18439,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  17 │ var g = function*() { yield 3 + yield 4; };
     ·                                 ─────
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/generators/yield-weak-binding.js:17:38]
@@ -19555,6 +20147,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ─────
  19 │ };
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/expressions/object/method-definition/yield-weak-binding.js:18:25]
@@ -23246,70 +23839,70 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·         ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js:21:9]
  20 │ 
  21 │ /(?<a>a)\k<ab>/u;
     ·         ──────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2.js:21:9]
  20 │ 
  21 │ /(?<a>a)\k<ab>/;
     ·         ──────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js:21:10]
  20 │ 
  21 │ /(?<ab>a)\k<a>/u;
     ·          ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3.js:21:10]
  20 │ 
  21 │ /(?<ab>a)\k<a>/;
     ·          ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js:21:2]
  20 │ 
  21 │ /\k<a>(?<ab>a)/u;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4.js:21:2]
  20 │ 
  21 │ /\k<a>(?<ab>a)/;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-5.js:21:2]
  20 │ 
  21 │ /\k<a>(?<b>x)/;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-u.js:21:9]
  20 │ 
  21 │ /(?<a>.)\k<b>/u;
     ·         ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js:21:2]
  20 │ 
  21 │ /\k<a>/u;
     ·  ─────
     ╰────
 
-  × Invalid regular expression: Group specifier is empty
+  × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname.js:21:9]
  20 │ 
  21 │ /(?<a>.)\k<b>/;
@@ -23407,14 +24000,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js:16:2]
  15 │ 
  16 │ /\k(?<a>.)/;
     ·  ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js:16:9]
  15 │ 
  16 │ /(?<a>.)\k/u;
@@ -23428,7 +24021,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ─
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js:16:2]
  15 │ 
  16 │ /\k/u;
@@ -23442,7 +24035,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ──
     ╰────
 
-  × Invalid regular expression: Invalid named reference
+  × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname.js:16:9]
  15 │ 
  16 │ /(?<a>.)\k/;
@@ -27718,6 +28311,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                    ─────
  19 │ }
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/class/definition/methods-gen-yield-weak-binding.js:18:25]
@@ -31933,7 +32527,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
 
   × Invalid Character ` `
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:29:4]
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.js:29:4]
  28 │ class C {
  29 │   # m() {}
     ·    ─
@@ -37136,6 +37730,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  17 │ function* g() { yield 3 + yield 4; }
     ·                           ─────
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/generators/yield-weak-binding.js:17:32]
@@ -37890,6 +38485,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·     ─────
  26 │ }
     ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/statements/let/syntax/let-newline-yield-in-generator-function.js:25:10]

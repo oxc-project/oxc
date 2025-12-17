@@ -17,13 +17,16 @@ export function typeAndWrappers(name) {
  */
 export function camelToSnake(name) {
   let prefixLen = 1;
-  for (const prefix of ['TS', 'JSX', 'JS']) {
+  for (const prefix of ["TS", "JSX", "JS"]) {
     if (name.startsWith(prefix)) {
       prefixLen = prefix.length;
       break;
     }
   }
-  return name.slice(0, prefixLen).toLowerCase() + name.slice(prefixLen).replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+  return (
+    name.slice(0, prefixLen).toLowerCase() +
+    name.slice(prefixLen).replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
+  );
 }
 
 /**
@@ -31,7 +34,7 @@ export function camelToSnake(name) {
  */
 export function snakeToCamel(name) {
   let prefixLen = 0;
-  for (const prefix of ['TS', 'JSX', 'JS']) {
+  for (const prefix of ["TS", "JSX", "JS"]) {
     if (name.startsWith(`${prefix.toLowerCase()}_`)) {
       prefixLen = prefix.length + 1;
       break;

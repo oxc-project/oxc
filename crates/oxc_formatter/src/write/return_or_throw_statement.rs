@@ -1,12 +1,11 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    Format, FormatResult,
-    ast_nodes::AstNode,
+    Format,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Formatter, comments::Comments, prelude::*},
+    formatter::{Formatter, prelude::*},
     write,
     write::{ExpressionLeftSide, semicolon::OptionalSemicolon},
 };
@@ -14,14 +13,14 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        ReturnAndThrowStatement::ReturnStatement(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        ReturnAndThrowStatement::ThrowStatement(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
 }
 
@@ -57,11 +56,11 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
 }
 
 impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.keyword())?;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, self.keyword());
 
         if let Some(argument) = self.argument() {
-            write!(f, [space(), FormatAdjacentArgument(argument)])?;
+            write!(f, [space(), FormatAdjacentArgument(argument)]);
         }
 
         let dangling_comments = f.context().comments().comments_before(self.span().end);
@@ -70,31 +69,27 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
             dangling_comments.last().is_some_and(|comment| comment.is_line());
 
         if is_last_comment_line {
-            write!(f, OptionalSemicolon)?;
+            write!(f, OptionalSemicolon);
         }
 
         if !dangling_comments.is_empty() {
-            write!(f, [space(), format_dangling_comments(self.span())])?;
+            write!(f, [space(), format_dangling_comments(self.span())]);
         }
 
         if !is_last_comment_line {
-            write!(f, OptionalSemicolon)?;
+            write!(f, OptionalSemicolon);
         }
-
-        Ok(())
     }
 }
 
 pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
 
 impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
-        if !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
-            && has_argument_leading_comments(argument, f)
-        {
-            write!(f, [token("("), &block_indent(&argument), token(")")])
+        if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
+            write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,
@@ -103,11 +98,11 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
                     soft_block_indent(&argument),
                     if_group_breaks(&token(")"))
                 ))]
-            )
+            );
         } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-            write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))])
+            write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))]);
         } else {
-            write!(f, argument)
+            write!(f, argument);
         }
     }
 }
@@ -119,24 +114,28 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
 fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
-    let source_text = f.source_text();
-
     for left_side in ExpressionLeftSide::from(argument).iter() {
         let start = left_side.span().start;
         let comments = f.context().comments();
         let leading_comments = comments.comments_before(start);
 
-        if leading_comments.iter().any(|comment| {
-            source_text.contains_newline(comment.span) || comments.is_end_of_line_comment(comment)
-        }) {
+        if leading_comments
+            .iter()
+            .any(|comment| comment.is_multiline_block() || comment.followed_by_newline())
+        {
             return true;
         }
 
         let is_own_line_comment_or_multi_line_comment = |leading_comments: &[Comment]| {
-            leading_comments.iter().any(|comment| {
-                comments.is_own_line_comment(comment) || source_text.contains_newline(comment.span)
-            })
+            leading_comments
+                .iter()
+                .any(|comment| comment.is_multiline_block() || comment.preceded_by_newline())
         };
+
+        // Yield expressions only need to check the leading comments on the left side.
+        if matches!(argument.parent, AstNodes::YieldExpression(_)) {
+            continue;
+        }
 
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
@@ -168,9 +167,4 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
     }
 
     false
-}
-
-#[inline]
-fn is_binary_or_sequence_argument(argument: &Expression) -> bool {
-    matches!(argument, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
 }

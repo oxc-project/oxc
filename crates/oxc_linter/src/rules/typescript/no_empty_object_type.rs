@@ -27,7 +27,7 @@ fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
 pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
@@ -66,8 +66,43 @@ pub struct NoEmptyObjectTypeConfig {
     /// interface InterfaceProps {}
     /// type TypeProps = {};
     /// ```
-    #[serde(skip)] // TODO: Serialize this so it can be documented properly.
     allow_with_name: Option<Regex>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum AllowInterfaces {
+    #[default]
+    Never,
+    Always,
+    WithSingleExtends,
+}
+
+impl From<&str> for AllowInterfaces {
+    fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            "with-single-extends" => Self::WithSingleExtends,
+            _ => Self::Never,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum AllowObjectTypes {
+    #[default]
+    Never,
+    Always,
+}
+
+impl From<&str> for AllowObjectTypes {
+    fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            _ => Self::Never,
+        }
+    }
 }
 
 impl std::ops::Deref for NoEmptyObjectType {
@@ -234,42 +269,6 @@ fn check_type_literal(
         type_literal.span,
         "Do not use the empty object type literal.",
     ));
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum AllowInterfaces {
-    #[default]
-    Never,
-    Always,
-    WithSingleExtends,
-}
-
-impl From<&str> for AllowInterfaces {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "with-single-extends" => Self::WithSingleExtends,
-            _ => Self::Never,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum AllowObjectTypes {
-    #[default]
-    Never,
-    Always,
-}
-
-impl From<&str> for AllowObjectTypes {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            _ => Self::Never,
-        }
-    }
 }
 
 #[test]

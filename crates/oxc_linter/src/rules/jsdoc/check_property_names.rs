@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn no_root(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("No root defined for @property path.")
-        .with_help(format!("@property path declaration `{x1}` appears before any real property."))
+    OxcDiagnostic::warn("No root defined for `@property` path.")
+        .with_help(format!("`@property` path declaration `{x1}` appears before any real property."))
         .with_label(span)
 }
 

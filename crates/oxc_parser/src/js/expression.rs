@@ -131,7 +131,14 @@ impl<'a> ParserImpl<'a> {
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
         if ctx.has_yield() && kind == Kind::Yield {
-            self.error(diagnostics::identifier_generator("yield", span));
+            let next_token = self.lexer.peek_token();
+            let looks_like_yield_expression =
+                !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
+            self.error(diagnostics::identifier_generator(
+                "yield",
+                span,
+                looks_like_yield_expression,
+            ));
         }
     }
 
@@ -987,7 +994,7 @@ impl<'a> ParserImpl<'a> {
 
             if let Some(span) = question_dot_span {
                 // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
-                let error = diagnostics::unexpected_token(span);
+                let error = diagnostics::identifier_expected_after_question_dot(span);
                 return self.fatal_error(error);
             }
 

@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_iterator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Reserved name '__iterator__'")
+    OxcDiagnostic::warn("Reserved name `__iterator__`")
         .with_help("Consider using [Symbol.iterator] instead")
         .with_label(span)
 }

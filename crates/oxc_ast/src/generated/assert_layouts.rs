@@ -1410,6 +1410,15 @@ const _: () = {
     assert!(size_of::<TSModuleDeclarationBody>() == 16);
     assert!(align_of::<TSModuleDeclarationBody>() == 8);
 
+    // Padding: 3 bytes
+    assert!(size_of::<TSGlobalDeclaration>() == 80);
+    assert!(align_of::<TSGlobalDeclaration>() == 8);
+    assert!(offset_of!(TSGlobalDeclaration, span) == 0);
+    assert!(offset_of!(TSGlobalDeclaration, global_span) == 8);
+    assert!(offset_of!(TSGlobalDeclaration, body) == 16);
+    assert!(offset_of!(TSGlobalDeclaration, declare) == 76);
+    assert!(offset_of!(TSGlobalDeclaration, scope_id) == 72);
+
     // Padding: 0 bytes
     assert!(size_of::<TSModuleBlock>() == 56);
     assert!(align_of::<TSModuleBlock>() == 8);
@@ -1440,13 +1449,13 @@ const _: () = {
     assert!(align_of::<TSTypeQueryExprName>() == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSImportType>() == 56);
+    assert!(size_of::<TSImportType>() == 88);
     assert!(align_of::<TSImportType>() == 8);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, argument) == 8);
-    assert!(offset_of!(TSImportType, options) == 24);
-    assert!(offset_of!(TSImportType, qualifier) == 32);
-    assert!(offset_of!(TSImportType, type_arguments) == 48);
+    assert!(offset_of!(TSImportType, source) == 8);
+    assert!(offset_of!(TSImportType, options) == 56);
+    assert!(offset_of!(TSImportType, qualifier) == 64);
+    assert!(offset_of!(TSImportType, type_arguments) == 80);
 
     assert!(size_of::<TSImportTypeQualifier>() == 16);
     assert!(align_of::<TSImportTypeQualifier>() == 8);
@@ -3017,6 +3026,15 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<TSModuleDeclarationBody>() == 8);
     assert!(align_of::<TSModuleDeclarationBody>() == 4);
 
+    // Padding: 3 bytes
+    assert!(size_of::<TSGlobalDeclaration>() == 64);
+    assert!(align_of::<TSGlobalDeclaration>() == 4);
+    assert!(offset_of!(TSGlobalDeclaration, span) == 0);
+    assert!(offset_of!(TSGlobalDeclaration, global_span) == 8);
+    assert!(offset_of!(TSGlobalDeclaration, body) == 16);
+    assert!(offset_of!(TSGlobalDeclaration, declare) == 60);
+    assert!(offset_of!(TSGlobalDeclaration, scope_id) == 56);
+
     // Padding: 0 bytes
     assert!(size_of::<TSModuleBlock>() == 40);
     assert!(align_of::<TSModuleBlock>() == 4);
@@ -3047,13 +3065,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<TSTypeQueryExprName>() == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSImportType>() == 32);
+    assert!(size_of::<TSImportType>() == 52);
     assert!(align_of::<TSImportType>() == 4);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, argument) == 8);
-    assert!(offset_of!(TSImportType, options) == 16);
-    assert!(offset_of!(TSImportType, qualifier) == 20);
-    assert!(offset_of!(TSImportType, type_arguments) == 28);
+    assert!(offset_of!(TSImportType, source) == 8);
+    assert!(offset_of!(TSImportType, options) == 36);
+    assert!(offset_of!(TSImportType, qualifier) == 40);
+    assert!(offset_of!(TSImportType, type_arguments) == 48);
 
     assert!(size_of::<TSImportTypeQualifier>() == 8);
     assert!(align_of::<TSImportTypeQualifier>() == 4);

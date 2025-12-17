@@ -1,9 +1,9 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
+    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName, TSLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{StringCharAt, StringCharAtResult};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::keyword::RESERVED_KEYWORDS;
@@ -66,7 +66,6 @@ fn unescape_backslash(input: &str, quote: char) -> String {
 }
 
 impl Rule for PreferStringRaw {
-    #[expect(clippy::cast_precision_loss)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StringLiteral(string_literal) = node.kind() else {
             return;
@@ -75,6 +74,14 @@ impl Rule for PreferStringRaw {
         let parent_node = ctx.nodes().parent_node(node.id());
 
         match parent_node.kind() {
+            // Skip string literals in type annotations - String.raw cannot be used in type positions
+            AstKind::TSLiteralType(ts_literal_type) => {
+                if let TSLiteral::StringLiteral(lit) = &ts_literal_type.literal
+                    && lit.address() == string_literal.unstable_address()
+                {
+                    return;
+                }
+            }
             AstKind::Directive(_) => return,
             AstKind::ImportDeclaration(decl) => {
                 if string_literal.span == decl.source.span {
@@ -129,24 +136,34 @@ impl Rule for PreferStringRaw {
 
         let raw = ctx.source_range(string_literal.span);
 
-        let last_char_index = raw.len() - 2;
-        if raw.char_at(Some(last_char_index as f64)) == StringCharAtResult::Value('\\') {
+        // Must contain escaped backslashes to be worth converting
+        if !raw.contains(r"\\") {
             return;
         }
 
-        if !raw.contains(r"\\") || raw.contains('`') || raw.contains("${") {
+        let value = string_literal.value.as_str();
+
+        // Cannot use String.raw if the value ends with an odd number of backslashes,
+        // as the final backslash would escape the closing backtick.
+        // e.g., String.raw`foo\` is invalid because \` escapes the backtick
+        // but String.raw`foo\\` is valid (two literal backslashes)
+        if has_odd_trailing_backslashes(value) {
             return;
         }
 
-        let StringCharAtResult::Value(quote) = raw.char_at(Some(0.0)) else {
+        // Cannot use String.raw if the value contains backticks (would need escaping)
+        // or template literal syntax ${...} (would be interpreted as interpolation)
+        if value.contains('`') || value.contains("${") {
             return;
-        };
+        }
+
+        let quote = raw.chars().next().unwrap_or('"');
 
         let trimmed = ctx.source_range(string_literal.span.shrink(1));
 
         let unescaped = unescape_backslash(trimmed, quote);
 
-        if unescaped != string_literal.value.as_ref() {
+        if unescaped != value {
             return;
         }
 
@@ -163,6 +180,18 @@ impl Rule for PreferStringRaw {
             fixer.replace(string_literal.span, fix)
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        !ctx.source_type().is_typescript_definition()
+    }
+}
+
+/// Returns true if the string ends with an odd number of backslashes.
+/// This is used to detect cases where using String.raw would be invalid,
+/// as an odd number of trailing backslashes would escape the closing backtick.
+fn has_odd_trailing_backslashes(s: &str) -> bool {
+    let count = s.chars().rev().take_while(|&c| c == '\\').count();
+    count % 2 == 1
 }
 
 fn ends_with_keyword(source: &str) -> bool {
@@ -211,6 +240,15 @@ fn test() {
              }
         "#,
         r"const a = 'a\\';",
+        // Non-ASCII characters with trailing backslash - should NOT be fixed
+        // (regression test for byte-length vs char-length bug)
+        r"const a = 'c:\\someöäü\\';",
+        r"const a = 'c:\\日本語\\';",
+        // String literals in type annotations should not be changed (String.raw is not valid in type positions)
+        r#"declare const POSIX_REGEX_SOURCE: { ascii: "\\x00-\\x7F"; };"#,
+        r#"type Foo = { path: "C:\\windows\\path"; };"#,
+        r#"interface Bar { regex: "foo\\.bar"; }"#,
+        r#"let x: "a\\b";"#,
     ];
 
     let fail = vec![
@@ -225,6 +263,8 @@ fn test() {
         r"const a = () => void'a\\b';",
         r"const foo = 'foo \\x46';",
         r"for (const f of'a\\b') {}",
+        // Non-ASCII characters without trailing backslash - should be fixed
+        r"const a = 'c:\\someöäü\\path';",
     ];
 
     let fix = vec![
@@ -256,9 +296,19 @@ fn test() {
         (r"const a = () => void'a\\b';", r"const a = () => void String.raw`a\b`;", None),
         (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;", None),
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
+        // Non-ASCII characters
+        (r"const a = 'c:\\someöäü\\path';", r"const a = String.raw`c:\someöäü\path`;", None),
     ];
 
     Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+
+    let dts_pass = vec![r#"declare const POSIX_REGEX_SOURCE: { ascii: "\\x00-\\x7F"; };"#];
+    let dts_fail: Vec<&str> = vec![];
+
+    Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, dts_pass, dts_fail)
+        .change_rule_path("test.d.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

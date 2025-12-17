@@ -176,7 +176,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             inner: arguments_ref,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportExpression({
-                /// * SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                // SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
                 unsafe {
                     transmute::<
                         &AstNode<'_, ImportExpression<'_>>,

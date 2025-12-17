@@ -1,11 +1,8 @@
 {
   "name": "oxfmt",
-  "version": "0.14.0",
-  "type": "module",
+  "version": "0.18.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
@@ -13,21 +10,27 @@
     "url": "git+https://github.com/oxc-project/oxc",
     "directory": "npm/oxfmt"
   },
-  "main": "dist/index.js",
-  "bin": {
-    "oxfmt": "bin/oxfmt"
-  },
-  "types": "dist/index.d.ts",
+  "author": "Boshen and oxc contributors",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "oxfmt": "bin/oxfmt"
   },
   "files": [
+    "README.md",
     "bin/oxfmt",
     "configuration_schema.json",
-    "dist",
-    "README.md"
-  ]
+    "dist"
+  ],
+  "dependencies": {
+    "tinypool": "2.0.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
 }

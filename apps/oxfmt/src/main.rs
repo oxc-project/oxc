@@ -1,29 +1,18 @@
-use std::io::BufWriter;
-
-use oxfmt::{CliRunResult, FormatRunner, format_command, init_miette, init_tracing, run_lsp};
+use oxfmt::cli::{
+    CliRunResult, FormatRunner, format_command, init_miette, init_rayon, init_tracing,
+};
 
 // Pure Rust CLI entry point.
-// For JS CLI entry point, see `run.rs` exported by `lib.rs`.
+// This CLI only supports the basic `Cli` mode.
+// For full featured JS CLI entry point, see `run_cli()` exported by `main_napi.rs`.
 
 #[tokio::main]
 async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
     let command = format_command().run();
 
-    // Handle LSP mode
-    if command.misc_options.lsp {
-        run_lsp().await;
-        return CliRunResult::None;
-    }
-
-    // Otherwise, CLI mode
     init_tracing();
     init_miette();
-
-    command.handle_threads();
-
-    // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-    // See `https://github.com/rust-lang/rust/issues/60673`.
-    let mut stdout = BufWriter::new(std::io::stdout());
-    FormatRunner::new(command).run(&mut stdout)
+    init_rayon(command.runtime_options.threads);
+    FormatRunner::new(command).run()
 }

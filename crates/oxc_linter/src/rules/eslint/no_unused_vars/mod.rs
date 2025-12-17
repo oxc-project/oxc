@@ -396,15 +396,12 @@ impl Symbol<'_, '_> {
                 flags.contains(ScopeFlags::TsModuleBlock)
             })
             .any(|ambient_module_scope_id| {
-                let AstKind::TSModuleDeclaration(module) = self
-                    .nodes()
-                    .get_node(self.scoping().get_node_id(ambient_module_scope_id))
-                    .kind()
-                else {
-                    return false;
-                };
-
-                module.kind.is_global()
+                matches!(
+                    self.nodes()
+                        .get_node(self.scoping().get_node_id(ambient_module_scope_id))
+                        .kind(),
+                    AstKind::TSGlobalDeclaration(_)
+                )
             })
     }
 }

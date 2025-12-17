@@ -1,16 +1,16 @@
-import type { Plugin } from '../../../../dist/index.js';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'plugin6',
+    name: "plugin6",
   },
   rules: {
-    'no-debugger': {
+    "no-debugger": {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: 'Unexpected Debugger Statement',
+              message: "Unexpected Debugger Statement",
               node: debuggerStatement,
             });
           },

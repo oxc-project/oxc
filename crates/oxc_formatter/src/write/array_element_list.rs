@@ -5,10 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     Expand, FormatTrailingCommas,
     ast_nodes::AstNode,
-    formatter::{
-        Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
-        separated::FormatSeparatedIter,
-    },
+    formatter::{Buffer, Format, Formatter, GroupId, prelude::*, separated::FormatSeparatedIter},
     utils::array::write_array_node,
     write,
 };
@@ -28,7 +25,7 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
 }
 
 impl<'a> Format<'a> for ArrayElementList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let expand_lists = f.context().options().expand == Expand::Always;
         let layout = if expand_lists {
             ArrayLayout::OnePerLine
@@ -50,23 +47,23 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                     .with_group_id(self.group_id)
                 {
                     filler.entry(
-                        &format_once(|f| {
+                        &format_with(|f| {
                             if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
-                                write!(f, empty_line())
+                                write!(f, empty_line());
                             } else if f
                                 .comments()
                                 .has_leading_own_line_comment(element.span().start)
                             {
-                                write!(f, hard_line_break())
+                                write!(f, hard_line_break());
                             } else {
-                                write!(f, soft_line_break_or_space())
+                                write!(f, soft_line_break_or_space());
                             }
                         }),
                         &element,
                     );
                 }
 
-                filler.finish()
+                filler.finish();
             }
             ArrayLayout::OnePerLine => write_array_node(
                 self.elements.len(),
@@ -123,7 +120,7 @@ pub fn can_concisely_print_array_list(
 
     for item in list {
         match item {
-            ArrayExpressionElement::NumericLiteral(literal) => {}
+            ArrayExpressionElement::NumericLiteral(_) => {}
             ArrayExpressionElement::UnaryExpression(unary_expr) => {
                 let signed = unary_expr.operator.is_arithmetic();
                 let argument = &unary_expr.argument;
@@ -150,11 +147,9 @@ pub fn can_concisely_print_array_list(
     // ]
     // ```
 
-    !comments.comments_before_iter(array_expression_span.end).any(|comment| {
-        comment.is_line()
-            && !comments.is_own_line_comment(comment)
-            && comments.is_end_of_line_comment(comment)
-    })
+    !comments
+        .comments_before_iter(array_expression_span.end)
+        .any(|comment| comment.is_line() && !comment.preceded_by_newline())
 }
 
 // ```js

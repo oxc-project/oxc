@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -96,7 +94,6 @@ impl Rule for NoConsoleSpaces {
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
                         call_expr_method_callee_info(call_expr).unwrap().1,
                         expression_arg.span(),
-                        literal_raw,
                         is_template_lit,
                         ctx,
                     );
@@ -108,7 +105,6 @@ impl Rule for NoConsoleSpaces {
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
                         call_expr_method_callee_info(call_expr).unwrap().1,
                         expression_arg.span(),
-                        literal_raw,
                         is_template_lit,
                         ctx,
                     );
@@ -128,19 +124,20 @@ fn report_diagnostic<'a>(
     direction: &'static str,
     ident: &'a str,
     span: Span,
-    literal_raw: &'a str,
     is_template_lit: bool,
     ctx: &LintContext<'a>,
 ) {
     let span = if is_template_lit { span } else { Span::new(span.start + 1, span.end - 1) };
 
     ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), |fixer| {
+        // Use raw source text to preserve escape sequences (e.g. `\n`, `\'`)
+        let raw_text = fixer.source_range(span);
         let content = if is_template_lit {
-            Cow::Owned(format!("`{}`", literal_raw.trim()))
+            format!("`{}`", raw_text.trim_matches('`').trim())
         } else {
-            Cow::Borrowed(literal_raw.trim())
+            raw_text.trim().to_string()
         };
-        fixer.replace(span, content.to_string())
+        fixer.replace(span, content)
     });
 }
 
@@ -251,6 +248,8 @@ fn test() {
         ("console.info(foo, ` bar`)", "console.info(foo, `bar`)", None),
         ("console.warn(foo, ` bar`)", "console.warn(foo, `bar`)", None),
         ("console.error(foo, ` bar`)", "console.error(foo, `bar`)", None),
+        (r#"console.log("foo\\n ", bar)"#, r#"console.log("foo\\n", bar)"#, None),
+        (r#"console.log(foo, " \\nbar")"#, r#"console.log(foo, "\\nbar")"#, None),
     ];
 
     Tester::new(NoConsoleSpaces::NAME, NoConsoleSpaces::PLUGIN, pass, fail)

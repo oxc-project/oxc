@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 let x: string = `\x01`;
@@ -96,9 +96,9 @@ class A {constructor(public readonly a: number) {}}
 ----------
 class A{constructor(public readonly a:number){}}
 ########## 22
-abstract class A {private abstract static m() {}}
+abstract class A {private abstract static m()}
 ----------
-abstract class A{private abstract static m(){}}
+abstract class A{private abstract static m();}
 ########## 23
 abstract class A {private abstract static readonly prop: string}
 ----------
@@ -132,22 +132,26 @@ c = foo<string>;
 ----------
 c=foo<string> ;
 ########## 31
+new Map<string, number>();
+----------
+new Map<string,number>;
+########## 32
 d = x satisfies y;
 ----------
 d=((x) satisfies y);
-########## 32
+########## 33
 export @x declare abstract class C {}
 ----------
 export @x declare abstract class C{}
-########## 33
+########## 34
 div<T>``
 ----------
 div<T>``;
-########## 34
+########## 35
 export type Component<Props = any> = Foo;
 ----------
 export type Component<Props = any>=Foo;
-########## 35
+########## 36
 
 export type Component<
   Props = any,
@@ -163,19 +167,19 @@ export type Component<
 
 ----------
 export type Component<Props = any,RawBindings = any,D = any,C extends ComputedOptions = ComputedOptions,M extends MethodOptions = MethodOptions,E extends EmitsOptions|Record<string,any[]> = {},S extends Record<string,any> = any>=ConcreteComponent<Props,RawBindings,D,C,M,E,S>|ComponentPublicInstanceConstructor<Props>;
-########## 36
+########## 37
 (a || b) as any
 ----------
 (a||b) as any;
-########## 37
+########## 38
 (a ** b) as any
 ----------
 (a**b) as any;
-########## 38
+########## 39
 (function g() {}) as any
 ----------
 (function g(){}) as any;
-########## 39
+########## 40
 
 import defaultExport from "module-name";
 import * as name from "module-name";
@@ -212,14 +216,14 @@ export { default as name16 } from "module-name";
 
 ----------
 import defaultExport from"module-name";import*as name from"module-name";import{export1}from"module-name";import{export1 as alias1}from"module-name";import{default as alias}from"module-name";import{export1,export2}from"module-name";import{export1,export2 as alias2}from"module-name";import{"string name" as alias}from"module-name";import defaultExport,{export1}from"module-name";import defaultExport,*as name from"module-name";import"module-name";import{}from"mod";export let name1,name2;export const name3=1,name4=2;export function functionName(){}export class ClassName{}export function*generatorFunctionName(){}export const{name5,name2:bar}=o;export const[name6,name7]=array;export{name8,name81};export{variable1 as name9,variable2 as name10,name82};export{variable1 as "string name"};export{name1 as default1};export*from"module-name";export*as name11 from"module-name";export{name12,nameN}from"module-name";export{import1 as name13,import2 as name14,name15}from"module-name";export{default}from"module-name";export{default as name16}from"module-name";
-########## 40
+########## 41
 
 import a = require("a");
 export import b = require("b");
 
 ----------
 import a = require("a");export import b = require("b");
-########## 41
+########## 42
 class C {
   static
   static
@@ -228,3 +232,19 @@ class C {
 }
 ----------
 class C{static static;static bar(){}}
+########## 43
+type T = typeof import('react');
+----------
+type T=typeof import("react");
+########## 44
+type U = typeof import("vue");
+----------
+type U=typeof import("vue");
+########## 45
+type V = typeof import('some-module').SomeType;
+----------
+type V=typeof import("some-module").SomeType;
+########## 46
+type W = typeof import('pkg').default<string>;
+----------
+type W=typeof import("pkg").default<string>;

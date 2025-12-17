@@ -1,6 +1,8 @@
 ---
 source: crates/oxc_codegen/tests/integration/sourcemap.rs
 ---
+Node.js version: v24.10.0
+
 ## Input
 const fn = () => {
     Error.stackTraceLimit = 2;

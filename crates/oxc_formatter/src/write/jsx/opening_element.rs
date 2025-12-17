@@ -1,12 +1,9 @@
 use std::ops::Deref;
 
-use oxc_ast::ast::{
-    JSXAttribute, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral,
-};
+use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral};
 use oxc_span::GetSpan;
 
 use crate::{
-    AttributePosition, FormatResult,
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     write,
@@ -30,7 +27,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
         Self { element, is_self_closing }
     }
 
-    fn compute_layout(&self, f: &mut Formatter<'_, 'a>) -> OpeningElementLayout {
+    fn compute_layout(&self, f: &Formatter<'_, 'a>) -> OpeningElementLayout {
         let attributes = self.element.attributes();
 
         let comments = f.context().comments();
@@ -44,7 +41,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
             self.type_arguments().map_or_else(|| self.name.span().end, |t| t.span.end);
         let first_attribute_start_or_element_end =
             self.attributes.first().map_or_else(|| self.span.end, |a| a.span().start);
-        let mut name_has_comment = comments
+        let name_has_comment = comments
             .has_comment_in_range(type_arguments_or_name_end, first_attribute_start_or_element_end);
 
         if self.is_self_closing && attributes.is_empty() && !name_has_comment {
@@ -70,11 +67,9 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
 }
 
 impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 
-        let name = self.name();
-        let type_arguments = self.type_arguments();
         let attributes = self.attributes();
 
         let format_open = format_with(|f| write!(f, ["<", self.name(), self.type_arguments(),]));
@@ -82,45 +77,50 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
 
         match layout {
             OpeningElementLayout::Inline => {
-                write!(f, [format_open, space(), format_close])
+                write!(f, [format_open, space(), format_close]);
             }
             OpeningElementLayout::SingleStringAttribute => {
                 let attribute_spacing = if self.is_self_closing { Some(space()) } else { None };
                 write!(
                     f,
                     [format_open, space(), self.attributes(), attribute_spacing, format_close]
-                )
+                );
             }
             OpeningElementLayout::IndentAttributes {
                 name_has_comment,
                 last_attribute_has_comment,
             } => {
                 let format_inner = format_with(|f| {
-                    write!(f, [format_open, soft_line_indent_or_space(&self.attributes())])?;
+                    write!(f, [format_open]);
+
+                    let attributes = self.attributes();
+                    if !attributes.is_empty() {
+                        write!(f, [soft_line_indent_or_space(&attributes)]);
+                    }
 
                     let comments = f.context().comments().comments_before(self.span.end);
-                    FormatTrailingComments::Comments(comments).fmt(f)?;
+                    FormatTrailingComments::Comments(comments).fmt(f);
 
                     let force_bracket_same_line = f.options().bracket_same_line.value();
                     let wants_bracket_same_line = attributes.is_empty() && !name_has_comment;
 
                     if self.is_self_closing {
-                        write!(f, [soft_line_break_or_space(), format_close])
+                        write!(f, [soft_line_break_or_space(), format_close]);
                     } else if last_attribute_has_comment {
-                        write!(f, [soft_line_break(), format_close])
+                        write!(f, [soft_line_break(), format_close]);
                     } else if (force_bracket_same_line && !self.attributes.is_empty())
                         || wants_bracket_same_line
                     {
-                        write!(f, [format_close])
+                        write!(f, [format_close]);
                     } else {
-                        write!(f, [soft_line_break(), format_close])
+                        write!(f, [soft_line_break(), format_close]);
                     }
                 });
 
                 let has_multiline_string_attribute = attributes
                     .iter()
                     .any(|attribute| is_multiline_string_literal_attribute(attribute));
-                write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)])
+                write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)]);
             }
         }
     }

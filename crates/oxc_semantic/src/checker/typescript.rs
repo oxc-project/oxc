@@ -104,8 +104,7 @@ pub fn check_ts_type_alias_declaration<'a>(
 }
 
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
-        .with_label(span)
+    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
@@ -149,24 +148,49 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
 }
 
 fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    ts_error(
+        "1235",
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
     .with_label(span)
 }
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+    check_ts_export_assignment_in_module_decl(decl, ctx);
+}
+
+fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "2670",
+        "Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.",
+    )
+    .with_label(span)
+}
+
+pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+
+    if !decl.declare && !ctx.in_declare_scope() {
+        ctx.error(global_scope_augmentation_should_have_declare_modifier(decl.global_span));
+    }
+}
+
+fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
     for node in ctx.nodes.ancestors(ctx.current_node_id) {
         match node.kind() {
-            AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
+            AstKind::Program(_)
+            | AstKind::TSModuleBlock(_)
+            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
             m if m.is_module_declaration() => {
                 // We need to check the parent of the parent
             }
             _ => {
-                ctx.error(not_allowed_namespace_declaration(decl.span));
+                ctx.error(not_allowed_namespace_declaration(span));
             }
         }
     }
@@ -228,11 +252,12 @@ fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnost
 }
 
 fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
+    ts_error("2390", "Constructor implementation is missing.").with_label(span)
 }
 
 fn function_implementation_missing(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    ts_error(
+        "2391",
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)
@@ -413,11 +438,6 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     }
 }
 
-fn invalid_jsx_attribute_value(span: Span) -> OxcDiagnostic {
-    ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
-        .with_label(span)
-}
-
 fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
     ts_error("18007", "JSX expressions may not use the comma operator")
         .with_help("Did you mean to write an array?")
@@ -428,13 +448,70 @@ pub fn check_jsx_expression_container(
     container: &JSXExpressionContainer,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::JSXAttribute(_))
-    {
-        ctx.error(invalid_jsx_attribute_value(container.span()));
-    }
-
     if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
         ctx.error(jsx_expressions_may_not_use_the_comma_operator(container.expression.span()));
+    }
+}
+
+fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
+    ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
+        .with_label(span)
+        .with_help("If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.")
+}
+
+pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &SemanticBuilder<'a>) {
+    if !ctx.source_type.is_typescript() {
+        return;
+    }
+    check_ts_export_assignment_in_statements(&program.body, ctx);
+}
+
+fn check_ts_export_assignment_in_module_decl<'a>(
+    module_decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    let Some(body) = &module_decl.body else {
+        return;
+    };
+    match body {
+        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
+            check_ts_export_assignment_in_module_decl(nested, ctx);
+        }
+        TSModuleDeclarationBody::TSModuleBlock(block) => {
+            check_ts_export_assignment_in_statements(&block.body, ctx);
+        }
+    }
+}
+
+fn check_ts_export_assignment_in_statements<'a>(
+    statements: &[Statement<'a>],
+    ctx: &SemanticBuilder<'a>,
+) {
+    let mut export_assignment_spans = vec![];
+    let mut has_other_exports = false;
+
+    for stmt in statements {
+        match stmt {
+            Statement::TSExportAssignment(export_assignment) => {
+                export_assignment_spans.push(export_assignment.span);
+            }
+            Statement::ExportNamedDeclaration(export_decl) => {
+                // ignore `export {}`
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
+                    continue;
+                }
+                has_other_exports = true;
+            }
+            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+                has_other_exports = true;
+            }
+            _ => {}
+        }
+    }
+
+    if has_other_exports {
+        for span in export_assignment_spans {
+            ctx.error(ts_export_assignment_cannot_be_used_with_other_exports(span));
+        }
     }
 }

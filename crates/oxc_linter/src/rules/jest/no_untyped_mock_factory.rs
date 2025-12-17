@@ -8,12 +8,14 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
-fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn add_type_parameter_to_module_mock_diagnostic(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "`jest.mock()` factories should not be used without an explicit type parameter.",
     )
-    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
-    .with_label(span1)
+    .with_help(format!(
+        "Add a type parameter to the mock factory such as `typeof import({module_name:?})`"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -143,9 +145,9 @@ impl NoUntypedMockFactory {
                     let mut code = String::with_capacity(string_literal.value.len() + 20);
                     code.push_str("<typeof import('");
                     code.push_str(string_literal.value.as_str());
-                    code.push_str("')>(");
+                    code.push_str("')>");
 
-                    fixer.replace(Span::sized(string_literal.span.start - 1, 1), code)
+                    fixer.insert_text_after(&call_expr.callee, code)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
@@ -395,6 +397,18 @@ fn test() {
                     return jest.fn(() => 42);
                 });
             ",
+            None,
+        ),
+        // Test case for newline between jest.mock( and module name
+        (
+            "jest.mock(
+  'foo',
+  () => {}
+);",
+            "jest.mock<typeof import('foo')>(
+  'foo',
+  () => {}
+);",
             None,
         ),
     ];

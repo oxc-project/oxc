@@ -1,9 +1,6 @@
-use oxc_ast::{AstKind, ast::Program};
-use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
-use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, prelude::Interned};
+use super::{FormatContext, GroupId, UniqueGroupIdBuilder, prelude::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -16,10 +13,6 @@ pub struct FormatState<'ast> {
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
-    // This is using a RefCell as it only exists in debug mode,
-    // the Formatter is still completely immutable in release builds
-    // #[cfg(debug_assertions)]
-    // pub printed_tokens: PrintedTokens,
 }
 
 impl std::fmt::Debug for FormatState<'_> {
@@ -35,8 +28,6 @@ impl<'ast> FormatState<'ast> {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
-            // #[cfg(debug_assertions)]
-            // printed_tokens: Default::default(),
         }
     }
 
@@ -65,81 +56,4 @@ impl<'ast> FormatState<'ast> {
     pub fn printed_interned_elements(&mut self) -> &mut FxHashMap<Interned<'ast>, usize> {
         &mut self.printed_interned_elements
     }
-
-    #[cfg(not(debug_assertions))]
-    #[inline]
-    pub fn track_token(&mut self, span: Span) {}
-
-    /// Tracks the given token as formatted
-    #[cfg(debug_assertions)]
-    #[inline]
-    pub fn track_token(&mut self, span: Span) {
-        // self.printed_tokens.track_token(token);
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline]
-    pub fn set_token_tracking_disabled(&mut self, _: bool) {}
-
-    /// Disables or enables token tracking for a portion of the code.
-    ///
-    /// It can be useful to disable the token tracking when it is necessary to re-format a node with different parameters.
-    #[cfg(debug_assertions)]
-    pub fn set_token_tracking_disabled(&mut self, enabled: bool) {
-        todo!()
-        // self.printed_tokens.set_disabled(enabled)
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline]
-    pub fn is_token_tracking_disabled(&self) -> bool {
-        false
-    }
-
-    /// Returns `true` if token tracking is currently disabled.
-    #[cfg(debug_assertions)]
-    pub fn is_token_tracking_disabled(&self) -> bool {
-        todo!()
-        // self.printed_tokens.is_disabled()
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline]
-    pub fn assert_formatted_all_tokens(&self, _root: &SyntaxNode) {}
-
-    /// Asserts in debug builds that all tokens have been printed.
-    #[cfg(debug_assertions)]
-    #[inline]
-    pub fn assert_formatted_all_tokens(&self, root: &SyntaxNode) {
-        todo!()
-        // self.printed_tokens.assert_all_tracked(root);
-    }
 }
-
-impl FormatState<'_> {
-    pub fn snapshot(&self) -> FormatStateSnapshot {
-        todo!()
-        // FormatStateSnapshot {
-        // #[cfg(debug_assertions)]
-        // printed_tokens: self.printed_tokens.snapshot(),
-        // }
-    }
-
-    pub fn restore_snapshot(&mut self, _snapshot: FormatStateSnapshot) {
-        todo!()
-        // let FormatStateSnapshot {
-        // #[cfg(debug_assertions)]
-        // printed_tokens,
-        // } = snapshot;
-
-        // cfg_if::cfg_if! {
-        // if #[cfg(debug_assertions)] {
-        // self.printed_tokens.restore(printed_tokens);
-        // }
-        // }
-    }
-}
-
-pub struct FormatStateSnapshot;
-// #[cfg(debug_assertions)]
-// printed_tokens: printed_tokens::PrintedTokensSnapshot,

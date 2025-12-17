@@ -1,5 +1,3 @@
-use std::iter;
-
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -7,21 +5,35 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::*,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_trailing_comments,
-        },
+        Buffer, Format, Formatter, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
+        trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
-    utils::{assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide},
+    utils::{
+        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    },
     write,
     write::function::FormatContentWithCacheMode,
 };
 
-use super::parameters::has_only_simple_parameters;
+use super::{FormatWrite, parameters::has_only_simple_parameters};
+
+impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
+    for AstNode<'a, ArrowFunctionExpression<'a>>
+{
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        FormatJsArrowFunctionExpression::new(self).fmt(f);
+    }
+
+    fn write_with_options(
+        &self,
+        options: FormatJsArrowFunctionExpressionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) {
+        FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f);
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
@@ -32,7 +44,7 @@ pub struct FormatJsArrowFunctionExpression<'a, 'b> {
 #[derive(Default, Clone, Copy)]
 pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
-    pub call_arg_layout: Option<GroupedCallArgumentLayout>,
+    pub call_argument_layout: Option<GroupedCallArgumentLayout>,
     // Determine whether the signature and body should be cached.
     pub cache_mode: FunctionCacheMode,
 }
@@ -77,16 +89,14 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     ) -> Self {
         Self { arrow, options }
     }
-}
 
-impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let layout =
-            ArrowFunctionLayout::for_arrow(self.arrow, f.context().comments(), self.options);
+    #[inline]
+    pub fn format(&self, f: &mut Formatter<'_, 'a>) {
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
-                write!(f, chain)
+                write!(f, chain);
             }
             ArrowFunctionLayout::Single(arrow) => {
                 let body = &arrow.body();
@@ -97,14 +107,14 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         [
                             format_signature(
                                 arrow,
-                                self.options.call_arg_layout.is_some(),
+                                self.options.call_argument_layout.is_some(),
                                 true,
                                 self.options.cache_mode
                             ),
                             space(),
                             "=>"
                         ]
-                    )
+                    );
                 });
 
                 let format_body = FormatMaybeCachedFunctionBody {
@@ -145,7 +155,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                     token(")")
                                 ))))
                             ))]
-                        )
+                        );
                     } else {
                         write!(
                             f,
@@ -158,7 +168,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                     token(")")
                                 ))
                             ))]
-                        )
+                        );
                     };
                 }
 
@@ -176,12 +186,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     });
 
                 if body_has_soft_line_break {
-                    write!(f, [formatted_signature, space(), format_body])
+                    write!(f, [formatted_signature, space(), format_body]);
                 } else {
                     let should_add_parens = arrow.expression && should_add_parens(body);
 
                     let is_last_call_arg = matches!(
-                        self.options.call_arg_layout,
+                        self.options.call_argument_layout,
                         Some(GroupedCallArgumentLayout::GroupedLastArgument)
                     );
 
@@ -190,63 +200,36 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         || (matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    let body_is_condition_type =
-                        matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
+                    write!(
+                        f,
+                        [
+                            formatted_signature,
+                            group(&format_args!(
+                                soft_line_indent_or_space(&format_with(|f| {
+                                    if should_add_parens {
+                                        write!(f, if_group_fits_on_line(&"("));
+                                    }
 
-                    if body_is_condition_type {
-                        write!(
-                            f,
-                            [
-                                formatted_signature,
-                                group(&format_args!(
-                                    soft_line_indent_or_hard_space(&format_with(|f| {
-                                        if should_add_parens {
-                                            write!(f, if_group_fits_on_line(&"("))?;
-                                        }
+                                    write!(f, format_body);
 
-                                        write!(f, format_body)?;
-
-                                        if should_add_parens {
-                                            write!(f, if_group_fits_on_line(&")"))?;
-                                        }
-
-                                        Ok(())
-                                    })),
-                                    is_last_call_arg
-                                        .then_some(format_args!(FormatTrailingCommas::All,)),
-                                    should_add_soft_line.then_some(format_args!(soft_line_break()))
-                                ))
-                            ]
-                        )
-                    } else {
-                        write!(
-                            f,
-                            [
-                                formatted_signature,
-                                group(&format_args!(
-                                    soft_line_indent_or_space(&format_with(|f| {
-                                        if should_add_parens {
-                                            write!(f, if_group_fits_on_line(&"("))?;
-                                        }
-
-                                        write!(f, format_body)?;
-
-                                        if should_add_parens {
-                                            write!(f, if_group_fits_on_line(&")"))?;
-                                        }
-
-                                        Ok(())
-                                    })),
-                                    is_last_call_arg
-                                        .then_some(format_args!(FormatTrailingCommas::All,)),
-                                    should_add_soft_line.then_some(format_args!(soft_line_break()))
-                                ))
-                            ]
-                        )
-                    }
+                                    if should_add_parens {
+                                        write!(f, if_group_fits_on_line(&")"));
+                                    }
+                                })),
+                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                should_add_soft_line.then_some(soft_line_break())
+                            ))
+                        ]
+                    );
                 }
             }
         }
+    }
+}
+
+impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        self.format(f);
     }
 }
 
@@ -277,24 +260,24 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// of the different layouts.
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
-        comments: &Comments<'a>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
         let mut middle = Vec::new();
         let mut current = arrow;
         let mut should_break = false;
+        let is_non_grouped_or_grouped_last_argument = matches!(
+            options.call_argument_layout,
+            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+        );
 
         loop {
-            if current.expression()
+            if is_non_grouped_or_grouped_last_argument
+                && current.expression()
                 && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
                 && let AstNodes::ArrowFunctionExpression(next) =
                     &expr_stmt.expression().as_ast_nodes()
-                && matches!(
-                    options.call_arg_layout,
-                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                )
             {
                 should_break = should_break || Self::should_break_chain(current);
 
@@ -418,12 +401,11 @@ impl<'a, 'b> ArrowChain<'a, 'b> {
 }
 
 impl<'a> Format<'a> for ArrowChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
         let tail_body = tail.body();
-        let is_assignment_rhs = self.options.assignment_layout.is_some();
-        let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
+        let is_grouped_call_arg_layout = self.options.call_argument_layout.is_some();
 
         // If this chain is the callee in a parent call expression, then we
         // want it to break onto a new line to clearly show that the arrow
@@ -503,7 +485,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
-                        let format_leading_comments = format_once(|f| {
+                        let format_leading_comments = format_with(|f| {
                             if should_format_comments {
                                 // A grouped layout implies that the arrow chain is trying to be rendered
                                 // in a condensed, single-line format (at least the signatures, not
@@ -512,7 +494,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                                 // then we want to _force_ the line break so that the leading comments
                                 // don't inadvertently end up on the previous line after the fat arrow.
                                 if is_grouped_call_arg_layout {
-                                    write!(f, [space(), format_leading_comments(arrow.span())])
+                                    write!(f, [space(), format_leading_comments(arrow.span())]);
                                 } else {
                                     write!(
                                         f,
@@ -520,10 +502,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                                             soft_line_break_or_space(),
                                             format_leading_comments(arrow.span())
                                         ]
-                                    )
+                                    );
                                 }
-                            } else {
-                                Ok(())
                             }
                         });
 
@@ -543,7 +523,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                                     self.options.cache_mode
                                 )
                             ]
-                        )
+                        );
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -557,22 +537,20 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // one additional level, as shown above.
                     if is_first_in_chain || has_initial_indent {
                         is_first_in_chain = false;
-                        write!(f, [formatted_signature])?;
+                        write!(f, [formatted_signature]);
                     } else {
-                        write!(f, [indent(&formatted_signature)])?;
+                        write!(f, [indent(&formatted_signature)]);
                     }
 
                     // The arrow of the tail is formatted outside of the group to ensure it never
                     // breaks from the body
                     if !std::ptr::eq(arrow, tail) {
-                        write!(f, [space(), "=>"])?;
+                        write!(f, [space(), "=>"]);
                     }
                 }
-
-                Ok(())
             });
 
-            group(&join_signatures).should_expand(*expand_signatures).fmt(f)
+            group(&join_signatures).should_expand(*expand_signatures).fmt(f);
         });
 
         let format_tail_body_inner = format_with(|f| {
@@ -594,7 +572,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             soft_block_indent(&format_tail_body),
                             token(")")
                         ))))]
-                    )?;
+                    );
                 } else {
                     write!(
                         f,
@@ -603,7 +581,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             soft_block_indent(&format_tail_body),
                             token(")")
                         ))]
-                    )?;
+                    );
                 }
             } else {
                 let should_add_parens = tail.expression && should_add_parens(tail_body);
@@ -615,12 +593,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             format_tail_body,
                             if_group_fits_on_line(&token(")"))
                         ]
-                    )?;
+                    );
                 } else {
-                    write!(f, [format_tail_body])?;
+                    write!(f, [format_tail_body]);
                 }
             }
-            Ok(())
         });
 
         let format_tail_body = format_with(|f| {
@@ -635,47 +612,45 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                         soft_line_indent_or_space(&format_tail_body_inner),
                         should_add_soft_line.then_some(soft_line_break())
                     ]
-                )
+                );
             } else {
-                write!(f, [space(), format_tail_body_inner])
+                write!(f, [space(), format_tail_body_inner]);
             }
         });
 
         let group_id = f.group_id("arrow-chain");
 
-        let format_inner = format_once(|f| {
+        let format_inner = format_with(|f| {
             if has_initial_indent {
                 write!(
                     f,
                     [group(&indent(&format_args!(soft_line_break(), format_arrow_signatures)))
                         .with_group_id(Some(group_id))
                         .should_expand(break_signatures)]
-                )?;
+                );
             } else {
                 write!(
                     f,
                     group(&format_arrow_signatures)
                         .with_group_id(Some(group_id))
                         .should_expand(break_signatures)
-                )?;
+                );
             }
 
-            write!(f, [space(), "=>"])?;
+            write!(f, [space(), "=>"]);
 
             if is_grouped_call_arg_layout {
-                write!(f, [group(&format_tail_body)])?;
+                write!(f, [group(&format_tail_body)]);
             } else {
-                write!(f, [indent_if_group_breaks(&format_tail_body, group_id)])?;
+                write!(f, [indent_if_group_breaks(&format_tail_body, group_id)]);
             }
 
             if is_callee {
-                write!(f, [if_group_breaks(&soft_line_break()).with_group_id(Some(group_id))])?;
+                write!(f, [if_group_breaks(&soft_line_break()).with_group_id(Some(group_id))]);
             }
-
-            Ok(())
         });
 
-        write!(f, [group(&format_inner)])
+        write!(f, [group(&format_inner)]);
     }
 }
 
@@ -707,48 +682,34 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 
 /// Writes the arrow function type parameters, parameters, and return type annotation.
 ///
-/// Formats the parameters and return type annotation without any soft line breaks if `is_first_or_last_call_argument` is `true`
+/// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
-///
-/// # Errors
-///
-/// Returns [`FormatError::PoorLayout`] if `is_first_or_last_call_argument` is `true` but the parameters
-/// or return type annotation contain any content that forces a [*group to break](FormatElements::will_break).
-///
-/// This error gets captured by FormatJsCallArguments.
 fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
-    is_first_or_last_call_argument: bool,
+    is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
-        let content = format_once(|f| {
+        let content = format_with(|f| {
             group(&format_args!(
                 maybe_space(!is_first_in_chain),
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                format_once(|f| {
-                    let needs_space = arrow.return_type.as_ref().is_some_and(|return_type| {
-                        f.context().comments().has_comment_before(return_type.span.start)
-                    });
-                    maybe_space(needs_space).fmt(f)
-                }),
-                group(&arrow.return_type())
+                arrow.return_type().map(FormatNodeWithoutTrailingComments),
             ))
-            .fmt(f)
+            .fmt(f);
         });
         let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
-        if is_first_or_last_call_argument {
-            let mut buffer = RemoveSoftLinesBuffer::new(f);
-            let mut recording = buffer.start_recording();
-
-            write!(recording, format_head)?;
-
-            if recording.stop().will_break() {
-                return Err(FormatError::PoorLayout);
+        if is_grouped_call_argument {
+            // The first arrow's soft lines have already been removed in the CallArguments.
+            if is_first_in_chain {
+                write!(f, format_head);
+            } else {
+                let mut buffer = RemoveSoftLinesBuffer::new(f);
+                write!(buffer, format_head);
             }
         } else {
             write!(
@@ -761,15 +722,14 @@ fn format_signature<'a, 'b>(
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
                     format_head
                 ]
-            )?;
+            );
         }
 
         // Print comments before the fat arrow (`=>`)
         let comments_before_fat_arrow =
             f.context().comments().comments_before_character(arrow.params.span().end, b'=');
-        let content =
-            format_once(|f| FormatTrailingComments::Comments(comments_before_fat_arrow).fmt(f));
-        write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)])
+        let content = FormatTrailingComments::Comments(comments_before_fat_arrow);
+        write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)]);
     })
 }
 
@@ -786,16 +746,16 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let content = format_once(|f| {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let content = format_with(|f| {
             if self.expression
                 && let AstNodes::ExpressionStatement(s) =
                     &self.body.statements().first().unwrap().as_ast_nodes()
             {
                 return s.expression().fmt(f);
             }
-            self.body.fmt(f)
+            self.body.fmt(f);
         });
-        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f)
+        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f);
     }
 }

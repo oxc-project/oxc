@@ -1,14 +1,14 @@
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'message-id-error-plugin',
+    name: "message-id-error-plugin",
   },
   rules: {
-    'test-rule': {
+    "test-rule": {
       meta: {
         messages: {
-          validMessage: 'This is a valid message',
+          validMessage: "This is a valid message",
         },
       },
       create(context) {
@@ -16,7 +16,7 @@ const plugin: Plugin = {
           DebuggerStatement(node) {
             // Try to use an unknown messageId
             context.report({
-              messageId: 'unknownMessage',
+              messageId: "unknownMessage",
               node,
             });
           },

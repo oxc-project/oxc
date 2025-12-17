@@ -689,6 +689,7 @@ impl ContentEq for Statement<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -736,6 +737,7 @@ impl ContentEq for Declaration<'_> {
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
             }
@@ -2280,6 +2282,13 @@ impl ContentEq for TSModuleDeclarationBody<'_> {
     }
 }
 
+impl ContentEq for TSGlobalDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
 impl ContentEq for TSModuleBlock<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.directives, &other.directives)
@@ -2320,7 +2329,7 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.argument, &other.argument)
+        ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)

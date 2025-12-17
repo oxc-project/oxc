@@ -49,7 +49,6 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 #[ast_meta]
 #[estree(raw_deser = "
     const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
-        global = kind === 'global',
         start = DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
@@ -65,7 +64,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
             // No `body` field
             kind,
             declare,
-            global,
+            global: false,
             start,
             end,
             ...(RANGE && { range: [start, end] }),
@@ -79,7 +78,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
             body,
             kind,
             declare,
-            global,
+            global: false,
             start,
             end,
             ...(RANGE && { range: [start, end] }),
@@ -211,7 +210,7 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
 
         state.serialize_field("kind", &module.kind);
         state.serialize_field("declare", &module.declare);
-        state.serialize_field("global", &TSModuleDeclarationGlobal(module));
+        state.serialize_field("global", &false);
 
         state.serialize_span(module.span);
 
@@ -248,16 +247,36 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
     }
 }
 
-/// Serializer for `global` field of `TSModuleDeclaration`.
+/// Serializer for `id` field of `TSGlobalDeclaration`.
 ///
-/// `true` if `kind` is `TSModuleDeclarationKind::Global`.
+/// Contains an identifier `global`, with the span from `global_span` field.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
-pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        let keywordStart, keywordEnd;
+        const ident = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'global',
+            ...(IS_TS && {
+                optional: false,
+                typeAnnotation: null,
+            }),
+            start: keywordStart = DESER[u32](POS_OFFSET.global_span.start),
+            end: keywordEnd = DESER[u32](POS_OFFSET.global_span.end),
+            ...(RANGE && { range: [keywordStart, keywordEnd] }),
+            ...(PARENT && { parent }),
+        };
+        ident
+    "
+)]
+pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
-impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
+impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.kind.is_global().serialize(serializer);
+        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global") };
+        ident.serialize(serializer);
     }
 }
 

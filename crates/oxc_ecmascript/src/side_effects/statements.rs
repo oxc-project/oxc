@@ -93,6 +93,7 @@ impl<'a> MayHaveSideEffects<'a> for Declaration<'a> {
             Declaration::TSEnumDeclaration(_)
             | Declaration::TSImportEqualsDeclaration(_)
             | Declaration::TSModuleDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
             | Declaration::TSTypeAliasDeclaration(_) => unreachable!(),
         }

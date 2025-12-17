@@ -17,6 +17,7 @@ fn incorrect_ast() {
     let source_type = SourceType::ts();
     let source_text = "foo\nvar bar = '测试'";
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
 
     let mut program = ret.program;
     program.span = Span::new(0, 0);
@@ -52,6 +53,7 @@ fn no_invalid_tokens_beyond_source() {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
 
         let result = Codegen::new()
             .with_options(CodegenOptions {
@@ -156,13 +158,22 @@ fn('name', () => {
 })",
     ];
 
+    let node_version = std::process::Command::new("node").arg("--version").output().map_or_else(
+        |_| "unknown".to_string(),
+        |output| String::from_utf8_lossy(&output.stdout).trim().to_string(),
+    );
+
     insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
         insta::assert_snapshot!(
             "stacktrace_is_correct",
-            cases.iter().map(|s| {
-                let (output, sourcemap_url) = codegen(s);
-                format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
-            }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+            format!(
+                "Node.js version: {}\n\n{}",
+                node_version,
+                cases.iter().map(|s| {
+                    let (output, sourcemap_url) = codegen(s);
+                    format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
+                }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+            )
         );
     });
 }
@@ -170,6 +181,7 @@ fn('name', () => {
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    assert!(ret.errors.is_empty());
     let ret = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: Some(PathBuf::from("input.js")),

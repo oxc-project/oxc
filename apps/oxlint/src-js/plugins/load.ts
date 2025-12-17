@@ -1,17 +1,18 @@
-import { pathToFileURL } from 'node:url';
+import { createContext } from "./context.ts";
+import { deepFreezeJsonArray } from "./json.ts";
+import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
+import { getErrorMessage } from "../utils/utils.ts";
 
-import { createContext } from './context.js';
-import { getErrorMessage } from './utils.js';
+import type { Writable } from "type-fest";
+import type { Context } from "./context.ts";
+import type { Options, SchemaValidator } from "./options.ts";
+import type { RuleMeta } from "./rule_meta.ts";
+import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
+import type { SetNullable } from "../utils/types.ts";
 
-import type { Writable } from 'type-fest';
-import type { Context } from './context.ts';
-import type { JsonValue } from './json.ts';
-import type { RuleMeta } from './rule_meta.ts';
-import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
-
-const ObjectKeys = Object.keys;
-
-// Linter plugin, comprising multiple rules
+/**
+ * Linter plugin, comprising multiple rules
+ */
 export interface Plugin {
   meta?: {
     name?: string;
@@ -21,9 +22,15 @@ export interface Plugin {
   };
 }
 
-// Linter rule.
-// `Rule` can have either `create` method, or `createOnce` method.
-// If `createOnce` method is present, `create` is ignored.
+/**
+ * Linter rule.
+ *
+ * `Rule` can have either `create` method, or `createOnce` method.
+ * If `createOnce` method is present, `create` is ignored.
+ *
+ * If defining the rule with `createOnce`, and you want the rule to work with ESLint too,
+ * you need to wrap the rule with `defineRule`.
+ */
 export type Rule = CreateRule | CreateOnceRule;
 
 export interface CreateRule {
@@ -38,11 +45,6 @@ export interface CreateOnceRule {
 }
 
 /**
- * Options for a rule on a file.
- */
-export type Options = JsonValue[];
-
-/**
  * Linter rule, context object, and other details of rule.
  * If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor` property.
  */
@@ -50,12 +52,18 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
+  readonly fullName: string;
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
+  readonly defaultOptions: Readonly<Options>;
+  // Function to validate options against schema.
+  // `false` means validation is disabled. Rule accepts any options.
+  // `null` means no validator provided. Rule does not accept any options.
+  readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
-  options: Readonly<Options>;
+  options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
@@ -73,7 +81,7 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 }
 
 // Absolute paths of plugins which have been loaded
-const registeredPluginPaths = new Set<string>();
+const registeredPluginUrls = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
@@ -81,9 +89,6 @@ export const registeredRules: RuleDetails[] = [];
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
-
-// Default rule options
-const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 
 // Plugin details returned to Rust
 interface PluginDetails {
@@ -98,16 +103,21 @@ interface PluginDetails {
 /**
  * Load a plugin.
  *
- * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
- * containing try/catch.
+ * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
- * @param path - Absolute path of plugin file
- * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
- * @returns JSON result
+ * @param url - Absolute path of plugin file as a `file://...` URL
+ * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(path: string, packageName?: string): Promise<string> {
+export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
   try {
-    const res = await loadPluginImpl(path, packageName);
+    if (DEBUG) {
+      if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
+      registeredPluginUrls.add(url);
+    }
+
+    const plugin = (await import(url)).default as Plugin;
+    const res = registerPlugin(plugin, packageName);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -115,89 +125,136 @@ export async function loadPlugin(path: string, packageName?: string): Promise<st
 }
 
 /**
- * Load a plugin.
+ * Register a plugin.
  *
- * @param path - Absolute path of plugin file
- * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
+ * @param plugin - Plugin
+ * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
  * @returns - Plugin details
- * @throws {Error} If plugin has already been registered
- * @throws {TypeError} If one of plugin's rules is malformed or its `createOnce` method returns invalid visitor
- * @throws {*} If plugin throws an error during import
+ * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
+ * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
+ * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-async function loadPluginImpl(path: string, packageName?: string): Promise<PluginDetails> {
-  if (registeredPluginPaths.has(path)) {
-    throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
-  }
-
-  const { default: plugin } = (await import(pathToFileURL(path).href)) as { default: Plugin };
-
-  registeredPluginPaths.add(path);
-
+export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
-  // Get plugin name from plugin.meta.name, or fall back to package name from package.json
-  const pluginName = plugin.meta?.name ?? packageName;
-  if (!pluginName) {
-    throw new TypeError(
-      'Plugin must have either meta.name or be loaded from an npm package with a name field in package.json',
-    );
-  }
+
+  const pluginName = getPluginName(plugin, packageName);
+
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = ObjectKeys(rules);
+  const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
+    const fullRuleName = `${pluginName}/${ruleName}`;
+
     // Validate `rule.meta` and convert to vars with standardized shape
-    let isFixable = false;
-    let messages: Record<string, string> | null = null;
-    let ruleMeta = rule.meta;
+    let isFixable = false,
+      messages: Record<string, string> | null = null,
+      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
+      schemaValidator: SchemaValidator | false | null = null;
+    const ruleMeta = rule.meta;
     if (ruleMeta != null) {
-      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
+      if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `meta.fixable`');
+        if (fixable !== "code" && fixable !== "whitespace") {
+          throw new TypeError("Invalid `rule.meta.fixable`");
+        }
         isFixable = true;
+      }
+
+      // If `schema` provided, compile schema to validator for applying schema defaults to options
+      schemaValidator = compileSchema(ruleMeta.schema);
+
+      // Get default options
+      const inputDefaultOptions = ruleMeta.defaultOptions;
+      if (inputDefaultOptions != null) {
+        if (!Array.isArray(inputDefaultOptions)) {
+          throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
+        }
+
+        // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
+        // and does not validate against schema
+        if (inputDefaultOptions.length !== 0) {
+          // Serialize to JSON and deserialize again.
+          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
+          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+          try {
+            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
+          } catch (err) {
+            throw new Error(
+              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+            );
+          }
+
+          // Validate default options against schema, if schema was provided.
+          // This also applies any defaults from schema.
+          // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
+          // but that's what ESLint does, so it's OK.
+          if (schemaValidator === null) {
+            throw new Error(
+              `Rule ${fullRuleName}:\n` +
+                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
+                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+            );
+          }
+          // Note: `defaultOptions` is not frozen yet
+          if (schemaValidator !== false) {
+            schemaValidator(defaultOptions as Writable<typeof defaultOptions>, fullRuleName);
+          }
+
+          deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
+        }
       }
 
       // Extract messages for messageId support
       const inputMessages = ruleMeta.messages;
       if (inputMessages != null) {
-        if (typeof inputMessages !== 'object') throw new TypeError('`meta.messages` must be an object if provided');
+        if (typeof inputMessages !== "object") {
+          throw new TypeError("`rule.meta.messages` must be an object if provided");
+        }
         messages = inputMessages;
       }
     }
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
+      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
-      context: null as Readonly<Context>, // Filled in below
+      context: null!, // Filled in below
       isFixable,
       messages,
+      defaultOptions,
+      optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
-      options: DEFAULT_OPTIONS,
+      options: null,
       visitor: null,
       beforeHook: null,
       afterHook: null,
     };
 
     // Create `Context` object for rule. This will be re-used for every file.
-    const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
+    const context = createContext(ruleDetails);
     (ruleDetails as Writable<RuleDetails>).context = context;
 
-    if ('createOnce' in rule) {
+    if ("createOnce" in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      let visitorWithHooks = rule.createOnce(context);
-      if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
-        throw new TypeError('`createOnce` must return an object');
+      const visitorWithHooks = rule.createOnce(context) as SetNullable<
+        VisitorWithHooks,
+        "before" | "after"
+      >;
+      if (typeof visitorWithHooks !== "object" || visitorWithHooks === null) {
+        throw new TypeError("`createOnce` must return an object");
       }
 
       let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
-      beforeHook = conformHookFn(beforeHook, 'before');
-      afterHook = conformHookFn(afterHook, 'after');
+      beforeHook = conformHookFn(beforeHook, "before");
+      afterHook = conformHookFn(afterHook, "after");
 
       // If empty visitor, make this rule never run by substituting a `before` hook which always returns `false`.
       // This means the original `before` hook won't run either.
@@ -207,20 +264,51 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
       // and if not, skip calling into JS entirely. In that case, the `before` hook won't get called.
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
-      if (ObjectKeys(visitor).length === 0) {
+      if (Object.keys(visitor).length === 0) {
         beforeHook = neverRunBeforeHook;
         afterHook = null;
       }
 
-      (ruleDetails as Writable<CreateOnceRuleDetails>).visitor = visitor;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
-      (ruleDetails as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).visitor = visitor;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
+      (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
     registeredRules.push(ruleDetails);
   }
 
   return { name: pluginName, offset, ruleNames };
+}
+
+/**
+ * Get plugin name.
+ * - If `plugin.meta.name` is defined, return it.
+ * - Otherwise, fall back to `packageName`, if defined.
+ * - If neither is defined, throw an error.
+ *
+ * @param plugin - Plugin object
+ * @param packageName - Package name from `package.json`
+ * @returns Plugin name
+ * @throws {TypeError} If `plugin.meta.name` is not a string
+ * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
+ */
+function getPluginName(plugin: Plugin, packageName: string | null): string {
+  const pluginMeta = plugin.meta;
+  if (pluginMeta != null) {
+    const pluginMetaName = pluginMeta.name;
+    if (pluginMetaName != null) {
+      if (typeof pluginMetaName !== "string") {
+        throw new TypeError("`plugin.meta.name` must be a string if defined");
+      }
+      return pluginMetaName;
+    }
+  }
+
+  if (packageName !== null) return packageName;
+
+  throw new Error(
+    "Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`",
+  );
 }
 
 /**
@@ -232,6 +320,8 @@ async function loadPluginImpl(path: string, packageName?: string): Promise<Plugi
  */
 function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
   if (hookFn == null) return null;
-  if (typeof hookFn !== 'function') throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  if (typeof hookFn !== "function") {
+    throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  }
   return hookFn;
 }

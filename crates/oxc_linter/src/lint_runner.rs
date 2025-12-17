@@ -126,6 +126,7 @@ impl Default for DirectivesStore {
 pub struct LintRunnerBuilder {
     regular_linter: Linter,
     type_aware_enabled: bool,
+    type_check: bool,
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
@@ -136,6 +137,7 @@ impl LintRunnerBuilder {
         Self {
             regular_linter: linter,
             type_aware_enabled: false,
+            type_check: false,
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
@@ -145,6 +147,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_type_aware(mut self, enabled: bool) -> Self {
         self.type_aware_enabled = enabled;
+        self
+    }
+
+    #[must_use]
+    pub fn with_type_check(mut self, enabled: bool) -> Self {
+        self.type_check = enabled;
         self
     }
 
@@ -171,7 +179,7 @@ impl LintRunnerBuilder {
                 self.regular_linter.config.clone(),
                 self.fix_kind,
             ) {
-                Ok(state) => Some(state.with_silent(self.silent)),
+                Ok(state) => Some(state.with_silent(self.silent).with_type_check(self.type_check)),
                 Err(e) => return Err(e),
             }
         } else {
@@ -214,7 +222,7 @@ impl LintRunner {
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(files, self.directives_store.map(), tx_error)?;
+            type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
         } else {
             drop(tx_error);
         }
@@ -227,26 +235,25 @@ impl LintRunner {
     /// Returns an error if type-aware linting fails.
     pub fn run_source(
         &self,
-        file: &Arc<OsStr>,
-        source_text: String,
+        files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Vec<Message> {
-        let mut messages = self.lint_service.run_source(file_system, vec![Arc::clone(file)]);
+        let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
-            let tsgo_messages =
-                match type_aware_linter.lint_source(file, source_text, self.directives_store.map())
-                {
-                    Ok(msgs) => msgs,
-                    Err(err) => {
-                        vec![Message::new(
-                            OxcDiagnostic::warn(format!(
-                                "Failed to run type-aware linting: `{err}`",
-                            )),
-                            PossibleFixes::None,
-                        )]
-                    }
-                };
+            let tsgo_messages = match type_aware_linter.lint_source(
+                files,
+                file_system,
+                self.directives_store.map(),
+            ) {
+                Ok(msgs) => msgs,
+                Err(err) => {
+                    vec![Message::new(
+                        OxcDiagnostic::warn(format!("Failed to run type-aware linting: `{err}`",)),
+                        PossibleFixes::None,
+                    )]
+                }
+            };
             messages.extend(tsgo_messages);
         }
 

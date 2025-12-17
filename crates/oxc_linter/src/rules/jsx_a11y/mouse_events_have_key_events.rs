@@ -13,14 +13,16 @@ use crate::{
 };
 
 fn miss_on_focus(span: Span, attr_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{attr_name} must be accompanied by onFocus for accessibility."))
-        .with_help("Try to add onFocus.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "`{attr_name}` must be accompanied by `onFocus` for accessibility."
+    ))
+    .with_help("Try to add `onFocus`.")
+    .with_label(span)
 }
 
 fn miss_on_blur(span: Span, attr_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{attr_name} must be accompanied by onBlur for accessibility."))
-        .with_help("Try to add onBlur.")
+    OxcDiagnostic::warn(format!("`{attr_name}` must be accompanied by `onBlur` for accessibility."))
+        .with_help("Try to add `onBlur`.")
         .with_label(span)
 }
 

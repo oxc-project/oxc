@@ -1,14 +1,9 @@
 use std::cell::{Cell, RefCell};
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{Format, FormatResult, Formatter, SourceText, prelude::*},
-    parentheses::NeedsParentheses,
-    write,
-};
+use crate::formatter::{Format, Formatter, prelude::*};
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
@@ -90,7 +85,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     /// Here we check if the length of the groups exceeds the cutoff or there are comments
     /// This function is the inverse of the prettier function
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
-    pub(crate) fn is_member_call_chain(&self, f: &Formatter) -> bool {
+    pub(crate) fn is_member_call_chain(&self) -> bool {
         self.groups.len() > 1
     }
 
@@ -100,7 +95,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Test if any group except the last group [break](FormatElements::will_break).
-    pub(super) fn any_except_last_will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    pub(super) fn any_except_last_will_break(&self, f: &Formatter<'_, 'a>) -> bool {
         for group in &self.groups[..self.groups.len().saturating_sub(1)] {
             if group.will_break(f) {
                 return true;
@@ -117,8 +112,8 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 }
 
 impl<'a> Format<'a> for TailChainGroups<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.groups.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.groups.iter());
     }
 }
 
@@ -153,25 +148,22 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.members.extend(members);
     }
 
-    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) {
         let mut cell = self.formatted.borrow_mut();
         if cell.is_none() {
-            let interned = f.intern(&FormatMemberChainGroup { group: self })?;
+            let interned = f.intern(&FormatMemberChainGroup { group: self });
 
             if tail {
                 self.set_needs_empty_line(self.needs_empty_line_before(f));
             }
 
-            if let Some(interned) = interned {
-                *cell = Some(interned);
-            }
+            *cell = interned;
         }
-        Ok(())
     }
 
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
-        let mut cell = self.formatted.borrow_mut();
+    pub(super) fn will_break(&self, _f: &Formatter<'_, 'a>) -> bool {
+        let cell = self.formatted.borrow_mut();
         if let Some(formatted) = cell.as_ref() {
             formatted.will_break()
         } else {
@@ -217,7 +209,6 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         }
 
         // Count the number of continuous new lines
-        let mut new_lines_count = 0;
         for (idx, &b) in source.bytes_range(start, end).iter().enumerate() {
             #[expect(clippy::cast_possible_truncation)]
             if matches!(b, b'\n' | b'\r') && source.lines_after(start + idx as u32) > 1 {
@@ -242,12 +233,12 @@ impl std::fmt::Debug for MemberChainGroup<'_, '_> {
 }
 
 impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let Some(formatted) = self.formatted.borrow().as_ref() {
             return f.write_element(formatted.clone());
         }
 
-        FormatMemberChainGroup { group: self }.fmt(f)
+        FormatMemberChainGroup { group: self }.fmt(f);
     }
 }
 
@@ -256,7 +247,7 @@ pub struct FormatMemberChainGroup<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.group.members.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.group.members.iter());
     }
 }

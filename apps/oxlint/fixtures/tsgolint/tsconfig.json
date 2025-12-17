@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "lib": ["ES2024"],
-    "module": "commonjs",
+    "target": "es2024",
+    "lib": ["ES2024", "DOM"],
+    "module": "es2022",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

@@ -1,105 +1,105 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42, 25))
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockImplementation(() => Promise.reject(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.resolve(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => { return Promise.resolve(42); })
    ·           ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42),)
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementationOnce(() => Promise.resolve(42))
    ·           ──────────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementationOnce(() => Promise.reject(42))
    ·           ──────────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockReturnValue(Promise.resolve(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockReturnValue(Promise.reject(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValue(Promise.resolve(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValue(Promise.reject(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve(42))
    ·           ───────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(42))
    ·           ───────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:2:27]
  1 │ 
  2 │                 aVariable.mockReturnValue(Promise.resolve({
@@ -108,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:5:22]
  4 │                     .mockImplementation(() => Promise.resolve(42))
  5 │                     .mockReturnValue(Promise.reject(42))
@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:4:22]
  3 │                     .mockImplementation(() => Promise.reject(42))
  4 │                     .mockImplementation(() => Promise.resolve(42))
@@ -126,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:3:22]
  2 │                 aVariable
  3 │                     .mockImplementation(() => Promise.reject(42))
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:5:22]
  4 │                     .mockImplementation(() => Promise.resolve(42))
  5 │                     .mockReturnValueOnce(Promise.reject(42))
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:4:22]
  3 │                     .mockReturnValueOnce(Promise.reject(42))
  4 │                     .mockImplementation(() => Promise.resolve(42))
@@ -153,7 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:3:22]
  2 │                 aVariable
  3 │                     .mockReturnValueOnce(Promise.reject(42))
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:2:27]
  1 │ 
  2 │                 aVariable.mockReturnValueOnce(
@@ -171,217 +171,217 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockReturnValue(Promise.resolve(42), xyz)
    ·           ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockImplementation(() => Promise.reject(42), xyz)
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve(42, xyz))
    ·           ───────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve())
    ·           ───────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:28]
  1 │ jest.spyOn(fs, "readFile").mockReturnValue(Promise.reject(new Error("oh noes!")))
    ·                            ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockImplementation(() => Promise.resolve(42))
    ·         ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockImplementation(() => Promise.reject(42))
    ·         ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.resolve(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => { return Promise.resolve(42) })
    ·           ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42),)
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementationOnce(() => Promise.resolve(42))
    ·           ──────────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementationOnce(() => Promise.reject(42))
    ·           ──────────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockReturnValue(Promise.resolve(42))
    ·         ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockReturnValue(Promise.reject(42))
    ·         ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValue(Promise.resolve(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValue(Promise.reject(42))
    ·           ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve(42))
    ·           ───────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(42))
    ·           ───────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValue(Promise.resolve({ target: 'world', message: 'hello' }))
    ·           ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:102]
  1 │ aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))
    ·                                                                                                      ───────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:56]
  1 │ aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))
    ·                                                        ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))
    ·           ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:97]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))
    ·                                                                                                 ───────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:51]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))
    ·                                                   ──────────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))
    ·           ───────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.reject(new Error('oh noes!')))
    ·           ───────────────────
    ╰────
   help: Prefer "mockRejectedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockReturnValue(Promise.resolve(42), xyz)
    ·         ───────────────
    ╰────
   help: Prefer "mockResolvedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:9]
  1 │ vi.fn().mockImplementation(() => Promise.reject(42), xyz)
    ·         ──────────────────
    ╰────
   help: Prefer "mockRejectedValue"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve(42, xyz))
    ·           ───────────────────
    ╰────
   help: Prefer "mockResolvedValueOnce"
 
-  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockReturnValueOnce(Promise.resolve())
    ·           ───────────────────

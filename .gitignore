@@ -12,7 +12,9 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/tasks/compat_data/compat-table/
 /tasks/e2e/node_modules/
+/plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
@@ -31,8 +33,8 @@ target/
 tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
-tasks/coverage/acorn-test262/
-tasks/coverage/acorn-test262-diff/
+tasks/coverage/estree-conformance/
+tasks/coverage/estree-conformance-diff/
 tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
 

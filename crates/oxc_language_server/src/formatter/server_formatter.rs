@@ -5,14 +5,11 @@ use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, Oxfmtrc, enable_jsx_source_type, get_parse_options,
-    get_supported_source_type,
+    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
+    oxfmtrc::{OxfmtOptions, Oxfmtrc},
 };
 use oxc_parser::Parser;
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{Pattern, Position, Range, TextEdit, Uri},
-};
+use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
 use crate::{
     formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
@@ -35,17 +32,13 @@ impl ServerFormatterBuilder {
                 LSPFormatOptions::default()
             }
         };
-        if options.experimental {
-            debug!("experimental formatter enabled");
-        }
+
         let root_path = root_uri.to_file_path().unwrap();
         let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
+        let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
 
-        let gitignore_glob = if options.experimental {
-            match Self::create_ignore_globs(
-                &root_path,
-                oxfmtrc.ignore_patterns.as_deref().unwrap_or(&[]),
-            ) {
+        let gitignore_glob =
+            match Self::create_ignore_globs(&root_path, &oxfmt_options.ignore_patterns) {
                 Ok(glob) => Some(glob),
                 Err(err) => {
                     warn!(
@@ -53,20 +46,17 @@ impl ServerFormatterBuilder {
                     );
                     None
                 }
-            }
-        } else {
-            None
-        };
+            };
 
-        ServerFormatter::new(
-            Self::get_format_options(oxfmtrc),
-            options.experimental,
-            gitignore_glob,
-        )
+        ServerFormatter::new(format_options, gitignore_glob)
     }
 }
 
 impl ToolBuilder for ServerFormatterBuilder {
+    fn server_capabilities(&self, capabilities: &mut ServerCapabilities) {
+        capabilities.document_formatting_provider =
+            Some(tower_lsp_server::ls_types::OneOf::Left(true));
+    }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerFormatterBuilder::build(root_uri, options))
     }
@@ -75,7 +65,7 @@ impl ToolBuilder for ServerFormatterBuilder {
 impl ServerFormatterBuilder {
     fn get_config(root_path: &Path, config_path: Option<&String>) -> Oxfmtrc {
         if let Some(config) = Self::search_config_file(root_path, config_path) {
-            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
+            if let Ok(oxfmtrc) = Self::from_file(&config) {
                 oxfmtrc
             } else {
                 warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
@@ -89,12 +79,32 @@ impl ServerFormatterBuilder {
             Oxfmtrc::default()
         }
     }
-    fn get_format_options(oxfmtrc: Oxfmtrc) -> FormatOptions {
-        match oxfmtrc.into_format_options() {
-            Ok(options) => options,
+
+    /// # Errors
+    /// Returns error if:
+    /// - file cannot be found or read
+    /// - file content is not valid JSONC
+    /// - deserialization fails for string enum values
+    fn from_file(path: &Path) -> Result<Oxfmtrc, String> {
+        let mut string = std::fs::read_to_string(path)
+            // Do not include OS error, it differs between platforms
+            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
+
+        // JSONC support - strip comments
+        json_strip_comments::strip(&mut string)
+            .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
+
+        // NOTE: String enum deserialization errors are handled here
+        serde_json::from_str(&string)
+            .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
+    }
+
+    fn get_options(oxfmtrc: Oxfmtrc) -> (FormatOptions, OxfmtOptions) {
+        match oxfmtrc.into_options() {
+            Ok(opts) => opts,
             Err(err) => {
                 warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
-                FormatOptions::default()
+                (FormatOptions::default(), OxfmtOptions::default())
             }
         }
     }
@@ -140,7 +150,6 @@ impl ServerFormatterBuilder {
 }
 pub struct ServerFormatter {
     options: FormatOptions,
-    should_run: bool,
     gitignore_glob: Option<Gitignore>,
 }
 
@@ -179,27 +188,18 @@ impl Tool for ServerFormatter {
         };
 
         if old_option == new_option {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
+            return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
         let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
-            diagnostic_reports: None,
             watch_patterns: Some(watch_patterns),
         }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        if !self.should_run {
-            return vec![];
-        }
-
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -223,21 +223,12 @@ impl Tool for ServerFormatter {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if !self.should_run {
-            return ToolRestartChanges {
-                tool: None,
-                diagnostic_reports: None,
-                watch_patterns: None,
-            };
-        }
-
         // TODO: Check if the changed file is actually a config file
 
         let new_formatter = ServerFormatterBuilder::build(root_uri, options);
 
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
-            diagnostic_reports: None,
             // TODO: update watch patterns if config_path changed
             watch_patterns: None,
         }
@@ -245,9 +236,6 @@ impl Tool for ServerFormatter {
 
     fn run_format(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
         // Formatter is disabled
-        if !self.should_run {
-            return None;
-        }
 
         let path = uri.to_file_path()?;
 
@@ -307,12 +295,8 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    pub fn new(
-        options: FormatOptions,
-        should_run: bool,
-        gitignore_glob: Option<Gitignore>,
-    ) -> Self {
-        Self { options, should_run, gitignore_glob }
+    pub fn new(options: FormatOptions, gitignore_glob: Option<Gitignore>) -> Self {
+        Self { options, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -378,6 +362,84 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
             if path.exists() { Some(path) } else { None }
         })
         .collect::<Vec<_>>()
+}
+
+#[cfg(test)]
+mod tests_builder {
+    use crate::{ServerFormatterBuilder, ToolBuilder};
+
+    #[test]
+    fn test_server_capabilities() {
+        use tower_lsp_server::ls_types::{OneOf, ServerCapabilities};
+
+        let builder = ServerFormatterBuilder;
+        let mut capabilities = ServerCapabilities::default();
+
+        builder.server_capabilities(&mut capabilities);
+
+        assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
+    }
+}
+
+#[cfg(test)]
+mod test_watchers {
+    // formatter file watcher-system does not depend on the actual file system,
+    // so we can use a fake directory for testing.
+    const FAKE_DIR: &str = "fixtures/formatter/watchers";
+
+    mod init_watchers {
+        use crate::formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use serde_json::json;
+
+        #[test]
+        fn test_default_options() {
+            let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], ".oxfmtrc.json");
+            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let patterns = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.configPath": "configs/formatter.json"
+                }),
+            )
+            .get_watcher_patterns();
+            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns[0], "configs/formatter.json");
+        }
+    }
+
+    mod handle_configuration_change {
+        use crate::{
+            ToolRestartChanges,
+            formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester},
+        };
+        use serde_json::json;
+
+        #[test]
+        fn test_no_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new(FAKE_DIR, json!({})).handle_configuration_change(json!({}));
+
+            assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let ToolRestartChanges { watch_patterns, .. } = Tester::new(FAKE_DIR, json!({}))
+                .handle_configuration_change(json!({
+                    "fmt.configPath": "configs/formatter.json"
+                }));
+
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
+        }
+    }
 }
 
 #[cfg(test)]

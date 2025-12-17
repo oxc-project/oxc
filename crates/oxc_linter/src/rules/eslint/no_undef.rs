@@ -4,14 +4,19 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
 pub struct NoUndef {
     /// When set to `true`, warns on undefined variables used in a `typeof` expression.
@@ -25,9 +30,13 @@ declare_oxc_lint!(
     ///
     /// Disallow the use of undeclared variables.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
-    /// It is most likely a potential ReferenceError caused by a misspelling of a variable or parameter name.
+    /// It is most likely a potential ReferenceError caused by a misspelling
+    /// of a variable or parameter name.
     ///
     /// ### Examples
     ///
@@ -44,12 +53,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUndef {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let type_of = value
-            .get(0)
-            .and_then(|config| config.get("typeof"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        Self { type_of }
+        serde_json::from_value::<DefaultRuleConfig<NoUndef>>(value).unwrap_or_default().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

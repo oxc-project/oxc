@@ -1,5 +1,5 @@
-import { createRequire } from 'node:module';
-import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.js';
+import { createRequire } from "node:module";
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -12,8 +12,6 @@ const require = createRequire(import.meta.url);
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
 export function parseSyncRaw(filename, sourceText, options) {
-  let _;
-  ({ experimentalRawTransfer: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
 }
 
@@ -36,8 +34,6 @@ export function parseSyncRaw(filename, sourceText, options) {
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
 export function parse(filename, sourceText, options) {
-  let _;
-  ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
 }
 
@@ -46,14 +42,14 @@ export function parse(filename, sourceText, options) {
 // Index into these arrays is `isJs * 1 + range * 2 + experimentalParent * 4`.
 const deserializers = [null, null, null, null, null, null, null, null];
 const deserializerNames = [
-  'ts',
-  'js',
-  'ts_range',
-  'js_range',
-  'ts_parent',
-  'js_parent',
-  'ts_range_parent',
-  'js_range_parent',
+  "ts",
+  "js",
+  "ts_range",
+  "js_range",
+  "ts_parent",
+  "js_parent",
+  "ts_range_parent",
+  "js_range_parent",
 ];
 
 /**
@@ -75,7 +71,7 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
   let deserializeThis = deserializers[deserializerIndex];
   if (deserializeThis === null) {
     deserializeThis = deserializers[deserializerIndex] = require(
-      `../../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
+      `../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
     ).deserialize;
   }
 
@@ -89,8 +85,14 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
     if (hashbang !== null) {
       data.comments.unshift(
         range
-          ? { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end, range: hashbang.range }
-          : { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end },
+          ? {
+              type: "Line",
+              value: hashbang.value,
+              start: hashbang.start,
+              end: hashbang.end,
+              range: hashbang.range,
+            }
+          : { type: "Line", value: hashbang.value, start: hashbang.start, end: hashbang.end },
       );
     }
   }

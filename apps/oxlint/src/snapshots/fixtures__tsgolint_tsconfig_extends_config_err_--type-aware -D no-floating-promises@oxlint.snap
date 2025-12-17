@@ -1,0 +1,17 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware -D no-floating-promises
+working directory: fixtures/tsgolint_tsconfig_extends_config_err
+----------
+
+  x typescript(tsconfig-error): Invalid tsconfig
+  help: Option 'baseUrl' has been removed. Please remove it from your configuration.
+        See https://github.com/oxc-project/tsgolint/issues/351 for more information.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 104 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

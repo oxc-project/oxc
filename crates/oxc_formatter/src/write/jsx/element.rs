@@ -1,11 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::{
-    JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment, JSXText,
-};
+use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    FormatResult,
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
@@ -15,10 +12,7 @@ use crate::{
         suppressed::FormatSuppressedNode,
     },
     write,
-    write::{
-        FormatWrite,
-        jsx::{FormatChildrenResult, FormatOpeningElement},
-    },
+    write::jsx::{FormatChildrenResult, FormatOpeningElement},
 };
 
 use super::{FormatJsxChildList, JsxChildListLayout};
@@ -38,25 +32,23 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
         }
     }
 
-    fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => element.format_leading_comments(f),
             Self::Fragment(fragment) => fragment.format_leading_comments(f),
         }
     }
 
-    fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let AstNodes::ArrowFunctionExpression(arrow) = self.parent().parent().parent()
+    fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) =
+            self.parent().parent().parent()
             && arrow.expression
         {
-            let comments = f.context().comments().comments_before(arrow.span.end);
-            FormatTrailingComments::Comments(comments).fmt(f)
+            f.context().comments().comments_before(arrow.span.end)
         } else {
-            match self {
-                Self::Element(element) => element.format_trailing_comments(f),
-                Self::Fragment(fragment) => fragment.format_trailing_comments(f),
-            }
-        }
+            f.context().comments().end_of_line_comments_after(self.span().end)
+        };
+        FormatTrailingComments::Comments(trailing_comments).fmt(f);
     }
 
     /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
@@ -82,6 +74,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 WrapState::NoWrap
             }
+            AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
             AstNodes::ExpressionStatement(stmt) => {
                 // `() => <div></div>`
                 //        ^^^^^^^^^^^
@@ -104,10 +97,10 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
 }
 
 impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
-        let format_tag = format_once(|f| {
+        let format_tag = format_with(|f| {
             if is_suppressed {
                 return FormatSuppressedNode(self.span()).fmt(f);
             }
@@ -115,18 +108,18 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
             let format_opening = format_with(|f| self.fmt_opening(f));
             let format_closing = format_with(|f| self.fmt_closing(f));
 
-            let layout = self.layout(f);
+            let layout = self.layout();
 
             match layout {
                 ElementLayout::NoChildren => {
-                    write!(f, [format_opening, format_closing])
+                    write!(f, [format_opening, format_closing]);
                 }
                 ElementLayout::Template(expression) => {
-                    write!(f, [format_opening, expression, format_closing])
+                    write!(f, [format_opening, expression, format_closing]);
                 }
                 ElementLayout::Default => {
-                    let mut format_opening = format_opening.memoized();
-                    let opening_breaks = format_opening.inspect(f)?.will_break();
+                    let format_opening = format_opening.memoized();
+                    let opening_breaks = format_opening.inspect(f).will_break();
 
                     let multiple_attributes = match self {
                         Self::Element(element) => element.opening_element.attributes.len() > 1,
@@ -142,11 +135,14 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     let children = self.children();
                     let format_children = FormatJsxChildList::default()
                         .with_options(list_layout)
-                        .fmt_children(children, f)?;
+                        .fmt_children(children, f);
 
                     match format_children {
+                        FormatChildrenResult::SingleChild(child) => {
+                            write!(f, group(&format_args!(format_opening, child, format_closing)));
+                        }
                         FormatChildrenResult::ForceMultiline(multiline) => {
-                            write!(f, [format_opening, multiline, format_closing])
+                            write!(f, [format_opening, multiline, format_closing]);
                         }
                         FormatChildrenResult::BestFitting { flat_children, expanded_children } => {
                             let format_closing = format_closing.memoized();
@@ -156,7 +152,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                                     format_args!(format_opening, flat_children, format_closing),
                                     format_args!(format_opening, expanded_children, format_closing)
                                 ]]
-                            )
+                            );
                         }
                     }
                 }
@@ -174,11 +170,11 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                 write!(
                     f,
                     [
-                        &format_once(|f| { self.format_leading_comments(f) }),
+                        &format_with(|f| { self.format_leading_comments(f) }),
                         format_tag,
-                        &format_once(|f| { self.format_trailing_comments(f) }),
+                        &format_with(|f| { self.format_trailing_comments(f) }),
                     ]
-                )
+                );
             }
             WrapState::WrapOnBreak => {
                 let should_expand = should_expand(self.parent());
@@ -186,26 +182,24 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 
                 let format_inner = format_with(|f| {
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&token("("))])?;
+                        write!(f, [if_group_breaks(&token("("))]);
                     }
 
                     write!(
                         f,
                         [soft_block_indent(&format_args!(
-                            &format_once(|f| { self.format_leading_comments(f) }),
+                            &format_with(|f| { self.format_leading_comments(f) }),
                             format_tag,
-                            &format_once(|f| { self.format_trailing_comments(f) }),
+                            &format_with(|f| { self.format_trailing_comments(f) }),
                         ))]
-                    )?;
+                    );
 
                     if !needs_parentheses {
-                        write!(f, [if_group_breaks(&token(")"))])?;
+                        write!(f, [if_group_breaks(&token(")"))]);
                     }
-
-                    Ok(())
                 });
 
-                write!(f, [group(&format_inner).should_expand(should_expand)])
+                write!(f, [group(&format_inner).should_expand(should_expand)]);
             }
         }
     }
@@ -244,27 +238,27 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
 }
 
 impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
-    fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
                 let is_self_closing = element.closing_element().is_none();
                 let opening_formatter =
                     FormatOpeningElement::new(element.opening_element(), is_self_closing);
-                write!(f, opening_formatter)
+                write!(f, opening_formatter);
             }
             Self::Fragment(fragment) => {
-                write!(f, fragment.opening_fragment())
+                write!(f, fragment.opening_fragment());
             }
         }
     }
 
-    fn fmt_closing(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt_closing(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
-                write!(f, element.closing_element())
+                write!(f, element.closing_element());
             }
             Self::Fragment(fragment) => {
-                write!(f, fragment.closing_fragment())
+                write!(f, fragment.closing_fragment());
             }
         }
     }
@@ -283,14 +277,14 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn needs_parentheses(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
             Self::Element(element) => element.needs_parentheses(f),
             Self::Fragment(fragment) => fragment.needs_parentheses(f),
         }
     }
 
-    fn layout(&self, f: &mut Formatter<'_, 'a>) -> ElementLayout<'a, 'b> {
+    fn layout(&self) -> ElementLayout<'a, 'b> {
         let children = self.children();
 
         match children.len() {

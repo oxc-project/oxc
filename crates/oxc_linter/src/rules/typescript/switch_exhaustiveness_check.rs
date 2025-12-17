@@ -4,18 +4,19 @@ use serde::{Deserialize, Serialize};
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.
     pub allow_default_case_for_exhaustive_switch: bool,
-    /// Whether to allow this rule to run without `strictNullChecks` enabled.
-    /// This is not recommended as the rule may produce incorrect results.
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
+    /// Whether to consider `default` cases exhaustive for union types.
+    /// When true, a switch statement with a `default` case is considered exhaustive
+    /// even if not all union members are handled explicitly.
+    pub consider_default_exhaustive_for_unions: bool,
     /// Regular expression pattern that when matched in a default case comment,
     /// will suppress the exhaustiveness check.
     /// Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`
@@ -24,6 +25,17 @@ pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to require default cases on switches over union types that are not exhaustive.
     /// When true, switches with non-exhaustive union types must have a default case.
     pub require_default_for_non_union: bool,
+}
+
+impl Default for SwitchExhaustivenessCheckConfig {
+    fn default() -> Self {
+        Self {
+            allow_default_case_for_exhaustive_switch: true,
+            consider_default_exhaustive_for_unions: false,
+            default_case_comment_pattern: None,
+            require_default_for_non_union: false,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -127,11 +139,9 @@ declare_oxc_lint!(
 
 impl Rule for SwitchExhaustivenessCheck {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<SwitchExhaustivenessCheckConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<SwitchExhaustivenessCheck>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

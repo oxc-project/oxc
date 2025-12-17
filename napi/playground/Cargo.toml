@@ -23,6 +23,7 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["ast_visit", "codegen", "minifier", "mangler", "semantic", "serialize", "transformer", "isolated_declarations", "regular_expression", "cfg"] }
+oxc_compat = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
@@ -33,9 +34,6 @@ napi-derive = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-
-[package.metadata.cargo-shear]
-ignored = ["napi"]
 
 [build-dependencies]
 napi-build = { workspace = true }

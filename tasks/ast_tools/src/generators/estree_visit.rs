@@ -7,6 +7,9 @@ use std::{
     process::{Command, Stdio},
 };
 
+use convert_case::{Case, Casing};
+use indexmap::map::Entry;
+use itertools::Itertools;
 use serde::Deserialize;
 
 use oxc_index::{IndexVec, define_index_type};
@@ -15,7 +18,7 @@ use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     output::{Output, javascript::VariantGenerator},
     schema::Schema,
-    utils::{string, write_it},
+    utils::{FxIndexMap, string, write_it},
 };
 
 use super::define_generator;
@@ -43,6 +46,8 @@ impl Generator for ESTreeVisitGenerator {
         let Codes {
             walk_parser,
             walk_oxlint,
+            walk_dts_parser,
+            walk_dts_oxlint,
             visitor_keys,
             type_ids_map_parser,
             type_ids_map_oxlint,
@@ -52,24 +57,32 @@ impl Generator for ESTreeVisitGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.js"),
                 code: walk_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.d.ts"),
+                code: walk_dts_parser,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/keys.js"),
                 code: visitor_keys.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/type_ids.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/type_ids.js"),
                 code: type_ids_map_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/visitor.d.ts"),
                 code: visitor_type_parser,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
                 code: walk_oxlint,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.d.ts"),
+                code: walk_dts_oxlint,
             },
             Output::Javascript {
                 // This file is also valid as TS
@@ -93,6 +106,8 @@ impl Generator for ESTreeVisitGenerator {
 struct Codes {
     walk_parser: String,
     walk_oxlint: String,
+    walk_dts_parser: String,
+    walk_dts_oxlint: String,
     visitor_keys: String,
     type_ids_map_parser: String,
     type_ids_map_oxlint: String,
@@ -207,17 +222,20 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut walk_fns = string!("");
 
     #[rustfmt::skip]
-    let mut visitor_keys = string!("
-        export default Object.freeze({
-            // Leaf nodes
-    ");
-
-    #[rustfmt::skip]
     let mut type_ids_map = string!("
         // Mapping from node type name to node type ID
         export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
     ");
+
+    // `visitor_keys_entries` contains `(node_name, keys_str)` pairs, where `keys_str` formatted keys array
+    // e.g. `["decorators", "key", "typeAnnotation"]`
+    // `visitor_keys_vars` contains `(keys_str, var_name)` pairs, where `keys_str` is formatted keys array,
+    // and `var_name` is name of variable for that array of keys.
+    // `Some` if this array is used more than once (and so needs a variable), `None` otherwise.
+    let mut visitor_keys_entries = vec![];
+    let mut visitor_keys_vars = FxIndexMap::default();
+    visitor_keys_vars.insert("[]".to_string(), Some("$EMPTY".to_string()));
 
     let mut visitor_type = string!("");
 
@@ -226,8 +244,7 @@ fn generate(codegen: &Codegen) -> Codes {
     for (node_id, node) in nodes.iter_enumerated() {
         let is_leaf = node.keys.is_empty();
         if leaf_nodes_count.is_none() && !is_leaf {
-            leaf_nodes_count = Some(node_id.raw());
-            visitor_keys.push_str("// Non-leaf nodes\n");
+            leaf_nodes_count = Some(node_id.raw() as usize);
             type_ids_map.push_str("// Non-leaf nodes\n");
         }
 
@@ -272,7 +289,22 @@ fn generate(codegen: &Codegen) -> Codes {
         ");
 
         let keys = &node.keys;
-        write_it!(visitor_keys, "{node_name}: {keys:?},\n");
+        let keys_str = format!("{keys:?}");
+
+        visitor_keys_entries.push((node_name, keys_str.clone()));
+
+        match visitor_keys_vars.entry(keys_str) {
+            Entry::Occupied(mut entry) => {
+                let var_name = entry.get_mut();
+                if var_name.is_none() {
+                    let name = keys.iter().map(|key| key.to_case(Case::Constant)).join("__");
+                    *var_name = Some(name);
+                }
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(None);
+            }
+        }
 
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
 
@@ -307,6 +339,7 @@ fn generate(codegen: &Codegen) -> Codes {
             "RestElement" => {
                 Some(&["AssignmentTargetRest", "BindingRestElement", "FormalParameterRest"])
             }
+            "TSModuleDeclaration" => Some(&["TSModuleDeclaration", "TSGlobalDeclaration"]),
             _ => None,
         };
         let type_def = if let Some(type_names) = type_names {
@@ -354,10 +387,41 @@ fn generate(codegen: &Codegen) -> Codes {
     let walk_parser = walk_variants.next().unwrap();
     let walk_oxlint = walk_variants.next().unwrap();
 
-    visitor_keys.push_str("});");
+    let leaf_nodes_count = leaf_nodes_count.unwrap();
+
+    let visitor_keys_vars_str = visitor_keys_vars
+        .iter()
+        .filter_map(|(keys_str, var_name)| {
+            var_name.as_ref().map(|name| format!("{name} = freeze({keys_str})"))
+        })
+        .join(",\n");
+
+    let visitor_keys_entries_str = visitor_keys_entries
+        .iter()
+        .enumerate()
+        .map(|(index, (name, keys_str))| {
+            let entry = if let Some(var_name) = &visitor_keys_vars[keys_str] {
+                format!("{name}: {var_name},\n")
+            } else {
+                format!("{name}: freeze({keys_str}),\n")
+            };
+            if index == leaf_nodes_count { format!("// Non-leaf nodes\n{entry}") } else { entry }
+        })
+        .join("");
+
+    #[rustfmt::skip]
+    let visitor_keys = format!("
+        const {{ freeze }} = Object;
+
+        const {visitor_keys_vars_str};
+
+        export default freeze({{
+            // Leaf nodes
+            {visitor_keys_entries_str}
+        }});
+    ");
 
     let nodes_count = nodes.len();
-    let leaf_nodes_count = leaf_nodes_count.unwrap();
     #[rustfmt::skip]
     write_it!(type_ids_map, "]);
 
@@ -384,16 +448,52 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let visitor_type_oxlint = format!("
-        import * as ESTree from './types.d.ts';
+        import type * as ESTree from './types.d.ts';
 
         export interface VisitorObject {{
             {visitor_type} [key: string]: (node: ESTree.Node) => void;
         }}
     ");
 
+    // Type definitions for walk.js.
+    // The visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_parser = "
+        import type * as ESTree from '@oxc-project/types';
+
+        type VisitFn = ((node: ESTree.Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;
+    ".to_string();
+
+    // For oxlint, the visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_oxlint = "
+        import type { Node, Program } from './types.d.ts';
+
+        type VisitFn = ((node: Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: Program, visitors: CompiledVisitors): void;
+        export declare const ancestors: Node[];
+    ".to_string();
+
     Codes {
         walk_parser,
         walk_oxlint,
+        walk_dts_parser,
+        walk_dts_oxlint,
         visitor_keys,
         type_ids_map_parser: type_ids_map,
         type_ids_map_oxlint,

@@ -76,6 +76,7 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
+#[serde(deny_unknown_fields)]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///

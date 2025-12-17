@@ -1,0 +1,247 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-restricted-types): Do not use `bigint` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: bigint;
+   ·            ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `boolean` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: boolean;
+   ·            ───────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `never` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: never;
+   ·            ─────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `null` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: null;
+   ·            ────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `number` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: number;
+   ·            ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `object` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: object;
+   ·            ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `string` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: string;
+   ·            ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `symbol` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: symbol;
+   ·            ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `undefined` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: undefined;
+   ·            ─────────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `unknown` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: unknown;
+   ·            ───────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `any` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: any;
+   ·            ───
+   ╰────
+  help: Use unknown instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `void` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: void;
+   ·            ────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `[]` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: [];
+   ·            ──
+   ╰────
+  help: Use unknown[] instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `[]` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: [  ];
+   ·            ────
+   ╰────
+  help: Use unknown[] instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `[]` as a type
+   ╭─[no_restricted_types.tsx:1:13]
+ 1 │ let value: [[]];
+   ·             ──
+   ╰────
+  help: Use unknown[] instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: Banned;
+   ·            ──────
+   ╰────
+  help: This type is restricted from being used.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: Banned;
+   ·            ──────
+   ╰────
+  help: Use "{}" instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: Banned[];
+   ·            ──────
+   ╰────
+  help: Use "{}" instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:13]
+ 1 │ let value: [Banned];
+   ·             ──────
+   ╰────
+  help: Use "{}" instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: Banned;
+   ·            ──────
+   ╰────
+  help: This type is restricted from being used.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:13]
+ 1 │ let b: { c: Banned };
+   ·             ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:6]
+ 1 │ 1 as Banned;
+   ·      ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:26]
+ 1 │ class Derived implements Banned {}
+   ·                          ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned1` as a type
+   ╭─[no_restricted_types.tsx:1:26]
+ 1 │ class Derived implements Banned1, Banned2 {}
+   ·                          ───────
+   ╰────
+  help: Use Ok1 instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned2` as a type
+   ╭─[no_restricted_types.tsx:1:35]
+ 1 │ class Derived implements Banned1, Banned2 {}
+   ·                                   ───────
+   ╰────
+  help: Use Ok2 instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:27]
+ 1 │ interface Derived extends Banned {}
+   ·                           ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:21]
+ 1 │ type Intersection = Banned & {};
+   ·                     ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:14]
+ 1 │ type Union = Banned | {};
+   ·              ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `NS.Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: NS.Banned;
+   ·            ─────────
+   ╰────
+  help: Use NS.Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `{}` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: {} = {};
+   ·            ──
+   ╰────
+  help: Use object instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `NS.Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: NS.Banned;
+   ·            ─────────
+   ╰────
+  help: Use NS.Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:20]
+ 1 │ let value: Type<   Banned   >;
+   ·                    ──────
+   ╰────
+  help: Use Ok instead.
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned<any>` as a type
+   ╭─[no_restricted_types.tsx:1:21]
+ 1 │ type Intersection = Banned<any>;
+   ·                     ───────────
+   ╰────
+  help: Don't use `any` as a type parameter to `Banned`
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned<A, B>` as a type
+   ╭─[no_restricted_types.tsx:1:21]
+ 1 │ type Intersection = Banned<A,B>;
+   ·                     ───────────
+   ╰────
+  help: Don't pass `A, B` as parameters to `Banned`
+
+  ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:12]
+ 1 │ let value: Banned;
+   ·            ──────
+   ╰────
+  help: Use a safer type

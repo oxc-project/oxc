@@ -7,7 +7,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_self_compare_diagnostic(left_span: Span, right_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Both sides of this comparison are exactly the same")
-        .with_help("If you are testing for NaN, you can use Number.isNaN function.")
+        .with_help("If you are testing for NaN, you can use the `Number.isNaN()` function.")
         .with_labels([left_span, right_span])
 }
 

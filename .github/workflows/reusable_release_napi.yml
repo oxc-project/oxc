@@ -68,10 +68,6 @@ jobs:
             target: armv7-unknown-linux-gnueabihf
             build: pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-musleabihf
-            build: pnpm build --target armv7-unknown-linux-musleabihf -x
-
           - os: macos-latest
             target: x86_64-apple-darwin
             build: pnpm build --target x86_64-apple-darwin
@@ -103,12 +99,20 @@ jobs:
               export CXX=riscv64-linux-gnu-g++
               pnpm build --target riscv64gc-unknown-linux-gnu
 
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm build --target aarch64-unknown-linux-ohos
+
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
       - run: rustup target add ${{ matrix.target }}
+
+      - name: Setup OpenHarmony SDK
+        if: ${{ contains(matrix.target, 'ohos') }}
+        uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
 
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
         if: ${{ contains(matrix.target, 'musl') }}
@@ -122,7 +126,7 @@ jobs:
         env:
           TARGET_CC: clang # for mimalloc
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: bindings-${{ matrix.target }}
@@ -172,7 +176,7 @@ jobs:
             rm -rf node_modules
             rm -rf target
       - name: Upload artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: bindings-freebsd
@@ -195,9 +199,9 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: artifacts
 
@@ -217,36 +221,7 @@ jobs:
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
-        run: |
-          # Check subpackages
-          for package in ${npm_dir}/*
-          do
-            echo $package
-            ls $package
-            cat $package/package.json
-            # Check publish files exist
-            jq -r '.files[]' $package/package.json | while read -r file ; do
-              if ! [ -f $package/$file ] ; then
-                echo "File does not exist." $package/$file
-                exit 1
-              fi
-            done
-            pnpm publish $package/ ${PUBLISH_FLAGS} --dry-run
-            echo ''
-          done
-
-          # Check root package
-          echo ${package_path}
-          ls ${package_path}
-          cat ${package_path}/package.json
-          # Check publish files exist
-          jq -r '.files[]' ${package_path}/package.json | while read -r file ; do
-            if ! [ -f ${package_path}/$file ]; then
-              echo "File does not exist." ${package_path}/$file
-              exit 1
-            fi
-          done
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
+        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
       - name: Trusted Publish
         run: |

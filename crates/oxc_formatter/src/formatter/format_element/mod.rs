@@ -4,15 +4,17 @@ pub mod tag;
 // #[cfg(target_pointer_width = "64")]
 // use biome_rowan::static_assert;
 use std::hash::{Hash, Hasher};
-use std::num::NonZeroU32;
-use std::{borrow::Cow, ops::Deref, rc::Rc};
+use std::ptr;
+use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use crate::{IndentWidth, TabWidth};
+use oxc_allocator::Vec as ArenaVec;
+
+use crate::IndentWidth;
 
 use super::{
-    TagKind, TextSize,
+    TagKind,
     format_element::tag::{LabelId, Tag},
 };
 
@@ -23,7 +25,11 @@ const _: () = {
             size_of::<FormatElement>() == 40,
             "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
         );
-    } else {
+    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
+        //
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
+        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
         assert!(
             size_of::<FormatElement>() == 24,
             "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
@@ -38,7 +44,11 @@ const _: () = {
             size_of::<FormatElement>() == 24,
             "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 64-bit platforms"
         );
-    } else {
+    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
+        //
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
+        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
         assert!(
             size_of::<FormatElement>() == 16,
             "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
@@ -146,28 +156,25 @@ impl PrintMode {
 }
 
 #[derive(Clone)]
-pub struct Interned<'a>(Rc<[FormatElement<'a>]>);
+pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
-    pub(super) fn new(content: Vec<FormatElement<'a>>) -> Self {
-        Self(content.into())
+    pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
+        Self(content.into_bump_slice())
     }
 }
 
 impl PartialEq for Interned<'_> {
     fn eq(&self, other: &Interned<'_>) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
+        ptr::eq(self.0, other.0)
     }
 }
 
 impl Eq for Interned<'_> {}
 
 impl Hash for Interned<'_> {
-    fn hash<H>(&self, hasher: &mut H)
-    where
-        H: Hasher,
-    {
-        Rc::as_ptr(&self.0).hash(hasher);
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.as_ptr().addr().hash(state);
     }
 }
 
@@ -181,16 +188,20 @@ impl<'a> Deref for Interned<'a> {
     type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
 }
 
 const LINE_SEPARATOR: char = '\u{2028}';
+
 const PARAGRAPH_SEPARATOR: char = '\u{2029}';
+
+#[expect(unused)]
 pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARATOR];
 
 /// Replace the line terminators matching the provided list with "\n"
 /// since its the only line break type supported by the printer
+#[expect(unused)]
 pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) -> Cow<'_, str> {
     let mut result = String::new();
     let mut last_end = 0;
@@ -258,7 +269,7 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
-            FormatElement::Text { text, width } => width.is_multiline(),
+            FormatElement::Text { text: _, width } => width.is_multiline(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.
@@ -305,7 +316,7 @@ pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: Box<[Box<[FormatElement<'a>]>]>,
+    variants: &'a [&'a [FormatElement<'a>]],
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -318,13 +329,13 @@ impl<'a> BestFittingElement<'a> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement<'a>]>>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, &'a [FormatElement<'a>]>) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_boxed_slice() }
+        Self { variants: variants.into_bump_slice() }
     }
 
     /// Returns the most expanded variant
@@ -334,8 +345,16 @@ impl<'a> BestFittingElement<'a> {
         )
     }
 
-    pub fn variants(&self) -> &[Box<[FormatElement<'a>]>] {
-        &self.variants
+    /// Splits the variants into the most expanded and the remaining flat variants
+    pub fn split_to_most_expanded_and_flat_variants(
+        &self,
+    ) -> (&&[FormatElement<'a>], &[&[FormatElement<'a>]]) {
+        // SAFETY: We have already asserted that there are at least two variants for creating this struct.
+        unsafe { self.variants.split_last().unwrap_unchecked() }
+    }
+
+    pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
+        self.variants
     }
 
     /// Returns the least expanded variant
@@ -348,7 +367,7 @@ impl<'a> BestFittingElement<'a> {
 
 impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(&*self.variants).finish()
+        f.debug_list().entries(self.variants).finish()
     }
 }
 
@@ -377,6 +396,7 @@ pub trait FormatElements {
     /// Returns the start tag of `kind` if:
     /// * the last element is an end tag of `kind`.
     /// * there's a matching start tag in this document (may not be true if this slice is an interned element and the `start` is in the document storing the interned element).
+    #[expect(unused)]
     fn start_tag(&self, kind: TagKind) -> Option<&Tag>;
 
     /// Returns the end tag if:
@@ -384,69 +404,161 @@ pub trait FormatElements {
     fn end_tag(&self, kind: TagKind) -> Option<&Tag>;
 }
 
-/// New-type wrapper for a single-line text unicode width.
-/// Mainly to prevent access to the inner value.
+/// New-type wrapper for a text Unicode width. Mainly to prevent access to the inner value.
 ///
 /// ## Representation
 ///
-/// Represents the width by adding 1 to the actual width so that the width can be represented by a [`NonZeroU32`],
-/// allowing [`TextWidth`] or [`Option<Width>`] fit in 4 bytes rather than 8.
+/// Uses a single `u32` to efficiently store both the width value and a multiline flag:
 ///
-/// This means that 2^32 can not be precisely represented and instead has the same value as 2^32-1.
-/// This imprecision shouldn't matter in practice because either text are longer than any configured line width
-/// and thus, the text should break.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct Width(NonZeroU32);
-
-impl Width {
-    pub(crate) const fn new(width: u32) -> Self {
-        Width(NonZeroU32::MIN.saturating_add(width))
-    }
-
-    pub const fn value(self) -> u32 {
-        self.0.get() - 1
-    }
-}
-
-/// The pre-computed unicode width of a text if it is a single-line text or a marker
-/// that it is a multiline text if it contains a line feed.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum TextWidth {
-    /// Single-line text width
-    Width(Width),
-    /// Multi-line text whose `width` is from the start of the text to the first line break
-    Multiline(Width),
-}
+/// - Bit 31: Multiline flag (1 = multiline, 0 = single line)
+/// - Bits 0-30: Width value (stored directly)
+///
+/// This encoding allows `TextWidth` to fit in 4 bytes while supporting both a width value
+/// and a boolean flag. The maximum representable width is 2^31 - 1 (0x7FFFFFFF).
+///
+/// The maximum value is sufficient in practice as texts that long would exceed any
+/// reasonable line width configuration (typically < 500 columns).
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct TextWidth(u32);
 
 impl TextWidth {
+    /// Bit mask for the multiline flag (highest bit)
+    const MULTILINE_MASK: u32 = 1 << 31;
+
+    /// Bit mask for extracting the width value (all bits except the highest)
+    const WIDTH_MASK: u32 = Self::MULTILINE_MASK - 1;
+
+    /// Encodes width and multiline flag into a single u32.
+    const fn encode(width: u32, multiline: bool) -> u32 {
+        debug_assert!(width <= Self::WIDTH_MASK, "width exceeds maximum representable value");
+
+        // Set multiline flag if needed
+        if multiline { width | Self::MULTILINE_MASK } else { width }
+    }
+
+    /// Creates a single-line text width.
+    pub const fn single(width: u32) -> Self {
+        Self(Self::encode(width, false))
+    }
+
+    /// Creates a multi-line text width.
+    pub const fn multiline(width: u32) -> Self {
+        Self(Self::encode(width, true))
+    }
+
+    /// Returns the width value.
+    pub const fn value(self) -> u32 {
+        self.0 & Self::WIDTH_MASK
+    }
+
+    /// Calculates width from text, handling tabs, newlines, and Unicode.
+    ///
+    /// Returns early on newline detection for efficiency.
     pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
+        // Fast path for empty text
+        if text.is_empty() {
+            return Self::single(0);
+        }
+
         let mut width = 0u32;
 
         #[expect(clippy::cast_lossless)]
         for c in text.chars() {
             let char_width = match c {
                 '\t' => indent_width.value(),
-                '\n' => return Self::Multiline(Width::new(width)),
+                '\n' => return Self::multiline(width),
                 #[expect(clippy::cast_possible_truncation)]
                 c => c.width().unwrap_or(0) as u8,
             };
             width += char_width as u32;
         }
 
-        Self::Width(Width::new(width))
+        Self::single(width)
     }
 
+    /// Creates width from a string known to not contain whitespace.
+    /// More efficient than `from_text` when whitespace is guaranteed absent.
     pub fn from_non_whitespace_str(name: &str) -> TextWidth {
         #[expect(clippy::cast_possible_truncation)]
-        Self::Width(Width::new(name.width() as u32))
+        Self::single(name.width() as u32)
     }
 
-    pub fn from_len(len: usize) -> TextWidth {
-        #[expect(clippy::cast_possible_truncation)]
-        TextWidth::Width(Width::new(len as u32))
-    }
-
+    /// Returns true if the text contains newlines.
     pub(crate) const fn is_multiline(self) -> bool {
-        matches!(self, TextWidth::Multiline(_))
+        (self.0 & Self::MULTILINE_MASK) != 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn indent_width(value: u8) -> IndentWidth {
+        IndentWidth::try_from(value).expect("valid indent width")
+    }
+
+    #[test]
+    fn single_width_round_trips_zero() {
+        let width = TextWidth::single(0);
+        debug_assert_eq!(width.value(), 0);
+        debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn multiline_sets_flag_without_touching_width() {
+        let width = TextWidth::multiline(3);
+        debug_assert_eq!(width.value(), 3);
+        debug_assert!(width.is_multiline());
+    }
+
+    #[test]
+    fn from_text_uses_indent_width_for_tabs() {
+        let width = TextWidth::from_text("\t", indent_width(4));
+        debug_assert_eq!(width.value(), 4);
+        debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn from_text_marks_multiline_on_newline() {
+        let width = TextWidth::from_text("ab\nc", indent_width(2));
+        debug_assert_eq!(width.value(), 2);
+        debug_assert!(width.is_multiline());
+    }
+
+    #[test]
+    fn from_non_whitespace_and_len_match() {
+        let name = "hello";
+        #[expect(clippy::cast_possible_truncation)]
+        let name_len = name.len() as u32;
+        debug_assert_eq!(TextWidth::from_non_whitespace_str(name).value(), name_len);
+    }
+
+    #[test]
+    fn is_single_line_inverse_of_is_multiline() {
+        let single = TextWidth::single(10);
+        debug_assert!(!single.is_multiline());
+
+        let multi = TextWidth::multiline(10);
+        debug_assert!(multi.is_multiline());
+    }
+
+    #[test]
+    fn from_text_handles_unicode() {
+        // Emoji width
+        let width = TextWidth::from_text("👍", indent_width(2));
+        debug_assert_eq!(width.value(), 2); // Most emojis are width 2
+        debug_assert!(!width.is_multiline());
+
+        // Chinese characters
+        let width = TextWidth::from_text("你好", indent_width(2));
+        debug_assert_eq!(width.value(), 4); // Each CJK char is width 2
+        debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn from_text_empty_returns_zero() {
+        let width = TextWidth::from_text("", indent_width(2));
+        debug_assert_eq!(width.value(), 0);
+        debug_assert!(!width.is_multiline());
     }
 }

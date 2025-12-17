@@ -1348,66 +1348,65 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
 
         let is_parent_call_expr = self.is_callee_of_call_expr;
 
-        match analyze_property_chain(&it.object, self.semantic) {
-            Ok(source) => {
-                if let Some(source) = source {
-                    if is_parent_call_expr {
-                        self.found_dependencies.insert(source);
-                    } else {
-                        let new_chain = Vec::from([it.property.name]);
+        if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
+            if let Some(source) = source {
+                if is_parent_call_expr {
+                    self.found_dependencies.insert(source);
+                } else {
+                    let new_chain = Vec::from([it.property.name]);
 
-                        let mut destructured_props: Vec<Atom<'a>> = vec![];
-                        let mut did_see_ref = false;
-                        let needs_full_chain = self
-                            .iter_destructure_bindings(|id| {
-                                if let Cow::Borrowed(id) = id {
-                                    if id == "current" {
-                                        did_see_ref = true;
-                                    } else {
-                                        destructured_props.push(id.into());
-                                    }
+                    let mut destructured_props: Vec<Atom<'a>> = vec![];
+                    let mut did_see_ref = false;
+                    let needs_full_chain = self
+                        .iter_destructure_bindings(|id| {
+                            if let Cow::Borrowed(id) = id {
+                                if id == "current" {
+                                    did_see_ref = true;
                                 } else {
-                                    // todo
+                                    destructured_props.push(id.into());
                                 }
-                            })
-                            .unwrap_or(true);
+                            } else {
+                                // todo
+                            }
+                        })
+                        .unwrap_or(true);
 
-                        let symbol_id =
-                            self.semantic.scoping().get_reference(source.reference_id).symbol_id();
-                        if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                    let symbol_id =
+                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
+                    if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name,
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: [source.chain.clone(), new_chain].concat(),
+                            symbol_id,
+                        });
+                    } else {
+                        for prop in destructured_props {
                             self.found_dependencies.insert(Dependency {
                                 name: source.name,
                                 reference_id: source.reference_id,
                                 span: source.span,
-                                chain: [source.chain.clone(), new_chain].concat(),
+                                chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
+                                    .concat(),
                                 symbol_id,
                             });
-                        } else {
-                            for prop in destructured_props {
-                                self.found_dependencies.insert(Dependency {
-                                    name: source.name,
-                                    reference_id: source.reference_id,
-                                    span: source.span,
-                                    chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
-                                        .concat(),
-                                    symbol_id,
-                                });
-                            }
                         }
                     }
                 }
-
-                let cur_skip_reporting_dependency = self.skip_reporting_dependency;
-                self.skip_reporting_dependency = true;
-                self.visit_expression(&it.object);
-                self.skip_reporting_dependency = cur_skip_reporting_dependency;
             }
+
+            let cur_skip_reporting_dependency = self.skip_reporting_dependency;
+            self.skip_reporting_dependency = true;
+            self.is_callee_of_call_expr = false;
+            self.visit_expression(&it.object);
+            self.skip_reporting_dependency = cur_skip_reporting_dependency;
+        } else {
             // this means that some part of the chain could not be analyzed
             // for example `foo.bar.baz().abc`. `baz()` cannot be statically analyzed
             // instead, continue to go down, looking at the object to gather dependencies
-            Err(()) => {
-                self.visit_expression(&it.object);
-            }
+            self.is_callee_of_call_expr = false;
+            self.visit_expression(&it.object);
         }
     }
 
@@ -2655,6 +2654,25 @@ fn test() {
           React.useEffect(() => {
             onStuff();
           }, []);
+        }",
+        // Issue #15796 - object property access should work correctly
+        r"export const FileSize = ({ file, showSize = true }) => {
+          const fileSizeInMB = useMemo(
+            () => (showSize ? (file.size / (1024 * 1024)).toFixed(2) : undefined),
+            [showSize, file.size],
+          );
+          return fileSizeInMB;
+        }",
+        // Additional tests for nested property access within expressions
+        r"function MyComponent({ obj }) {
+          useMemo(() => {
+            return (obj.value * 2).toFixed(2);
+          }, [obj.value]);
+        }",
+        r"function MyComponent({ data }) {
+          useCallback(() => {
+            console.log((data.count + 1).toString());
+          }, [data.count]);
         }",
     ];
 

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -7,16 +5,7 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::*,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_dangling_comments,
-        },
-    },
-    options::Expand,
+    formatter::{Buffer, Format, Formatter, prelude::*, trivia::FormatLeadingComments},
     utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
     write,
 };
@@ -24,17 +13,17 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.object())?;
-        FormatComputedMemberExpressionWithoutObject(self).fmt(f)
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, self.object());
+        FormatComputedMemberExpressionWithoutObject(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_member_chain = {
             let mut recording = f.start_recording();
-            write!(recording, [self.object()])?;
+            write!(recording, [self.object()]);
             recording.stop().has_label(LabelId::of(JsLabels::MemberChain))
         };
 
@@ -44,9 +33,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
                     format_with(|f| write!(f, [operator_token(self.optional()), self.property()]));
 
                 if is_member_chain {
-                    write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)])
+                    write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)]);
                 } else {
-                    write!(f, [format_no_break])
+                    write!(f, [format_no_break]);
                 }
             }
             StaticMemberLayout::BreakAfterObject => {
@@ -54,7 +43,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
                     f,
                     [group(&indent(&format_args!(
                         soft_line_break(),
-                        &format_once(|f| {
+                        &format_with(|f| {
                             if f.comments().has_leading_own_line_comment(self.property.span.start) {
                                 let comments = f
                                     .context()
@@ -63,14 +52,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
                                 write!(
                                     f,
                                     [FormatLeadingComments::Comments(comments), soft_line_break()]
-                                )?;
+                                );
                             }
-                            Ok(())
                         }),
                         operator_token(self.optional()),
                         self.property(),
                     )))]
-                )
+                );
             }
         }
     }
@@ -150,7 +138,7 @@ fn layout<'a>(
     }
 
     match first_non_static_member_ancestor {
-        AstNodes::NewExpression(expr) if expr.is_argument_span(node.span()) => {
+        AstNodes::NewExpression(expr) if expr.callee.span().contains_inclusive(node.span()) => {
             StaticMemberLayout::NoBreak
         }
         AstNodes::AssignmentExpression(assignment) => {
@@ -165,7 +153,7 @@ fn layout<'a>(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()])
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()]);
     }
 }

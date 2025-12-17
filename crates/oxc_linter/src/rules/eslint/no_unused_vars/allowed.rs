@@ -70,16 +70,22 @@ impl Symbol<'_, '_> {
     pub fn is_in_declared_module(&self) -> bool {
         let scopes = self.scoping();
         let nodes = self.nodes();
-        scopes.scope_ancestors(self.scope_id())
+        scopes
+            .scope_ancestors(self.scope_id())
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
-            .any(|node| matches!(node.kind(), AstKind::TSModuleDeclaration(namespace) if is_ambient_namespace(namespace)))
+            .any(|node| match node.kind() {
+                AstKind::TSModuleDeclaration(namespace) => is_ambient_namespace(namespace),
+                // No need to check `declare` field, as `global` is only valid in ambient context
+                AstKind::TSGlobalDeclaration(_) => true,
+                _ => false,
+            })
     }
 }
 
 #[inline]
 fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
-    namespace.declare || namespace.kind.is_global()
+    namespace.declare
 }
 
 impl NoUnusedVars {

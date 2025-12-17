@@ -16,7 +16,7 @@ use crate::{
 
 fn click_events_have_key_events_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce a clickable non-interactive element has at least one keyboard event listener.")
-        .with_help("Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.")
+        .with_help("Visible, non-interactive elements with click handlers must have one of `keyup`, `keydown`, or `keypress` listener.")
         .with_label(span)
 }
 

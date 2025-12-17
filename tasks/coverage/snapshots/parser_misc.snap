@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 50/50 (100.00%)
-Positive Passed: 50/50 (100.00%)
-Negative Passed: 118/118 (100.00%)
+AST Parsed     : 54/54 (100.00%)
+Positive Passed: 54/54 (100.00%)
+Negative Passed: 122/122 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -78,6 +78,23 @@ Negative Passed: 118/118 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
+ 3 │ 
+ 4 │ export = 3;
+   · ───────────
+ 5 │ export = 4;
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[misc/fail/export-equal-with-normal-export.ts:5:1]
+ 4 │ export = 3;
+ 5 │ export = 4;
+   · ───────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
@@ -215,6 +232,37 @@ Negative Passed: 118/118 (100.00%)
    ·                   ╰── `from` expected
    ╰────
 
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:2:24]
+ 1 │ // String literal expected in import type source
+ 2 │ type A = typeof import(`react`);
+   ·                        ───────
+ 3 │ type B = typeof import(A);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:3:24]
+ 2 │ type A = typeof import(`react`);
+ 3 │ type B = typeof import(A);
+   ·                        ─
+ 4 │ type C = typeof import(`${A} ${B}`);
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:4:24]
+ 3 │ type B = typeof import(A);
+ 4 │ type C = typeof import(`${A} ${B}`);
+   ·                        ───────────
+ 5 │ type D = typeof import(typeof import('react'));
+   ╰────
+
+  × TS(1141): String literal expected.
+   ╭─[misc/fail/import-type-source-not-string.ts:5:24]
+ 4 │ type C = typeof import(`${A} ${B}`);
+ 5 │ type D = typeof import(typeof import('react'));
+   ·                        ──────────────────────
+   ╰────
+
   × Expected `from` but found `string`
    ╭─[misc/fail/import-type-without-from.ts:1:13]
  1 │ import type 'module';
@@ -241,6 +289,75 @@ Negative Passed: 118/118 (100.00%)
  1 │ export const foo = <Foo;
    ·                    ─
    ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:4:1]
+ 3 │ 
+ 4 │ let.x;
+   · ───
+ 5 │ 
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:6:1]
+ 5 │ 
+ 6 │ let.x = 1;
+   · ───
+ 7 │ let()[x] = 1;
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:7:1]
+ 6 │ let.x = 1;
+ 7 │ let()[x] = 1;
+   · ───
+ 8 │ 
+   ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:9:1]
+  8 │ 
+  9 │ let?.x;
+    · ───
+ 10 │ let?.y.z;
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:10:1]
+  9 │ let?.x;
+ 10 │ let?.y.z;
+    · ───
+ 11 │ let?.[0];
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:11:1]
+ 10 │ let?.y.z;
+ 11 │ let?.[0];
+    · ───
+ 12 │ let?.method();
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:12:1]
+ 11 │ let?.[0];
+ 12 │ let?.method();
+    · ───
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/minus-yield-100.js:1:27]
+ 1 │ export function* foo() { -yield 100 }
+   ·                           ─────
+   ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/minus-yield-100.js:1:32]
+ 1 │ export function* foo() { -yield 100 }
+   ·                                ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected `:` but found `EOF`
    ╭─[misc/fail/missing-conditional-alternative-type.ts:2:1]
@@ -3143,6 +3260,68 @@ Negative Passed: 118/118 (100.00%)
    ·                         ╰── `{` expected
    ╰────
 
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:1:22]
+ 1 │ class A {constructor(override []){}}
+   ·                      ───────────
+ 2 │ class B {constructor(private []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:2:22]
+ 1 │ class A {constructor(override []){}}
+ 2 │ class B {constructor(private []){}}
+   ·                      ──────────
+ 3 │ class C {constructor(protected []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:3:22]
+ 2 │ class B {constructor(private []){}}
+ 3 │ class C {constructor(protected []){}}
+   ·                      ────────────
+ 4 │ class D {constructor(public []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:4:22]
+ 3 │ class C {constructor(protected []){}}
+ 4 │ class D {constructor(public []){}}
+   ·                      ─────────
+ 5 │ class E {constructor(readonly []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:5:22]
+ 4 │ class D {constructor(public []){}}
+ 5 │ class E {constructor(readonly []){}}
+   ·                      ───────────
+ 6 │ class F {constructor(private {}){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:6:22]
+ 5 │ class E {constructor(readonly []){}}
+ 6 │ class F {constructor(private {}){}}
+   ·                      ──────────
+ 7 │ class G {constructor(public {a} = {}){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:7:22]
+ 6 │ class F {constructor(private {}){}}
+ 7 │ class G {constructor(public {a} = {}){}}
+   ·                      ───────────────
+ 8 │ class H {constructor(readonly [b] = []){}}
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[misc/fail/oxc-16077.ts:8:22]
+ 7 │ class G {constructor(public {a} = {}){}}
+ 8 │ class H {constructor(readonly [b] = []){}}
+   ·                      ─────────────────
+   ╰────
+
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
@@ -3180,51 +3359,57 @@ Negative Passed: 118/118 (100.00%)
    ·        ─────
    ╰────
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:1:8]
  1 │ const a? = "A"
    ·        ─
  2 │ const [b]? = ["B"]
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:2:10]
  1 │ const a? = "A"
  2 │ const [b]? = ["B"]
    ·          ─
  3 │ const { c }? = { c: "C" }
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:3:12]
  2 │ const [b]? = ["B"]
  3 │ const { c }? = { c: "C" }
    ·            ─
  4 │ 
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:5:13]
  4 │ 
  5 │ const d     ? = "A"
    ·             ─
  6 │ const [e, f]      ? = ["B"]
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:6:19]
  5 │ const d     ? = "A"
  6 │ const [e, f]      ? = ["B"]
    ·                   ─
  7 │ const { g, h }       ? = { c: "C" }
    ╰────
+  help: Remove the `?`
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:7:22]
  6 │ const [e, f]      ? = ["B"]
  7 │ const { g, h }       ? = { c: "C" }
    ·                      ─
    ╰────
+  help: Remove the `?`
 
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
@@ -3395,18 +3580,20 @@ Negative Passed: 118/118 (100.00%)
    ╰────
   help: Remove this `?`
 
-  × Unexpected token
+  × Identifiers in JSX cannot contain hyphens
    ╭─[misc/fail/oxc-5355.jsx:1:6]
  1 │ <Foo.bar-baz />
    ·      ───────
    ╰────
+  help: Remove the hyphen from the identifier
 
-  × Unexpected token
+  × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-5955-1.ts:1:8]
  1 │ const x?: number = 1;
    ·        ─
  2 │ 
    ╰────
+  help: Remove the `?`
 
   × Unexpected token
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
@@ -3432,47 +3619,36 @@ Negative Passed: 118/118 (100.00%)
  5 │   }
    ╰────
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9497.js:2:8]
  1 │ let repro = {};
  2 │ repro.f?.
    ·        ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-1.js:1:2]
  1 │ x?.;
    ·  ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-2.js:1:3]
  1 │ [x?.];
    ·   ──
    ╰────
+  help: Add an identifier after '?.'
 
-  × Unexpected token
+  × Identifier expected after '?.'
    ╭─[misc/fail/oxc-9525-3.js:2:4]
  1 │ () => {
  2 │   x?.
    ·    ──
  3 │ }
    ╰────
-
-  × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:3:1]
- 2 │ 
- 3 │ let.a = 1;
-   · ───
- 4 │ let()[a] = 1;
-   ╰────
-
-  × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:4:1]
- 3 │ let.a = 1;
- 4 │ let()[a] = 1;
-   · ───
-   ╰────
+  help: Add an identifier after '?.'
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

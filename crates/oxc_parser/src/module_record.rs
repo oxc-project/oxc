@@ -55,9 +55,8 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .indirect_export_entries
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            )
-            .collect::<std::vec::Vec<_>>();
-        if default_exports.len() > 1 {
+            );
+        if default_exports.clone().count() > 1 {
             errors.push(
                 OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
             );
@@ -397,6 +396,7 @@ mod module_record_tests {
     fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
         let source_type = SourceType::ts();
         let ret = Parser::new(allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
         ret.module_record
     }
 
@@ -513,9 +513,9 @@ mod module_record_tests {
         // ExportDeclaration : export NamedExports ;
         // ExportSpecifier : ModuleExportName
         let allocator = Allocator::default();
-        let module_record = build(&allocator, "export { x }");
+        let module_record = build(&allocator, "export { x }; var x");
         let export_entry = ExportEntry {
-            statement_span: Span::new(0, 12),
+            statement_span: Span::new(0, 13),
             span: Span::new(9, 10),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -530,9 +530,9 @@ mod module_record_tests {
         // ExportDeclaration : export NamedExports ;
         // ExportSpecifier : ModuleExportName as ModuleExportName
         let allocator = Allocator::default();
-        let module_record = build(&allocator, "export { x as v }");
+        let module_record = build(&allocator, "export { x as v }; var x");
         let export_entry = ExportEntry {
-            statement_span: Span::new(0, 17),
+            statement_span: Span::new(0, 18),
             span: Span::new(9, 15),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -645,16 +645,18 @@ mod module_record_tests {
     #[test]
     fn export_named_default() {
         let allocator = Allocator::default();
-        let module_record = build(&allocator, "export { default }");
+        let module_record = build(&allocator, "export { default } from 'mod'");
         let export_entry = ExportEntry {
-            statement_span: Span::new(0, 18),
+            statement_span: Span::new(0, 29),
+            module_request: Some(NameSpan::new("mod".into(), Span::new(24, 29))),
             span: Span::new(9, 16),
             export_name: ExportExportName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
-            local_name: ExportLocalName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
+            import_name: ExportImportName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
+            local_name: ExportLocalName::Null,
             ..ExportEntry::default()
         };
-        assert_eq!(module_record.local_export_entries.len(), 1);
-        assert_eq!(module_record.local_export_entries[0], export_entry);
+        assert_eq!(module_record.indirect_export_entries.len(), 1);
+        assert_eq!(module_record.indirect_export_entries[0], export_entry);
     }
 
     #[test]

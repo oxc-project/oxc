@@ -12,6 +12,7 @@ use oxc_span::SourceType;
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = &mut ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).dead_code_elimination(program, options);
@@ -42,6 +43,7 @@ fn test_with_options(source_text: &str, expected: &str, options: CompressOptions
     let allocator = Allocator::default();
     let source_type = SourceType::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let program = &mut ret.program;
     Compressor::new(&allocator).dead_code_elimination(program, options);
     let result = Codegen::new().build(program).code;
@@ -105,12 +107,15 @@ fn dce_if_statement() {
     test("function foo() { { bar } } foo()", "function foo() { bar } foo()");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
-    test("if (true) { foo; return } foo; if (true) { bar; return } bar;", "foo; return");
+    test(
+        "export function baz() { if (true) { foo; return } foo; if (true) { bar; return } bar; }",
+        "export function baz() { foo }",
+    );
 
     // nested expression
     test(
-        "const a = { fn: function() { if (true) { foo; } } } bar(a)",
-        "const a = { fn: function() { foo; } } bar(a)",
+        "const a = { fn: function() { if (true) { foo; } } }; bar(a)",
+        "bar({ fn: function() { foo; } })",
     );
 
     // parenthesized

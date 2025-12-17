@@ -18,6 +18,7 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "apps/oxlint/src/lsp.rs"
+      - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - ".github/workflows/ci_vscode.yml"
 
@@ -31,16 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
 
-      - uses: oxc-project/setup-rust@83350c0ef69ec34f00be596f1cb9302179b9f43d # v1.0.9
+      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: vscode
-
-      - name: Type-Check VSCode
-        working-directory: editors/vscode
-        run: pnpm run type-check
 
       - name: Build Language Server
         working-directory: editors/vscode
@@ -49,6 +46,10 @@ jobs:
       - name: Build oxlint (with napi)
         working-directory: editors/vscode
         run: pnpm run oxlint:build:debug
+
+      - name: Build oxfmt (with napi)
+        working-directory: editors/vscode
+        run: pnpm run oxfmt:build:debug
 
       - name: Compile VSCode
         working-directory: editors/vscode

@@ -142,6 +142,12 @@ impl Program<'_> {
             return comments;
         },
         /* END_IF */
+        /* IF LINTER */
+        get tokens() {
+            if (tokens === null) initTokens();
+            return tokens;
+        },
+        /* END_IF */
         start,
         end,
         ...(RANGE && { range: [start, end] }),

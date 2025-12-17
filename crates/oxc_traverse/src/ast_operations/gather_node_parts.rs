@@ -22,8 +22,23 @@ pub fn get_var_name_from_node<'a, N: GatherNodeParts<'a>>(node: &N) -> String {
 
     if name.is_empty() {
         name = "ref".to_string();
-    } else {
-        name.truncate(20);
+    } else if name.len() > 20 {
+        // Truncate to ~20 bytes, respecting UTF-8 char boundaries.
+        // This diverges slightly from Babel (which limits to 20 chars),
+        // but the goal is just to avoid overly long variable names.
+        let bytes = name.as_bytes();
+        if bytes[19] < 0x80 {
+            // 20th byte is ASCII, safe to truncate here
+            name.truncate(20);
+        } else {
+            // Byte 19 may be in the middle of a multi-byte char.
+            // Walk back to find the start byte (continuation bytes are 10xxxxxx).
+            let mut truncate_at = 19;
+            while truncate_at > 0 && (bytes[truncate_at] & 0xC0) == 0x80 {
+                truncate_at -= 1;
+            }
+            name.truncate(truncate_at);
+        }
     }
 
     to_identifier(name)
@@ -561,5 +576,68 @@ impl<'a> GatherNodeParts<'a> for JSXMemberExpressionObject<'a> {
 impl<'a> GatherNodeParts<'a> for JSXIdentifier<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         f(self.name.as_str());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Test wrapper that implements GatherNodeParts for testing purposes
+    struct TestNode<'a>(&'a str);
+
+    impl<'a> GatherNodeParts<'a> for TestNode<'a> {
+        fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+            f(self.0);
+        }
+    }
+
+    #[test]
+    fn test_get_var_name_truncation_limits_to_approximately_20_bytes() {
+        // ASCII: 20 bytes - no truncation
+        let node = TestNode("abcdefghijklmnopqrst");
+        assert_eq!(get_var_name_from_node(&node), "abcdefghijklmnopqrst");
+
+        // ASCII: 21 bytes -> 20 bytes
+        let node = TestNode("abcdefghijklmnopqrstu");
+        assert_eq!(get_var_name_from_node(&node), "abcdefghijklmnopqrst");
+
+        // 2-byte UTF-8 (Greek): 21 chars (42 bytes) -> 9 chars (18 bytes)
+        let node = TestNode("αβγδεζηθικλμνξοπρστυφ");
+        assert_eq!(get_var_name_from_node(&node), "αβγδεζηθι");
+
+        // 3-byte UTF-8 (Korean): 10 chars (30 bytes) -> 6 chars (18 bytes)
+        let node = TestNode("가나다라마바사아자차");
+        assert_eq!(get_var_name_from_node(&node), "가나다라마바");
+
+        // 4-byte UTF-8 (CJK Ext B): 6 chars (24 bytes) -> 4 chars (16 bytes)
+        let node = TestNode("𠀀𠀁𠀂𠀃𠀄𠀅");
+        assert_eq!(get_var_name_from_node(&node), "𠀀𠀁𠀂𠀃");
+
+        // Mixed ASCII + Greek: 21 bytes -> 19 bytes
+        let node = TestNode("test_αβγδεζηθ");
+        assert_eq!(get_var_name_from_node(&node), "test_αβγδεζη");
+
+        // Short string - no truncation
+        let node = TestNode("short");
+        assert_eq!(get_var_name_from_node(&node), "short");
+
+        // Exactly 20 bytes - no truncation
+        let node = TestNode("αβγδεζηθικ");
+        assert_eq!(get_var_name_from_node(&node), "αβγδεζηθικ");
+    }
+
+    #[test]
+    fn test_get_var_name_empty_returns_ref() {
+        let node = TestNode("");
+        let result = get_var_name_from_node(&node);
+        assert_eq!(result, "ref");
+    }
+
+    #[test]
+    fn test_get_var_name_strips_leading_underscores() {
+        let node = TestNode("___foo");
+        let result = get_var_name_from_node(&node);
+        assert_eq!(result, "foo");
     }
 }

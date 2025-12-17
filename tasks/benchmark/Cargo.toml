@@ -76,8 +76,6 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
-rustc-hash = { workspace = true }
-
 # Only for lexer benchmark
 cow-utils = { workspace = true, optional = true }
 
@@ -117,4 +115,28 @@ linter = [
   "dep:oxc_span",
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
+]
+
+[dev-dependencies]
+rustc-hash = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = [
+  "oxc_allocator",
+  "oxc_ast",
+  "oxc_ast_visit",
+  "oxc_codegen",
+  "oxc_formatter",
+  "oxc_isolated_declarations",
+  "oxc_linter",
+  "oxc_mangler",
+  "oxc_minifier",
+  "oxc_parser",
+  "oxc_semantic",
+  "oxc_span",
+  "oxc_tasks_common",
+  "oxc_transformer",
+  "serde",
+  "serde_json",
+  "cow-utils",
 ]

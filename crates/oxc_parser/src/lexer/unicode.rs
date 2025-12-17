@@ -2,13 +2,15 @@ use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::StringBuilder;
-use oxc_syntax::identifier::{
-    CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
-    is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
-};
-
 use crate::diagnostics;
+use oxc_allocator::StringBuilder;
+use oxc_syntax::{
+    identifier::{
+        FF, TAB, VT, is_identifier_part, is_identifier_start, is_identifier_start_unicode,
+        is_irregular_whitespace,
+    },
+    line_terminator::{CR, LF, LS, PS, is_irregular_line_terminator},
+};
 
 use super::{Kind, Lexer, Span};
 

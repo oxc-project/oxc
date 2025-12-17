@@ -8,9 +8,8 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, SourceText, prelude::*},
+    formatter::{Buffer, Format, Formatter, prelude::*},
     utils::{
-        call_expression::is_test_call_expression,
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
@@ -20,8 +19,8 @@ use crate::{
     },
     write,
 };
-use oxc_ast::{AstKind, ast::*};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use super::typecast::is_type_cast_node;
 
@@ -46,7 +45,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         // `flattened_items` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
         let tail_groups =
-            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+            compute_remaining_groups(chain_members.drain(remaining_members_start_index..), f);
         let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
@@ -111,18 +110,16 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
-    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.head.inspect(false, f)?;
+    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) {
+        self.head.inspect(false, f);
 
         for member in self.tail.iter() {
-            member.inspect(true, f)?;
+            member.inspect(true, f);
         }
-
-        Ok(())
     }
 
     /// It tells if the groups should break on multiple lines
-    fn groups_should_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn groups_should_break(&self, f: &Formatter<'_, 'a>) -> bool {
         let mut call_expressions = self
             .members()
             .filter_map(|member| match member {
@@ -163,7 +160,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// We retrieve all the call expressions inside the group and we check if
     /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn last_call_breaks(&self, f: &Formatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
         if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
@@ -200,54 +197,53 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 }
 
 impl<'a> Format<'a> for MemberChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
-            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
+            f.join().entries(iter::once(&self.head).chain(self.tail.iter()));
         });
 
-        self.inspect_member_chain_groups(f)?;
+        self.inspect_member_chain_groups(f);
 
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
         if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
-                write!(f, [format_one_line])
+                write!(f, [format_one_line]);
             } else {
-                write!(f, [group(&format_one_line)])
+                write!(f, [group(&format_one_line)]);
             };
         }
 
         let format_tail = format_with(|f| {
             for group in self.tail.iter() {
                 if group.needs_empty_line() {
-                    write!(f, [empty_line()])?;
+                    write!(f, [empty_line()]);
                 } else {
-                    write!(f, [hard_line_break()])?;
+                    write!(f, [hard_line_break()]);
                 }
-                write!(f, [group])?;
+                write!(f, [group]);
             }
-            Ok(())
         });
         let format_expanded = format_with(|f| write!(f, [self.head, indent(&format_tail)]));
 
         let format_content = format_with(|f| {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
-                write!(f, [group(&format_expanded)])
+                write!(f, [group(&format_expanded)]);
             } else {
                 let has_empty_line_before_tail =
                     self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
 
                 if has_empty_line_before_tail || self.last_group().will_break(f) {
-                    write!(f, [expand_parent()])?;
+                    write!(f, [expand_parent()]);
                 }
 
-                write!(f, [best_fitting!(format_one_line, format_expanded)])
+                write!(f, [best_fitting!(format_one_line, format_expanded)]);
             }
         });
 
-        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)])
+        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)]);
     }
 }
 
@@ -301,11 +297,18 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 /// computes groups coming after the first group
 fn compute_remaining_groups<'a, 'b>(
     members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+    f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
     for member in members {
+        let span = member.span();
+        let has_trailing_comment =
+            f.comments().comments_after(span.end).first().is_some_and(|comment| {
+                f.source_text().bytes_range(span.end, comment.span.start).trim_ascii().is_empty()
+            });
+
         match member {
             // [0] should be appended at the end of the group instead of the
             // beginning of the next one
@@ -333,6 +336,14 @@ fn compute_remaining_groups<'a, 'b>(
                 groups_builder.start_or_continue_group(member);
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
+        }
+
+        // Close the group immediately if the node had any trailing comments to
+        // ensure those are printed in a trailing position for the token they
+        // were originally commenting
+        if has_trailing_comment {
+            groups_builder.close_group();
+            has_seen_call_expression = false;
         }
     }
 
@@ -377,7 +388,7 @@ pub fn is_member_call_chain<'a>(
     expression: &AstNode<'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain(f)
+    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
 fn has_short_name(name: &Atom, tab_width: u8) -> bool {

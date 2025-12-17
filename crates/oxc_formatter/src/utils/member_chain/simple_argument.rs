@@ -77,8 +77,8 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                 Expression::TaggedTemplateExpression(template) => {
                     is_simple_template_literal(&template.quasi, depth + 1)
                 }
-                Expression::ObjectExpression(object) => self.is_simple_object(object, depth),
-                Expression::ArrayExpression(array) => self.is_simple_array(array, depth),
+                Expression::ObjectExpression(object) => Self::is_simple_object(object, depth),
+                Expression::ArrayExpression(array) => Self::is_simple_array(array, depth),
                 Expression::UnaryExpression(unary_expression) => {
                     matches!(
                         unary_expression.operator,
@@ -102,14 +102,14 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                         && Self::from(&computed_expression.object).is_simple_impl(depth)
                 }
                 Expression::NewExpression(expr) => {
-                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
+                    Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
                 Expression::CallExpression(expr) => {
-                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
+                    Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
                 Expression::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
                 Expression::ChainExpression(chain) => {
-                    self.is_simple_chain_element(&chain.expression, depth)
+                    Self::is_simple_chain_element(&chain.expression, depth)
                 }
                 _ => false,
             },
@@ -119,7 +119,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_object(&self, object: &'b ObjectExpression<'a>, depth: u8) -> bool {
+    fn is_simple_object(object: &'b ObjectExpression<'a>, depth: u8) -> bool {
         object.properties.iter().all(|member| {
             if let ObjectPropertyKind::ObjectProperty(property) = member {
                 if property.method {
@@ -138,7 +138,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_array(&self, array: &'b ArrayExpression<'a>, depth: u8) -> bool {
+    fn is_simple_array(array: &'b ArrayExpression<'a>, depth: u8) -> bool {
         array.elements.iter().all(|element| match element {
             match_expression!(ArrayExpressionElement) => {
                 Self::from(element.to_expression()).is_simple_impl(depth + 1)
@@ -150,7 +150,6 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
 
     #[inline]
     fn is_simple_call_like(
-        &self,
         callee: &'b Expression<'a>,
         arguments: &'b [Argument<'a>],
         depth: u8,
@@ -161,10 +160,10 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_chain_element(&self, element: &'b ChainElement<'a>, depth: u8) -> bool {
+    fn is_simple_chain_element(element: &'b ChainElement<'a>, depth: u8) -> bool {
         match element {
             ChainElement::CallExpression(call) => {
-                self.is_simple_call_like(&call.callee, &call.arguments, depth)
+                Self::is_simple_call_like(&call.callee, &call.arguments, depth)
             }
             ChainElement::TSNonNullExpression(assertion) => {
                 Self::from(&assertion.expression).is_simple_impl(depth)

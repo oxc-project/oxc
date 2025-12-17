@@ -142,11 +142,12 @@ impl Rule for InitDeclarations {
                 if decl.declare {
                     return;
                 }
-                let decl_ancestor =
-                    ctx.nodes().ancestor_kinds(node.id()).find(|el| {
-                        matches!(el, AstKind::TSModuleDeclaration(ts_module_decl) if ts_module_decl.declare)
-                    });
-                if decl_ancestor.is_some() {
+                let declare = ctx.nodes().ancestor_kinds(node.id()).any(|el| match el {
+                    AstKind::TSModuleDeclaration(ts_module_decl) => ts_module_decl.declare,
+                    AstKind::TSGlobalDeclaration(ts_global_decl) => ts_global_decl.declare,
+                    _ => false,
+                });
+                if declare {
                     return;
                 }
             }

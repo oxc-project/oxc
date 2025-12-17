@@ -6,7 +6,7 @@ import { testSingleFolderMode } from './test-helpers.js';
 const conf = workspace.getConfiguration('oxc');
 
 suite('VSCodeConfig', () => {
-  const keys = ['enable', 'requireConfig', 'trace.server', 'path.server', 'path.node'];
+  const keys = ['enable', 'requireConfig', 'trace.server', 'path.server', 'path.oxlint', 'path.oxfmt', 'path.tsgolint', 'path.node'];
   setup(async () => {
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
@@ -21,8 +21,17 @@ suite('VSCodeConfig', () => {
     strictEqual(config.enable, true);
     strictEqual(config.requireConfig, false);
     strictEqual(config.trace, 'off');
-    strictEqual(config.binPath, '');
+    strictEqual(config.binPathOxlint, '');
+    strictEqual(config.binPathOxfmt, '');
+    strictEqual(config.binPathTsGoLint, '');
     strictEqual(config.nodePath, '');
+  });
+
+  testSingleFolderMode('deprecated values are respected', async () => {
+    await conf.update('path.server', './deprecatedBinary');
+    const config = new VSCodeConfig();
+
+    strictEqual(config.binPathOxlint, './deprecatedBinary');
   });
 
   testSingleFolderMode('updating values updates the workspace configuration', async () => {
@@ -32,7 +41,9 @@ suite('VSCodeConfig', () => {
       config.updateEnable(false),
       config.updateRequireConfig(true),
       config.updateTrace('messages'),
-      config.updateBinPath('./binary'),
+      config.updateBinPathOxlint('./binary'),
+      config.updateBinPathOxfmt('./formatter'),
+      config.updateBinPathTsGoLint('./tsgolint'),
       config.updateNodePath('./node'),
     ]);
 
@@ -41,7 +52,9 @@ suite('VSCodeConfig', () => {
     strictEqual(wsConfig.get('enable'), false);
     strictEqual(wsConfig.get('requireConfig'), true);
     strictEqual(wsConfig.get('trace.server'), 'messages');
-    strictEqual(wsConfig.get('path.server'), './binary');
+    strictEqual(wsConfig.get('path.oxlint'), './binary');
+    strictEqual(wsConfig.get('path.oxfmt'), './formatter');
+    strictEqual(wsConfig.get('path.tsgolint'), './tsgolint');
     strictEqual(wsConfig.get('path.node'), './node');
   });
 });

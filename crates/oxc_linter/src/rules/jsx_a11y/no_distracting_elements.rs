@@ -7,8 +7,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{LintContext, rule::Rule, utils::get_element_type};
 
 fn no_distracting_elements_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
-        .with_help("Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.")
+    OxcDiagnostic::warn("Do not use `<marquee>` or `<blink>` elements as they can create visual accessibility issues and are deprecated.")
+        .with_help("Replace the `<marquee>` or `<blink>` element with alternative, more accessible ways to achieve your desired visual effects.")
         .with_label(span)
 }
 

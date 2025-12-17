@@ -226,13 +226,11 @@ fn check_var_on_top_in_function_scope(
 }
 
 fn is_in_ambient_typescript_context(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|ancestor| {
-        if let AstKind::TSModuleDeclaration(module) = ancestor.kind() {
-            // Ambient if it has the `declare` keyword or is a `declare global` block
-            module.declare || module.kind.is_global()
-        } else {
-            false
-        }
+    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
+        AstKind::TSModuleDeclaration(module) => module.declare,
+        // No need to check `declare` field, as `global` is only valid in ambient context
+        AstKind::TSGlobalDeclaration(_) => true,
+        _ => false,
     })
 }
 

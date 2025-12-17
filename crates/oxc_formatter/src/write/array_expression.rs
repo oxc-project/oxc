@@ -26,8 +26,8 @@ impl<'a, 'b> FormatArrayExpression<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "[")?;
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, "[");
 
         if self.array.elements().is_empty() {
             write!(f, format_dangling_comments(self.array.span).with_block_indent());
@@ -43,10 +43,10 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
                 group(&soft_block_indent(&elements))
                     .with_group_id(Some(group_id))
                     .should_expand(should_expand)
-            )?;
+            );
         }
 
-        write!(f, "]")
+        write!(f, "]");
     }
 }
 

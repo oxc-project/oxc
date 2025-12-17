@@ -1,27 +1,11 @@
-commit: fd594a07
+commit: 947fee33
 
 formatter_test262 Summary:
-AST Parsed     : 44758/44758 (100.00%)
-Positive Passed: 44747/44758 (99.98%)
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
-Cannot assign to this expression
+AST Parsed     : 46453/46453 (100.00%)
+Positive Passed: 46450/46453 (99.99%)
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
 
-Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
-Unexpected token

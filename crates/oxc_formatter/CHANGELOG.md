@@ -4,6 +4,123 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.18.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- 320c09f ast, parser, linter, codegen, formatter: [**BREAKING**] Rename `CommentKind::Block` to `CommentKind::SinglelineBlock` (#16501) (Dunqing)
+
+### 🚀 Features
+
+- afd6c44 oxfmt: Support `quoteProps: consistent` in `Oxfmtrc` (#16721) (leaysgur)
+- 686f2b7 formatter: Support `consistent` quote props (#16677) (Dunqing)
+- 28e0682 oxfmt: Enable experimental `package.json` sorting by default (#16593) (leaysgur)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- a0efc41 formatter: Incorrect formatting for member chain call with an empty arguments call argument (#16875) (Dunqing)
+- e973965 formatter: Incorrect indentation of long assignment pattern in object (#16709) (Dunqing)
+- 2a63d74 formatter: Should not insert a semicolon for non-property signatures when no semicolon is set (#16700) (Dunqing)
+- 2495a39 formatter/sort-imports: Do not move leading comment if empty line found (#16676) (leaysgur)
+- 0d5da26 formatter: Disable layout assertions on some 32-bit platforms (#16625) (Dunqing)
+
+### ⚡ Performance
+
+- c7db70b formatter: Optimize formatting of JSX element/fragment with a single child (#16631) (Dunqing)
+- 4843475 formatter: Do not write elements to the flat buffer if the layout is multline (#16630) (Dunqing)
+
+### 📚 Documentation
+
+- 8babdf9 oxfmt: Improve docs for `.oxfmtrc.jsonc` config fields and add markdownDescription fields to JSON Schema (#16587) (connorshea)
+
+## [0.17.0] - 2025-12-08
+
+### 🚀 Features
+
+- 7bb3304 oxfmt: Pass populated config to prettier formatting (#16584) (leaysgur)
+- 69f84d2 oxfmt: Pass raw config to prettier formatting (#16582) (leaysgur)
+- 930533f formatter: Convert single `\r` to `\n` in string and add a debug assertion to ensure that there is no `\r` in the text (#16531) (Dunqing)
+- 80e6999 formatter: Add debug assertion to ensure that there is no empty content is passed in (#16475) (Dunqing)
+- 7374856 formatter/sort-imports: Support `options.internalPattern` (#16372) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 40b0134 formatter: Incorrect formatting of `useImperativeHandle` hook (#16533) (Dunqing)
+- 75393e7 formatter: Incorrect handling of `CRLF` for multiline block comment (#16528) (Dunqing)
+- ee0756b formatter: JSX text wrapping incorrect 2 (#16320) (Dunqing)
+- 36308b8 formatter: Fix indent for new expression with type cast (#16380) (leaysgur)
+
+### ⚡ Performance
+
+- 6f16a8f formatter: Avoid using an indent with a empty content (#16474) (Dunqing)
+- 201c98f formatter: Early return when no comments need to be printed (#16432) (Dunqing)
+
+## [0.16.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+### 🚀 Features
+
+- 862bdf7 oxfmt: Detect unsupported experimental options (take2) (#16088) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 75ac90c formatter: Comments in call arguments should be printed as-is (#16327) (Dunqing)
+- fd77568 formatter: Don't wrap parenthesis for yield expression if there is no leading comment (#16326) (Dunqing)
+- 8ccfb06 formatter: Should indent class extends and interface heritage when it is a member expression without type arguments (#16323) (Dunqing)
+- 2b8f982 formatter: JSX text wrapping incorrect (#16318) (Dunqing)
+- f3ffebe formatter: Should indent variable declarator if there is a trailing comment (#16243) (Dunqing)
+- 31d3186 formatter: Incorrect handling of directives with comments (#16235) (Dunqing)
+- ac8fcaf formatter: Add parens for new: private field expr (#16312) (leaysgur)
+- 380a0af formatter: Incorrect printing of class binding trailing comments (#16234) (Dunqing)
+- 0ca8154 formatter: Incorrect printing of trailing comments of callee when the call arguments are empty (#16232) (Dunqing)
+- ac3a92e formatter: Print comment in ternary jsx (#16224) (leaysgur)
+- e3a7388 formatter: Fix parens for static member chain (#16229) (leaysgur)
+- 55334c3 formatter: Incorrect printing of dangling comments in the if statement (#16228) (Dunqing)
+- 9096a63 formatter: Correct printing of trailing comments after the semicolon for class properties (#16225) (Dunqing)
+- 75fd568 formatter: Inconsistent union type output between two runs (#16222) (Dunqing)
+- cd70484 formatter: Should not add a hard space before function body (#16221) (Dunqing)
+- 9097167 formatter: Incorrect printing of union types with comments (#16205) (Dunqing)
+- 79b78b3 formatter: Template literal element should not be indented (#16189) (Dunqing)
+- 48d6ed2 formatter: Nested assignment pattern should not expand outer object pattern (#16160) (Dunqing)
+- 8f4137d formatter: Output is incorrect when using comments inside JSX which is the right hand-side of `LogicalExpression` (#16156) (Dunqing)
+- 85c3a10 formatter/sort_imports: Handle internal prefixes correctly (#16128) (leaysgur)
+- 889d2e7 formatter: Handle poor layout for grouped call arguments (#16093) (Dunqing)
+- 14b0a6a oxfmt: Fix JS-ish file detection (#16092) (leaysgur)
+- 9706a1a oxfmt: Ignore unsupported options (#16085) (leaysgur)
+
+## [0.15.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- a937890 formatter: [**BREAKING**] Default to `lineWidth: 100` (#15933) (leaysgur)
+- 03d5f5a formatter/sort-imports: [**BREAKING**] Change default order to `natural` with `natord` crate (#15828) (leaysgur)
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 7818e22 formatter/sort-imports: Support `options.groups` (#15831) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 4817486 formatter: Revert  `FormatElement::BestFitting` printing logic (#16028) (Dunqing)
+- 5562dd6 formatter: Incorrect formatting method chain with trailing comments (#16027) (Dunqing)
+- 6d14c8b formatter: Comments in export class decorators are printing incorrectly (#15897) (Dunqing)
+- 683c764 formatter: Correct a few minor mismatched typescript tests (#15894) (Dunqing)
+- c11cc07 formatter: Improve formatting for default type on type parameters (#15893) (Dunqing)
+- 0bff596 formatter: Handle JSX expresssion dangling comment (#15890) (leaysgur)
+- 16a9dc8 formatter: Inconsistent printing of class extends and interface extends (#15892) (Dunqing)
+- 300b496 formatter: Inconsistent CallExpression and NewExpression around member chain and logical expression (#15858) (Dunqing)
+
+### ⚡ Performance
+
+- 65174cc formatter: Reduce the size of `TextWidth` to 4 byte (#15827) (Dunqing)
+- 4fe3aac formatter: Use `ArenaVec` and `ArenaBox` (#15420) (Dunqing)
+
 ## [0.14.0] - 2025-11-17
 
 ### 🚀 Features

@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, FormatResult, Formatter,
+        Buffer, Format, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
@@ -72,7 +72,7 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
-    fn write_members(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write_members(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::ObjectExpression(o) => o.properties().fmt(f),
             Self::TSTypeLiteral(o) => o.members().fmt(f),
@@ -81,13 +81,13 @@ impl<'a> ObjectLike<'a, '_> {
 }
 
 impl<'a> Format<'a> for ObjectLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
-        write!(f, "{")?;
+        write!(f, "{");
 
         if self.members_are_empty() {
-            write!(f, format_dangling_comments(self.span()).with_block_indent())?;
+            write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
             let should_expand = (f.options().expand == Expand::Auto
@@ -108,12 +108,12 @@ impl<'a> Format<'a> for ObjectLike<'a, '_> {
                 soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);
 
             if should_hug {
-                write!(f, inner)?;
+                write!(f, inner);
             } else {
-                write!(f, [group(&inner).should_expand(should_expand)])?;
+                write!(f, [group(&inner).should_expand(should_expand)]);
             }
         }
 
-        write!(f, "}")
+        write!(f, "}");
     }
 }

@@ -406,10 +406,13 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(left) = &e.left else {
             return;
         };
+        if left.operator != e.operator {
+            return;
+        }
         let Some(new_expr) = Self::try_compress_is_object_and_not_null_for_left_and_right(
             &left.right,
             &e.right,
-            Span::new(left.right.span().start, e.span.end),
+            left.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN),
             ctx,
             inversed,
         ) else {
@@ -2143,6 +2146,24 @@ mod test {
             "var foo, bar; v = bar !== 1 && typeof foo === 'object' && foo !== null",
             "var foo, bar; v = bar !== 1 && typeof foo == 'object' && !!foo",
         );
+        test(
+            "var foo, bar; v = typeof foo === 'object' && foo !== null || bar !== 1",
+            "var foo, bar; v = typeof foo == 'object' && !!foo || bar !== 1",
+        );
+        test(
+            "var foo, bar; v = bar !== 1 || typeof foo === 'object' && foo !== null",
+            "var foo, bar; v = bar !== 1 || typeof foo == 'object' && !!foo",
+        );
+        test(
+            "var foo, bar; v = (typeof foo !== 'object' || foo === null) && bar !== 1",
+            "var foo, bar; v = (typeof foo != 'object' || !foo) && bar !== 1",
+        );
+        test(
+            "var foo, bar; v = bar !== 1 && (typeof foo !== 'object' || foo === null)",
+            "var foo, bar; v = bar !== 1 && (typeof foo != 'object' || !foo)",
+        );
+        test_same("var foo, bar; v = bar !== 1 && typeof foo != 'object' || foo === null");
+        test_same("var foo, bar; v = typeof foo != 'object' || foo === null && bar !== 1");
         test_same("var foo; v = typeof foo.a == 'object' && foo.a !== null"); // cannot be folded because accessing foo.a might have a side effect
         test_same("v = foo !== null && typeof foo == 'object'"); // cannot be folded because accessing foo might have a side effect
         test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect

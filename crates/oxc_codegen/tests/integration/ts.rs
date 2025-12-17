@@ -59,7 +59,7 @@ fn ts() {
         "function <const T>(){}",
         "class A {m?(): void}",
         "class A {constructor(public readonly a: number) {}}",
-        "abstract class A {private abstract static m() {}}",
+        "abstract class A {private abstract static m()}",
         "abstract class A {private abstract static readonly prop: string}",
         "interface A { a: string, 'b': number, 'c'(): void }",
         "enum A { a, 'b' }",
@@ -68,6 +68,7 @@ fn ts() {
         "a = x!;",
         "b = (x as y);",
         "c = foo<string>;",
+        "new Map<string, number>();",
         "d = x satisfies y;",
         "export @x declare abstract class C {}",
         "div<T>``",
@@ -132,6 +133,11 @@ export import b = require("b");
   static
   bar() {}
 }",
+        // TSImportType - ensure backticks are not used in minify mode
+        "type T = typeof import('react');",
+        "type U = typeof import(\"vue\");",
+        "type V = typeof import('some-module').SomeType;",
+        "type W = typeof import('pkg').default<string>;",
     ];
 
     snapshot("ts", &cases);

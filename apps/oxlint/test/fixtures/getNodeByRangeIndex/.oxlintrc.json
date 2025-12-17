@@ -1,0 +1,9 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "getNode-plugin/getNode": "error"
+  }
+}

@@ -224,7 +224,7 @@ impl<'a> PeepholeOptimizations {
 
     fn remove_unused_new_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
-        if new_expr.pure && ctx.annotations() {
+        if (new_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&new_expr.callee) {
             let mut exprs =
                 Self::fold_arguments_into_needed_expressions(&mut new_expr.arguments, ctx);
             if exprs.is_empty() {
@@ -536,6 +536,7 @@ impl<'a> PeepholeOptimizations {
 
         let is_pure = {
             (call_expr.pure && ctx.annotations())
+                || ctx.manual_pure_functions(&call_expr.callee)
                 || (if let Expression::Identifier(id) = &call_expr.callee
                     && let Some(symbol_id) =
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
@@ -684,6 +685,10 @@ impl<'a> PeepholeOptimizations {
             .as_ref()
             .is_some_and(|e| matches!(e, Expression::ArrowFunctionExpression(_)))
         {
+            return None;
+        }
+        // Don't remove classes with decorators - they may have side effects
+        if !c.decorators.is_empty() {
             return None;
         }
         // Keep the entire class if there are class level side effects.
@@ -1172,6 +1177,7 @@ mod test {
 
         // decorators
         test_same_options("(class { @dec foo() {} })", &options);
+        test_same_options("(@dec class {})", &options);
 
         // TypeError
         test_same_options("(class extends (() => {}) {})", &options);

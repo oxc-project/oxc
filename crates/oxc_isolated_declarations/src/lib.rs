@@ -200,17 +200,15 @@ impl<'a> IsolatedDeclarations<'a> {
             match stmt {
                 match_declaration!(Statement) => {
                     if let Statement::TSModuleDeclaration(decl) = stmt {
-                        // `declare global { ... }` or `declare module "foo" { ... }`
+                        // `declare module "foo" { ... }`
                         // We need to emit it anyway
-                        let is_global = decl.kind.is_global();
-                        if is_global || decl.id.is_string_literal() {
+                        if decl.id.is_string_literal() {
                             transformed_spans.insert(decl.span);
 
                             let mut decl = decl.clone_in(self.ast.allocator);
                             // Remove export keyword from all statements in `declare module "xxx" { ... }`
-                            if !is_global
-                                && let Some(body) =
-                                    decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+                            if let Some(body) =
+                                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
                             {
                                 self.strip_export_keyword(&mut body.body);
                             }
@@ -218,11 +216,19 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We need to visit the module declaration to collect all references
                             self.scope.visit_ts_module_declaration(decl.as_ref());
 
-                            transformed_stmts.insert(
-                                decl.span,
-                                Statement::from(Declaration::TSModuleDeclaration(decl)),
-                            );
+                            transformed_stmts
+                                .insert(decl.span, Statement::TSModuleDeclaration(decl));
                         }
+                    } else if let Statement::TSGlobalDeclaration(decl) = stmt {
+                        // `declare global { ... }`
+                        // We need to emit it anyway
+                        transformed_spans.insert(decl.span);
+
+                        let decl = decl.clone_in(self.ast.allocator);
+                        // We need to visit the module declaration to collect all references
+                        self.scope.visit_ts_global_declaration(decl.as_ref());
+
+                        transformed_stmts.insert(decl.span, Statement::TSGlobalDeclaration(decl));
                     }
                 }
                 match_module_declaration!(Statement) => {

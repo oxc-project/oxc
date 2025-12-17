@@ -4,7 +4,7 @@ import path = require('path');
 
 type OxlintConfigPlugins = string[];
 type OxlintConfigCategories = Record<string, unknown>;
-type OxlintConfigGlobals = Record<string, 'readonly' | 'writeable' | 'off'>;
+type OxlintConfigGlobals = Record<string, 'readonly' | 'writable' | 'off'>;
 type OxlintConfigEnv = Record<string, boolean>;
 type OxlintConfigIgnorePatterns = string[];
 type OxlintRuleSeverity = 'off' | 'warn' | 'error';
@@ -122,7 +122,7 @@ export async function writeToFixtureFile(file: string, content: string, workspac
       // oxlint-disable eslint/no-await-in-loop -- simulate key presses
       await commands.executeCommand('type', { text: char });
       await sleep(50);
-      // oxlint-enable
+      // oxlint-enable eslint/no-await-in-loop
   }
 }
 

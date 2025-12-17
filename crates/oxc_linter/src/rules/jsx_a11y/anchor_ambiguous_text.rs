@@ -8,11 +8,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader,
@@ -27,10 +28,10 @@ fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
     .with_help(format!("Avoid using ambiguous text like \"{text}\", replace it with more descriptive text that provides context."))
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AnchorAmbiguousText(Box<AnchorAmbiguousTextConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AnchorAmbiguousTextConfig {
     /// List of ambiguous words or phrases that should be flagged in anchor text.
@@ -96,19 +97,9 @@ declare_oxc_lint!(
 
 impl Rule for AnchorAmbiguousText {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = AnchorAmbiguousTextConfig::default();
-
-        if let Some(words_array) =
-            value.get(0).and_then(|v| v.get("words")).and_then(serde_json::Value::as_array)
-        {
-            config.words = words_array
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<AnchorAmbiguousText>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

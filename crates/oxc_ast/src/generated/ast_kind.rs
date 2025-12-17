@@ -12,7 +12,7 @@ use oxc_span::{GetSpan, Span};
 use crate::ast::*;
 
 /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
-pub const AST_TYPE_MAX: u8 = 185;
+pub const AST_TYPE_MAX: u8 = 186;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -180,29 +180,30 @@ pub enum AstType {
     TSInterfaceHeritage = 160,
     TSTypePredicate = 161,
     TSModuleDeclaration = 162,
-    TSModuleBlock = 163,
-    TSTypeLiteral = 164,
-    TSInferType = 165,
-    TSTypeQuery = 166,
-    TSImportType = 167,
-    TSImportTypeQualifiedName = 168,
-    TSFunctionType = 169,
-    TSConstructorType = 170,
-    TSMappedType = 171,
-    TSTemplateLiteralType = 172,
-    TSAsExpression = 173,
-    TSSatisfiesExpression = 174,
-    TSTypeAssertion = 175,
-    TSImportEqualsDeclaration = 176,
-    TSExternalModuleReference = 177,
-    TSNonNullExpression = 178,
-    Decorator = 179,
-    TSExportAssignment = 180,
-    TSNamespaceExportDeclaration = 181,
-    TSInstantiationExpression = 182,
-    JSDocNullableType = 183,
-    JSDocNonNullableType = 184,
-    JSDocUnknownType = 185,
+    TSGlobalDeclaration = 163,
+    TSModuleBlock = 164,
+    TSTypeLiteral = 165,
+    TSInferType = 166,
+    TSTypeQuery = 167,
+    TSImportType = 168,
+    TSImportTypeQualifiedName = 169,
+    TSFunctionType = 170,
+    TSConstructorType = 171,
+    TSMappedType = 172,
+    TSTemplateLiteralType = 173,
+    TSAsExpression = 174,
+    TSSatisfiesExpression = 175,
+    TSTypeAssertion = 176,
+    TSImportEqualsDeclaration = 177,
+    TSExternalModuleReference = 178,
+    TSNonNullExpression = 179,
+    Decorator = 180,
+    TSExportAssignment = 181,
+    TSNamespaceExportDeclaration = 182,
+    TSInstantiationExpression = 183,
+    JSDocNullableType = 184,
+    JSDocNonNullableType = 185,
+    JSDocUnknownType = 186,
 }
 
 /// Untyped AST Node Kind
@@ -385,6 +386,7 @@ pub enum AstKind<'a> {
     TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>) = AstType::TSInterfaceHeritage as u8,
     TSTypePredicate(&'a TSTypePredicate<'a>) = AstType::TSTypePredicate as u8,
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>) = AstType::TSModuleDeclaration as u8,
+    TSGlobalDeclaration(&'a TSGlobalDeclaration<'a>) = AstType::TSGlobalDeclaration as u8,
     TSModuleBlock(&'a TSModuleBlock<'a>) = AstType::TSModuleBlock as u8,
     TSTypeLiteral(&'a TSTypeLiteral<'a>) = AstType::TSTypeLiteral as u8,
     TSInferType(&'a TSInferType<'a>) = AstType::TSInferType as u8,
@@ -593,6 +595,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSInterfaceHeritage(it) => it.span(),
             Self::TSTypePredicate(it) => it.span(),
             Self::TSModuleDeclaration(it) => it.span(),
+            Self::TSGlobalDeclaration(it) => it.span(),
             Self::TSModuleBlock(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
             Self::TSInferType(it) => it.span(),
@@ -786,6 +789,7 @@ impl GetAddress for AstKind<'_> {
             Self::TSInterfaceHeritage(it) => it.unstable_address(),
             Self::TSTypePredicate(it) => it.unstable_address(),
             Self::TSModuleDeclaration(it) => it.unstable_address(),
+            Self::TSGlobalDeclaration(it) => it.unstable_address(),
             Self::TSModuleBlock(it) => it.unstable_address(),
             Self::TSTypeLiteral(it) => it.unstable_address(),
             Self::TSInferType(it) => it.unstable_address(),
@@ -1635,6 +1639,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_module_declaration(self) -> Option<&'a TSModuleDeclaration<'a>> {
         if let Self::TSModuleDeclaration(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_global_declaration(self) -> Option<&'a TSGlobalDeclaration<'a>> {
+        if let Self::TSGlobalDeclaration(v) = self { Some(v) } else { None }
     }
 
     #[inline]

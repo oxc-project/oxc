@@ -6,13 +6,11 @@ use std::{
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span};
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
 use crate::{
-    FormatResult,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{Formatter, prelude::*},
     write,
@@ -89,27 +87,27 @@ pub enum WrapState {
 pub struct JsxSpace;
 
 impl<'a> Format<'a> for JsxSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
             [
                 if_group_breaks(&format_args!(JsxRawSpace, soft_line_break())),
                 if_group_fits_on_line(&space())
             ]
-        )
+        );
     }
 }
 
 pub struct JsxRawSpace;
 
 impl<'a> Format<'a> for JsxRawSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let jsx_space = match f.options().quote_style {
             QuoteStyle::Double => r#"{" "}"#,
             QuoteStyle::Single => "{' '}",
         };
 
-        write!(f, [token(jsx_space)])
+        write!(f, [token(jsx_space)]);
     }
 }
 
@@ -188,12 +186,6 @@ impl PartialEq for JsxChild<'_, '_> {
 
 impl Eq for JsxChild<'_, '_> {}
 
-impl JsxChild<'_, '_> {
-    pub const fn is_any_line(&self) -> bool {
-        matches!(self, Self::EmptyLine | Self::Newline)
-    }
-}
-
 /// A word in a Jsx Text. A word is string sequence that isn't separated by any JSX whitespace.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct JsxWord<'a> {
@@ -211,8 +203,8 @@ impl<'a> JsxWord<'a> {
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [text_without_whitespace(self.text)])
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [text_without_whitespace(self.text)]);
     }
 }
 
@@ -238,7 +230,7 @@ impl<'a> JsxSplitChunksIterator<'a> {
 }
 
 impl<'a> Iterator for JsxSplitChunksIterator<'a> {
-    type Item = (usize, JsxTextChunk<'a>);
+    type Item = JsxTextChunk<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let char = self.chars.next()?;
@@ -264,7 +256,7 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
         let chunk =
             if is_whitespace { JsxTextChunk::Whitespace(slice) } else { JsxTextChunk::Word(slice) };
 
-        Some((start, chunk))
+        Some(chunk)
     }
 }
 
@@ -286,9 +278,9 @@ pub fn jsx_split_children<'a, 'b>(
                 let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
 
                 // Text starting with a whitespace
-                if let Some((_, JsxTextChunk::Whitespace(_whitespace))) = chunks.peek() {
+                if let Some(JsxTextChunk::Whitespace(_whitespace)) = chunks.peek() {
                     match chunks.next() {
-                        Some((_, JsxTextChunk::Whitespace(whitespace))) => {
+                        Some(JsxTextChunk::Whitespace(whitespace)) => {
                             if whitespace.contains('\n') {
                                 if chunks.peek().is_none() {
                                     // A text only consisting of whitespace that also contains a new line isn't considered meaningful text.
@@ -321,7 +313,7 @@ pub fn jsx_split_children<'a, 'b>(
 
                 while let Some(chunk) = chunks.next() {
                     match chunk {
-                        (_, JsxTextChunk::Whitespace(whitespace)) => {
+                        JsxTextChunk::Whitespace(whitespace) => {
                             // Only handle trailing whitespace. Words must always be joined by new lines
                             if chunks.peek().is_none() {
                                 if whitespace.contains('\n') {
@@ -332,14 +324,14 @@ pub fn jsx_split_children<'a, 'b>(
                             }
                         }
 
-                        (relative_start, JsxTextChunk::Word(word)) => {
+                        JsxTextChunk::Word(word) => {
                             builder.entry(JsxChild::Word(JsxWord::new(word)));
                         }
                     }
                 }
             }
 
-            expr_container @ JSXChild::ExpressionContainer(container) => {
+            JSXChild::ExpressionContainer(container) => {
                 if is_whitespace_jsx_expression(container.as_ref(), comments) {
                     builder.entry(JsxChild::Whitespace);
                 } else {

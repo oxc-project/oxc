@@ -62,6 +62,7 @@ fn main() -> std::io::Result<()> {
 fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let mangler_return = Mangler::new().with_options(options).build(&ret.program);
     Codegen::new()
         .with_scoping(Some(mangler_return.scoping))

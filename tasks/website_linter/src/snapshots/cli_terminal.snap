@@ -1,0 +1,101 @@
+---
+source: tasks/website_linter/src/cli.rs
+expression: snapshot
+---
+Usage: [-c=<./.oxlintrc.json>] [PATH]...
+
+Basic Configuration
+    -c, --config=<./.oxlintrc.json>  Oxlint configuration file
+                              * only `.json` extension is supported
+                              * you can use comments in configuration files.
+                              * tries to be compatible with ESLint v8's format
+        --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
+                              project references for import plugin. If not provided, will look for
+                              `tsconfig.json` in the current working directory.
+        --init                Initialize oxlint configuration with default values
+
+Allowing / Denying Multiple Lints
+   Accumulate rules and categories from left to right on the command-line.
+   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
+   The categories are:
+   * `correctness` - Code that is outright wrong or useless (default)
+   * `suspicious`  - Code that is most likely wrong or useless
+   * `pedantic`    - Lints which are rather strict or have occasional false positives
+   * `perf`        - Code that could be written in a more performant way
+   * `style`       - Code that should be written in a more idiomatic way
+   * `restriction` - Lints which prevent the use of language and library features
+   * `nursery`     - New lints that are still under development
+   * `all`         - All categories listed above except `nursery`. Does not enable plugins
+  automatically.
+    -A, --allow=NAME          Allow the rule or category (suppress the lint)
+    -W, --warn=NAME           Deny the rule or category (emit a warning)
+    -D, --deny=NAME           Deny the rule or category (emit an error)
+
+Enable/Disable Plugins
+        --disable-unicorn-plugin  Disable unicorn plugin, which is turned on by default
+        --disable-oxc-plugin  Disable oxc unique rules, which is turned on by default
+        --disable-typescript-plugin  Disable TypeScript plugin, which is turned on by default
+        --import-plugin       Enable import plugin and detect ESM problems. It is recommended to use
+                              alongside the `--tsconfig` option.
+        --react-plugin        Enable react plugin, which is turned off by default
+        --jsdoc-plugin        Enable jsdoc plugin and detect JSDoc problems
+        --jest-plugin         Enable the Jest plugin and detect test problems
+        --vitest-plugin       Enable the Vitest plugin and detect test problems
+        --jsx-a11y-plugin     Enable the JSX-a11y plugin and detect accessibility problems
+        --nextjs-plugin       Enable the Next.js plugin and detect Next.js problems
+        --react-perf-plugin   Enable the React performance plugin and detect rendering performance
+                              problems
+        --promise-plugin      Enable the promise plugin and detect promise usage problems
+        --node-plugin         Enable the node plugin and detect node usage problems
+        --vue-plugin          Enable the vue plugin and detect vue usage problems
+
+Fix Problems
+        --fix                 Fix as many issues as possible. Only unfixed issues are reported in
+                              the output.
+        --fix-suggestions     Apply auto-fixable suggestions. May change program behavior.
+        --fix-dangerously     Apply dangerous fixes and suggestions
+
+Ignore Files
+        --ignore-path=PATH    Specify the file to use as your `.eslintignore`
+        --ignore-pattern=PAT  Specify patterns of files to ignore (in addition to those in
+                              `.eslintignore`)
+        --no-ignore           Disable excluding files from `.eslintignore` files, --ignore-path
+                              flags and --ignore-pattern flags
+
+Handle Warnings
+        --quiet               Disable reporting on warnings, only errors are reported
+        --deny-warnings       Ensure warnings produce a non-zero exit code
+        --max-warnings=INT    Specify a warning threshold, which can be used to force exit with an
+                              error status if there are too many warning-level rule violations in
+                              your project
+
+Output
+    -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
+                              `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+
+Miscellaneous
+        --silent              Do not display any diagnostics
+        --threads=INT         Number of threads to use. Set to 1 for using only 1 CPU core.
+        --print-config        This option outputs the configuration to be used. When present, no
+                              linting is performed and only config-related options are valid.
+
+Inline Configuration Comments
+        --report-unused-disable-directives  Report directive comments like `// oxlint-disable-line`,
+                              when no errors would have been reported on that line anyway
+        --report-unused-disable-directives-severity=SEVERITY  Same as
+                              `--report-unused-disable-directives`, but allows you to specify the
+                              severity level of the reported errors. Only one of these two options
+                              can be used at a time.
+
+Available positional items:
+    PATH                      Single file, single path or list of paths
+
+Available options:
+        --rules               List all the rules that are currently registered
+        --lsp                 Start the language server
+        --disable-nested-config  Disable the automatic loading of nested configuration files
+        --type-aware          Enable rules that require type information
+        --type-check          Enable experimental type checking (includes TypeScript compiler
+                              diagnostics)
+    -h, --help                Prints help information
+    -V, --version             Prints version information

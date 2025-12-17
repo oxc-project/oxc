@@ -21,7 +21,7 @@ use crate::{
 fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
-            "Expected to not encounter a Jest snapshot but one was found that is {line_count} lines long"
+            "Expected to not encounter a Jest or Vitest snapshot but one was found that is {line_count} lines long"
         ))
         .with_label(span)
 }
@@ -29,7 +29,7 @@ fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
 fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
-            "Expected Jest snapshot to be no longer than {line_limit} lines but it was {line_count} lines long"
+            "Expected Jest or Vitest snapshot to be no longer than {line_limit} lines but it was {line_count} lines long"
         ))
         .with_label(span)
 }
@@ -143,6 +143,17 @@ declare_oxc_lint!(
     /// line 3
     /// line 4
     /// `;
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-large-snapshots.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-large-snapshots": "error"
+    ///   }
+    /// }
     /// ```
     NoLargeSnapshots,
     jest,
@@ -379,7 +390,7 @@ fn test() {
     // let twenty_exports_snapshot = generate_exports_snapshot_string(20, None);
     // let fifty_eight_exports_snapshot = generate_exports_snapshot_string(58, None);
 
-    let pass = vec![
+    let mut pass = vec![
         ("expect(something)", None, None, None),
         ("expect(something).toBe(1)", None, None, None),
         ("expect(something).toMatchInlineSnapshot", None, None, None),
@@ -434,7 +445,7 @@ fn test() {
     // ]
     // .join("\n\n");
 
-    let fail = vec![
+    let mut fail = vec![
         (fifty_match_inline_cases.as_str(), None, None, None),
         (fifty_throw_error_match_cases.as_str(), None, None, None),
         (
@@ -507,7 +518,50 @@ fn test() {
         // ),
     ];
 
+    let vitest_pass = vec![
+        ("expect(something)", None, None, None),
+        ("expect(something).toBe(1)", None, None, None),
+        ("expect(something).toMatchInlineSnapshot", None, None, None),
+        ("expect(something).toMatchInlineSnapshot()", None, None, None),
+        (two_match_inline_cases.as_str(), None, None, None),
+        (two_throw_error_match_cases.as_str(), None, None, None),
+        (
+            twenty_match_inline_cases.as_str(),
+            Some(serde_json::json!([{ "maxSize": 19, "inlineMaxSize": 21 }])),
+            None,
+            None,
+        ),
+        (
+            sixty_match_inline_cases.as_str(),
+            Some(serde_json::json!([{ "maxSize": 61 }])),
+            None,
+            None,
+        ),
+        (sixty_cases.as_str(), Some(serde_json::json!([{ "maxSize": 61 }])), None, None),
+    ];
+
+    let vitest_fail = vec![
+        (fifty_match_inline_cases.as_str(), None, None, None),
+        (fifty_throw_error_match_cases.as_str(), None, None, None),
+        (
+            fifty_throw_error_match_cases.as_str(),
+            Some(serde_json::json!([{ "maxSize": 51, "inlineMaxSize": 50 }])),
+            None,
+            None,
+        ),
+        (
+            fifty_throw_error_match_cases.as_str(),
+            Some(serde_json::json!([{ "maxSize": 0 }])),
+            None,
+            None,
+        ),
+    ];
+
+    pass.extend(vitest_pass);
+    fail.extend(vitest_fail);
+
     Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

@@ -7,12 +7,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::{get_function_like_declaration, is_node_call_like_argument, outermost_paren_parent},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_react_hook,
 };
 
@@ -52,7 +53,7 @@ fn consistent_function_scoping(
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ConsistentFunctionScoping {
     /// Whether to check scoping with arrow functions.
@@ -160,13 +161,9 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentFunctionScoping {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            check_arrow_functions: value
-                .get(0)
-                .and_then(|val| val.get("checkArrowFunctions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+        serde_json::from_value::<DefaultRuleConfig<ConsistentFunctionScoping>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -8,13 +8,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
-        parse_jest_fn_call,
+        valid_vitest_fn::is_valid_vitest_call,
     },
 };
 
@@ -24,14 +25,14 @@ fn use_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RequireHookConfig {
     /// An array of function names that are allowed to be called outside of hooks.
     allowed_function_calls: Vec<CompactStr>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireHook(Box<RequireHookConfig>);
 
 impl std::ops::Deref for RequireHook {
@@ -158,6 +159,17 @@ declare_oxc_lint!(
     ///     clearCityDatabase();
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/require-hook.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/require-hook": "error"
+    ///   }
+    /// }
+    /// ```
     RequireHook,
     jest,
     style,
@@ -166,20 +178,15 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_function_calls = value
-            .get(0)
-            .and_then(|config| config.get("allowedFunctionCalls"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(RequireHookConfig { allowed_function_calls }))
+        serde_json::from_value::<DefaultRuleConfig<RequireHook>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Program(program) => {
-                self.check_block_body(node, &program.body, ctx);
+                self.check_block_body(&program.body, ctx);
             }
             AstKind::CallExpression(call_expr) => {
                 if !is_type_of_jest_fn_call(
@@ -191,15 +198,16 @@ impl Rule for RequireHook {
                 {
                     return;
                 }
+
                 match &call_expr.arguments[1] {
                     Argument::FunctionExpression(func_expr) => {
                         if let Some(func_body) = &func_expr.body {
-                            self.check_block_body(node, &func_body.statements, ctx);
+                            self.check_block_body(&func_body.statements, ctx);
                         }
                     }
                     Argument::ArrowFunctionExpression(arrow_func_expr) => {
                         if !arrow_func_expr.expression {
-                            self.check_block_body(node, &arrow_func_expr.body.statements, ctx);
+                            self.check_block_body(&arrow_func_expr.body.statements, ctx);
                         }
                     }
                     _ => (),
@@ -213,18 +221,17 @@ impl Rule for RequireHook {
 impl RequireHook {
     fn check_block_body<'a>(
         &self,
-        node: &AstNode<'a>,
         statements: &'a OxcVec<'a, Statement<'_>>,
         ctx: &LintContext<'a>,
     ) {
         for stmt in statements {
-            self.check(node, stmt, ctx);
+            self.check(stmt, ctx);
         }
     }
 
-    fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
+    fn check<'a>(&self, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
+            self.check_should_report_in_hook(&expr_stmt.expression, ctx);
         } else if let Statement::VariableDeclaration(var_decl) = stmt
             && var_decl.kind != VariableDeclarationKind::Const
             && var_decl.declarations.iter().any(|decl| {
@@ -238,18 +245,19 @@ impl RequireHook {
         }
     }
 
-    fn check_should_report_in_hook<'a>(
-        &self,
-        node: &AstNode<'a>,
-        expr: &'a Expression<'a>,
-        ctx: &LintContext<'a>,
-    ) {
+    fn check_should_report_in_hook<'a>(&self, expr: &'a Expression<'a>, ctx: &LintContext<'a>) {
         if let Expression::CallExpression(call_expr) = expr {
             let name = get_node_name(&call_expr.callee);
 
-            if !(parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-                .is_some()
+            let node_name_split: Vec<&str> = name.split('.').collect();
+
+            let Some(fn_type) = node_name_split.first() else {
+                return;
+            };
+
+            if !(is_valid_vitest_call(&[fn_type])
                 || name.starts_with("jest.")
+                || name.starts_with("vi.")
                 || self.allowed_function_calls.contains(&name))
             {
                 ctx.diagnostic(use_hook(call_expr.span));
@@ -262,7 +270,7 @@ impl RequireHook {
 fn tests() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe()", None),
         ("describe(\"just a title\")", None),
         (
@@ -486,7 +494,7 @@ fn tests() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("setup();", None),
         (
             "
@@ -637,7 +645,310 @@ fn tests() {
         ),
     ];
 
+    let vitest_pass = vec![
+        ("describe()", None),
+        ("describe.for([])('%s', (value) => {})", None),
+        (
+            "describe('a test', () =>
+			test('something', () => {
+			        expect(true).toBe(true);
+			}));",
+            None,
+        ),
+        (
+            "describe('scoped', () => {
+			      test.scoped({ example: 'value' });
+			    });",
+            None,
+        ),
+        (
+            "
+			import { myFn } from '../functions';
+			test('myFn', () => {
+			expect(myFn()).toBe(1);
+			});
+			",
+            None,
+        ), // { "parserOptions": { "sourceType": "module" } },
+        (
+            "
+			class MockLogger {
+			  log() {}
+			     }
+
+			     test('myFn', () => {
+			       expect(myFn()).toBe(1);
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     const { myFn } = require('../functions');
+
+			     describe('myFn', () => {
+			       it('returns one', () => {
+			      expect(myFn()).toBe(1);
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     describe('some tests', () => {
+			       it('is true', () => {
+			      expect(true).toBe(true);
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     describe('some tests', () => {
+			       it('is true', () => {
+			      expect(true).toBe(true);
+			       });
+
+			       describe('more tests', () => {
+			      it('is false', () => {
+			        expect(true).toBe(false);
+			      });
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     describe('some tests', () => {
+			       let consoleLogSpy;
+
+			       beforeEach(() => {
+			      consoleLogSpy = vi.spyOn(console, 'log');
+			       });
+
+			       it('prints a message', () => {
+			      printMessage('hello world');
+
+			      expect(consoleLogSpy).toHaveBeenCalledWith('hello world');
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     let consoleErrorSpy = null;
+
+			     beforeEach(() => {
+			       consoleErrorSpy = vi.spyOn(console, 'error');
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     let consoleErrorSpy = undefined;
+
+			     beforeEach(() => {
+			       consoleErrorSpy = vi.spyOn(console, 'error');
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     describe('some tests', () => {
+			       beforeEach(() => {
+			      setup();
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     beforeEach(() => {
+			       initializeCityDatabase();
+			     });
+
+			     afterEach(() => {
+			       clearCityDatabase();
+			     });
+
+			     test('city database has Vienna', () => {
+			       expect(isCity('Vienna')).toBeTruthy();
+			     });
+
+			     test('city database has San Juan', () => {
+			       expect(isCity('San Juan')).toBeTruthy();
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			     describe('cities', () => {
+			       beforeEach(() => {
+			      initializeCityDatabase();
+			       });
+
+			       test('city database has Vienna', () => {
+			      expect(isCity('Vienna')).toBeTruthy();
+			       });
+
+			       test('city database has San Juan', () => {
+			      expect(isCity('San Juan')).toBeTruthy();
+			       });
+
+			       afterEach(() => {
+			      clearCityDatabase();
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			       enableAutoDestroy(afterEach);
+
+			       describe('some tests', () => {
+			      it('is false', () => {
+			        expect(true).toBe(true);
+			      });
+			       });
+			     ",
+            Some(serde_json::json!([{ "allowedFunctionCalls": ["enableAutoDestroy"] }])),
+        ),
+    ];
+
+    let vitest_fail = vec![
+        ("setup();", None),
+        (
+            "
+			       describe('some tests', () => {
+			      setup();
+			       });
+			     ",
+            None,
+        ),
+        (
+            "
+			       let { setup } = require('./test-utils');
+
+			       describe('some tests', () => {
+			      setup();
+			       });
+			     ",
+            None,
+        ),
+        (
+            "
+			     describe('some tests', () => {
+			       setup();
+
+			       it('is true', () => {
+			      expect(true).toBe(true);
+			       });
+
+			       describe('more tests', () => {
+			      setup();
+
+			      it('is false', () => {
+			        expect(true).toBe(false);
+			      });
+			       });
+			     });
+			      ",
+            None,
+        ),
+        (
+            "
+			       let consoleErrorSpy = vi.spyOn(console, 'error');
+
+			       describe('when loading cities from the api', () => {
+			      let consoleWarnSpy = vi.spyOn(console, 'warn');
+			       });
+			     ",
+            None,
+        ),
+        (
+            "
+			       let consoleErrorSpy = null;
+
+			       describe('when loading cities from the api', () => {
+			      let consoleWarnSpy = vi.spyOn(console, 'warn');
+			       });
+			     ",
+            None,
+        ),
+        ("let value = 1", None),
+        ("let consoleErrorSpy, consoleWarnSpy = vi.spyOn(console, 'error');", None),
+        ("let consoleErrorSpy = vi.spyOn(console, 'error'), consoleWarnSpy;", None),
+        (
+            "
+			       import { database, isCity } from '../database';
+			       import { loadCities } from '../api';
+
+			       vi.mock('../api');
+
+			       const initializeCityDatabase = () => {
+			      database.addCity('Vienna');
+			      database.addCity('San Juan');
+			      database.addCity('Wellington');
+			       };
+
+			       const clearCityDatabase = () => {
+			      database.clear();
+			       };
+
+			       initializeCityDatabase();
+
+			       test('that persists cities', () => {
+			      expect(database.cities.length).toHaveLength(3);
+			       });
+
+			       test('city database has Vienna', () => {
+			      expect(isCity('Vienna')).toBeTruthy();
+			       });
+
+			       test('city database has San Juan', () => {
+			      expect(isCity('San Juan')).toBeTruthy();
+			       });
+
+			       describe('when loading cities from the api', () => {
+			      let consoleWarnSpy = vi.spyOn(console, 'warn');
+
+			      loadCities.mockResolvedValue(['Wellington', 'London']);
+
+			      it('does not duplicate cities', async () => {
+			        await database.loadCities();
+
+			        expect(database.cities).toHaveLength(4);
+			      });
+
+			      it('logs any duplicates', async () => {
+			        await database.loadCities();
+
+			        expect(consoleWarnSpy).toHaveBeenCalledWith(
+			       'Ignored duplicate cities: Wellington',
+			        );
+			      });
+			       });
+
+			       clearCityDatabase();
+			     ",
+            None,
+        ), // { "parserOptions": { "sourceType": "module" } }
+    ];
+
+    pass.extend(vitest_pass);
+    fail.extend(vitest_fail);
+
     Tester::new(RequireHook::NAME, RequireHook::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

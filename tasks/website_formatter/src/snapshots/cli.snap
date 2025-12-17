@@ -1,0 +1,67 @@
+---
+source: tasks/website_formatter/src/cli.rs
+expression: snapshot
+---
+---
+search: false
+---
+
+
+## Usage
+ **`oxfmt`** \[**`-c`**=_`PATH`_\] \[_`PATH`_\]...
+
+## Mode Options:
+- **`    --init`** &mdash; 
+  Initialize `.oxfmtrc.json` with default values
+- **`    --migrate`**=_`SOURCE`_ &mdash; 
+  Migrate configuration to `.oxfmtrc.json` from specified source Available sources: prettier
+- **`    --lsp`** &mdash; 
+  Start language server protocol (LSP) server
+- **`    --stdin-filepath`**=_`PATH`_ &mdash; 
+  Specify the file name to use to infer which parser to use
+
+
+
+## Output Options:
+- **`    --write`** &mdash; 
+  Format and write files in place (default)
+- **`    --check`** &mdash; 
+  Check if files are formatted, also show statistics
+- **`    --list-different`** &mdash; 
+  List files that would be changed
+
+
+
+## Config Options
+- **`-c`**, **`--config`**=_`PATH`_ &mdash; 
+  Path to the configuration file
+
+
+
+## Ignore Options
+- **`    --ignore-path`**=_`PATH`_ &mdash; 
+  Path to ignore file(s). Can be specified multiple times. If not specified, .gitignore and .prettierignore in the current directory are used.
+- **`    --with-node-modules`** &mdash; 
+  Format code in node_modules directory (skipped by default)
+
+
+
+## Runtime Options
+- **`    --no-error-on-unmatched-pattern`** &mdash; 
+  Do not exit with error when pattern is unmatched
+- **`    --threads`**=_`INT`_ &mdash; 
+  Number of threads to use. Set to 1 for using only 1 CPU core.
+
+
+
+## Available positional items:
+- _`PATH`_ &mdash; 
+  Single file, single path or list of paths. If not provided, current working directory is used. Glob is supported only for exclude patterns like `'!**/fixtures/*.js'`.
+
+
+
+## Available options:
+- **`-h`**, **`--help`** &mdash; 
+  Prints help information
+- **`-V`**, **`--version`** &mdash; 
+  Prints version information

@@ -1,33 +1,36 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.js';
+import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
-// @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
+import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
-import visitorKeys from '../generated/keys.js';
-import * as commentMethods from './comments.js';
+import visitorKeys from "../generated/keys.ts";
+import * as commentMethods from "./comments.ts";
 import {
   getLineColumnFromOffset,
+  getNodeByRangeIndex,
   getNodeLoc,
   getOffsetFromLineColumn,
   initLines,
   lines,
+  lineStartIndices,
   resetLines,
-} from './location.js';
-import { resetScopeManager, SCOPE_MANAGER } from './scope.js';
-import * as scopeMethods from './scope.js';
-import * as tokenMethods from './tokens.js';
+} from "./location.ts";
+import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
+import * as scopeMethods from "./scope.ts";
+import { resetTokens } from "./tokens.ts";
+import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
+import * as tokenMethods from "./tokens.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Program } from '../generated/types.d.ts';
-import type { Ranged } from './location.ts';
-import type { BufferWithArrays, Node } from './types.ts';
-import type { ScopeManager } from './scope.ts';
-
-const { max } = Math;
+import type { Program } from "../generated/types.d.ts";
+import type { Ranged } from "./location.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Comment, Node } from "./types.ts";
+import type { ScopeManager } from "./scope.ts";
 
 // Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 let buffer: BufferWithArrays | null = null;
@@ -64,6 +67,7 @@ export function setupSourceForFile(
  * Decode source text from buffer.
  */
 export function initSourceText(): void {
+  debugAssertIsNonNull(buffer);
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
@@ -75,7 +79,11 @@ export function initSourceText(): void {
  */
 export function initAst(): void {
   if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
+
   ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
+  debugAssertIsNonNull(ast);
 }
 
 /**
@@ -96,6 +104,7 @@ export function resetSourceAndAst(): void {
   resetBuffer();
   resetLines();
   resetScopeManager();
+  resetTokens();
 }
 
 // `SourceCode` object.
@@ -109,42 +118,90 @@ export function resetSourceAndAst(): void {
 //
 // Freeze the object to prevent user mutating it.
 export const SOURCE_CODE = Object.freeze({
-  // Get source text.
+  /**
+   * Source text.
+   */
   get text(): string {
     if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
     return sourceText;
   },
 
-  // `true` if source text has Unicode BOM.
+  /**
+   * `true` if file has Unicode BOM.
+   */
   get hasBOM(): boolean {
     return hasBOM;
   },
 
-  // Get AST of the file.
+  /**
+   * AST of the file.
+   */
   get ast(): Program {
     if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
     return ast;
   },
 
-  // Get `ScopeManager` for the file.
+  /**
+   * `true` if the AST is in ESTree format.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  isESTree: true,
+
+  /**
+   * `ScopeManager` for the file.
+   */
   get scopeManager(): ScopeManager {
     return SCOPE_MANAGER;
   },
 
-  // Get visitor keys to traverse this AST.
-  get visitorKeys(): Record<string, string[]> {
+  /**
+   * Visitor keys to traverse this AST.
+   */
+  get visitorKeys(): Readonly<Record<string, readonly string[]>> {
     return visitorKeys;
   },
 
-  // Get parser services for the file.
+  /**
+   * Parser services for the file.
+   */
   get parserServices(): Record<string, unknown> {
+    debugAssertIsNonNull(parserServices);
     return parserServices;
   },
 
-  // Get source text as array of lines, split according to specification's definition of line breaks.
+  /**
+   * Source text as array of lines, split according to specification's definition of line breaks.
+   */
   get lines(): string[] {
     if (lines.length === 0) initLines();
     return lines;
+  },
+
+  /**
+   * Character offset of the first character of each line in source text,
+   * split according to specification's definition of line breaks.
+   */
+  get lineStartIndices(): number[] {
+    if (lines.length === 0) initLines();
+    return lineStartIndices;
+  },
+
+  /**
+   * Array of all tokens and comments in the file, in source order.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  get tokensAndComments(): (Token | Comment)[] {
+    if (tokensAndComments === null) {
+      if (tokens === null) {
+        if (sourceText === null) initSourceText();
+        initTokens();
+      }
+      initTokensAndComments();
+    }
+    debugAssertIsNonNull(tokensAndComments);
+    return tokensAndComments;
   },
 
   /**
@@ -154,12 +211,9 @@ export const SOURCE_CODE = Object.freeze({
    * @param afterCount? - The number of characters after the node to retrieve.
    * @returns Source text representing the AST node.
    */
-  getText(
-    node?: Ranged | null | undefined,
-    beforeCount?: number | null | undefined,
-    afterCount?: number | null | undefined,
-  ): string {
+  getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
     if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
 
     // ESLint treats all falsy values for `node` as undefined
     if (!node) return sourceText;
@@ -168,7 +222,7 @@ export const SOURCE_CODE = Object.freeze({
     const { range } = node;
     let start = range[0],
       end = range[1];
-    if (beforeCount) start = max(start - beforeCount, 0);
+    if (beforeCount) start = Math.max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
     return sourceText.slice(start, end);
   },
@@ -183,7 +237,7 @@ export const SOURCE_CODE = Object.freeze({
     const ancestors = [];
 
     while (true) {
-      // @ts-expect-error `parent` property should be present on `Node` type
+      // @ts-expect-error - TODO: `parent` property should be present on `Node` type
       node = node.parent;
       if (node === null) break;
       ancestors.push(node);
@@ -192,17 +246,8 @@ export const SOURCE_CODE = Object.freeze({
     return ancestors.reverse();
   },
 
-  /**
-   * Get the deepest node containing a range index.
-   * @param index Range index of the desired node.
-   * @returns The node if found, or `null` if not found.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getNodeByRangeIndex(index: number): Node | null {
-    throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
-  },
-
   // Location methods
+  getNodeByRangeIndex,
   getLocFromIndex: getLineColumnFromOffset,
   getIndexFromLoc: getOffsetFromLineColumn,
 

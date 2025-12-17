@@ -1,6 +1,6 @@
 use std::{ffi::c_void, marker::PhantomData};
 
-use super::{Buffer, Format, FormatResult, Formatter};
+use super::{Buffer, Format, Formatter};
 
 /// Mono-morphed type to format an object. Used by the [crate::format!], [crate::format_args!], and
 /// [crate::write!] macros.
@@ -17,7 +17,7 @@ pub struct Argument<'fmt, 'ast> {
     lifetime: PhantomData<&'fmt ()>,
 
     /// The function pointer to `value`'s `Format::format` method
-    formatter: fn(*const c_void, &mut Formatter<'_, 'ast>) -> FormatResult<()>,
+    formatter: fn(*const c_void, &mut Formatter<'_, 'ast>),
 }
 
 impl<'fmt, 'ast> Argument<'fmt, 'ast> {
@@ -27,12 +27,9 @@ impl<'fmt, 'ast> Argument<'fmt, 'ast> {
     #[inline]
     pub fn new<F: Format<'ast>>(value: &'fmt F) -> Self {
         #[inline(always)]
-        fn formatter<'ast, F: Format<'ast>>(
-            ptr: *const c_void,
-            fmt: &mut Formatter<'_, 'ast>,
-        ) -> FormatResult<()> {
+        fn formatter<'ast, F: Format<'ast>>(ptr: *const c_void, fmt: &mut Formatter<'_, 'ast>) {
             // SAFETY: Safe because the 'fmt lifetime is captured by the 'lifetime' field.
-            F::fmt(unsafe { &*ptr.cast::<F>() }, fmt)
+            F::fmt(unsafe { &*ptr.cast::<F>() }, fmt);
         }
 
         Self {
@@ -44,15 +41,15 @@ impl<'fmt, 'ast> Argument<'fmt, 'ast> {
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
-    pub(super) fn format(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        (self.formatter)(self.value, f)
+    pub(super) fn format(&self, f: &mut Formatter<'_, 'ast>) {
+        (self.formatter)(self.value, f);
     }
 }
 
 impl<'ast> Format<'ast> for Argument<'_, 'ast> {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        self.format(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        self.format(f);
     }
 }
 
@@ -67,7 +64,7 @@ impl<'ast> Format<'ast> for Argument<'_, 'ast> {
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(SimpleFormatContext::default(), [
 ///     format_args!(token("a"), space(), token("b"))
 /// ])?;
@@ -95,8 +92,8 @@ impl<'fmt, 'ast> Arguments<'fmt, 'ast> {
 
 impl<'ast> Format<'ast> for Arguments<'_, 'ast> {
     #[inline(always)]
-    fn fmt(&self, formatter: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        formatter.write_fmt(*self)
+    fn fmt(&self, formatter: &mut Formatter<'_, 'ast>) {
+        formatter.write_fmt(*self);
     }
 }
 

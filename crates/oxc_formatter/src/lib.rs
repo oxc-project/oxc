@@ -1,13 +1,4 @@
-#![allow(
-    unused,
-    clippy::inline_always,
-    clippy::missing_panics_doc,
-    clippy::needless_pass_by_ref_mut,
-    clippy::todo,
-    clippy::unused_self,
-    clippy::enum_variant_names,
-    clippy::struct_field_names
-)] // FIXME: all these needs to be fixed.
+#![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
@@ -16,30 +7,22 @@ mod embedded_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
+pub mod oxfmtrc;
 mod parentheses;
 mod service;
 mod utils;
 mod write;
 
-use std::{
-    cell::{Cell, UnsafeCell},
-    fmt::{self, Display},
-    marker::PhantomData,
-    mem::{self, transmute},
-    vec::IntoIter,
-};
-
-use oxc_allocator::{Address, Allocator, GetAddress};
-use oxc_ast::{AstKind, ast::*};
-use rustc_hash::{FxHashMap, FxHashSet};
-use write::FormatWrite;
+use oxc_allocator::Allocator;
+use oxc_ast::ast::*;
 
 pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::ir_transform::options::*;
 pub use crate::options::*;
-pub use crate::service::{oxfmtrc::Oxfmtrc, parse_utils::*};
+pub use crate::service::*;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatContext, Formatted, format_element::document::Document},
+    formatter::{FormatContext, Formatted},
     ir_transform::SortImportsTransform,
 };
 #[cfg(feature = "detect_code_removal")]
@@ -51,31 +34,38 @@ pub struct Formatter<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     options: FormatOptions,
-    embedded_formatter: Option<EmbeddedFormatter>,
 }
 
 impl<'a> Formatter<'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
-        Self { allocator, source_text: "", options, embedded_formatter: None }
-    }
-
-    /// Set the embedded formatter for handling embedded languages in templates
-    #[must_use]
-    pub fn with_embedded_formatter(
-        mut self,
-        embedded_formatter: Option<EmbeddedFormatter>,
-    ) -> Self {
-        self.embedded_formatter = embedded_formatter;
-        self
+        Self { allocator, source_text: "", options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
-    pub fn build(mut self, program: &Program<'a>) -> String {
+    pub fn build(self, program: &Program<'a>) -> String {
         let formatted = self.format(program);
         formatted.print().unwrap().into_code()
     }
 
-    pub fn format(mut self, program: &'a Program<'a>) -> Formatted<'a> {
+    #[inline]
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
+        self.format_impl(program, None)
+    }
+
+    #[inline]
+    pub fn format_with_embedded(
+        self,
+        program: &'a Program<'a>,
+        embedded_formatter: EmbeddedFormatter,
+    ) -> Formatted<'a> {
+        self.format_impl(program, Some(embedded_formatter))
+    }
+
+    pub fn format_impl(
+        mut self,
+        program: &'a Program<'a>,
+        embedded_formatter: Option<EmbeddedFormatter>,
+    ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
@@ -84,26 +74,25 @@ impl<'a> Formatter<'a> {
 
         let experimental_sort_imports = self.options.experimental_sort_imports.clone();
 
-        let mut context = FormatContext::new(
+        let context = FormatContext::new(
             program.source_text,
             program.source_type,
             &program.comments,
             self.allocator,
             self.options,
+            embedded_formatter,
         );
-        context.set_embedded_formatter(self.embedded_formatter);
 
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
-        )
-        .unwrap();
+        );
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
         if let Some(sort_imports_options) = experimental_sort_imports {
             let sort_imports = SortImportsTransform::new(sort_imports_options);
-            formatted.apply_transform(|doc| sort_imports.transform(doc));
+            formatted.apply_transform(|doc| sort_imports.transform(doc, self.allocator));
         }
 
         formatted

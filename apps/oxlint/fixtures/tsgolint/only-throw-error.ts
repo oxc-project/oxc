@@ -1,1 +1,3 @@
 throw 'error';
+
+export {};

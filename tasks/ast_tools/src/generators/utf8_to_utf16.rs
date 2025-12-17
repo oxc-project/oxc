@@ -42,6 +42,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// * `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
 ///   Except for `BindingRestElement`, where `type_annotation`'s span is after `BindingPatternKind`.
 /// * `FormalParameters` where span can include a `TSThisParameter` which is visited before it.
+/// * `TSGlobalDeclaration` which has a separate `Span` for `global` keyword.
 ///
 /// Delegate to the custom visitors for these types in `oxc_ast_visit/src/utf8_to_utf16/visit.rs`,
 /// which ensure `convert_offset` is always called with offsets in ascending order.
@@ -63,6 +64,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ImportSpecifier",
         "TemplateLiteral",
         "TSTemplateLiteralType",
+        "TSGlobalDeclaration",
     ]
     .map(|type_name| schema.type_names[type_name]);
 

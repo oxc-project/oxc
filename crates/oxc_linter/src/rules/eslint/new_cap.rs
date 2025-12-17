@@ -7,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
     let msg = if *cap == GetCapResult::Lower {
@@ -21,14 +22,22 @@ fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NewCap(Box<NewCapConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NewCapConfig {
+    /// `true` to require that all constructor names start with an uppercase letter, e.g. `new Person()`.
     new_is_cap: bool,
+    /// `true` to require that all functions with names starting with an uppercase letter to be called with `new`.
     cap_is_new: bool,
+    /// Exceptions to ignore for constructor names starting with an uppercase letter.
     new_is_cap_exceptions: Vec<CompactStr>,
+    /// A regex pattern to match exceptions for constructor names starting with an uppercase letter.
     new_is_cap_exception_pattern: Option<Regex>,
+    /// Exceptions to ignore for functions with names starting with an uppercase letter.
     cap_is_new_exceptions: Vec<CompactStr>,
+    /// A regex pattern to match exceptions for functions with names starting with an uppercase letter.
     cap_is_new_exception_pattern: Option<Regex>,
+    /// `true` to require capitalization for object properties (e.g., `new obj.Method()`).
     properties: bool,
 }
 
@@ -100,14 +109,7 @@ impl From<&serde_json::Value> for NewCap {
 
         let config = config_entry
             .as_object()
-            .map_or_else(
-                || {
-                    Err(OxcDiagnostic::warn(
-                        "eslint/new-cap: invalid configuration, expected object.",
-                    ))
-                },
-                Ok,
-            )
+            .map_or_else(|| Err(OxcDiagnostic::warn("Invalid configuration, expected object.")), Ok)
             .unwrap();
 
         Self(Box::new(NewCapConfig {
@@ -450,7 +452,8 @@ declare_oxc_lint!(
     NewCap,
     eslint,
     style,
-    pending  // TODO: maybe?
+    pending, // TODO: maybe?
+    config = NewCapConfig,
 );
 
 impl Rule for NewCap {

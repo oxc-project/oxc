@@ -84,8 +84,8 @@ declare_oxc_lint!(
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -578,6 +578,9 @@ fn test() {
         ("test('valid-expect', () => { expect(Promise.reject(2)).toRejectWith(2); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { await expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
+        (
+        "import { describe, expect, it } from 'vitest'; async function runCaseInWorker(type, props) { await runCase({ type, props }, expect); }", None
+        )
     ];
 
     let mut fail = vec![

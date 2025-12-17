@@ -2,7 +2,9 @@
  * Common utilities for GitHub Actions scripts
  */
 
-const { execSync } = require('child_process');
+// oxlint-disable no-console
+
+const { execSync } = require("child_process");
 
 /**
  * Execute a shell command and return the output
@@ -11,11 +13,11 @@ const { execSync } = require('child_process');
  */
 function exec(command) {
   try {
-    return execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return execSync(command, { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch (error) {
     console.error(`Error executing command: ${command}`);
     console.error(error.message);
-    return '';
+    return "";
   }
 }
 
@@ -29,7 +31,7 @@ function exec(command) {
  */
 function getCrateDependencies(packages, options = {}) {
   const pkgs = Array.isArray(packages) ? packages : [packages];
-  const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(' ');
+  const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(" ");
 
   let command = `cargo tree ${packageArgs} -f "{lib}" -e normal --no-dedupe --prefix none`;
 
@@ -38,20 +40,20 @@ function getCrateDependencies(packages, options = {}) {
   }
 
   if (options.noDefaultFeatures) {
-    command += ' --no-default-features';
+    command += " --no-default-features";
   }
 
-  command += ' 2>/dev/null | grep oxc | sort -u';
+  command += " 2>/dev/null | grep oxc | sort -u";
 
   const output = exec(command);
 
   if (!output) {
-    console.error(`Warning: Could not get dependencies for ${pkgs.join(', ')}`);
+    console.error(`Warning: Could not get dependencies for ${pkgs.join(", ")}`);
     return [];
   }
 
   // Filter out the queried packages themselves
-  return output.split('\n').filter((dep) => dep && !pkgs.includes(dep));
+  return output.split("\n").filter((dep) => dep && !pkgs.includes(dep));
 }
 
 /**

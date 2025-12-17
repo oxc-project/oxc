@@ -1,15 +1,12 @@
-use std::fmt::Pointer;
-
-use oxc_allocator::{Address, Vec};
-use oxc_ast::{AstKind, ast::*};
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, FormatError, FormatResult, Formatter, GroupId,
+        Buffer, Format, Formatter, GroupId,
         prelude::*,
-        separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     options::{FormatTrailingCommas, TrailingSeparator},
@@ -23,17 +20,17 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#const() {
-            write!(f, ["const", space()])?;
+            write!(f, ["const", space()]);
         }
         if self.r#in() {
-            write!(f, ["in", space()])?;
+            write!(f, ["in", space()]);
         }
         if self.out() {
-            write!(f, ["out", space()])?;
+            write!(f, ["out", space()]);
         }
-        write!(f, self.name())?;
+        write!(f, self.name());
 
         if let Some(constraint) = &self.constraint() {
             let group_id = f.group_id("constraint");
@@ -50,17 +47,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
                     .with_group_id(Some(group_id)),
                     indent_if_group_breaks(&constraint, group_id)
                 ]
-            )?;
+            );
         }
         if let Some(default) = &self.default() {
-            write!(f, [space(), "=", space(), default])?;
+            let group_id = f.group_id("default");
+            write!(
+                f,
+                [
+                    space(),
+                    "=",
+                    group(&indent(&soft_line_break_or_space())).with_group_id(Some(group_id)),
+                    line_suffix_boundary(),
+                    indent_if_group_breaks(&default, group_id)
+                ]
+            );
         }
-        Ok(())
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Type parameter lists of arrow function expressions have to include at least one comma
         // to avoid any ambiguity with JSX elements.
         // Thus, we have to add a trailing comma when there is a single type parameter.
@@ -78,9 +84,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
 
-        f.join_with(soft_line_break_or_space())
-            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
-            .finish()
+        f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+            self.iter(),
+            ",",
+            trailing_separator,
+        );
     }
 }
 
@@ -105,31 +113,31 @@ impl<'a, 'b> FormatTSTypeParameters<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {
-            write!(f, "<>")
+            write!(f, "<>");
         } else {
             write!(
                 f,
-                [group(&format_args!("<", format_once(|f| {
+                [group(&format_args!("<", format_with(|f| {
                     if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
                     {
-                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
+                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
                     } else {
-                        soft_block_indent(&params).fmt(f)
-                    }?;
+                        soft_block_indent(&params).fmt(f);
+                    }
 
-                    format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f)
+                    format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f);
                 }), ">"))
                     .with_group_id(self.options.group_id)]
-            )
+            );
         }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.params();
 
         if params.is_empty() {
@@ -158,24 +166,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
             false
         };
 
-        let format_params = format_once(|f| {
-            f.join_with(&soft_line_break_or_space())
-                .entries_with_trailing_separator(params, ",", TrailingSeparator::Disallowed)
-                .finish()
+        let format_params = format_with(|f| {
+            f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
+                params,
+                ",",
+                TrailingSeparator::Disallowed,
+            );
         });
 
         let should_inline = !is_arrow_function_vars && first_arg_can_be_hugged;
 
         if should_inline {
-            write!(f, ["<", format_params, ">"])
+            write!(f, ["<", format_params, ">"]);
         } else {
-            write!(f, [group(&format_args!("<", soft_block_indent(&format_params), ">"))])
+            write!(f, [group(&format_args!("<", soft_block_indent(&format_params), ">"))]);
         }
     }
 }
 
 /// Check if a single type should be "hugged" (kept inline)
-fn should_hug_single_type(ty: &TSType, f: &mut Formatter<'_, '_>) -> bool {
+fn should_hug_single_type(ty: &TSType, f: &Formatter<'_, '_>) -> bool {
     // Simple types and object-like types can be hugged
     if is_simple_type(ty) || is_object_like_type(ty) {
         return true;

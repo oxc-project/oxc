@@ -30,8 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
-    QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
+    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
+    default_internal_patterns, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -197,7 +198,7 @@ impl Oxc {
         }
 
         // Phase 7: Apply minification
-        let minifier_return = Self::apply_minification(&allocator, &mut program, &options);
+        let minifier_return = self.apply_minification(&allocator, &mut program, &options);
 
         // Phase 8: Generate code
         self.codegen(&path, &program, minifier_return, run_options, &codegen_options);
@@ -309,6 +310,7 @@ impl Oxc {
     }
 
     fn apply_minification<'a>(
+        &mut self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         options: &OxcOptions,
@@ -317,7 +319,19 @@ impl Oxc {
             return None;
         }
         let compress = if options.run.compress {
-            options.compress.map(|_| CompressOptions::smallest())
+            options.compress.map(|_| {
+                let mut compress_options = CompressOptions::smallest();
+                if let Some(transform_options) = &options.transformer
+                    && let Some(target) = &transform_options.target
+                    && let Ok(targets) =
+                        oxc_compat::EngineTargets::from_target(target).map_err(|err| {
+                            self.diagnostics.push(OxcDiagnostic::error(err));
+                        })
+                {
+                    compress_options.target = targets;
+                }
+                compress_options
+            })
         } else {
             None
         };
@@ -375,7 +389,7 @@ impl Oxc {
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
-            let external_plugin_store = ExternalPluginStore::default();
+            let mut external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
             let lint_config = if linter_options.config.is_some() {
@@ -386,12 +400,12 @@ impl Oxc {
                     false,
                     oxlintrc,
                     None,
-                    &mut ExternalPluginStore::default(),
+                    &mut external_plugin_store,
                 )
                 .unwrap_or_default();
-                config_builder.build(&external_plugin_store)
+                config_builder.build(&mut external_plugin_store)
             } else {
-                ConfigStoreBuilder::default().build(&external_plugin_store)
+                ConfigStoreBuilder::default().build(&mut external_plugin_store)
             };
             let lint_config = lint_config.unwrap();
             let linter_ret = Linter::new(
@@ -496,29 +510,25 @@ impl Oxc {
             }
         }
 
-        if let Some(ref position) = options.experimental_operator_position
-            && let Ok(op_position) = position.parse::<OperatorPosition>()
-        {
-            format_options.experimental_operator_position = op_position;
-        }
-
         if let Some(ref sort_imports_config) = options.experimental_sort_imports {
             let order = sort_imports_config
                 .order
                 .as_ref()
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
-            // TODO: support from options
-            let groups = SortImports::default_groups();
 
-            format_options.experimental_sort_imports = Some(SortImports {
+            format_options.experimental_sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
                 order,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
                 newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
-                groups,
+                internal_pattern: sort_imports_config
+                    .internal_pattern
+                    .clone()
+                    .unwrap_or_else(default_internal_patterns),
+                groups: sort_imports_config.groups.clone().unwrap_or_else(default_groups),
             });
         }
 

@@ -59,8 +59,14 @@ impl TriviaBuilder {
         self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
     }
 
-    pub fn add_block_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Block), source_text);
+    pub fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+    ) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -248,10 +254,18 @@ impl TriviaBuilder {
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
                 self.has_pure_comment = true;
+                return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
                 self.has_no_side_effects_comment = true;
+                return;
             }
+        }
+
+        // Fallback: check for @license or @preserve anywhere in the comment
+        // This handles cases like /* @foo @preserve */ where the first @ doesn't match known patterns
+        if contains_license_or_preserve_comment(s) {
+            comment.content = CommentContent::Legal;
         }
     }
 }
@@ -304,6 +318,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
@@ -319,7 +334,7 @@ mod test {
         let expected = [
             Comment {
                 span: Span::new(9, 24),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -335,7 +350,7 @@ mod test {
             },
             Comment {
                 span: Span::new(54, 69),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
@@ -343,7 +358,7 @@ mod test {
             },
             Comment {
                 span: Span::new(76, 92),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::None,
@@ -383,7 +398,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(20, 35),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -391,7 +406,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(42, 58),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::Trailing,
@@ -416,7 +431,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(1, 13),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -424,7 +439,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(14, 26),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -503,6 +518,8 @@ token /* Trailing 1 */
             ("/* @license */", CommentContent::Legal),
             ("/* foo @preserve */", CommentContent::Legal),
             ("/* foo @license */", CommentContent::Legal),
+            ("/* @foo @preserve */", CommentContent::Legal),
+            ("/* @foo @license */", CommentContent::Legal),
             ("/** foo @preserve */", CommentContent::JsdocLegal),
             ("/** foo @license */", CommentContent::JsdocLegal),
             ("/** jsdoc */", CommentContent::Jsdoc),

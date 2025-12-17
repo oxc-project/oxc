@@ -1,6 +1,6 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import type { Plugin, Node } from '../../../dist/index.js';
+import type { Plugin, Node } from "#oxlint";
 
 const SPAN: Node = {
   start: 0,
@@ -14,7 +14,7 @@ const SPAN: Node = {
 
 const plugin: Plugin = {
   meta: {
-    name: 'language-options-plugin',
+    name: "language-options-plugin",
   },
   rules: {
     lang: {
@@ -25,13 +25,35 @@ const plugin: Plugin = {
 
         context.report({
           message:
-            'languageOptions:\n' +
+            "languageOptions:\n" +
             `sourceType: ${languageOptions.sourceType}\n` +
             `ecmaVersion: ${languageOptions.ecmaVersion}\n` +
             `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n` +
             `globals: ${JSON.stringify(languageOptions.globals)}`,
           node: SPAN,
         });
+
+        // Only output once, as it's the same for all files
+        if (context.filename.endsWith("index.js")) {
+          const { parser } = languageOptions;
+
+          context.report({
+            message:
+              "parser:\n" +
+              // oxlint-disable-next-line typescript/restrict-template-expressions
+              `object keys: ${Reflect.ownKeys(parser)}\n` +
+              `name: ${parser.name}\n` +
+              // Don't include `version` in the message, as it'll change each time we do a release
+              `typeof version: ${typeof parser.version}\n` +
+              `typeof parse: ${typeof parser.parse}\n` +
+              `latestEcmaVersion: ${parser.latestEcmaVersion}\n` +
+              // oxlint-disable-next-line typescript/restrict-template-expressions
+              `supportedEcmaVersions: ${parser.supportedEcmaVersions}\n` +
+              `Syntax: ${JSON.stringify(parser.Syntax, null, 2)}\n` +
+              `VisitorKeys: ${JSON.stringify(parser.VisitorKeys, null, 2)}`,
+            node: SPAN,
+          });
+        }
 
         return {};
       },

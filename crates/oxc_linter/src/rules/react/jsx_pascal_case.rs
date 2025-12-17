@@ -4,8 +4,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn jsx_pascal_case_diagnostic(
     span: Span,
@@ -21,10 +26,10 @@ fn jsx_pascal_case_diagnostic(
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxPascalCase(Box<JsxPascalCaseConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct JsxPascalCaseConfig {
     /// Whether to allow all-caps component names.
@@ -106,35 +111,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxPascalCase {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
-
-        let allow_all_caps = config
-            .and_then(|v| v.get("allowAllCaps"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let allow_namespace = config
-            .and_then(|v| v.get("allowNamespace"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let allow_leading_underscore = config
-            .and_then(|v| v.get("allowLeadingUnderscore"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let ignore = config
-            .and_then(|v| v.get("ignore"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(JsxPascalCaseConfig {
-            allow_all_caps,
-            allow_namespace,
-            allow_leading_underscore,
-            ignore,
-        }))
+        serde_json::from_value::<DefaultRuleConfig<JsxPascalCase>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

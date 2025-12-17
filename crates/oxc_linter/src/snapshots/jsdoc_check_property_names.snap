@@ -1,41 +1,41 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:4:27]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property Foo.Bar
    ·                                    ───────
  5 │                        */
    ╰────
-  help: @property path declaration `Foo.Bar` appears before any real property.
+  help: `@property` path declaration `Foo.Bar` appears before any real property.
 
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:5:27]
  4 │                        * @property foo
  5 │                        * @property Foo.Bar
    ·                                    ───────
  6 │                        */
    ╰────
-  help: @property path declaration `Foo.Bar` appears before any real property.
+  help: `@property` path declaration `Foo.Bar` appears before any real property.
 
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:5:36]
  4 │                        * @typedef {SomeType} SomeTypedef
  5 │                        * @property {string} employees[].name - The name of an employee.
    ·                                             ────────────────
  6 │                        * @property {string} employees[].department - The employee's department.
    ╰────
-  help: @property path declaration `employees[].name` appears before any real property.
+  help: `@property` path declaration `employees[].name` appears before any real property.
 
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:6:36]
  5 │                        * @property {string} employees[].name - The name of an employee.
  6 │                        * @property {string} employees[].department - The employee's department.
    ·                                             ──────────────────────
  7 │                        */
    ╰────
-  help: @property path declaration `employees[].department` appears before any real property.
+  help: `@property` path declaration `employees[].department` appears before any real property.
 
   ⚠ eslint-plugin-jsdoc(check-property-names): Duplicate @property found.
    ╭─[check_property_names.tsx:4:27]
@@ -105,23 +105,23 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: @property `cfg.foo` is duplicated on the same block.
 
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:6:27]
  5 │                        * @property foo.bar
  6 │                        * @property foo.bar.baz.qux
    ·                                    ───────────────
  7 │                        * @property bar
    ╰────
-  help: @property path declaration `foo.bar.baz.qux` appears before any real property.
+  help: `@property` path declaration `foo.bar.baz.qux` appears before any real property.
 
-  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
+  ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for `@property` path.
    ╭─[check_property_names.tsx:5:36]
  4 │                        * @property {object[]} foo
  5 │                        * @property {number} foo[].bar[].baz
    ·                                             ───────────────
  6 │                        * @property bar
    ╰────
-  help: @property path declaration `foo[].bar[].baz` appears before any real property.
+  help: `@property` path declaration `foo[].bar[].baz` appears before any real property.
 
   ⚠ eslint-plugin-jsdoc(check-property-names): Duplicate @property found.
    ╭─[check_property_names.tsx:4:23]

@@ -1,11 +1,13 @@
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{Argument, MemberExpression, RegExpFlags},
 };
+use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::Term;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, SPAN, Span};
 
 use crate::{AstNode, ast_util::extract_regex_flags, context::LintContext, rule::Rule};
 
@@ -81,8 +83,19 @@ impl Rule for PreferStringReplaceAll {
             "replaceAll" => {
                 if let Some(k) = get_pattern_replacement(pattern) {
                     ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
-                        // foo.replaceAll(/hello world/g, bar) => foo.replaceAll("hello world", bar)
-                        fixer.replace(pattern.span(), format!("{k:?}"))
+                        // foo.replaceAll(/hello world/g, bar) => foo.replaceAll('hello world', bar)
+                        let mut codegen = fixer.codegen().with_options(CodegenOptions {
+                            single_quote: true,
+                            ..Default::default()
+                        });
+                        let alloc = Allocator::default();
+                        let ast = AstBuilder::new(&alloc);
+                        codegen.print_expression(&ast.expression_string_literal(
+                            SPAN,
+                            ast.atom(&k),
+                            None,
+                        ));
+                        fixer.replace(pattern.span(), codegen.into_source_text())
                     });
                 }
             }
@@ -131,13 +144,24 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         .as_deref()
         .filter(|pattern| pattern.body.body.len() == 1)
         .and_then(|pattern| pattern.body.body.first().map(|it| &it.body))?;
-    let is_simple_string = pattern_terms.iter().all(|term| matches!(term, Term::Character(_)));
 
-    if !is_simple_string {
-        return None;
+    // Convert the regex pattern to a string by extracting character values
+    // from the parsed AST instead of using the raw source text.
+    // This ensures escape sequences are properly handled.
+    let mut result = String::new();
+    for term in pattern_terms {
+        let Term::Character(ch) = term else {
+            return None;
+        };
+
+        match char::from_u32(ch.value) {
+            Some(c) => result.push(c),
+            // Invalid unicode character, fall back to source text
+            None => return Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str())),
+        }
     }
 
-    Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str()))
+    Some(CompactStr::new(&result))
 }
 
 #[test]
@@ -230,7 +254,8 @@ fn test() {
 
     let fix = vec![
         ("foo.replace(/a/g, bar)", "foo.replaceAll(/a/g, bar)"),
-        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll(\"a\", bar)"),
+        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll('a', bar)"),
+        (r"text.replaceAll(/\\`/g, '`')", r"text.replaceAll('\\`', '`')"),
     ];
 
     Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::PLUGIN, pass, fail)

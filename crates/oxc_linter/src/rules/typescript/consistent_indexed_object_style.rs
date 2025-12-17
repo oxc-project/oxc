@@ -21,11 +21,11 @@ fn consistent_indexed_object_style_diagnostic(
     let (warning_message, help_message) = match preferred {
         ConsistentIndexedObjectStyleConfig::Record => (
             "A record is preferred over an index signature.",
-            "Use a record type like `Record<string, unknown>` instead of an index signature.",
+            "Use a record type such as `Record<string, unknown>` instead of an index signature.",
         ),
         ConsistentIndexedObjectStyleConfig::IndexSignature => (
             "An index signature is preferred over a record.",
-            "Use an index signature like `{ [key: string]: unknown }` instead of a record type.",
+            "Use an index signature such as `{ [key: string]: unknown }` instead of a record type.",
         ),
     };
 

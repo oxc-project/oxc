@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.103.0] - 2025-12-15
+
+### 🚀 Features
+
+- aafcf3e minifier: Remove empty `[]` and `{}` declaration (#16855) (Armano)
+
+### 🐛 Bug Fixes
+
+- d2f9461 minifier: Preserve classes with decorators (#16878) (Copilot)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- d6d2bcd minifier: Remove unused function calls that are marked by `manual_pure_functions` (#16534) (sapphi-red)
+- c90f053 minfier: Support `.` separated values for `compress.treeshake.manualPureFunctions` (#16529) (sapphi-red)
+
+## [0.100.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 6b54dab minifier: Incorrect non-null object condition simplification with `&&` and `||` (#16161) (sapphi-red)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+
+## [0.99.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- f386efc minifier: Avoid generating invalid spans (#15778) (sapphi-red)
+
 ## [0.98.0] - 2025-11-17
 
 ### 🚀 Features

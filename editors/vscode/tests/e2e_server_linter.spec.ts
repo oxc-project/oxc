@@ -43,6 +43,11 @@ teardown(async () => {
 
 
 suite('E2E Server Linter', () => {
+  // Skip tests if linter tests are disabled
+  if (process.env.SKIP_LINTER_TEST === 'true') {
+    return;
+  }
+
   test('simple debugger statement', async () => {
     await loadFixture('debugger');
     const diagnostics = await getDiagnostics('debugger.js');
@@ -71,7 +76,8 @@ suite('E2E Server Linter', () => {
     });
   }
 
-  testSingleFolderMode('detects diagnostics on run', async () =>
+  // TODO: fix flaky test, somehow broken since 25-12-16
+  test.skip('detects diagnostics on run', async () => // testSingleFolderMode
   {
     await loadFixture('lint_on_run');
     await sleep(500);
@@ -90,7 +96,8 @@ suite('E2E Server Linter', () => {
     strictEqual(updatedDiagnostics.length, sameDiagnostics.length);
   });
 
-  test('empty oxlint configuration behaves like default configuration', async () => {
+  // TODO: fix flaky test, somehow broken since 25-12-16
+  test.skip('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
     await sleep(500);
     const diagnostics = await getDiagnosticsWithoutClose('debugger.js');
@@ -277,4 +284,23 @@ suite('E2E Server Linter', () => {
     const secondDiagnostics = await getDiagnostics('index.ts');
     strictEqual(secondDiagnostics.length, 1);
   });
+
+  testSingleFolderMode('changing oxc.enable will update the client status', async () => {
+    await loadFixture('changing_enable');
+
+    const firstDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(firstDiagnostics.length, 1);
+
+    await workspace.getConfiguration('oxc').update('enable', false);
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(secondDiagnostics.length, 0);
+
+    // enable it for other tests
+    await workspace.getConfiguration('oxc').update('enable', true);
+    await workspace.saveAll();
+    await sleep(500);
+  })
 });

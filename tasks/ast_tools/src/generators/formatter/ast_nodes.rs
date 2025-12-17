@@ -97,29 +97,26 @@ impl Generator for FormatterAstNodesGenerator {
         let transmute_self = quote! {
             #[inline]
             pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-                /// * SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                // SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                #[expect(clippy::undocumented_unsafe_blocks)]
                 unsafe { transmute(s) }
             }
         };
 
         let output = quote! {
-            use std::{mem::transmute, ops::Deref, fmt};
+            use std::mem::transmute;
             ///@@line_break
+            use oxc_allocator::Vec;
             use oxc_ast::ast::*;
-            use oxc_allocator::{Allocator, Vec, Box};
-            use oxc_span::{GetSpan, SPAN};
-
+            use oxc_span::GetSpan;
             ///@@line_break
-            use crate::{
-                formatter::{
-                    Buffer, Format, FormatResult, Formatter,
-                    trivia::{format_leading_comments, format_trailing_comments},
-                },
-                parentheses::NeedsParentheses,
-                write::FormatWrite,
+            use crate::ast_nodes::AstNode;
+            use crate::formatter::{
+                Format, Formatter,
+                trivia::{format_leading_comments, format_trailing_comments},
             };
 
-            use crate::ast_nodes::AstNode;
+
 
             ///@@line_break
             #transmute_self
@@ -354,21 +351,21 @@ fn generate_struct_impls(
             #(#methods)*
 
             ///@@line_break
-            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
                 format_leading_comments(
                     self.span()
                 )
-                .fmt(f)
+                .fmt(f);
             }
 
             ///@@line_break
-            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
                 format_trailing_comments(
                     self.parent.span(),
                     self.inner.span(),
                     self.following_span,
                 )
-                .fmt(f)
+                .fmt(f);
             }
         }
     }
@@ -512,18 +509,29 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     });
 
     let node_type = get_node_type(&type_ty);
-
+    let implementation = if variant_match_arms.len() == 0 {
+        quote! {
+            #[expect(clippy::needless_return)]
+            match self.inner {
+                #(#inherits_match_arms)*
+            }
+        }
+    } else {
+        quote! {
+            let node = match self.inner {
+                #(#variant_match_arms)*
+                #(#inherits_match_arms)*
+            };
+            self.allocator.alloc(node)
+        }
+    };
     quote! {
         ///@@line_break
         impl<'a> #node_type {
             #[inline]
             pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
                 #parent_decl
-                let node = match self.inner {
-                    #(#variant_match_arms)*
-                    #(#inherits_match_arms)*
-                };
-                self.allocator.alloc(node)
+                #implementation
             }
         }
     }

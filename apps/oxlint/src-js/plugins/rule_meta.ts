@@ -1,3 +1,5 @@
+import type { Options, RuleOptionsSchema } from "./options.ts";
+
 /**
  * Rule metadata.
  * `meta` property of `Rule`.
@@ -14,7 +16,7 @@ export interface RuleMeta {
    *   of the program that determine how the code looks rather than how it executes.
    *   These rules work on parts of the code that aren’t specified in the AST.
    */
-  type?: 'problem' | 'suggestion' | 'layout';
+  type?: "problem" | "suggestion" | "layout";
   /**
    * Rule documentation.
    */
@@ -27,7 +29,7 @@ export interface RuleMeta {
    * Type of fixes that the rule provides.
    * Must be `'code'` or `'whitespace'` if the rule provides fixes.
    */
-  fixable?: 'code' | 'whitespace';
+  fixable?: "code" | "whitespace";
   /**
    * Specifies whether rule can return suggestions.
    * Must be `true` if the rule provides suggestions.
@@ -43,9 +45,8 @@ export interface RuleMeta {
    * Default options for the rule.
    * If present, any user-provided options in their config will be merged on top of them recursively.
    */
-  // TODO: Make this more precise.
   // TODO: Use this to alter options passed to rules.
-  defaultOptions?: unknown[];
+  defaultOptions?: Options;
   /**
    * Indicates whether the rule has been deprecated, and info about the deprecation and possible replacements.
    */
@@ -82,16 +83,6 @@ export interface RuleDocs {
    */
   [key: string]: unknown;
 }
-
-/**
- * Schema describing valid options for a rule.
- * `schema` property of `RuleMeta`.
- *
- * `false` opts out of schema validation. This is not recommended, as it increases the chance of bugs and mistakes.
- */
-// TODO: Make this more precise.
-// TODO: Use this to validate options in configs.
-export type RuleOptionsSchema = Record<string, unknown> | unknown[] | false;
 
 /**
  * Info about deprecation of a rule, and possible replacements.

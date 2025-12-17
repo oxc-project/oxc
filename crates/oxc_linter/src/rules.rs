@@ -40,9 +40,11 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
+    pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod capitalized_comments;
     pub mod class_methods_use_this;
     pub mod constructor_super;
     pub mod curly;
@@ -106,7 +108,9 @@ pub(crate) mod eslint {
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
+    pub mod no_implicit_coercion;
     pub mod no_import_assign;
+    pub mod no_inline_comments;
     pub mod no_inner_declarations;
     pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
@@ -115,6 +119,7 @@ pub(crate) mod eslint {
     pub mod no_labels;
     pub mod no_lone_blocks;
     pub mod no_lonely_if;
+    pub mod no_loop_func;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_misleading_character_class;
@@ -131,6 +136,7 @@ pub(crate) mod eslint {
     pub mod no_object_constructor;
     pub mod no_param_reassign;
     pub mod no_plusplus;
+    pub mod no_promise_executor_return;
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
@@ -141,6 +147,7 @@ pub(crate) mod eslint {
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
+    pub mod no_sequences;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
@@ -169,6 +176,7 @@ pub(crate) mod eslint {
     pub mod no_useless_constructor;
     pub mod no_useless_escape;
     pub mod no_useless_rename;
+    pub mod no_useless_return;
     pub mod no_var;
     pub mod no_void;
     pub mod no_warning_comments;
@@ -240,6 +248,7 @@ pub(crate) mod typescript {
     pub mod no_non_null_assertion;
     pub mod no_redundant_type_constituents;
     pub mod no_require_imports;
+    pub mod no_restricted_types;
     pub mod no_this_alias;
     pub mod no_unnecessary_boolean_literal_compare;
     pub mod no_unnecessary_parameter_property_assignment;
@@ -269,6 +278,7 @@ pub(crate) mod typescript {
     pub mod prefer_includes;
     pub mod prefer_literal_enum_member;
     pub mod prefer_namespace_keyword;
+    pub mod prefer_nullish_coalescing;
     pub mod prefer_promise_reject_errors;
     pub mod prefer_reduce_type_parameter;
     pub mod prefer_return_this_type;
@@ -330,6 +340,8 @@ pub(crate) mod jest {
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
     pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called;
+    pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_hook;
@@ -362,6 +374,7 @@ pub(crate) mod react {
     pub mod jsx_no_useless_fragment;
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
+    pub mod jsx_props_no_spreading;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
@@ -370,6 +383,7 @@ pub(crate) mod react {
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_namespace;
+    pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
@@ -464,11 +478,13 @@ pub(crate) mod unicorn {
     pub mod prefer_array_index_of;
     pub mod prefer_array_some;
     pub mod prefer_at;
+    pub mod prefer_bigint_literals;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_class_fields;
     pub mod prefer_classlist_toggle;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
+    pub mod prefer_default_parameters;
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
     pub mod prefer_dom_node_remove;
@@ -476,6 +492,7 @@ pub(crate) mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_global_this;
     pub mod prefer_includes;
+    pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
@@ -567,6 +584,7 @@ pub(crate) mod oxc {
     pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
+    pub mod no_this_in_exported_function;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
@@ -669,9 +687,11 @@ pub(crate) mod vue {
 }
 
 oxc_macros::declare_all_lint_rules! {
+    eslint::accessor_pairs,
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
+    eslint::capitalized_comments,
     eslint::class_methods_use_this,
     eslint::constructor_super,
     eslint::curly,
@@ -694,6 +714,9 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_implicit_coercion,
+    eslint::no_inline_comments,
+    eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
@@ -766,6 +789,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
     eslint::no_plusplus,
+    eslint::no_promise_executor_return,
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
@@ -775,6 +799,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
+    eslint::no_sequences,
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
@@ -798,6 +823,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_useless_constructor,
     eslint::no_useless_escape,
     eslint::no_useless_rename,
+    eslint::no_useless_return,
     eslint::no_var,
     eslint::no_void,
     eslint::no_warning_comments,
@@ -897,6 +923,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_strict_equal,
     jest::prefer_to_be,
     jest::prefer_to_contain,
+    jest::prefer_to_have_been_called,
+    jest::prefer_to_have_been_called_times,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_hook,
@@ -998,6 +1026,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
+    oxc::no_this_in_exported_function,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
@@ -1038,6 +1067,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::jsx_props_no_spreading,
     react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
@@ -1046,6 +1076,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_is_mounted,
+    react::no_redundant_should_component_update,
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
@@ -1105,6 +1136,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_redundant_type_constituents,
     typescript::no_require_imports,
+    typescript::no_restricted_types,
     typescript::no_this_alias,
     typescript::no_unnecessary_boolean_literal_compare,
     typescript::no_unnecessary_parameter_property_assignment,
@@ -1134,6 +1166,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_includes,
     typescript::prefer_literal_enum_member,
     typescript::prefer_namespace_keyword,
+    typescript::prefer_nullish_coalescing,
     typescript::prefer_promise_reject_errors,
     typescript::prefer_reduce_type_parameter,
     typescript::prefer_return_this_type,
@@ -1215,10 +1248,13 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::numeric_separators_style,
     unicorn::prefer_classlist_toggle,
     unicorn::prefer_class_fields,
+    unicorn::prefer_bigint_literals,
+    unicorn::prefer_default_parameters,
     unicorn::prefer_response_static_json,
     unicorn::prefer_top_level_await,
     unicorn::prefer_at,
     unicorn::prefer_global_this,
+    unicorn::prefer_keyboard_event_key,
     unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,

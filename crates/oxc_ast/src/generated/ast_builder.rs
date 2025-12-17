@@ -4349,6 +4349,59 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`Declaration::TSGlobalDeclaration`].
+    ///
+    /// This node contains a [`TSGlobalDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    #[inline]
+    pub fn declaration_ts_global(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+    ) -> Declaration<'a> {
+        Declaration::TSGlobalDeclaration(self.alloc_ts_global_declaration(
+            span,
+            global_span,
+            body,
+            declare,
+        ))
+    }
+
+    /// Build a [`Declaration::TSGlobalDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSGlobalDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn declaration_ts_global_with_scope_id(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Declaration<'a> {
+        Declaration::TSGlobalDeclaration(self.alloc_ts_global_declaration_with_scope_id(
+            span,
+            global_span,
+            body,
+            declare,
+            scope_id,
+        ))
+    }
+
     /// Build a [`Declaration::TSImportEqualsDeclaration`].
     ///
     /// This node contains a [`TSImportEqualsDeclaration`] that will be stored in the memory arena.
@@ -10568,7 +10621,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -10576,7 +10629,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -10587,7 +10640,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
-            argument,
+            source,
             options,
             qualifier,
             type_arguments,
@@ -13712,6 +13765,103 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationBody::TSModuleBlock(self.alloc_ts_module_block(span, directives, body))
     }
 
+    /// Build a [`TSGlobalDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ts_global_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    #[inline]
+    pub fn ts_global_declaration(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+    ) -> TSGlobalDeclaration<'a> {
+        TSGlobalDeclaration { span, global_span, body, declare, scope_id: Default::default() }
+    }
+
+    /// Build a [`TSGlobalDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ts_global_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    #[inline]
+    pub fn alloc_ts_global_declaration(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+    ) -> Box<'a, TSGlobalDeclaration<'a>> {
+        Box::new_in(self.ts_global_declaration(span, global_span, body, declare), self.allocator)
+    }
+
+    /// Build a [`TSGlobalDeclaration`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ts_global_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_global_declaration_with_scope_id(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSGlobalDeclaration<'a> {
+        TSGlobalDeclaration {
+            span,
+            global_span,
+            body,
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSGlobalDeclaration`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ts_global_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `global_span`: Span of `global` keyword
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn alloc_ts_global_declaration_with_scope_id(
+        self,
+        span: Span,
+        global_span: Span,
+        body: TSModuleBlock<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSGlobalDeclaration<'a>> {
+        Box::new_in(
+            self.ts_global_declaration_with_scope_id(span, global_span, body, declare, scope_id),
+            self.allocator,
+        )
+    }
+
     /// Build a [`TSModuleBlock`].
     ///
     /// If you want the built node to be allocated in the memory arena,
@@ -13866,7 +14016,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -13874,7 +14024,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -13885,7 +14035,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
-            argument,
+            source,
             options,
             qualifier,
             type_arguments,
@@ -13899,7 +14049,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -13907,7 +14057,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -13918,7 +14068,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSImportType {
             span,
-            argument,
+            source,
             options: options.into_in(self.allocator),
             qualifier,
             type_arguments: type_arguments.into_in(self.allocator),
@@ -13932,7 +14082,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `argument`
+    /// * `source`
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
@@ -13940,7 +14090,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        argument: TSType<'a>,
+        source: StringLiteral<'a>,
         options: T1,
         qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
@@ -13950,7 +14100,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(span, argument, options, qualifier, type_arguments),
+            self.ts_import_type(span, source, options, qualifier, type_arguments),
             self.allocator,
         )
     }

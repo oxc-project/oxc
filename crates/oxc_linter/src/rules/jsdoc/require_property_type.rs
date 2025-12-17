@@ -9,8 +9,8 @@ use crate::{
 };
 
 fn require_property_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing type in @property tag.")
-        .with_help("Add a {type} to this @property tag.")
+    OxcDiagnostic::warn("Missing type in `@property` tag.")
+        .with_help("Add a {type} to this `@property` tag.")
         .with_label(span)
 }
 

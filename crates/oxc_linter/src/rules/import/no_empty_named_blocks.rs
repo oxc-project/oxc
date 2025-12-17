@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_named_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected empty named import block.").with_label(span)
+    OxcDiagnostic::warn("Unexpected empty named `import` block.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

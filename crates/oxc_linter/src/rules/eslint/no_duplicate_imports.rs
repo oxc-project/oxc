@@ -4,11 +4,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     module_record::{ExportImportName, ImportImportName},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_duplicate_imports_diagnostic(
@@ -37,7 +38,7 @@ fn no_duplicate_exports_diagnostic(
         ])
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoDuplicateImports {
     /// When `true` this rule will also look at exports to see if there is both a re-export of a
@@ -139,17 +140,9 @@ enum ModuleType {
 
 impl Rule for NoDuplicateImports {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.get(0);
-        Self {
-            include_exports: value
-                .and_then(|v| v.get("includeExports"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_separate_type_imports: value
-                .and_then(|v| v.get("allowSeparateTypeImports"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+        serde_json::from_value::<DefaultRuleConfig<NoDuplicateImports>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

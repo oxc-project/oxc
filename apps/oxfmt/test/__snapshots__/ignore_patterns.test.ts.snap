@@ -7,6 +7,7 @@ working directory: fixtures/ignore_patterns
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 ignored/should-be-ignored.js (<variable>ms)
 ignored/should-be-ignored.ts (<variable>ms)
 
@@ -21,6 +22,7 @@ working directory: fixtures/ignore_patterns
 exit code: 1
 --- STDOUT ---------
 Checking formatting...
+
 not-formatted/bad.js (<variable>ms)
 not-formatted/bad.ts (<variable>ms)
 
@@ -46,9 +48,9 @@ arguments: --check --ignore-path nonexistent.ignore
 working directory: fixtures/ignore_patterns
 exit code: 1
 --- STDOUT ---------
+
+--- STDERR ---------
 Failed to parse target paths or ignore settings.
 Failed to add ignore file: <cwd>/nonexistent.ignore
---- STDERR ---------
-
 --------------------"
 `;

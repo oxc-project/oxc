@@ -1,8 +1,8 @@
-import type { Plugin } from '../../../dist/index.js';
+import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: 'parents',
+    name: "parents",
   },
   rules: {
     check: {
@@ -14,9 +14,9 @@ const plugin: Plugin = {
               `parent: ${node.parent?.type}\n` +
               `ancestors: [ ${context.sourceCode
                 .getAncestors(node)
-                // @ts-expect-error - Shouldn't be an error. We need to fix our types.
+                // @ts-expect-error - TODO: Shouldn't be an error. We need to fix our types.
                 .map((node) => node.type)
-                .join(', ')} ]`,
+                .join(", ")} ]`,
             node,
           });
         }

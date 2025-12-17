@@ -17,8 +17,10 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+fn valid_title_diagnostic(error_message: &str, help_text: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{error_message:?}"))
+        .with_help(format!("{help_text:?}"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,12 +28,19 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
+    /// Whether to ignore the type of the name passed to `test`.
     ignore_type_of_test_name: bool,
+    /// Whether to ignore the type of the name passed to `describe`.
     ignore_type_of_describe_name: bool,
+    /// Whether to allow arguments as titles.
     allow_arguments: bool,
+    /// A list of disallowed words, which will not be allowed in titles.
     disallowed_words: Vec<CompactStr>,
+    /// Whether to ignore leading and trailing spaces in titles.
     ignore_space: bool,
+    /// Patterns for titles that must not match.
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
+    /// Patterns for titles that must be matched for the title to be valid.
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
@@ -91,7 +100,6 @@ declare_oxc_lint!(
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
     /// ```
-    ///
     ValidTitle,
     jest,
     correctness,
@@ -379,7 +387,10 @@ fn validate_title(
     if !valid_title.ignore_space && trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            fixer.replace(span.shrink(1), trimmed_title.to_string())
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            let trimmed_raw = raw_text.trim().to_string();
+            fixer.replace(inner_span, trimmed_raw)
         });
     }
 
@@ -391,8 +402,14 @@ fn validate_title(
     if first_word == un_prefixed_name {
         let (error, help) = Message::DuplicatePrefix.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            let replaced_title = title[first_word.len()..].trim().to_string();
-            fixer.replace(span.shrink(1), replaced_title)
+            // Use raw source text to preserve escape sequences
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            // Find the first space in raw text to avoid byte offset issues
+            // if the prefix word ever contains escapable characters
+            let space_pos = raw_text.find(' ').unwrap_or(raw_text.len());
+            let replaced_raw = raw_text[space_pos..].trim().to_string();
+            fixer.replace(inner_span, replaced_raw)
         });
         return;
     }
@@ -1127,6 +1144,16 @@ fn test() {
                     it('bar', () => {})
                 })
             ",
+        ),
+        // AccidentalSpace: preserve escape sequences when trimming spaces
+        (
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format ', () => { assert(true); });",
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format', () => { assert(true); });",
+        ),
+        // DuplicatePrefix: preserve escape sequences when removing prefix
+        (
+            "test('test that it doesn\\'t break', () => {});",
+            "test('that it doesn\\'t break', () => {});",
         ),
     ];
 

@@ -18,6 +18,9 @@ use crate::{
     },
 };
 
+#[derive(Debug, Default, Clone)]
+pub struct RoleSupportsAriaProps;
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -47,18 +50,17 @@ declare_oxc_lint!(
     correctness
 );
 
-#[derive(Debug, Default, Clone)]
-pub struct RoleSupportsAriaProps;
-
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}."))
-        .with_help(format!("Try to remove invalid attribute {attr_name}."))
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "The attribute `{attr_name}` is not supported by the role `{role}`."
+    ))
+    .with_help(format!("Try to remove invalid attribute `{attr_name}`."))
+    .with_label(span)
 }
 
 fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}. This role is implicit on the element {el_name}."))
-        .with_help(format!("Try to remove invalid attribute {attr_name}."))
+    OxcDiagnostic::warn(format!("The attribute `{attr_name}` is not supported by the role `{role}`. This role is implicit on the element `{el_name}`."))
+        .with_help(format!("Try to remove invalid attribute `{attr_name}`."))
         .with_label(span)
 }
 

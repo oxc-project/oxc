@@ -393,13 +393,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'history.foo', and 'history.foo.bar'
    ╭─[exhaustive_deps.tsx:7:14]
  3 │             return [
  4 │               history.foo.bar[2].dobedo.listen(),
-   ·               ─────┬─────
-   ·                    ╰── useEffect uses `history.foo` here
+   ·               ───────────
  5 │               history.foo.bar().dobedo.listen[2]
+   ·               ───────────
  6 │             ];
  7 │           }, []);
    ·              ──

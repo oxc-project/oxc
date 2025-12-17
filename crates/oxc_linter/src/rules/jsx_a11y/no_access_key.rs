@@ -10,7 +10,7 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignor
 
 fn no_access_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No access key attribute allowed.")
-        .with_help("Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")
+        .with_help("Remove the `accessKey` attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create accessibility complications.")
         .with_label(span)
 }
 

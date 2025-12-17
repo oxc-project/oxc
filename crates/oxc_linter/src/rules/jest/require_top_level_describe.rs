@@ -5,10 +5,11 @@ use oxc_semantic::ScopeId;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, ParsedJestFnCallNew,
         PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call,
@@ -35,7 +36,7 @@ fn unexpected_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RequireTopLevelDescribe {
     /// The maximum number of top-level `describe` blocks allowed in a test file.
@@ -99,6 +100,17 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/require-top-level-describe.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/require-top-level-describe": "error"
+    ///   }
+    /// }
+    /// ```
     RequireTopLevelDescribe,
     jest,
     style,
@@ -107,14 +119,9 @@ declare_oxc_lint!(
 
 impl Rule for RequireTopLevelDescribe {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let max_number_of_top_level_describes = value
-            .get(0)
-            .and_then(|config| config.get("maxNumberOfTopLevelDescribes"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(usize::MAX, |v| usize::try_from(v).unwrap_or(usize::MAX));
-
-        Self { max_number_of_top_level_describes }
+        serde_json::from_value::<DefaultRuleConfig<RequireTopLevelDescribe>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

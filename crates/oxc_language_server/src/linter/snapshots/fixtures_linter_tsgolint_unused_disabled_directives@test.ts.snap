@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/tsgolint/unused_disabled_directives/test.ts
+Linted file: fixtures/linter/tsgolint/unused_disabled_directives/test.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/tsgolint/unused_disabled_directives/test.ts
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -27,9 +28,11 @@ related_information[0].location.range: Range { start: Position { line: 38, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -47,6 +50,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -64,6 +68,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this line
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -81,6 +86,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable no-floating-promises for this whole file
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

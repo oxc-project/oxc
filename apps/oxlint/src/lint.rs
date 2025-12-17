@@ -277,7 +277,7 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build(&external_plugin_store) {
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -329,6 +329,18 @@ impl CliRunner {
             return CliRunResult::None;
         }
 
+        // Send JS plugins config to JS side
+        if let Some(external_linter) = &external_linter {
+            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            if let Err(err) = res {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to setup JS plugin options:\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+
         let files_to_lint = paths
             .into_iter()
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
@@ -340,6 +352,20 @@ impl CliRunner {
             .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
+
+        // Due to the architecture of the import plugin and JS plugins,
+        // linting a large number of files with both enabled can cause resource exhaustion.
+        // See: https://github.com/oxc-project/oxc/issues/15863
+        if number_of_files > 10_000 && use_cross_module && has_external_linter {
+            print_and_flush_stdout(
+                stdout,
+                &format!(
+                    "Failed to run oxlint.\n{}\n",
+                    render_report(&handler, &OxcDiagnostic::error(format!("Linting {number_of_files} files with both import plugin and JS plugins enabled can cause resource exhaustion.")).with_help("See https://github.com/oxc-project/oxc/issues/15863 for more details."))
+                ),
+            );
+            return CliRunResult::TooManyFilesWithImportAndJsPlugins;
+        }
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -366,6 +392,7 @@ impl CliRunner {
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(self.options.type_aware)
+            .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .build()
@@ -1126,6 +1153,16 @@ mod test {
     }
 
     #[test]
+    // Test to ensure that a vitest rule based on the jest rule is
+    // handled correctly when it has a different name.
+    // e.g. `vitest/no-restricted-vi-methods` vs `jest/no-restricted-jest-methods`
+    fn test_disable_vitest_rules() {
+        let args =
+            &["-c", ".oxlintrc-vitest.json", "--report-unused-disable-directives", "test.js"];
+        Tester::new().with_cwd("fixtures/disable_vitest_rules".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_two_rules_with_same_rule_name_from_different_plugins() {
         // Issue: <https://github.com/oxc-project/oxc/issues/8485>
         let args = &["-c", ".oxlintrc.json", "test.js"];
@@ -1349,6 +1386,13 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_error() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_no_typescript_files() {
         // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
@@ -1380,5 +1424,46 @@ mod test {
     fn test_tsgolint_config_error() {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_tsconfig_extends_config_err() {
+        let args = &["--type-aware", "-D", "no-floating-promises"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_tsconfig_extends_config_err".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_rule_options() {
+        // Test that rule options are correctly passed to tsgolint
+        // See: https://github.com/oxc-project/oxc/issues/16182
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/tsgolint_rule_options".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_fix() {
+        Tester::test_fix_with_args(
+            "fixtures/tsgolint_fix/fix.ts",
+            "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
+// The type assertion `as string` is unnecessary because str is already a string
+const str: string = 'hello';
+const redundant = str as string;
+
+export { redundant };
+",
+            "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
+// The type assertion `as string` is unnecessary because str is already a string
+const str: string = 'hello';
+const redundant = str;
+
+export { redundant };
+",
+            &["--type-aware", "-D", "no-unnecessary-type-assertion"],
+        );
     }
 }
