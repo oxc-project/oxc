@@ -17,7 +17,7 @@ Failed to parse configuration file.
   | Then reference rules using your alias:
   | 
   | "rules": {
-  | "jsdoc-js/rule-name": "error"
+  |   "jsdoc-js/rule-name": "error"
   | }
   | 
   | See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html

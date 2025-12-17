@@ -670,9 +670,7 @@ impl Display for ConfigBuilderError {
                      \n\
                      Then reference rules using your alias:\n\
                      \n\
-                     \"rules\": {{\n\
-                       \"{plugin_name}-js/rule-name\": \"error\"\n\
-                     }}\n\
+                     \"rules\": {{\n  \"{plugin_name}-js/rule-name\": \"error\"\n}}\n\
                      \n\
                      See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html",
                 )?;
