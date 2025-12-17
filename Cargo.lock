@@ -3259,9 +3259,9 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 
 [[package]]
 name = "sort-package-json"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae07b9655c802fb809c6b07e9c10e53f708452c7aeb6bd81277b3a6f8ee8c3fb"
+checksum = "e0a1f31d138d6267b9865809824f53f65d5181bb80427977e811fcb49b4cd3a5"
 dependencies = [
  "serde_json",
 ]
