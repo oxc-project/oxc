@@ -1134,3 +1134,12 @@ fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext)
 
     None
 }
+
+#[test]
+// This array needs to be alphabetized, or else binary_search will not work correctly.
+fn test_this_use_alphabetization() {
+    let mut sorted_methods = METHOD_WHICH_HAS_THIS_ARG;
+    sorted_methods.sort_unstable();
+
+    assert_eq!(sorted_methods, METHOD_WHICH_HAS_THIS_ARG);
+}
