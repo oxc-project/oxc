@@ -122,7 +122,7 @@ impl Serialize for ExternalPluginEntry {
             Object { name: &'a str, specifier: &'a str },
         }
 
-        if let Some(ref alias_name) = self.name {
+        if let Some(alias_name) = &self.name {
             PluginEntry::Object { name: alias_name.as_str(), specifier: self.specifier.as_str() }
                 .serialize(serializer)
         } else {
