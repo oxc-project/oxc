@@ -50,3 +50,5 @@ inferrable = "inferrable"
 [default.extend-identifiers]
 IIFEs = "IIFEs"
 allowIIFEs = "allowIIFEs"
+fo_o = "fo_o"
+ba_r = "ba_r"
