@@ -1,13 +1,22 @@
 use lazy_regex::Regex;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{AssignmentTarget, BindingPatternKind, Expression, PropertyKey};
+use oxc_ast::ast::{
+    AssignmentTarget, AssignmentTargetMaybeDefault, BindingPatternKind, ImportAttributeKey,
+    ImportDeclarationSpecifier, PropertyKey,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::NodeId;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn camelcase_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier '{name}' is not in camel case."))
@@ -24,8 +33,6 @@ enum PropertiesOption {
 }
 
 /// Pre-compiled allow pattern
-/// ESLint treats each entry as both a literal string AND a regex pattern:
-/// `allow.some(entry => name === entry || name.match(new RegExp(entry, "u")))`
 #[derive(Debug, Clone)]
 struct AllowPattern {
     literal: String,
@@ -34,13 +41,11 @@ struct AllowPattern {
 
 impl AllowPattern {
     fn new(pattern: String) -> Self {
-        // Try to compile as regex (ESLint uses Unicode flag)
         let regex = Regex::new(&pattern).ok();
         Self { literal: pattern, regex }
     }
 
     fn matches(&self, name: &str) -> bool {
-        // ESLint: name === entry || name.match(new RegExp(entry, "u"))
         if name == self.literal {
             return true;
         }
@@ -56,42 +61,45 @@ impl AllowPattern {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default, rename_all = "camelCase")]
 pub struct CamelcaseConfig {
-    /// When set to "never", the rule will not check property names.
     properties: PropertiesOption,
-    /// When set to true, the rule will not check destructuring identifiers.
     ignore_destructuring: bool,
-    /// When set to true, the rule will not check import identifiers.
     ignore_imports: bool,
-    /// An array of names or regex patterns to allow.
-    /// Patterns starting with `^` or ending with `$` are treated as regular expressions.
+    ignore_globals: bool,
     #[serde(default)]
     allow: Vec<String>,
 }
 
-/// Runtime configuration with pre-compiled patterns
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default, Clone)]
 struct CamelcaseRuntime {
     properties: PropertiesOption,
     ignore_destructuring: bool,
     ignore_imports: bool,
+    ignore_globals: bool,
     allow_patterns: Vec<AllowPattern>,
 }
 
 impl From<CamelcaseConfig> for CamelcaseRuntime {
     fn from(config: CamelcaseConfig) -> Self {
         let allow_patterns = config.allow.into_iter().map(AllowPattern::new).collect();
-
         Self {
             properties: config.properties,
             ignore_destructuring: config.ignore_destructuring,
             ignore_imports: config.ignore_imports,
+            ignore_globals: config.ignore_globals,
             allow_patterns,
         }
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(from = "CamelcaseConfig")]
 pub struct Camelcase(Box<CamelcaseRuntime>);
+
+impl From<CamelcaseConfig> for Camelcase {
+    fn from(config: CamelcaseConfig) -> Self {
+        Self(Box::new(config.into()))
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -101,8 +109,6 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Inconsistent naming conventions make code harder to read and maintain.
-    /// The camelCase convention is widely used in JavaScript and helps maintain
-    /// a consistent codebase.
     ///
     /// ### Examples
     ///
@@ -118,8 +124,6 @@ declare_oxc_lint!(
     /// var myVariable = 1;
     /// function doSomething() {}
     /// obj.myProp = 2;
-    /// var CONSTANT_VALUE = 1; // all caps allowed
-    /// var _privateVar = 1; // leading underscore allowed
     /// ```
     Camelcase,
     eslint,
@@ -129,112 +133,91 @@ declare_oxc_lint!(
 
 impl Rule for Camelcase {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config: CamelcaseConfig =
-            value.get(0).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
-        Self(Box::new(config.into()))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
+    }
+
+    fn run_once(&self, ctx: &LintContext) {
+        // Pre-compute positions to skip (equalsToOriginalName)
+        let skip_positions = self.compute_skip_positions(ctx);
+        let mut reported: FxHashSet<Span> = FxHashSet::default();
+
+        // 1. Check all declared symbols
+        for symbol_id in ctx.scoping().symbol_ids() {
+            let name = ctx.scoping().symbol_name(symbol_id);
+            let span = ctx.scoping().symbol_span(symbol_id);
+
+            // Check the symbol declaration (skip if equalsToOriginalName)
+            if !skip_positions.contains(&span.start) {
+                self.report_if_bad(name, span, &mut reported, ctx);
+            }
+
+            // Check references to this symbol
+            for reference in ctx.scoping().get_resolved_references(symbol_id) {
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+                let ref_span = ref_node.span();
+
+                // Skip if equalsToOriginalName (shorthand property, etc.)
+                if skip_positions.contains(&ref_span.start) {
+                    continue;
+                }
+
+                // Skip certain reference contexts (call, new, assignment pattern default)
+                if Self::should_skip_reference(reference.node_id(), ctx) {
+                    continue;
+                }
+
+                self.report_if_bad(name, ref_span, &mut reported, ctx);
+            }
+        }
+
+        // 2. Check unresolved (through) references
+        for (name, reference_ids) in ctx.scoping().root_unresolved_references() {
+            // ignoreGlobals: skip references to variables that are globals
+            // This includes both explicit globals config and env-provided globals (like browser/node builtins)
+            if self.0.ignore_globals
+                && (ctx.globals().is_enabled(*name) || ctx.env_contains_var(name))
+            {
+                continue;
+            }
+
+            for &reference_id in reference_ids {
+                let reference = ctx.scoping().get_reference(reference_id);
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+                let ref_span = ref_node.span();
+
+                // Skip if equalsToOriginalName
+                if skip_positions.contains(&ref_span.start) {
+                    continue;
+                }
+
+                // Skip certain reference contexts
+                if Self::should_skip_reference(reference.node_id(), ctx) {
+                    continue;
+                }
+
+                self.report_if_bad(name, ref_span, &mut reported, ctx);
+            }
+        }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            // Variable declarations: var foo_bar = 1;
-            AstKind::VariableDeclarator(decl) => {
-                // Only check simple binding identifiers, not destructuring patterns
-                // Destructuring (ObjectPattern/ArrayPattern) is handled by BindingProperty
-                if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
-                    self.check_name(&ident.name, ident.span, ctx);
-                }
-            }
-
-            // Destructuring patterns in variable declarations
-            AstKind::BindingProperty(prop) => {
-                // Get the local binding name
-                let local_name = match &prop.value.kind {
-                    BindingPatternKind::BindingIdentifier(ident) => Some(&ident.name),
-                    BindingPatternKind::AssignmentPattern(pattern) => {
-                        if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
-                            Some(&ident.name)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                };
-
-                let Some(local_name) = local_name else {
-                    return;
-                };
-
-                // ESLint ignoreDestructuring: only skip when local name equals property name
-                // e.g., { category_id } or { category_id: category_id } -> skip
-                // but { category_id: categoryId } -> still check categoryId
-                if self.0.ignore_destructuring {
-                    let key_name = match &prop.key {
-                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
-                        _ => None,
-                    };
-                    if key_name == Some(local_name.as_str()) {
-                        return;
-                    }
-                }
-
-                // Check the local binding name
-                match &prop.value.kind {
-                    BindingPatternKind::BindingIdentifier(ident) => {
-                        self.check_name(&ident.name, ident.span, ctx);
-                    }
-                    BindingPatternKind::AssignmentPattern(pattern) => {
-                        if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
-                            self.check_name(&ident.name, ident.span, ctx);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
-            // Rest element in destructuring: { ...other_props } or [...rest]
-            AstKind::BindingRestElement(rest) => {
-                // Get the binding name from the rest element's argument
-                if let BindingPatternKind::BindingIdentifier(ident) = &rest.argument.kind {
-                    // Check if we should skip due to ignoreDestructuring
-                    // Rest elements don't have a "property name" to compare, so they're
-                    // only skipped when ignoreDestructuring is true (ESLint behavior)
-                    if self.0.ignore_destructuring {
-                        return;
-                    }
-                    self.check_name(&ident.name, ident.span, ctx);
-                }
-            }
-
-            // Array destructuring: const [foo_bar, bar_baz] = arr;
-            AstKind::ArrayPattern(pattern) => {
-                for element in pattern.elements.iter().flatten() {
-                    self.check_binding_pattern(element, ctx);
-                }
-            }
-
-            // Function declarations: function foo_bar() {}
-            AstKind::Function(func) => {
-                if let Some(ident) = &func.id {
-                    self.check_name(&ident.name, ident.span, ctx);
-                }
-            }
-
-            // Function/method parameters
-            AstKind::FormalParameter(param) => {
-                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                    self.check_name(&ident.name, ident.span, ctx);
-                }
-            }
-
             // Object property definitions: { foo_bar: 1 }
             AstKind::ObjectProperty(prop) => {
                 if self.0.properties == PropertiesOption::Never {
                     return;
                 }
 
-                // Check property key if it's an identifier
-                if let PropertyKey::StaticIdentifier(ident) = &prop.key {
-                    self.check_name(&ident.name, ident.span, ctx);
+                // Skip import attribute keys: import ... with { my_type: 'json' }
+                if Self::is_import_attribute_key(node, ctx) {
+                    return;
+                }
+
+                // Check static property key
+                if let PropertyKey::StaticIdentifier(ident) = &prop.key
+                    && !self.is_good_name(&ident.name)
+                {
+                    ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
                 }
             }
 
@@ -243,162 +226,121 @@ impl Rule for Camelcase {
                 if self.0.properties == PropertiesOption::Never {
                     return;
                 }
-
-                if let PropertyKey::StaticIdentifier(ident) = &prop.key {
-                    self.check_name(&ident.name, ident.span, ctx);
+                if let PropertyKey::StaticIdentifier(ident) = &prop.key
+                    && !self.is_good_name(&ident.name)
+                {
+                    ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
                 }
             }
 
-            // Private identifiers in classes: #foo_bar
+            // Private identifiers in classes
             AstKind::PrivateIdentifier(ident) => {
                 if self.0.properties == PropertiesOption::Never {
                     return;
                 }
-                self.check_name(&ident.name, ident.span, ctx);
+                if !self.is_good_name(&ident.name) {
+                    ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
+                }
             }
 
-            // Method definitions
+            // Method definitions in classes and objects
             AstKind::MethodDefinition(method) => {
                 if self.0.properties == PropertiesOption::Never {
                     return;
                 }
-
-                if let PropertyKey::StaticIdentifier(ident) = &method.key {
-                    self.check_name(&ident.name, ident.span, ctx);
-                }
-            }
-
-            // Assignment expressions
-            AstKind::AssignmentExpression(assign) => {
-                match &assign.left {
-                    // Simple identifier assignment: foo_bar = 1
-                    AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        self.check_name(&ident.name, ident.span, ctx);
-                    }
-                    // Member expression assignment: obj.foo_bar = 1 or bar_baz.foo = 1
-                    AssignmentTarget::StaticMemberExpression(member) => {
-                        // Check the object identifier (bar_baz in bar_baz.foo)
-                        if let Expression::Identifier(obj_ident) = &member.object {
-                            self.check_name(&obj_ident.name, obj_ident.span, ctx);
-                        }
-                        // Check the property if properties option is "always"
-                        if self.0.properties != PropertiesOption::Never {
-                            self.check_name(&member.property.name, member.property.span, ctx);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
-            // Import declarations
-            AstKind::ImportSpecifier(specifier) => {
-                // ESLint ignoreImports: only skip when local name equals imported name
-                // e.g., import { snake_case } -> skip (local === imported)
-                // but import { snake_case as local_name } -> still check local_name
-                if self.0.ignore_imports {
-                    let imported_name = specifier.imported.name();
-                    if specifier.local.name.as_str() == imported_name.as_str() {
-                        return;
-                    }
-                }
-
-                // Check the local name (the name used in current scope)
-                self.check_name(&specifier.local.name, specifier.local.span, ctx);
-            }
-
-            // Default imports: import foo_bar from 'mod'
-            // No "imported" name to compare, so ignoreImports doesn't apply
-            AstKind::ImportDefaultSpecifier(specifier) => {
-                self.check_name(&specifier.local.name, specifier.local.span, ctx);
-            }
-
-            // Namespace imports: import * as foo_bar from 'mod'
-            // No "imported" name to compare, so ignoreImports doesn't apply
-            AstKind::ImportNamespaceSpecifier(specifier) => {
-                self.check_name(&specifier.local.name, specifier.local.span, ctx);
-            }
-
-            // Export all: export * as foo_bar from 'mod'
-            AstKind::ExportAllDeclaration(export) => {
-                if let Some(exported) = &export.exported
-                    && let Some(name) = exported.identifier_name()
+                if let PropertyKey::StaticIdentifier(ident) = &method.key
+                    && !self.is_good_name(&ident.name)
                 {
-                    self.check_name(name.as_str(), exported.span(), ctx);
+                    ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
                 }
             }
 
-            // Named exports: export { foo_bar } or export { foo as bar_baz }
+            // Export specifiers: export { foo_bar } or export { camelCase as bar_baz }
             AstKind::ExportSpecifier(specifier) => {
-                // Check the exported name (the name visible to importers)
-                if let Some(name) = specifier.exported.identifier_name() {
-                    self.check_name(name.as_str(), specifier.exported.span(), ctx);
-                }
-            }
-
-            // Destructuring assignment (not declaration): ({ foo_bar } = obj)
-            // For shorthand: { foo_bar } = obj - this is always local === key
-            AstKind::AssignmentTargetPropertyIdentifier(ident) => {
-                // Shorthand destructuring: local name always equals property name
-                // ESLint ignoreDestructuring skips this case
-                if self.0.ignore_destructuring {
-                    return;
-                }
-                self.check_name(&ident.binding.name, ident.binding.span, ctx);
-            }
-
-            // For renamed: { key: foo_bar } = obj - check foo_bar
-            AstKind::AssignmentTargetPropertyProperty(prop) => {
-                // Get the local binding name
-                let local_name =
-                    if let oxc_ast::ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
-                        ident,
-                    ) = &prop.binding
-                    {
-                        Some(ident.name.as_str())
-                    } else {
-                        None
-                    };
-
-                let Some(local_name) = local_name else {
-                    return;
-                };
-
-                // ESLint ignoreDestructuring: only skip when local name equals property name
-                if self.0.ignore_destructuring {
-                    let key_name = match &prop.name {
-                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
-                        _ => None,
-                    };
-                    if key_name == Some(local_name) {
-                        return;
+                // Check the exported name (what it's being exported as)
+                // ESLint checks the exported name, not the local name
+                // Skip string literals: export { a as 'snake_cased' }
+                match &specifier.exported {
+                    oxc_ast::ast::ModuleExportName::IdentifierName(ident) => {
+                        if !self.is_good_name(&ident.name) {
+                            ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
+                        }
+                    }
+                    oxc_ast::ast::ModuleExportName::IdentifierReference(ident) => {
+                        if !self.is_good_name(&ident.name) {
+                            ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
+                        }
+                    }
+                    oxc_ast::ast::ModuleExportName::StringLiteral(_) => {
+                        // String literal exports are allowed
                     }
                 }
+            }
 
-                // Check the binding target
-                if let oxc_ast::ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
-                    ident,
-                ) = &prop.binding
-                {
-                    self.check_name(&ident.name, ident.span, ctx);
+            // Export all declarations: export * as foo_bar from 'mod'
+            AstKind::ExportAllDeclaration(decl) => {
+                if let Some(exported) = &decl.exported {
+                    // Skip string literals: export * as 'snake_cased' from 'mod'
+                    match exported {
+                        oxc_ast::ast::ModuleExportName::IdentifierName(ident) => {
+                            if !self.is_good_name(&ident.name) {
+                                ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
+                            }
+                        }
+                        oxc_ast::ast::ModuleExportName::IdentifierReference(ident) => {
+                            if !self.is_good_name(&ident.name) {
+                                ctx.diagnostic(camelcase_diagnostic(&ident.name, ident.span));
+                            }
+                        }
+                        oxc_ast::ast::ModuleExportName::StringLiteral(_) => {
+                            // String literal exports are allowed
+                        }
+                    }
                 }
             }
 
-            // Labels - both definition and references
+            // Labels
             AstKind::LabeledStatement(stmt) => {
-                self.check_name(&stmt.label.name, stmt.label.span, ctx);
+                if !self.is_good_name(&stmt.label.name) {
+                    ctx.diagnostic(camelcase_diagnostic(&stmt.label.name, stmt.label.span));
+                }
             }
-
-            // break label_name;
             AstKind::BreakStatement(stmt) => {
-                if let Some(label) = &stmt.label {
-                    self.check_name(&label.name, label.span, ctx);
+                if let Some(label) = &stmt.label
+                    && !self.is_good_name(&label.name)
+                {
+                    ctx.diagnostic(camelcase_diagnostic(&label.name, label.span));
+                }
+            }
+            AstKind::ContinueStatement(stmt) => {
+                if let Some(label) = &stmt.label
+                    && !self.is_good_name(&label.name)
+                {
+                    ctx.diagnostic(camelcase_diagnostic(&label.name, label.span));
                 }
             }
 
-            // continue label_name;
-            AstKind::ContinueStatement(stmt) => {
-                if let Some(label) = &stmt.label {
-                    self.check_name(&label.name, label.span, ctx);
+            // Assignment expressions - check member expression property on LHS
+            AstKind::AssignmentExpression(expr) => {
+                if self.0.properties == PropertiesOption::Never {
+                    return;
+                }
+                self.check_assignment_target(&expr.left, ctx);
+            }
+
+            // Update expressions: obj.foo_bar++
+            AstKind::UpdateExpression(expr) => {
+                if self.0.properties == PropertiesOption::Never {
+                    return;
+                }
+                if let oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(member) =
+                    &expr.argument
+                    && !self.is_good_name(&member.property.name)
+                {
+                    ctx.diagnostic(camelcase_diagnostic(
+                        &member.property.name,
+                        member.property.span,
+                    ));
                 }
             }
 
@@ -408,75 +350,339 @@ impl Rule for Camelcase {
 }
 
 impl Camelcase {
-    /// Check if a name violates the camelCase rule
-    fn check_name(&self, name: &str, span: Span, ctx: &LintContext) {
-        if self.is_good_name(name) {
-            return;
+    /// Compute positions (span.start) where identifiers should be skipped
+    /// due to equalsToOriginalName semantics
+    fn compute_skip_positions(&self, ctx: &LintContext) -> FxHashSet<u32> {
+        let mut skip_positions = FxHashSet::default();
+
+        for node in ctx.nodes().iter() {
+            match node.kind() {
+                // Destructuring: { foo_bar } or { foo_bar: foo_bar }
+                AstKind::BindingProperty(prop) => {
+                    if self.0.ignore_destructuring {
+                        let key_name = match &prop.key {
+                            PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
+                            _ => None,
+                        };
+                        let value_name = match &prop.value.kind {
+                            BindingPatternKind::BindingIdentifier(ident) => {
+                                Some((ident.name.as_str(), ident.span.start))
+                            }
+                            BindingPatternKind::AssignmentPattern(pattern) => {
+                                if let BindingPatternKind::BindingIdentifier(ident) =
+                                    &pattern.left.kind
+                                {
+                                    Some((ident.name.as_str(), ident.span.start))
+                                } else {
+                                    None
+                                }
+                            }
+                            _ => None,
+                        };
+                        if let (Some(key), Some((value, pos))) = (key_name, value_name)
+                            && key == value
+                        {
+                            skip_positions.insert(pos);
+                        }
+                    }
+                }
+
+                // Object shorthand property: const o = { some_property }
+                AstKind::ObjectProperty(prop) => {
+                    if self.0.ignore_destructuring
+                        && prop.shorthand
+                        && let PropertyKey::StaticIdentifier(ident) = &prop.key
+                    {
+                        // The identifier reference in shorthand should be skipped
+                        // (the property key is the same as the value reference)
+                        skip_positions.insert(ident.span.start);
+                    }
+                }
+
+                // Import: import { foo_bar } from 'mod'
+                AstKind::ImportDeclaration(decl) => {
+                    if self.0.ignore_imports
+                        && let Some(specifiers) = &decl.specifiers
+                    {
+                        for spec in specifiers {
+                            if let ImportDeclarationSpecifier::ImportSpecifier(import_spec) = spec {
+                                let imported_name = import_spec.imported.name();
+                                if imported_name == import_spec.local.name.as_str() {
+                                    skip_positions.insert(import_spec.local.span.start);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Import attributes: import ... with { my_type: 'json' }
+                // These keys should always be skipped
+                AstKind::ImportAttribute(attr) => match &attr.key {
+                    ImportAttributeKey::Identifier(ident) => {
+                        skip_positions.insert(ident.span.start);
+                    }
+                    ImportAttributeKey::StringLiteral(_) => {}
+                },
+
+                // Assignment target shorthand: ({ foo_bar } = obj)
+                AstKind::AssignmentTargetPropertyIdentifier(prop) => {
+                    if self.0.ignore_destructuring {
+                        // Shorthand assignment target - skip the binding
+                        skip_positions.insert(prop.binding.span.start);
+                    }
+                }
+
+                // Assignment target non-shorthand: ({ foo: foo } = obj)
+                AstKind::AssignmentTargetPropertyProperty(prop) => {
+                    if self.0.ignore_destructuring {
+                        let key_name = match &prop.name {
+                            PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
+                            _ => None,
+                        };
+                        let binding_info = Self::get_assignment_target_name(&prop.binding);
+                        if let (Some(key), Some((binding_name, pos))) = (key_name, binding_info)
+                            && key == binding_name
+                        {
+                            skip_positions.insert(pos);
+                        }
+                    }
+                }
+
+                _ => {}
+            }
         }
-        ctx.diagnostic(camelcase_diagnostic(name, span));
+
+        skip_positions
     }
 
-    /// Check a binding pattern for camelCase violations (used for array destructuring)
-    /// Note: ignoreDestructuring does NOT apply to array destructuring because
-    /// array elements have no "property name" to compare against (only indices).
-    /// ESLint always checks array destructuring bindings regardless of ignoreDestructuring.
-    fn check_binding_pattern(&self, pattern: &oxc_ast::ast::BindingPattern, ctx: &LintContext) {
-        match &pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
-                self.check_name(&ident.name, ident.span, ctx);
+    /// Extract the identifier name and span from an AssignmentTargetMaybeDefault
+    fn get_assignment_target_name<'a>(
+        target: &'a AssignmentTargetMaybeDefault<'a>,
+    ) -> Option<(&'a str, u32)> {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
+                Some((ident.name.as_str(), ident.span.start))
             }
-            BindingPatternKind::AssignmentPattern(assign) => {
-                // Handle default values: const [foo_bar = 1] = arr;
-                self.check_binding_pattern(&assign.left, ctx);
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &with_default.binding {
+                    Some((ident.name.as_str(), ident.span.start))
+                } else {
+                    None
+                }
             }
-            // ObjectPattern and ArrayPattern are handled by their own AstKind handlers
+            _ => None,
+        }
+    }
+
+    /// Check if a reference should be skipped based on its context
+    /// ESLint skips identifiers in Call/New expressions entirely (backward compatibility)
+    fn should_skip_reference(node_id: NodeId, ctx: &LintContext) -> bool {
+        let node = ctx.nodes().get_node(node_id);
+        let parent = ctx.nodes().parent_node(node_id);
+
+        match parent.kind() {
+            // Skip ALL identifiers in call expressions (callee, arguments, etc.)
+            // This is ESLint's backward-compat behavior
+            AstKind::CallExpression(_) | AstKind::NewExpression(_) => true,
+            // Skip assignment pattern right side only: function foo(a = foo_bar) {}
+            // ESLint skips only when the identifier is the `right` of AssignmentPattern
+            AstKind::AssignmentPattern(pattern) => pattern.right.span() == node.span(),
+            // Skip shorthand properties in import options
+            AstKind::ObjectProperty(prop) if prop.shorthand => {
+                Self::is_inside_import_options(node_id, ctx)
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if a node is inside import options (second argument to import())
+    fn is_inside_import_options(node_id: NodeId, ctx: &LintContext) -> bool {
+        let mut in_object_chain = false;
+
+        for ancestor in ctx.nodes().ancestors(node_id) {
+            match ancestor.kind() {
+                AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_) => {
+                    in_object_chain = true;
+                }
+                AstKind::ImportExpression(_) => {
+                    return in_object_chain;
+                }
+                AstKind::ImportDeclaration(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportAllDeclaration(_)
+                | AstKind::ExpressionStatement(_)
+                | AstKind::Program(_)
+                | AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_) => return false,
+                _ => {}
+            }
+        }
+        false
+    }
+
+    /// Check if this node is an import attribute key or dynamic import options key
+    fn is_import_attribute_key(node: &AstNode, ctx: &LintContext) -> bool {
+        let mut in_object_chain = false;
+
+        // Note: ancestors() already starts from the parent node, not the node itself
+        for ancestor in ctx.nodes().ancestors(node.id()) {
+            match ancestor.kind() {
+                // Static import attributes: import ... with { my_type: 'json' }
+                AstKind::ImportAttribute(_) | AstKind::WithClause(_) => return true,
+
+                // Track that we're inside an object literal chain
+                AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_) => {
+                    in_object_chain = true;
+                }
+
+                // Dynamic import: import('foo.json', { my_with: { my_type: 'json' } })
+                // If we're in an object chain and hit ImportExpression, we're in options
+                AstKind::ImportExpression(_) => return in_object_chain,
+
+                AstKind::ImportDeclaration(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportAllDeclaration(_)
+                | AstKind::ExpressionStatement(_)
+                | AstKind::Program(_)
+                | AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_) => return false,
+
+                _ => {}
+            }
+        }
+        false
+    }
+
+    /// Check assignment target for member expression properties
+    fn check_assignment_target(&self, target: &AssignmentTarget, ctx: &LintContext) {
+        match target {
+            AssignmentTarget::StaticMemberExpression(member) => {
+                if !self.is_good_name(&member.property.name) {
+                    ctx.diagnostic(camelcase_diagnostic(
+                        &member.property.name,
+                        member.property.span,
+                    ));
+                }
+            }
+            AssignmentTarget::ArrayAssignmentTarget(arr) => {
+                for element in arr.elements.iter().flatten() {
+                    self.check_assignment_target_maybe_default(element, ctx);
+                }
+                // Check rest: [...obj.fo_o] = bar
+                if let Some(rest) = &arr.rest {
+                    self.check_assignment_target(&rest.target, ctx);
+                }
+            }
+            AssignmentTarget::ObjectAssignmentTarget(obj) => {
+                for prop in &obj.properties {
+                    if let oxc_ast::ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                        p,
+                    ) = prop
+                    {
+                        self.check_assignment_target_maybe_default(&p.binding, ctx);
+                    }
+                }
+                // Check rest: {...obj.fo_o} = bar
+                if let Some(rest) = &obj.rest {
+                    self.check_assignment_target(&rest.target, ctx);
+                }
+            }
             _ => {}
         }
     }
 
-    /// Check if a name is acceptable (either camelCase or in the allow list)
+    /// Check assignment target maybe default for member expression properties
+    fn check_assignment_target_maybe_default(
+        &self,
+        target: &AssignmentTargetMaybeDefault,
+        ctx: &LintContext,
+    ) {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                self.check_assignment_target(&with_default.binding, ctx);
+            }
+            AssignmentTargetMaybeDefault::StaticMemberExpression(member) => {
+                if !self.is_good_name(&member.property.name) {
+                    ctx.diagnostic(camelcase_diagnostic(
+                        &member.property.name,
+                        member.property.span,
+                    ));
+                }
+            }
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(arr) => {
+                for element in arr.elements.iter().flatten() {
+                    self.check_assignment_target_maybe_default(element, ctx);
+                }
+                if let Some(rest) = &arr.rest {
+                    self.check_assignment_target(&rest.target, ctx);
+                }
+            }
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(obj) => {
+                for prop in &obj.properties {
+                    if let oxc_ast::ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                        p,
+                    ) = prop
+                    {
+                        self.check_assignment_target_maybe_default(&p.binding, ctx);
+                    }
+                }
+                if let Some(rest) = &obj.rest {
+                    self.check_assignment_target(&rest.target, ctx);
+                }
+            }
+            // Other variants don't have properties we care about
+            _ => {}
+        }
+    }
+
+    /// Report if name is bad, using deduplication
+    fn report_if_bad(
+        &self,
+        name: &str,
+        span: Span,
+        reported: &mut FxHashSet<Span>,
+        ctx: &LintContext,
+    ) {
+        if reported.contains(&span) {
+            return;
+        }
+        if !self.is_good_name(name) {
+            reported.insert(span);
+            ctx.diagnostic(camelcase_diagnostic(name, span));
+        }
+    }
+
+    /// Check if a name is acceptable
     fn is_good_name(&self, name: &str) -> bool {
-        // Check pre-compiled allow patterns first
         if self.0.allow_patterns.iter().any(|p| p.matches(name)) {
             return true;
         }
-
         !is_underscored(name)
     }
 }
 
-/// Check if a name contains underscores in the middle (not camelCase).
-/// Leading and trailing underscores are allowed.
-/// ALL_CAPS names (constants) are allowed.
+/// Check if a name contains underscores in the middle (not camelCase)
 fn is_underscored(name: &str) -> bool {
-    // Strip leading underscores
     let name = name.trim_start_matches('_');
-    // Strip trailing underscores
     let name = name.trim_end_matches('_');
 
-    // Empty string or single char after stripping is fine
     if name.is_empty() {
         return false;
     }
 
-    // Check if it's ALL_CAPS (constant style) - these are allowed
     if is_all_caps(name) {
         return false;
     }
 
-    // Check for underscore in the middle
     name.contains('_')
 }
 
-/// Check if a name is in ALL_CAPS style (allowed for constants)
+/// Check if a name is in ALL_CAPS style
 fn is_all_caps(name: &str) -> bool {
-    // Must contain at least one letter
     let has_letter = name.chars().any(char::is_alphabetic);
     if !has_letter {
         return false;
     }
-
-    // All letters must be uppercase, and underscores/digits are allowed
     name.chars().all(|c| c.is_uppercase() || c.is_ascii_digit() || c == '_')
 }
 
@@ -523,100 +729,67 @@ fn test() {
             Some(serde_json::json!([{ "properties": "never" }])),
         ),
         ("obj.foo_bar = function(){};", Some(serde_json::json!([{ "properties": "never" }]))),
-        ("const { ['foo']: _foo } = obj;", None), // { "ecmaVersion": 6 },
-        ("const { [_foo_]: foo } = obj;", None),  // { "ecmaVersion": 6 },
+        ("const { ['foo']: _foo } = obj;", None),
+        ("const { [_foo_]: foo } = obj;", None),
         (
             "var { category_id } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
+        ),
         (
             "var { category_id: category_id } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
+        ),
         (
             "var { category_id = 1 } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
+        ),
         (
             "var { [{category_id} = query]: categoryId } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
-        ("var { category_id: category } = query;", None), // { "ecmaVersion": 6 },
-        ("var { _leading } = query;", None),      // { "ecmaVersion": 6 },
-        ("var { trailing_ } = query;", None),     // { "ecmaVersion": 6 },
-        (r#"import { camelCased } from "external module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { _leading } from "external module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { trailing_ } from "external module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { no_camelcased as camelCased } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { no_camelcased as _leading } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { no_camelcased as trailing_ } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        ("var { category_id: category } = query;", None),
+        ("var { _leading } = query;", None),
+        ("var { trailing_ } = query;", None),
+        (r#"import { camelCased } from "external module";"#, None),
+        (r#"import { _leading } from "external module";"#, None),
+        (r#"import { trailing_ } from "external module";"#, None),
+        (r#"import { no_camelcased as camelCased } from "external-module";"#, None),
+        (r#"import { no_camelcased as _leading } from "external-module";"#, None),
+        (r#"import { no_camelcased as trailing_ } from "external-module";"#, None),
         (
             r#"import { no_camelcased as camelCased, anotherCamelCased } from "external-module";"#,
             None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("import { snake_cased } from 'mod'", Some(serde_json::json!([{ "ignoreImports": true }]))), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        ("import { snake_cased } from 'mod'", Some(serde_json::json!([{ "ignoreImports": true }]))),
         (
             "import { snake_cased as snake_cased } from 'mod'",
             Some(serde_json::json!([{ "ignoreImports": true }])),
-        ), // { "ecmaVersion": 2022, "sourceType": "module" },
+        ),
         (
             "import { 'snake_cased' as snake_cased } from 'mod'",
             Some(serde_json::json!([{ "ignoreImports": true }])),
-        ), // { "ecmaVersion": 2022, "sourceType": "module" },
-        ("import { camelCased } from 'mod'", Some(serde_json::json!([{ "ignoreImports": false }]))), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("export { a as 'snake_cased' } from 'mod'", None), // { "ecmaVersion": 2022, "sourceType": "module" },
-        ("export * as 'snake_cased' from 'mod'", None), // { "ecmaVersion": 2022, "sourceType": "module" },
+        ),
+        ("import { camelCased } from 'mod'", Some(serde_json::json!([{ "ignoreImports": false }]))),
+        ("export { a as 'snake_cased' } from 'mod'", None),
+        ("export * as 'snake_cased' from 'mod'", None),
         (
             "var _camelCased = aGlobalVariable",
             Some(serde_json::json!([{ "ignoreGlobals": false }])),
-        ), // { "globals": { "aGlobalVariable": "readonly" } },
+        ),
         (
             "var camelCased = _aGlobalVariable",
             Some(serde_json::json!([{ "ignoreGlobals": false }])),
-        ), // { "globals": { _"aGlobalVariable": "readonly" } },
-        (
-            "var camelCased = a_global_variable",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // { "globals": { "a_global_variable": "readonly" } },
-        ("a_global_variable.foo()", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "readonly" } },
-        ("a_global_variable[undefined]", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "readonly" } },
-        ("var foo = a_global_variable.bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "readonly" } },
-        ("a_global_variable.foo = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "readonly" } },
-        (
-            "( { foo: a_global_variable.bar } = baz )",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "readonly",				},			},
-        ("a_global_variable = foo", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "writable" } },
-        ("a_global_variable = foo", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "readonly" } },
-        ("({ a_global_variable } = foo)", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        (
-            "({ snake_cased: a_global_variable } = foo)",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        (
-            "({ snake_cased: a_global_variable = foo } = bar)",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("[a_global_variable] = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("[a_global_variable = foo] = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("foo[a_global_variable] = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"globals": {										"a_global_variable": "readonly",				},			},
-        (
-            "var foo = { [a_global_variable]: bar }",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "readonly",				},			},
-        (
-            "var { [a_global_variable]: foo } = bar",
-            Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "readonly",				},			},
-        ("function foo({ no_camelcased: camelCased }) {};", None), // { "ecmaVersion": 6 },
-        ("function foo({ no_camelcased: _leading }) {};", None),   // { "ecmaVersion": 6 },
-        ("function foo({ no_camelcased: trailing_ }) {};", None),  // { "ecmaVersion": 6 },
-        ("function foo({ camelCased = 'default value' }) {};", None), // { "ecmaVersion": 6 },
-        ("function foo({ _leading = 'default value' }) {};", None), // { "ecmaVersion": 6 },
-        ("function foo({ trailing_ = 'default value' }) {};", None), // { "ecmaVersion": 6 },
-        ("function foo({ camelCased }) {};", None),                // { "ecmaVersion": 6 },
-        ("function foo({ _leading }) {}", None),                   // { "ecmaVersion": 6 },
-        ("function foo({ trailing_ }) {}", None),                  // { "ecmaVersion": 6 },
+        ),
+        // Note: ignoreGlobals tests with explicit globals config are in a separate Tester run below
+        ("function foo({ no_camelcased: camelCased }) {};", None),
+        ("function foo({ no_camelcased: _leading }) {};", None),
+        ("function foo({ no_camelcased: trailing_ }) {};", None),
+        ("function foo({ camelCased = 'default value' }) {};", None),
+        ("function foo({ _leading = 'default value' }) {};", None),
+        ("function foo({ trailing_ = 'default value' }) {};", None),
+        ("function foo({ camelCased }) {};", None),
+        ("function foo({ _leading }) {}", None),
+        ("function foo({ trailing_ }) {}", None),
         ("ignored_foo = 0;", Some(serde_json::json!([{ "allow": ["ignored_foo"] }]))),
         (
             "ignored_foo = 0; ignored_bar = 1;",
@@ -630,26 +803,26 @@ fn test() {
         ),
         ("fo_o = 0;", Some(serde_json::json!([{ "allow": ["__option_foo__", "fo_o"] }]))),
         ("user = 0;", Some(serde_json::json!([{ "allow": [] }]))),
-        ("foo = { [computedBar]: 0 };", Some(serde_json::json!([{ "ignoreDestructuring": true }]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "allow": ["fo_o"] }]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.foo } = bar);", Some(serde_json::json!([{ "allow": ["fo_o"] }]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o.b_ar } = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("({ a: { b: obj.fo_o } } = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("([obj.fo_o] = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("({ c: [ob.fo_o]} = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("([obj.fo_o.b_ar] = bar);", Some(serde_json::json!([{ "properties": "never" }]))), // { "ecmaVersion": 6 },
-        ("({obj} = baz.fo_o);", None), // { "ecmaVersion": 6 },
-        ("([obj] = baz.fo_o);", None), // { "ecmaVersion": 6 },
-        ("([obj.foo = obj.fo_o] = bar);", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 6 },
+        ("foo = { [computedBar]: 0 };", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
+        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "allow": ["fo_o"] }]))),
+        ("({ a: obj.foo } = bar);", Some(serde_json::json!([{ "allow": ["fo_o"] }]))),
+        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({ a: obj.fo_o.b_ar } = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({ a: { b: obj.fo_o } } = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("([obj.fo_o] = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({ c: [ob.fo_o]} = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("([obj.fo_o.b_ar] = bar);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({obj} = baz.fo_o);", None),
+        ("([obj] = baz.fo_o);", None),
+        ("([obj.foo = obj.fo_o] = bar);", Some(serde_json::json!([{ "properties": "always" }]))),
         (
             "class C { camelCase; #camelCase; #camelCase2() {} }",
             Some(serde_json::json!([{ "properties": "always" }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "class C { snake_case; #snake_case; #snake_case2() {} }",
             Some(serde_json::json!([{ "properties": "never" }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "
 			            const { some_property } = obj;
@@ -665,56 +838,42 @@ fn test() {
 			            };
 			            ",
             Some(serde_json::json!([{ "properties": "never", "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "
 			            const { some_property } = obj;
 			            doSomething({ some_property });
 			            ",
             Some(serde_json::json!([{ "properties": "never", "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "import foo from 'foo.json' with { my_type: 'json' }",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025, "sourceType": "module" },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "export * from 'foo.json' with { my_type: 'json' }",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025, "sourceType": "module" },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "export { default } from 'foo.json' with { my_type: 'json' }",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025, "sourceType": "module" },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "import('foo.json', { my_with: { my_type: 'json' } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025 },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "import('foo.json', { 'with': { my_type: 'json' } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025 },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "import('foo.json', { my_with: { my_type } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025 },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "import('foo.json', { my_with: { my_type } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // {				"ecmaVersion": 2025,				"globals": {					"my_type": true, 				},			}
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
     ];
 
     let fail = vec![
@@ -734,142 +893,143 @@ fn test() {
         ("foo.qux.boom_pow = { bar: boom.bam_pow }", None),
         ("var o = {bar_baz: 1}", Some(serde_json::json!([{ "properties": "always" }]))),
         ("obj.a_b = 2;", Some(serde_json::json!([{ "properties": "always" }]))),
-        ("var { category_id: category_alias } = query;", None), // { "ecmaVersion": 6 },
+        ("var { category_id: category_alias } = query;", None),
         (
             "var { category_id: category_alias } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
+        ),
         (
             "var { [category_id]: categoryId } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
-        ("var { [category_id]: categoryId } = query;", None),   // { "ecmaVersion": 6 },
+        ),
+        ("var { [category_id]: categoryId } = query;", None),
         (
             "var { category_id: categoryId, ...other_props } = query;",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2018 },
-        ("var { category_id } = query;", None),                 // { "ecmaVersion": 6 },
-        ("var { category_id: category_id } = query;", None),    // { "ecmaVersion": 6 },
-        ("var { category_id = 1 } = query;", None),             // { "ecmaVersion": 6 },
-        (r#"import no_camelcased from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import * as no_camelcased from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { no_camelcased } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { no_camelcased as no_camel_cased } from "external module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import { camelCased as no_camel_cased } from "external module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("import { 'snake_cased' as snake_cased } from 'mod'", None), // { "ecmaVersion": 2022, "sourceType": "module" },
+        ),
+        ("var { category_id } = query;", None),
+        ("var { category_id: category_id } = query;", None),
+        ("var { category_id = 1 } = query;", None),
+        (r#"import no_camelcased from "external-module";"#, None),
+        (r#"import * as no_camelcased from "external-module";"#, None),
+        (r#"import { no_camelcased } from "external-module";"#, None),
+        (r#"import { no_camelcased as no_camel_cased } from "external module";"#, None),
+        (r#"import { camelCased as no_camel_cased } from "external module";"#, None),
+        ("import { 'snake_cased' as snake_cased } from 'mod'", None),
         (
             "import { 'snake_cased' as another_snake_cased } from 'mod'",
             Some(serde_json::json!([{ "ignoreImports": true }])),
-        ), // { "ecmaVersion": 2022, "sourceType": "module" },
-        (r#"import { camelCased, no_camelcased } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        (r#"import { camelCased, no_camelcased } from "external-module";"#, None),
         (
             r#"import { no_camelcased as camelCased, another_no_camelcased } from "external-module";"#,
             None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        (r#"import camelCased, { no_camelcased } from "external-module";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        (r#"import camelCased, { no_camelcased } from "external-module";"#, None),
         (
             r#"import no_camelcased, { another_no_camelcased as camelCased } from "external-module";"#,
             None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("import snake_cased from 'mod'", Some(serde_json::json!([{ "ignoreImports": true }]))), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        ("import snake_cased from 'mod'", Some(serde_json::json!([{ "ignoreImports": true }]))),
         (
             "import * as snake_cased from 'mod'",
             Some(serde_json::json!([{ "ignoreImports": true }])),
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("import snake_cased from 'mod'", Some(serde_json::json!([{ "ignoreImports": false }]))), // { "ecmaVersion": 6, "sourceType": "module" },
+        ),
+        ("import snake_cased from 'mod'", Some(serde_json::json!([{ "ignoreImports": false }]))),
         (
             "import * as snake_cased from 'mod'",
             Some(serde_json::json!([{ "ignoreImports": false }])),
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("var camelCased = snake_cased", Some(serde_json::json!([{ "ignoreGlobals": false }]))), // { "globals": { "snake_cased": "readonly" } },
-        ("a_global_variable.foo()", Some(serde_json::json!([{ "ignoreGlobals": false }]))), // { "globals": { "snake_cased": "readonly" } },
-        ("a_global_variable[undefined]", Some(serde_json::json!([{ "ignoreGlobals": false }]))), // { "globals": { "snake_cased": "readonly" } },
-        ("var camelCased = snake_cased", None), // { "globals": { "snake_cased": "readonly" } },
-        ("var camelCased = snake_cased", Some(serde_json::json!([{}]))), // { "globals": { "snake_cased": "readonly" } },
-        ("foo.a_global_variable = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "globals": { "a_global_variable": "writable" } },
+        ),
+        ("var camelCased = snake_cased", Some(serde_json::json!([{ "ignoreGlobals": false }]))),
+        ("a_global_variable.foo()", Some(serde_json::json!([{ "ignoreGlobals": false }]))),
+        ("a_global_variable[undefined]", Some(serde_json::json!([{ "ignoreGlobals": false }]))),
+        ("var camelCased = snake_cased", None),
+        ("var camelCased = snake_cased", Some(serde_json::json!([{}]))),
+        ("foo.a_global_variable = bar", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
         (
             "var foo = { a_global_variable: bar }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // { "globals": { "a_global_variable": "writable" } },
+        ),
         (
             "var foo = { a_global_variable: a_global_variable }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // { "globals": { "a_global_variable": "writable" } },
+        ),
         (
             "var foo = { a_global_variable() {} }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
+        ),
         (
             "class Foo { a_global_variable() {} }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("a_global_variable: for (;;);", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"globals": {										"a_global_variable": "writable",				},			},
+        ),
+        ("a_global_variable: for (;;);", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
         (
             "if (foo) { let a_global_variable; a_global_variable = bar; }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
+        ),
         (
             "function foo(a_global_variable) { foo = a_global_variable; }",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("var a_global_variable", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "ecmaVersion": 6 },
-        ("function a_global_variable () {}", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // { "ecmaVersion": 6 },
+        ),
+        ("var a_global_variable", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
+        ("function a_global_variable () {}", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
         (
             "const a_global_variable = foo; bar = a_global_variable",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
+        ),
         (
             "bar = a_global_variable; var a_global_variable;",
             Some(serde_json::json!([{ "ignoreGlobals": true }])),
-        ), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "writable",				},			},
-        ("var foo = { a_global_variable }", Some(serde_json::json!([{ "ignoreGlobals": true }]))), // {				"ecmaVersion": 6,				"globals": {										"a_global_variable": "readonly",				},			},
-        ("undefined_variable;", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
-        ("implicit_global = 1;", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
-        ("export * as snake_cased from 'mod'", None), // { "ecmaVersion": 2020, "sourceType": "module" },
-        ("function foo({ no_camelcased }) {};", None), // { "ecmaVersion": 6 },
-        ("function foo({ no_camelcased = 'default value' }) {};", None), // { "ecmaVersion": 6 },
-        ("const no_camelcased = 0; function foo({ camelcased_value = no_camelcased}) {}", None), // { "ecmaVersion": 6 },
-        ("const { bar: no_camelcased } = foo;", None), // { "ecmaVersion": 6 },
-        ("function foo({ value_1: my_default }) {}", None), // { "ecmaVersion": 6 },
-        ("function foo({ isCamelcased: no_camelcased }) {};", None), // { "ecmaVersion": 6 },
-        ("var { foo: bar_baz = 1 } = quz;", None),     // { "ecmaVersion": 6 },
-        ("const { no_camelcased = false } = bar;", None), // { "ecmaVersion": 6 },
-        ("const { no_camelcased = foo_bar } = bar;", None), // { "ecmaVersion": 6 },
+        ),
+        ("var foo = { a_global_variable }", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
+        // ESLint: ignoreGlobals only skips configured globals, undefined variables still fail
+        ("undefined_variable", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
+        ("implicit_global = 1", Some(serde_json::json!([{ "ignoreGlobals": true }]))),
+        ("export * as snake_cased from 'mod'", None),
+        ("function foo({ no_camelcased }) {};", None),
+        ("function foo({ no_camelcased = 'default value' }) {};", None),
+        ("const no_camelcased = 0; function foo({ camelcased_value = no_camelcased}) {}", None),
+        ("const { bar: no_camelcased } = foo;", None),
+        ("function foo({ value_1: my_default }) {}", None),
+        ("function foo({ isCamelcased: no_camelcased }) {};", None),
+        ("var { foo: bar_baz = 1 } = quz;", None),
+        ("const { no_camelcased = false } = bar;", None),
+        ("const { no_camelcased = foo_bar } = bar;", None),
         ("not_ignored_foo = 0;", Some(serde_json::json!([{ "allow": ["ignored_bar"] }]))),
         ("not_ignored_foo = 0;", Some(serde_json::json!([{ "allow": ["_id$"] }]))),
         (
             "foo = { [computed_bar]: 0 };",
             Some(serde_json::json!([{ "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o } = bar);", None), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.fo_o.b_ar } = baz);", None), // { "ecmaVersion": 6 },
-        ("({ a: { b: { c: obj.fo_o } } } = bar);", None), // { "ecmaVersion": 6 },
-        ("({ a: { b: { c: obj.fo_o.b_ar } } } = baz);", None), // { "ecmaVersion": 6 },
-        ("([obj.fo_o] = bar);", None),           // { "ecmaVersion": 6 },
-        ("([obj.fo_o] = bar);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))), // { "ecmaVersion": 6 },
-        ("([obj.fo_o = 1] = bar);", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 6 },
-        ("({ a: [obj.fo_o] } = bar);", None), // { "ecmaVersion": 6 },
-        ("({ a: { b: [obj.fo_o] } } = bar);", None), // { "ecmaVersion": 6 },
-        ("([obj.fo_o.ba_r] = baz);", None),   // { "ecmaVersion": 6 },
-        ("({...obj.fo_o} = baz);", None),     // { "ecmaVersion": 9 },
-        ("({...obj.fo_o.ba_r} = baz);", None), // { "ecmaVersion": 9 },
-        ("({c: {...obj.fo_o }} = baz);", None), // { "ecmaVersion": 9 },
-        ("obj.o_k.non_camelcase = 0", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 2020 },
-        ("(obj?.o_k).non_camelcase = 0", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 2020 },
-        ("class C { snake_case; }", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 2022 },
+        ),
+        ("({ a: obj.fo_o } = bar);", None),
+        ("({ a: obj.fo_o } = bar);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
+        ("({ a: obj.fo_o.b_ar } = baz);", None),
+        ("({ a: { b: { c: obj.fo_o } } } = bar);", None),
+        ("({ a: { b: { c: obj.fo_o.b_ar } } } = baz);", None),
+        ("([obj.fo_o] = bar);", None),
+        ("([obj.fo_o] = bar);", Some(serde_json::json!([{ "ignoreDestructuring": true }]))),
+        ("([obj.fo_o = 1] = bar);", Some(serde_json::json!([{ "properties": "always" }]))),
+        ("({ a: [obj.fo_o] } = bar);", None),
+        ("({ a: { b: [obj.fo_o] } } = bar);", None),
+        ("([obj.fo_o.ba_r] = baz);", None),
+        ("({...obj.fo_o} = baz);", None),
+        ("({...obj.fo_o.ba_r} = baz);", None),
+        ("({c: {...obj.fo_o }} = baz);", None),
+        ("obj.o_k.non_camelcase = 0", Some(serde_json::json!([{ "properties": "always" }]))),
+        ("(obj?.o_k).non_camelcase = 0", Some(serde_json::json!([{ "properties": "always" }]))),
+        ("class C { snake_case; }", Some(serde_json::json!([{ "properties": "always" }]))),
         (
             "class C { #snake_case; foo() { this.#snake_case; } }",
             Some(serde_json::json!([{ "properties": "always" }])),
-        ), // { "ecmaVersion": 2022 },
-        ("class C { #snake_case() {} }", Some(serde_json::json!([{ "properties": "always" }]))), // { "ecmaVersion": 2022 },
+        ),
+        ("class C { #snake_case() {} }", Some(serde_json::json!([{ "properties": "always" }]))),
         (
             "
 			            const { some_property } = obj;
 			            doSomething({ some_property });
 			            ",
             Some(serde_json::json!([{ "properties": "always", "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             r#"
 			            const { some_property } = obj;
@@ -877,7 +1037,7 @@ fn test() {
 			            doSomething({ [some_property]: "bar" });
 			            "#,
             Some(serde_json::json!([{ "properties": "never", "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "
 			            const { some_property } = obj;
@@ -893,20 +1053,124 @@ fn test() {
 			            };
 			            ",
             Some(serde_json::json!([{ "properties": "always", "ignoreDestructuring": true }])),
-        ), // { "ecmaVersion": 2022 },
+        ),
         (
             "import('foo.json', { my_with: { [my_type]: 'json' } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025 },
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
         (
             "import('foo.json', { my_with: { my_type: my_json } })",
-            Some(
-                serde_json::json!([				{					"properties": "always",					"ignoreImports": false,				},			]),
-            ),
-        ), // { "ecmaVersion": 2025 }
+            Some(serde_json::json!([{ "properties": "always", "ignoreImports": false }])),
+        ),
     ];
 
     Tester::new(Camelcase::NAME, Camelcase::PLUGIN, pass, fail).test_and_snapshot();
+
+    // Separate test for ignoreGlobals with explicit globals config
+    // ESLint only skips globals that are explicitly configured
+    let pass_with_globals = vec![
+        (
+            "var camelCased = a_global_variable",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(serde_json::json!({ "globals": { "a_global_variable": "readonly" } })),
+        ),
+        (
+            "a_global_variable.foo()",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(serde_json::json!({ "globals": { "a_global_variable": "readonly" } })),
+        ),
+        (
+            "a_global_variable[undefined]",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "readonly", "undefined": "readonly" } }),
+            ),
+        ),
+        (
+            "var foo = a_global_variable.bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(serde_json::json!({ "globals": { "a_global_variable": "readonly" } })),
+        ),
+        (
+            "a_global_variable.foo = bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "( { foo: a_global_variable.bar } = baz )",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "readonly", "baz": "readonly" } }),
+            ),
+        ),
+        (
+            "a_global_variable = foo",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "foo": "readonly" } }),
+            ),
+        ),
+        (
+            "({ a_global_variable } = foo)",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "foo": "readonly" } }),
+            ),
+        ),
+        (
+            "({ snake_cased: a_global_variable } = foo)",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "foo": "readonly" } }),
+            ),
+        ),
+        (
+            "({ snake_cased: a_global_variable = foo } = bar)",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "foo": "readonly", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "[a_global_variable] = bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "[a_global_variable = foo] = bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "writable", "foo": "readonly", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "foo[a_global_variable] = bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "readonly", "foo": "writable", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "var foo = { [a_global_variable]: bar }",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "readonly", "bar": "readonly" } }),
+            ),
+        ),
+        (
+            "var { [a_global_variable]: foo } = bar",
+            Some(serde_json::json!([{ "ignoreGlobals": true }])),
+            Some(
+                serde_json::json!({ "globals": { "a_global_variable": "readonly", "bar": "readonly" } }),
+            ),
+        ),
+    ];
+    let fail_with_globals: Vec<(&str, Option<serde_json::Value>, Option<serde_json::Value>)> =
+        vec![];
+
+    Tester::new(Camelcase::NAME, Camelcase::PLUGIN, pass_with_globals, fail_with_globals).test();
 }
