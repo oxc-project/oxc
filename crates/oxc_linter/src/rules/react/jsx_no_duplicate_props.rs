@@ -28,15 +28,15 @@ fn jsx_no_duplicate_props_diagnostic(prop_name: &str, span1: Span, span2: Span) 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct JsxNoDuplicateProps {
-    // If set to `true`, the rule will consider props duplicates even if
-    // they use different casing.
-    //
-    // For example, with `ignoreCase` set to `true`, the following code would be considered
-    // to have duplicate props:
-    //
-    // ```jsx
-    // <InputField inputProps="foo" InputProps="bar" />;
-    // ```
+    /// If set to `true`, the rule will consider props duplicates even if
+    /// they use different casing.
+    ///
+    /// For example, with `ignoreCase` set to `true`, the following code would be considered
+    /// to have duplicate props:
+    ///
+    /// ```jsx
+    /// <InputField inputProps="foo" InputProps="bar" />;
+    /// ```
     ignore_case: bool,
 }
 
