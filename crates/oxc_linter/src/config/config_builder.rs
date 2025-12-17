@@ -15,6 +15,7 @@ use crate::{
     RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
+        external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, normalize_plugin_name},
     },
@@ -150,16 +151,15 @@ impl ConfigStoreBuilder {
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
         // Collect external plugins from both base config and overrides
-        let mut external_plugins: FxHashSet<(&PathBuf, &str)> = FxHashSet::default();
+        let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
 
         if let Some(base_external_plugins) = &oxlintrc.external_plugins {
-            external_plugins.extend(base_external_plugins.iter().map(|(k, v)| (k, v.as_str())));
+            external_plugins.extend(base_external_plugins.iter());
         }
 
         for r#override in &oxlintrc.overrides {
             if let Some(override_external_plugins) = &r#override.external_plugins {
-                external_plugins
-                    .extend(override_external_plugins.iter().map(|(k, v)| (k, v.as_str())));
+                external_plugins.extend(override_external_plugins.iter());
             }
         }
 
@@ -169,9 +169,9 @@ impl ConfigStoreBuilder {
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let (_, original_specifier) = external_plugins.iter().next().unwrap();
+                let first_plugin = external_plugins.iter().next().unwrap();
                 return Err(ConfigBuilderError::NoExternalLinterConfigured {
-                    plugin_specifier: (*original_specifier).to_string(),
+                    plugin_specifier: first_plugin.specifier.clone(),
                 });
             };
 
@@ -180,10 +180,11 @@ impl ConfigStoreBuilder {
                 ..Default::default()
             });
 
-            for (config_path, specifier) in &external_plugins {
+            for entry in &external_plugins {
                 Self::load_external_plugin(
-                    config_path,
-                    specifier,
+                    &entry.config_dir,
+                    &entry.specifier,
+                    entry.name.as_deref(),
                     external_linter,
                     &resolver,
                     external_plugin_store,
@@ -523,6 +524,7 @@ impl ConfigStoreBuilder {
     fn load_external_plugin(
         resolve_dir: &Path,
         plugin_specifier: &str,
+        alias: Option<&str>,
         external_linter: &ExternalLinter,
         resolver: &Resolver,
         external_plugin_store: &mut ExternalPluginStore,
@@ -562,8 +564,13 @@ impl ConfigStoreBuilder {
             }
         })?;
 
-        // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
-        let plugin_name = normalize_plugin_name(&result.name).into_owned();
+        // Use alias if provided, otherwise normalize plugin name
+        let plugin_name = if let Some(alias_name) = alias {
+            alias_name.to_string()
+        } else {
+            // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
+            normalize_plugin_name(&result.name).into_owned()
+        };
 
         if LintPlugins::try_from(plugin_name.as_str()).is_err() {
             external_plugin_store.register_plugin(
@@ -652,7 +659,22 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::ReservedExternalPluginName { plugin_name } => {
                 write!(
                     f,
-                    "Plugin name '{plugin_name}' is reserved, and cannot be used for JS plugins",
+                    "Plugin name '{plugin_name}' is reserved, and cannot be used for JS plugins.\n\
+                     \n\
+                     The '{plugin_name}' plugin is already implemented natively in Rust within oxlint.\n\
+                     Using both the native and JS versions would create ambiguity about which rules to use.\n\
+                     \n\
+                     To use an external '{plugin_name}' plugin instead, provide a custom alias:\n\
+                     \n\
+                     \"jsPlugins\": [{{ \"name\": \"{plugin_name}-js\", \"specifier\": \"eslint-plugin-{plugin_name}\" }}]\n\
+                     \n\
+                     Then reference rules using your alias:\n\
+                     \n\
+                     \"rules\": {{\n\
+                       \"{plugin_name}-js/rule-name\": \"error\"\n\
+                     }}\n\
+                     \n\
+                     See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html",
                 )?;
                 Ok(())
             }

@@ -5,15 +5,22 @@ use std::{
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{JsonSchema, schema_for};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::{LintPlugins, utils::read_to_string};
 
 use super::{
-    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals,
-    overrides::OxlintOverrides, rules::OxlintRules, settings::OxlintSettings,
+    categories::OxlintCategories,
+    env::OxlintEnv,
+    external_plugins::{
+        ExternalPluginEntry, deserialize_external_plugins, external_plugins_schema,
+    },
+    globals::OxlintGlobals,
+    overrides::OxlintOverrides,
+    rules::OxlintRules,
+    settings::OxlintSettings,
 };
 
 /// Oxlint Configuration File
@@ -76,13 +83,12 @@ pub struct Oxlintrc {
     /// They are not supported in language server at present.
     #[serde(
         rename = "jsPlugins",
-        deserialize_with = "deserialize_external_plugins",
-        serialize_with = "serialize_external_plugins",
         default,
-        skip_serializing_if = "Option::is_none"
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_external_plugins"
     )]
-    #[schemars(with = "Option<FxHashSet<String>>")]
-    pub external_plugins: Option<FxHashSet<(PathBuf, String)>>,
+    #[schemars(schema_with = "external_plugins_schema")]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -170,7 +176,10 @@ impl Oxlintrc {
         if let Some(external_plugins) = &mut config.external_plugins {
             *external_plugins = std::mem::take(external_plugins)
                 .into_iter()
-                .map(|(_, specifier)| (config_dir.to_path_buf(), specifier))
+                .map(|mut entry| {
+                    entry.config_dir = config_dir.to_path_buf();
+                    entry
+                })
                 .collect();
         }
 
@@ -178,7 +187,10 @@ impl Oxlintrc {
             if let Some(external_plugins) = &mut override_config.external_plugins {
                 *external_plugins = std::mem::take(external_plugins)
                     .into_iter()
-                    .map(|(_, specifier)| (config_dir.to_path_buf(), specifier))
+                    .map(|mut entry| {
+                        entry.config_dir = config_dir.to_path_buf();
+                        entry
+                    })
                     .collect();
             }
         }
@@ -315,7 +327,7 @@ impl Oxlintrc {
 
         let external_plugins = match (&self.external_plugins, &other.external_plugins) {
             (Some(self_external), Some(other_external)) => {
-                Some(self_external.iter().chain(other_external).cloned().collect())
+                Some(self_external.iter().chain(other_external.iter()).cloned().collect())
             }
             (Some(self_external), None) => Some(self_external.clone()),
             (None, Some(other_external)) => Some(other_external.clone()),
@@ -342,37 +354,12 @@ fn is_json_ext(ext: &str) -> bool {
     ext == "json" || ext == "jsonc"
 }
 
-fn deserialize_external_plugins<'de, D>(
-    deserializer: D,
-) -> Result<Option<FxHashSet<(PathBuf, String)>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt_set: Option<FxHashSet<String>> = Option::deserialize(deserializer)?;
-    Ok(opt_set
-        .map(|set| set.into_iter().map(|specifier| (PathBuf::default(), specifier)).collect()))
-}
-
-#[expect(clippy::ref_option)]
-fn serialize_external_plugins<S>(
-    plugins: &Option<FxHashSet<(PathBuf, String)>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    // Serialize as an array of original specifiers (the values in the map)
-    match plugins {
-        Some(set) => serializer.collect_seq(set.iter().map(|(_, specifier)| specifier)),
-        None => serializer.serialize_none(),
-    }
-}
-
 #[cfg(test)]
 mod test {
+    use rustc_hash::FxHashSet;
     use serde_json::json;
 
-    use crate::config::plugins::LintPlugins;
+    use crate::config::{external_plugins::ExternalPluginEntry, plugins::LintPlugins};
 
     use super::*;
 
@@ -434,5 +421,71 @@ mod test {
 
         let config: Oxlintrc = serde_json::from_str(r#"{"extends": []}"#).unwrap();
         assert_eq!(0, config.extends.len());
+    }
+
+    #[test]
+    fn test_oxlintrc_js_plugins() {
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{"jsPlugins": ["./plugin.ts", { "name": "custom", "specifier": "./plugin2.ts" }]}"#,
+        )
+        .unwrap();
+        assert_eq!(config.external_plugins.as_ref().unwrap().len(), 2);
+
+        // None
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        assert!(config.external_plugins.is_none());
+
+        // Empty array
+        let config: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": []}"#).unwrap();
+        assert_eq!(config.external_plugins.as_ref().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_oxlintrc_js_plugins_rejects_invalid() {
+        // Extra fields should be rejected
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"jsPlugins": [{ "name": "x", "specifier": "y", "extra": "z" }]}"#
+            )
+            .is_err()
+        );
+
+        // Missing required fields should be rejected
+        assert!(serde_json::from_str::<Oxlintrc>(r#"{"jsPlugins": [{ "name": "x" }]}"#).is_err());
+
+        // Object with arbitrary field should be rejected
+        assert!(
+            serde_json::from_str::<Oxlintrc>(r#"{"jsPlugins": [{ "myAlias": "my-plugin" }]}"#)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_js_plugins_roundtrip() {
+        let mut config = Oxlintrc::default();
+        let mut plugins = FxHashSet::default();
+        plugins.insert(ExternalPluginEntry {
+            config_dir: PathBuf::default(),
+            specifier: "./plugin.ts".to_string(),
+            name: None,
+        });
+        plugins.insert(ExternalPluginEntry {
+            config_dir: PathBuf::default(),
+            specifier: "./plugin2.ts".to_string(),
+            name: Some("custom".to_string()),
+        });
+        config.external_plugins = Some(plugins);
+
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: Oxlintrc = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(config.external_plugins, deserialized.external_plugins);
+    }
+
+    #[test]
+    fn test_oxlintrc_js_plugins_merge() {
+        let config1: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin1.ts"]}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin2.ts"]}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.external_plugins.unwrap().len(), 2);
     }
 }
