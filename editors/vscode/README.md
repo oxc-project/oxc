@@ -31,12 +31,12 @@ To enable it, use a VSCode `settings.json` like:
 
 ```json
 {
-  "oxc.fmt.experimental": true,
-  "editor.defaultFormatter": "oxc.oxc-vscode"
-  // Or enable it for specific files:
-  // "[javascript]": {
-  //   "editor.defaultFormatter": "oxc.oxc-vscode"
-  // },
+    "oxc.fmt.experimental": true,
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+    // Or enable it for specific files:
+    // "[javascript]": {
+    //   "editor.defaultFormatter": "oxc.oxc-vscode"
+    // },
 }
 ```
 
@@ -51,7 +51,9 @@ Following configuration are supported via `settings.json` and effect the window 
 | `oxc.enable`        | `true`        | `true` \| `false`                | Enables the language server to receive lint diagnostics                                      |
 | `oxc.requireConfig` | `false`       | `true` \| `false`                | Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces. |
 | `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                            |
-| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                  |
+| `oxc.path.server`   | -             | `<string>`                       | (deprecated) Path to Oxc language server binary. Use `oxc.path.oxlint` instead.              |
+| `oxc.path.oxlint`   | -             | `<string>`                       | Path to the Oxlint binary. Will be used instead of the bundled one.                          |
+| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to the Oxfmt binary. Will be used instead of the bundled one.                           |
 | `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.           |
 
 ### Workspace Configuration
