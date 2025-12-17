@@ -24,11 +24,11 @@ catalog:
   vitest: 4.0.15
 
 onlyBuiltDependencies:
-  - '@vscode/vsce-sign@2.0.8'
+  - "@vscode/vsce-sign@2.0.8"
   - esbuild@0.25.11
 
 patchedDependencies:
-  '@typescript-eslint/scope-manager': patches/@typescript-eslint__scope-manager.patch
+  "@typescript-eslint/scope-manager": patches/@typescript-eslint__scope-manager.patch
   prettier-plugin-tailwindcss@0.7.2: patches/prettier-plugin-tailwindcss@0.7.2.patch
 
 verifyDepsBeforeRun: install
