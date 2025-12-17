@@ -66,7 +66,7 @@ bitflags! {
         const JSDOC = 1 << 5;
         /// `eslint-plugin-jest`
         const JEST = 1 << 6;
-        /// `eslint-plugin-vitest`
+        /// `@vitest/eslint-plugin`
         const VITEST = 1 << 7;
         /// `eslint-plugin-jsx-a11y`
         const JSX_A11Y = 1 << 8;
@@ -345,6 +345,9 @@ mod tests {
         assert_eq!(LintPlugins::try_from("react"), Ok(LintPlugins::REACT));
         assert_eq!(LintPlugins::try_from("unicorn"), Ok(LintPlugins::UNICORN));
         assert_eq!(LintPlugins::try_from("@typescript-eslint"), Ok(LintPlugins::TYPESCRIPT));
+
+        assert_eq!(LintPlugins::try_from("vitest"), Ok(LintPlugins::VITEST));
+        assert_eq!(LintPlugins::try_from("eslint-plugin-vitest"), Ok(LintPlugins::VITEST));
     }
 
     #[test]
