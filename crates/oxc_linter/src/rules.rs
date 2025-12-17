@@ -40,8 +40,7 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
-        pub mod max_statements;
-pub mod accessor_pairs;
+    pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
@@ -67,6 +66,7 @@ pub mod accessor_pairs;
     pub mod max_lines_per_function;
     pub mod max_nested_callbacks;
     pub mod max_params;
+    pub mod max_statements;
     pub mod new_cap;
     pub mod no_alert;
     pub mod no_array_constructor;

@@ -99,8 +99,7 @@ declare_oxc_lint!(
     /// ```
     MaxStatements,
     eslint,
-    style,
-    pending,
+    pedantic,
     config = MaxStatementsConfig,
 );
 
@@ -133,16 +132,6 @@ impl Rule for MaxStatements {
         let config = config.unwrap();
 
         Self::new(config)
-    }
-
-    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
-        Some(serde_json::to_value((
-            match &self.max {
-                n if *n == 10 => MaxLineConfig::default(),
-                n => MaxLineConfig::Max(*n),
-            },
-            ConfigElement1 { ignore_top_level_functions: self.ignore_top_level_functions },
-        )))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
