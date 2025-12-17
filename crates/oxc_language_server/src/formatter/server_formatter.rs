@@ -5,8 +5,8 @@ use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, OxfmtOptions, Oxfmtrc, enable_jsx_source_type, get_parse_options,
-    get_supported_source_type,
+    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
+    oxfmtrc::{OxfmtOptions, Oxfmtrc},
 };
 use oxc_parser::Parser;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -32,14 +32,12 @@ impl ServerFormatterBuilder {
                 LSPFormatOptions::default()
             }
         };
-        if options.experimental {
-            debug!("experimental formatter enabled");
-        }
+
         let root_path = root_uri.to_file_path().unwrap();
         let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
         let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
 
-        let gitignore_glob = if options.experimental {
+        let gitignore_glob =
             match Self::create_ignore_globs(&root_path, &oxfmt_options.ignore_patterns) {
                 Ok(glob) => Some(glob),
                 Err(err) => {
@@ -48,12 +46,9 @@ impl ServerFormatterBuilder {
                     );
                     None
                 }
-            }
-        } else {
-            None
-        };
+            };
 
-        ServerFormatter::new(format_options, options.experimental, gitignore_glob)
+        ServerFormatter::new(format_options, gitignore_glob)
     }
 }
 
@@ -70,7 +65,7 @@ impl ToolBuilder for ServerFormatterBuilder {
 impl ServerFormatterBuilder {
     fn get_config(root_path: &Path, config_path: Option<&String>) -> Oxfmtrc {
         if let Some(config) = Self::search_config_file(root_path, config_path) {
-            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
+            if let Ok(oxfmtrc) = Self::from_file(&config) {
                 oxfmtrc
             } else {
                 warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
@@ -84,6 +79,26 @@ impl ServerFormatterBuilder {
             Oxfmtrc::default()
         }
     }
+
+    /// # Errors
+    /// Returns error if:
+    /// - file cannot be found or read
+    /// - file content is not valid JSONC
+    /// - deserialization fails for string enum values
+    fn from_file(path: &Path) -> Result<Oxfmtrc, String> {
+        let mut string = std::fs::read_to_string(path)
+            // Do not include OS error, it differs between platforms
+            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
+
+        // JSONC support - strip comments
+        json_strip_comments::strip(&mut string)
+            .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
+
+        // NOTE: String enum deserialization errors are handled here
+        serde_json::from_str(&string)
+            .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
+    }
+
     fn get_options(oxfmtrc: Oxfmtrc) -> (FormatOptions, OxfmtOptions) {
         match oxfmtrc.into_options() {
             Ok(opts) => opts,
@@ -135,7 +150,6 @@ impl ServerFormatterBuilder {
 }
 pub struct ServerFormatter {
     options: FormatOptions,
-    should_run: bool,
     gitignore_glob: Option<Gitignore>,
 }
 
@@ -186,10 +200,6 @@ impl Tool for ServerFormatter {
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        if !self.should_run {
-            return vec![];
-        }
-
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -213,10 +223,6 @@ impl Tool for ServerFormatter {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if !self.should_run {
-            return ToolRestartChanges { tool: None, watch_patterns: None };
-        }
-
         // TODO: Check if the changed file is actually a config file
 
         let new_formatter = ServerFormatterBuilder::build(root_uri, options);
@@ -230,9 +236,6 @@ impl Tool for ServerFormatter {
 
     fn run_format(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
         // Formatter is disabled
-        if !self.should_run {
-            return None;
-        }
 
         let path = uri.to_file_path()?;
 
@@ -292,12 +295,8 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    pub fn new(
-        options: FormatOptions,
-        should_run: bool,
-        gitignore_glob: Option<Gitignore>,
-    ) -> Self {
-        Self { options, should_run, gitignore_glob }
+    pub fn new(options: FormatOptions, gitignore_glob: Option<Gitignore>) -> Self {
+        Self { options, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -395,19 +394,6 @@ mod test_watchers {
         #[test]
         fn test_default_options() {
             let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
-            assert!(patterns.is_empty());
-        }
-
-        #[test]
-        fn test_formatter_experimental_enabled() {
-            let patterns = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.experimental": true
-                }),
-            )
-            .get_watcher_patterns();
-
             assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], ".oxfmtrc.json");
             assert_eq!(patterns[1], ".oxfmtrc.jsonc");
@@ -418,7 +404,6 @@ mod test_watchers {
             let patterns = Tester::new(
                 FAKE_DIR,
                 json!({
-                    "fmt.experimental": true,
                     "fmt.configPath": "configs/formatter.json"
                 }),
             )
@@ -444,61 +429,15 @@ mod test_watchers {
         }
 
         #[test]
-        fn test_no_changes_with_experimental() {
-            let options = json!({
-                "fmt.experimental": true
-            });
-            let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new(FAKE_DIR, options.clone()).handle_configuration_change(options);
-
-            assert!(watch_patterns.is_none());
-        }
-
-        #[test]
-        fn test_formatter_experimental_enabled() {
+        fn test_formatter_custom_config_path() {
             let ToolRestartChanges { watch_patterns, .. } = Tester::new(FAKE_DIR, json!({}))
                 .handle_configuration_change(json!({
-                    "fmt.experimental": true
+                    "fmt.configPath": "configs/formatter.json"
                 }));
-
-            assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
-            assert_eq!(watch_patterns.as_ref().unwrap()[0], ".oxfmtrc.json");
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".oxfmtrc.jsonc");
-        }
-
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let ToolRestartChanges { watch_patterns, .. } = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.experimental": true,
-                }),
-            )
-            .handle_configuration_change(json!({
-                "fmt.experimental": true,
-                "fmt.configPath": "configs/formatter.json"
-            }));
 
             assert!(watch_patterns.is_some());
             assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
-        }
-
-        #[test]
-        fn test_formatter_disabling() {
-            let ToolRestartChanges { watch_patterns, .. } = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.experimental": true
-                }),
-            )
-            .handle_configuration_change(json!({
-                "fmt.experimental": false
-            }));
-
-            assert!(watch_patterns.is_some());
-            assert!(watch_patterns.unwrap().is_empty());
         }
     }
 }

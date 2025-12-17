@@ -235,25 +235,25 @@ impl LintRunner {
     /// Returns an error if type-aware linting fails.
     pub fn run_source(
         &self,
-        file: &Arc<OsStr>,
+        files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Vec<Message> {
-        let mut messages = self.lint_service.run_source(file_system, vec![Arc::clone(file)]);
+        let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
-            let tsgo_messages =
-                match type_aware_linter.lint_source(file, file_system, self.directives_store.map())
-                {
-                    Ok(msgs) => msgs,
-                    Err(err) => {
-                        vec![Message::new(
-                            OxcDiagnostic::warn(format!(
-                                "Failed to run type-aware linting: `{err}`",
-                            )),
-                            PossibleFixes::None,
-                        )]
-                    }
-                };
+            let tsgo_messages = match type_aware_linter.lint_source(
+                files,
+                file_system,
+                self.directives_store.map(),
+            ) {
+                Ok(msgs) => msgs,
+                Err(err) => {
+                    vec![Message::new(
+                        OxcDiagnostic::warn(format!("Failed to run type-aware linting: `{err}`",)),
+                        PossibleFixes::None,
+                    )]
+                }
+            };
             messages.extend(tsgo_messages);
         }
 

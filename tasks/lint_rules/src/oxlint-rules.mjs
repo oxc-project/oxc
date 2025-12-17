@@ -576,6 +576,17 @@ export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) =>
       });
     }
   }
+
+  // Special case: vitest/no-restricted-vi-methods is implemented by jest/no-restricted-jest-methods
+  const vitestRestrictedViMethodsEntry = ruleEntries.get("vitest/no-restricted-vi-methods");
+  const jestRestrictedJestMethodsEntry = ruleEntries.get("jest/no-restricted-jest-methods");
+  if (vitestRestrictedViMethodsEntry && jestRestrictedJestMethodsEntry) {
+    ruleEntries.set("vitest/no-restricted-vi-methods", {
+      ...vitestRestrictedViMethodsEntry,
+      isImplemented: jestRestrictedJestMethodsEntry.isImplemented,
+      isPendingFix: jestRestrictedJestMethodsEntry.isPendingFix,
+    });
+  }
 };
 
 /**

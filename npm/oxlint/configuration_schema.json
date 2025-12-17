@@ -128,8 +128,14 @@
           "$ref": "#/definitions/OxlintSettings"
         }
       ]
+    },
+    "$schema": {
+      "type": "string",
+      "description": "Schema URI for editor tooling",
+      "markdownDescription": "Schema URI for editor tooling"
     }
   },
+  "additionalProperties": false,
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
@@ -505,7 +511,8 @@
             }
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "OxlintOverrides": {
       "type": "array",
@@ -646,7 +653,7 @@
       ]
     },
     "VitestPluginSettings": {
-      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
+      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
         "typecheck": {
@@ -656,7 +663,7 @@
           "markdownDescription": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios."
         }
       },
-      "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s\nconfiguration for a full reference."
+      "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference."
     }
   },
   "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```"

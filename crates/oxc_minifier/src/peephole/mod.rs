@@ -169,6 +169,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::remove_unused_function_declaration(stmt, ctx);
             }
             Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+            Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
             _ => {}
         }
         Self::try_fold_expression_stmt(stmt, ctx);
@@ -488,6 +489,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             }
             Statement::ExpressionStatement(_) => {
                 PeepholeOptimizations::try_fold_expression_stmt(stmt, ctx);
+            }
+            Statement::ImportDeclaration(_) => {
+                PeepholeOptimizations::remove_unused_import_specifiers(stmt, ctx);
             }
             _ => {}
         }

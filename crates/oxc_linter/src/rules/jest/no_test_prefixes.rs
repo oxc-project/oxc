@@ -12,8 +12,8 @@ use crate::{
     },
 };
 
-fn no_test_prefixes_diagnostic(x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use {x1:?} instead.")).with_label(span2)
+fn no_test_prefixes_diagnostic(preferred_node_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use `{preferred_node_name}` instead.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// xdescribe('foo'); // invalid
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-test-prefixes.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-test-prefixes.md),
     /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json

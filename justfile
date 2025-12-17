@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear -y
   # Node.js related init
   pnpm install
 
@@ -60,7 +60,6 @@ lint:
 fmt:
   -cargo shear --fix # remove all unused dependencies
   cargo fmt
-  dprint fmt
   node --run fmt
 
 [unix]
@@ -243,7 +242,7 @@ watch-playground:
 
 # Generate website documentation, intended for updating the oxc-project.github.io site.
 # Path should be the path to your clone of https://github.com/oxc-project/oxc-project.github.io
-# When testing changes to the website documentation, you may also want to run `dprint fmt --staged`
+# When testing changes to the website documentation, you may also want to run `pnpm run fmt`
 # in the website directory.
 website path:
   cargo run -p website_linter rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)

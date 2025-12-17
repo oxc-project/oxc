@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.18.0] - 2025-12-15
+
+### 🚀 Features
+
+- 5e3ceb8 oxfmt: Support `oxfmt --stdin-filepath` (#16868) (leaysgur)
+- d4c0bb7 oxfmt: Support `oxfmt --migrate prettier` (JS side) (#16773) (leaysgur)
+- 2b9c3fe oxfmt: Support `oxfmt --migrate [prettier]` (Rust side) (#16771) (leaysgur)
+- 47c8710 oxfmt: Arrange cli mode and update help (#16728) (leaysgur)
+- 559eff1 oxfmt: Support `oxfmt --init` (#16720) (leaysgur)
+- 28e0682 oxfmt: Enable experimental `package.json` sorting by default (#16593) (leaysgur)
+- feffe48 oxfmt: Trace which files are being formatted via `OXC_LOG=debug` (#16627) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bc2e0f8 oxfmt: Report `exitCode` correctly (#16770) (leaysgur)
+- d719988 oxfmt: Make Rust CLI as just formatting CLI (#16768) (leaysgur)
+- 2577814 oxfmt: Remove `jsonc` parser override for `(j|t)sconfig(.*)?.json` (#16762) (leaysgur)
+- 02f59ba oxfmt: Always respect ignored files even specified (#16632) (leaysgur)
+- 37c1a06 oxfmt: Exclude lock files to be formatted (#16629) (leaysgur)
+
+### ⚡ Performance
+
+- 10b4f9f oxfmt: Make time measurement conditional (#16634) (Boshen)
+- 6f3aaba oxfmt: Use `worker_threads` by `tinypool` for prettier formatting (#16618) (leaysgur)
+
 ## [0.17.0] - 2025-12-08
 
 ### 🚀 Features

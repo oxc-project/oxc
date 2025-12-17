@@ -6,7 +6,11 @@
   x globals-plugin(globals): {
   |   "React": "readonly",
   |   "console": "readonly",
+  |   "baz": "writable",
+  |   "foo": "writable",
   |   "process": "writable",
+  |   "bar": "readonly",
+  |   "qux": "readonly",
   |   "window": "off"
   | }
    ,-[files/index.js:1:1]
@@ -17,8 +21,12 @@
   x globals-plugin(globals): {
   |   "React": "writable",
   |   "console": "readonly",
-  |   "customGlobal": "readonly",
+  |   "baz": "writable",
+  |   "foo": "writable",
   |   "process": "off",
+  |   "bar": "readonly",
+  |   "qux": "readonly",
+  |   "customGlobal": "readonly",
   |   "window": "off"
   | }
    ,-[files/nested/index.js:1:1]

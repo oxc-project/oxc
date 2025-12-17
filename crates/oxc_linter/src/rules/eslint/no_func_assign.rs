@@ -17,7 +17,10 @@ pub struct NoFuncAssign;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow reassigning `function` declarations
+    /// Disallow reassigning `function` declarations.
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///

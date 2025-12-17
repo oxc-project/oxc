@@ -643,6 +643,10 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
+        // Don't remove classes with decorators - they may have side effects
+        if !c.decorators.is_empty() {
+            return None;
+        }
         // Keep the entire class if there are class level side effects.
         for e in &c.body.body {
             match e {
@@ -1149,6 +1153,7 @@ mod test {
 
         // decorators
         test_same_options("(class { @dec foo() {} })", &options);
+        test_same_options("(@dec class {})", &options);
 
         // TypeError
         test_same_options("(class extends (() => {}) {})", &options);

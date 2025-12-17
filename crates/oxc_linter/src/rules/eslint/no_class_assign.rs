@@ -21,6 +21,9 @@ declare_oxc_lint!(
     ///
     /// Disallow reassigning class variables.
     ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
+    ///
     /// ### Why is this bad?
     ///
     /// `ClassDeclaration` creates a variable that can be re-assigned, but the re-assignment is a

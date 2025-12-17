@@ -11,8 +11,8 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_import_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("do not assign to imported bindings")
-        .with_help("imported bindings are readonly")
+    OxcDiagnostic::warn("Do not assign to imported bindings")
+        .with_help("Imported bindings are readonly")
         .with_label(span)
 }
 
@@ -22,11 +22,16 @@ pub struct NoImportAssign;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assigning to imported bindings
+    /// Disallow assigning to imported bindings.
     ///
     /// ### Why is this bad?
     ///
     /// The updates of imported bindings by ES Modules cause runtime errors.
+    ///
+    /// The TypeScript compiler generally enforces this check already. Although
+    /// it should be noted that there are some cases TypeScript does not catch, such
+    /// as assignments via `Object.assign`. So this rule is still useful for
+    /// TypeScript code in those cases.
     ///
     /// ### Examples
     ///

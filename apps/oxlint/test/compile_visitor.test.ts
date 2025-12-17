@@ -9,7 +9,8 @@ import {
   initCompiledVisitor,
 } from "../src-js/plugins/visitor.ts";
 
-import type { EnterExit, Node, VisitFn } from "../src-js/plugins/types.ts";
+import type { Node } from "../src-js/plugins/types.ts";
+import type { EnterExit, VisitFn } from "../src-js/plugins/visitor.ts";
 
 const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get("Program")!,
   EMPTY_STMT_TYPE_ID = NODE_TYPE_IDS_MAP.get("EmptyStatement")!,

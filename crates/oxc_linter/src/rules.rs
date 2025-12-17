@@ -40,9 +40,11 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
+    pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod capitalized_comments;
     pub mod class_methods_use_this;
     pub mod constructor_super;
     pub mod curly;
@@ -108,6 +110,7 @@ pub(crate) mod eslint {
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
     pub mod no_import_assign;
+    pub mod no_inline_comments;
     pub mod no_inner_declarations;
     pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
@@ -116,6 +119,7 @@ pub(crate) mod eslint {
     pub mod no_labels;
     pub mod no_lone_blocks;
     pub mod no_lonely_if;
+    pub mod no_loop_func;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_misleading_character_class;
@@ -143,6 +147,7 @@ pub(crate) mod eslint {
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
+    pub mod no_sequences;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
@@ -273,6 +278,7 @@ pub(crate) mod typescript {
     pub mod prefer_includes;
     pub mod prefer_literal_enum_member;
     pub mod prefer_namespace_keyword;
+    pub mod prefer_nullish_coalescing;
     pub mod prefer_promise_reject_errors;
     pub mod prefer_reduce_type_parameter;
     pub mod prefer_return_this_type;
@@ -334,6 +340,8 @@ pub(crate) mod jest {
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
     pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called;
+    pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_hook;
@@ -679,9 +687,11 @@ pub(crate) mod vue {
 }
 
 oxc_macros::declare_all_lint_rules! {
+    eslint::accessor_pairs,
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
+    eslint::capitalized_comments,
     eslint::class_methods_use_this,
     eslint::constructor_super,
     eslint::curly,
@@ -705,6 +715,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_implicit_coercion,
+    eslint::no_inline_comments,
+    eslint::no_loop_func,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
@@ -787,6 +799,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
+    eslint::no_sequences,
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
@@ -910,6 +923,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_strict_equal,
     jest::prefer_to_be,
     jest::prefer_to_contain,
+    jest::prefer_to_have_been_called,
+    jest::prefer_to_have_been_called_times,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_hook,
@@ -1151,6 +1166,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_includes,
     typescript::prefer_literal_enum_member,
     typescript::prefer_namespace_keyword,
+    typescript::prefer_nullish_coalescing,
     typescript::prefer_promise_reject_errors,
     typescript::prefer_reduce_type_parameter,
     typescript::prefer_return_this_type,

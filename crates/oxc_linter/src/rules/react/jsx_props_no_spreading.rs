@@ -46,7 +46,7 @@ pub struct JsxPropsNoSpreadingConfig {
     exceptions: Vec<CompactStr>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxPropsNoSpreading(Box<JsxPropsNoSpreadingConfig>);
 
 impl std::ops::Deref for JsxPropsNoSpreading {
@@ -91,11 +91,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxPropsNoSpreading {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<JsxPropsNoSpreadingConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<JsxPropsNoSpreading>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

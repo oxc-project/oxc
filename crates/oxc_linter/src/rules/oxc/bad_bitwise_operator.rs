@@ -4,10 +4,10 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn bad_bitwise_operator_diagnostic(
     bad_operator: &str,
@@ -23,7 +23,7 @@ fn bad_bitwise_operator_diagnostic(
 
 fn bad_bitwise_or_operator_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad bitwise operator")
-        .with_help("Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.")
+        .with_help("Bitwise operator '|=' seems unintended. Did you mean logical operator '||='?")
         .with_label(span)
 }
 
@@ -68,9 +68,8 @@ declare_oxc_lint!(
     /// ```
     BadBitwiseOperator,
     oxc,
-    restriction, // Restricted because there are false positives for enum bitflags in TypeScript,
-                // e.g. in the vscode repo
-    pending
+    restriction, // Restricted because there are false positives for enum bitflags in TypeScript, e.g. in the vscode repo
+    suggestion
 );
 
 impl Rule for BadBitwiseOperator {
@@ -78,20 +77,63 @@ impl Rule for BadBitwiseOperator {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {
-                    ctx.diagnostic(bad_bitwise_operator_diagnostic("&", "&&", bin_expr.span));
+                    let start = bin_expr.left.span().end;
+                    ctx.diagnostic_with_suggestion(
+                        bad_bitwise_operator_diagnostic("&", "&&", bin_expr.span),
+                        |fixer| Self::fix_binary_operator(fixer, start, "&", "&&", ctx),
+                    );
                 } else if is_mistype_option_fallback(node) {
-                    ctx.diagnostic(bad_bitwise_operator_diagnostic("|", "||", bin_expr.span));
+                    let start = bin_expr.left.span().end;
+                    ctx.diagnostic_with_suggestion(
+                        bad_bitwise_operator_diagnostic("|", "||", bin_expr.span),
+                        |fixer| Self::fix_binary_operator(fixer, start, "|", "||", ctx),
+                    );
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::BitwiseOR
                     && !is_numeric_expr(&assign_expr.right, true)
                 {
-                    ctx.diagnostic(bad_bitwise_or_operator_diagnostic(assign_expr.span));
+                    let start = assign_expr.left.span().end;
+                    ctx.diagnostic_with_suggestion(
+                        bad_bitwise_or_operator_diagnostic(assign_expr.span),
+                        |fixer| Self::fix_assignment_operator(fixer, start, ctx),
+                    );
                 }
             }
             _ => {}
         }
+    }
+}
+
+impl BadBitwiseOperator {
+    #[expect(clippy::cast_possible_truncation)]
+    fn fix_binary_operator(
+        fixer: RuleFixer<'_, '_>,
+        start: u32,
+        bad: &str,
+        good: &'static str,
+        ctx: &LintContext<'_>,
+    ) -> crate::fixer::RuleFix {
+        let Some(offset) = ctx.find_next_token_from(start, bad) else {
+            return fixer.noop();
+        };
+        let op_start = start + offset;
+        let op_span = Span::new(op_start, op_start + bad.len() as u32);
+        fixer.replace(op_span, good)
+    }
+
+    fn fix_assignment_operator(
+        fixer: RuleFixer<'_, '_>,
+        start: u32,
+        ctx: &LintContext<'_>,
+    ) -> crate::fixer::RuleFix {
+        let Some(offset) = ctx.find_next_token_from(start, "|=") else {
+            return fixer.noop();
+        };
+        let op_start = start + offset;
+        let op_span = Span::new(op_start, op_start + 2);
+        fixer.replace(op_span, "||=")
     }
 }
 
@@ -243,6 +285,82 @@ fn test() {
         // ("var a = '1'; var b = a | {}", None),
     ];
 
+    let fix = vec![
+        ("var a = obj & obj.a", "var a = obj && obj.a", None),
+        ("var a = options | {}", "var a = options || {}", None),
+        ("var a = options | !{}", "var a = options || !{}", None),
+        ("var a = options | typeof {}", "var a = options || typeof {}", None),
+        ("var a = options | ''", "var a = options || ''", None),
+        ("var a = options | true", "var a = options || true", None),
+        ("var a = options | false", "var a = options || false", None),
+        ("var a = options | (1 + 2 + typeof {})", "var a = options || (1 + 2 + typeof {})", None),
+        ("var a = options | (1 + 2 + (3 + ''))", "var a = options || (1 + 2 + (3 + ''))", None),
+        ("var a = options | (1 + 2 + (3 + '4'))", "var a = options || (1 + 2 + (3 + '4'))", None),
+        ("input |= ''", "input ||= ''", None),
+        ("input |= (1 + '')", "input ||= (1 + '')", None),
+        ("input |= (1 + (3 + '1'))", "input ||= (1 + (3 + '1'))", None),
+        ("input |= !{}", "input ||= !{}", None),
+        ("input |= typeof {}", "input ||= typeof {}", None),
+        ("var a = obj /* comment */ & obj.a", "var a = obj /* comment */ && obj.a", None),
+        ("var a = obj &/* comment */ obj.a", "var a = obj &&/* comment */ obj.a", None),
+        ("var a = obj & /* comment */ obj.a", "var a = obj && /* comment */ obj.a", None),
+        ("var a = obj/* comment */& obj.a", "var a = obj/* comment */&& obj.a", None),
+        (
+            "var a = obj /* before */ & /* after */ obj.a",
+            "var a = obj /* before */ && /* after */ obj.a",
+            None,
+        ),
+        ("var a = options /* comment */ | {}", "var a = options /* comment */ || {}", None),
+        ("var a = options |/* comment */ {}", "var a = options ||/* comment */ {}", None),
+        ("var a = options | /* comment */ {}", "var a = options || /* comment */ {}", None),
+        (
+            "var a = options /* before */ | /* after */ {}",
+            "var a = options /* before */ || /* after */ {}",
+            None,
+        ),
+        ("var a = obj\n  & obj.a", "var a = obj\n  && obj.a", None),
+        ("var a = obj &\n  obj.a", "var a = obj &&\n  obj.a", None),
+        ("var a = obj /* comment */\n  & obj.a", "var a = obj /* comment */\n  && obj.a", None),
+        ("var a = options\n  | {}", "var a = options\n  || {}", None),
+        ("input /* comment */ |= ''", "input /* comment */ ||= ''", None),
+        ("input |=/* comment */ ''", "input ||=/* comment */ ''", None),
+        ("input |= /* comment */ ''", "input ||= /* comment */ ''", None),
+        ("input /* before */ |= /* after */ ''", "input /* before */ ||= /* after */ ''", None),
+        ("input\n  |= ''", "input\n  ||= ''", None),
+        ("input |=\n  ''", "input ||=\n  ''", None),
+        ("input /* comment */\n  |= ''", "input /* comment */\n  ||= ''", None),
+        (
+            "var a = obj /* a */ /* b */ & /* c */ /* d */ obj.a",
+            "var a = obj /* a */ /* b */ && /* c */ /* d */ obj.a",
+            None,
+        ),
+        ("var a = obj // comment\n  & obj.a", "var a = obj // comment\n  && obj.a", None),
+        ("var a = options // comment\n  | {}", "var a = options // comment\n  || {}", None),
+        (
+            "var a = obj /* use & for bitwise */ & obj.a",
+            "var a = obj /* use & for bitwise */ && obj.a",
+            None,
+        ),
+        (
+            "var a = options /* | is bitwise */ | {}",
+            "var a = options /* | is bitwise */ || {}",
+            None,
+        ),
+        ("input /* |= assigns */ |= ''", "input /* |= assigns */ ||= ''", None),
+        (
+            "var a = obj & /* use & for bitwise */ obj.a",
+            "var a = obj && /* use & for bitwise */ obj.a",
+            None,
+        ),
+        (
+            "var a = options | /* | is bitwise */ {}",
+            "var a = options || /* | is bitwise */ {}",
+            None,
+        ),
+        ("input |= /* |= assigns */ ''", "input ||= /* |= assigns */ ''", None),
+    ];
+
     Tester::new(BadBitwiseOperator::NAME, BadBitwiseOperator::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
-   ╭─[define_props_destructuring.tsx:3:24]
+   ╭─[define_props_destructuring.tsx:3:33]
  2 │                   <script setup>
  3 │                   const props = defineProps(['foo'])
    ·                                 ────────────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
-   ╭─[define_props_destructuring.tsx:3:37]
+   ╭─[define_props_destructuring.tsx:3:46]
  2 │                   <script setup>
  3 │                   const props = withDefaults(defineProps(['foo']), { foo: 'default' })
    ·                                              ────────────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
-   ╭─[define_props_destructuring.tsx:3:26]
+   ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup>
  3 │                   const { foo } = withDefaults(defineProps(['foo']), { foo: 'default' })
    ·                                   ────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
-   ╭─[define_props_destructuring.tsx:3:37]
+   ╭─[define_props_destructuring.tsx:3:46]
  2 │                   <script setup lang="ts">
  3 │                   const props = withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
    ·                                              ───────────────────────────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
-   ╭─[define_props_destructuring.tsx:3:26]
+   ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup lang="ts">
  3 │                   const { foo } = withDefaults(defineProps<{ foo?: string }>(), { foo: 'default' })
    ·                                   ────────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
-   ╭─[define_props_destructuring.tsx:3:26]
+   ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup>
  3 │                   const { foo } = defineProps(['foo'])
    ·                                   ────────────────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
-   ╭─[define_props_destructuring.tsx:3:39]
+   ╭─[define_props_destructuring.tsx:3:48]
  2 │                   <script setup>
  3 │                   const { foo } = withDefaults(defineProps(['foo']), { foo: 'default' })
    ·                                                ────────────────────
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
-   ╭─[define_props_destructuring.tsx:3:26]
+   ╭─[define_props_destructuring.tsx:3:35]
  2 │                   <script setup lang="ts">
  3 │                   const { foo } = defineProps<{ foo?: string }>()
    ·                                   ───────────────────────────────

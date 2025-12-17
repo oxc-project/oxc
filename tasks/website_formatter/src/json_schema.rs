@@ -1,4 +1,4 @@
-use oxc_formatter::Oxfmtrc;
+use oxc_formatter::oxfmtrc::Oxfmtrc;
 use schemars::schema_for;
 use website_common::Renderer;
 

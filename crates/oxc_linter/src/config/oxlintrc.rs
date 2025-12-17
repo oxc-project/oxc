@@ -60,7 +60,7 @@ use super::{
 ///  }
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Oxlintrc {
     /// Enabled built-in plugins for Oxlint.
@@ -214,8 +214,26 @@ impl Oxlintrc {
             .extensions
             .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
 
-        // Inject markdownDescription fields for better editor support (e.g., VS Code)
         let mut json = serde_json::to_value(&schema).unwrap();
+
+        // inject "$schema" at the root for editor support without changing the struct
+        if let serde_json::Value::Object(map) = &mut json {
+            let props = map
+                .entry("properties")
+                .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+            if let serde_json::Value::Object(props) = props {
+                props.insert(
+                    "$schema".to_string(),
+                    serde_json::json!({
+                        "type": "string",
+                        "description": "Schema URI for editor tooling",
+                        "markdownDescription": "Schema URI for editor tooling"
+                    }),
+                );
+            }
+        }
+
+        // Inject markdown descriptions for better editor support
         Self::inject_markdown_descriptions(&mut json);
 
         serde_json::to_string_pretty(&json).unwrap()
@@ -252,11 +270,18 @@ impl Oxlintrc {
         }
     }
 
-    /// Merges two [Oxlintrc] files together
-    /// [Self] takes priority over `other`
+    /// Merges two [Oxlintrc] files together.
+    ///
+    /// [Self] takes priority over `other` - if both configs define the same property,
+    /// the value from [Self] wins.
+    ///
+    /// For example, if `self` has `{ "rules": { "no-console": "error" } }` and `other` has
+    /// `{ "rules": { "no-console": "warn", "no-debugger": "error" } }`, the result will be
+    /// `{ "rules": { "no-console": "error", "no-debugger": "error" } }` (self's `"no-console"`
+    /// setting wins).
     #[must_use]
-    pub fn merge(&self, other: &Oxlintrc) -> Oxlintrc {
-        let mut categories = other.categories.clone();
+    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+        let mut categories = other.categories;
         categories.extend(self.categories.iter());
 
         let rules = self
@@ -279,7 +304,7 @@ impl Oxlintrc {
         let env = self.env.clone();
         let globals = self.globals.clone();
 
-        let mut overrides = other.overrides.clone();
+        let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
 
         let plugins = match (self.plugins, other.plugins) {
