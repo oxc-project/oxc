@@ -1580,6 +1580,12 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
+    /// This function checks if the first ancestor in the hierarchy of the given context exists
+    /// and satisfies the condition of being a parent of a statement
+    fn is_descendant_of_block(ctx: &Ctx<'a, '_>) -> bool {
+        ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_statement)
+    }
+
     /// Optimizes the usage of Immediately Invoked Function Expressions (IIFEs)
     /// within the given expression and context by performing various substitutions
     /// to clean up and simplify the code.
@@ -1595,17 +1601,18 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let is_descendant_of_block =
-            ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_statement);
-
         let is_empty_iife = match &call_expr.callee {
             Expression::FunctionExpression(f) => {
                 f.params.is_empty()
                     && f.body.as_ref().is_some_and(|body| body.is_empty())
-                    && (!f.r#async && !f.generator || is_descendant_of_block)
+                    // ignore async/generator if value is not used
+                    && ((!f.r#async && !f.generator) || Self::is_descendant_of_block(ctx))
             }
             Expression::ArrowFunctionExpression(f) => {
-                f.params.is_empty() && f.body.is_empty() && (!f.r#async || is_descendant_of_block)
+                f.params.is_empty()
+                    && f.body.is_empty()
+                    // ignore async if value is not used
+                    && (!f.r#async || Self::is_descendant_of_block(ctx))
             }
             _ => false,
         };
@@ -1629,7 +1636,7 @@ impl<'a> PeepholeOptimizations {
             if f.expression {
                 // Replace "(() => foo())()" with "foo()"
                 let expr = f.get_expression_mut().unwrap();
-                if is_pure && is_descendant_of_block {
+                if is_pure && Self::is_descendant_of_block(ctx) {
                     *e = ctx.ast.void_0(call_expr.span);
                 } else {
                     *e = expr.take_in(ctx.ast);
@@ -1640,7 +1647,7 @@ impl<'a> PeepholeOptimizations {
             match &mut f.body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
-                    if is_pure && is_descendant_of_block {
+                    if is_pure && Self::is_descendant_of_block(ctx) {
                         *e = ctx.ast.void_0(call_expr.span);
                     } else {
                         *e = ctx.ast.expression_sequence(expr_stmt.span, {
@@ -1656,7 +1663,7 @@ impl<'a> PeepholeOptimizations {
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
-                        if is_pure && is_descendant_of_block {
+                        if is_pure && Self::is_descendant_of_block(ctx) {
                             *e = ctx.ast.void_0(call_expr.span);
                         } else {
                             *e = argument.take_in(ctx.ast);
