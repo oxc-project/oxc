@@ -31,7 +31,7 @@ import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
-import { EMPTY_GLOBALS, Globals, globals, initGlobals } from "./globals.ts";
+import { Globals, globals, initGlobals } from "./globals.ts";
 
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
@@ -182,12 +182,13 @@ const LANGUAGE_OPTIONS = {
   /**
    * Globals defined for the file being linted.
    */
-  get globals(): Readonly<Globals> | null {
+  get globals(): Readonly<Globals> {
+    // ESLint does not define `globals` property on `LanguageOptions` if no globals are defined.
+    // We have no way to distinguish between "no globals defined" and "globals defined as empty object",
+    // so we behave slightly differently from ESLint here, but it should make no practical difference.
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
-
-    // ESLint has `globals` as `null`, not empty object, if no globals are defined
-    return globals === EMPTY_GLOBALS ? null : globals;
+    return globals;
   },
 };
 

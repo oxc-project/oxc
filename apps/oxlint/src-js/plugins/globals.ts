@@ -13,8 +13,8 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 export type Globals = Record<string, "readonly" | "writable" | "off">;
 
 // Empty globals object.
-// No need to freeze this object, as it's never passed to user.
-export const EMPTY_GLOBALS: Globals = {};
+// When globals are empty, we use this singleton object to avoid allocating a new object each time.
+const EMPTY_GLOBALS: Globals = Object.freeze({});
 
 // Globals for current file.
 // `globalsJSON` is set before linting a file by `setGlobalsForFile`.
@@ -43,9 +43,7 @@ export function initGlobals(): void {
   debugAssertIsNonNull(globalsJSON);
 
   if (globalsJSON === "{}") {
-    // `EMPTY_GLOBALS` is a placeholder meaning "no globals defined".
-    // `globals` getter on `LanguageOptions` returns `null` if `globals === EMPTY_GLOBALS`.
-    // No need to freeze `EMPTY_GLOBALS`, since it's never passed to user.
+    // Re-use a single object for empty globals as an optimization
     globals = EMPTY_GLOBALS;
   } else {
     globals = JSON.parse(globalsJSON);
