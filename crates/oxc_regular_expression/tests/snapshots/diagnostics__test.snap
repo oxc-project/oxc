@@ -1,0 +1,260 @@
+---
+source: crates/oxc_regular_expression/tests/diagnostics.rs
+expression: snapshot
+---
+# unknown_flag
+
+  × Invalid regular expression: Unknown flag: `z` found
+   ╭─[/a/z:1:4]
+ 1 │ /a/z
+   ·    ─
+   ╰────
+
+# duplicated_flags
+
+  × Invalid regular expression: Duplicated flag: `g` found
+   ╭─[/a/gg:1:5]
+ 1 │ /a/gg
+   ·     ─
+   ╰────
+
+# invalid_unicode_flags
+
+  × Invalid regular expression: Invalid unicode flags combination `u` and `v`
+   ╭─[/a/uv:1:5]
+ 1 │ /a/uv
+   ·     ─
+   ╰────
+
+# duplicated_capturing_group_names
+
+  × Invalid regular expression: Duplicated capturing group names
+   ╭─[/(?<n>.)(?<n>.)/:1:5]
+ 1 │ /(?<n>.)(?<n>.)/
+   ·     ─      ─
+   ╰────
+
+# empty_group_specifier
+
+  × Invalid regular expression: Unterminated capturing group name
+   ╭─[/(?<>a)/:1:4]
+ 1 │ /(?<>a)/
+   ·    ─
+   ╰────
+
+# lone_quantifier
+
+  × Invalid regular expression: Lone quantifier found, expected with `Atom`
+   ╭─[/+/u:1:2]
+ 1 │ /+/u
+   ·  ─
+   ╰────
+
+# invalid_braced_quantifier
+
+  × Invalid regular expression: Invalid braced quantifier
+   ╭─[/a|+/:1:4]
+ 1 │ /a|+/
+   ·    ─
+   ╰────
+
+# invalid_braced_quantifier_unicode
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/a{/u:1:3]
+ 1 │ /a{/u
+   ·   ▲
+   ╰────
+
+# too_large_number_in_braced_quantifier
+
+  × Invalid regular expression: Number is too large in decimal digits
+   ╭─[/x{99999999999999999999999999999999999999999999999999}/:1:4]
+ 1 │ /x{99999999999999999999999999999999999999999999999999}/
+   ·    ───────────────────
+   ╰────
+
+# braced_quantifier_out_of_order
+
+  × Invalid regular expression: Numbers out of order in braced quantifier
+   ╭─[/a{2,1}/:1:3]
+ 1 │ /a{2,1}/
+   ·   ─────
+   ╰────
+
+# unterminated_group
+
+  × Invalid regular expression: Unterminated capturing group
+   ╭─[/(/:1:2]
+ 1 │ /(/
+   ·  ─
+   ╰────
+
+# unterminated_character_class
+
+  × Invalid regular expression: Unterminated character class
+   ╭─[/[/:1:2]
+ 1 │ /[/
+   ·  ─
+   ╰────
+
+# invalid_indexed_reference
+
+  × Invalid regular expression: Invalid indexed reference
+   ╭─[/\1/u:1:2]
+ 1 │ /\1/u
+   ·  ──
+   ╰────
+
+# invalid_named_reference
+
+  × Invalid regular expression: Group specifier is empty
+   ╭─[/\k<a>/u:1:2]
+ 1 │ /\k<a>/u
+   ·  ─────
+   ╰────
+
+# invalid_unicode_property_name_negative_strings
+
+  × Invalid regular expression: Invalid property name `Basic_Emoji`(negative + property of strings)
+   ╭─[/\P{Basic_Emoji}/v:1:2]
+ 1 │ /\P{Basic_Emoji}/v
+   ·  ───────────────
+   ╰────
+
+# invalid_unicode_property_of_strings
+
+  × Invalid regular expression: Invalid unicode property `Basic_Emoji`
+   ╭─[/\p{Basic_Emoji}/u:1:5]
+ 1 │ /\p{Basic_Emoji}/u
+   ·     ───────────
+   ╰────
+  help: Enable `UnicodeSetsMode` to use this property
+
+# invalid_unicode_property
+
+  × Invalid regular expression: Invalid unicode property name and/or value
+   ╭─[/\p{Foo}/u:1:5]
+ 1 │ /\p{Foo}/u
+   ·     ───
+   ╰────
+
+# character_class_range_out_of_order
+
+  × Invalid regular expression: Character class atom range out of order
+   ╭─[/[z-a]/:1:4]
+ 1 │ /[z-a]/
+   ·    ──
+   ╰────
+
+# character_class_range_invalid_atom
+
+  × Invalid regular expression: Character class range with invalid atom
+   ╭─[/[\d-z]/u:1:3]
+ 1 │ /[\d-z]/u
+   ·   ────
+   ╰────
+
+# invalid_class_atom
+
+  × Invalid regular expression: Character class range with invalid atom
+   ╭─[/[a-\d]/u:1:3]
+ 1 │ /[a-\d]/u
+   ·   ────
+   ╰────
+
+# empty_class_set_expression
+
+  × Invalid regular expression: Expected nonempty class set expression
+   ╭─[/[&&]/v:1:3]
+ 1 │ /[&&]/v
+   ·   ▲
+   ╰────
+
+# class_intersection_unexpected_ampersand
+
+  × Invalid regular expression: Unexpected `&` inside of class intersection
+   ╭─[/[a&&&b]/v:1:6]
+ 1 │ /[a&&&b]/v
+   ·      ─
+   ╰────
+
+# class_set_expression_invalid_character
+
+  × Invalid regular expression: Unexpected character inside of class intersection
+   ╭─[/[a&&]/v:1:6]
+ 1 │ /[a&&]/v
+   ·      ▲
+   ╰────
+
+# class_set_expression_invalid_character
+
+  × Invalid regular expression: Unexpected character inside of class intersection
+   ╭─[/[a&&b(]/v:1:7]
+ 1 │ /[a&&b(]/v
+   ·       ▲
+   ╰────
+
+# character_class_contents_invalid_operands
+
+  × Invalid regular expression: Invalid class operands inside of character class contents
+   ╭─[/[[^\q{ng}]]/v:1:3]
+ 1 │ /[[^\q{ng}]]/v
+   ·   ─────────
+   ╰────
+
+# too_large_number_digits
+
+  × Invalid regular expression: Number is too large in hex digits
+   ╭─[/\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}/u:1:5]
+ 1 │ /\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}/u
+   ·     ────────
+   ╰────
+
+# invalid_unicode_escape_sequence
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[/\ua/u:1:3]
+ 1 │ /\ua/u
+   ·   ─
+   ╰────
+
+# invalid_surrogate_pair
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[/\u{110000}/u:1:3]
+ 1 │ /\u{110000}/u
+   ·   ─
+   ╰────
+
+# invalid_extended_atom_escape
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/\c0/u:1:3]
+ 1 │ /\c0/u
+   ·   ▲
+   ╰────
+
+# invalid_modifiers
+
+  × Invalid regular expression: Invalid modifiers
+   ╭─[/(?ii:.)/:1:4]
+ 1 │ /(?ii:.)/
+   ·    ──
+   ╰────
+
+# unknown_modifiers
+
+  × Invalid regular expression: Unknown modifiers
+   ╭─[/(?a:.)/:1:4]
+ 1 │ /(?a:.)/
+   ·    ▲
+   ╰────
+
+# parse_pattern_incomplete
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/)/v:1:2]
+ 1 │ /)/v
+   ·  ▲
+   ╰────

@@ -2264,6 +2264,7 @@ name = "oxc_regular_expression"
 version = "0.103.0"
 dependencies = [
  "bitflags",
+ "insta",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
