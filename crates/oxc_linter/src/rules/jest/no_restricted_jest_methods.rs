@@ -24,13 +24,8 @@ fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnost
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoRestrictedJestMethodsConfig {
-    /// A mapping of restricted Jest method names to custom messages - or
-    /// `null`, for a generic message.
-    #[serde(flatten)]
-    restricted_jest_methods: FxHashMap<String, Option<String>>,
-}
+#[serde(transparent)]
+pub struct NoRestrictedJestMethodsConfig(FxHashMap<String, Option<String>>);
 
 impl JsonSchema for NoRestrictedJestMethodsConfig {
     fn schema_name() -> String {
@@ -62,6 +57,14 @@ impl JsonSchema for NoRestrictedJestMethodsConfig {
 
 impl std::ops::Deref for NoRestrictedJestMethods {
     type Target = NoRestrictedJestMethodsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::Deref for NoRestrictedJestMethodsConfig {
+    type Target = FxHashMap<String, Option<String>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -139,7 +142,7 @@ impl Rule for NoRestrictedJestMethods {
 
 impl NoRestrictedJestMethods {
     fn contains(&self, key: &str) -> bool {
-        self.restricted_jest_methods.contains_key(key)
+        self.contains_key(key)
     }
 
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
@@ -171,7 +174,7 @@ impl NoRestrictedJestMethods {
         };
 
         if self.contains(property_name) {
-            match self.restricted_jest_methods.get(property_name).and_then(|m| m.as_deref()) {
+            match self.get(property_name).and_then(|m| m.as_deref()) {
                 None | Some("") => {
                     ctx.diagnostic(restricted_jest_method(property_name, span));
                 }

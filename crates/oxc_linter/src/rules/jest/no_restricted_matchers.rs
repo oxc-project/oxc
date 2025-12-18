@@ -31,14 +31,8 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoRestrictedMatchersConfig {
-    /// A map of restricted matchers/modifiers to custom messages.
-    /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
-    /// The value is an optional custom message to display when the matcher/modifier is used.
-    #[serde(flatten)]
-    restricted_matchers: FxHashMap<String, Option<String>>,
-}
+#[serde(transparent)]
+pub struct NoRestrictedMatchersConfig(FxHashMap<String, Option<String>>);
 
 impl JsonSchema for NoRestrictedMatchersConfig {
     fn schema_name() -> String {
@@ -71,6 +65,14 @@ impl JsonSchema for NoRestrictedMatchersConfig {
 
 impl std::ops::Deref for NoRestrictedMatchers {
     type Target = NoRestrictedMatchersConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::Deref for NoRestrictedMatchersConfig {
+    type Target = FxHashMap<String, Option<String>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -203,7 +205,7 @@ impl NoRestrictedMatchers {
 
         let span = Span::new(members.first().unwrap().span.start, members.last().unwrap().span.end);
 
-        for (restriction, message) in &self.restricted_matchers {
+        for (restriction, message) in self.iter() {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
                 match message.as_deref() {
                     None | Some("") => {
