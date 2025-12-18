@@ -13756,7 +13756,7 @@ function constructBoxTSExternalModuleReference(pos, ast) {
 function constructU64(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
+  return uint32[pos32] + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
 }
 
 function constructOptionNameSpan(pos, ast) {

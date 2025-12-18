@@ -808,10 +808,21 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "u8" => "return uint8[pos];",
         // "u16" => "return uint16[pos >> 1];",
         "u32" => "return uint32[pos >> 2];",
+        // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
             const pos32 = pos >> 2;
-            return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
+            return uint32[pos32]
+                + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
+        ",
+        // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
+        #[rustfmt::skip]
+        "u128" => "
+            const pos32 = pos >> 2;
+            return uint32[pos32]
+                + uint32[pos32 + 1] * /* 2^32 */ 4294967296
+                + uint32[pos32 + 2] * /* 2^64 */ 18446744073709551616
+                + uint32[pos32 + 3] * /* 2^96 */ 79228162514264337593543950336;
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
