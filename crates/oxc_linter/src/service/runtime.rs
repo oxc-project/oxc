@@ -45,6 +45,7 @@ pub struct Runtime {
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
 
+    /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
 
     /// Separate pool of fixed-size allocators for copying AST before JS transfer.

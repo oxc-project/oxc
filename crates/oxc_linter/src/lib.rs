@@ -518,6 +518,9 @@ impl Linter {
             &js_allocator,
             program,
         );
+
+        // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
+        // This ensures that we never have too many allocators in play at once, avoiding OOM.
     }
 
     /// Convert spans to UTF-16, write metadata, call external linter, and process diagnostics.
