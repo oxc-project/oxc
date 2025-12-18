@@ -4,6 +4,7 @@ use std::{
     fmt::{self, Display},
     ops::Deref,
     path::Path,
+    str::FromStr,
 };
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
@@ -105,31 +106,69 @@ pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", 
 
 /// Valid file extension.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum FileExtension {
+pub enum FileExtension {
+    /// `.js` file extension
     Js,
+    /// `.mjs` file extension
     Mjs,
+    /// `.cjs` file extension
     Cjs,
+    /// `.jsx` file extension
     Jsx,
+    /// `.ts` file extension
     Ts,
+    /// `.mts` file extension
     Mts,
+    /// `.cts` file extension
     Cts,
+    /// `.tsx` file extension
     Tsx,
 }
 
 impl FileExtension {
-    fn from_str(extension: &str) -> Option<Self> {
-        let file_ext = match extension {
-            "js" => Self::Js,
-            "mjs" => Self::Mjs,
-            "cjs" => Self::Cjs,
-            "jsx" => Self::Jsx,
-            "ts" => Self::Ts,
-            "mts" => Self::Mts,
-            "cts" => Self::Cts,
-            "tsx" => Self::Tsx,
-            _ => return None,
-        };
-        Some(file_ext)
+    /// Checks if this file extension represents a TypeScript declaration file
+    /// given its full file name.
+    ///
+    /// # Examples
+    /// - `index.d.ts` -> true
+    /// - `index.ts` -> false
+    /// - `index.d.mts` -> true
+    /// - `index.mts` -> false
+    /// - `index.d.css.ts` -> true
+    /// - `index.d.css.mts` -> false
+    pub fn is_ts_declaration(self, file_name: &str) -> bool {
+        match self {
+            // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
+            // `{file basename}.d.{extension}.ts`
+            // https://github.com/microsoft/TypeScript/issues/50133
+            FileExtension::Ts => {
+                file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d")
+            }
+            FileExtension::Mts | FileExtension::Cts =>
+            {
+                #[expect(clippy::case_sensitive_file_extension_comparisons)]
+                file_name[..file_name.len() - 4].ends_with(".d")
+            }
+            _ => false,
+        }
+    }
+}
+
+impl FromStr for FileExtension {
+    type Err = UnknownExtension;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "js" => Ok(FileExtension::Js),
+            "mjs" => Ok(FileExtension::Mjs),
+            "cjs" => Ok(FileExtension::Cjs),
+            "jsx" => Ok(FileExtension::Jsx),
+            "ts" => Ok(FileExtension::Ts),
+            "mts" => Ok(FileExtension::Mts),
+            "cts" => Ok(FileExtension::Cts),
+            "tsx" => Ok(FileExtension::Tsx),
+            _ => Err(UnknownExtension::new("Unknown extension.")),
+        }
     }
 }
 
@@ -507,33 +546,19 @@ impl SourceType {
             .and_then(std::ffi::OsStr::to_str)
             .ok_or_else(|| UnknownExtension::new("Please provide a valid file name."))?;
 
-        let file_ext =
-            path.as_ref().extension().and_then(std::ffi::OsStr::to_str).and_then(FileExtension::from_str).ok_or_else(|| {
-                let path = path.as_ref().to_string_lossy();
-                UnknownExtension::new(
-                    format!("Please provide a valid file extension for {path}: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .d.ts, .mts, .cts or .tsx for TypeScript"),
-                )
-            })?;
-
-        let mut source_type = SourceType::from(file_ext);
-
-        let is_dts = match file_ext {
-            // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
-            // `{file basename}.d.{extension}.ts`
-            // https://github.com/microsoft/TypeScript/issues/50133
-            FileExtension::Ts => {
-                file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d")
-            }
-            FileExtension::Mts | FileExtension::Cts =>
-            {
-                #[expect(clippy::case_sensitive_file_extension_comparisons)]
-                file_name[..file_name.len() - 4].ends_with(".d")
-            }
-            _ => false,
+        let Some(Ok(file_ext)) = path
+            .as_ref()
+            .extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .map(FileExtension::from_str)
+        else {
+            return Err(UnknownExtension::new(
+                "Please provide a valid file extension: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .d.ts, .mts, .cts or .tsx for TypeScript",
+            ));
         };
-        if is_dts {
-            source_type.language = Language::TypeScriptDefinition;
-        }
+
+        let source_type = SourceType::from(file_ext)
+            .with_typescript_definition(file_ext.is_ts_declaration(file_name));
 
         Ok(source_type)
     }
@@ -548,8 +573,8 @@ impl SourceType {
     ///     extensions.
     pub fn from_extension(extension: &str) -> Result<Self, UnknownExtension> {
         match FileExtension::from_str(extension) {
-            Some(file_ext) => Ok(SourceType::from(file_ext)),
-            None => Err(UnknownExtension::new("Unknown extension.")),
+            Ok(file_ext) => Ok(SourceType::from(file_ext)),
+            Err(_) => Err(UnknownExtension::new("Unknown extension.")),
         }
     }
 }
@@ -690,5 +715,47 @@ mod tests {
         assert!(mjs.is_javascript());
         assert!(cjs.is_javascript());
         assert!(jsx.is_jsx());
+    }
+}
+
+#[cfg(test)]
+mod file_extension_tests {
+    use std::{path::Path, str::FromStr};
+
+    use super::FileExtension;
+
+    #[test]
+    fn test_is_ts_declaration() {
+        let cases = vec![
+            ("index.d.ts", true),
+            ("index.ts", false),
+            ("index.d.mts", true),
+            ("index.mts", false),
+            ("index.d.cts", true),
+            ("index.cts", false),
+            ("index.d.js", false),
+            ("index.js", false),
+            ("index.d.jsx", false),
+            ("index.jsx", false),
+            ("index.d.css.ts", true),
+            ("index.d.css.mts", false),
+        ];
+
+        for (file_name, expected) in cases {
+            let ext = Path::new(file_name)
+                .extension()
+                .and_then(std::ffi::OsStr::to_str)
+                .expect("File name should have an extension.");
+            let ext = FileExtension::from_str(ext).expect("Extension should be valid.");
+
+            assert_eq!(
+                ext.is_ts_declaration(file_name),
+                expected,
+                "Expected is_ts_declaration to be {} for file name {} but got {}",
+                expected,
+                file_name,
+                !expected
+            );
+        }
     }
 }

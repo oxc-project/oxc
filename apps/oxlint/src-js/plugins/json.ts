@@ -63,6 +63,10 @@ export function deepFreezeJsonArray(arr: JsonValue[]): undefined {
   Object.freeze(arr);
 }
 
+// Benchmarking shows that this clone implementation is much faster than `structuredClone`
+// and `JSON.parse(JSON.stringify(value))`.
+// https://benchmarklab.azurewebsites.net/Benchmarks/ShowResult/622558
+
 /**
  * Deep clone a JSON value, recursively cloning all nested objects and arrays.
  * @param value - The value to deep clone
@@ -84,10 +88,10 @@ export function deepCloneJsonObject(obj: JsonObject): JsonObject {
   // Circular references are not possible in JSON, so no need to handle them here.
   // Symbol properties are not possible in JSON, so no need to handle them here.
   // All properties are enumerable own properties, so can use simple `for..in` loop.
-  // Clone `obj` into `cloned` first, so then don't have to handle if object has a key called `__proto__`.
+  // Clone `obj` into `cloned` first, so then don't need special handling for if object has a key called `__proto__`.
   const cloned = { ...obj };
-  for (const key in obj) {
-    const value = obj[key];
+  for (const key in cloned) {
+    const value = cloned[key];
     if (typeof value !== "object" || value === null) continue;
     cloned[key] = Array.isArray(value) ? deepCloneJsonArray(value) : deepCloneJsonObject(value);
   }

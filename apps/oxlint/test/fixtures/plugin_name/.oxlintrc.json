@@ -1,0 +1,43 @@
+{
+  "plugins": ["jsdoc"],
+  "jsPlugins": [
+    // `plugin.meta.name` overrides package name
+    "plugin1",
+    // Package name used where no `plugin.meta.name`
+    "plugin2",
+    // `eslint-plugin-` prefix stripped
+    "eslint-plugin-plugin3",
+    "eslint-plugin-plugin4",
+    // `/eslint-plugin` suffix stripped
+    "@scope/eslint-plugin",
+    "@scope2/eslint-plugin",
+    // Plugin name is `jsdoc`, but that's overridden by alias
+    { "name": "js-jsdoc", "specifier": "./plugins/jsdoc.ts" },
+    { "name": "js-jsdoc2", "specifier": "jsdoc" },
+    // Plugin defines no `plugin.meta.name`, but not an error due to alias
+    { "name": "no-name-alias", "specifier": "./plugins/no_name.ts" },
+    { "name": "no-name-alias2", "specifier": "no_name" }
+  ],
+  "categories": { "correctness": "off" },
+  "rules": {
+    // `plugin1`
+    "plugin1-name-from-rule/rule": "error",
+    // `plugin2`
+    "plugin2-name-from-package/rule": "error",
+    // `eslint-plugin-plugin3`
+    "eslint-plugin-plugin3-name-from-package/rule": "error",
+    // `eslint-plugin-plugin4`
+    "eslint-plugin-plugin4-name-from-rule/rule": "error",
+    // `@scope/eslint-plugin`
+    "@scope/rule": "error",
+    // `@scope2/eslint-plugin`
+    "@scope2/rule": "error",
+    // Aliased
+    "js-jsdoc/rule": "error",
+    "js-jsdoc2/rule": "error",
+    "no-name-alias/rule": "error",
+    "no-name-alias2/rule": "error",
+    // Native `jsdoc` rule still works
+    "jsdoc/require-param": "error"
+  }
+}

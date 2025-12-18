@@ -81,7 +81,7 @@ impl Generator for RawTransferGenerator {
 
         outputs.extend([
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/constants.js"),
                 code: constants_js.clone(),
             },
             Output::Javascript {
@@ -280,7 +280,7 @@ fn generate_deserializers(
                 for range in [false, true] {
                     for parent in [false, true] {
                         self.variant_paths.push(format!(
-                            "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{}{}{}.js",
+                            "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.js",
                             if is_ts { "ts" } else { "js" },
                             if range { "_range" } else { "" },
                             if parent { "_parent" } else { "" },
@@ -331,7 +331,7 @@ fn generate_deserializers(
             for parent in [false, true] {
                 outputs.push((
                     format!(
-                        "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{}{}{}.d.ts",
+                        "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.d.ts",
                         if is_ts { "ts" } else { "js" },
                         if range { "_range" } else { "" },
                         if parent { "_parent" } else { "" },

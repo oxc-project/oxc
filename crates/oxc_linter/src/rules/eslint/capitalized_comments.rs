@@ -15,6 +15,8 @@ const DIRECTIVES: &[&str] = &[
     "eslint-enable",
     "eslint-env",
     "eslint ",
+    "oxlint-disable",
+    "oxlint-enable",
     "jshint",
     "jscs",
     "istanbul",
@@ -286,6 +288,12 @@ fn find_first_letter(content: &str) -> Option<(usize, char)> {
 fn is_directive_comment(content: &str) -> bool {
     let trimmed = content.trim_start();
 
+    // Oxlint/ESLint disable/enable directives.
+    // e.g. `eslint-disable-next-line`, `oxlint-disable-line`, etc.
+    if trimmed.starts_with("eslint-") || trimmed.starts_with("oxlint-") {
+        return true;
+    }
+
     // Check known directive prefixes
     if DIRECTIVES.iter().any(|d| trimmed.starts_with(d)) {
         return true;
@@ -404,8 +412,12 @@ fn test() {
         ("// jscs:disable", None),
         ("// eslint-disable-line", None),
         ("// eslint-disable-next-line", None),
+        ("// oxlint-disable-line", None),
+        ("// oxlint-disable-next-line", None),
         ("/* eslint semi:off */", None),
         ("/* eslint-enable */", None),
+        ("/* oxlint-disable */", None),
+        ("/* oxlint-enable */", None),
         ("/* istanbul ignore next */", None),
         ("/* jshint asi:true */", None),
         ("/* jscs: enable */", None),
@@ -478,8 +490,12 @@ fn test() {
         ("// jscs:disable", Some(serde_json::json!(["always"]))),
         ("// eslint-disable-line", Some(serde_json::json!(["always"]))),
         ("// eslint-disable-next-line", Some(serde_json::json!(["always"]))),
+        ("// oxlint-disable-line", Some(serde_json::json!(["always"]))),
+        ("// oxlint-disable-next-line", Some(serde_json::json!(["always"]))),
         ("/* eslint semi:off */", Some(serde_json::json!(["always"]))),
         ("/* eslint-enable */", Some(serde_json::json!(["always"]))),
+        ("/* oxlint-disable */", Some(serde_json::json!(["always"]))),
+        ("/* oxlint-enable */", Some(serde_json::json!(["always"]))),
         ("/* istanbul ignore next */", Some(serde_json::json!(["always"]))),
         ("/* jshint asi:true */", Some(serde_json::json!(["always"]))),
         ("/* jscs: enable */", Some(serde_json::json!(["always"]))),

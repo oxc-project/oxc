@@ -39,7 +39,7 @@ import pluginNext from "@next/eslint-plugin-next";
 // https://github.com/eslint-community/eslint-plugin-promise/blob/v7.1.0/index.js
 import pluginPromise from "eslint-plugin-promise";
 // https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
-import pluginVitest from "eslint-plugin-vitest";
+import pluginVitest from "@vitest/eslint-plugin";
 // https://github.com/vuejs/eslint-plugin-vue
 import pluginVue from "eslint-plugin-vue";
 
@@ -299,7 +299,7 @@ export const ALL_TARGET_PLUGINS = new Map([
   ["react-perf", { npm: ["eslint-plugin-react-perf"], issueNo: 2041 }],
   ["nextjs", { npm: ["@next/eslint-plugin-next"], issueNo: 1929 }],
   ["promise", { npm: ["eslint-plugin-promise"], issueNo: 4655 }],
-  ["vitest", { npm: ["eslint-plugin-vitest"], issueNo: 4656 }],
+  ["vitest", { npm: ["@vitest/eslint-plugin"], issueNo: 4656 }],
   ["vue", { npm: ["eslint-plugin-vue"], issueNo: 11440 }],
 ]);
 

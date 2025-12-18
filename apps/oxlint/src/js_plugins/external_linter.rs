@@ -45,11 +45,14 @@ pub enum LoadPluginReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_url, package_name| {
+    Box::new(move |plugin_url, plugin_name, plugin_name_is_alias| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((plugin_url, package_name))).await?.into_future().await
+                cb.call_async(FnArgs::from((plugin_url, plugin_name, plugin_name_is_alias)))
+                    .await?
+                    .into_future()
+                    .await
             })
         });
 

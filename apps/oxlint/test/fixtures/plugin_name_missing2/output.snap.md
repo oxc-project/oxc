@@ -5,7 +5,8 @@
 ```
 Failed to parse configuration file.
 
-  x Plugin name 'import' is reserved, and cannot be used for JS plugins
+  x Failed to load JS plugin: no_name
+  |   Error: Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, or be given an alias in config
 ```
 
 # stderr

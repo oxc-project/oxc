@@ -1153,6 +1153,16 @@ mod test {
     }
 
     #[test]
+    // Test to ensure that a vitest rule based on the jest rule is
+    // handled correctly when it has a different name.
+    // e.g. `vitest/no-restricted-vi-methods` vs `jest/no-restricted-jest-methods`
+    fn test_disable_vitest_rules() {
+        let args =
+            &["-c", ".oxlintrc-vitest.json", "--report-unused-disable-directives", "test.js"];
+        Tester::new().with_cwd("fixtures/disable_vitest_rules".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_two_rules_with_same_rule_name_from_different_plugins() {
         // Issue: <https://github.com/oxc-project/oxc/issues/8485>
         let args = &["-c", ".oxlintrc.json", "test.js"];

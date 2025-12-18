@@ -4,8 +4,19 @@ use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 
-pub type ExternalLinterLoadPluginCb =
-    Box<dyn Fn(String, Option<String>) -> Result<LoadPluginResult, String> + Send + Sync>;
+pub type ExternalLinterLoadPluginCb = Box<
+    dyn Fn(
+            // File URL to load plugin from
+            String,
+            // Plugin name (either alias or package name).
+            // If is package name, it is pre-normalized.
+            Option<String>,
+            // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+            bool,
+        ) -> Result<LoadPluginResult, String>
+        + Send
+        + Sync,
+>;
 
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 

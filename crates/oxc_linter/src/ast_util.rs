@@ -1134,3 +1134,8 @@ fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext)
 
     None
 }
+
+#[test]
+fn test_this_use_alphabetization() {
+    assert!(METHOD_WHICH_HAS_THIS_ARG.is_sorted());
+}

@@ -14,7 +14,8 @@ pub use atom::Atom;
 pub use cmp::ContentEq;
 pub use compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN};
 pub use source_type::{
-    Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
+    FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
+    VALID_EXTENSIONS,
 };
 pub use span::{GetSpan, GetSpanMut, SPAN, Span};
 
