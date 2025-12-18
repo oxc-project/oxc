@@ -59,7 +59,7 @@
             "patterns": [
               {
                 "regex": ".*/dist/.*",
-                "message": "Use subpath imports instead of relative paths to /dist/"
+                "message": "Use `#oxlint` subpath imports instead of relative paths to `dist` directory"
               }
             ]
           }
