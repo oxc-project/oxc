@@ -106,6 +106,15 @@ impl<'a> Formatter<'a> {
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         );
 
+        // Call tailwind callback to sort classes if provided
+        if let Some(callback) = tailwind_callback {
+            let classes = formatted.context_mut().take_tailwind_classes();
+            if !classes.is_empty() {
+                let sorted = callback(self.filepath, classes);
+                formatted.set_sorted_tailwind_classes(sorted);
+            }
+        }
+
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
         if let Some(sort_imports_options) = &formatted.context().options().experimental_sort_imports
@@ -116,15 +125,6 @@ impl<'a> Formatter<'a> {
             )
         {
             *formatted.document_mut() = transformed_document;
-        }
-
-        // Call tailwind callback to sort classes if provided
-        if let Some(callback) = tailwind_callback {
-            let classes = formatted.context().take_tailwind_classes();
-            if !classes.is_empty() {
-                let sorted = callback(self.filepath, classes);
-                formatted.set_sorted_tailwind_classes(sorted);
-            }
         }
 
         formatted

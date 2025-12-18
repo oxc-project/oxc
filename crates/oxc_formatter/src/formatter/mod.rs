@@ -74,6 +74,11 @@ impl<'a> Formatted<'a> {
         &self.context
     }
 
+    /// Returns the &mut context used during formatting.
+    pub fn context_mut(&mut self) -> &mut FormatContext<'a> {
+        &mut self.context
+    }
+
     /// Returns the formatted document.
     pub fn document(&self) -> &Document<'a> {
         &self.document

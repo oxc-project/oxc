@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::mem;
 
 use oxc_allocator::Allocator;
 use oxc_ast::Comment;
@@ -31,13 +31,13 @@ pub struct FormatContext<'ast> {
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
 
+    /// Collected Tailwind CSS class strings from JSX attributes.
+    /// These will be sorted by an external callback and replaced during printing.
+    tailwind_classes: Vec<String>,
+
     embedded_formatter: Option<EmbeddedFormatter>,
 
     allocator: &'ast Allocator,
-
-    /// Collected Tailwind CSS class strings from JSX attributes.
-    /// These will be sorted by an external callback and replaced during printing.
-    tailwind_classes: RefCell<Vec<String>>,
 }
 
 impl std::fmt::Debug for FormatContext<'_> {
@@ -48,6 +48,8 @@ impl std::fmt::Debug for FormatContext<'_> {
             .field("source_type", &self.source_type)
             .field("comments", &self.comments)
             .field("cached_elements", &self.cached_elements)
+            .field("quote_needed_stack", &self.quote_needed_stack)
+            .field("tailwind_classes", &self.tailwind_classes)
             .finish()
     }
 }
@@ -69,9 +71,9 @@ impl<'ast> FormatContext<'ast> {
             comments: Comments::new(source_text, comments),
             cached_elements: FxHashMap::default(),
             quote_needed_stack: Vec::new(),
+            tailwind_classes: Vec::new(),
             embedded_formatter,
             allocator,
-            tailwind_classes: RefCell::new(Vec::new()),
         }
     }
 
@@ -85,7 +87,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             embedded_formatter: None,
             allocator,
-            tailwind_classes: RefCell::new(Vec::new()),
+            tailwind_classes: Vec::new(),
         }
     }
 
@@ -157,15 +159,14 @@ impl<'ast> FormatContext<'ast> {
 
     /// Add a Tailwind CSS class string found in JSX attributes.
     /// Returns the index where the class was stored.
-    pub fn add_tailwind_class(&self, class: String) -> usize {
-        let mut classes = self.tailwind_classes.borrow_mut();
-        let index = classes.len();
-        classes.push(class);
+    pub fn add_tailwind_class(&mut self, class: String) -> usize {
+        let index = self.tailwind_classes.len();
+        self.tailwind_classes.push(class);
         index
     }
 
     /// Take all collected Tailwind classes, clearing the internal storage.
-    pub fn take_tailwind_classes(&self) -> Vec<String> {
-        std::mem::take(&mut *self.tailwind_classes.borrow_mut())
+    pub fn take_tailwind_classes(&mut self) -> Vec<String> {
+        mem::take(&mut self.tailwind_classes)
     }
 }
