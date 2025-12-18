@@ -17,9 +17,9 @@ impl<'a> PeepholeOptimizations {
             | Expression::StringLiteral(_)
             | Expression::TemplateLiteral(_) => true,
             Expression::Identifier(ident) => {
-                ctx.scoping.current_scope_flags().is_function()
-                    && ident.name == "arguments"
+                ident.name == "arguments"
                     && ctx.is_global_reference(ident)
+                    && ctx.current_scope_flags().is_function()
             }
             _ => false,
         }
