@@ -13,7 +13,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var [] = foo
    ·     ──
    ╰────
-  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable.
 
   ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:9]
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var {a: []} = foo
    ·         ──
    ╰────
-  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable.
 
   ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:14]
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo([]) {}
    ·              ──
    ╰────
-  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable.
 
   ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:18]
@@ -62,4 +62,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo({a: []}) {}
    ·                  ──
    ╰────
-  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable.

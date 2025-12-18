@@ -6,8 +6,19 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_pattern_diagnostic(pattern_type: &str, span: Span) -> OxcDiagnostic {
+    let help_message = match pattern_type {
+        "array" => {
+            "Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable."
+        }
+        "object" => {
+            "Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured."
+        }
+        _ => {
+            "Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured."
+        }
+    };
     OxcDiagnostic::warn(format!("Empty {pattern_type} binding pattern"))
-        .with_help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
+        .with_help(help_message)
         .with_label(span)
 }
 
