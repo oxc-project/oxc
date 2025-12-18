@@ -136,11 +136,11 @@ fn generate_configuration_docs() -> String {
     let mut output = String::new();
 
     output.push_str("\n### Window Configuration\n\n");
-    output.push_str("Following configuration are supported via `settings.json` and effect the window editor:\n\n");
+    output.push_str("Following configurations are supported via `settings.json` and affect the window editor:\n\n");
     output.push_str(&generate_table(&window_configs, &window_deprecated_configs));
 
     output.push_str("\n### Workspace Configuration\n\n");
-    output.push_str("Following configuration are supported via `settings.json` and can be changed for each workspace:\n\n");
+    output.push_str("Following configurations are supported via `settings.json` and can be changed for each workspace:\n\n");
     output.push_str(&generate_table(&workspace_configs, &workspace_deprecated_configs));
 
     // Add FixKind section if there are any references to it

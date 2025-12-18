@@ -46,7 +46,7 @@ To enable it, use a VSCode `settings.json` like:
 
 ### Window Configuration
 
-Following configuration are supported via `settings.json` and effect the window editor:
+Following configurations are supported via `settings.json` and affect the window editor:
 
 | Key                 | Default Value | Possible Values                  | Description                                                                                      |
 | ------------------- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -61,7 +61,7 @@ Following configuration are supported via `settings.json` and effect the window 
 
 ### Workspace Configuration
 
-Following configuration are supported via `settings.json` and can be changed for each workspace:
+Following configurations are supported via `settings.json` and can be changed for each workspace:
 
 | Key                           | Default Value | Possible Values                                                                                               | Description                                                                                                                                                                  |
 | ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -12,13 +12,13 @@ cargo run -p vscode_docs update
 just vscode-docs
 ```
 
-### Check if the README is up-to-date
+## CI Verification
 
-```bash
-cargo run -p vscode_docs check
-```
+The CI workflow verifies the README is up-to-date by:
 
-This will be used in CI to verify that the README is always in sync with the package.json.
+1. Running `cargo run -p vscode_docs update` to regenerate the configuration
+2. Running `pnpm fmt` to format the entire project
+3. Running `git diff --exit-code` to ensure no changes were made
 
 ## How it works
 
@@ -32,6 +32,5 @@ This will be used in CI to verify that the README is always in sync with the pac
 
 - Includes deprecated fields in a separate section with an empty row separator
 - Generates properly formatted markdown tables with Key, Default Value, Possible Values, and Description columns
-- Runs `just fmt` automatically after generation to ensure consistent formatting
 - Includes FixKind enum values if referenced in any configuration
 - Sorts configuration options alphabetically for consistent output
