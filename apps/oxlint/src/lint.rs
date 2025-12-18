@@ -391,7 +391,7 @@ impl CliRunner {
 
         // Configure the file system for external linter if needed.
         // When using the copy-to-fixed-allocator approach (cross-module + JS plugins),
-        // we use OsFileSystem instead of RawTransferFileSystem because we use standard allocators for parsing.
+        // we use `OsFileSystem` instead of `RawTransferFileSystem`, because we use standard allocators for parsing.
         let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
             if use_cross_module {
