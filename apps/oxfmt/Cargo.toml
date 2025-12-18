@@ -37,7 +37,7 @@ oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
-editorconfig-parser = "0.0.2"
+editorconfig-parser = "0.0.3"
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
 miette = { workspace = true }
