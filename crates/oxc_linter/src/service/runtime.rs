@@ -48,8 +48,8 @@ pub struct Runtime {
     allocator_pool: AllocatorPool,
 
     /// Separate pool of fixed-size allocators for copying AST before JS transfer.
-    /// Only created when using the copy-to-fixed-allocator approach (large file count
-    /// with both import plugin and JS plugins enabled).
+    /// Only created when using the copy-to-fixed-allocator approach
+    /// (both import plugin and JS plugins enabled).
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     js_allocator_pool: Option<AllocatorPool>,
 
@@ -216,7 +216,7 @@ impl Runtime {
         let thread_count = rayon::current_num_threads();
 
         // Determine whether to use the copy-to-fixed-allocator approach.
-        // This is used when we have both JS plugins and import plugin enabled with a large file count.
+        // This is used when we have both JS plugins and import plugin enabled.
         // In this case, we use standard allocators for parsing/linting (lower memory usage),
         // and copy the AST to a fixed-size allocator only when passing to JS plugins.
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
