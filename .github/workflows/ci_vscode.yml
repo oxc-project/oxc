@@ -10,6 +10,7 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "editors/vscode/**"
+      - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "apps/oxlint/src/lsp.rs"
       - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
+      - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
 
 concurrency:
@@ -38,6 +40,12 @@ jobs:
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: vscode
+
+      - name: Check VSCode README is up-to-date
+        run: |
+          cargo run -p vscode_docs update
+          pnpm fmt
+          git diff --exit-code
 
       - name: Build Language Server
         working-directory: editors/vscode
