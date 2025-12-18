@@ -163,24 +163,42 @@ const source = `{}`;{}
                     Schema::Object(schema_object) => {
                         let section = self.renderer.render_schema(3, "", schema_object);
                         let title = format!("\n### The {} option\n", ordinal(i + 1));
+
+                        // Check if this is a mapped type (Record<string, T>)
+                        let is_mapped_type = schema_object.object.as_ref().is_some_and(|obj| {
+                            obj.properties.is_empty() && obj.additional_properties.is_some()
+                        });
+
                         let instance_type = section.instance_type.as_ref().map_or_else(
                             String::new,
                             |instance_type| {
                                 if instance_type == "object" {
                                     "\nThis option is an object with the following properties:\n"
                                         .to_string()
+                                } else if instance_type.starts_with("Record<") {
+                                    // For mapped types, explain what the keys and values represent
+                                    format!("\ntype: `{instance_type}`\n\nThis configuration accepts an object where:\n- **Keys** are the method/matcher names you want to restrict\n- **Values** are optional custom error messages (use `null` for the default message)\n")
                                 } else {
                                     format!("\ntype: `{instance_type}`\n")
                                 }
                             },
                         );
+
                         let rendered = section.to_md(&self.renderer);
                         let description = if section.description.is_empty() {
                             section.description
                         } else {
                             format!("\n{}\n", section.description)
                         };
-                        format!("{title}{instance_type}{description}{rendered}")
+
+                        // If it's a mapped type with no rendered properties, add example
+                        let example = if is_mapped_type && rendered.trim().is_empty() {
+                            format!("\n**Example:**\n\n```json\n{{\n  \"methodName\": \"Custom error message\",\n  \"anotherMethod\": null\n}}\n```\n")
+                        } else {
+                            String::new()
+                        };
+
+                        format!("{title}{instance_type}{description}{rendered}{example}")
                     }
                     Schema::Bool(_) => panic!(),
                 })
@@ -200,8 +218,17 @@ const source = `{}`;{}
                 _ => {}
             }
         }
+
+        // Check if this is a mapped type (Record<string, T>) before checking if rendered is empty
+        let is_mapped_type = schema
+            .object
+            .as_ref()
+            .is_some_and(|obj| obj.properties.is_empty() && obj.additional_properties.is_some());
+
         let mut rendered = section.to_md(&self.renderer);
-        if rendered.trim().is_empty() {
+
+        // Don't return early if it's a mapped type - we'll add special documentation for it
+        if rendered.trim().is_empty() && !is_mapped_type {
             return rendered;
         }
 
@@ -218,9 +245,16 @@ const source = `{}`;{}
             });
 
         if schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::Object)) {
-            rendered = format!(
-                "\nThis rule accepts a configuration object with the following properties:\n{rendered}\n"
-            );
+            if is_mapped_type {
+                // For mapped types, explain that arbitrary keys can be used
+                rendered = format!(
+                    "\nThis rule accepts a configuration object where:\n\n- **Keys** are the names of the methods/matchers you want to restrict\n- **Values** are optional custom error messages (use `null` for the default message)\n\n**Example:**\n\n```json\n{{\n  \"methodName\": \"Custom error message\",\n  \"anotherMethod\": null\n}}\n```\n{rendered}"
+                );
+            } else {
+                rendered = format!(
+                    "\nThis rule accepts a configuration object with the following properties:\n{rendered}\n"
+                );
+            }
         } else if is_enum_config
             || (schema.instance_type.as_ref().is_some_and(|it| it.contains(&InstanceType::String))
                 && schema.enum_values.is_some())

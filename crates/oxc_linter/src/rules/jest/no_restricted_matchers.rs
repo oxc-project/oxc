@@ -30,7 +30,7 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
@@ -38,6 +38,35 @@ pub struct NoRestrictedMatchersConfig {
     /// The value is an optional custom message to display when the matcher/modifier is used.
     #[serde(flatten)]
     restricted_matchers: FxHashMap<String, Option<String>>,
+}
+
+impl JsonSchema for NoRestrictedMatchersConfig {
+    fn schema_name() -> String {
+        "NoRestrictedMatchersConfig".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        use schemars::schema::*;
+
+        Schema::Object(SchemaObject {
+            instance_type: Some(InstanceType::Object.into()),
+            metadata: Some(Box::new(Metadata {
+                description: Some(
+                    "A map of restricted matcher/modifier names to custom error messages."
+                        .to_string(),
+                ),
+                ..Default::default()
+            })),
+            object: Some(Box::new(ObjectValidation {
+                additional_properties: Some(Box::new(Schema::Object(SchemaObject {
+                    instance_type: Some(vec![InstanceType::String, InstanceType::Null].into()),
+                    ..Default::default()
+                }))),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
+    }
 }
 
 impl std::ops::Deref for NoRestrictedMatchers {
