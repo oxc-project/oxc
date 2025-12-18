@@ -1,0 +1,9 @@
+{
+  "jsPlugins": [
+    { "name": "@tanstack/query", "specifier": "./plugin.ts" }
+  ],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "@tanstack/query/exhaustive-deps": "error"
+  }
+}

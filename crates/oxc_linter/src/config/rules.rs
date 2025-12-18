@@ -418,7 +418,7 @@ mod test {
         // Test that scoped packages split on the last '/' to handle plugin names with slashes
         let rules = OxlintRules::deserialize(&json!({
             "@tanstack/query/exhaustive-deps": "error",
-            "@eslint-react/eslint-plugin/naming-convention/context-name": "warn",
+            "@eslint-react/naming-convention/context-name": "warn",
             "@typescript-eslint/no-unused-vars": "off",
         }))
         .unwrap();
@@ -430,8 +430,8 @@ mod test {
         assert_eq!(r1.plugin_name, "@tanstack/query");
         assert!(r1.severity.is_warn_deny());
 
-        // @eslint-react/eslint-plugin/naming-convention/context-name
-        // should split into plugin: @eslint-react/eslint-plugin/naming-convention, rule: context-name
+        // @eslint-react/naming-convention/context-name
+        // should split into plugin: @eslint-react/naming-convention, rule: context-name
         let r2 = rules.next().unwrap();
         assert_eq!(r2.rule_name, "context-name");
         assert_eq!(r2.plugin_name, "@eslint-react/naming-convention");

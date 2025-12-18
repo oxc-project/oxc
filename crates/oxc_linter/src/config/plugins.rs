@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 /// - `eslint-plugin-foo` → `foo`
 /// - `@scope/eslint-plugin` → `@scope`
 /// - `@scope/eslint-plugin-foo` → `@scope/foo`
-/// - `@scope/eslint-plugin/foo` → `@scope/foo`
 ///
 /// # Examples
 ///
@@ -20,7 +19,6 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 /// assert_eq!(normalize_plugin_name("eslint-plugin-react"), "react");
 /// assert_eq!(normalize_plugin_name("@typescript-eslint/eslint-plugin"), "@typescript-eslint");
 /// assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
-/// assert_eq!(normalize_plugin_name("@foo/eslint-plugin/bar"), "@foo/bar");
 /// ```
 pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
     // Handle scoped packages (@scope/...)
@@ -31,9 +29,6 @@ pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
             return Cow::Borrowed(scope);
         } else if let Some(suffix) = rest.strip_prefix("eslint-plugin-") {
             // @foo/eslint-plugin-bar -> @foo/bar
-            return Cow::Owned(format!("{scope}/{suffix}"));
-        } else if let Some(suffix) = rest.strip_prefix("eslint-plugin/") {
-            // @foo/eslint-plugin/bar -> @foo/bar
             return Cow::Owned(format!("{scope}/{suffix}"));
         }
     }
@@ -366,13 +361,6 @@ mod tests {
 
         // Test @scope/eslint-plugin-name normalization
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
-
-        // Test @scope/eslint-plugin/name normalization (with slash instead of dash)
-        assert_eq!(normalize_plugin_name("@foo/eslint-plugin/bar"), "@foo/bar");
-        assert_eq!(
-            normalize_plugin_name("@eslint-react/eslint-plugin/naming-convention"),
-            "@eslint-react/naming-convention"
-        );
 
         // Test no change for already normalized names
         assert_eq!(normalize_plugin_name("react"), "react");
