@@ -17,7 +17,7 @@ use crate::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
-        plugins::{LintPlugins, normalize_plugin_name},
+        plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
     },
     external_linter::ExternalLinter,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
@@ -554,6 +554,17 @@ impl ConfigStoreBuilder {
         // Use alias if provided.
         // Otherwise use package name if the specifier is not relative, and normalize it.
         let plugin_name = if let Some(alias_name) = alias {
+            // Check that the alias is valid - does not start with `eslint-plugin-` etc
+            if !is_normal_plugin_name(alias_name) {
+                return Err(ConfigBuilderError::PluginLoadFailed {
+                    plugin_specifier: plugin_specifier.to_string(),
+                    error: format!(
+                        "Plugin alias '{alias_name}' is not valid. \
+                         Must not start with 'eslint-plugin-', or be of form '@scope/eslint-plugin' \
+                         or '@scope/eslint-plugin-name'."
+                    ),
+                });
+            }
             Some(alias_name.to_string())
         } else if let Some(pkg) = resolved.package_json()
             && let Some(package_name) = pkg.name()
