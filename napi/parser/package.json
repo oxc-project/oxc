@@ -20,6 +20,9 @@
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
+  "imports": {
+    "#oxc-parser": "./dist/index.js"
+  },
   "browser": "dist/wasm.js",
   "types": "dist/index.d.ts",
   "files": [

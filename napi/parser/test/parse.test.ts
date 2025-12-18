@@ -1,13 +1,13 @@
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
-import { parse, parseSync } from "../src-js/index.js";
+import { parse, parseSync } from "#oxc-parser";
 import type {
   ExpressionStatement,
   ParserOptions,
   TSTypeAliasDeclaration,
   VariableDeclaration,
-} from "../src-js/index.js";
+} from "#oxc-parser";
 
 describe("parse", () => {
   const code = "/* comment */ foo";
