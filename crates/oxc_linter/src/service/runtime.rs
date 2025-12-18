@@ -263,6 +263,17 @@ impl Runtime {
         }
     }
 
+    /// Get [`AllocatorPool`] for copying ASTs to fixed-size allocators, if one if required.
+    fn js_allocator_pool(&self) -> Option<&AllocatorPool> {
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        let pool = self.js_allocator_pool.as_ref();
+
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        let pool = None;
+
+        pool
+    }
+
     pub fn set_disable_directives_map(
         &mut self,
         map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
@@ -627,17 +638,12 @@ impl Runtime {
                             return;
                         }
 
-                        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-                        let js_pool = me.js_allocator_pool.as_ref();
-                        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-                        let js_pool = None::<&AllocatorPool>;
-
                         let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,
                                 context_sub_hosts,
                                 allocator_guard,
-                                js_pool,
+                                me.js_allocator_pool(),
                             );
 
                         // Store the disable directives for this file
@@ -751,14 +757,9 @@ impl Runtime {
 
                         let path = Path::new(&module_to_lint.path);
 
-                        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-                        let js_pool = me.js_allocator_pool.as_ref();
-                        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-                        let js_pool = None::<&AllocatorPool>;
-
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, js_pool);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool());
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
