@@ -55,11 +55,11 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Type alias for Tailwind class processing callback.
-/// Takes (filepath, classes) and returns sorted array.
+/// Takes (filepath, options, classes) and returns sorted array.
 pub type JsTailwindCb = ThreadsafeFunction<
-    FnArgs<(String, Vec<String>)>, // Input: (filepath, classes)
-    Promise<Vec<String>>,          // Return: promise of sorted array
-    FnArgs<(String, Vec<String>)>,
+    FnArgs<(String, Value, Vec<String>)>, // Input: (filepath, options, classes)
+    Promise<Vec<String>>,                 // Return: promise of sorted array
+    FnArgs<(String, Value, Vec<String>)>,
     Status,
     false,
 >;
@@ -79,9 +79,10 @@ type FormatFileWithConfigCallback =
 type InitExternalFormatterCallback =
     Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
 
-/// Internal callback type for Tailwind processing that includes filepath.
-/// Takes (filepath, classes) and returns sorted classes.
-type TailwindWithFilepathCallback = Arc<dyn Fn(String, Vec<String>) -> Vec<String> + Send + Sync>;
+/// Internal callback type for Tailwind processing with config.
+/// Takes (filepath, options, classes) and returns sorted classes.
+type TailwindWithConfigCallback =
+    Arc<dyn Fn(&str, &Value, Vec<String>) -> Vec<String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
@@ -89,7 +90,7 @@ pub struct ExternalFormatter {
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
-    pub process_tailwind: TailwindWithFilepathCallback,
+    process_tailwind: TailwindWithConfigCallback,
 }
 
 impl std::fmt::Debug for ExternalFormatter {
@@ -138,11 +139,11 @@ impl ExternalFormatter {
     }
 
     /// Convert this external formatter to the oxc_formatter::TailwindCallback type.
-    /// The filepath is captured in the closure and passed to JS on each call.
-    pub fn to_tailwind_callback(&self, filepath: &Path) -> TailwindCallback {
+    /// The filepath and options are captured in the closure and passed to JS on each call.
+    pub fn to_tailwind_callback(&self, filepath: &Path, options: Value) -> TailwindCallback {
         let file_path = filepath.to_string_lossy().to_string();
         let process_tailwind = Arc::clone(&self.process_tailwind);
-        Arc::new(move |classes: Vec<String>| (process_tailwind)(file_path.clone(), classes))
+        Arc::new(move |classes: Vec<String>| (process_tailwind)(&file_path, &options, classes))
     }
 
     /// Format non-js file using the JS callback.
@@ -238,10 +239,10 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
 }
 
 /// Wrap JS `processTailwindClasses` callback as a normal Rust function.
-fn wrap_tailwind(cb: JsTailwindCb) -> TailwindWithFilepathCallback {
-    Arc::new(move |filepath: String, classes: Vec<String>| {
+fn wrap_tailwind(cb: JsTailwindCb) -> TailwindWithConfigCallback {
+    Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
         block_on(async {
-            let args = FnArgs::from((filepath, classes.clone()));
+            let args = FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
             match cb.call_async(args).await {
                 Ok(promise) => match promise.await {
                     Ok(sorted) => sorted,

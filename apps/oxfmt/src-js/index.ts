@@ -23,7 +23,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
-    (filepath, classes) => processTailwindClasses({ filepath, classes, options }),
+    (filepath, options, classes) => processTailwindClasses({ filepath, classes, options }),
   );
 }
 
@@ -100,10 +100,9 @@ export type FormatOptions = {
   experimentalSortPackageJson?: boolean;
   /**
    * Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
-   * Pass `true` to enable with defaults, or an object with options from `prettier-plugin-tailwindcss`.
    * (Default: disabled)
    */
-  experimentalTailwindcss?: boolean | TailwindcssOptions;
+  experimentalTailwindcss?: TailwindcssOptions;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**

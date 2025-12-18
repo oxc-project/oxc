@@ -623,7 +623,6 @@ impl Oxfmtrc {
         obj.remove("insertFinalNewline");
         obj.remove("experimentalSortImports");
         obj.remove("experimentalSortPackageJson");
-        obj.remove("experimentalTailwindcss");
 
         // Any other unknown fields are preserved as-is.
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.

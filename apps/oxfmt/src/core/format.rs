@@ -152,7 +152,7 @@ impl SourceFormatter {
             };
 
             let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
-                Some(external_formatter.to_tailwind_callback(path))
+                Some(external_formatter.to_tailwind_callback(path, external_options.clone()))
             } else {
                 None
             };
