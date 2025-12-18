@@ -14,6 +14,14 @@
       {
         "ignoredTypeNames": ["Error", "RegExp", "URL", "URLSearchParams", "CustomStringifiable"]
       }
+    ],
+    "typescript/no-deprecated": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedDeprecated" }
+        ]
+      }
     ]
   }
 }

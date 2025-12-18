@@ -22,4 +22,17 @@ declare class CustomStringifiable {
 declare const custom: CustomStringifiable;
 const customStr = custom.toString();
 
+// Test no-deprecated with allow option
+/** @deprecated Use newFunction instead */
+function allowedDeprecated(): void {}
+
+/** @deprecated Use anotherNewFunction instead */
+function notAllowedDeprecated(): void {}
+
+// This should NOT error because allowedDeprecated is in the allow list
+allowedDeprecated();
+
+// This SHOULD error because notAllowedDeprecated is NOT in the allow list
+notAllowedDeprecated();
+
 export { result, customStr };

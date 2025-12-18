@@ -1,9 +1,22 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::TypeOrValueSpecifier,
+};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoDeprecated;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoDeprecated(Box<NoDeprecatedConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct NoDeprecatedConfig {
+    /// An array of type or value specifiers that are allowed to be used even if deprecated.
+    /// Use this to allow specific deprecated APIs that you intentionally want to continue using.
+    pub allow: Vec<TypeOrValueSpecifier>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -48,7 +61,18 @@ declare_oxc_lint!(
     /// ```
     NoDeprecated(tsgolint),
     typescript,
-    pedantic
+    pedantic,
+    config = NoDeprecatedConfig,
 );
 
-impl Rule for NoDeprecated {}
+impl Rule for NoDeprecated {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value::<DefaultRuleConfig<NoDeprecated>>(value)
+            .unwrap_or_default()
+            .into_inner()
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

@@ -5,8 +5,17 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware
 working directory: fixtures/tsgolint_rule_options
 ----------
-Found 0 warnings and 0 errors.
+
+  x typescript-eslint(no-deprecated): `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
+    ,-[test.ts:36:1]
+ 35 | // This SHOULD error because notAllowedDeprecated is NOT in the allow list
+ 36 | notAllowedDeprecated();
+    : ^^^^^^^^^^^^^^^^^^^^
+ 37 | 
+    `----
+
+Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintFoundErrors
 ----------
