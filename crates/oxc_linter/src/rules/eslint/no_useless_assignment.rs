@@ -147,32 +147,54 @@ fn handle_multi_block_references<'a>(
         });
 
     let mut local_last_write: LastWrite = last_write;
-    for (block_id, refs) in &block_references {
+    for r in references {
+        let block_id = nodes.cfg_id(r.node_id());
+        let refs = if let Some(refs) = block_references.get(&block_id) {
+            refs
+        } else {
+            continue;
+        };
         if visited_blocks.contains(&block_id) {
             continue;
         }
-        visited_blocks.insert(*block_id);
+        visited_blocks.insert(block_id);
 
         local_last_write = handle_single_block_references(&refs, local_last_write.clone());
         // Process neighbor blocks
-        let last_write_in_neighbors = cfg
+        let last_write_used_in_neighbors = cfg
             .graph
-            .neighbors(*block_id)
+            .neighbors(block_id)
             .map(|n| {
+                if visited_blocks.contains(&n) {
+                    return local_last_write.clone();
+                }
+                visited_blocks.insert(n);
+
                 if let Some(neighbor_refs) = block_references.get(&n) {
-                    visited_blocks.insert(n);
                     handle_single_block_references(neighbor_refs, local_last_write.clone())
                 } else {
                     local_last_write.clone()
                 }
             })
             .any(|w| match &w {
-                LastWrite::Reference(_) => true,
-                LastWrite::Initialization(_) => true,
-                LastWrite::None => false,
+                LastWrite::Reference(_) => false,
+                LastWrite::Initialization(_) => false,
+                LastWrite::None => true,
             });
 
-        if last_write_in_neighbors {
+        println!(
+            "Block {:?}, last_write_used_in_neighbors: {}",
+            block_id, last_write_used_in_neighbors
+        );
+
+        println!("refs in block:");
+        for r in refs {
+            let start = nodes.get_node(r.node_id()).span().start;
+            let end = nodes.get_node(r.node_id()).span().end;
+            println!("  - {:?}", ctx.source_range(Span::new(start - 4, end + 4)));
+        }
+
+        if !last_write_used_in_neighbors {
             match &local_last_write {
                 LastWrite::Reference(r) => {
                     let diagnostic = no_useless_assignment_diagnostic(
@@ -204,23 +226,23 @@ fn test() {
         ("let x = 5; console.log(x);", None),
         (
             "function fn1() {
-        let v = 'used';
-        doSomething(v);
-        v = 'used-2';
-        doSomething(v);
-    }",
+            let v = 'used';
+            doSomething(v);
+            v = 'used-2';
+            doSomething(v);
+        }",
             None,
         ),
         (
             "function fn2() {
-        let v = 'used';
-        if (condition) {
-            v = 'used-2';
+            let v = 'used';
+            if (condition) {
+                v = 'used-2';
+                doSomething(v);
+                return
+            }
             doSomething(v);
-            return
-        }
-        doSomething(v);
-    }",
+        }",
             None,
         ),
         (
@@ -235,16 +257,16 @@ fn test() {
     }",
             None,
         ),
-        //     (
-        //         "function fn4() {
+        // (
+        //     "function fn4() {
         //     let v = 'used';
         //     for (let i = 0; i < 10; i++) {
         //         doSomething(v);
         //         v = 'used in next iteration';
         //     }
         // }",
-        //         None,
-        //     ),
+        //     None,
+        // ),
     ];
     let fail = vec![
         ("let x = 5; x = 7;", None),
