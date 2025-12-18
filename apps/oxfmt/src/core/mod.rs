@@ -6,7 +6,9 @@ pub mod utils;
 #[cfg(feature = "napi")]
 mod external_formatter;
 
-pub use config::{ConfigResolver, ResolvedOptions, resolve_config_path};
+pub use config::{
+    ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
+};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;
 

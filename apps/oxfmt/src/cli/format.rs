@@ -9,7 +9,9 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{ConfigResolver, SourceFormatter, resolve_config_path, utils};
+use crate::core::{
+    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -67,8 +69,12 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config_path = resolve_config_path(&cwd, config_options.config.as_deref());
-        let mut config_resolver = match ConfigResolver::from_config_path(config_path.as_deref()) {
+        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
+        let editorconfig_path = resolve_editorconfig_path(&cwd);
+        let mut config_resolver = match ConfigResolver::from_config_paths(
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
             Ok(r) => r,
             Err(err) => {
                 utils::print_and_flush(
