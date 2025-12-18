@@ -407,7 +407,7 @@ impl Linter {
             return;
         }
 
-        // If js_allocator_pool is provided, use clone-into-fixed-allocator approach
+        // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
         if let Some(js_pool) = js_allocator_pool {
             self.clone_into_fixed_size_allocator_and_run_external_rules(
                 external_rules,
@@ -489,8 +489,8 @@ impl Linter {
 
         // Copy source text to the START of the fixed-size allocator.
         // This is critical - the JS deserializer expects source text at offset 0.
-        // SAFETY: The js_allocator is from a fixed-size allocator pool, which wraps the allocator
-        // in a custom Drop that doesn't actually drop it (it returns it to the pool), so the
+        // SAFETY: `js_allocator` is from a fixed-size allocator pool, which wraps the allocator
+        // in a custom `Drop` that doesn't actually drop it (it returns it to the pool), so the
         // memory remains valid. This matches the safety requirements of `alloc_bytes_start`.
         let new_source_text: &str = unsafe {
             let bytes = original_source_text.as_bytes();
@@ -499,8 +499,8 @@ impl Linter {
             std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), bytes.len()))
         };
 
-        // Clone Program into fixed-size allocator.
-        // We need to allocate the Program struct ITSELF in the allocator, not just its contents.
+        // Clone `Program` into fixed-size allocator.
+        // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
         let program: &mut Program<'_> = {
             let mut program = original_program.clone_in(&js_allocator);
