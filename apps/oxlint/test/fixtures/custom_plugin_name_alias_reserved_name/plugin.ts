@@ -2,7 +2,7 @@ import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
   meta: {
-    name: "jsdoc",
+    name: "legal-plugin-name",
   },
   rules: {
     "no-debugger": {
