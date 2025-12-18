@@ -11,6 +11,25 @@ impl<'a> PeepholeOptimizations {
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
+    fn can_explode_expression_as_array_pattern(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => true,
+            Expression::Identifier(ident) => {
+                ctx.scoping.current_scope_flags().is_function()
+                    && ident.name == "arguments"
+                    && ctx.is_global_reference(ident)
+            }
+            _ => false,
+        }
+    }
+
+    fn can_explode_expression_as_object_pattern(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        matches!(expr, Expression::ObjectExpression(_))
+            || Self::can_explode_expression_as_array_pattern(expr, ctx)
+    }
+
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
         ctx: &Ctx<'a, '_>,
@@ -29,8 +48,18 @@ impl<'a> PeepholeOptimizations {
                 }
                 false
             }
-            BindingPatternKind::ArrayPattern(ident) => ident.is_empty(),
-            BindingPatternKind::ObjectPattern(ident) => ident.is_empty(),
+            BindingPatternKind::ArrayPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| {
+                        Self::can_explode_expression_as_array_pattern(expr, ctx)
+                    })
+            }
+            BindingPatternKind::ObjectPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| {
+                        Self::can_explode_expression_as_object_pattern(expr, ctx)
+                    })
+            }
             BindingPatternKind::AssignmentPattern(_) => false,
         }
     }
@@ -189,13 +218,28 @@ mod test {
         test_options("var x", "", &options);
         test_options("var x = 1", "", &options);
         test_options("var x = foo", "foo", &options);
+
         test_options("var [] = []", "", &options);
         test_options("var [] = [1]", "", &options);
         test_options("var [] = [foo]", "foo", &options);
+        test_options("var [] = 'foo'", "", &options);
+        test_options(
+            "export var f = () => { var [] = arguments }",
+            "export var f = () => { arguments; }",
+            &options,
+        );
+        test_same_options("var [] = arguments", &options);
+        test_same_options("var [] = null", &options);
+        test_same_options("var [] = void 0", &options);
+        test_same_options("var [] = 1", &options);
+        test_same_options("var [] = a", &options);
+
         test_options("var {} = {}", "", &options);
         test_options("var {} = { a: 1 }", "", &options);
         test_options("var {} = { foo }", "foo", &options);
-        test_options("var {} = { foo: { a } }", "a", &options);
+        test_same_options("var {} = null", &options);
+        test_same_options("var {} = a", &options);
+
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
         test_same_options("using x = foo", &options);
