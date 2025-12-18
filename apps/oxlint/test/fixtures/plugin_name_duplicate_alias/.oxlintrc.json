@@ -1,0 +1,7 @@
+{
+  "jsPlugins": [
+    { "name": "custom", "specifier": "./plugin1.ts" },
+    { "name": "custom", "specifier": "./plugin2.ts" }
+  ],
+  "rules": {}
+}
