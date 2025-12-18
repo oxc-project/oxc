@@ -7,7 +7,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_array_pattern_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty array binding pattern")
-        .with_help("Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in runtime error because they are not iterable.")
+        .with_help("Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.")
         .with_label(span)
 }
 
