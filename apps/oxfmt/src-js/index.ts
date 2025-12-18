@@ -1,5 +1,5 @@
 import { format as napiFormat } from "./bindings.js";
-import { setupConfig, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
+import { initExternalFormatter, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
 
 export async function format(fileName: string, sourceText: string, options?: FormatOptions) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
@@ -9,7 +9,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    setupConfig,
+    initExternalFormatter,
     formatEmbeddedCode,
     formatFile,
   );

@@ -1,5 +1,5 @@
 import { runCli } from "./bindings.js";
-import { setupConfig, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
+import { initExternalFormatter, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
 import { runInit, runMigratePrettier } from "./migration/index.js";
 
 void (async () => {
@@ -7,7 +7,12 @@ void (async () => {
 
   // Call the Rust CLI to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
-  const [mode, exitCode] = await runCli(args, setupConfig, formatEmbeddedCode, formatFile);
+  const [mode, exitCode] = await runCli(
+    args,
+    initExternalFormatter,
+    formatEmbeddedCode,
+    formatFile,
+  );
 
   switch (mode) {
     // Handle `--init` and `--migrate` command in JS

@@ -1,4 +1,3 @@
-import { workerData } from "node:worker_threads";
 import type { Options } from "prettier";
 
 // Lazy load Prettier in each worker thread
@@ -8,23 +7,15 @@ import type { Options } from "prettier";
 // Nevertheless, we will keep it as lazy loading just in case.
 let prettierCache: typeof import("prettier");
 
-export type WorkerData = {
-  prettierConfig: Options;
-};
-
-// Initialize config from `workerData` (passed during pool creation)
-// NOTE: The 1st element is thread id, passed by `tinypool`
-const [, { prettierConfig }] = workerData satisfies [unknown, WorkerData];
-
 // ---
 
 export type FormatEmbeddedCodeArgs = {
-  parser: string;
   code: string;
+  options: Options;
 };
 
 export async function formatEmbeddedCode({
-  parser,
+  options,
   code,
 }: FormatEmbeddedCodeArgs): Promise<string> {
   if (!prettierCache) {
@@ -32,10 +23,7 @@ export async function formatEmbeddedCode({
   }
 
   return prettierCache
-    .format(code, {
-      ...prettierConfig,
-      parser,
-    })
+    .format(code, options)
     .then((formatted) => formatted.trimEnd())
     .catch(() => code);
 }
@@ -43,19 +31,14 @@ export async function formatEmbeddedCode({
 // ---
 
 export type FormatFileArgs = {
-  parserName: string;
-  fileName: string;
   code: string;
+  options: Options;
 };
 
-export async function formatFile({ parserName, fileName, code }: FormatFileArgs): Promise<string> {
+export async function formatFile({ options, code }: FormatFileArgs): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }
 
-  return prettierCache.format(code, {
-    ...prettierConfig,
-    parser: parserName,
-    filepath: fileName,
-  });
+  return prettierCache.format(code, options);
 }
