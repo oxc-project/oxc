@@ -45,7 +45,14 @@ pub struct Runtime {
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
 
+    /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
+
+    /// Separate pool of fixed-size allocators for copying AST before JS transfer.
+    /// Only created when using the copy-to-fixed-allocator approach
+    /// (both import plugin and JS plugins enabled).
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    js_allocator_pool: Option<AllocatorPool>,
 
     /// The module graph keyed by module paths. It is looked up when populating `loaded_modules`.
     /// The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
@@ -209,13 +216,33 @@ impl Runtime {
 
         let thread_count = rayon::current_num_threads();
 
-        // If an external linter is used (JS plugins), we must use fixed-size allocators,
-        // for compatibility with raw transfer
-        let allocator_pool = if linter.has_external_linter() {
-            AllocatorPool::new_fixed_size(thread_count)
+        // Create allocator pools.
+        //
+        // * If both JS plugins and import plugin enabled, use copy-to-fixed-allocator approach.
+        //   This approach is to use standard allocators for parsing/linting (lower memory usage),
+        //   and copy ASTs to a fixed-size allocator only when passing to JS plugins.
+        //
+        // * If JS plugins, but no import plugin, use fixed-size allocators for everything.
+        //   Without import plugin, there's no danger of memory exhaustion, as no more than <thread count>
+        //   ASTs are live at any given time.
+        //
+        // * If no JS plugins, use standard allocators for parsing/linting.
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        let (allocator_pool, js_allocator_pool) = if linter.has_external_linter() {
+            if options.cross_module {
+                (
+                    AllocatorPool::new(thread_count),
+                    Some(AllocatorPool::new_fixed_size(thread_count)),
+                )
+            } else {
+                (AllocatorPool::new_fixed_size(thread_count), None)
+            }
         } else {
-            AllocatorPool::new(thread_count)
+            (AllocatorPool::new(thread_count), None)
         };
+
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        let allocator_pool = AllocatorPool::new(thread_count);
 
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
@@ -223,6 +250,8 @@ impl Runtime {
 
         Self {
             allocator_pool,
+            #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+            js_allocator_pool,
             cwd: options.cwd,
             linter,
             resolver,
@@ -598,9 +627,18 @@ impl Runtime {
                             return;
                         }
 
-                        let (mut messages, disable_directives) = me
-                            .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
+                        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+                        let js_pool = me.js_allocator_pool.as_ref();
+                        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+                        let js_pool = None::<&AllocatorPool>;
+
+                        let (mut messages, disable_directives) =
+                            me.linter.run_with_disable_directives(
+                                path,
+                                context_sub_hosts,
+                                allocator_guard,
+                                js_pool,
+                            );
 
                         // Store the disable directives for this file
                         if let Some(disable_directives) = disable_directives {
@@ -712,9 +750,15 @@ impl Runtime {
                         }
 
                         let path = Path::new(&module_to_lint.path);
+
+                        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+                        let js_pool = me.js_allocator_pool.as_ref();
+                        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+                        let js_pool = None::<&AllocatorPool>;
+
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, js_pool);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map

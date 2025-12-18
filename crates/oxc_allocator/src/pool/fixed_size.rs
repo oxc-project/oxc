@@ -134,10 +134,6 @@ impl FixedSizeAllocatorPool {
                 return None;
             }
 
-            // Protect against IDs wrapping around.
-            // TODO: Does this work? Do we need it anyway?
-            assert!(id < u32::MAX, "Created too many allocators");
-
             // Try to claim this ID. If another thread got there first, retry with new ID.
             if self
                 .next_id
