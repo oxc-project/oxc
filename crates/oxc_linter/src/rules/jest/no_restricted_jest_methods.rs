@@ -26,8 +26,9 @@ pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedJestMethodsConfig {
-    /// A mapping of restricted Jest method names to custom messages - or
-    /// `null`, for a generic message.
+    /// A map of restricted Jest method names to custom messages.
+    /// The key is the method name (e.g., "advanceTimersByTime", "spyOn").
+    /// The value is an optional custom message to display when the method is used.
     restricted_jest_methods: FxHashMap<String, String>,
 }
 
