@@ -22,10 +22,7 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 /// ```
 pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
     // Handle scoped packages (@scope/...)
-    if let Some(scope_end) = plugin_name.find('/') {
-        let scope = &plugin_name[..scope_end]; // e.g., "@foo"
-        let rest = &plugin_name[scope_end + 1..]; // e.g., "eslint-plugin" or "eslint-plugin-bar"
-
+    if let Some((scope, rest)) = plugin_name.split_once('/') {
         // Check if it's @scope/eslint-plugin or @scope/eslint-plugin-something
         if rest == "eslint-plugin" {
             // @foo/eslint-plugin -> @foo
