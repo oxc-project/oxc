@@ -57,7 +57,7 @@ impl<'alloc> BitSet<'alloc> {
     ///
     /// # Note on differing lengths
     /// If the two sets have different lengths, this method only unions the prefix common to both.
-    /// it iterates up to the length of the shorter set
+    /// It iterates up to the length of the shorter set.
     pub fn union(&mut self, other: &Self) {
         for (self_word, other_word) in self.entries.iter_mut().zip(other.entries.iter()) {
             *self_word |= *other_word;
