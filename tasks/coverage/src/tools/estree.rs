@@ -340,14 +340,20 @@ impl Case for EstreeTypescriptCase {
     fn run(&mut self) {
         let estree_file_content = fs::read_to_string(&self.estree_file_path).unwrap();
 
-        let estree_units = estree_file_content
-            .split("__ESTREE_TEST__")
-            .skip(1)
-            .map(|s| {
-                let s = s.strip_prefix(":PASS:\n```json\n").unwrap();
-                s.strip_suffix("\n```\n").unwrap()
-            })
-            .collect::<Vec<_>>();
+        let mut estree_units = vec![];
+        // TODO: Check tokens match
+        #[expect(clippy::collection_is_never_read)]
+        let mut tokens_units = vec![];
+
+        for s in estree_file_content.split("__ESTREE_TEST__").skip(1) {
+            let s = s.strip_suffix("\n```\n").unwrap();
+            if let Some(s) = s.strip_prefix(":AST:\n```json\n") {
+                estree_units.push(s);
+            } else {
+                let s = s.strip_prefix(":TOKENS:\n```json\n").unwrap();
+                tokens_units.push(s);
+            }
+        }
 
         if estree_units.len() != self.base.units.len() {
             // likely a bug in estree-conformance script
