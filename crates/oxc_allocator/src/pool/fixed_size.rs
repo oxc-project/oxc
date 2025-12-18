@@ -1,8 +1,6 @@
 use std::{
     alloc::{GlobalAlloc, Layout, System},
     cmp::max,
-    error::Error,
-    fmt,
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
@@ -17,26 +15,6 @@ use crate::{
     Allocator,
     generated::fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
-
-/// Error returned when a fixed-size allocator cannot be created due to allocation failure.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct AllocError {
-    /// The layout of the allocation that failed.
-    pub layout: Layout,
-}
-
-impl fmt::Display for AllocError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "memory allocation failed for fixed-size allocator: requested {} bytes with {} byte alignment",
-            self.layout.size(),
-            self.layout.align()
-        )
-    }
-}
-
-impl Error for AllocError {}
 
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
@@ -121,7 +99,7 @@ impl FixedSizeAllocatorPool {
         }
     }
 
-    fn create_new_allocator(&self) -> Option<Result<FixedSizeAllocator, AllocError>> {
+    fn create_new_allocator(&self) -> Option<Result<FixedSizeAllocator, ()>> {
         // If a previous allocation attempt failed, don't try again - it will also fail.
         if self.allocation_failed.load(Ordering::Relaxed) {
             return None;
@@ -273,9 +251,9 @@ struct FixedSizeAllocator {
 impl FixedSizeAllocator {
     /// Try to create a new [`FixedSizeAllocator`].
     ///
-    /// Returns `Err(AllocError)` if memory allocation fails.
+    /// Returns `Err` if memory allocation fails.
     #[expect(clippy::items_after_statements)]
-    fn try_new(id: u32) -> Result<Self, AllocError> {
+    fn try_new(id: u32) -> Result<Self, ()> {
         // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
         // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
         // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
@@ -289,7 +267,7 @@ impl FixedSizeAllocator {
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
-        let alloc_ptr = NonNull::new(alloc_ptr).ok_or(AllocError { layout: ALLOC_LAYOUT })?;
+        let alloc_ptr = NonNull::new(alloc_ptr).ok_or(())?;
 
         // All code in the rest of this function is infallible, so the allocation will always end up
         // owned by a `FixedSizeAllocator`, which takes care of freeing the memory correctly on drop
