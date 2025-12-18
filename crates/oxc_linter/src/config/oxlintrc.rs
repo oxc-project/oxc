@@ -503,7 +503,7 @@ mod test {
         assert_eq!(merged.schema, Some("schema1.json".to_string()));
 
         // Test merge - when self has no schema, use other's schema
-        let config1: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let config1: Oxlintrc = serde_json::from_str(r"{}").unwrap();
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
