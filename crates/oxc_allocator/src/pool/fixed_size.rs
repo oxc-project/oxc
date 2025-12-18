@@ -73,11 +73,12 @@ impl FixedSizeAllocatorPool {
     /// * Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> Allocator {
         // Try to get an allocator from the pool
-        {
-            let maybe_allocator = self.allocators.lock().unwrap().pop();
-            if let Some(allocator) = maybe_allocator {
-                return allocator.into_inner();
-            }
+        let maybe_allocator = {
+            let mut allocators = self.allocators.lock().unwrap();
+            allocators.pop()
+        };
+        if let Some(allocator) = maybe_allocator {
+            return allocator.into_inner();
         }
 
         // Pool is empty. Try to create a new allocator.
@@ -87,8 +88,11 @@ impl FixedSizeAllocatorPool {
 
         // Pool cannot produce another allocator. Wait for an existing allocator to be returned to the pool.
         loop {
-            let mut maybe_allocator = self.available.wait(self.allocators.lock().unwrap()).unwrap();
-            if let Some(allocator) = maybe_allocator.pop() {
+            let maybe_allocator = {
+                let mut allocators = self.available.wait(self.allocators.lock().unwrap()).unwrap();
+                allocators.pop()
+            };
+            if let Some(allocator) = maybe_allocator {
                 return allocator.into_inner();
             }
         }
