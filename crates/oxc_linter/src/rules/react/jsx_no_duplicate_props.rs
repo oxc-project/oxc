@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// <App bar baz foo={3} />;
     /// ```
     ///
-    /// ### Differences from ESLint
+    /// ### Differences from eslint-plugin-react
     ///
     /// This rule does not support the `ignoreCase` option. Props with different cases are
     /// considered distinct and will not be flagged as duplicates (e.g., `<App foo Foo />`
