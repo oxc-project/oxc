@@ -45,7 +45,9 @@ pub async fn run_cli(
         ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
-    #[napi(ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>")]
+    #[napi(
+        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
+    )]
     tailwind_cb: JsTailwindCb,
 ) -> (String, Option<u8>) {
     // Convert String args to OsString for compatibility with bpaf
@@ -135,7 +137,9 @@ pub async fn format(
         ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
-    #[napi(ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>")]
+    #[napi(
+        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
+    )]
     tailwind_cb: JsTailwindCb,
 ) -> FormatResult {
     let num_of_threads = 1;
