@@ -82,7 +82,7 @@ impl FixedSizeAllocatorPool {
         }
 
         // Pool is empty. Try to create a new allocator.
-        if let Some(Ok(allocator)) = self.create_new_allocator() {
+        if let Some(allocator) = self.create_new_allocator() {
             return allocator.into_inner();
         }
 
@@ -98,7 +98,7 @@ impl FixedSizeAllocatorPool {
         }
     }
 
-    fn create_new_allocator(&self) -> Option<Result<FixedSizeAllocator, ()>> {
+    fn create_new_allocator(&self) -> Option<FixedSizeAllocator> {
         // If a previous allocation attempt failed, don't try again - it will also fail.
         if self.allocation_failed.load(Ordering::Relaxed) {
             return None;
@@ -121,7 +121,7 @@ impl FixedSizeAllocatorPool {
                 if result.is_err() {
                     self.allocation_failed.store(true, Ordering::Relaxed);
                 }
-                return Some(result);
+                return result.ok();
             }
         }
     }
