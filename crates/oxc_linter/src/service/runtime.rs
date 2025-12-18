@@ -216,18 +216,27 @@ impl Runtime {
 
         let thread_count = rayon::current_num_threads();
 
-        // Determine whether to use the copy-to-fixed-allocator approach.
-        // This is used when we have both JS plugins and import plugin enabled.
-        // In this case, we use standard allocators for parsing/linting (lower memory usage),
-        // and copy the AST to a fixed-size allocator only when passing to JS plugins.
+        // Create allocator pools.
+        //
+        // * If both JS plugins and import plugin enabled, use copy-to-fixed-allocator approach.
+        //   This approach is to use standard allocators for parsing/linting (lower memory usage),
+        //   and copy ASTs to a fixed-size allocator only when passing to JS plugins.
+        //
+        // * If JS plugins, but no import plugin, use fixed-size allocators for everything.
+        //   Without import plugin, there's no danger of memory exhaustion, as no more than <thread count>
+        //   ASTs are live at any given time.
+        //
+        // * If no JS plugins, use standard allocators for parsing/linting.
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-        let use_copy_approach = options.cross_module && linter.has_external_linter();
-
-        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-        let (allocator_pool, js_allocator_pool) = if use_copy_approach {
-            (AllocatorPool::new(thread_count), Some(AllocatorPool::new_fixed_size(thread_count)))
-        } else if linter.has_external_linter() {
-            (AllocatorPool::new_fixed_size(thread_count), None)
+        let (allocator_pool, js_allocator_pool) = if linter.has_external_linter() {
+            if options.cross_module {
+                (
+                    AllocatorPool::new(thread_count),
+                    Some(AllocatorPool::new_fixed_size(thread_count)),
+                )
+            } else {
+                (AllocatorPool::new_fixed_size(thread_count), None)
+            }
         } else {
             (AllocatorPool::new(thread_count), None)
         };
