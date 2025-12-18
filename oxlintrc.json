@@ -49,6 +49,22 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/oxlint/test/fixtures/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": ".*dist.*",
+                "message": "Use subpath imports instead of relative paths to /dist/"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "ignorePatterns": [
