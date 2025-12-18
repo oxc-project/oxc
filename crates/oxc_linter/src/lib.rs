@@ -479,13 +479,15 @@ impl Linter {
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &ContextHost<'_>,
-        original_program: &Program<'_>,
+        original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
     ) {
         let js_allocator = js_allocator_pool.get();
 
-        // Get the original source text from the `Program`
+        // Get the original source text from the `Program`, and replace it with an empty string.
+        // This avoids cloning the original source text, which can be large.
         let original_source_text = original_program.source_text;
+        original_program.source_text = "";
 
         // Copy source text to the START of the fixed-size allocator.
         // This is critical - the JS deserializer expects source text at offset 0.
