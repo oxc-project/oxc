@@ -20,6 +20,7 @@ Rust workspace with key directories:
 
 - `crates/` - Core functionality (start here when exploring)
 - `apps/` - Application binaries (oxlint, oxfmt)
+  - When working on `oxfmt`, refer to `./apps/oxfmt/AGENTS.md`
 - `napi/` - Node.js bindings
 - `npm/` - npm packages
 - `tasks/` - Development tools/automation
