@@ -578,17 +578,23 @@ impl ConfigStoreBuilder {
             })?;
         let plugin_name = result.name;
 
-        if LintPlugins::try_from(plugin_name.as_str()).is_err() {
-            external_plugin_store.register_plugin(
-                plugin_path,
-                plugin_name,
-                result.offset,
-                result.rule_names,
-            );
-            Ok(())
-        } else {
-            Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
+        // Check if plugin name is reserved
+        if LintPlugins::try_from(plugin_name.as_str()).is_ok() {
+            return Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name });
         }
+
+        // Check if plugin name is already registered (duplicate alias)
+        if external_plugin_store.is_plugin_name_registered(&plugin_name) {
+            return Err(ConfigBuilderError::DuplicatePluginAlias { plugin_name });
+        }
+
+        external_plugin_store.register_plugin(
+            plugin_path,
+            plugin_name,
+            result.offset,
+            result.rule_names,
+        );
+        Ok(())
     }
 }
 
@@ -630,6 +636,9 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
     },
     ReservedExternalPluginName {
+        plugin_name: String,
+    },
+    DuplicatePluginAlias {
         plugin_name: String,
     },
 }
@@ -679,6 +688,23 @@ impl Display for ConfigBuilderError {
                      \"rules\": {{\n  \"{plugin_name}-js/rule-name\": \"error\"\n}}\n\
                      \n\
                      See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html",
+                )?;
+                Ok(())
+            }
+            ConfigBuilderError::DuplicatePluginAlias { plugin_name } => {
+                write!(
+                    f,
+                    "Plugin name '{plugin_name}' is already in use.\n\
+                     \n\
+                     Multiple plugins cannot share the same name or alias.\n\
+                     Each plugin must have a unique identifier to avoid conflicts.\n\
+                     \n\
+                     Please provide a different alias for one of the plugins:\n\
+                     \n\
+                     \"jsPlugins\": [\n  \
+                       {{ \"name\": \"{plugin_name}\", \"specifier\": \"plugin-one\" }},\n  \
+                       {{ \"name\": \"{plugin_name}-alt\", \"specifier\": \"plugin-two\" }}\n\
+                     ]",
                 )?;
                 Ok(())
             }

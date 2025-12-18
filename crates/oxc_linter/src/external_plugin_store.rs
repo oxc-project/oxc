@@ -83,6 +83,10 @@ impl ExternalPluginStore {
         self.registered_plugin_paths.contains(plugin_path)
     }
 
+    pub fn is_plugin_name_registered(&self, plugin_name: &str) -> bool {
+        self.plugin_names.contains_key(plugin_name)
+    }
+
     /// Register plugin.
     ///
     /// # Panics

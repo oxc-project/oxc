@@ -1,18 +1,21 @@
 # Exit code
-0
+1
 
 # stdout
 ```
-  ! eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
-   ,-[files/test.js:1:7]
- 1 | const x = 1;
-   :       |
-   :       `-- 'x' is declared here
-   `----
-  help: Consider removing this declaration.
+Failed to parse configuration file.
 
-Found 1 warning and 0 errors.
-Finished in Xms on 1 file using X threads.
+  x Plugin name 'custom' is already in use.
+  | 
+  | Multiple plugins cannot share the same name or alias.
+  | Each plugin must have a unique identifier to avoid conflicts.
+  | 
+  | Please provide a different alias for one of the plugins:
+  | 
+  | "jsPlugins": [
+  |   { "name": "custom", "specifier": "plugin-one" },
+  |   { "name": "custom-alt", "specifier": "plugin-two" }
+  | ]
 ```
 
 # stderr
