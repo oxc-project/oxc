@@ -58,7 +58,7 @@
           {
             "patterns": [
               {
-                "regex": ".*dist.*",
+                "regex": ".*/dist/.*",
                 "message": "Use subpath imports instead of relative paths to /dist/"
               }
             ]
