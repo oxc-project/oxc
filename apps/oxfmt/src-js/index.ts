@@ -84,7 +84,7 @@ export type FormatOptions = {
   experimentalSortImports?: SortImportsOptions;
   /** Experimental: Sort `package.json` keys. (Default: `true`) */
   experimentalSortPackageJson?: boolean;
-};
+} & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
  * Configuration options for sort imports.
