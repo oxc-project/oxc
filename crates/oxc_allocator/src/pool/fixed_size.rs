@@ -1,5 +1,6 @@
 use std::{
     alloc::{GlobalAlloc, Layout, System},
+    cmp::max,
     error::Error,
     fmt,
     mem::{self, ManuallyDrop},
@@ -72,7 +73,7 @@ impl FixedSizeAllocatorPool {
     /// Passing `thread_count == 0` is equivalent to a pool that may use exactly one allocator
     /// in total (the one created during construction).
     pub fn new(thread_count: usize) -> FixedSizeAllocatorPool {
-        let max_allocator_count = thread_count.max(1);
+        let max_allocator_count = max(thread_count, 1);
         let mut allocators = Vec::with_capacity(max_allocator_count);
         let Ok(allocator) = FixedSizeAllocator::try_new(0) else {
             panic!("Failed to create initial fixed-size allocator for the pool");
