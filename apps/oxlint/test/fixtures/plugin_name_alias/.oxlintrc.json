@@ -1,9 +1,0 @@
-{
-  "plugins": ["jsdoc"],
-  "jsPlugins": [{ "name": "jsPluginJsDoc", "specifier": "./plugin.ts" }],
-  "categories": { "correctness": "off" },
-  "rules": {
-    "jsPluginJsDoc/no-debugger": "error",
-    "jsdoc/rule-name": "error"
-  }
-}

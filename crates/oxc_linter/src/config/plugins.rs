@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 /// - `@scope/eslint-plugin` → `@scope`
 /// - `@scope/eslint-plugin-foo` → `@scope/foo`
 ///
+/// This logic is replicated on JS side in `normalizePluginName` in `apps/oxlint/src-js/plugins/load.ts`.
+/// The 2 implementations must be kept in sync.
+///
 /// # Examples
 ///
 /// ```

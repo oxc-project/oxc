@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Debug, Display},
-    path::{Path, PathBuf},
+    path::{Component as PathComponent, Path, PathBuf},
 };
 
 use itertools::Itertools;
@@ -550,27 +550,33 @@ impl ConfigStoreBuilder {
             return Ok(());
         }
 
-        // Extract package name from `package.json` if available
-        let package_name = resolved.package_json().and_then(|pkg| pkg.name().map(String::from));
+        // Get plugin name.
+        // Use alias if provided.
+        // Otherwise use package name if the specifier is not relative, and normalize it.
+        let plugin_name = if let Some(alias_name) = alias {
+            Some(alias_name.to_string())
+        } else if let Some(pkg) = resolved.package_json()
+            && let Some(package_name) = pkg.name()
+            && !matches!(
+                Path::new(plugin_specifier).components().next(),
+                Some(PathComponent::CurDir | PathComponent::ParentDir)
+            )
+        {
+            Some(normalize_plugin_name(package_name).into_owned())
+        } else {
+            None
+        };
 
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
 
-        let result = (external_linter.load_plugin)(plugin_url, package_name).map_err(|error| {
-            ConfigBuilderError::PluginLoadFailed {
+        let result = (external_linter.load_plugin)(plugin_url, plugin_name, alias.is_some())
+            .map_err(|error| ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
                 error,
-            }
-        })?;
-
-        // Use alias if provided, otherwise normalize plugin name
-        let plugin_name = if let Some(alias_name) = alias {
-            alias_name.to_string()
-        } else {
-            // Normalize plugin name (e.g., "eslint-plugin-foo" -> "foo", "@foo/eslint-plugin" -> "@foo")
-            normalize_plugin_name(&result.name).into_owned()
-        };
+            })?;
+        let plugin_name = result.name;
 
         if LintPlugins::try_from(plugin_name.as_str()).is_err() {
             external_plugin_store.register_plugin(

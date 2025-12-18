@@ -962,7 +962,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(plugin, null);
+    registerPlugin(plugin, null, false);
 
     // Set up options
     const optionsId = setupOptions(test);

@@ -1,17 +1,15 @@
 import type { Plugin } from "#oxlint";
 
 const plugin: Plugin = {
-  meta: {
-    name: "legal-plugin-name",
-  },
+  // No name defined
   rules: {
-    "no-debugger": {
+    rule: {
       create(context) {
         return {
-          DebuggerStatement(debuggerStatement) {
+          Program(node) {
             context.report({
-              message: "Unexpected Debugger Statement",
-              node: debuggerStatement,
+              message: `filename: ${context.filename}`,
+              node,
             });
           },
         };
