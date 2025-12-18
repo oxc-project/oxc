@@ -72,29 +72,24 @@ impl FixedSizeAllocatorPool {
     /// # Panics
     /// * Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> Allocator {
-        fn into_allocator(allocator: FixedSizeAllocator) -> Allocator {
-            // SAFETY: `FixedSizeAllocator` is just a wrapper around `ManuallyDrop<Allocator>`,
-            // and is `#[repr(transparent)]`, so the 2 are equivalent.
-            let allocator =
-                unsafe { mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(allocator) };
-            ManuallyDrop::into_inner(allocator)
-        }
-
+        // Try to get an allocator from the pool
         {
             let maybe_allocator = self.allocators.lock().unwrap().pop();
             if let Some(allocator) = maybe_allocator {
-                return into_allocator(allocator);
+                return allocator.into_inner();
             }
         }
 
+        // Pool is empty. Try to create a new allocator.
         if let Some(Ok(allocator)) = self.create_new_allocator() {
-            return into_allocator(allocator);
+            return allocator.into_inner();
         }
 
+        // Pool cannot produce another allocator. Wait for an existing allocator to be returned to the pool.
         loop {
             let mut maybe_allocator = self.available.wait(self.allocators.lock().unwrap()).unwrap();
             if let Some(allocator) = maybe_allocator.pop() {
-                return into_allocator(allocator);
+                return allocator.into_inner();
             }
         }
     }
@@ -336,6 +331,19 @@ impl FixedSizeAllocator {
             let data_ptr = data_ptr.sub(offset);
             self.allocator.set_data_ptr(data_ptr);
         }
+    }
+
+    /// Unwrap a [`FixedSizeAllocator`] into the [`Allocator`] it contains.
+    ///
+    /// Caller must ensure that the returned `Allocator` is not dropped.
+    /// It must be wrapped in another type to ensure that it's dropped correctly.
+    #[inline] // Because this function is a no-op
+    fn into_inner(self) -> Allocator {
+        // SAFETY: `FixedSizeAllocator` is just a wrapper around `ManuallyDrop<Allocator>`,
+        // and is `#[repr(transparent)]`, so the 2 are equivalent
+        let allocator =
+            unsafe { mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(self) };
+        ManuallyDrop::into_inner(allocator)
     }
 }
 
