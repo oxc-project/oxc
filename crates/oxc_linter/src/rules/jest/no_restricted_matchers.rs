@@ -6,6 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -29,7 +30,7 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
