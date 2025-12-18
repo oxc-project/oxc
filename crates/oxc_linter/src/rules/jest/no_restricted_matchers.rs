@@ -35,6 +35,7 @@ pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
     /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
     /// The value is an optional custom message to display when the matcher/modifier is used.
+    #[serde(flatten)]
     restricted_matchers: FxHashMap<String, String>,
 }
 
