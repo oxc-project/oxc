@@ -2,12 +2,7 @@
 
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
-import {
-  hasOxfmtrcFile,
-  createBlankOxfmtrcFile,
-  saveOxfmtrcFile,
-  exitWithError,
-} from "./shared.js";
+import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
 
 /**
  * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json` file.

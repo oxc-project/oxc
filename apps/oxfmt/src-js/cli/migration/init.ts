@@ -1,11 +1,6 @@
 /* oxlint-disable no-console */
 
-import {
-  hasOxfmtrcFile,
-  createBlankOxfmtrcFile,
-  saveOxfmtrcFile,
-  exitWithError,
-} from "./shared.js";
+import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
 
 /**
  * Run the `--init` command to scaffold a default `.oxfmtrc.json` file.

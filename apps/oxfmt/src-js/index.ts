@@ -1,6 +1,12 @@
-import { format as napiFormat } from "./bindings.js";
-import { initExternalFormatter, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
+import { format as napiFormat } from "./bindings";
+import { resolvePlugins, formatEmbeddedCode, formatFile } from "./libs/prettier";
 
+// napi-JS `oxfmt` API entry point
+// See also `format()` function in `./src/main_napi.rs`
+
+/**
+ * Format the given source text according to the specified options.
+ */
 export async function format(fileName: string, sourceText: string, options?: FormatOptions) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
@@ -9,9 +15,9 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    initExternalFormatter,
-    formatEmbeddedCode,
-    formatFile,
+    resolvePlugins,
+    (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
   );
 }
 
