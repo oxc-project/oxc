@@ -8,6 +8,14 @@ expression: json
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```",
   "type": "object",
   "properties": {
+    "$schema": {
+      "description": "Schema URI for editor tooling.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "markdownDescription": "Schema URI for editor tooling."
+    },
     "categories": {
       "default": {},
       "allOf": [
@@ -136,11 +144,6 @@ expression: json
           "$ref": "#/definitions/OxlintSettings"
         }
       ]
-    },
-    "$schema": {
-      "type": "string",
-      "description": "Schema URI for editor tooling",
-      "markdownDescription": "Schema URI for editor tooling"
     }
   },
   "additionalProperties": false,

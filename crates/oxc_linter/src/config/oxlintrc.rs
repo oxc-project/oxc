@@ -68,6 +68,9 @@ use super::{
 #[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Oxlintrc {
+    /// Schema URI for editor tooling.
+    #[serde(rename = "$schema", default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<String>,
     /// Enabled built-in plugins for Oxlint.
     /// You can view the list of available plugins on
     /// [the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).
@@ -221,23 +224,6 @@ impl Oxlintrc {
 
         let mut json = serde_json::to_value(&schema).unwrap();
 
-        // inject "$schema" at the root for editor support without changing the struct
-        if let serde_json::Value::Object(map) = &mut json {
-            let props = map
-                .entry("properties")
-                .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
-            if let serde_json::Value::Object(props) = props {
-                props.insert(
-                    "$schema".to_string(),
-                    serde_json::json!({
-                        "type": "string",
-                        "description": "Schema URI for editor tooling",
-                        "markdownDescription": "Schema URI for editor tooling"
-                    }),
-                );
-            }
-        }
-
         // Inject markdown descriptions for better editor support
         Self::inject_markdown_descriptions(&mut json);
 
@@ -327,7 +313,10 @@ impl Oxlintrc {
             (None, None) => None,
         };
 
+        let schema = self.schema.clone().or(other.schema);
+
         Oxlintrc {
+            schema,
             plugins,
             external_plugins,
             categories,
@@ -480,5 +469,43 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"jsPlugins": ["./plugin2.ts"]}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.external_plugins.unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_oxlintrc_schema_field() {
+        // Test that $schema field is accepted and deserialized correctly
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{
+                "$schema": "./node_modules/oxlint/configuration_schema.json",
+                "rules": {
+                    "no-console": "warn"
+                }
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            config.schema,
+            Some("./node_modules/oxlint/configuration_schema.json".to_string())
+        );
+
+        // Test that config without $schema still works
+        let config_without_schema: Oxlintrc = serde_json::from_str(r#"{"rules": {}}"#).unwrap();
+        assert_eq!(config_without_schema.schema, None);
+
+        // Test serialization - $schema should be skipped when None
+        let serialized = serde_json::to_string(&config_without_schema).unwrap();
+        assert!(!serialized.contains("$schema"));
+
+        // Test merge - self takes priority over other
+        let config1: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema1.json"}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.schema, Some("schema1.json".to_string()));
+
+        // Test merge - when self has no schema, use other's schema
+        let config1: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.schema, Some("schema2.json".to_string()));
     }
 }
