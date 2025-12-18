@@ -495,5 +495,20 @@ mod test {
         // Test serialization - $schema should be skipped when None
         let serialized = serde_json::to_string(&config_without_schema).unwrap();
         assert!(!serialized.contains("$schema"));
+
+        // Test merge - self takes priority over other
+        let config1: Oxlintrc =
+            serde_json::from_str(r#"{"$schema": "schema1.json"}"#).unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.schema, Some("schema1.json".to_string()));
+
+        // Test merge - when self has no schema, use other's schema
+        let config1: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.schema, Some("schema2.json".to_string()));
     }
 }
