@@ -120,7 +120,9 @@ oxc_mangler = { version = "0.103.0", path = "crates/oxc_mangler" } # Name mangli
 oxc_minifier = { version = "0.103.0", path = "crates/oxc_minifier" } # Code minification
 oxc_minify_napi = { version = "0.103.0", path = "napi/minify" } # Node.js minifier binding
 oxc_napi = { version = "0.103.0", path = "crates/oxc_napi" } # NAPI utilities
-oxc_parser = { version = "0.103.0", path = "crates/oxc_parser", features = ["regular_expression"] } # JS/TS parser
+oxc_parser = { version = "0.103.0", path = "crates/oxc_parser", features = [
+  "regular_expression",
+] } # JS/TS parser
 oxc_parser_napi = { version = "0.103.0", path = "napi/parser" } # Node.js parser binding
 oxc_regular_expression = { version = "0.103.0", path = "crates/oxc_regular_expression" } # Regex parser
 oxc_semantic = { version = "0.103.0", path = "crates/oxc_semantic" } # Semantic analysis
@@ -199,7 +201,9 @@ lazy-regex = "3.4.2" # Lazy regex compilation
 log = "0.4.29" # Logging facade
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.7.6" # Fast byte searching
-miette = { package = "oxc-miette", version = "2.6.0", features = ["fancy-no-syscall"] } # Error reporting
+miette = { package = "oxc-miette", version = "2.6.0", features = [
+  "fancy-no-syscall",
+] } # Error reporting
 mimalloc-safe = "0.1.55" # Fast allocator
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers

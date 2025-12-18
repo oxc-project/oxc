@@ -62,6 +62,9 @@ impl SourceFormatter {
             FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name } => {
                 self.format_by_external_formatter_package_json(source_text, path, parser_name)
             }
+            FormatFileStrategy::TomlFormatter { path } => {
+                self.format_by_taplo(source_text, path)
+            }
             #[cfg(not(feature = "napi"))]
             FormatFileStrategy::ExternalFormatter { .. }
             | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
@@ -179,5 +182,38 @@ impl SourceFormatter {
         };
 
         self.format_by_external_formatter(&source_text, path, parser_name)
+    }
+
+    /// Format TOML file using taplo formatter.
+    #[expect(clippy::unnecessary_wraps)]
+    fn format_by_taplo(
+        &self,
+        source_text: &str,
+        _path: &Path,
+    ) -> Result<String, OxcDiagnostic> {
+        use oxc_formatter::{IndentStyle, LineEnding, TrailingCommas};
+
+        // Map oxfmt options to taplo options
+        let indent_string = if self.format_options.indent_style == IndentStyle::Tab {
+            "\t".to_string()
+        } else {
+            " ".repeat(usize::from(self.format_options.indent_width.value()))
+        };
+
+        let options = taplo::formatter::Options {
+            indent_string,
+            column_width: usize::from(self.format_options.line_width.value()),
+            crlf: self.format_options.line_ending == LineEnding::Crlf,
+            array_trailing_comma: self.format_options.trailing_commas != TrailingCommas::None,
+            trailing_newline: true,
+            align_comments: false,
+            align_single_comments: false,
+            // Use taplo defaults for all other options
+            ..Default::default()
+        };
+
+        let formatted = taplo::formatter::format(source_text, options);
+
+        Ok(formatted)
     }
 }

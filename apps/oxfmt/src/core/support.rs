@@ -21,6 +21,9 @@ pub enum FormatFileStrategy {
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
+    TomlFormatter {
+        path: PathBuf,
+    },
 }
 
 impl TryFrom<PathBuf> for FormatFileStrategy {
@@ -45,7 +48,8 @@ impl FormatFileStrategy {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::ExternalFormatter { path, .. }
-            | Self::ExternalFormatterPackageJson { path, .. } => path,
+            | Self::ExternalFormatterPackageJson { path, .. }
+            | Self::TomlFormatter { path } => path,
         }
     }
 }
@@ -100,6 +104,13 @@ fn get_external_format_source(path: PathBuf) -> Option<FormatFileStrategy> {
         && YAML_EXTENSIONS.contains(ext)
     {
         return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "yaml" });
+    }
+
+    // TOML
+    if let Some(ext) = extension
+        && TOML_EXTENSIONS.contains(ext)
+    {
+        return Some(FormatFileStrategy::TomlFormatter { path });
     }
 
     // Markdown and variants
@@ -312,6 +323,10 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "yaml-tmlanguage",
 };
 
+static TOML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "toml",
+};
+
 // ---
 
 #[cfg(test)]
@@ -324,6 +339,7 @@ mod tests {
                 FormatFileStrategy::ExternalFormatter { parser_name, .. }
                 | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. },
             ) => Some(parser_name),
+            Some(FormatFileStrategy::TomlFormatter { .. }) => Some("toml"),
             _ => None,
         }
     }
@@ -375,6 +391,9 @@ mod tests {
             ("config.yml", Some("yaml")),
             ("settings.yaml", Some("yaml")),
             ("grammar.sublime-syntax", Some("yaml")),
+            // TOML
+            ("config.toml", Some("toml")),
+            ("Cargo.toml", Some("toml")),
             // Excluded lock files
             ("package-lock.json", None),
             ("pnpm-lock.yaml", None),

@@ -237,7 +237,10 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     };
 
                     #[cfg(not(feature = "napi"))]
-                    if !matches!(format_file_source, FormatFileStrategy::OxcFormatter { .. }) {
+                    if !matches!(
+                        format_file_source,
+                        FormatFileStrategy::OxcFormatter { .. } | FormatFileStrategy::TomlFormatter { .. }
+                    ) {
                         return ignore::WalkState::Continue;
                     }
 

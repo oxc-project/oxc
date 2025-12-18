@@ -9,6 +9,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "ahash"
+version = "0.8.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
+dependencies = [
+ "cfg-if",
+ "getrandom 0.3.4",
+ "once_cell",
+ "version_check",
+ "zerocopy",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -45,6 +58,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arc-swap"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
+
+[[package]]
 name = "arraydeque"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -77,6 +96,12 @@ dependencies = [
  "outref",
  "vsimd",
 ]
+
+[[package]]
+name = "beef"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 
 [[package]]
 name = "bincode"
@@ -150,7 +175,7 @@ checksum = "fefb4feeec9a091705938922f26081aad77c64cd2e76cd1c4a9ece8e42e1618a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -383,6 +408,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "countme"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
+
+[[package]]
 name = "cow-utils"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -503,7 +534,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -514,7 +545,7 @@ checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
 dependencies = [
  "darling_core",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -558,7 +589,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -568,7 +599,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
 dependencies = [
  "derive_builder_core",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -589,7 +620,7 @@ checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -833,7 +864,7 @@ checksum = "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -915,7 +946,7 @@ dependencies = [
  "bstr",
  "log",
  "regex-automata",
- "regex-syntax",
+ "regex-syntax 0.8.8",
 ]
 
 [[package]]
@@ -951,7 +982,7 @@ dependencies = [
  "pest_derive",
  "serde",
  "serde_json",
- "thiserror",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -1219,6 +1250,15 @@ checksum = "7655c9839580ee829dfacba1d1278c2b7883e50a277ff7541299489d6bdfdc45"
 
 [[package]]
 name = "itertools"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -1262,7 +1302,7 @@ checksum = "03343451ff899767262ec32146f6d559dd759fdadf42ff0e227c7c48f72594b4"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1316,7 +1356,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1392,6 +1432,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "logos"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf8b031682c67a8e3d5446840f9573eb7fe26efe7ec8d195c9ac4c0647c502f1"
+dependencies = [
+ "logos-derive",
+]
+
+[[package]]
+name = "logos-derive"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d849148dbaf9661a6151d1ca82b13bb4c4c128146a88d05253b38d4e2f496c"
+dependencies = [
+ "beef",
+ "fnv",
+ "proc-macro2",
+ "quote",
+ "regex-syntax 0.6.29",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "ls-types"
 version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1418,6 +1481,15 @@ name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
+
+[[package]]
+name = "memoffset"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
+dependencies = [
+ "autocfg",
+]
 
 [[package]]
 name = "mimalloc-safe"
@@ -1450,7 +1522,7 @@ dependencies = [
  "napi-build",
  "napi-sys",
  "nohash-hasher",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "tokio",
@@ -1473,7 +1545,7 @@ dependencies = [
  "napi-derive-backend",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1486,7 +1558,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "semver",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1659,10 +1731,10 @@ dependencies = [
  "bincode 2.0.1",
  "flate2",
  "nom",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
- "thiserror",
+ "thiserror 2.0.17",
  "time",
 ]
 
@@ -1676,7 +1748,7 @@ dependencies = [
  "owo-colors",
  "oxc-miette-derive",
  "textwrap",
- "thiserror",
+ "thiserror 2.0.17",
  "unicode-segmentation",
  "unicode-width",
 ]
@@ -1689,7 +1761,7 @@ checksum = "003b4612827f6501183873fb0735da92157e3c7daa71c40921c7d2758fec2229"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1716,7 +1788,7 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_data_structures",
  "oxc_estree",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
 ]
@@ -1743,7 +1815,7 @@ dependencies = [
  "phf",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1755,7 +1827,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "indexmap",
- "itertools",
+ "itertools 0.14.0",
  "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
@@ -1773,10 +1845,10 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rayon",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
- "syn",
+ "syn 2.0.110",
  "toml",
 ]
 
@@ -1810,7 +1882,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
 ]
@@ -1820,11 +1892,11 @@ name = "oxc_cfg"
 version = "0.103.0"
 dependencies = [
  "bitflags",
- "itertools",
+ "itertools 0.14.0",
  "oxc_index",
  "oxc_syntax",
  "petgraph",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -1846,7 +1918,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -1856,7 +1928,7 @@ dependencies = [
  "cow-utils",
  "oxc-browserslist",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
 ]
 
@@ -1871,7 +1943,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -1884,7 +1956,7 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "futures",
- "itertools",
+ "itertools 0.14.0",
  "lazy-regex",
  "oxc",
  "oxc_formatter",
@@ -1893,7 +1965,7 @@ dependencies = [
  "phf",
  "pico-args",
  "rayon",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "saphyr",
  "serde",
  "serde_json",
@@ -1958,7 +2030,7 @@ dependencies = [
  "phf",
  "pico-args",
  "project-root",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "unicode-width",
@@ -1989,7 +2061,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2009,7 +2081,7 @@ dependencies = [
  "oxc_linter",
  "oxc_parser",
  "papaya",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "tokio",
@@ -2029,7 +2101,7 @@ dependencies = [
  "ignore",
  "indexmap",
  "insta",
- "itertools",
+ "itertools 0.14.0",
  "javascript-globals",
  "json-strip-comments",
  "language-tags",
@@ -2059,7 +2131,7 @@ dependencies = [
  "project-root",
  "rayon",
  "rust-lapper",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "self_cell",
  "serde",
  "serde_json",
@@ -2074,8 +2146,8 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "project-root",
- "rustc-hash",
- "syn",
+ "rustc-hash 2.1.1",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2083,17 +2155,17 @@ name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
  "convert_case",
- "itertools",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
 name = "oxc_mangler"
 version = "0.103.0"
 dependencies = [
- "itertools",
+ "itertools 0.14.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
@@ -2102,7 +2174,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2129,7 +2201,7 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2167,7 +2239,7 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer_plugins",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "similar-asserts",
 ]
 
@@ -2204,7 +2276,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "seq-macro",
 ]
 
@@ -2220,7 +2292,7 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_estree",
  "oxc_napi",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2236,7 +2308,7 @@ dependencies = [
  "oxc_linter",
  "oxc_napi",
  "oxc_transformer_plugins",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
 ]
@@ -2254,7 +2326,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "similar",
  "walkdir",
 ]
@@ -2270,7 +2342,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_span",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "unicode-id-start",
 ]
 
@@ -2287,14 +2359,14 @@ dependencies = [
  "once_cell",
  "papaya",
  "parking_lot",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "rustix",
  "self_cell",
  "serde",
  "serde_json",
  "simd-json",
  "simdutf8",
- "thiserror",
+ "thiserror 2.0.17",
  "tracing",
  "url",
  "windows",
@@ -2309,7 +2381,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2317,7 +2389,7 @@ name = "oxc_semantic"
 version = "0.103.0"
 dependencies = [
  "insta",
- "itertools",
+ "itertools 0.14.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2330,7 +2402,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "self_cell",
  "serde_json",
 ]
@@ -2346,7 +2418,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
 ]
@@ -2406,7 +2478,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2448,7 +2520,7 @@ dependencies = [
  "oxc",
  "oxc_napi",
  "oxc_sourcemap",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2476,7 +2548,7 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "sha1",
@@ -2505,7 +2577,7 @@ dependencies = [
  "oxc_transformer",
  "oxc_traverse",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "similar",
 ]
 
@@ -2522,7 +2594,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]
@@ -2550,6 +2622,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "sort-package-json",
+ "taplo",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -2579,7 +2652,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "rayon",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "simdutf8",
@@ -2657,7 +2730,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2723,7 +2796,7 @@ dependencies = [
  "phf_shared",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2792,7 +2865,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
 dependencies = [
  "proc-macro2",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2871,7 +2944,7 @@ checksum = "b7186006dcb21920990093f30e3dea63b7d6e977bf1256be20c3563a5db070da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -2883,7 +2956,7 @@ dependencies = [
  "aho-corasick",
  "memchr",
  "regex-automata",
- "regex-syntax",
+ "regex-syntax 0.8.8",
 ]
 
 [[package]]
@@ -2894,8 +2967,14 @@ checksum = "5276caf25ac86c8d810222b3dbb938e512c55c6831a10f3e6ed1c93b84041f1c"
 dependencies = [
  "aho-corasick",
  "memchr",
- "regex-syntax",
+ "regex-syntax 0.8.8",
 ]
+
+[[package]]
+name = "regex-syntax"
+version = "0.6.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
 
 [[package]]
 name = "regex-syntax"
@@ -2928,6 +3007,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rowan"
+version = "0.15.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4f1e4a001f863f41ea8d0e6a0c34b356d5b733db50dadab3efef640bafb779b"
+dependencies = [
+ "countme",
+ "hashbrown 0.14.5",
+ "memoffset",
+ "rustc-hash 1.1.0",
+ "text-size",
+]
+
+[[package]]
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
@@ -2940,7 +3032,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
- "rustc-hash",
+ "rustc-hash 2.1.1",
  "serde",
 ]
 
@@ -2952,6 +3044,12 @@ checksum = "2274b9cc4f205bc0945b7be3e4fc1a102b0b7119ba6482faaedb9c4f76dde5d1"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc-hash"
@@ -3112,7 +3210,7 @@ checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3123,7 +3221,7 @@ checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3317,6 +3415,17 @@ dependencies = [
 
 [[package]]
 name = "syn"
+version = "1.0.109"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
 version = "2.0.110"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a99801b5bd34ede4cf3fc688c5919368fea4e4814a4664359503e6015b280aea"
@@ -3340,7 +3449,28 @@ checksum = "728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
+]
+
+[[package]]
+name = "taplo"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c221a50eef1a5493074f11ca1ed62bef28c05a4d925002944cc686b2e783a5b3"
+dependencies = [
+ "ahash",
+ "arc-swap",
+ "either",
+ "globset",
+ "itertools 0.10.5",
+ "logos",
+ "once_cell",
+ "rowan",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "time",
+ "tracing",
 ]
 
 [[package]]
@@ -3357,6 +3487,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "text-size"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
+
+[[package]]
 name = "textwrap"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3369,11 +3505,31 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+dependencies = [
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
 version = "2.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f63587ca0f12b72a0600bcba1d40081f830876000bb46dd2337a3051618f4fc8"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 2.0.17",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3384,7 +3540,7 @@ checksum = "3ff15c8ecd7de3849db632e14d18d2571fa09dfc5ed93479bc4485c7a517c913"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3457,7 +3613,7 @@ checksum = "af407857209536a95c8e56f8231ef2c2e2aff839b22e07a1ffcbc617e9db9fa5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3577,7 +3733,7 @@ checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3834,7 +3990,7 @@ dependencies = [
  "bumpalo",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
  "wasm-bindgen-shared",
 ]
 
@@ -3861,7 +4017,7 @@ name = "website_common"
 version = "0.0.0"
 dependencies = [
  "handlebars",
- "itertools",
+ "itertools 0.14.0",
  "oxc-schemars",
  "serde",
  "serde_json",
@@ -3887,7 +4043,7 @@ version = "0.0.0"
 dependencies = [
  "bpaf",
  "insta",
- "itertools",
+ "itertools 0.14.0",
  "oxc-schemars",
  "oxc_linter",
  "oxlint",
@@ -3958,7 +4114,7 @@ checksum = "053e2e040ab57b9dc951b72c264860db7eb3b0200ba345b4e4c3b14f67855ddf"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -3969,7 +4125,7 @@ checksum = "3f316c4a2570ba26bbec722032c4099d8c8bc095efccdc15688708623367e358"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -4143,7 +4299,7 @@ checksum = "b659052874eb698efe5b9e8cf382204678a0086ebf46982b79d6ca3182927e5d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
  "synstructure",
 ]
 
@@ -4164,7 +4320,7 @@ checksum = "88d2b8d9c68ad2b9e4340d7832716a4d21a22a1154777ad56ea55c51a9cf3831"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
 
 [[package]]
@@ -4184,7 +4340,7 @@ checksum = "d71e5d6e06ab090c67b5e44993ec16b72dcbaabc526db883a360057678b48502"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
  "synstructure",
 ]
 
@@ -4225,5 +4381,5 @@ checksum = "eadce39539ca5cb3985590102671f2567e659fca9666581ad3411d59207951f3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.110",
 ]
