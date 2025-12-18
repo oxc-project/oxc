@@ -47,6 +47,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    TailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
@@ -1025,24 +1026,37 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        use crate::formatter::format_element::tag::Tag;
+        // Check if this is a tailwind class string that needs sorting
+        let (is_tailwind_class, is_jsx) =
+            f.options().experimental_tailwindcss.as_ref().map_or_else(
+                || {
+                    (false, /* is_jsx */ matches!(self.parent, AstNodes::JSXAttribute(_)))
+                },
+                |tailwind_options| {
+                    match self.parent {
+                        // Check if parent is a JSX attribute (class/className or custom tailwindAttributes)
+                        AstNodes::JSXAttribute(attr) => {
+                            (
+                                is_tailwind_jsx_attribute(&attr.name, tailwind_options),
+                                /* is_jsx */ true,
+                            )
+                        }
+                        // Check if parent is a call expression with a tailwind function name
+                        AstNodes::CallExpression(call) => {
+                            (
+                                is_tailwind_function_call(&call.callee, tailwind_options),
+                                /* is_jsx */ false,
+                            )
+                        }
+                        _ => {
+                            (false, /* is_jsx */ false)
+                        }
+                    }
+                },
+            );
 
-        let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
-
-        // Check if this is a string literal argument to a tailwind function
-        let is_tailwind_function_arg =
-            if let Some(tailwind_options) = &f.options().experimental_tailwindcss {
-                if let AstNodes::CallExpression(call) = self.parent {
-                    is_tailwind_function_call(&call.callee, tailwind_options)
-                } else {
-                    false
-                }
-            } else {
-                false
-            };
-
-        if is_tailwind_function_arg {
-            let index = f.context().add_tailwind_class(self.value.to_string());
+        if is_tailwind_class {
+            let index = f.context_mut().add_tailwind_class(self.value.to_string());
             let quote = if is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
@@ -1072,30 +1086,44 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     }
 }
 
+/// Check if a JSX attribute is a tailwind class attribute (class/className or custom tailwindAttributes)
+fn is_tailwind_jsx_attribute(
+    attr_name: &JSXAttributeName<'_>,
+    tailwind_options: &crate::options::TailwindcssOptions,
+) -> bool {
+    let JSXAttributeName::Identifier(ident) = attr_name else {
+        return false;
+    };
+    let name = ident.name.as_str();
+
+    // Default attributes: `class` and `className`
+    let is_default_attr = name == "class" || name == "className";
+
+    if is_default_attr {
+        return true;
+    }
+
+    // Custom attributes from `tailwindAttributes` option
+    tailwind_options
+        .tailwind_attributes
+        .as_ref()
+        .is_some_and(|attrs| attrs.iter().any(|a| a == name))
+}
+
 /// Check if a callee expression is a tailwind function (e.g., `clsx`, `cn`, `tw`)
 fn is_tailwind_function_call(
     callee: &Expression<'_>,
-    tailwind_options: &crate::options::TailwindcssOptions,
+    tailwind_options: &TailwindcssOptions,
 ) -> bool {
     let Some(functions) = &tailwind_options.tailwind_functions else {
         return false;
     };
 
-    let callee_name = match callee {
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
-        // Handle member expressions like `clsx.default` or `cn.clsx`
-        Expression::StaticMemberExpression(member) => {
-            // Check the object name (e.g., `clsx` in `clsx.default`)
-            if let Expression::Identifier(ident) = &member.object {
-                Some(ident.name.as_str())
-            } else {
-                None
-            }
-        }
-        _ => None,
+    let Expression::Identifier(ident) = callee else {
+        return false;
     };
 
-    callee_name.is_some_and(|name| functions.iter().any(|f| f == name))
+    functions.iter().any(|f| f == ident.name.as_str())
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
