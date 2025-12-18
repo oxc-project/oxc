@@ -29,6 +29,31 @@ fn bench_parser(criterion: &mut Criterion) {
     group.finish();
 }
 
+fn bench_parser_with_tokens(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("parser_tokens");
+    for file in TestFiles::minimal().files() {
+        let id = BenchmarkId::from_parameter(&file.file_name);
+        let source_text = &file.source_text;
+        let source_type = file.source_type;
+        group.bench_function(id, |b| {
+            // Do not include initializing allocator in benchmark.
+            // User code would likely reuse the same allocator over and over to parse multiple files,
+            // so we do the same here.
+            let mut allocator = Allocator::default();
+            b.iter(|| {
+                Parser::new(&allocator, source_text, source_type)
+                    .with_options(ParseOptions {
+                        parse_regular_expression: true,
+                        ..ParseOptions::default()
+                    })
+                    .parse();
+                allocator.reset();
+            });
+        });
+    }
+    group.finish();
+}
+
 fn bench_estree(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("estree");
     for file in TestFiles::complicated().files().iter().take(1) {
@@ -60,5 +85,5 @@ fn bench_estree(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree);
+criterion_group!(parser, bench_parser, bench_parser_with_tokens, bench_estree);
 criterion_main!(parser);
