@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_allocator::{Allocator, BitSet, CloneIn};
+use oxc_allocator::{Allocator, BitSet};
 use oxc_ast::{
     AstKind,
     ast::{BindingPatternKind, Expression, VariableDeclarationKind},
@@ -296,7 +296,8 @@ impl Rule for NoUselessAssignment {
                                     let mut loop_requirements =
                                         BitSet::new_in(num_symbols, &allocator);
                                     let mut visited = BitSet::new_in(num_blocks, &allocator);
-                                    let killed_on_path = BitSet::new_in(num_symbols, &allocator);
+                                    let mut killed_on_path =
+                                        BitSet::new_in(num_symbols, &allocator);
 
                                     Self::analyze_loop_recursive(
                                         ctx,
@@ -304,7 +305,7 @@ impl Rule for NoUselessAssignment {
                                         loop_header,
                                         &cfg_ops,
                                         &mut loop_requirements,
-                                        killed_on_path,
+                                        &mut killed_on_path,
                                         &mut visited,
                                         &allocator, // <--- Pass the allocator here
                                     );
@@ -510,7 +511,7 @@ impl NoUselessAssignment {
         loop_header_id: BlockNodeId,
         cfg_ops: &CfgOps,
         result_gen: &mut BitSet,
-        mut killed_on_path: BitSet,
+        killed_on_path: &mut BitSet, // Changed to mutable reference
         visited: &mut BitSet,
         allocator: &Allocator,
     ) {
@@ -521,11 +522,13 @@ impl NoUselessAssignment {
         }
         visited.set_bit(block_id.index());
 
+        // Track bits we set in THIS block so we can undo them later
+        let mut newly_killed = Vec::new();
+
         if let Some(block_ops_vec) = &cfg_ops[block_id] {
             for (symbol_id, ops) in block_ops_vec {
                 let sym_idx = symbol_id.index();
 
-                // If already Live-In globally, or Killed on this specific path, skip.
                 if result_gen.has_bit(sym_idx) || killed_on_path.has_bit(sym_idx) {
                     continue;
                 }
@@ -537,6 +540,7 @@ impl NoUselessAssignment {
                         }
                         Operation::Write => {
                             killed_on_path.set_bit(sym_idx);
+                            newly_killed.push(sym_idx); // Remember to backtrack
                         }
                     }
                 }
@@ -551,19 +555,25 @@ impl NoUselessAssignment {
                         continue;
                     }
 
+                    // Pass the same mutable bitset down
                     Self::analyze_loop_recursive(
                         ctx,
                         target,
                         loop_header_id,
                         cfg_ops,
                         result_gen,
-                        killed_on_path.clone_in(allocator),
+                        killed_on_path,
                         visited,
                         allocator,
                     );
                 }
                 _ => {}
             }
+        }
+
+        // BACKTRACK: Remove only the bits that this specific block call added
+        for sym_idx in newly_killed {
+            killed_on_path.remove(sym_idx);
         }
     }
 
