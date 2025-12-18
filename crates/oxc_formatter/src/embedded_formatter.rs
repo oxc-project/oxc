@@ -7,6 +7,8 @@ pub type EmbeddedFormatterCallback =
 
 /// Callback function type for sorting Tailwind CSS classes.
 /// Takes (filepath, classes) and returns the sorted versions.
+/// - `filepath`: Path to the file being formatted (for locating tailwind.config.js)
+/// - `classes`: List of class strings to sort
 pub type TailwindCallback = Arc<dyn Fn(&str, Vec<String>) -> Vec<String> + Send + Sync>;
 
 /// Formatter for embedded languages in template literals.
