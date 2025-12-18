@@ -35,4 +35,15 @@ allowedDeprecated();
 // This SHOULD error because notAllowedDeprecated is NOT in the allow list
 notAllowedDeprecated();
 
-export { result, customStr };
+// Test no-misused-spread with allow option
+// Spreading a function triggers the rule
+function allowedFunc() { return 1; }
+function notAllowedFunc() { return 2; }
+
+// This should NOT error because allowedFunc is in the allow list
+const allowedSpread = { ...allowedFunc };
+
+// This SHOULD error because notAllowedFunc is NOT in the allow list
+const notAllowedSpread = { ...notAllowedFunc };
+
+export { result, customStr, allowedSpread, notAllowedSpread };

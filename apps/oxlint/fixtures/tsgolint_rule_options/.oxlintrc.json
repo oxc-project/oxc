@@ -22,6 +22,14 @@
           { "from": "file", "name": "allowedDeprecated" }
         ]
       }
+    ],
+    "typescript/no-misused-spread": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedFunc" }
+        ]
+      }
     ]
   }
 }

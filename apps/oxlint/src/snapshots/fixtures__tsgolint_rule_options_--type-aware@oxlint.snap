@@ -14,7 +14,15 @@ working directory: fixtures/tsgolint_rule_options
  37 | 
     `----
 
-Found 0 warnings and 1 error.
+  x typescript-eslint(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior. Did you forget to call the function?
+    ,-[test.ts:47:28]
+ 46 | // This SHOULD error because notAllowedFunc is NOT in the allow list
+ 47 | const notAllowedSpread = { ...notAllowedFunc };
+    :                            ^^^^^^^^^^^^^^^^^
+ 48 | 
+    `----
+
+Found 0 warnings and 2 errors.
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors
