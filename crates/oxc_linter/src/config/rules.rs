@@ -249,7 +249,12 @@ impl<'de> Deserialize<'de> for OxlintRules {
 }
 
 fn parse_rule_key(name: &str) -> (String, String) {
-    let Some((plugin_name, rule_name)) = name.split_once('/') else {
+    // For scoped packages (starting with `@`), split at the last `/` to handle
+    // packages like `@eslint-react/naming-convention` with rule `rule-name`.
+    // For non-scoped packages, split at the first `/`.
+    let parts = if name.starts_with('@') { name.rsplit_once('/') } else { name.split_once('/') };
+
+    let Some((plugin_name, rule_name)) = parts else {
         return (
             RULES
                 .iter()
@@ -275,8 +280,8 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "import-x" => ("import", rule_name),
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
-        // e.g. "@next/next/google-font-display"
-        "@next" => ("nextjs", rule_name.trim_start_matches("next/")),
+        // e.g. "@next/google-font-display", "@next/next/google-font-display"
+        "@next" | "@next/next" => ("nextjs", rule_name),
         // For backwards compatibility, react hook rules reside in the react plugin.
         "react-hooks" => ("react", rule_name),
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
@@ -374,6 +379,9 @@ mod test {
             "foo/no-unused-vars": [1],
             "dummy": ["error", "arg1", "args2"],
             "@next/next/noop": 2,
+            "@next/something": "error",
+            "@tanstack/query/exhaustive-deps": "warn",
+            "@scope/whatever": "warn",
         }))
         .unwrap();
         let mut rules = rules.rules.iter();
@@ -396,11 +404,32 @@ mod test {
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config.as_slice(), &[serde_json::json!("arg1"), serde_json::json!("args2")]);
 
+        // `@next/next` is aliased to `nextjs`
         let r4 = rules.next().unwrap();
         assert_eq!(r4.rule_name, "noop");
         assert_eq!(r4.plugin_name, "nextjs");
         assert!(r4.severity.is_warn_deny());
         assert!(r4.config.is_empty());
+
+        // `@next` is also aliased to `nextjs`
+        let r5 = rules.next().unwrap();
+        assert_eq!(r5.rule_name, "something");
+        assert_eq!(r5.plugin_name, "nextjs");
+        assert!(r5.severity.is_warn_deny());
+        assert!(r5.config.is_empty());
+
+        // Scoped package with nested name - split at last `/`
+        let r6 = rules.next().unwrap();
+        assert_eq!(r6.rule_name, "exhaustive-deps");
+        assert_eq!(r6.plugin_name, "@tanstack/query");
+        assert!(r6.severity.is_warn_deny());
+        assert!(r6.config.is_empty());
+
+        let r7 = rules.next().unwrap();
+        assert_eq!(r7.rule_name, "whatever");
+        assert_eq!(r7.plugin_name, "@scope");
+        assert!(r7.severity.is_warn_deny());
+        assert!(r7.config.is_empty());
     }
 
     #[test]
