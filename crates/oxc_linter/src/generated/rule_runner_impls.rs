@@ -2742,6 +2742,7 @@ impl RuleRunner for crate::rules::typescript::no_import_type_side_effects::NoImp
 
 impl RuleRunner for crate::rules::typescript::no_inferrable_types::NoInferrableTypes {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
         AstType::ArrowFunctionExpression,
         AstType::Function,
         AstType::PropertyDefinition,
