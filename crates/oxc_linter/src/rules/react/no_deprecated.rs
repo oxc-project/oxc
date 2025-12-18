@@ -468,92 +468,145 @@ fn test() {
         ("ReactDOMServer.renderToStaticMarkup(element);", None, None),
         (
             "
-            var Foo = createReactClass({
-              render: function() {}
-            })
-            ",
+			        var Foo = createReactClass({
+			          render: function() {}
+			        })
+			      ",
             None,
             None,
         ),
         (
             "
-            var Foo = createReactClassNonReact({
-              componentWillMount: function() {},
-              componentWillReceiveProps: function() {},
-              componentWillUpdate: function() {}
-            });
-            ",
+			        var Foo = createReactClassNonReact({
+			          componentWillMount: function() {},
+			          componentWillReceiveProps: function() {},
+			          componentWillUpdate: function() {}
+			        });
+			      ",
             None,
             None,
         ),
         (
             "
-            var Foo = {
-              componentWillMount: function() {},
-              componentWillReceiveProps: function() {},
-              componentWillUpdate: function() {}
-            };
-            ",
+			        var Foo = {
+			          componentWillMount: function() {},
+			          componentWillReceiveProps: function() {},
+			          componentWillUpdate: function() {}
+			        };
+			      ",
             None,
             None,
         ),
         (
             "
-            class Foo {
-              constructor() {}
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            }
-            ",
+			        class Foo {
+			          constructor() {}
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        }
+			      ",
             None,
             None,
         ),
-        // Version-based tests - skipped (requires settings support)
-        // Pragma tests - skipped (requires settings support)
+        (
+            "React.renderComponent()",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "version": "0.11.0" } } })),
+        ),
+        (
+            "React.createClass()",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "version": "15.4.0" } } })),
+        ),
+        (
+            "PropTypes",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "version": "15.4.0" } } })),
+        ),
+        (
+            "
+			        class Foo extends React.Component {
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        }
+			      ",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "version": "16.8.0" } } })),
+        ),
         (
             r#"
-            import React from "react";
-            let { default: defaultReactExport, ...allReactExports } = React;
-            "#,
+			        import React from "react";
+
+			        let { default: defaultReactExport, ...allReactExports } = React;
+			      "#,
             None,
             None,
         ),
         (
             "
-            import ReactDOM, { createRoot } from 'react-dom/client';
-            ReactDOM.createRoot(container);
-            const root = createRoot(container);
-            root.unmount();
-            ",
+			        import { render, hydrate } from 'react-dom';
+			        import { renderToNodeStream } from 'react-dom/server';
+			        ReactDOM.render(element, container);
+			        ReactDOM.unmountComponentAtNode(container);
+			        ReactDOMServer.renderToNodeStream(element);
+			      ",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "version": "17.999.999" } } })),
+        ),
+        (
+            "
+			        import ReactDOM, { createRoot } from 'react-dom/client';
+			        ReactDOM.createRoot(container);
+			        const root = createRoot(container);
+			        root.unmount();
+			      ",
             None,
             None,
         ),
         (
             "
-            import ReactDOM, { hydrateRoot } from 'react-dom/client';
-            ReactDOM.hydrateRoot(container, <App/>);
-            hydrateRoot(container, <App/>);
-            ",
+			        import ReactDOM, { hydrateRoot } from 'react-dom/client';
+			        ReactDOM.hydrateRoot(container, <App/>);
+			        hydrateRoot(container, <App/>);
+			      ",
             None,
             None,
         ),
         (
             "
-            import ReactDOMServer, { renderToPipeableStream } from 'react-dom/server';
-            ReactDOMServer.renderToPipeableStream(<App />, {});
-            renderToPipeableStream(<App />, {});
-            ",
+			        import ReactDOMServer, { renderToPipeableStream } from 'react-dom/server';
+			        ReactDOMServer.renderToPipeableStream(<App />, {});
+			        renderToPipeableStream(<App />, {});
+			      ",
             None,
             None,
         ),
-        ("import { renderToString } from 'react-dom/server';", None, None),
-        ("const { renderToString } = require('react-dom/server');", None, None),
+        (
+            "
+			        import { renderToString } from 'react-dom/server';
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        const { renderToString } = require('react-dom/server');
+			      ",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
         ("React.renderComponent()", None, None),
-        // Pragma tests - skipped
+        (
+            "Foo.renderComponent()",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "pragma": "Foo" } } })),
+        ),
+        ("/** @jsx Foo */ Foo.renderComponent()", None, None),
         ("this.transferPropsTo()", None, None),
         ("React.addons.TestUtils", None, None),
         ("React.addons.classSet()", None, None),
@@ -563,150 +616,143 @@ fn test() {
         ("React.renderToString(element);", None, None),
         ("React.renderToStaticMarkup(element);", None, None),
         ("React.createClass({});", None, None),
-        // Pragma tests - skipped
+        (
+            "Foo.createClass({});",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "pragma": "Foo" } } })),
+        ),
         ("React.PropTypes", None, None),
         ("var {createClass} = require('react');", None, None),
         ("var {createClass, PropTypes} = require('react');", None, None),
         ("import {createClass} from 'react';", None, None),
         ("import {createClass, PropTypes} from 'react';", None, None),
-        // Destructuring from React variable
         (
             "
-            import React from 'react';
-            const {createClass, PropTypes} = React;
-            ",
+			      import React from 'react';
+			      const {createClass, PropTypes} = React;
+			    ",
             None,
             None,
         ),
         ("import {printDOM} from 'react-addons-perf';", None, None),
-        // Destructuring from ReactPerf variable (require)
         (
             "
-            const ReactPerf = require('react-addons-perf');
-            const {printDOM} = ReactPerf;
-            ",
-            None,
-            None,
-        ),
-        // Destructuring from ReactPerf variable (import)
-        (
-            "
-            import ReactPerf from 'react-addons-perf';
-            const {printDOM} = ReactPerf;
-            ",
+			        import ReactPerf from 'react-addons-perf';
+			        const {printDOM} = ReactPerf;
+			      ",
             None,
             None,
         ),
         ("React.DOM.div", None, None),
         (
             "
-            class Bar extends React.PureComponent {
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            };
-            ",
+			        class Bar extends React.PureComponent {
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        };
+			      ",
             None,
             None,
         ),
         (
             "
-            function Foo() {
-              return class Bar extends React.PureComponent {
-                componentWillMount() {}
-                componentWillReceiveProps() {}
-                componentWillUpdate() {}
-              };
-            }
-            ",
+			        function Foo() {
+			          return class Bar extends React.PureComponent {
+			            componentWillMount() {}
+			            componentWillReceiveProps() {}
+			            componentWillUpdate() {}
+			          };
+			        }
+			      ",
             None,
             None,
         ),
         (
             "
-            class Bar extends PureComponent {
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            };
-            ",
+			        class Bar extends PureComponent {
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        };
+			      ",
             None,
             None,
         ),
         (
             "
-            class Foo extends React.Component {
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            }
-            ",
+			        class Foo extends React.Component {
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        }
+			      ",
             None,
             None,
         ),
         (
             "
-            class Foo extends Component {
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            }
-            ",
+			        class Foo extends Component {
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        }
+			      ",
             None,
             None,
         ),
         (
             "
-            var Foo = createReactClass({
-              componentWillMount: function() {},
-              componentWillReceiveProps: function() {},
-              componentWillUpdate: function() {}
-            })
-            ",
+			        var Foo = createReactClass({
+			          componentWillMount: function() {},
+			          componentWillReceiveProps: function() {},
+			          componentWillUpdate: function() {}
+			        })
+			      ",
             None,
             None,
         ),
         (
             "
-            class Foo extends React.Component {
-              constructor() {}
-              componentWillMount() {}
-              componentWillReceiveProps() {}
-              componentWillUpdate() {}
-            }
-            ",
+			        class Foo extends React.Component {
+			          constructor() {}
+			          componentWillMount() {}
+			          componentWillReceiveProps() {}
+			          componentWillUpdate() {}
+			        }
+			      ",
             None,
             None,
         ),
         (
             "
-            import { render } from 'react-dom';
-            ReactDOM.render(<div></div>, container);
-            ",
+			        import { render } from 'react-dom';
+			        ReactDOM.render(<div></div>, container);
+			      ",
             None,
             None,
         ),
         (
             "
-            import { hydrate } from 'react-dom';
-            ReactDOM.hydrate(<div></div>, container);
-            ",
+			        import { hydrate } from 'react-dom';
+			        ReactDOM.hydrate(<div></div>, container);
+			      ",
             None,
             None,
         ),
         (
             "
-            import { unmountComponentAtNode } from 'react-dom';
-            ReactDOM.unmountComponentAtNode(container);
-            ",
+			        import { unmountComponentAtNode } from 'react-dom';
+			        ReactDOM.unmountComponentAtNode(container);
+			      ",
             None,
             None,
         ),
         (
             "
-            import { renderToNodeStream } from 'react-dom/server';
-            ReactDOMServer.renderToNodeStream(element);
-            ",
+			        import { renderToNodeStream } from 'react-dom/server';
+			        ReactDOMServer.renderToNodeStream(element);
+			      ",
             None,
             None,
         ),
