@@ -37,6 +37,8 @@ pub struct TsGoLintState {
     type_check: bool,
 }
 
+type TsGoLintStateLSPResult = Result<Vec<(Arc<OsStr>, Vec<Message>)>, String>;
+
 impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore, fix_kind: FixKind) -> Self {
         let executable_path =
@@ -323,7 +325,7 @@ impl TsGoLintState {
         paths: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
-    ) -> Result<Vec<Message>, String> {
+    ) -> TsGoLintStateLSPResult {
         if paths.is_empty() {
             return Ok(vec![]);
         }
@@ -331,7 +333,6 @@ impl TsGoLintState {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
         let mut source_overrides: FxHashMap<String, String> = FxHashMap::default();
         let allocator = Allocator::default();
-
         // Read all sources into overrides
         for path in paths {
             let path_ref = Path::new(path.as_ref());
@@ -347,103 +348,113 @@ impl TsGoLintState {
         let json_input =
             self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
 
-        //  Get the file name of the first path for internal diagnostic filtering
-        let path_file_name =
+        // If there is an internal diagnostic, we may need to attribute it to a file.
+        // Not all diagnostics will have a file path, so we use the first file as a fallback.
+        let fallback_diagnostic_filepath =
             Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
         let mut child = self.spawn_tsgolint(&json_input)?;
         let handler = std::thread::spawn(move || {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
-            let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
-                let disable_directives_map =
-                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
-                let msg_iter = TsGoLintMessageStream::new(stdout);
+            // Collect diagnostics grouped by file path
+            let stdout_handler =
+                std::thread::spawn(move || -> Result<FxHashMap<PathBuf, Vec<Message>>, String> {
+                    let disable_directives_map = disable_directives_map
+                        .lock()
+                        .expect("disable_directives_map mutex poisoned");
+                    let msg_iter = TsGoLintMessageStream::new(stdout);
 
-                let mut result = vec![];
+                    let mut result: FxHashMap<PathBuf, Vec<Message>> = FxHashMap::default();
 
-                for msg in msg_iter {
-                    match msg {
-                        Ok(TsGoLintMessage::Error(err)) => {
-                            return Err(err.error);
-                        }
-                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            match tsgolint_diagnostic {
-                                TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
-                                    let path = tsgolint_diagnostic.file_path.clone();
-                                    let Some(resolved_config) = resolved_configs.get(&path) else {
-                                        // If we don't have a resolved config for this path, skip it. We should always
-                                        // have a resolved config though, since we processed them already above.
-                                        continue;
-                                    };
+                    for msg in msg_iter {
+                        match msg {
+                            Ok(TsGoLintMessage::Error(err)) => {
+                                return Err(err.error);
+                            }
+                            Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                                match tsgolint_diagnostic {
+                                    TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
+                                        let path = tsgolint_diagnostic.file_path.clone();
+                                        let Some(resolved_config) = resolved_configs.get(&path)
+                                        else {
+                                            // If we don't have a resolved config for this path, skip it.
+                                            continue;
+                                        };
 
-                                    let severity =
-                                        resolved_config.rules.iter().find_map(|(rule, status)| {
-                                            if rule.name() == tsgolint_diagnostic.rule {
-                                                Some(*status)
-                                            } else {
-                                                None
-                                            }
-                                        });
-                                    let Some(severity) = severity else {
-                                        // If the severity is not found, we should not report the diagnostic
-                                        continue;
-                                    };
+                                        let severity = resolved_config.rules.iter().find_map(
+                                            |(rule, status)| {
+                                                if rule.name() == tsgolint_diagnostic.rule {
+                                                    Some(*status)
+                                                } else {
+                                                    None
+                                                }
+                                            },
+                                        );
+                                        let Some(severity) = severity else {
+                                            // If the severity is not found, we should not report the diagnostic
+                                            continue;
+                                        };
 
-                                    if should_skip_diagnostic(
-                                        &disable_directives_map,
-                                        &path,
-                                        &tsgolint_diagnostic,
-                                    ) {
-                                        continue;
+                                        if should_skip_diagnostic(
+                                            &disable_directives_map,
+                                            &path,
+                                            &tsgolint_diagnostic,
+                                        ) {
+                                            continue;
+                                        }
+
+                                        // Use the corresponding source override text
+                                        let Some(source_text_owned) = source_overrides
+                                            .get(&path.to_string_lossy().to_string())
+                                            .cloned()
+                                        else {
+                                            // should never happen, because we populated source_overrides above
+                                            continue;
+                                        };
+
+                                        let mut message = Message::from_tsgo_lint_diagnostic(
+                                            tsgolint_diagnostic,
+                                            &source_text_owned,
+                                        );
+
+                                        message.error.severity = if severity == AllowWarnDeny::Deny
+                                        {
+                                            Severity::Error
+                                        } else {
+                                            Severity::Warning
+                                        };
+
+                                        result.entry(path).or_default().push(message);
                                     }
+                                    TsGoLintDiagnostic::Internal(e) => {
+                                        // Attribute internal diagnostics to the current file when possible
+                                        let target_path =
+                                            e.file_path.clone().unwrap_or_else(|| {
+                                                PathBuf::from(fallback_diagnostic_filepath.clone())
+                                            });
 
-                                    // Use the corresponding source override text
-                                    let Some(source_text_owned) = source_overrides
-                                        .get(&path.to_string_lossy().to_string())
-                                        .cloned()
-                                    else {
-                                        // should never happen, because we populated source_overrides above
-                                        continue;
-                                    };
+                                        let mut diagnostic: OxcDiagnostic = e.clone().into();
+                                        if e.file_path.is_some() {
+                                            diagnostic =
+                                                diagnostic.with_label(e.span.unwrap_or_default());
+                                        }
 
-                                    let mut message = Message::from_tsgo_lint_diagnostic(
-                                        tsgolint_diagnostic,
-                                        &source_text_owned,
-                                    );
-
-                                    message.error.severity = if severity == AllowWarnDeny::Deny {
-                                        Severity::Error
-                                    } else {
-                                        Severity::Warning
-                                    };
-
-                                    result.push(message);
-                                }
-                                TsGoLintDiagnostic::Internal(e) => {
-                                    let span = e
-                                        .file_path
-                                        .as_ref()
-                                        .is_some_and(|f| {
-                                            f.file_name().unwrap_or_default() == path_file_name
-                                        })
-                                        .then_some(e.span)
-                                        .flatten()
-                                        .unwrap_or_default();
-                                    let mut diagnostic: OxcDiagnostic = e.into();
-                                    diagnostic = diagnostic.with_label(span);
-                                    result.push(Message::new(diagnostic, PossibleFixes::None));
+                                        result
+                                            .entry(target_path)
+                                            .or_default()
+                                            .push(Message::new(diagnostic, PossibleFixes::None));
+                                    }
                                 }
                             }
-                        }
-                        Err(e) => {
-                            return Err(e);
+                            Err(e) => {
+                                return Err(e);
+                            }
                         }
                     }
-                }
 
-                Ok(result)
-            });
+                    Ok(result)
+                });
 
             // Wait for process to complete and stdout processing to finish
             let exit_status = child.wait().expect("Failed to wait for tsgolint process");
@@ -464,10 +475,10 @@ impl TsGoLintState {
         });
 
         match handler.join() {
-            Ok(Ok(diagnostics)) => {
-                // Successfully ran tsgolint
-                Ok(diagnostics)
-            }
+            Ok(Ok(diagnostics)) => Ok(diagnostics
+                .into_iter()
+                .map(|(path, msgs)| (Arc::<OsStr>::from(path.into_os_string()), msgs))
+                .collect()),
             Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }

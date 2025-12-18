@@ -1,0 +1,21 @@
+---
+source: crates/oxc_language_server/src/linter/tester.rs
+---
+########## 
+Linted file: fixtures/linter/deprecated_tsconfig/debugger.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/deprecated_tsconfig/tsconfig.json
+
+code: "typescript(tsconfig-error)"
+code_description.href: "None"
+message: "Invalid tsconfig\nhelp: Option 'baseUrl' has been removed. Please remove it from your configuration.\nSee https://github.com/oxc-project/tsgolint/issues/351 for more information."
+range: Range { start: Position { line: 2, character: 4 }, end: Position { line: 2, character: 13 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/deprecated_tsconfig/tsconfig.json"
+related_information[0].location.range: Range { start: Position { line: 2, character: 4 }, end: Position { line: 2, character: 13 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+
+########### Code Actions/Commands

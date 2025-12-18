@@ -130,6 +130,26 @@ pub fn message_to_lsp_diagnostic(
         }
     }
 
+    // Ignore fixes are not applicable for JSON files
+    let is_json = uri
+        .to_file_path()
+        .and_then(|path| {
+            path.extension()
+                .map(|e| e.eq_ignore_ascii_case("json") || e.eq_ignore_ascii_case("jsonc"))
+        })
+        .unwrap_or(false);
+
+    if is_json {
+        return DiagnosticReport {
+            diagnostic,
+            code_action: if fixed_content.is_empty() {
+                None
+            } else {
+                Some(LinterCodeAction { range, fixed_content })
+            },
+        };
+    }
+
     // Add ignore fixes
     let error_offset = message.span.start;
     let section_offset = message.section_offset;
