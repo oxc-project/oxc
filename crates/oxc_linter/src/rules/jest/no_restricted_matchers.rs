@@ -27,20 +27,6 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
         .with_label(span)
 }
 
-/// Custom deserializer for HashMap that converts null values to empty strings
-mod string_or_null_map {
-    use rustc_hash::FxHashMap;
-    use serde::{Deserialize, Deserializer};
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<FxHashMap<String, String>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let map: FxHashMap<String, Option<String>> = Deserialize::deserialize(deserializer)?;
-        Ok(map.into_iter().map(|(k, v)| (k, v.unwrap_or_default())).collect())
-    }
-}
-
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
@@ -50,8 +36,8 @@ pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
     /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
     /// The value is an optional custom message to display when the matcher/modifier is used.
-    #[serde(flatten, deserialize_with = "string_or_null_map::deserialize")]
-    restricted_matchers: FxHashMap<String, String>,
+    #[serde(flatten)]
+    restricted_matchers: FxHashMap<String, Option<String>>,
 }
 
 impl std::ops::Deref for NoRestrictedMatchers {
@@ -190,10 +176,13 @@ impl NoRestrictedMatchers {
 
         for (restriction, message) in &self.restricted_matchers {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
-                if message.is_empty() {
-                    ctx.diagnostic(restricted_chain(&chain_call, span));
-                } else {
-                    ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                match message.as_deref() {
+                    None | Some("") => {
+                        ctx.diagnostic(restricted_chain(&chain_call, span));
+                    }
+                    Some(message) => {
+                        ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                    }
                 }
             }
         }

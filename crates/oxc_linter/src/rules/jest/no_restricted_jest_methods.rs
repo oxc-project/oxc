@@ -20,20 +20,6 @@ fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnost
     OxcDiagnostic::warn(message.to_string()).with_label(span)
 }
 
-/// Custom deserializer for HashMap that converts null values to empty strings
-mod string_or_null_map {
-    use rustc_hash::FxHashMap;
-    use serde::{Deserialize, Deserializer};
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<FxHashMap<String, String>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let map: FxHashMap<String, Option<String>> = Deserialize::deserialize(deserializer)?;
-        Ok(map.into_iter().map(|(k, v)| (k, v.unwrap_or_default())).collect())
-    }
-}
-
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
@@ -42,8 +28,8 @@ pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 pub struct NoRestrictedJestMethodsConfig {
     /// A mapping of restricted Jest method names to custom messages - or
     /// `null`, for a generic message.
-    #[serde(flatten, deserialize_with = "string_or_null_map::deserialize")]
-    restricted_jest_methods: FxHashMap<String, String>,
+    #[serde(flatten)]
+    restricted_jest_methods: FxHashMap<String, Option<String>>,
 }
 
 impl std::ops::Deref for NoRestrictedJestMethods {
@@ -128,10 +114,6 @@ impl NoRestrictedJestMethods {
         self.restricted_jest_methods.contains_key(key)
     }
 
-    fn get_message(&self, name: &str) -> Option<String> {
-        self.restricted_jest_methods.get(name).cloned()
-    }
-
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -161,18 +143,14 @@ impl NoRestrictedJestMethods {
         };
 
         if self.contains(property_name) {
-            self.get_message(property_name).map_or_else(
-                || {
+            match self.restricted_jest_methods.get(property_name).and_then(|m| m.as_deref()) {
+                None | Some("") => {
                     ctx.diagnostic(restricted_jest_method(property_name, span));
-                },
-                |message| {
-                    if message.trim() == "" {
-                        ctx.diagnostic(restricted_jest_method(property_name, span));
-                    } else {
-                        ctx.diagnostic(restricted_jest_method_with_message(&message, span));
-                    }
-                },
-            );
+                }
+                Some(message) => {
+                    ctx.diagnostic(restricted_jest_method_with_message(message, span));
+                }
+            }
         }
     }
 }
