@@ -394,17 +394,15 @@ impl CliRunner {
         // we use OsFileSystem instead of RawTransferFileSystem because we use standard allocators for parsing.
         let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
-            {
-                if use_cross_module {
-                    // Use standard file system - source text will be copied to fixed-size allocator later
-                    None
-                } else {
-                    // Use raw transfer file system - source text goes directly to fixed-size allocator
-                    Some(
-                        &crate::js_plugins::RawTransferFileSystem
-                            as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
-                    )
-                }
+            if use_cross_module {
+                // Use standard file system - source text will be copied to fixed-size allocator later
+                None
+            } else {
+                // Use raw transfer file system - source text goes directly to fixed-size allocator
+                Some(
+                    &crate::js_plugins::RawTransferFileSystem
+                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
+                )
             }
 
             #[cfg(not(all(
