@@ -407,17 +407,6 @@ impl Linter {
             return;
         }
 
-        // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
-        if let Some(js_pool) = js_allocator_pool {
-            self.clone_into_fixed_size_allocator_and_run_external_rules(
-                external_rules,
-                path,
-                ctx_host,
-                js_pool,
-            );
-            return;
-        }
-
         // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
         //
         // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
@@ -451,7 +440,20 @@ impl Linter {
         // so can get a mutable reference to `Program` without aliasing violations.
         let program = unsafe { program_ptr.as_mut() };
 
-        self.convert_and_call_external_linter(external_rules, path, ctx_host, allocator, program);
+        // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
+        if let Some(js_allocator_pool) = js_allocator_pool {
+            self.clone_into_fixed_size_allocator_and_run_external_rules(
+                external_rules,
+                path,
+                ctx_host,
+                program,
+                js_allocator_pool,
+            );
+            return;
+        }
+
+        // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
+        self.convert_and_call_external_linter(external_rules, path, ctx_host, program, allocator);
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -476,15 +478,13 @@ impl Linter {
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
-        ctx_host: &mut Rc<ContextHost<'_>>,
+        ctx_host: &ContextHost<'_>,
+        original_program: &Program<'_>,
         js_allocator_pool: &AllocatorPool,
     ) {
         let js_allocator = js_allocator_pool.get();
 
-        // Get the original source text and program from semantic
-        let ctx_host_ref = Rc::get_mut(ctx_host).unwrap();
-        let semantic = mem::take(ctx_host_ref.semantic_mut());
-        let original_program = semantic.nodes().program();
+        // Get the original source text from the `Program`
         let original_source_text = original_program.source_text;
 
         // Copy source text to the START of the fixed-size allocator.
@@ -502,21 +502,18 @@ impl Linter {
         // Clone `Program` into fixed-size allocator.
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
-        let program: &mut Program<'_> = {
+        let program = {
             let mut program = original_program.clone_in(&js_allocator);
             program.source_text = new_source_text;
             js_allocator.alloc(program)
         };
 
-        // Drop semantic now that we've copied what we need
-        drop(semantic);
-
         self.convert_and_call_external_linter(
             external_rules,
             path,
-            ctx_host_ref,
-            &js_allocator,
+            ctx_host,
             program,
+            &js_allocator,
         );
 
         // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
@@ -532,8 +529,8 @@ impl Linter {
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &ContextHost<'_>,
-        allocator: &Allocator,
         program: &mut Program<'_>,
+        allocator: &Allocator,
     ) {
         let source_text = program.source_text;
 
