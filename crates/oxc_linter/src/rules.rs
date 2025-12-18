@@ -40,7 +40,8 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
-    pub mod accessor_pairs;
+        pub mod no_useless_assignment;
+pub mod accessor_pairs;
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
@@ -717,6 +718,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_implicit_coercion,
     eslint::no_inline_comments,
     eslint::no_loop_func,
+    eslint::no_useless_assignment,
     eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
