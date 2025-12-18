@@ -1,0 +1,13 @@
+[*]
+indent_style = space
+indent_size = 2
+
+[*.ts]
+indent_size = 4
+
+[nested/**/*.js]
+indent_size = 8
+
+[nested/deep/*.json]
+indent_size = 8
+max_line_length = 40

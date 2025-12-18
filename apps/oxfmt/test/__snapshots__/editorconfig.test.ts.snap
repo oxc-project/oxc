@@ -1,0 +1,83 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`editorconfig > .oxfmtrc overrides .editorconfig 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (true) { console.log("hello"); }
+
+--- AFTER ----------
+if (true) {
+  console.log("hello");
+}
+
+--------------------"
+`;
+
+exports[`editorconfig > basic settings from .editorconfig 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (condition) { console.log("hello world"); }
+
+--- AFTER ----------
+if (condition) {
+	console.log("hello world");
+}
+
+--------------------"
+`;
+
+exports[`editorconfig > empty .editorconfig 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (true) { console.log("hello"); }
+
+--- AFTER ----------
+if (true) {
+  console.log("hello");
+}
+
+--------------------"
+`;
+
+exports[`editorconfig > no root [*] section 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (true) { console.log("js"); }
+
+--- AFTER ----------
+if (true) {
+	console.log("js");
+}
+
+--------------------
+
+--- FILE -----------
+test.ts
+--- BEFORE ---------
+if (true) { console.log("ts"); }
+
+--- AFTER ----------
+if (true) {
+  console.log("ts");
+}
+
+--------------------"
+`;
+
+exports[`editorconfig > partial override - settings from both files merged 1`] = `
+"--- FILE -----------
+test.js
+--- BEFORE ---------
+if (true) { console.log("hello"); }
+
+--- AFTER ----------
+if (true) {
+	console.log("hello");
+}
+
+--------------------"
+`;
