@@ -263,7 +263,7 @@ impl Runtime {
         }
     }
 
-    /// Get [`AllocatorPool`] for copying ASTs to fixed-size allocators, if one if required.
+    /// Get [`AllocatorPool`] for copying ASTs to fixed-size allocators, if one is required.
     fn js_allocator_pool(&self) -> Option<&AllocatorPool> {
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
         let pool = self.js_allocator_pool.as_ref();
