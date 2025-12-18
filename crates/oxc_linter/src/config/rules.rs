@@ -252,15 +252,12 @@ fn parse_rule_key(name: &str) -> (String, String) {
     // Split on the appropriate slash to extract plugin name and rule name.
     // For scoped packages (starting with '@'), split on the last '/' to handle cases like:
     // - "@tanstack/query/exhaustive-deps" -> plugin: "@tanstack/query", rule: "exhaustive-deps"
-    // - "@eslint-react/eslint-plugin/naming-convention/context-name" -> 
+    // - "@eslint-react/eslint-plugin/naming-convention/context-name" ->
     //   plugin: "@eslint-react/eslint-plugin/naming-convention", rule: "context-name"
     // For non-scoped packages, split on the first '/' to handle cases like:
     // - "react/jsx-no-undef" -> plugin: "react", rule: "jsx-no-undef"
-    let split_result = if name.starts_with('@') {
-        name.rsplit_once('/')
-    } else {
-        name.split_once('/')
-    };
+    let split_result =
+        if name.starts_with('@') { name.rsplit_once('/') } else { name.split_once('/') };
 
     let Some((plugin_name, rule_name)) = split_result else {
         return (
@@ -433,7 +430,7 @@ mod test {
         assert_eq!(r1.plugin_name, "@tanstack/query");
         assert!(r1.severity.is_warn_deny());
 
-        // @eslint-react/eslint-plugin/naming-convention/context-name 
+        // @eslint-react/eslint-plugin/naming-convention/context-name
         // should split into plugin: @eslint-react/eslint-plugin/naming-convention, rule: context-name
         let r2 = rules.next().unwrap();
         assert_eq!(r2.rule_name, "context-name");

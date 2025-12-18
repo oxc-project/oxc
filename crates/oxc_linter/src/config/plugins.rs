@@ -366,10 +366,13 @@ mod tests {
 
         // Test @scope/eslint-plugin-name normalization
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
-        
+
         // Test @scope/eslint-plugin/name normalization (with slash instead of dash)
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin/bar"), "@foo/bar");
-        assert_eq!(normalize_plugin_name("@eslint-react/eslint-plugin/naming-convention"), "@eslint-react/naming-convention");
+        assert_eq!(
+            normalize_plugin_name("@eslint-react/eslint-plugin/naming-convention"),
+            "@eslint-react/naming-convention"
+        );
 
         // Test no change for already normalized names
         assert_eq!(normalize_plugin_name("react"), "react");
