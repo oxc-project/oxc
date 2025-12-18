@@ -249,7 +249,20 @@ impl<'de> Deserialize<'de> for OxlintRules {
 }
 
 fn parse_rule_key(name: &str) -> (String, String) {
-    let Some((plugin_name, rule_name)) = name.split_once('/') else {
+    // Split on the appropriate slash to extract plugin name and rule name.
+    // For scoped packages (starting with '@'), split on the last '/' to handle cases like:
+    // - "@tanstack/query/exhaustive-deps" -> plugin: "@tanstack/query", rule: "exhaustive-deps"
+    // - "@eslint-react/eslint-plugin/naming-convention/context-name" -> 
+    //   plugin: "@eslint-react/eslint-plugin/naming-convention", rule: "context-name"
+    // For non-scoped packages, split on the first '/' to handle cases like:
+    // - "react/jsx-no-undef" -> plugin: "react", rule: "jsx-no-undef"
+    let split_result = if name.starts_with('@') {
+        name.rsplit_once('/')
+    } else {
+        name.split_once('/')
+    };
+
+    let Some((plugin_name, rule_name)) = split_result else {
         return (
             RULES
                 .iter()
@@ -275,8 +288,8 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "import-x" => ("import", rule_name),
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
-        // e.g. "@next/next/google-font-display"
-        "@next" => ("nextjs", rule_name.trim_start_matches("next/")),
+        // e.g. "@next/next/google-font-display" where plugin is @next/next (normalized from @next/eslint-plugin-next)
+        "@next/next" => ("nextjs", rule_name),
         // For backwards compatibility, react hook rules reside in the react plugin.
         "react-hooks" => ("react", rule_name),
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
@@ -401,6 +414,37 @@ mod test {
         assert_eq!(r4.plugin_name, "nextjs");
         assert!(r4.severity.is_warn_deny());
         assert!(r4.config.is_empty());
+    }
+
+    #[test]
+    fn test_parse_rules_scoped_packages_with_slashes() {
+        // Test that scoped packages split on the last '/' to handle plugin names with slashes
+        let rules = OxlintRules::deserialize(&json!({
+            "@tanstack/query/exhaustive-deps": "error",
+            "@eslint-react/eslint-plugin/naming-convention/context-name": "warn",
+            "@typescript-eslint/no-unused-vars": "off",
+        }))
+        .unwrap();
+        let mut rules = rules.rules.iter();
+
+        // @tanstack/query/exhaustive-deps should split into plugin: @tanstack/query, rule: exhaustive-deps
+        let r1 = rules.next().unwrap();
+        assert_eq!(r1.rule_name, "exhaustive-deps");
+        assert_eq!(r1.plugin_name, "@tanstack/query");
+        assert!(r1.severity.is_warn_deny());
+
+        // @eslint-react/eslint-plugin/naming-convention/context-name 
+        // should split into plugin: @eslint-react/eslint-plugin/naming-convention, rule: context-name
+        let r2 = rules.next().unwrap();
+        assert_eq!(r2.rule_name, "context-name");
+        assert_eq!(r2.plugin_name, "@eslint-react/naming-convention");
+        assert!(r2.severity.is_warn_deny());
+
+        // @typescript-eslint/no-unused-vars should split into plugin: @typescript-eslint, rule: no-unused-vars
+        let r3 = rules.next().unwrap();
+        assert_eq!(r3.rule_name, "no-unused-vars");
+        assert_eq!(r3.plugin_name, "typescript");
+        assert!(r3.severity.is_allow());
     }
 
     #[test]
