@@ -1,5 +1,6 @@
 {
   "jsPlugins": ["./plugin.ts"],
+  "plugins": ["import"],
   "rules": {
     "basic-custom-plugin/no-debugger": "error"
   }
