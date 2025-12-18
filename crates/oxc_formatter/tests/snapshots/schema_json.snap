@@ -282,9 +282,6 @@ expression: json
     "experimentalTailwindcss": {
       "anyOf": [
         {
-          "type": "boolean"
-        },
-        {
           "$ref": "#/definitions/TailwindcssConfig"
         },
         {

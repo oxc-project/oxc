@@ -468,7 +468,7 @@ impl Oxfmtrc {
             format_options.experimental_sort_imports = Some(sort_imports);
         }
 
-        // [Oxfmt] experimentalTailwindcss: boolean | object
+        // [Oxfmt] experimentalTailwindcss: object | null
         if let Some(config) = self.experimental_tailwindcss {
             format_options.experimental_tailwindcss = Some(TailwindcssOptions {
                 tailwind_config: config.tailwind_config,
