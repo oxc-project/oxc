@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use napi::{
     Status,
@@ -79,13 +79,17 @@ type FormatFileWithConfigCallback =
 type InitExternalFormatterCallback =
     Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
 
+/// Internal callback type for Tailwind processing that includes filepath.
+/// Takes (filepath, classes) and returns sorted classes.
+type TailwindWithFilepathCallback = Arc<dyn Fn(String, Vec<String>) -> Vec<String> + Send + Sync>;
+
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
-    pub process_tailwind: TailwindCallback,
+    pub process_tailwind: TailwindWithFilepathCallback,
 }
 
 impl std::fmt::Debug for ExternalFormatter {
@@ -131,6 +135,14 @@ impl ExternalFormatter {
         let callback =
             Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));
         oxc_formatter::EmbeddedFormatter::new(callback)
+    }
+
+    /// Convert this external formatter to the oxc_formatter::TailwindCallback type.
+    /// The filepath is captured in the closure and passed to JS on each call.
+    pub fn to_tailwind_callback(&self, filepath: &Path) -> TailwindCallback {
+        let file_path = filepath.to_string_lossy().to_string();
+        let process_tailwind = Arc::clone(&self.process_tailwind);
+        Arc::new(move |classes: Vec<String>| (process_tailwind)(file_path.clone(), classes))
     }
 
     /// Format non-js file using the JS callback.
@@ -226,10 +238,10 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
 }
 
 /// Wrap JS `processTailwindClasses` callback as a normal Rust function.
-fn wrap_tailwind(cb: JsTailwindCb) -> TailwindCallback {
-    Arc::new(move |filepath: &str, classes: Vec<String>| {
+fn wrap_tailwind(cb: JsTailwindCb) -> TailwindWithFilepathCallback {
+    Arc::new(move |filepath: String, classes: Vec<String>| {
         block_on(async {
-            let args = FnArgs::from((filepath.to_string(), classes.clone()));
+            let args = FnArgs::from((filepath, classes.clone()));
             match cb.call_async(args).await {
                 Ok(promise) => match promise.await {
                     Ok(sorted) => sorted,

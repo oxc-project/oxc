@@ -35,13 +35,12 @@ use self::formatter::prelude::tag::Label;
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
-    filepath: &'a str,
     options: FormatOptions,
 }
 
 impl<'a> Formatter<'a> {
-    pub fn new(allocator: &'a Allocator, options: FormatOptions, filepath: &'a str) -> Self {
-        Self { allocator, source_text: "", filepath, options }
+    pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
+        Self { allocator, source_text: "", options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
@@ -110,7 +109,7 @@ impl<'a> Formatter<'a> {
         if let Some(callback) = tailwind_callback {
             let classes = formatted.context_mut().take_tailwind_classes();
             if !classes.is_empty() {
-                let sorted = callback(self.filepath, classes);
+                let sorted = callback(classes);
                 formatted.set_sorted_tailwind_classes(sorted);
             }
         }

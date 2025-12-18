@@ -136,8 +136,7 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let filepath = path.to_string_lossy();
-        let base_formatter = Formatter::new(&allocator, format_options.clone(), &filepath);
+        let base_formatter = Formatter::new(&allocator, format_options.clone());
 
         #[cfg(feature = "napi")]
         let formatted = {
@@ -153,12 +152,16 @@ impl SourceFormatter {
             };
 
             let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
-                Some(&external_formatter.process_tailwind)
+                Some(external_formatter.to_tailwind_callback(path))
             } else {
                 None
             };
 
-            base_formatter.format_with_all(&ret.program, embedded_formatter, tailwind_callback)
+            base_formatter.format_with_all(
+                &ret.program,
+                embedded_formatter,
+                tailwind_callback.as_ref(),
+            )
         };
         #[cfg(not(feature = "napi"))]
         let formatted = {
