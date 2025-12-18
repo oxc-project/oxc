@@ -23,37 +23,10 @@ fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnost
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
-#[derive(Debug, Default, Clone, Deserialize)]
+/// A map of restricted Jest method names to custom error messages.
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(transparent)]
 pub struct NoRestrictedJestMethodsConfig(FxHashMap<String, Option<String>>);
-
-impl JsonSchema for NoRestrictedJestMethodsConfig {
-    fn schema_name() -> String {
-        "NoRestrictedJestMethodsConfig".to_string()
-    }
-
-    fn json_schema(_gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
-        use schemars::schema::*;
-
-        Schema::Object(SchemaObject {
-            instance_type: Some(InstanceType::Object.into()),
-            metadata: Some(Box::new(Metadata {
-                description: Some(
-                    "A map of restricted Jest method names to custom error messages.".to_string(),
-                ),
-                ..Default::default()
-            })),
-            object: Some(Box::new(ObjectValidation {
-                additional_properties: Some(Box::new(Schema::Object(SchemaObject {
-                    instance_type: Some(vec![InstanceType::String, InstanceType::Null].into()),
-                    ..Default::default()
-                }))),
-                ..Default::default()
-            })),
-            ..Default::default()
-        })
-    }
-}
 
 impl std::ops::Deref for NoRestrictedJestMethods {
     type Target = NoRestrictedJestMethodsConfig;
