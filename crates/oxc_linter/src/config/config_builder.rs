@@ -578,12 +578,10 @@ impl ConfigStoreBuilder {
             })?;
         let plugin_name = result.name;
 
-        // Check if plugin name is reserved
         if LintPlugins::try_from(plugin_name.as_str()).is_ok() {
             return Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name });
         }
 
-        // Check if plugin name is already registered (duplicate alias)
         if external_plugin_store.is_plugin_name_registered(&plugin_name) {
             return Err(ConfigBuilderError::DuplicatePluginAlias { plugin_name });
         }
