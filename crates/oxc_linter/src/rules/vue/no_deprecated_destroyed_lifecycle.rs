@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -67,19 +68,18 @@ declare_oxc_lint!(
 impl Rule for NoDeprecatedDestroyedLifecycle {
     fn run_once(&self, ctx: &LintContext) {
         for node in ctx.nodes() {
-            match node.kind() {
-                AstKind::ExportDefaultDeclaration(export_default_decl) => {
-                    // Handle `export default { ... }`
-                    match &export_default_decl.declaration {
-                        ExportDefaultDeclarationKind::ObjectExpression(obj_expr) => {
-                            check_object_properties(obj_expr, ctx);
-                        }
-                        ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                            // Handle `export default defineComponent({ ... })`
-                            check_define_component(call_expr, ctx);
-                        }
-                        _ => {}
-                    }
+            let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
+                continue;
+            };
+
+            // Handle `export default { ... }`
+            match &export_default_decl.declaration {
+                ExportDefaultDeclarationKind::ObjectExpression(obj_expr) => {
+                    check_object_properties(obj_expr, ctx);
+                }
+                ExportDefaultDeclarationKind::CallExpression(call_expr) => {
+                    // Handle `export default defineComponent({ ... })`
+                    check_define_component(call_expr, ctx);
                 }
                 _ => {}
             }
@@ -110,6 +110,16 @@ fn check_define_component<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<
 
 /// Check object properties for deprecated lifecycle hooks
 fn check_object_properties<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
+    let mut existing_keys = FxHashSet::default();
+    for prop in &obj_expr.properties {
+        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
+            continue;
+        };
+        if let Some(name) = obj_prop.key.static_name() {
+            existing_keys.insert(name.into_owned());
+        }
+    }
+
     for prop in &obj_expr.properties {
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
             continue;
@@ -125,6 +135,19 @@ fn check_object_properties<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContex
             "destroyed" => "unmounted",
             _ => continue,
         };
+
+        // If the replacement hook already exists in this object, an autofix could create
+        // duplicate keys and change semantics (later keys overwrite earlier ones).
+        if existing_keys.contains(replacement) {
+            ctx.diagnostic(no_deprecated_destroyed_lifecycle_diagnostic(
+                key_span,
+                &key_name,
+                replacement,
+            ));
+            continue;
+        }
+
+        existing_keys.insert(replacement.to_string());
 
         ctx.diagnostic_with_fix(
             no_deprecated_destroyed_lifecycle_diagnostic(key_span, &key_name, replacement),
@@ -376,6 +399,12 @@ fn test() {
         (
             "export default { [`beforeDestroy`]() {}, [`destroyed`]() {} }",
             "export default { [`beforeUnmount`]() {}, [`unmounted`]() {} }",
+            None,
+        ),
+        // Do not autofix when the replacement hook already exists (avoids duplicate keys).
+        (
+            "export default { unmounted() {}, destroyed() {} }",
+            "export default { unmounted() {}, destroyed() {} }",
             None,
         ),
     ];
