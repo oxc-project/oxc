@@ -59,6 +59,10 @@ impl SourceFormatter {
                 format_options,
                 external_options,
             ),
+            (
+                FormatFileStrategy::OxfmtToml { .. },
+                ResolvedOptions::OxfmtToml { taplo_options },
+            ) => Ok(Self::format_by_taplo(source_text, taplo_options)),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
@@ -147,6 +151,11 @@ impl SourceFormatter {
         }
 
         Ok(code.into_code())
+    }
+
+    /// Format TOML file using `taplo`.
+    fn format_by_taplo(source_text: &str, options: &taplo::formatter::Options) -> String {
+        taplo::formatter::format(source_text, options.clone())
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
