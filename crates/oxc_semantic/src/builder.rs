@@ -2084,6 +2084,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.resolve_references_for_current_scope();
         self.leave_node(kind);
     }
+
+    fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
+        let kind = AstKind::TSTypeQuery(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_span(&ty.span);
+        self.visit_ts_type_query_expr_name(&ty.expr_name);
+        if let Some(type_arguments) = &ty.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.current_reference_flags = ReferenceFlags::empty();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2212,8 +2224,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
+        #[expect(clippy::single_match)]
         match kind {
-            AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
+            AstKind::TSPropertySignature(_) => {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
