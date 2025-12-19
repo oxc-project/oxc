@@ -2075,6 +2075,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&it.expression);
         self.leave_node(kind);
     }
+
+    fn visit_catch_parameter(&mut self, param: &CatchParameter<'a>) {
+        let kind = AstKind::CatchParameter(self.alloc(param));
+        self.enter_node(kind);
+        self.visit_span(&param.span);
+        self.visit_binding_pattern(&param.pattern);
+        self.resolve_references_for_current_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2204,9 +2213,6 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::CatchParameter(_) => {
-                self.resolve_references_for_current_scope();
-            }
             AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
