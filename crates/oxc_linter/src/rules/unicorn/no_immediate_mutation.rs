@@ -382,13 +382,8 @@ fn get_assignment_info<'a>(
     assign: &'a AssignmentExpression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<(&'a str, InitType)> {
-    // Must be simple assignment
+    // Must be simple assignment (=), not compound assignments like +=, ??=, etc.
     if !assign.operator.is_assign() {
-        return None;
-    }
-
-    // Exclude ??= assignments
-    if assign.operator == oxc_syntax::operator::AssignmentOperator::LogicalNullish {
         return None;
     }
 
