@@ -2943,6 +2943,7 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "handlebars",
+ "insta",
  "lazy-regex",
  "oxc_allocator",
  "oxc_ast",

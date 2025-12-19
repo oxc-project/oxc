@@ -154,6 +154,7 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just fmt
 
 # Legacy aliases for backward compatibility
 new-jest-rule name: (new-rule name "jest")
