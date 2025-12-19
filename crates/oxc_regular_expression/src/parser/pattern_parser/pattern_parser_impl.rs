@@ -479,6 +479,7 @@ impl<'a> PatternParser<'a> {
                 if self.state.num_of_capturing_groups < index {
                     return Err(diagnostics::invalid_indexed_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
+                        self.state.num_of_capturing_groups as usize,
                     ));
                 }
 
@@ -531,8 +532,11 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.capturing_group_names.contains(name.as_str()) {
+                    let names: std::vec::Vec<&str> =
+                        self.state.capturing_group_names.iter().map(SpanAtom::as_str).collect();
                     return Err(diagnostics::invalid_named_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
+                        &names,
                     ));
                 }
 
@@ -871,6 +875,11 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
                 // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
                 if to.value < from.value {
+                    if to.value == '-' as u32 {
+                        return Err(diagnostics::character_class_range_dash_not_subtraction(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                        ));
+                    }
                     return Err(diagnostics::character_class_range_out_of_order(
                         self.span_factory.create(span_start, self.reader.offset()),
                         "class atom",
@@ -1569,6 +1578,8 @@ impl<'a> PatternParser<'a> {
     //   `i` `m` `s`
     // ```
     fn parse_modifiers(&mut self) -> Result<Option<ast::Modifiers>> {
+        const VALID_MODIFIERS: [&str; 3] = ["i", "m", "s"];
+
         let span_start = self.reader.offset();
 
         let mut enabling = ast::Modifier::empty();
@@ -1601,6 +1612,7 @@ impl<'a> PatternParser<'a> {
 
             return Err(diagnostics::unknown_modifiers(
                 self.span_factory.create(span_start, self.reader.offset()),
+                &VALID_MODIFIERS,
             ));
         }
 
@@ -1631,6 +1643,7 @@ impl<'a> PatternParser<'a> {
 
                 return Err(diagnostics::unknown_modifiers(
                     self.span_factory.create(span_start, self.reader.offset()),
+                    &VALID_MODIFIERS,
                 ));
             }
         }
@@ -1641,11 +1654,19 @@ impl<'a> PatternParser<'a> {
         // It is a Syntax Error if the source text matched by the first RegularExpressionModifiers and the source text matched by the second RegularExpressionModifiers are both empty.
         // It is a Syntax Error if the source text matched by the first RegularExpressionModifiers contains the same code point more than once.
         // It is a Syntax Error if any code point in the source text matched by the first RegularExpressionModifiers is also contained in the source text matched by the second RegularExpressionModifiers.
-        if enabling.is_empty() && disabling.is_empty()
-            || duplicate
-            || [ast::Modifier::I, ast::Modifier::M, ast::Modifier::S]
-                .iter()
-                .any(|&modifier| enabling.contains(modifier) && disabling.contains(modifier))
+        if duplicate {
+            return Err(diagnostics::duplicated_modifiers(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
+        }
+        if enabling.is_empty() && disabling.is_empty() {
+            return Err(diagnostics::empty_modifiers(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
+        }
+        if [ast::Modifier::I, ast::Modifier::M, ast::Modifier::S]
+            .iter()
+            .any(|&modifier| enabling.contains(modifier) && disabling.contains(modifier))
         {
             return Err(diagnostics::invalid_modifiers(
                 self.span_factory.create(span_start, self.reader.offset()),
