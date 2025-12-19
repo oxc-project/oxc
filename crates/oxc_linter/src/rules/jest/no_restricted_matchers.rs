@@ -30,6 +30,7 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
+/// A map of restricted matcher/modifier names to custom error messages.
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(transparent)]
 pub struct NoRestrictedMatchersConfig(FxHashMap<String, Option<String>>);
