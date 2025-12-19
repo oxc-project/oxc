@@ -146,8 +146,7 @@ fn analyze_variable_references(
         /*
          * Initialization is used if:
          *   - There exists a read reachable from init, AND
-         *   - That read is in a different CFG block than any writes between init and read
-         *     OR there are no writes reachable from init
+         *   - There is no write reachable from init that is before the read
          */
 
         let mut init_value_is_used = false;
@@ -241,18 +240,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("let x = 5; console.log(x);", None),
-        (
-            "function fn1() {
+        "let x = 5; console.log(x);",
+        "function fn1() {
             let v = 'used';
             doSomething(v);
             v = 'used-2';
             doSomething(v);
         }",
-            None,
-        ),
-        (
-            "function fn2() {
+        "function fn2() {
             let v = 'used';
             if (condition) {
                 v = 'used-2';
@@ -261,43 +256,31 @@ fn test() {
             }
             doSomething(v);
         }",
-            None,
-        ),
-        (
-            "function fn3() {
-        let v = 'used';
-        if (condition) {
-            doSomething(v);
-        } else {
-            v = 'used-2';
-            doSomething(v);
-        }
-    }",
-            None,
-        ),
-        (
-            "function fn4() {
+        "function fn3() {
+            let v = 'used';
+            if (condition) {
+                doSomething(v);
+            } else {
+                v = 'used-2';
+                doSomething(v);
+            }
+        }",
+        "function fn4() {
             let v = 'used';
             for (let i = 0; i < 10; i++) {
                 doSomething(v);
                 v = 'used in next iteration';
             }
         }",
-            None,
-        ),
     ];
     let fail = vec![
-        ("let x = 5; x = 7;", None),
-        (
-            "function fn1() {
+        "let x = 5; x = 7;",
+        "function fn1() {
             let v = 'used';
             doSomething(v);
             v = 'unused';
         }",
-            None,
-        ),
-        (
-            "function fn2() {
+        "function fn2() {
             let v = 'used';
             if (condition) {
                 v = 'unused';
@@ -305,10 +288,7 @@ fn test() {
             }
             doSomething(v);
         }",
-            None,
-        ),
-        (
-            "function fn3() {
+        "function fn3() {
             let v = 'used';
             if (condition) {
                 doSomething(v);
@@ -316,10 +296,7 @@ fn test() {
                 v = 'unused';
             }
         }",
-            None,
-        ),
-        (
-            "function fn4() {
+        "function fn4() {
             let v = 'unused';
             if (condition) {
                 v = 'used';
@@ -327,10 +304,7 @@ fn test() {
                 return
             }
         }",
-            None,
-        ),
-        (
-            "function fn5() {
+        "function fn5() {
             let v = 'used';
             if (condition) {
                 let v = 'used';
@@ -339,8 +313,6 @@ fn test() {
             }
             console.log(v);
         }",
-            None,
-        ),
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
