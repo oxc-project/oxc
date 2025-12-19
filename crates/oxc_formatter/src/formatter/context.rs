@@ -11,17 +11,6 @@ use crate::{
 
 use super::{Comments, SourceText};
 
-/// Entry for a Tailwind CSS class string with metadata for proper sorting.
-#[derive(Debug, Clone)]
-pub struct TailwindClassEntry {
-    /// The class string text to be sorted (trimmed, ready for sorting)
-    pub text: String,
-    /// Preserved leading whitespace (restore after sorting if not empty)
-    pub prefix: String,
-    /// Preserved trailing whitespace (restore after sorting if not empty)
-    pub suffix: String,
-}
-
 /// Context object storing data relevant when formatting an object.
 #[derive(Clone)]
 pub struct FormatContext<'ast> {
@@ -42,9 +31,9 @@ pub struct FormatContext<'ast> {
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
 
-    /// Collected Tailwind CSS class entries from JSX attributes and template literals.
+    /// Collected Tailwind CSS class strings from JSX attributes.
     /// These will be sorted by an external callback and replaced during printing.
-    tailwind_classes: Vec<TailwindClassEntry>,
+    tailwind_classes: Vec<String>,
 
     embedded_formatter: Option<EmbeddedFormatter>,
 
@@ -168,16 +157,16 @@ impl<'ast> FormatContext<'ast> {
         self.allocator
     }
 
-    /// Add a Tailwind CSS class entry found in JSX attributes or template literals.
-    /// Returns the index where the entry was stored.
-    pub fn add_tailwind_class(&mut self, entry: TailwindClassEntry) -> usize {
+    /// Add a Tailwind CSS class string found in JSX attributes.
+    /// Returns the index where the class was stored.
+    pub fn add_tailwind_class(&mut self, class: String) -> usize {
         let index = self.tailwind_classes.len();
-        self.tailwind_classes.push(entry);
+        self.tailwind_classes.push(class);
         index
     }
 
-    /// Take all collected Tailwind class entries, clearing the internal storage.
-    pub fn take_tailwind_classes(&mut self) -> Vec<TailwindClassEntry> {
+    /// Take all collected Tailwind classes, clearing the internal storage.
+    pub fn take_tailwind_classes(&mut self) -> Vec<String> {
         mem::take(&mut self.tailwind_classes)
     }
 }

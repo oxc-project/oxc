@@ -47,7 +47,7 @@ pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
-    context::{FormatContext, TailwindClassEntry},
+    context::FormatContext,
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,

@@ -227,6 +227,37 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  test("should sort classes after ignored first class", async () => {
+    // When expression is directly followed by a class (no space), that class is ignored
+    // But subsequent classes should still be sorted with proper spacing
+    const input =
+      "const A = <div className={`flex ${variant}items-center p-4`}>Hello</div>;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // "items-center" is ignored (touching expression), "p-4" is sorted
+    // Space should be preserved between ignored class and sorted content
+    expect(result.code).toContain("${variant}items-center p-4");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes before ignored last class", async () => {
+    // When a class is directly followed by expression (no space), that class is ignored
+    const input =
+      "const A = <div className={`flex p-4${variant} items-center`}>Hello</div>;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // "p-4" is ignored (touching expression), "flex" is sorted
+    // Space should be preserved between sorted content and ignored class
+    expect(result.code).toContain("flex p-4${variant}");
+    expect(result.errors).toStrictEqual([]);
+  });
+
   test("should handle simple template literal without expressions", async () => {
     // Template literal without expressions should be treated like string literal
     const input = `const A = <div className={\`p-4 flex\`}>Hello</div>;`;
@@ -282,6 +313,32 @@ const A = (
 
     // Spaces between expressions should be preserved
     expect(result.code).toContain("${a} ${b} ${c}");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should normalize multiple spaces between expressions to single space", async () => {
+    // Template literal with only multiple spaces between expressions
+    const input = "const A = <div className={`${a}   ${b}   ${c}`}>Hello</div>;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Multiple spaces should be normalized to single space
+    expect(result.code).toContain("${a} ${b} ${c}");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle template literal with only spaces (no classes)", async () => {
+    // Template literal containing only spaces - normalized to single space
+    const input = "const A = <div className={`   `}>Hello</div>;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Multiple spaces normalized to single space (like Prettier)
+    expect(result.code).toContain("className={` `}");
     expect(result.errors).toStrictEqual([]);
   });
 

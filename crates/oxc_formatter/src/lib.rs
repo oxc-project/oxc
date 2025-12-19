@@ -89,24 +89,10 @@ impl<'a> Formatter<'a> {
 
         // Call tailwind callback to sort classes if provided
         if let Some(callback) = tailwind_callback {
-            let entries = formatted.context_mut().take_tailwind_classes();
-            if !entries.is_empty() {
-                // Extract just the text for sorting (already trimmed)
-                let texts: Vec<String> = entries.iter().map(|e| e.text.clone()).collect();
-                let sorted = callback(texts);
-
-                // Restore preserved prefix/suffix after sorting
-                let processed: Vec<String> = entries
-                    .iter()
-                    .zip(sorted.iter())
-                    .map(|(entry, sorted_text)| {
-                        // sortClasses may return already trimmed text, but we need to
-                        // restore any preserved whitespace
-                        std::format!("{}{}{}", entry.prefix, sorted_text, entry.suffix)
-                    })
-                    .collect();
-
-                formatted.set_sorted_tailwind_classes(processed);
+            let classes = formatted.context_mut().take_tailwind_classes();
+            if !classes.is_empty() {
+                let sorted = callback(classes);
+                formatted.set_sorted_tailwind_classes(sorted);
             }
         }
 

@@ -50,7 +50,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Buffer, Format, Formatter, TailwindClassEntry,
+        Buffer, Format, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -1053,7 +1053,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             },
         );
 
-        if let Some(tailwind_options) = tailwind_match {
+        if let Some(_tailwind_options) = tailwind_match {
             let quote = if is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
@@ -1063,36 +1063,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
             // For StringLiteral, it's always the entire content (first and last quasi)
             // so collapse whitespace at both ends unless preserve_whitespace is true
-            let preserve_whitespace =
-                tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
+
+            // let preserve_whitespace =
+            //     tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
 
             let content = self.value.as_str();
 
-            // Extract prefix/suffix if preserving whitespace
-            let (prefix, suffix) = if preserve_whitespace {
-                // Preserve leading whitespace
-                let trimmed_start = content.trim_start();
-                let prefix_len = content.len() - trimmed_start.len();
-                let prefix = content[..prefix_len].to_string();
-
-                // Preserve trailing whitespace
-                let trimmed_end = content.trim_end();
-                let suffix = content[trimmed_end.len()..].to_string();
-
-                (prefix, suffix)
-            } else {
-                (String::new(), String::new())
-            };
-
-            // Trim the text for sorting (sortClasses normalizes whitespace internally)
-            let trimmed_text = content.trim().to_string();
-
-            let entry = TailwindClassEntry { text: trimmed_text, prefix, suffix };
-            let index = f.context_mut().add_tailwind_class(entry);
-
-            f.write_element(FormatElement::Token { text: quote_str });
+            write!(f, quote_str);
+            let index = f.context_mut().add_tailwind_class(content.to_string());
             f.write_element(FormatElement::TailwindClass(index));
-            f.write_element(FormatElement::Token { text: quote_str });
+            write!(f, quote_str);
         } else {
             FormatLiteralStringToken::new(
                 f.source_text().text_for(self),
