@@ -111,6 +111,10 @@ impl Config {
         self.base.config.plugins
     }
 
+    pub fn env(&self) -> &OxlintEnv {
+        &self.base.config.env
+    }
+
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
     }
