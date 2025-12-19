@@ -8,3 +8,11 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'N' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:31]
+ 1 │ export namespace N { function foo() }
+   ·                               ─┬─
+   ·                                ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.

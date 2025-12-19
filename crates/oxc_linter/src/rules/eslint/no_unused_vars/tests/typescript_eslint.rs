@@ -1115,14 +1115,14 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        // declare module 'foo' {
-        //   type Test = 1;
-        // }
-        // ",
-        //     None,
-        // ),
+        (
+            "
+        declare module 'foo' {
+          type Test = 1;
+        }
+        ",
+            None,
+        ),
         (
             "
         declare module 'foo' {
