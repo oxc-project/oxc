@@ -480,16 +480,16 @@ impl<'a> ParserImpl<'a> {
             errors.push(error);
         }
         let (module_record, module_record_errors) = self.module_record_builder.build();
+        let tokens = if self.options.collect_tokens { Some(self.lexer.tokens()) } else { None };
         if errors.len() != 1 {
             errors.reserve(self.lexer.errors.len() + self.errors.len());
-            errors.append(&mut self.lexer.errors);
-            errors.append(&mut self.errors);
+            errors.extend(self.lexer.errors);
+            errors.extend(self.errors);
             // Skip checking for exports in TypeScript {
             if !self.source_type.is_typescript() {
                 errors.extend(module_record_errors);
             }
         }
-        let tokens = if self.options.collect_tokens { Some(self.lexer.tokens()) } else { None };
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
 
