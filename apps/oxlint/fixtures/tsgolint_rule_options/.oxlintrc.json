@@ -30,6 +30,12 @@
           { "from": "file", "name": "allowedFunc" }
         ]
       }
+    ],
+    "typescript/no-unnecessary-type-assertion": [
+      "error",
+      {
+        "checkLiteralConstAssertions": false
+      }
     ]
   }
 }
