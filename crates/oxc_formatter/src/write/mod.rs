@@ -72,7 +72,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindicss::is_tailwind_function_call,
+        tailwindcss::{is_tailwind_function_call, write_tailwind_string_literal},
     },
     write,
     write::parameters::can_avoid_parentheses,
@@ -1057,45 +1057,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
                 f.options().quote_style.as_char()
             };
             let quote_str = if quote == '"' { "\"" } else { "'" };
-            let content = self.value.as_str();
-
-            // For nested string literals (not direct JSXAttribute children), preserve whitespace
-            // because the sorter will trim it otherwise
-            let is_direct_child = matches!(self.parent, AstNodes::JSXAttribute(_));
 
             write!(f, quote_str);
-
-            if is_direct_child {
-                // Direct attribute value - sorter handles everything
-                let index = f.context_mut().add_tailwind_class(content.to_string());
-                f.write_element(FormatElement::TailwindClass(index));
-            } else {
-                // Nested string literal - preserve leading/trailing whitespace
-                let leading_ws: String =
-                    content.chars().take_while(char::is_ascii_whitespace).collect();
-                let trailing_ws: String =
-                    content.chars().rev().take_while(char::is_ascii_whitespace).collect();
-                let trimmed = content.trim();
-
-                // Write leading whitespace
-                if !leading_ws.is_empty() {
-                    let ws = f.context().allocator().alloc_str(&leading_ws);
-                    write!(f, text(ws));
-                }
-
-                // Sort the trimmed content (if any)
-                if !trimmed.is_empty() {
-                    let index = f.context_mut().add_tailwind_class(trimmed.to_string());
-                    f.write_element(FormatElement::TailwindClass(index));
-                }
-
-                // Write trailing whitespace
-                if !trailing_ws.is_empty() {
-                    let ws = f.context().allocator().alloc_str(&trailing_ws);
-                    write!(f, text(ws));
-                }
-            }
-
+            write_tailwind_string_literal(self, f);
             write!(f, quote_str);
         } else {
             // Not in Tailwind context - use normal string literal formatting

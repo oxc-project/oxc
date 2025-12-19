@@ -19,7 +19,7 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    utils::tailwindicss::is_tailwind_jsx_attribute,
+    utils::tailwindcss::is_tailwind_jsx_attribute,
     write,
 };
 

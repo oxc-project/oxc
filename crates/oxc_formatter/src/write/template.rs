@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     EmbeddedFormatter, IndentWidth,
-    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
+    ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
         Format, FormatElement, Formatter, VecBuffer,
@@ -20,7 +20,7 @@ use crate::{
     utils::{
         call_expression::is_test_each_pattern,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        tailwindicss::is_tailwind_function_call,
+        tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
     write,
 };
@@ -79,103 +79,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         if is_tailwind {
             f.context_mut().pop_tailwind_context();
         }
-    }
-}
-
-/// Returns (quasi_index, expressions_count) for a template element within its parent template literal.
-fn get_template_position(element: &AstNode<'_, TemplateElement<'_>>) -> Option<(usize, usize)> {
-    match element.parent {
-        AstNodes::TemplateLiteral(tl) => {
-            let expressions_count = tl.expressions.len();
-            // Find our index by comparing spans
-            let quasi_index =
-                tl.quasis.iter().position(|q| q.span() == element.span()).unwrap_or(0);
-            Some((quasi_index, expressions_count))
-        }
-        AstNodes::TSTemplateLiteralType(tl) => {
-            let expressions_count = tl.types.len();
-            let quasi_index =
-                tl.quasis.iter().position(|q| q.span() == element.span()).unwrap_or(0);
-            Some((quasi_index, expressions_count))
-        }
-        _ => None,
-    }
-}
-
-/// Writes a template element with Tailwind CSS class sorting support.
-///
-/// Implements ignoreFirst/ignoreLast/collapseWhitespace logic:
-/// - ignoreFirst: class touching previous expression (no leading whitespace) is preserved
-/// - ignoreLast: class touching next expression (no trailing whitespace) is preserved
-/// - collapseWhitespace: multiple spaces normalized to single space
-///
-/// Based on <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566>
-fn write_tailwind_template_element<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
-    preserve_whitespace: bool,
-    f: &mut Formatter<'_, 'a>,
-) {
-    let content = f.source_text().text_for(element);
-
-    if preserve_whitespace {
-        let index = f.context_mut().add_tailwind_class(content.to_string());
-        f.write_element(FormatElement::TailwindClass(index));
-        return;
-    }
-
-    let (quasi_index, expressions_count) = get_template_position(element).unwrap_or((0, 0));
-    let is_first_quasi = quasi_index == 0;
-    let is_last_quasi = quasi_index >= expressions_count;
-
-    // Determine which boundary classes to ignore (classes touching expressions)
-    let ignore_first = !is_first_quasi && !content.starts_with(|c: char| c.is_ascii_whitespace());
-    let ignore_last = !is_last_quasi && !content.ends_with(|c: char| c.is_ascii_whitespace());
-
-    // Find whitespace positions for splitting
-    let first_ws = ignore_first.then(|| content.find(|c: char| c.is_ascii_whitespace())).flatten();
-    let last_ws = ignore_last.then(|| content.rfind(|c: char| c.is_ascii_whitespace())).flatten();
-
-    // Split into: prefix (ignored) | sortable | suffix (ignored)
-    let (prefix, sortable, suffix) = match (first_ws, last_ws) {
-        (Some(f), Some(l)) if f < l => (&content[..f], &content[f..=l], &content[l + 1..]),
-        (Some(f), _) => (&content[..f], &content[f..], ""),
-        (None, Some(l)) => ("", &content[..=l], &content[l + 1..]),
-        (None, None) => ("", content, ""),
-    };
-
-    let has_prefix = !prefix.is_empty();
-    let has_suffix = !suffix.is_empty();
-
-    // Write prefix (class attached to previous expression)
-    if has_prefix {
-        write!(f, text(prefix));
-    }
-
-    // Write sortable content with normalized whitespace
-    let trimmed = sortable.trim();
-    if trimmed.is_empty() {
-        // Whitespace-only: normalize to single space
-        if !sortable.is_empty() {
-            write!(f, text(" "));
-        }
-    } else {
-        // Leading space: after expression or after ignored prefix
-        if !is_first_quasi || has_prefix {
-            write!(f, text(" "));
-        }
-
-        let index = f.context_mut().add_tailwind_class(trimmed.to_string());
-        f.write_element(FormatElement::TailwindClass(index));
-
-        // Trailing space: before expression or before ignored suffix
-        if !is_last_quasi || has_suffix {
-            write!(f, text(" "));
-        }
-    }
-
-    // Write suffix (class attached to next expression)
-    if has_suffix {
-        write!(f, text(suffix));
     }
 }
 
