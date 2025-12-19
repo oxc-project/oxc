@@ -151,6 +151,14 @@ const source = `{}`;{}
         Ok(self.page.take())
     }
 
+    // Check if this is a mapped type (Record<string, T>).
+    fn is_mapped_type(schema: &SchemaObject) -> bool {
+        schema
+            .object
+            .as_ref()
+            .is_some_and(|obj| obj.properties.is_empty() && obj.additional_properties.is_some())
+    }
+
     fn rule_config(&self, schema: &SchemaObject) -> String {
         if let Some(array) = &schema.array
             && let Some(SingleOrVec::Vec(options)) = &array.items
@@ -165,9 +173,7 @@ const source = `{}`;{}
                         let title = format!("\n### The {} option\n", ordinal(i + 1));
 
                         // Check if this is a mapped type (Record<string, T>)
-                        let is_mapped_type = schema_object.object.as_ref().is_some_and(|obj| {
-                            obj.properties.is_empty() && obj.additional_properties.is_some()
-                        });
+                        let is_mapped_type = Self::is_mapped_type(schema_object);
 
                         let instance_type = section.instance_type.as_ref().map_or_else(
                             String::new,
@@ -221,10 +227,7 @@ const source = `{}`;{}
 
         // Check if this is a mapped type (Record<string, T>) before checking if rendered is empty.
         // We need this to add special documentation for mapped types where there are no defined properties.
-        let is_mapped_type = schema
-            .object
-            .as_ref()
-            .is_some_and(|obj| obj.properties.is_empty() && obj.additional_properties.is_some());
+        let is_mapped_type = Self::is_mapped_type(schema);
 
         let mut rendered = section.to_md(&self.renderer);
 
