@@ -115,6 +115,10 @@ impl Config {
         &self.base.config.env
     }
 
+    pub fn globals(&self) -> &OxlintGlobals {
+        &self.base.config.globals
+    }
+
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
     }
