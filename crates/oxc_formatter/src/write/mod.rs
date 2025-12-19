@@ -50,7 +50,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Buffer, Format, Formatter,
+        Buffer, Format, Formatter, TailwindClassEntry,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -1027,42 +1027,69 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if this is a tailwind class string that needs sorting
-        let (is_sortable_literal, is_jsx) =
-            f.options().experimental_tailwindcss.as_ref().map_or_else(
-                || {
-                    (false, /* is_jsx */ matches!(self.parent, AstNodes::JSXAttribute(_)))
-                },
-                |tailwind_options| {
-                    match self.parent {
-                        // Check if parent is a JSX attribute (class/className or custom tailwindAttributes)
-                        AstNodes::JSXAttribute(attr) => {
-                            (
-                                is_tailwind_jsx_attribute(&attr.name, tailwind_options),
-                                /* is_jsx */ true,
-                            )
-                        }
-                        // Check if parent is a call expression with a tailwind function name
-                        AstNodes::CallExpression(call) => {
-                            (
-                                is_tailwind_function_call(&call.callee, tailwind_options),
-                                /* is_jsx */ false,
-                            )
-                        }
-                        _ => {
-                            (false, /* is_jsx */ false)
-                        }
+        // Also get the preserve_whitespace option if applicable
+        let (tailwind_match, is_jsx) = f.options().experimental_tailwindcss.as_ref().map_or_else(
+            || {
+                (None, /* is_jsx */ matches!(self.parent, AstNodes::JSXAttribute(_)))
+            },
+            |tailwind_options| match self.parent {
+                // Check if parent is a JSX attribute (class/className or custom tailwindAttributes)
+                AstNodes::JSXAttribute(attr) => {
+                    if is_tailwind_jsx_attribute(&attr.name, tailwind_options) {
+                        (Some(tailwind_options), /* is_jsx */ true)
+                    } else {
+                        (None, /* is_jsx */ true)
                     }
-                },
-            );
+                }
+                // Check if parent is a call expression with a tailwind function name
+                AstNodes::CallExpression(call) => {
+                    if is_tailwind_function_call(&call.callee, tailwind_options) {
+                        (Some(tailwind_options), /* is_jsx */ false)
+                    } else {
+                        (None, /* is_jsx */ false)
+                    }
+                }
+                _ => (None, /* is_jsx */ false),
+            },
+        );
 
-        if is_sortable_literal {
+        if let Some(tailwind_options) = tailwind_match {
             let quote = if is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
                 f.options().quote_style.as_char()
             };
             let quote_str = if quote == '"' { "\"" } else { "'" };
-            let index = f.context_mut().add_tailwind_class(self.value.to_string());
+
+            // For StringLiteral, it's always the entire content (first and last quasi)
+            // so collapse whitespace at both ends unless preserve_whitespace is true
+            let preserve_whitespace =
+                tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
+
+            let content = self.value.as_str();
+
+            // Extract prefix/suffix if preserving whitespace
+            let (prefix, suffix) = if preserve_whitespace {
+                // Preserve leading whitespace
+                let trimmed_start = content.trim_start();
+                let prefix_len = content.len() - trimmed_start.len();
+                let prefix = content[..prefix_len].to_string();
+
+                // Preserve trailing whitespace
+                let trimmed_end = content.trim_end();
+                let suffix = content[trimmed_end.len()..].to_string();
+
+                (prefix, suffix)
+            } else {
+                (String::new(), String::new())
+            };
+
+            // Trim the text for sorting (sortClasses normalizes whitespace internally)
+            let trimmed_text = content.trim().to_string();
+
+            let entry = TailwindClassEntry { text: trimmed_text, prefix, suffix };
+            let index = f.context_mut().add_tailwind_class(entry);
+
             f.write_element(FormatElement::Token { text: quote_str });
             f.write_element(FormatElement::TailwindClass(index));
             f.write_element(FormatElement::Token { text: quote_str });

@@ -11,7 +11,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, VecBuffer,
+        Format, FormatElement, Formatter, TailwindClassEntry, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -66,28 +66,173 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     }
 }
 
+/// Returns (quasi_index, expressions_count) for a template element within its parent template literal.
+fn get_template_position(element: &AstNode<'_, TemplateElement<'_>>) -> Option<(usize, usize)> {
+    match element.parent {
+        AstNodes::TemplateLiteral(tl) => {
+            let expressions_count = tl.expressions.len();
+            // Find our index by comparing spans
+            let quasi_index =
+                tl.quasis.iter().position(|q| q.span() == element.span()).unwrap_or(0);
+            Some((quasi_index, expressions_count))
+        }
+        AstNodes::TSTemplateLiteralType(tl) => {
+            let expressions_count = tl.types.len();
+            let quasi_index =
+                tl.quasis.iter().position(|q| q.span() == element.span()).unwrap_or(0);
+            Some((quasi_index, expressions_count))
+        }
+        _ => None,
+    }
+}
+
+/// Writes a template element with Tailwind CSS class sorting support.
+/// Handles ignoreFirst/ignoreLast/collapseWhitespace logic based on position in template literal.
+fn write_tailwind_template_element<'a>(
+    element: &AstNode<'a, TemplateElement<'a>>,
+    preserve_whitespace: bool,
+    f: &mut Formatter<'_, 'a>,
+) {
+    let source = f.source_text().text_for(element).to_string();
+
+    // Get position info to determine ignoreFirst/ignoreLast/collapseWhitespace
+    let (quasi_index, expressions_count) = get_template_position(element).unwrap_or((0, 0));
+
+    let is_first_quasi = quasi_index == 0;
+    let is_last_quasi = quasi_index >= expressions_count;
+    let starts_with_whitespace = source.starts_with(|c: char| c.is_ascii_whitespace());
+    let ends_with_whitespace = source.ends_with(|c: char| c.is_ascii_whitespace());
+
+    // Calculate ignoreFirst/ignoreLast based on prettier-plugin-tailwindcss logic
+    let ignore_first = !is_first_quasi && !starts_with_whitespace;
+    let ignore_last = !is_last_quasi && !ends_with_whitespace;
+
+    // Split the text if needed - all parts owned to avoid lifetime issues
+    let mut sortable_text = source.clone();
+    let mut first_part: Option<String> = None;
+    let mut last_part: Option<String> = None;
+
+    if ignore_first {
+        // Split on first whitespace - the first class stays unsorted
+        if let Some(pos) = sortable_text.find(|c: char| c.is_ascii_whitespace()) {
+            first_part = Some(source[..pos].to_string());
+            sortable_text = source[pos..].to_string();
+        } else {
+            // No whitespace found - entire text is the "ignored first", nothing to sort
+            write!(f, text(element.value.raw.as_str()));
+            return;
+        }
+    }
+
+    if ignore_last {
+        // Split on last whitespace - the last class stays unsorted
+        if let Some(pos) = sortable_text.rfind(|c: char| c.is_ascii_whitespace()) {
+            last_part = Some(sortable_text[pos + 1..].to_string());
+            sortable_text = sortable_text[..=pos].to_string();
+        } else {
+            // No whitespace found - if we already have first_part, write it and the rest
+            if let Some(ref first) = first_part {
+                let first_str = f.context().allocator().alloc_str(first);
+                write!(f, text(first_str));
+            }
+            // Remaining text is the "ignored last", nothing to sort
+            let remaining = f.context().allocator().alloc_str(&sortable_text);
+            write!(f, text(remaining));
+            return;
+        }
+    }
+
+    // Write the first part (ignored first class) as regular text
+    if let Some(ref first) = first_part {
+        let first_str = f.context().allocator().alloc_str(first);
+        write!(f, text(first_str));
+    }
+
+    // Check if there's actual content to sort (not just whitespace)
+    let trimmed_text = sortable_text.trim();
+    if trimmed_text.is_empty() {
+        // Just whitespace - write it as-is (normalized to single space if non-empty)
+        if !sortable_text.is_empty() {
+            write!(f, text(" "));
+        }
+    } else {
+        // Determine whether to collapse whitespace at each end
+        // If collapse is FALSE, we need to preserve the whitespace
+        let collapse_start = is_first_quasi && !preserve_whitespace;
+        let collapse_end = is_last_quasi && !preserve_whitespace;
+
+        // Extract preserved prefix/suffix before trimming
+        // If preserve_whitespace is true, keep exact whitespace; otherwise normalize to single space
+        let prefix =
+            if !collapse_start && sortable_text.starts_with(|c: char| c.is_ascii_whitespace()) {
+                if preserve_whitespace {
+                    // Preserve exact whitespace
+                    let trimmed = sortable_text.trim_start();
+                    let prefix_len = sortable_text.len() - trimmed.len();
+                    sortable_text[..prefix_len].to_string()
+                } else {
+                    // Normalize to single space
+                    " ".to_string()
+                }
+            } else {
+                String::new()
+            };
+
+        let suffix =
+            if !collapse_end && sortable_text.ends_with(|c: char| c.is_ascii_whitespace()) {
+                if preserve_whitespace {
+                    // Preserve exact whitespace
+                    let trimmed = sortable_text.trim_end();
+                    sortable_text[trimmed.len()..].to_string()
+                } else {
+                    // Normalize to single space
+                    " ".to_string()
+                }
+            } else {
+                String::new()
+            };
+
+        // Trim the text for sorting (sortClasses normalizes whitespace internally)
+        let trimmed_text = trimmed_text.to_string();
+
+        let entry = TailwindClassEntry { text: trimmed_text, prefix, suffix };
+        let index = f.context_mut().add_tailwind_class(entry);
+        f.write_element(FormatElement::TailwindClass(index));
+    }
+
+    // Write the last part (ignored last class) as regular text
+    if let Some(ref last) = last_part {
+        let last_str = f.context().allocator().alloc_str(last);
+        write!(f, text(last_str));
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_sortable_literal = f.options().experimental_tailwindcss.as_ref().is_some_and(
-            |tailwind_options| match self.grand_parent() {
-                AstNodes::JSXExpressionContainer(container) => {
-                    if let AstNodes::JSXAttribute(attribute) = container.parent {
-                        is_tailwind_jsx_attribute(&attribute.name, tailwind_options)
-                    } else {
-                        false
+        let tailwind_options =
+            f.options().experimental_tailwindcss.as_ref().filter(|tailwind_options| {
+                match self.grand_parent() {
+                    AstNodes::JSXExpressionContainer(container) => {
+                        if let AstNodes::JSXAttribute(attribute) = container.parent {
+                            is_tailwind_jsx_attribute(&attribute.name, tailwind_options)
+                        } else {
+                            false
+                        }
                     }
+                    AstNodes::TaggedTemplateExpression(tagged) => {
+                        is_tailwind_function_call(&tagged.tag, tailwind_options)
+                    }
+                    AstNodes::CallExpression(call) => {
+                        is_tailwind_function_call(&call.callee, tailwind_options)
+                    }
+                    _ => false,
                 }
-                AstNodes::TaggedTemplateExpression(tagged) => {
-                    is_tailwind_function_call(&tagged.tag, tailwind_options)
-                }
-                _ => false,
-            },
-        );
+            });
 
-        if is_sortable_literal {
-            let source = f.source_text().text_for(&self).to_string();
-            let index = f.context_mut().add_tailwind_class(source);
-            f.write_element(FormatElement::TailwindClass(index));
+        if let Some(tailwind_options) = tailwind_options {
+            let preserve_whitespace =
+                tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
+            write_tailwind_template_element(self, preserve_whitespace, f);
         } else {
             write!(f, text(self.value.raw.as_str()));
         }
