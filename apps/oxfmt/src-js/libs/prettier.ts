@@ -114,7 +114,6 @@ import type { TransformerEnv } from "prettier-plugin-tailwindcss";
 let cachedGetTailwindConfig: typeof import("prettier-plugin-tailwindcss").getTailwindConfig;
 let cachedSortClasses: typeof import("prettier-plugin-tailwindcss").sortClasses;
 let tailwindInitialized = false;
-let cachedTailwindOptions: TailwindOptions = {};
 
 /**
  * Configuration options for Tailwind CSS class sorting.
@@ -163,6 +162,7 @@ export async function processTailwindClasses({
   const configOptions = {
     filepath,
     ...options,
+    // Oxfmt puts all Tailwind options under `experimentalTailwindcss`
     ...options?.experimentalTailwindcss,
   };
 

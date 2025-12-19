@@ -55,24 +55,6 @@ impl<'a> Formatter<'a> {
     }
 
     #[inline]
-    pub fn format_with_embedded(
-        self,
-        program: &'a Program<'a>,
-        embedded_formatter: EmbeddedFormatter,
-    ) -> Formatted<'a> {
-        self.format_impl(program, Some(embedded_formatter), None)
-    }
-
-    #[inline]
-    pub fn format_with_tailwind(
-        self,
-        program: &'a Program<'a>,
-        tailwind_callback: &TailwindCallback,
-    ) -> Formatted<'a> {
-        self.format_impl(program, None, Some(tailwind_callback))
-    }
-
-    #[inline]
     pub fn format_with_all(
         self,
         program: &'a Program<'a>,
