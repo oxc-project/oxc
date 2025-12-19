@@ -219,7 +219,8 @@ const source = `{}`;{}
             }
         }
 
-        // Check if this is a mapped type (Record<string, T>) before checking if rendered is empty
+        // Check if this is a mapped type (Record<string, T>) before checking if rendered is empty.
+        // We need this to add special documentation for mapped types where there are no defined properties.
         let is_mapped_type = schema
             .object
             .as_ref()
