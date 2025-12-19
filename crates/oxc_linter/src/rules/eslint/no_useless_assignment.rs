@@ -1,12 +1,10 @@
 use oxc_ast::{AstKind, ast::BindingIdentifier};
-use oxc_cfg::BlockNodeId;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, Reference};
+use oxc_semantic::Reference;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_assignment_diagnostic(name: &str, first_write: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Useless assignment to variable {name}"))
@@ -17,204 +15,224 @@ fn no_useless_assignment_diagnostic(name: &str, first_write: Span) -> OxcDiagnos
 pub struct NoUselessAssignment;
 
 declare_oxc_lint!(
-  /// # What it does
+  /// ### What it does
   ///
   /// Disallow variable assignments when the value is not used
   ///
-  /// ## Why is this bad?
+  /// ### Why is this bad?
   ///
   /// “Dead stores” waste processing and memory, so it is better to remove unnecessary assignments to variables.
   /// Also, if the author intended the variable to be used, there is likely a mistake around the dead store.
+  ///
+  /// ### Examples
+  ///
+  /// Examples of **incorrect** code for this rule:
+  /// ```js
+  /// let x = 5;
+  /// x = 7; // 'x' is assigned a value but never used
+  ///
+  /// // --------------------------------------------------
+  ///
+  /// function fn1() {
+  ///   let v = 'used';
+  ///   doSomething(v);
+  ///   v = 'unused'; // 'v' is assigned a value but never used
+  /// }
+  /// ```
+  ///
+  /// Additional examples of **incorrect** code for this rule:
+  /// ```js
+  /// function fn2() {
+  ///   let v = 'used';
+  ///   if (condition) {
+  ///     v = 'unused'; // 'v' is assigned a value but never used
+  ///     return
+  ///   }
+  ///   doSomething(v);
+  /// }
+  ///
+  /// // --------------------------------------------------
+  ///
+  /// function fn3() {
+  ///   let v = 'used';
+  ///   if (condition) {
+  ///     doSomething(v);
+  ///   } else {
+  ///     v = 'unused'; // 'v' is assigned a value but never used
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// Examples of **correct** code for this rule:
+  /// ```js
+  /// let x = 5;
+  /// console.log(x); // 'x' is used here
+  ///
+  /// // --------------------------------------------------
+  ///
+  /// function fn1() {
+  ///   let v = 'used';
+  ///   doSomething(v);
+  ///   v = 'used-2';
+  ///   doSomething(v); // 'v' is used here
+  /// }
+  ///
+  /// // --------------------------------------------------
+  ///
+  /// function fn2() {
+  ///   let v = 'used';
+  ///   if (condition) {
+  ///     v = 'used-2';
+  ///     doSomething(v); // 'v' is used here
+  ///     return
+  ///   }
+  ///   doSomething(v); // 'v' is used here
+  /// }
+  /// ```
   NoUselessAssignment,
   eslint,
   correctness
 );
 
-// LastWrite can be either a Reference or NodeId of the initialization or None
-
-#[derive(Debug, Clone)]
-enum LastWrite {
-    Reference(Reference),
-    Initialization(NodeId),
-    None,
-}
-
 impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
+        let cfg = match ctx.semantic().cfg() {
+            Some(cfg) => cfg,
+            None => return,
+        };
+
         let nodes = ctx.nodes();
+        let scoping = ctx.scoping();
 
         for node in nodes {
             match node.kind() {
-                AstKind::VariableDeclarator(declarator) => {
-                    if let Some(ident) = declarator.id.get_binding_identifier() {
-                        let symbol_id = ident.symbol_id();
-                        let references: Vec<_> =
-                            ctx.semantic().symbol_references(symbol_id).collect();
-                        let cfg_nodes = references
-                            .iter()
-                            .map(|r| nodes.cfg_id(r.node_id()))
-                            .collect::<FxHashSet<_>>();
+                AstKind::VariableDeclarator(_) => {
+                    let declarator = node.kind().as_variable_declarator().unwrap();
+                    let Some(ident) = declarator.id.get_binding_identifier() else {
+                        continue;
+                    };
 
-                        let has_multi_cfg_references = cfg_nodes.len() > 1
-                            || if let Some(_) = &declarator.init {
-                                let init_cfg_id = nodes.cfg_id(node.id());
-                                !cfg_nodes.contains(&init_cfg_id)
-                            } else {
-                                false
-                            };
+                    let symbol_id = ident.symbol_id();
+                    let references: Vec<&Reference> =
+                        scoping.get_resolved_references(symbol_id).collect();
 
-                        let last_write: LastWrite = if let Some(_) = &declarator.init {
-                            LastWrite::Initialization(node.id())
-                        } else {
-                            LastWrite::None
-                        };
-
-                        if has_multi_cfg_references {
-                            handle_multi_block_references(
-                                &ident,
-                                &references,
-                                ctx,
-                                last_write,
-                                &mut FxHashSet::default(),
-                            );
-                        } else {
-                            let write = handle_single_block_references(&references, last_write);
-
-                            match &write {
-                                LastWrite::Reference(r) => {
-                                    let diagnostic = no_useless_assignment_diagnostic(
-                                        &ident.name,
-                                        nodes.get_node(r.node_id()).span(),
-                                    );
-                                    ctx.diagnostic(diagnostic);
-                                }
-                                LastWrite::Initialization(node_id) => {
-                                    let diagnostic = no_useless_assignment_diagnostic(
-                                        &ident.name,
-                                        nodes.get_node(*node_id).span(),
-                                    );
-                                    ctx.diagnostic(diagnostic);
-                                }
-                                LastWrite::None => {}
-                            }
-                        }
+                    if references.is_empty() {
+                        continue;
                     }
+
+                    analyze_variable_references(ident, &references, node, ctx, cfg);
                 }
-                _ => {}
+                _ => continue,
             }
         }
     }
 }
 
-fn handle_single_block_references<'a>(
-    references: &Vec<&'a Reference>,
-    last_write: LastWrite,
-) -> LastWrite {
-    let mut local_last_write: LastWrite = last_write;
-
-    for reference in references {
-        if reference.is_write() {
-            match &local_last_write {
-                LastWrite::Reference(_) => return local_last_write,
-                LastWrite::Initialization(_) => return local_last_write,
-                LastWrite::None => {}
-            }
-            local_last_write = LastWrite::Reference((*reference).clone());
-        } else if reference.is_read() {
-            local_last_write = LastWrite::None;
-        }
-    }
-
-    local_last_write
-}
-
-fn handle_multi_block_references<'a>(
+fn analyze_variable_references(
     ident: &BindingIdentifier,
-    references: &Vec<&'a Reference>,
+    references: &[&Reference],
+    decl_node: &AstNode,
     ctx: &LintContext,
-    last_write: LastWrite,
-    visited_blocks: &mut FxHashSet<BlockNodeId>,
+    cfg: &oxc_cfg::ControlFlowGraph,
 ) {
     let nodes = ctx.nodes();
-    let cfg = ctx.cfg();
 
-    // Group references by their CFG block
-    let block_references: FxHashMap<BlockNodeId, Vec<&Reference>> =
-        references.iter().fold(FxHashMap::default(), |mut acc, r| {
-            let block_id = nodes.cfg_id(r.node_id());
-            acc.entry(block_id).or_default().push(*r);
-            acc
-        });
+    let has_init =
+        decl_node.kind().as_variable_declarator().and_then(|d| d.init.as_ref()).is_some();
 
-    let mut local_last_write: LastWrite = last_write;
-    for r in references {
-        let block_id = nodes.cfg_id(r.node_id());
-        let refs = if let Some(refs) = block_references.get(&block_id) {
-            refs
-        } else {
-            continue;
-        };
-        if visited_blocks.contains(&block_id) {
-            continue;
-        }
-        visited_blocks.insert(block_id);
+    if has_init {
+        let init_cfg_id = nodes.cfg_id(decl_node.id());
 
-        local_last_write = handle_single_block_references(&refs, local_last_write.clone());
-        // Process neighbor blocks
-        let last_write_used_in_neighbors = cfg
-            .graph
-            .neighbors(block_id)
-            .map(|n| {
-                if visited_blocks.contains(&n) {
-                    return local_last_write.clone();
+        /*
+         * Initialization is used if:
+         *   - There exists a read reachable from init, AND
+         *   - That read is in a different CFG block than any writes between init and read
+         *     OR there are no writes reachable from init
+         */
+
+        let mut init_value_is_used = false;
+
+        let writes_after_init: Vec<_> = references
+            .iter()
+            .filter(|r| r.is_write() && cfg.is_reachable(init_cfg_id, nodes.cfg_id(r.node_id())))
+            .collect();
+
+        for r in references.iter() {
+            if r.is_write() {
+                continue;
+            }
+
+            let read_cfg_id = nodes.cfg_id(r.node_id());
+            let read_span = nodes.get_node(r.node_id()).span();
+
+            if !cfg.is_reachable(init_cfg_id, read_cfg_id) {
+                continue;
+            }
+
+            let mut init_is_used_for_read = true;
+            for w in &writes_after_init {
+                let write_cfg_id = nodes.cfg_id(w.node_id());
+                let write_span = nodes.get_node(w.node_id()).span();
+
+                if cfg.is_reachable(write_cfg_id, read_cfg_id) && write_span.start < read_span.start
+                {
+                    init_is_used_for_read = false;
+                    break;
                 }
-                visited_blocks.insert(n);
+            }
 
-                if let Some(neighbor_refs) = block_references.get(&n) {
-                    handle_single_block_references(neighbor_refs, local_last_write.clone())
-                } else {
-                    local_last_write.clone()
-                }
-            })
-            .any(|w| match &w {
-                LastWrite::Reference(_) => false,
-                LastWrite::Initialization(_) => false,
-                LastWrite::None => true,
-            });
-
-        println!(
-            "Block {:?}, last_write_used_in_neighbors: {}",
-            block_id, last_write_used_in_neighbors
-        );
-
-        println!("refs in block:");
-        for r in refs {
-            let start = nodes.get_node(r.node_id()).span().start;
-            let end = nodes.get_node(r.node_id()).span().end;
-            println!("  - {:?}", ctx.source_range(Span::new(start - 4, end + 4)));
-        }
-
-        if !last_write_used_in_neighbors {
-            match &local_last_write {
-                LastWrite::Reference(r) => {
-                    let diagnostic = no_useless_assignment_diagnostic(
-                        &ident.name,
-                        nodes.get_node(r.node_id()).span(),
-                    );
-                    ctx.diagnostic(diagnostic);
-                }
-                LastWrite::Initialization(node_id) => {
-                    let diagnostic = no_useless_assignment_diagnostic(
-                        &ident.name,
-                        nodes.get_node(*node_id).span(),
-                    );
-                    ctx.diagnostic(diagnostic);
-                }
-                LastWrite::None => {}
+            if init_is_used_for_read {
+                init_value_is_used = true;
+                break;
             }
         }
 
-        local_last_write = LastWrite::None;
+        if !init_value_is_used {
+            ctx.diagnostic(no_useless_assignment_diagnostic(&ident.name, decl_node.span()));
+        }
+    }
+
+    /*
+     * Non-initial writes are used if:
+     *   - There exists a read reachable from the write
+     */
+    for (i, reference) in references.iter().enumerate() {
+        if !reference.is_write() {
+            continue;
+        }
+
+        let write_cfg_id = nodes.cfg_id(reference.node_id());
+        let write_span = nodes.get_node(reference.node_id()).span();
+
+        let mut has_read_after = false;
+        for r in references[i + 1..].iter() {
+            if r.is_write() {
+                break;
+            }
+            if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
+                has_read_after = true;
+                break;
+            }
+        }
+
+        if !has_read_after {
+            if cfg.is_cyclic(write_cfg_id) {
+                println!("Node is cyclic {:?}", nodes.get_node(reference.node_id()));
+                for r in references[..i].iter() {
+                    if r.is_write() {
+                        continue;
+                    }
+                    if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
+                        has_read_after = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if !has_read_after {
+            ctx.diagnostic(no_useless_assignment_diagnostic(&ident.name, write_span));
+        }
     }
 }
 
@@ -257,16 +275,16 @@ fn test() {
     }",
             None,
         ),
-        // (
-        //     "function fn4() {
-        //     let v = 'used';
-        //     for (let i = 0; i < 10; i++) {
-        //         doSomething(v);
-        //         v = 'used in next iteration';
-        //     }
-        // }",
-        //     None,
-        // ),
+        (
+            "function fn4() {
+            let v = 'used';
+            for (let i = 0; i < 10; i++) {
+                doSomething(v);
+                v = 'used in next iteration';
+            }
+        }",
+            None,
+        ),
     ];
     let fail = vec![
         ("let x = 5; x = 7;", None),
