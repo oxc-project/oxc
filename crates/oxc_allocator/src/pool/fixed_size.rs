@@ -1,13 +1,15 @@
 use std::{
     alloc::{GlobalAlloc, Layout, System},
-    cmp::max,
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
-        Condvar, Mutex,
-        atomic::{AtomicBool, AtomicU32, Ordering},
+        Mutex,
+        atomic::{AtomicBool, Ordering},
     },
 };
+
+#[cfg(target_os = "windows")]
+use std::sync::Condvar;
 
 use oxc_ast_macros::ast;
 
@@ -21,56 +23,169 @@ const FOUR_GIB: usize = 1 << 32;
 
 /// A thread-safe pool for reusing [`Allocator`] instances, that uses fixed-size allocators,
 /// suitable for use with raw transfer.
+///
+/// Has different behavior depending on platform.
+/// Implementation for Windows is different, due to Windows' lack of virtual memory overcommit.
+///
+/// # Design
+/// This pool is designed for the linter to use with JS plugins.
+///
+/// There are 3 possible scenarios:
+///
+/// ## 1. JS plugins not in use
+///
+/// Linter will use `StandardAllocatorPool`, so not relevant here.
+///
+/// ## 2. JS plugins in use, but no `import` plugin
+///
+/// Parse + lint happen one after the other, on a single thread.
+/// Files are parsed directly into fixed-size allocators. After linting, the allocator is returned to the pool.
+///
+/// Therefore, no more than `thread_count` fixed-size allocators exist concurrently.
+///
+/// ## 3. Both JS plugins and `import` plugin in use
+///
+/// Multi-file analysis is enabled. Many ASTs may be parsed and held in memory - many more than `thread_count`.
+/// Linter parses ASTs into standard allocators.
+/// When it is time to lint AST with JS plugins, AST is copied into a fixed-size allocator.
+/// After linting, the fixed-size allocator is returned to the pool.
+/// The last step happens on maximum `thread_count` threads simultaneously.
+///
+/// Therefore, no more than `thread_count` fixed-size allocators exist concurrently.
+///
+/// ## All scenarios
+///
+/// In all scenarios, `thread_count` fixed-size allocators is sufficient for the workload.
+///
+/// We handle both scenarios (2) and (3) the same way, but implemented differently on Windows and Linux/Mac.
+///
+/// * Linux/Mac: No problem creating `thread_count` allocators.
+///   That is sufficient for the workload. Pool will not need to grow.
+///
+/// * Windows: There may not be enough memory for `thread_count` allocators.
+///   We create a pool of as close to `thread_count` allocators as possible.
+///   If an allocator is unavailable in pool, thread blocks until another thread is finished with one.
+///
+/// On all platforms, the pool is not growable after it's created, and that is sufficient for the workload.
 pub struct FixedSizeAllocatorPool {
-    /// Allocators in the pool
+    /// Allocators currently in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
-    /// ID to assign to next `Allocator` that's created
-    next_id: AtomicU32,
-    /// Maximum number of allocators this pool will create.
-    /// Once this limit is reached, [`get`](Self::get) will block until an allocator
-    /// is returned to the pool via [`add`](Self::add).
-    capacity_limit: usize,
+
     /// Condition variable used to signal when an allocator is returned to the pool.
-    /// Threads blocked in [`get`](Self::get) waiting for an allocator will be woken
-    /// when [`add`](Self::add) returns one to the pool.
+    /// Threads blocked in [`Self::get`] waiting for an allocator will be woken up
+    /// when [`Self::add`] returns an allocator to the pool.
+    ///
+    /// Only used on Windows. On *nix systems, we don't need this synchronization.
+    #[cfg(target_os = "windows")]
     available: Condvar,
-    /// `true` if allocator creation has failed.
-    /// Once set, no further attempts to create allocators will be made, since they would
-    /// also fail.
-    allocation_failed: AtomicBool,
 }
 
 impl FixedSizeAllocatorPool {
-    /// Create a new [`FixedSizeAllocatorPool`] for use across the specified number of threads.
+    /// Create a new [`FixedSizeAllocatorPool`] containing `thread_count` allocators.
     ///
-    /// The pool eagerly creates one allocator during construction. In total, it will create
-    /// at most `max(thread_count, 1)` allocators (including this initial allocator). If all
-    /// allocators are in use when [`get`](Self::get) is called, it will block until one is
-    /// returned to the pool via [`add`](Self::add).
+    /// Linux/Mac implementation.
     ///
-    /// Passing `thread_count == 0` is equivalent to a pool that may use exactly one allocator
-    /// in total (the one created during construction).
-    pub fn new(thread_count: usize) -> FixedSizeAllocatorPool {
-        let max_allocator_count = max(thread_count, 1);
-        let mut allocators = Vec::with_capacity(max_allocator_count);
-        let Ok(allocator) = FixedSizeAllocator::try_new(0) else {
-            panic!("Failed to create initial fixed-size allocator for the pool");
-        };
-        allocators.push(allocator);
-
-        FixedSizeAllocatorPool {
-            allocators: Mutex::new(allocators),
-            next_id: AtomicU32::new(1),
-            available: Condvar::new(),
-            capacity_limit: max_allocator_count,
-            allocation_failed: AtomicBool::new(false),
-        }
-    }
-
-    /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
+    /// Linux/Mac systems that we support overcommit virtual memory, so there is plenty of virtual memory available.
+    /// Creating a number of allocators equal to the number of threads should be easily possible,
+    /// and they'll primarily consume only virtual memory, not physical memory.
+    ///
+    /// The pool is not growable. Calling [`get`] on this pool when it's empty will panic.
     ///
     /// # Panics
+    /// Panics if cannot create `thread_count` allocators. This should be impossible if `thread_count` is accurate.
+    ///
+    /// [`get`]: Self::get
+    #[cfg(not(target_os = "windows"))]
+    pub fn new(thread_count: usize) -> Self {
+        let mut allocators = Vec::with_capacity(thread_count);
+
+        // Create `thread_count` allocators
+        for i in 0..thread_count {
+            // It's impossible to create more than `u32::MAX` allocators, as `u32::MAX` x 4 GiB allocations would
+            // consume almost the entirety of a 64-bit address space. No platform has such a large address space.
+            // Typically they use 48 bit address space, or 53 bit at most.
+            #[expect(clippy::cast_possible_truncation)]
+            let allocator = FixedSizeAllocator::try_new(i as u32).unwrap();
+            allocators.push(allocator);
+        }
+
+        Self { allocators: Mutex::new(allocators) }
+    }
+
+    /// Create a new [`FixedSizeAllocatorPool`] containing *up to* `thread_count` allocators.
+    ///
+    /// Windows implementation.
+    ///
+    /// Windows doesn't overcommit virtual memory, so it's easy to hit OOM.
+    /// We want to use as many allocators as we can up to `thread_count`, but without exhausting memory,
+    /// and without leaving the system starved of memory for *other* allocations.
+    ///
+    /// So we create as many allocators as we can, up to `thread_count + 1`, and then discard the last one.
+    /// This should guarantee that there's at least 4 GiB of memory left for other allocations.
+    ///
+    /// If we didn't return one allocator's memory back to the system, then it'd be pot luck whether you might get OOM,
+    /// depending on exactly how much memory the system has available in total.
+    ///
+    /// Each allocator is 4 GiB in size, so if system has 16.01 GiB of memory available, we could succeed in creating
+    /// 4 x 4 GiB allocators, but that'd only leave 10 MiB of memory free. Likely then some other allocation
+    /// (e.g. creating a normal `Allocator`, or even allocating a heap `String`) would fail due to OOM later on.
+    ///
+    /// Note that "memory available" on Windows does not mean "how much RAM the system has".
+    /// It includes the swap file, the size of which depends on how much free disk space the system has.
+    /// So numbers like 16.01 GiB are not at all out of the question.
+    ///
+    /// The pool is not growable. Calling [`get`] on this pool when it's empty will block the calling thread
+    /// until another thread returns an allocator to the pool.
+    ///
+    /// # Panics
+    /// Panics if cannot create at least 1 allocator.
+    ///
+    /// [`get`]: Self::get
+    #[cfg(target_os = "windows")]
+    pub fn new(thread_count: usize) -> Self {
+        // Capacity is `thread_count + 1`, because we want to give 1 allocator back to system
+        let capacity = thread_count + 1;
+
+        let mut allocators = Vec::with_capacity(capacity);
+
+        // Get as many allocators as possible, up to `capacity`
+        for i in 0..capacity {
+            // It's impossible to create more than `u32::MAX` allocators, as `u32::MAX` x 4 GiB allocations would
+            // consume almost the entirety of a 64-bit address space. No platform has such a large address space.
+            // Typically they use 48 bit address space, or 53 bit at most.
+            #[expect(clippy::cast_possible_truncation)]
+            let allocator = FixedSizeAllocator::try_new(i as u32);
+            let Ok(allocator) = allocator else { break };
+            allocators.push(allocator);
+        }
+
+        // Discard last allocator if we have more than 1.
+        // This leaves pool containing between 1 and `thread_count` allocators.
+        match allocators.len() {
+            // If we can't create even 1 allocator, panic
+            0 => panic!("Insufficient memory to create fixed-size allocator pool"),
+            // If we only got 1, keep it.
+            // If system has just over 4 GiB memory available in total, OOM is possible later.
+            // But what else can we do in this case?
+            1 => {}
+            // Otherwise, discard the last allocator we got, to leave memory free for other allocations
+            _ => {
+                allocators.pop();
+            }
+        }
+
+        Self { allocators: Mutex::new(allocators), available: Condvar::new() }
+    }
+
+    /// Retrieve an [`Allocator`] from the pool.
+    ///
+    /// Linux/Mac implementation.
+    ///
+    /// # Panics
+    ///
+    /// * Panics if the pool is empty.
     /// * Panics if the underlying mutex is poisoned.
+    #[cfg(not(target_os = "windows"))]
     pub fn get(&self) -> Allocator {
         // Try to get an allocator from the pool.
         // This is in a block, so that `Mutex` lock is held for the shortest possible time.
@@ -78,55 +193,33 @@ impl FixedSizeAllocatorPool {
             let mut allocators_guard = self.allocators.lock().unwrap();
             allocators_guard.pop()
         };
+
+        // Panic if pool is empty. Should never happen if the pool was created with the correct `thread_count`.
         if let Some(allocator) = maybe_allocator {
-            return allocator.into_inner();
+            allocator.into_inner()
+        } else {
+            panic!("Tried to get an allocator from an empty `FixedSizeAllocatorPool`")
         }
+    }
 
-        // Pool is empty. Try to create a new allocator.
-        if let Some(allocator) = self.create_new_allocator() {
-            return allocator.into_inner();
-        }
-
-        // Pool cannot produce another allocator.
-        // Check if an allocator was returned to the pool by another thread during the time when we were trying
-        // to create a new allocator above. If not, wait for notification that the pool isn't empty any more.
-        // IMPORTANT: To avoid deadlock, we must check if pool is still empty BEFORE waiting.
-        // Otherwise, another thread could have added an allocator to the pool since we last checked
-        // at start of the function, and `self.available.wait(allocators_guard)` could wait forever.
+    /// Retrieve an [`Allocator`] from the pool, blocking until one becomes available if the pool is currentlyempty.
+    ///
+    /// Windows implementation.
+    ///
+    /// # Panics
+    /// Panics if the underlying mutex is poisoned.
+    #[cfg(target_os = "windows")]
+    pub fn get(&self) -> Allocator {
+        // Try to get an allocator from the pool.
+        // If pool is empty, wait for notification that the pool isn't empty any more.
+        // After receiving a notification, we must still check that pool is not empty,
+        // (no `.pop().unwrap_unchecked()` here), because `Condvar` can produce spurious wakeups.
         let mut allocators_guard = self.allocators.lock().unwrap();
         loop {
             if let Some(allocator) = allocators_guard.pop() {
                 return allocator.into_inner();
             }
             allocators_guard = self.available.wait(allocators_guard).unwrap();
-        }
-    }
-
-    fn create_new_allocator(&self) -> Option<FixedSizeAllocator> {
-        // If a previous allocation attempt failed, don't try again - it will also fail.
-        if self.allocation_failed.load(Ordering::Relaxed) {
-            return None;
-        }
-
-        loop {
-            let id = self.next_id.load(Ordering::Relaxed);
-
-            if id as usize >= self.capacity_limit {
-                return None;
-            }
-
-            // Try to claim this ID. If another thread got there first, retry with new ID.
-            if self
-                .next_id
-                .compare_exchange_weak(id, id + 1, Ordering::Relaxed, Ordering::Relaxed)
-                .is_ok()
-            {
-                let result = FixedSizeAllocator::try_new(id);
-                if result.is_err() {
-                    self.allocation_failed.store(true, Ordering::Relaxed);
-                }
-                return result.ok();
-            }
         }
     }
 
@@ -152,6 +245,8 @@ impl FixedSizeAllocatorPool {
             allocators_guard.push(fixed_size_allocator);
         }
 
+        // On Windows, notify waiting threads that an allocator is available (see Windows impl of `get`)
+        #[cfg(target_os = "windows")]
         self.available.notify_one();
     }
 }
