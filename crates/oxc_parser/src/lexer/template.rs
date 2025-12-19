@@ -442,7 +442,8 @@ mod test {
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
             let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer = Lexer::new(&allocator, &source_text, SourceType::default(), unique);
+            let mut lexer =
+                Lexer::new(&allocator, &source_text, SourceType::default(), false, unique);
             let token = lexer.next_token();
             assert_eq!(
                 token.kind(),
