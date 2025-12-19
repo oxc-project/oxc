@@ -12,6 +12,7 @@ use std::{
 use std::sync::Condvar;
 
 use oxc_ast_macros::ast;
+use oxc_data_structures::stack::Stack;
 
 use crate::{
     Allocator,
@@ -68,8 +69,11 @@ const FOUR_GIB: usize = 1 << 32;
 ///
 /// On all platforms, the pool is not growable after it's created, and that is sufficient for the workload.
 pub struct FixedSizeAllocatorPool {
-    /// Allocators currently in the pool
-    allocators: Mutex<Vec<FixedSizeAllocator>>,
+    /// Allocators currently in the pool.
+    /// We use a `Stack` because it's faster than `Vec` for `push` and `pop`,
+    /// and those are the operations we do while `Mutex` lock is held.
+    /// The shorter the time lock is held, the less contention there is.
+    allocators: Mutex<Stack<FixedSizeAllocator>>,
 
     /// Condition variable used to signal when an allocator is returned to the pool.
     /// Threads blocked in [`Self::get`] waiting for an allocator will be woken up
@@ -97,7 +101,7 @@ impl FixedSizeAllocatorPool {
     /// [`get`]: Self::get
     #[cfg(not(target_os = "windows"))]
     pub fn new(thread_count: usize) -> Self {
-        let mut allocators = Vec::with_capacity(thread_count);
+        let mut allocators = Stack::with_capacity(thread_count);
 
         // Create `thread_count` allocators
         for i in 0..thread_count {
@@ -146,7 +150,7 @@ impl FixedSizeAllocatorPool {
         // Capacity is `thread_count + 1`, because we want to give 1 allocator back to system
         let capacity = thread_count + 1;
 
-        let mut allocators = Vec::with_capacity(capacity);
+        let mut allocators = Stack::with_capacity(capacity);
 
         // Get as many allocators as possible, up to `capacity`
         for i in 0..capacity {
