@@ -13,6 +13,7 @@
   "bugs": {
     "url": "https://github.com/oxc-project/oxc/issues"
   },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
@@ -21,7 +22,6 @@
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
   },
-  "license": "MIT",
   "publisher": "oxc",
   "main": "./out/main.js",
   "scripts": {
@@ -43,6 +43,21 @@
     "test:multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=multi-root vscode-test",
     "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
     "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "catalog:",
+    "@types/vscode": "1.93.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.0.0",
+    "cross-env": "catalog:",
+    "ovsx": "^0.10.0",
+    "rolldown": "catalog:",
+    "tinyglobby": "^0.2.15"
   },
   "contributes": {
     "commands": [
@@ -274,25 +289,10 @@
     "onLanguage:typescriptreact",
     "onLanguage:vue"
   ],
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.9",
-    "@types/node": "catalog:",
-    "@types/vscode": "1.93.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "^3.0.0",
-    "cross-env": "catalog:",
-    "ovsx": "^0.10.0",
-    "rolldown": "catalog:",
-    "tinyglobby": "^0.2.15"
-  },
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.93.0"
   },
-  "icon": "icon.png",
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
