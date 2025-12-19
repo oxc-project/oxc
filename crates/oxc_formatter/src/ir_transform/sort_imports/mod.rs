@@ -8,6 +8,7 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
+    SortImportsOptions,
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
         group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
@@ -18,29 +19,27 @@ use crate::{
 /// An IR transform that sorts import statements according to specified options.
 /// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
 /// <https://perfectionist.dev/rules/sort-imports>
-pub struct SortImportsTransform {
-    options: options::SortImportsOptions,
-}
+pub struct SortImportsTransform;
 
 impl SortImportsTransform {
-    pub fn new(options: options::SortImportsOptions) -> Self {
-        Self { options }
-    }
-
     /// Transform the given `Document` by sorting import statements according to the specified options.
     ///
     // NOTE: `Document` and its `FormatElement`s are already well-formatted.
     // It means that:
     // - There is no redundant spaces, no consecutive line breaks, etc...
     // - Last element is always `FormatElement::Line(Hard)`.
-    pub fn transform<'a>(&self, document: &Document<'a>, allocator: &'a Allocator) -> Document<'a> {
+    pub fn transform<'a>(
+        document: &Document<'a>,
+        options: &SortImportsOptions,
+        allocator: &'a Allocator,
+    ) -> Option<Document<'a>> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
-            return document.clone();
+            return None;
         }
 
         // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&self.options.groups);
+        let groups = parse_groups_from_strings(&options.groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
@@ -123,12 +122,12 @@ impl SortImportsTransform {
                 }
                 // `SourceLine::Empty` and `SourceLine::CommentOnly` can be boundaries depending on options.
                 // Otherwise, they will be the leading/trailing lines of `PartitionedChunk::Imports`.
-                SourceLine::Empty if !self.options.partition_by_newline => {
+                SourceLine::Empty if !options.partition_by_newline => {
                     current_chunk.add_imports_line(line);
                 }
                 // TODO: Support more flexible comment handling?
                 // e.g. Specific text by regex, only line comments, etc.
-                SourceLine::CommentOnly(..) if !self.options.partition_by_comment => {
+                SourceLine::CommentOnly(..) if !options.partition_by_comment => {
                     current_chunk.add_imports_line(line);
                 }
                 // This `SourceLine` is a boundary!
@@ -182,7 +181,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&groups, &self.options);
+                        chunk.into_sorted_import_units(&groups, options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
@@ -200,7 +199,7 @@ impl SortImportsTransform {
                         // Insert newline when:
                         // 1. Group changes
                         // 2. Previous import was not ignored (don't insert after ignored)
-                        if self.options.newlines_between {
+                        if options.newlines_between {
                             let current_group_idx = sorted_import.group_idx;
                             if let Some(prev_idx) = prev_group_idx
                                 && prev_idx != current_group_idx
@@ -217,7 +216,7 @@ impl SortImportsTransform {
                             line.write(
                                 prev_elements,
                                 &mut next_elements,
-                                self.options.partition_by_newline,
+                                options.partition_by_newline,
                             );
                         }
                         sorted_import.import_line.write(prev_elements, &mut next_elements, false);
@@ -267,6 +266,6 @@ impl SortImportsTransform {
             }
         }
 
-        Document::from(next_elements)
+        Some(Document::from(next_elements))
     }
 }

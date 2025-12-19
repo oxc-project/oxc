@@ -68,8 +68,6 @@ impl<'a> Formatter<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
-        let experimental_sort_imports = self.options.experimental_sort_imports.clone();
-
         let context = FormatContext::new(
             program.source_text,
             program.source_type,
@@ -86,9 +84,14 @@ impl<'a> Formatter<'a> {
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
-        if let Some(sort_imports_options) = experimental_sort_imports {
-            let sort_imports = SortImportsTransform::new(sort_imports_options);
-            formatted.apply_transform(|doc| sort_imports.transform(doc, self.allocator));
+        if let Some(sort_imports_options) = &formatted.context().options().experimental_sort_imports
+            && let Some(transformed_document) = SortImportsTransform::transform(
+                formatted.document(),
+                sort_imports_options,
+                self.allocator,
+            )
+        {
+            *formatted.document_mut() = transformed_document;
         }
 
         formatted
