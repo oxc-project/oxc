@@ -1056,23 +1056,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             );
 
         if is_tailwind_class {
-            let index = f.context_mut().add_tailwind_class(self.value.to_string());
             let quote = if is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
                 f.options().quote_style.as_char()
             };
             let quote_str = if quote == '"' { "\"" } else { "'" };
+            let index = f.context_mut().add_tailwind_class(self.value.to_string());
             f.write_element(FormatElement::Token { text: quote_str });
-            f.write_element(FormatElement::Tag(Tag::StartTailwindClass(index)));
-            f.write_element(FormatElement::Text {
-                text: f.context().allocator().alloc_str(self.value.as_str()),
-                width: crate::formatter::format_element::TextWidth::from_text(
-                    self.value.as_str(),
-                    f.options().indent_width,
-                ),
-            });
-            f.write_element(FormatElement::Tag(Tag::EndTailwindClass));
+            f.write_element(FormatElement::TailwindClass(index));
             f.write_element(FormatElement::Token { text: quote_str });
         } else {
             FormatLiteralStringToken::new(

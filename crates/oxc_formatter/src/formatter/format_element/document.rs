@@ -162,9 +162,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         write!(f, [ContentArrayStart]);
@@ -479,20 +479,6 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(f, [token("fill(")]);
                         }
 
-                        StartTailwindClass(index) => {
-                            write!(
-                                f,
-                                [
-                                    token("tailwind_class("),
-                                    text(
-                                        f.context().allocator().alloc_str(&std::format!("{index}")),
-                                    ),
-                                    token(","),
-                                    space(),
-                                ]
-                            );
-                        }
-
                         StartEntry => {
                             // handled after the match for all start tags
                         }
@@ -506,8 +492,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
-                        | EndDedent(_)
-                        | EndTailwindClass => {
+                        | EndDedent(_) => {
                             write!(f, [ContentArrayEnd, token(")")]);
                         }
                     }
@@ -515,6 +500,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                     if tag.is_start() {
                         write!(f, [ContentArrayStart]);
                     }
+                }
+                FormatElement::TailwindClass(_) => {
+                    // TODO: get sorted string to print
                 }
             }
         }

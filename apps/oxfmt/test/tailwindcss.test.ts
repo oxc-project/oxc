@@ -126,4 +126,55 @@ const A = (
     expect(result.code).toContain('cva("inline p-2")');
     expect(result.errors).toStrictEqual([]);
   });
+
+  test("should preserve whitespace when tailwindPreserveWhitespace is true", async () => {
+    // Input with leading/trailing whitespace in class string
+    const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;
+
+    // Without tailwindPreserveWhitespace, whitespace should be trimmed
+    const resultWithoutOption = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+    expect(resultWithoutOption.code).toContain('className="flex p-4"');
+
+    // With tailwindPreserveWhitespace: true, whitespace should be preserved
+    const resultWithOption = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindPreserveWhitespace: true,
+      },
+    });
+    // Whitespace should be preserved around the sorted classes
+    expect(resultWithOption.code).toContain('className="  flex p-4  "');
+    expect(resultWithOption.errors).toStrictEqual([]);
+  });
+
+  test("should remove duplicates by default", async () => {
+    // Input with duplicate class names
+    const input = `const A = <div className="flex p-4 flex p-4">Hello</div>;`;
+
+    // By default, duplicates should be removed
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Should only have one instance of each class
+    expect(result.code).toContain('className="flex p-4"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve duplicates when tailwindPreserveDuplicates is true", async () => {
+    // Input with duplicate class names
+    const input = `const A = <div className="flex p-4 flex p-4">Hello</div>;`;
+
+    // With tailwindPreserveDuplicates: true, duplicates should be preserved
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindPreserveDuplicates: true,
+      },
+    });
+
+    // Duplicates should be preserved (sorted but kept)
+    expect(result.code).toContain('className="flex flex p-4 p-4"');
+    expect(result.errors).toStrictEqual([]);
+  });
 });

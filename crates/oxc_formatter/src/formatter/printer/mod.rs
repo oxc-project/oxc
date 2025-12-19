@@ -88,9 +88,9 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = stack.top();
@@ -103,14 +103,7 @@ impl<'a> Printer<'a> {
 
             FormatElement::Token { text } => self.print_text(Text::Token(text)),
             FormatElement::Text { text, width } => {
-                // If we're inside a TailwindClass tag, use the sorted replacement
-                if let Some(replacement) = self.state.tailwind_replacement.take() {
-                    let replacement_width =
-                        TextWidth::from_text(replacement, self.options.indent_width());
-                    self.print_text(Text::Text { text: replacement, width: replacement_width });
-                } else {
-                    self.print_text(Text::Text { text, width: *width });
-                }
+                self.print_text(Text::Text { text, width: *width });
             }
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
@@ -254,19 +247,8 @@ impl<'a> Printer<'a> {
             FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
                 stack.push(tag.kind(), args);
             }
-            FormatElement::Tag(StartTailwindClass(index)) => {
-                // Set replacement text for the next Text element
-                self.state.tailwind_replacement =
-                    self.state.sorted_tailwind_classes.get(*index).map(String::as_str);
-                stack.push(TagKind::TailwindClass, args);
-            }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndFill
-                | EndTailwindClass),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 stack.pop(tag.kind())?;
             }
@@ -288,6 +270,12 @@ impl<'a> Printer<'a> {
                     DedentMode::Root => indent_stack.pop(),
                 }
                 stack.pop(tag.kind())?;
+            }
+            FormatElement::TailwindClass(index) => {
+                if let Some(text) = self.state.sorted_tailwind_classes.get(*index) {
+                    let width = TextWidth::from_text(text, self.options.indent_width);
+                    self.print_text(Text::Text { text, width });
+                }
             }
         }
 
@@ -726,8 +714,6 @@ struct PrinterState<'a> {
     fits_queue: Vec<&'a [FormatElement<'a>]>,
     /// Sorted Tailwind CSS classes for lookup during printing
     sorted_tailwind_classes: &'a [String],
-    /// Current tailwind class replacement (set when inside StartTailwindClass tag)
-    tailwind_replacement: Option<&'a str>,
 }
 
 impl<'a> PrinterState<'a> {
@@ -851,7 +837,7 @@ impl Default for Indention {
 
 #[must_use = "FitsMeasurer must be finished."]
 struct FitsMeasurer<'a, 'print> {
-    state: FitsState,
+    state: FitsState<'print>,
     queue: FitsQueue<'a, 'print>,
     stack: FitsCallStack<'print>,
     indent_stack: FitsIndentStack<'print>,
@@ -897,6 +883,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             pending_space: printer.state.pending_space,
             line_width: printer.state.line_width,
             has_line_suffix: printer.state.line_suffixes.has_pending(),
+            sorted_tailwind_classes: printer.state.sorted_tailwind_classes,
         };
 
         Self {
@@ -973,9 +960,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndTailwindClass, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartTailwindClass,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = self.stack.top();
@@ -1159,18 +1146,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(
-                tag @ (StartFill | StartLabelled(_) | StartEntry | StartTailwindClass(_)),
-            ) => {
+            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled
-                | EndEntry
-                | EndGroup
-                | EndConditionalContent
-                | EndFill
-                | EndTailwindClass),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
             ) => {
                 self.stack.pop(tag.kind())?;
             }
@@ -1191,6 +1171,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     self.indent_stack.end_dedent();
                 }
                 self.stack.pop(tag.kind())?;
+            }
+            FormatElement::TailwindClass(index) => {
+                if let Some(text) = self.state.sorted_tailwind_classes.get(*index) {
+                    let width = TextWidth::from_text(text, self.options().indent_width);
+                    return Ok(self.fits_text(Text::Text { text, width }));
+                }
             }
         }
 
@@ -1313,11 +1299,12 @@ impl From<bool> for Fits {
 
 /// State used when measuring if a group fits on a single line
 #[derive(Debug)]
-struct FitsState {
+struct FitsState<'print> {
     pending_indent: Indention,
     pending_space: bool,
     has_line_suffix: bool,
     line_width: usize,
+    sorted_tailwind_classes: &'print [String],
 }
 
 #[derive(Copy, Clone, Debug)]
