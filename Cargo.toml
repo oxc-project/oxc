@@ -233,6 +233,13 @@ tracing-subscriber = "0.3.22" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
 url = { version = "2.5.7" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
+editorconfig-parser = "0.0.3"
+natord = "1.0.9"
+oxfmt = { path = "apps/oxfmt" }
+sort-package-json = "0.0.5"
+oxc-toml = "0.14.1"
+unicode-width = "0.2"
+website_common = { path = "tasks/website_common" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]

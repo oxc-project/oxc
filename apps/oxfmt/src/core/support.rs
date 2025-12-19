@@ -10,6 +10,10 @@ pub enum FormatFileStrategy {
         path: PathBuf,
         source_type: SourceType,
     },
+    /// TOML files formatted by taplo (Pure Rust).
+    OxfmtToml {
+        path: PathBuf,
+    },
     ExternalFormatter {
         path: PathBuf,
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
@@ -43,6 +47,11 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
             return Err(());
         }
 
+        // Then TOML files
+        if is_toml_file(file_name) {
+            return Ok(Self::OxfmtToml { path });
+        }
+
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
@@ -61,12 +70,13 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 impl FormatFileStrategy {
     #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
-        matches!(self, Self::OxcFormatter { .. })
+        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
     }
 
     pub fn path(&self) -> &Path {
         match self {
             Self::OxcFormatter { path, .. }
+            | Self::OxfmtToml { path }
             | Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
@@ -86,16 +96,43 @@ static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     "Pipfile.lock",
     "flake.lock",
     "mcmod.info",
+    // TOML lock files
+    "Cargo.lock",
+    "Gopkg.lock",
+    "pdm.lock",
+    "poetry.lock",
+    "uv.lock",
+};
+
+// ---
+
+/// Returns `true` if this is a TOML file.
+fn is_toml_file(file_name: &str) -> bool {
+    if TOML_FILENAMES.contains(file_name) {
+        return true;
+    }
+
+    #[expect(clippy::case_sensitive_file_extension_comparisons)]
+    if file_name.ends_with(".toml.example") || file_name.ends_with(".toml") {
+        return true;
+    }
+
+    false
+}
+
+static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "Pipfile",
+    "Cargo.toml.orig",
 };
 
 // ---
 
 /// Returns parser name for external formatter, if supported.
-/// NOTE: `package.json` is handled separately in `TryFrom`.
 /// See also `prettier --support-info | jq '.languages[]'`
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    if JSON_STRINGIFY_FILENAMES.contains(file_name) || extension == Some("importmap") {
+    // NOTE: `package.json` is handled separately in `FormatFileStrategy::try_from()`
+    if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
     }
     if JSON_FILENAMES.contains(file_name) {
@@ -184,11 +221,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
 
     None
 }
-
-static JSON_STRINGIFY_FILENAMES: phf::Set<&'static str> = phf_set! {
-    // NOTE: `package.json` is handled separately as `ExternalFormatterPackageJson`
-    "composer.json",
-};
 
 static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "json",
@@ -398,5 +430,34 @@ mod tests {
 
         let source = FormatFileStrategy::try_from(PathBuf::from("composer.json")).unwrap();
         assert!(matches!(source, FormatFileStrategy::ExternalFormatter { .. }));
+    }
+
+    #[test]
+    fn test_toml_files() {
+        // Files that should be detected as TOML
+        let toml_files = vec![
+            "Cargo.toml",
+            "pyproject.toml",
+            "config.toml",
+            "config.toml.example",
+            "Pipfile",
+            "Cargo.toml.orig",
+        ];
+
+        for file_name in toml_files {
+            let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
+            assert!(
+                matches!(result, Ok(FormatFileStrategy::OxfmtToml { .. })),
+                "`{file_name}` should be detected as TOML"
+            );
+        }
+
+        // Lock files that should be excluded
+        let excluded_files = vec!["Cargo.lock", "poetry.lock", "pdm.lock", "uv.lock", "Gopkg.lock"];
+
+        for file_name in excluded_files {
+            let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
+            assert!(result.is_err(), "`{file_name}` should be excluded (lock file)");
+        }
     }
 }
