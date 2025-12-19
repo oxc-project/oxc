@@ -453,8 +453,7 @@ const A = (
 
   test("should sort template literal with expressions inside ternary", async () => {
     // Template literal with expressions, nested inside ternary
-    const input =
-      "const A = <div className={condition ? `p-4 flex ${x} m-2 inline` : `grid`} />;";
+    const input = "const A = <div className={condition ? `p-4 flex ${x} m-2 inline` : `grid`} />;";
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {},
