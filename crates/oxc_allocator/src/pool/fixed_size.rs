@@ -75,8 +75,8 @@ impl FixedSizeAllocatorPool {
         // Try to get an allocator from the pool.
         // This is in a block, so that `Mutex` lock is held for the shortest possible time.
         let maybe_allocator = {
-            let mut allocators = self.allocators.lock().unwrap();
-            allocators.pop()
+            let mut allocators_guard = self.allocators.lock().unwrap();
+            allocators_guard.pop()
         };
         if let Some(allocator) = maybe_allocator {
             return allocator.into_inner();
@@ -87,16 +87,18 @@ impl FixedSizeAllocatorPool {
             return allocator.into_inner();
         }
 
-        // Pool cannot produce another allocator. Wait for an existing allocator to be returned to the pool.
+        // Pool cannot produce another allocator.
+        // Check if an allocator was returned to the pool by another thread during the time when we were trying
+        // to create a new allocator above. If not, wait for notification that the pool isn't empty any more.
+        // IMPORTANT: To avoid deadlock, we must check if pool is still empty BEFORE waiting.
+        // Otherwise, another thread could have added an allocator to the pool since we last checked
+        // at start of the function, and `self.available.wait(allocators_guard)` could wait forever.
+        let mut allocators_guard = self.allocators.lock().unwrap();
         loop {
-            // This is in a block, so that `Mutex` lock is held for the shortest possible time
-            let maybe_allocator = {
-                let mut allocators = self.available.wait(self.allocators.lock().unwrap()).unwrap();
-                allocators.pop()
-            };
-            if let Some(allocator) = maybe_allocator {
+            if let Some(allocator) = allocators_guard.pop() {
                 return allocator.into_inner();
             }
+            allocators_guard = self.available.wait(allocators_guard).unwrap();
         }
     }
 
@@ -142,10 +144,12 @@ impl FixedSizeAllocatorPool {
             FixedSizeAllocator { allocator: ManuallyDrop::new(allocator) };
         fixed_size_allocator.reset();
 
-        // This is in a block, so that `Mutex` lock is held for the shortest possible time
+        // This is in a block so that lock (`allocators_guard`) is released before notifying the `Condvar`.
+        // This avoids waking up a thread, only for it to be immediately blocked again because the `Mutex`
+        // is still locked.
         {
-            let mut allocators = self.allocators.lock().unwrap();
-            allocators.push(fixed_size_allocator);
+            let mut allocators_guard = self.allocators.lock().unwrap();
+            allocators_guard.push(fixed_size_allocator);
         }
 
         self.available.notify_one();
