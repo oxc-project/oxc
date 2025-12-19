@@ -162,6 +162,7 @@ unsafe fn parse_raw_impl(
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
+                collect_tokens: true,
                 ..ParseOptions::default()
             })
             .parse();
