@@ -32,7 +32,7 @@ enum DeclarationStyle {
     Runtime,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DefinePropsDeclaration(DeclarationStyle);
 
 declare_oxc_lint!(
@@ -84,11 +84,9 @@ declare_oxc_lint!(
 
 impl Rule for DefinePropsDeclaration {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(
-            serde_json::from_value::<DefaultRuleConfig<DeclarationStyle>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        )
+        serde_json::from_value::<DefaultRuleConfig<DefinePropsDeclaration>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
