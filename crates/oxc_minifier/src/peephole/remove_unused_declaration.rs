@@ -1,8 +1,7 @@
-use oxc_ast::ast::*;
-
-use crate::{CompressOptionsUnused, ctx::Ctx};
-
 use super::PeepholeOptimizations;
+use crate::{CompressOptionsUnused, ctx::Ctx};
+use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
     fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
@@ -11,7 +10,7 @@ impl<'a> PeepholeOptimizations {
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
-    fn can_explode_expression_as_array_pattern(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
         match expr {
             Expression::ArrayExpression(_)
             | Expression::StringLiteral(_)
@@ -19,15 +18,14 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(ident) => {
                 ident.name == "arguments"
                     && ctx.is_global_reference(ident)
-                    && ctx.current_scope_flags().is_function()
+                    // check if any scope in a chain is a non-arrow function
+                    && ctx.scoping().scope_ancestors(ctx.current_scope_id()).any(|scope| {
+                        let scope_flags = ctx.scoping().scope_flags(scope);
+                        scope_flags.is_function() && !scope_flags.is_arrow()
+                    })
             }
             _ => false,
         }
-    }
-
-    fn can_explode_expression_as_object_pattern(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
-        matches!(expr, Expression::ObjectExpression(_))
-            || Self::can_explode_expression_as_array_pattern(expr, ctx)
     }
 
     pub fn should_remove_unused_declarator(
@@ -50,14 +48,15 @@ impl<'a> PeepholeOptimizations {
             }
             BindingPatternKind::ArrayPattern(ident) => {
                 ident.is_empty()
-                    && decl.init.as_ref().is_some_and(|expr| {
-                        Self::can_explode_expression_as_array_pattern(expr, ctx)
-                    })
+                    && decl.init.as_ref().is_some_and(|expr| Self::is_sync_iterator_expr(expr, ctx))
             }
             BindingPatternKind::ObjectPattern(ident) => {
                 ident.is_empty()
                     && decl.init.as_ref().is_some_and(|expr| {
-                        Self::can_explode_expression_as_object_pattern(expr, ctx)
+                        !matches!(
+                            expr.value_type(ctx),
+                            ValueType::Null | ValueType::Undefined | ValueType::Undetermined
+                        )
                     })
             }
             BindingPatternKind::AssignmentPattern(_) => false,
@@ -231,9 +230,15 @@ mod test {
         test_options("var [] = [1]", "", &options);
         test_options("var [] = [foo]", "foo", &options);
         test_options("var [] = 'foo'", "", &options);
+        test_same_options("export var f = () => { var [] = arguments }", &options);
         test_options(
-            "export var f = () => { var [] = arguments }",
-            "export var f = () => { arguments; }",
+            "export function f() { var [] = arguments }",
+            "export function f() { arguments; }",
+            &options,
+        );
+        test_options(
+            "function foo() {return (()=>{ var []=arguments })()};foo()",
+            "function foo() {arguments;} foo();",
             &options,
         );
         test_same_options("var [] = arguments", &options);
@@ -247,6 +252,9 @@ mod test {
         test_options("var {} = { foo }", "foo", &options);
         test_same_options("var {} = null", &options);
         test_same_options("var {} = a", &options);
+        test_same_options("var {} = null", &options);
+        test_same_options("var {} = null", &options);
+        test_same_options("var {} = void 0", &options);
 
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
