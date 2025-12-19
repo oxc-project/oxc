@@ -19,7 +19,6 @@ fn bench_parser(criterion: &mut Criterion) {
                 Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
-                        collect_tokens: true,
                         ..ParseOptions::default()
                     })
                     .parse();
@@ -45,6 +44,7 @@ fn bench_parser_with_tokens(criterion: &mut Criterion) {
                 Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
+                        collect_tokens: true,
                         ..ParseOptions::default()
                     })
                     .parse();
