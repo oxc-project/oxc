@@ -34,16 +34,14 @@ describe("editorconfig", () => {
   //   [*] indent_style=space, indent_size=2
   //   [*.ts] indent_size=4
   //   [nested/**/*.js] indent_size=8
-  //   [nested/**/*.json] indent_size=8, max_line_length=40
+  //   [nested/deep/*.json] indent_style=tab, max_line_length=40
   //
   // Expected:
   // - test.js: tabWidth=2 (from [*], not matched by [nested/**/*.js])
   // - test.ts: tabWidth=4 (from [*.ts])
   // - nested/deep/test.js: tabWidth=8 (from [nested/**/*.js], deep path glob)
-  // - nested/deep/test.json: tabWidth=8, printWidth=40 (from [nested/**/*.json], deep path glob for external formatter)
-  // TODO: Should fix `editor_config_parser` to accept `cwd` for `resolve()`
-  // oxlint-disable-next-line vitest/no-disabled-tests
-  it.skip("per-file overrides", async () => {
+  // - nested/deep/test.json: useTab=true, printWidth=40 (from [nested/deep/*.json], deep path glob for external formatter)
+  it("per-file overrides", async () => {
     const cwd = join(fixturesDir, "per_file_override");
     const snapshot = await runWriteModeAndSnapshot(cwd, [
       "test.js",

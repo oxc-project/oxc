@@ -93,6 +93,7 @@ impl ConfigResolver {
     /// - Config file is specified but not found or invalid
     /// - Config file parsing fails
     pub fn from_config_paths(
+        cwd: &Path,
         oxfmtrc_path: Option<&Path>,
         editorconfig_path: Option<&Path>,
     ) -> Result<Self, String> {
@@ -120,7 +121,7 @@ impl ConfigResolver {
                 let str = utils::read_to_string(path)
                     .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
 
-                Some(EditorConfig::parse(&str))
+                Some(EditorConfig::parse(&str).with_cwd(cwd))
             }
             None => None,
         };
