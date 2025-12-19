@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.102.0",
+  "version": "0.104.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "oxc",
@@ -8,22 +8,33 @@
   ],
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/parser"
   },
-  "author": "Boshen and oxc contributors",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "license": "MIT",
-  "type": "module",
-  "main": "src-js/index.js",
-  "browser": "src-js/wasm.js",
   "files": [
     "src-js/bindings.js",
+    "src-js/index.d.ts",
+    "src-js/index.js",
+    "src-js/wasm.js",
+    "src-js/webcontainer-fallback.cjs",
+    "src-js/wrap.js",
     "src-js/generated/constants.js",
+    "src-js/raw-transfer/common.js",
+    "src-js/raw-transfer/eager.js",
+    "src-js/raw-transfer/lazy-common.js",
+    "src-js/raw-transfer/lazy.js",
+    "src-js/raw-transfer/node-array.js",
+    "src-js/raw-transfer/supported.js",
+    "src-js/raw-transfer/visitor.js",
+    "src-js/visit/index.js",
+    "src-js/visit/visitor.js",
     "src-js/generated/deserialize/js.js",
     "src-js/generated/deserialize/js_range.js",
     "src-js/generated/deserialize/ts.js",
@@ -34,22 +45,15 @@
     "src-js/generated/visit/keys.js",
     "src-js/generated/visit/type_ids.js",
     "src-js/generated/visit/visitor.d.ts",
-    "src-js/generated/visit/walk.js",
-    "src-js/index.d.ts",
-    "src-js/index.js",
-    "src-js/raw-transfer/common.js",
-    "src-js/raw-transfer/eager.js",
-    "src-js/raw-transfer/lazy-common.js",
-    "src-js/raw-transfer/lazy.js",
-    "src-js/raw-transfer/node-array.js",
-    "src-js/raw-transfer/supported.js",
-    "src-js/raw-transfer/visitor.js",
-    "src-js/visit/index.js",
-    "src-js/visit/visitor.js",
-    "src-js/wasm.js",
-    "src-js/webcontainer-fallback.cjs",
-    "src-js/wrap.js"
+    "src-js/generated/visit/walk.js"
   ],
+  "type": "module",
+  "main": "src-js/index.js",
+  "browser": "src-js/wasm.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
     "build-test": "pnpm run build-dev --profile coverage",
@@ -112,9 +116,5 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
   }
 }

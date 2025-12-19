@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- 6cc3fdf linter/no-inferrable-types: Implement fixer (#17090) (camc314)
+- 2067997 linter/no-negation-in-equality-check: Implement suggestion (#17084) (camc314)
+- 9190c4b linter/no-unnecessary-array-flat-depth: Implement fixer (#17057) (camc314)
+- ed789de linter/misrefactored-assign-op: Implement fixer (#17056) (camc314)
+- a0f74a0 linter/config: Allow aliasing plugin names to allow names the same as builtin plugins (#15569) (Cameron)
+- 35070d9 linter/bad-bitwise-operator: Implement fixer (#17006) (camc314)
+- 322d995 linter/prefer-enum-initializers: Implement fixer (#17004) (camc314)
+- 3bfe31e linter/eslint-plugin-vitest: Add prefer-called-with as vitest compatible jest rule (#16993) (Said Atrahouch)
+- 0cd075f linter/eslint-plugin-jest: Add fix capabilities to prefer-called-with rule (#16987) (Said Atrahouch)
+- 357564b linter: Add options for `typescript/require-array-sort-compare` rule. (#16980) (connorshea)
+- 2b0ffba linter: Add options for `typescript/no-meaningless-void-operator` rule. (#16981) (connorshea)
+- fdc7d08 linter: Implement eslint/capitalized-comments (#16896) (Tu Shaokun)
+- f8b6561 linter: Add support for `test.for` in vitest (#16925) (camchenry)
+- 7ee0379 linter/eslint-plugin-vitest: Implement prefer-spy-on (#16426) (Said Atrahouch)
+- fc96ee0 linter: Implement jest/prefer-to-have-been-called-times (#16938) (秦宇航)
+- e31da2a linter: Implement jest/perfer-to-have-been-called (#16899) (秦宇航)
+- 1a31306 linter/eslint-plugin-vitest: Add require-hook as vitest compatible jest rule (#16880) (Said Atrahouch)
+- cd3db21 linter: Add ignoredTypeNames option to no-base-to-string rule (#16898) (camc314)
+- 763b25a linter: Implement eslint/no-inline-comments (#16885) (Tu Shaokun)
+
+### 🐛 Bug Fixes
+
+- fb9e193 linter: OOM problems with custom plugins (#17082) (overlookmotel)
+- 005ec25 linter: Permit `$schema` `.oxlintrc.json` struct (#17060) (Copilot)
+- fd03131 linter/plugins: Handle plugin names containing slashes (#17073) (overlookmotel)
+- b2a4fac linter/plugins: Error if plugin name alias is not normalized (#17071) (overlookmotel)
+- e046c4e linter/no-misused-spread: Add rule options support (#17054) (camc314)
+- 5c1a9e0 linter/no-deprecated: Add rule options support (#17053) (camc314)
+- 8c9cafe linter: `import/consistent-type-specifier-style`: add support for declaration files (#16979) (camchenry)
+- dab4780 linter/no-empty-pattern: Misleading help message for arrays (#17039) (Copilot)
+- 67f8c5d linter/plugins: Get correct plugin name in all cases (#17033) (overlookmotel)
+- 674dab9 linter/plugins: Fix indentation in error message (#17018) (overlookmotel)
+- 4cdc2f8 linter: Fix VITEST override rule list and add test for alphabetizing the two lists (#16975) (Connor Shea)
+- e466562 linter/consistent-type-definitions: Handle parenthesized types in rule (#16998) (camc314)
+- fce267c linter: Correct vitest plugin source to be `@vitest/eslint-plugin` (#16976) (connorshea)
+- 477bb57 linter: Fix `vitest/no-restricted-vi-methods` and add tests for it. (#16971) (connorshea)
+- 7d6974d linter: Ignore oxlint directive comments in capitalized-comments (#16989) (Tu Shaokun)
+- d446c43 linter: Prevent extra fields from being present on oxlint config file (#16874) (connorshea)
+- c897794 linter: Fix eslint/sort-imports allowSeparatedGroups not working with single empty line (#16012) (Duc Nghiem Xuan)
+- 0c347a1 linter/array-type: Handle satisfies expression (#16903) (camc314)
+
+### ⚡ Performance
+
+- 70d853c linter: Avoid cloning source text when cloning AST into fixed-size allocator (#17088) (overlookmotel)
+- 4d389f7 linter: Less bounds checks in `normalize_plugin_name` (#17030) (overlookmotel)
+
+### 📚 Documentation
+
+- 6d053b4 linter: Fix typo in doc comment (#17091) (overlookmotel)
+- b5f3c91 linter: Document intentional exclusion of ignoreCase option in jsx-no-duplicate-props (#17046) (Copilot)
+- a0bf5d8 linter: Fix the config option docs for no-inline-comments rule. (#16983) (connorshea)
+
 ## [1.33.0] - 2025-12-15
 
 ### 💥 BREAKING CHANGES

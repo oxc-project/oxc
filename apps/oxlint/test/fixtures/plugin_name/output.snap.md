@@ -17,6 +17,13 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x @scope3/subplugin(rule): id: @scope3/subplugin/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
   x js-jsdoc(rule): id: js-jsdoc/rule
    ,-[files/index.js:4:1]
  3 |  */
@@ -81,7 +88,7 @@
    `----
   help: Add `@param` tag with name.
 
-Found 0 warnings and 11 errors.
+Found 0 warnings and 12 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

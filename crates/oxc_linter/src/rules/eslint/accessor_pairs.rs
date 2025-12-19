@@ -56,7 +56,7 @@ impl Default for AccessorPairsConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AccessorPairs(Box<AccessorPairsConfig>);
 
 impl std::ops::Deref for AccessorPairs {
@@ -122,10 +122,9 @@ declare_oxc_lint!(
 
 impl Rule for AccessorPairs {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = serde_json::from_value::<DefaultRuleConfig<AccessorPairsConfig>>(value)
+        serde_json::from_value::<DefaultRuleConfig<AccessorPairs>>(value)
             .unwrap_or_default()
-            .into_inner();
-        Self(Box::new(config))
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

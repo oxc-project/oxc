@@ -62,6 +62,14 @@ Example
 ```
 
 
+## $schema
+
+type: `string | null`
+
+
+Schema URI for editor tooling.
+
+
 ## categories
 
 type: `object`

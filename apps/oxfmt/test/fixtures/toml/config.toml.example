@@ -1,0 +1,7 @@
+# Example configuration
+[server]
+host   =   "localhost"
+port=8080
+
+[logging]
+level    =    "info"

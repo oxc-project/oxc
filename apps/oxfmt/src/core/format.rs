@@ -59,6 +59,9 @@ impl SourceFormatter {
                 format_options,
                 external_options,
             ),
+            (FormatFileStrategy::OxfmtToml { .. }, ResolvedOptions::OxfmtToml { toml_options }) => {
+                Ok(Self::format_by_toml(source_text, toml_options))
+            }
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
@@ -147,6 +150,11 @@ impl SourceFormatter {
         }
 
         Ok(code.into_code())
+    }
+
+    /// Format TOML file using `toml`.
+    fn format_by_toml(source_text: &str, options: &oxc_toml::formatter::Options) -> String {
+        oxc_toml::formatter::format(source_text, options.clone())
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

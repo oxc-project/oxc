@@ -2,9 +2,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::count_comment_lines};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::count_comment_lines,
+};
 
 fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("File has too many lines ({count})."))
@@ -12,10 +17,10 @@ fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MaxLines(Box<MaxLinesConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct MaxLinesConfig {
     /// Maximum number of lines allowed per file.
@@ -60,29 +65,17 @@ declare_oxc_lint!(
 
 impl Rule for MaxLines {
     fn from_configuration(value: Value) -> Self {
-        let config = value.get(0);
-        if let Some(max) = config
+        if let Some(max) = value
+            .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
             Self(Box::new(MaxLinesConfig { max, skip_comments: false, skip_blank_lines: false }))
         } else {
-            let max = config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(300, |v| usize::try_from(v).unwrap_or(300));
-            let skip_comments = config
-                .and_then(|config| config.get("skipComments"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let skip_blank_lines = config
-                .and_then(|config| config.get("skipBlankLines"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-
-            Self(Box::new(MaxLinesConfig { max, skip_blank_lines, skip_comments }))
+            serde_json::from_value::<DefaultRuleConfig<MaxLines>>(value)
+                .unwrap_or_default()
+                .into_inner()
         }
     }
 

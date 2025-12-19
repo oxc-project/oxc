@@ -71,35 +71,6 @@ jobs:
           pnpm run preinstall
           pnpm run compile
 
-      - name: Install cross
-        uses: taiki-e/install-action@61e5998d108b2b55a81b9b386c18bd46e4237e4f # v2.63.1
-        with:
-          tool: cross
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-      # Please do not set a cache for release builds; they are evicted before they can be re-used, yet they consume significant cache storage before eviction.
-
-      - name: Add Rust Target
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Build with cross
-        run: cross build -p oxc_language_server --release --target=${{ matrix.target }}
-
-      - name: Copy binary
-        if: runner.os == 'Windows'
-        run: |
-          mkdir -p editors/vscode/target/release
-          # .vscodeignore uses `!target/release/oxc_language_server.exe` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_language_server.exe editors/vscode/target/release/oxc_language_server.exe
-
-      - name: Copy binary
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p editors/vscode/target/release/
-          # .vscodeignore uses `!target/release/oxc_language_server` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_language_server editors/vscode/target/release/oxc_language_server
-
       - name: Package Extension
         working-directory: editors/vscode
         run: |

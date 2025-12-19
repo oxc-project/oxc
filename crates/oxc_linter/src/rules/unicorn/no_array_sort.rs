@@ -156,9 +156,9 @@ fn test() {
         ("sorted = [...array]?.sort(compareFn)", None),
         ("sorted = array.sort(compareFn)", None),
         ("sorted = array?.sort(compareFn)", None),
-        ("array.sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
-        ("array?.sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
-        ("[...array].sort()", Some(serde_json::json!([{"allowExpressionStatement": false}]))),
+        ("array.sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
+        ("array?.sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
+        ("[...array].sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
         ("sorted = [...(0, array)].sort()", None),
     ];
 
@@ -168,7 +168,7 @@ fn test() {
         (
             "a.sort()",
             "a.toSorted()",
-            Some(serde_json::json!([{"allowExpressionStatement": false}])),
+            Some(serde_json::json!([{ "allowExpressionStatement": false }])),
         ),
         ("sorted = array?.sort()", "sorted = array?.toSorted()", None),
     ];

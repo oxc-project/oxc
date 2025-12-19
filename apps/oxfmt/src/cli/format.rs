@@ -72,6 +72,7 @@ impl FormatRunner {
         let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
         let mut config_resolver = match ConfigResolver::from_config_paths(
+            &cwd,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
         ) {

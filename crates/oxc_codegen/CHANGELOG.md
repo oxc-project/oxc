@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 67e9f9e codegen: Keep comments on the export specifiers (#16943) (夕舞八弦)
+
 ## [0.103.0] - 2025-12-15
 
 ### 💥 BREAKING CHANGES

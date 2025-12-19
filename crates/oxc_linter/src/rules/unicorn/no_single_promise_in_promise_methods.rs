@@ -93,15 +93,22 @@ impl Rule for NoSinglePromiseInPromiseMethods {
 
         let diagnostic = no_single_promise_in_promise_methods_diagnostic(span, method_name);
 
-        let is_directly_in_await = ctx
+        let await_expr_span = ctx
             .nodes()
             // get first non-parenthesis parent node
-            .ancestor_kinds(node.id())
+            .ancestors(node.id())
+            .map(AstNode::kind)
             .find(|kind| !is_ignorable_kind(kind))
             // check if it's an `await ...` expression
-            .is_some_and(|kind| matches!(kind, AstKind::AwaitExpression(_)));
+            .and_then(|kind| {
+                if let AstKind::AwaitExpression(await_expr) = kind {
+                    Some(await_expr.span)
+                } else {
+                    None
+                }
+            });
 
-        if !is_directly_in_await && method_name == "all" {
+        if await_expr_span.is_none() && method_name == "all" {
             return ctx.diagnostic(diagnostic);
         }
 
@@ -110,8 +117,12 @@ impl Rule for NoSinglePromiseInPromiseMethods {
                 let elem_text = fixer.source_range(first.span());
                 let call_span = call_expr.span;
 
-                if is_directly_in_await {
-                    fixer.replace(call_span, elem_text.to_owned())
+                if let Some(await_span) = await_expr_span {
+                    if method_name == "all" {
+                        fixer.replace(await_span, format!("[await {elem_text}]"))
+                    } else {
+                        fixer.replace(call_span, elem_text.to_owned())
+                    }
                 } else {
                     fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
                 }
@@ -253,9 +264,14 @@ fn test() {
 
     let fix = vec![
         ("Promise.all([null]).then()", "Promise.all([null]).then()", None),
-        ("await Promise.all([x]);", "await x;", None),
-        ("await Promise.all([x as Promise<number>]);", "await x as Promise<number>;", None),
-        ("while(true) { await Promise.all([x]); }", "while(true) { await x; }", None),
+        // Promise.all returns an array, so we preserve the array structure
+        // `await Promise.all([x])` -> `[await x]`
+        ("await Promise.all([x]);", "[await x];", None),
+        ("await Promise.all([x as Promise<number>]);", "[await x as Promise<number>];", None),
+        ("while(true) { await Promise.all([x]); }", "while(true) { [await x]; }", None),
+        // Promise.any and Promise.race return a single value, not an array
+        ("await Promise.any([x]);", "await x;", None),
+        ("await Promise.race([x]);", "await x;", None),
         ("const foo = await Promise.all([x])", "const foo = await Promise.all([x])", None),
         ("const [foo] = await Promise.all([x])", "const [foo] = await Promise.all([x])", None),
         ("let foo; foo = await Promise.all([x])", "let foo; foo = await Promise.all([x])", None),

@@ -19,6 +19,8 @@ export async function resolvePlugins(): Promise<string[]> {
   return [];
 }
 
+// ---
+
 const TAG_TO_PARSER: Record<string, string> = {
   // CSS
   css: "css",
@@ -33,6 +35,12 @@ const TAG_TO_PARSER: Record<string, string> = {
   markdown: "markdown",
 };
 
+export type FormatEmbeddedCodeParam = {
+  code: string;
+  tagName: string;
+  options: Options;
+};
+
 /**
  * Format xxx-in-js code snippets
  *
@@ -44,11 +52,7 @@ export async function formatEmbeddedCode({
   code,
   tagName,
   options,
-}: {
-  code: string;
-  tagName: string;
-  options: Options;
-}): Promise<string> {
+}: FormatEmbeddedCodeParam): Promise<string> {
   // TODO: This should be resolved in Rust side
   const parserName = TAG_TO_PARSER[tagName];
 
@@ -67,6 +71,15 @@ export async function formatEmbeddedCode({
     .catch(() => code);
 }
 
+// ---
+
+export type FormatFileParam = {
+  code: string;
+  parserName: string;
+  fileName: string;
+  options: Options;
+};
+
 /**
  * Format non-js file
  *
@@ -77,12 +90,7 @@ export async function formatFile({
   parserName,
   fileName,
   options,
-}: {
-  code: string;
-  parserName: string;
-  fileName: string;
-  options: Options;
-}): Promise<string> {
+}: FormatFileParam): Promise<string> {
   if (!prettierCache) {
     prettierCache = await import("prettier");
   }

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- 552f9ef vscode: Auto-generate VSCode README configuration from package.json (#16970) (Copilot)
+- ae1e5bc vscode: Add support for tsgolint binary configuration (#16921) (ColemanDunn)
+
 ## [1.33.0] - 2025-12-15
 
 ### 🚀 Features
