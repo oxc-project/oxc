@@ -57,4 +57,9 @@ const optionalAccess = anyValue?.foo;
 // This SHOULD error because it's not using optional chaining
 const unsafeAccess = anyValue.bar;
 
-export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optionalAccess, unsafeAccess };
+// Test no-base-to-string with checkUnknown option
+declare const unknownValue: unknown;
+// This SHOULD error because checkUnknown is true
+const unknownStr = unknownValue.toString();
+
+export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optionalAccess, unsafeAccess, unknownStr };
