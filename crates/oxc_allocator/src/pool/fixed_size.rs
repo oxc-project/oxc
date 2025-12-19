@@ -72,7 +72,8 @@ impl FixedSizeAllocatorPool {
     /// # Panics
     /// * Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> Allocator {
-        // Try to get an allocator from the pool
+        // Try to get an allocator from the pool.
+        // This is in a block, so that `Mutex` lock is held for the shortest possible time.
         let maybe_allocator = {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
@@ -88,6 +89,7 @@ impl FixedSizeAllocatorPool {
 
         // Pool cannot produce another allocator. Wait for an existing allocator to be returned to the pool.
         loop {
+            // This is in a block, so that `Mutex` lock is held for the shortest possible time
             let maybe_allocator = {
                 let mut allocators = self.available.wait(self.allocators.lock().unwrap()).unwrap();
                 allocators.pop()
@@ -140,8 +142,12 @@ impl FixedSizeAllocatorPool {
             FixedSizeAllocator { allocator: ManuallyDrop::new(allocator) };
         fixed_size_allocator.reset();
 
-        let mut allocators = self.allocators.lock().unwrap();
-        allocators.push(fixed_size_allocator);
+        // This is in a block, so that `Mutex` lock is held for the shortest possible time
+        {
+            let mut allocators = self.allocators.lock().unwrap();
+            allocators.push(fixed_size_allocator);
+        }
+
         self.available.notify_one();
     }
 }
