@@ -2,6 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 5; x = 7;
+   ·     ──┬──
+   ·       ╰── x is written to here but never read
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
    ╭─[no_useless_assignment.tsx:1:12]
  1 │ let x = 5; x = 7;
    ·            ┬
@@ -18,39 +25,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn2() {
- 2 │             let v = 'used';
-   ·                 ─────┬────
-   ·                      ╰── v is written to here but never read
+   ╭─[no_useless_assignment.tsx:4:17]
  3 │             if (condition) {
+ 4 │                 v = 'unused';
+   ·                 ┬
+   ·                 ╰── v is written to here but never read
+ 5 │                 return
    ╰────
 
   ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn2() {
- 2 │             let v = 'used';
-   ·                 ─────┬────
-   ·                      ╰── v is written to here but never read
- 3 │             if (condition) {
-   ╰────
-
-  ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn3() {
- 2 │             let v = 'used';
-   ·                 ─────┬────
-   ·                      ╰── v is written to here but never read
- 3 │             if (condition) {
-   ╰────
-
-  ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn3() {
- 2 │             let v = 'used';
-   ·                 ─────┬────
-   ·                      ╰── v is written to here but never read
- 3 │             if (condition) {
+   ╭─[no_useless_assignment.tsx:6:17]
+ 5 │             } else {
+ 6 │                 v = 'unused';
+   ·                 ┬
+   ·                 ╰── v is written to here but never read
+ 7 │             }
    ╰────
 
   ⚠ eslint(no-useless-assignment): Useless assignment to variable v
@@ -59,24 +48,6 @@ source: crates/oxc_linter/src/tester.rs
  2 │             let v = 'unused';
    ·                 ──────┬─────
    ·                       ╰── v is written to here but never read
- 3 │             if (condition) {
-   ╰────
-
-  ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn4() {
- 2 │             let v = 'unused';
-   ·                 ──────┬─────
-   ·                       ╰── v is written to here but never read
- 3 │             if (condition) {
-   ╰────
-
-  ⚠ eslint(no-useless-assignment): Useless assignment to variable v
-   ╭─[no_useless_assignment.tsx:2:17]
- 1 │ function fn5() {
- 2 │             let v = 'used';
-   ·                 ─────┬────
-   ·                      ╰── v is written to here but never read
  3 │             if (condition) {
    ╰────
 
