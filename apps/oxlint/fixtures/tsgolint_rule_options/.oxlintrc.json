@@ -36,6 +36,12 @@
       {
         "checkLiteralConstAssertions": false
       }
+    ],
+    "typescript/no-unsafe-member-access": [
+      "error",
+      {
+        "allowOptionalChaining": true
+      }
     ]
   }
 }

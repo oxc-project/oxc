@@ -50,4 +50,11 @@ const notAllowedSpread = { ...notAllowedFunc };
 // When checkLiteralConstAssertions is true, this SHOULD error
 const literalConst = 'hello' as const;
 
-export { result, customStr, allowedSpread, notAllowedSpread, literalConst };
+// Test no-unsafe-member-access with allowOptionalChaining option
+declare const anyValue: any;
+// This should NOT error because allowOptionalChaining is true and we use ?.
+const optionalAccess = anyValue?.foo;
+// This SHOULD error because it's not using optional chaining
+const unsafeAccess = anyValue.bar;
+
+export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optionalAccess, unsafeAccess };
