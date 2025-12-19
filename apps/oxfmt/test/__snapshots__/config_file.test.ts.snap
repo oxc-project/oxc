@@ -88,6 +88,6 @@ exit code: 1
 
 --- STDERR ---------
 Failed to load configuration file.
-Failed to read config <cwd>/NOT_EXISTS.json: File not found
+Failed to read <cwd>/NOT_EXISTS.json: File not found
 --------------------"
 `;

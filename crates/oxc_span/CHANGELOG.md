@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 5586823 span: Extract TS declaration file check to its own function (#17037) (camchenry)
+
 ## [0.100.0] - 2025-12-01
 
 ### ⚡ Performance

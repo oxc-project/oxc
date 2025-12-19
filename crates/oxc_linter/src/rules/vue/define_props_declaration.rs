@@ -139,7 +139,7 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
         (
             r#"
 			      <script setup lang="ts">
@@ -151,7 +151,7 @@ fn test() {
             Some(serde_json::json!(["type-based"])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
         (
             r#"
 			      <script setup lang="ts">
@@ -187,7 +187,7 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
         (
             r#"
 			        <script lang="ts">
@@ -204,7 +204,7 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     let fail = vec![
@@ -243,7 +243,7 @@ fn test() {
             Some(serde_json::json!(["runtime"])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     Tester::new(DefinePropsDeclaration::NAME, DefinePropsDeclaration::PLUGIN, pass, fail)

@@ -3,15 +3,14 @@ use std::path::PathBuf;
 
 use napi_derive::napi;
 
-use oxc_formatter::oxfmtrc::Oxfmtrc;
 use oxc_napi::OxcError;
-use serde_json::{Value, from_value};
+use serde_json::Value;
 
 use crate::{
     cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
     core::{
-        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-        JsFormatEmbeddedCb, JsFormatFileCb, JsSetupConfigCb, SourceFormatter,
+        ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, SourceFormatter,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -22,7 +21,7 @@ use crate::{
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
-/// 2. `setup_config_cb`: Callback to setup Prettier config
+/// 2. `init_external_formatter_cb`: Callback to initialize external formatter
 /// 3. `format_embedded_cb`: Callback to format embedded code in templates
 /// 4. `format_file_cb`: Callback to format files
 ///
@@ -34,12 +33,14 @@ use crate::{
 #[napi]
 pub async fn run_cli(
     args: Vec<String>,
-    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
-    setup_config_cb: JsSetupConfigCb,
-    #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
+    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    init_external_formatter_cb: JsInitExternalFormatterCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+    )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
-        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
 ) -> (String, Option<u8>) {
@@ -71,7 +72,7 @@ pub async fn run_cli(
             let result = StdinRunner::new(command)
                 // Create external formatter from JS callback
                 .with_external_formatter(Some(ExternalFormatter::new(
-                    setup_config_cb,
+                    init_external_formatter_cb,
                     format_embedded_cb,
                     format_file_cb,
                 )))
@@ -87,7 +88,7 @@ pub async fn run_cli(
             let result = FormatRunner::new(command)
                 // Create external formatter from JS callback
                 .with_external_formatter(Some(ExternalFormatter::new(
-                    setup_config_cb,
+                    init_external_formatter_cb,
                     format_embedded_cb,
                     format_file_cb,
                 )))
@@ -118,71 +119,64 @@ pub async fn format(
     filename: String,
     source_text: String,
     options: Option<Value>,
-    #[napi(ts_arg_type = "(configJSON: string, numThreads: number) => Promise<string[]>")]
-    setup_config_cb: JsSetupConfigCb,
-    #[napi(ts_arg_type = "(tagName: string, code: string) => Promise<string>")]
+    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    init_external_formatter_cb: JsInitExternalFormatterCb,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+    )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
-        ts_arg_type = "(parserName: string, fileName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
 ) -> FormatResult {
     let num_of_threads = 1;
 
     let external_formatter =
-        ExternalFormatter::new(setup_config_cb, format_embedded_cb, format_file_cb);
+        ExternalFormatter::new(init_external_formatter_cb, format_embedded_cb, format_file_cb);
+
+    // Create resolver from options and resolve format options
+    let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());
+    match config_resolver.build_and_validate() {
+        Ok(_) => {}
+        Err(err) => {
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    }
+
+    // Use `block_in_place()` to avoid nested async runtime access
+    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
+        // TODO: Plugins support
+        Ok(_) => {}
+        Err(err) => {
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
+            };
+        }
+    }
 
     // Determine format strategy from file path
-    let Ok(entry) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
         return FormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
 
-    // `core::config::load_config()` equivalent
-    // Deserialize options from JSON Value to Oxfmtrc
-    let oxfmtrc: Oxfmtrc = match options {
-        Some(value) => match from_value(value) {
-            Ok(config) => config,
-            Err(err) => {
-                return FormatResult {
-                    code: source_text,
-                    errors: vec![OxcError::new(format!("Invalid options: {err}"))],
-                };
-            }
-        },
-        None => Oxfmtrc::default(),
-    };
-    let (format_options, oxfmt_options) = match oxfmtrc.into_options() {
-        Ok(opts) => opts,
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Invalid options: {err}"))],
-            };
-        }
-    };
-    let mut external_config = Value::Object(serde_json::Map::new());
-    Oxfmtrc::populate_prettier_config(&format_options, &mut external_config);
-
-    // TODO: Plugins support
-    // Use `block_in_place()` to avoid nested async runtime access
-    if let Err(err) = tokio::task::block_in_place(|| {
-        external_formatter.setup_config(&external_config.to_string(), num_of_threads)
-    }) {
-        return FormatResult {
-            code: source_text,
-            errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
-        };
-    }
+    let resolved_options = config_resolver.resolve(&strategy);
 
     // Create formatter and format
-    let formatter = SourceFormatter::new(num_of_threads, format_options)
-        .with_external_formatter(Some(external_formatter), oxfmt_options.sort_package_json);
+    let formatter =
+        SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
 
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| formatter.format(&entry, &source_text)) {
+    match tokio::task::block_in_place(|| {
+        formatter.format(&strategy, &source_text, &resolved_options)
+    }) {
         CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
         CoreFormatResult::Error(diagnostics) => {
             let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);

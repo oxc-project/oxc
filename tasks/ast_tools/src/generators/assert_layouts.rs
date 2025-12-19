@@ -463,17 +463,13 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "u16" => Layout::from_type::<u16>(),
         "u32" => Layout::from_type::<u32>(),
         "u64" => Layout::from_type::<u64>(),
-        "u128" => {
-            panic!("Cannot calculate alignment for `u128`. It differs depending on Rust version.")
-        }
+        "u128" => Layout::from_type::<u128>(),
         "usize" => usize_layout,
         "i8" => Layout::from_type::<i8>(),
         "i16" => Layout::from_type::<i16>(),
         "i32" => Layout::from_type::<i32>(),
         "i64" => Layout::from_type::<i64>(),
-        "i128" => {
-            panic!("Cannot calculate alignment for `i128`. It differs depending on Rust version.")
-        }
+        "i128" => Layout::from_type::<i128>(),
         "isize" => usize_layout,
         "f32" => Layout::from_type::<f32>(),
         "f64" => Layout::from_type::<f64>(),
@@ -483,21 +479,13 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
         "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
-        "NonZeroU128" => {
-            panic!(
-                "Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version."
-            )
-        }
+        "NonZeroU128" => Layout::from_type_with_niche_for_zero::<num::NonZeroU128>(),
         "NonZeroUsize" => non_zero_usize_layout,
         "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
         "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
         "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
         "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
-        "NonZeroI128" => {
-            panic!(
-                "Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version."
-            )
-        }
+        "NonZeroI128" => Layout::from_type_with_niche_for_zero::<num::NonZeroI128>(),
         "NonZeroIsize" => non_zero_usize_layout,
         // Unlike `bool`, `AtomicBool` does not have any niches
         "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),

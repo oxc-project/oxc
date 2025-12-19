@@ -1,0 +1,6 @@
+{
+  "jsPlugins": [{ "name": "eslint-plugin-invalid", "specifier": "./plugin.ts" }],
+  "rules": {
+    "hahaha/no-debugger": "error"
+  }
+}

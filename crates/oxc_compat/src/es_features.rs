@@ -145,7 +145,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2015TemplateLiterals,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(8u16, 0u16, 0u16)),
-                    (Node, Version(8u16, 10u16, 0u16)),
+                    (Node, Version(10u16, 0u16, 0u16)),
                     (Firefox, Version(53u16, 0u16, 0u16)),
                     (Chrome, Version(62u16, 0u16, 0u16)),
                     (Safari, Version(13u16, 0u16, 0u16)),
@@ -233,7 +233,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2015Classes,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(5u16, 0u16, 0u16)),
-                    (Node, Version(5u16, 0u16, 0u16)),
+                    (Node, Version(6u16, 0u16, 0u16)),
                     (Firefox, Version(45u16, 0u16, 0u16)),
                     (Chrome, Version(46u16, 0u16, 0u16)),
                     (Safari, Version(10u16, 0u16, 0u16)),
@@ -250,7 +250,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2015ObjectSuper,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(5u16, 0u16, 0u16)),
-                    (Node, Version(5u16, 0u16, 0u16)),
+                    (Node, Version(6u16, 0u16, 0u16)),
                     (Firefox, Version(45u16, 0u16, 0u16)),
                     (Chrome, Version(46u16, 0u16, 0u16)),
                     (Safari, Version(10u16, 0u16, 0u16)),
@@ -390,7 +390,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2015Spread,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(5u16, 0u16, 0u16)),
-                    (Node, Version(5u16, 0u16, 0u16)),
+                    (Node, Version(6u16, 0u16, 0u16)),
                     (Firefox, Version(45u16, 0u16, 0u16)),
                     (Chrome, Version(46u16, 0u16, 0u16)),
                     (Safari, Version(10u16, 0u16, 0u16)),
@@ -441,7 +441,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2015TypeofSymbol,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(3u16, 0u16, 0u16)),
-                    (Node, Version(0u16, 12u16, 0u16)),
+                    (Node, Version(4u16, 0u16, 0u16)),
                     (Firefox, Version(36u16, 0u16, 0u16)),
                     (Chrome, Version(38u16, 0u16, 0u16)),
                     (Safari, Version(9u16, 0u16, 0u16)),
@@ -684,7 +684,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2020OptionalChaining,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(16u16, 0u16, 0u16)),
-                    (Node, Version(16u16, 9u16, 0u16)),
+                    (Node, Version(16u16, 1u16, 0u16)),
                     (Firefox, Version(74u16, 0u16, 0u16)),
                     (Chrome, Version(91u16, 0u16, 0u16)),
                     (Safari, Version(13u16, 1u16, 0u16)),
@@ -771,7 +771,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ES2022PrivatePropertyInObject,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Samsung, Version(16u16, 0u16, 0u16)),
-                    (Node, Version(16u16, 9u16, 0u16)),
+                    (Node, Version(16u16, 4u16, 0u16)),
                     (Firefox, Version(90u16, 0u16, 0u16)),
                     (Chrome, Version(91u16, 0u16, 0u16)),
                     (Safari, Version(15u16, 0u16, 0u16)),

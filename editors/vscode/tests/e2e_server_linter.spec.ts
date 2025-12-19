@@ -76,13 +76,20 @@ suite('E2E Server Linter', () => {
     });
   }
 
-  // TODO: fix flaky test, somehow broken since 25-12-16
+  // TODO: fix flaky test, broken since 25-12-16
+  // the `.oxlintrc.json` is not picked up correctly and `no-empty-file` is still enabled
   test.skip('detects diagnostics on run', async () => // testSingleFolderMode
   {
+    // const config = new VSCodeConfig();
+    // config.updateTrace('verbose');
+    // await commands.executeCommand('oxc.showOutputChannel');
+
     await loadFixture('lint_on_run');
     await sleep(500);
     const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
-    strictEqual(diagnostics.length, 0);
+    // process.stdout.write(JSON.stringify(diagnostics, null, 2));
+
+    strictEqual(diagnostics.length, 0, 'no diagnostics expected initially');
 
     await writeToFixtureFile('onType.ts', 'debugger;');
     await waitForDiagnosticChange();
@@ -92,15 +99,14 @@ suite('E2E Server Linter', () => {
     await workspace.saveAll();
     await sleep(500);
 
-    const sameDiagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
+    const sameDiagnostics = await getDiagnostics(`onType.ts`);
     strictEqual(updatedDiagnostics.length, sameDiagnostics.length);
   });
 
-  // TODO: fix flaky test, somehow broken since 25-12-16
-  test.skip('empty oxlint configuration behaves like default configuration', async () => {
+  test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
     await sleep(500);
-    const diagnostics = await getDiagnosticsWithoutClose('debugger.js');
+    const diagnostics = await getDiagnostics('debugger.js', undefined, 500);
 
     strictEqual(diagnostics.length, 1);
     assert(typeof diagnostics[0].code == 'object');

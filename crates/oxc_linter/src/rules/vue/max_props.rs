@@ -347,7 +347,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 5 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parser": require("vue-eslint-parser"),        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parser": require("vue-eslint-parser"), "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
         (
             r#"
 			      <script setup lang="ts">
@@ -357,7 +357,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     let fail = vec![
@@ -405,7 +405,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
         (
             r#"
 			      <script setup lang="ts">
@@ -423,7 +423,7 @@ fn test() {
             Some(serde_json::json!([{ "maxProps": 2 }])),
             None,
             Some(PathBuf::from("test.vue")),
-        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      }
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
     ];
 
     Tester::new(MaxProps::NAME, MaxProps::PLUGIN, pass, fail).test_and_snapshot();

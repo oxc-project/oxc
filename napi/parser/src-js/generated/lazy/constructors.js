@@ -1,8 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer_lazy.rs`.
 
-import { constructorError, TOKEN } from "../raw-transfer/lazy-common.js";
-import { NodeArray } from "../raw-transfer/node-array.js";
+import { constructorError, TOKEN } from "../../raw-transfer/lazy-common.js";
+import { NodeArray } from "../../raw-transfer/node-array.js";
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
@@ -13756,7 +13756,7 @@ function constructBoxTSExternalModuleReference(pos, ast) {
 function constructU64(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
+  return uint32[pos32] + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
 }
 
 function constructOptionNameSpan(pos, ast) {

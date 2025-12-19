@@ -77,15 +77,13 @@ impl<'a> Formatted<'a> {
         &self.document
     }
 
+    pub fn document_mut(&mut self) -> &mut Document<'a> {
+        &mut self.document
+    }
+
     /// Consumes `self` and returns the formatted document.
     pub fn into_document(self) -> Document<'a> {
         self.document
-    }
-}
-
-impl<'a> Formatted<'a> {
-    pub fn apply_transform(&mut self, transform: impl FnOnce(&Document<'a>) -> Document<'a>) {
-        self.document = transform(&self.document);
     }
 }
 

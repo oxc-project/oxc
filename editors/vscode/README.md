@@ -42,34 +42,41 @@ To enable it, use a VSCode `settings.json` like:
 
 ## Configuration
 
+<!-- START_GENERATED_CONFIGURATION -->
+
 ### Window Configuration
 
-Following configuration are supported via `settings.json` and effect the window editor:
+Following configurations are supported via `settings.json` and affect the window editor:
 
-| Key                 | Default Value | Possible Values                  | Description                                                                                  |
-| ------------------- | ------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `oxc.enable`        | `true`        | `true` \| `false`                | Enables the language server to receive lint diagnostics                                      |
-| `oxc.requireConfig` | `false`       | `true` \| `false`                | Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces. |
-| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                            |
-| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                  |
-| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.           |
+| Key                 | Default Value | Possible Values                  | Description                                                                                      |
+| ------------------- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `oxc.enable`        | `true`        | `true` \| `false`                | Enable oxc language server                                                                       |
+| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.               |
+| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one. |
+| `oxc.path.oxlint`   | -             | `<string>`                       | Path to an Oxc linter binary. Will be used by the language server instead of the bundled one.    |
+| `oxc.path.tsgolint` | -             | `<string>`                       | Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one.  |
+| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                                |
+| Deprecated          |               |                                  |                                                                                                  |
+| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                      |
 
 ### Workspace Configuration
 
-Following configuration are supported via `settings.json` and can be changed for each workspace:
+Following configurations are supported via `settings.json` and can be changed for each workspace:
 
-| Key                           | Default Value | Possible Values             | Description                                                                                                                                      |
-| ----------------------------- | ------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`        | Run the linter on save (onSave) or on type (onType)                                                                                              |
-| `oxc.configPath`              | `null`        | `null` \| `<string>`        | Path to ESlint configuration. Keep it empty to enable nested configuration.                                                                      |
-| `oxc.tsConfigPath`            | `null`        | `null` \| `<string>`        | Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin. |
-| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.     |
-| `oxc.typeAware`               | `false`       | `false` \| `true`           | Enable type aware linting.                                                                                                                       |
-| `oxc.disableNestedConfig`     | `false`       | `false` \| `true`           | Disable searching for nested configuration files.                                                                                                |
-| `oxc.fixKind`                 | `safe_fix`    | [FixKind](#fixkind)         | Specify the kind of fixes to suggest/apply.                                                                                                      |
-| `oxc.fmt.experimental`        | `false`       | `false` \| `true`           | Enable experimental formatting support. This feature is experimental and might not work as expected.                                             |
-| `oxc.fmt.configPath`          | `null`        | `<string>` \| `null`        | Path to an oxfmt configuration file. When `null`, the server will use `.oxfmtrc.json` at the workspace root.                                     |
-| `oxc.flags`                   | -             | `Record<string, string>`    | (deprecated) Custom flags passed to the language server.                                                                                         |
+| Key                           | Default Value | Possible Values                                                                                               | Description                                                                                                                                                                  |
+| ----------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `oxc.configPath`              | `null`        | `<string>`                                                                                                    | Path to oxlint configuration. Keep it empty to enable nested configuration.                                                                                                  |
+| `oxc.disableNestedConfig`     | `false`       | `true` \| `false`                                                                                             | Disable searching for nested configuration files. When set to true, only the configuration file specified in `oxc.configPath` (if any) will be used.                         |
+| `oxc.fixKind`                 | `safe_fix`    | `safe_fix` \| `safe_fix_or_suggestion` \| `dangerous_fix` \| `dangerous_fix_or_suggestion` \| `none` \| `all` | Specify the kind of fixes to suggest/apply.                                                                                                                                  |
+| `oxc.fmt.configPath`          | `null`        | `<string>`                                                                                                    | Path to an oxfmt configuration file                                                                                                                                          |
+| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`                                                                                          | Run the linter on save (onSave) or on type (onType)                                                                                                                          |
+| `oxc.requireConfig`           | `false`       | `true` \| `false`                                                                                             | Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces.                                                                                 |
+| `oxc.tsConfigPath`            | `null`        | `<string>`                                                                                                    | Path to the project's TypeScript config file. If your `tsconfig.json` is not at the root, you will need this set for the `import` plugin rules to resolve imports correctly. |
+| `oxc.typeAware`               | `false`       | `true` \| `false`                                                                                             | Enable type-aware linting. Requires the `oxlint-tsgolint` package. See [the oxc website](https://oxc.rs/docs/guide/usage/linter/type-aware.html) for more information.       |
+| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny`                                                                                   | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.                                 |
+| Deprecated                    |               |                                                                                                               |                                                                                                                                                                              |
+| `oxc.flags`                   | `{}`          | `Record<string, string>`                                                                                      | Specific Oxlint flags to pass to the language server.                                                                                                                        |
+| `oxc.fmt.experimental`        | `true`        | `true` \| `false`                                                                                             | Enable experimental formatting support. This feature is experimental and might not work as expected.                                                                         |
 
 #### FixKind
 
@@ -80,10 +87,7 @@ Following configuration are supported via `settings.json` and can be changed for
 - `"none"`
 - `"all"`
 
-#### Flags (deprecated)
-
-- `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
-- `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
+<!-- END_GENERATED_CONFIGURATION -->
 
 ## Testing
 

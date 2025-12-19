@@ -22,4 +22,28 @@ declare class CustomStringifiable {
 declare const custom: CustomStringifiable;
 const customStr = custom.toString();
 
-export { result, customStr };
+// Test no-deprecated with allow option
+/** @deprecated Use newFunction instead */
+function allowedDeprecated(): void {}
+
+/** @deprecated Use anotherNewFunction instead */
+function notAllowedDeprecated(): void {}
+
+// This should NOT error because allowedDeprecated is in the allow list
+allowedDeprecated();
+
+// This SHOULD error because notAllowedDeprecated is NOT in the allow list
+notAllowedDeprecated();
+
+// Test no-misused-spread with allow option
+// Spreading a function triggers the rule
+function allowedFunc() { return 1; }
+function notAllowedFunc() { return 2; }
+
+// This should NOT error because allowedFunc is in the allow list
+const allowedSpread = { ...allowedFunc };
+
+// This SHOULD error because notAllowedFunc is NOT in the allow list
+const notAllowedSpread = { ...notAllowedFunc };
+
+export { result, customStr, allowedSpread, notAllowedSpread };

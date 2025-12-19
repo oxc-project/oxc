@@ -2,5 +2,6 @@
   "printWidth": 40,
   "useTabs": true,
   "singleQuote": true,
-  "embeddedLanguageFormatting": "auto"
+  "embeddedLanguageFormatting": "auto",
+  "vueIndentScriptAndStyle": true
 }

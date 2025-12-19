@@ -1,6 +1,5 @@
-use std::{fmt, path::PathBuf};
+use std::path::PathBuf;
 
-use rustc_hash::FxHashSet;
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{
@@ -9,10 +8,7 @@ use schemars::{
     },
 };
 
-use serde::{
-    Deserialize, Deserializer, Serialize, Serializer,
-    de::{Error, SeqAccess, Visitor},
-};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// External plugin entry containing the plugin specifier and optional custom name
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -25,62 +21,12 @@ pub struct ExternalPluginEntry {
     pub name: Option<String>,
 }
 
-/// Custom deserializer for external plugins
+/// Custom deserializer for `ExternalPluginEntry`.
 /// Supports:
-/// - Array of strings: `["plugin1", "plugin2"]`
-/// - Array of objects: `[{ "name": "alias", "specifier": "plugin" }]`
-/// - Mixed array: `["plugin1", { "name": "alias", "specifier": "plugin2" }]`
-pub fn deserialize_external_plugins<'de, D>(
-    deserializer: D,
-) -> Result<Option<FxHashSet<ExternalPluginEntry>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct PluginSetVisitor;
-
-    impl<'de> Visitor<'de> for PluginSetVisitor {
-        type Value = Option<FxHashSet<ExternalPluginEntry>>;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("null or an array of plugin entries")
-        }
-
-        fn visit_none<E>(self) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            Ok(None)
-        }
-
-        fn visit_unit<E>(self) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            Ok(None)
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            let mut plugins = FxHashSet::default();
-
-            while let Some(entry) = seq.next_element::<ExternalPluginEntry>()? {
-                plugins.insert(entry);
-            }
-
-            Ok(Some(plugins))
-        }
-    }
-
-    deserializer.deserialize_any(PluginSetVisitor)
-}
-
+/// * String: `"my-plugin"`
+/// * Object: `{ "name": "my-alias", "specifier": "my-plugin" }`
 impl<'de> Deserialize<'de> for ExternalPluginEntry {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         #[derive(Deserialize)]
         #[serde(deny_unknown_fields)]
         struct PluginObject {
@@ -97,36 +43,30 @@ impl<'de> Deserialize<'de> for ExternalPluginEntry {
 
         let entry = PluginEntry::deserialize(deserializer)?;
 
-        Ok(match entry {
-            PluginEntry::String(specifier) => {
-                ExternalPluginEntry { config_dir: PathBuf::default(), specifier, name: None }
-            }
-            PluginEntry::Object(obj) => ExternalPluginEntry {
-                config_dir: PathBuf::default(),
-                specifier: obj.specifier,
-                name: Some(obj.name),
-            },
-        })
+        let (specifier, name) = match entry {
+            PluginEntry::String(specifier) => (specifier, None),
+            PluginEntry::Object(obj) => (obj.specifier, Some(obj.name)),
+        };
+        Ok(ExternalPluginEntry { config_dir: PathBuf::default(), specifier, name })
     }
 }
 
+/// Custom serializer for `ExternalPluginEntry`.
+/// * Serializes entry without alias as just the specifier e.g. `"my-plugin"`.
+/// * Serializes entry with alias as an object e.g. `{ "name": "my-alias", "specifier": "my-plugin" }`.
 impl Serialize for ExternalPluginEntry {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
-        #[serde(untagged)]
-        enum PluginEntry<'a> {
-            String(&'a str),
-            Object { name: &'a str, specifier: &'a str },
+        struct PluginObject<'e> {
+            name: &'e str,
+            specifier: &'e str,
         }
 
-        if let Some(alias_name) = &self.name {
-            PluginEntry::Object { name: alias_name.as_str(), specifier: self.specifier.as_str() }
+        if let Some(name) = &self.name {
+            PluginObject { name: name.as_str(), specifier: self.specifier.as_str() }
                 .serialize(serializer)
         } else {
-            PluginEntry::String(&self.specifier).serialize(serializer)
+            self.specifier.serialize(serializer)
         }
     }
 }
@@ -263,11 +203,7 @@ mod test {
     fn test_deserialize() {
         #[derive(Deserialize)]
         struct TestConfig {
-            #[serde(
-                rename = "jsPlugins",
-                default,
-                deserialize_with = "deserialize_external_plugins"
-            )]
+            #[serde(rename = "jsPlugins", default)]
             plugins: Option<FxHashSet<ExternalPluginEntry>>,
         }
 
@@ -297,11 +233,7 @@ mod test {
     fn test_deserialize_mixed_formats() {
         #[derive(Deserialize)]
         struct TestConfig {
-            #[serde(
-                rename = "jsPlugins",
-                default,
-                deserialize_with = "deserialize_external_plugins"
-            )]
+            #[serde(rename = "jsPlugins", default)]
             plugins: Option<FxHashSet<ExternalPluginEntry>>,
         }
 
@@ -323,11 +255,7 @@ mod test {
         #[derive(Deserialize)]
         struct TestConfig {
             #[expect(dead_code)]
-            #[serde(
-                rename = "jsPlugins",
-                default,
-                deserialize_with = "deserialize_external_plugins"
-            )]
+            #[serde(rename = "jsPlugins", default)]
             plugins: Option<FxHashSet<ExternalPluginEntry>>,
         }
 

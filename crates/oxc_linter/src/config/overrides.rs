@@ -9,9 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
-use super::external_plugins::{
-    ExternalPluginEntry, deserialize_external_plugins, external_plugins_schema,
-};
+use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -102,12 +100,7 @@ pub struct OxlintOverride {
     ///
     /// Note: JS plugins are experimental and not subject to semver.
     /// They are not supported in language server at present.
-    #[serde(
-        rename = "jsPlugins",
-        default,
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "deserialize_external_plugins"
-    )]
+    #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 

@@ -114,7 +114,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -126,7 +126,7 @@ fn test() {
 			           * @param {number} foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -160,12 +160,12 @@ fn test() {
 			           * @param {boolean} baz
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
             None,
             Some(
-                serde_json::json!({ "settings": {        "jsdoc": {          "exemptDestructuredRootsFromChecks": true,        },      } }),
+                serde_json::json!({ "settings": { "jsdoc": { "exemptDestructuredRootsFromChecks": true } } }),
             ),
         ),
         (
@@ -176,12 +176,12 @@ fn test() {
 			           * @param root.bar
 			           */
 			          function quux (foo, {bar: {baz}}) {
-			
+
 			          }
 			      ",
             None,
             Some(
-                serde_json::json!({ "settings": {        "jsdoc": {          "exemptDestructuredRootsFromChecks": true,        },      } }),
+                serde_json::json!({ "settings": { "jsdoc": { "exemptDestructuredRootsFromChecks": true } } }),
             ),
         ),
     ];
@@ -193,7 +193,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -216,12 +216,12 @@ fn test() {
 			           * @arg foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(
-                serde_json::json!({ "settings": {        "jsdoc": {          "tagNamePreference": {            "param": "arg",          },        },      } }),
+                serde_json::json!({ "settings": { "jsdoc": { "tagNamePreference": { "param": "arg" } } } }),
             ),
         ),
         (
@@ -232,12 +232,10 @@ fn test() {
 			           * @param {boolean} baz
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
-            Some(
-                serde_json::json!([        {          "setDefaultDestructuredRootType": true,        },      ]),
-            ),
+            Some(serde_json::json!([ { "setDefaultDestructuredRootType": true } ])),
             None,
         ),
         (
@@ -248,12 +246,10 @@ fn test() {
 			           * @param {boolean} baz
 			           */
 			          function quux (foo, {bar}, baz) {
-			
+
 			          }
 			      ",
-            Some(
-                serde_json::json!([        {          "setDefaultDestructuredRootType": false,        },      ]),
-            ),
+            Some(serde_json::json!([ { "setDefaultDestructuredRootType": false } ])),
             None,
         ),
     ];

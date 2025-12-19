@@ -146,7 +146,9 @@ async function runJsxCase(
 }
 
 // Run TypeScript test case
-const TS_CASE_HEADER = "__ESTREE_TEST__:PASS:\n```json\n";
+const TS_CASE_HEADER = "__ESTREE_TEST__:";
+const TS_CASE_HEADER_AST = "AST:\n```json\n";
+const TS_CASE_HEADER_AST_LEN = TS_CASE_HEADER_AST.length;
 const TS_CASE_FOOTER = "\n```\n";
 const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
 
@@ -166,10 +168,14 @@ async function runTsCase(
   if (sourceText.charCodeAt(0) === 0xfeff) sourceText = sourceText.slice(1);
 
   const { tests } = makeUnitsFromTest(tsPath, sourceText);
-  const estreeJsons = casesJson
-    .split(TS_CASE_HEADER)
-    .slice(1)
-    .map((part) => part.slice(0, -TS_CASE_FOOTER_LEN));
+
+  const estreeJsons = [];
+  for (const part of casesJson.split(TS_CASE_HEADER).slice(1)) {
+    if (part.startsWith(TS_CASE_HEADER_AST)) {
+      estreeJsons.push(part.slice(TS_CASE_HEADER_AST_LEN, -TS_CASE_FOOTER_LEN));
+    }
+  }
+
   expect(estreeJsons.length).toEqual(tests.length);
 
   for (let i = 0; i < tests.length; i++) {

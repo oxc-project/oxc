@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- 3002649 transformer/typescript: Remove unused import equals declaration (#16776) (Dunqing)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🐛 Bug Fixes

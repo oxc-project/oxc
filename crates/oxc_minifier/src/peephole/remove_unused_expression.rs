@@ -1,5 +1,6 @@
 use std::iter;
 
+use crate::{CompressOptionsUnused, ctx::Ctx};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -8,8 +9,6 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-
-use crate::{CompressOptionsUnused, ctx::Ctx};
 
 use super::PeepholeOptimizations;
 
@@ -562,50 +561,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        if call_expr.arguments.is_empty() {
-            let is_empty_iife = match &call_expr.callee {
-                Expression::FunctionExpression(f) => {
-                    f.params.is_empty() && f.body.as_ref().is_some_and(|body| body.is_empty())
-                }
-                Expression::ArrowFunctionExpression(f) => f.params.is_empty() && f.body.is_empty(),
-                _ => false,
-            };
-            if is_empty_iife {
-                return true;
-            }
-
-            if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
-                && !f.r#async
-                && f.params.parameters_count() == 0
-                && f.body.statements.len() == 1
-            {
-                if f.expression {
-                    // Replace "(() => foo())()" with "foo()"
-                    let expr = f.get_expression_mut().unwrap();
-                    *e = expr.take_in(ctx.ast);
-                    return Self::remove_unused_expression(e, ctx);
-                }
-                match &mut f.body.statements[0] {
-                    Statement::ExpressionStatement(expr_stmt) => {
-                        // Replace "(() => { foo() })" with "foo()"
-                        *e = expr_stmt.expression.take_in(ctx.ast);
-                        return Self::remove_unused_expression(e, ctx);
-                    }
-                    Statement::ReturnStatement(ret_stmt) => {
-                        if let Some(argument) = &mut ret_stmt.argument {
-                            // Replace "(() => { return foo() })" with "foo()"
-                            *e = argument.take_in(ctx.ast);
-                            return Self::remove_unused_expression(e, ctx);
-                        }
-                        // Replace "(() => { return })" with ""
-                        return true;
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        !call_expr.may_have_side_effects(ctx)
+        !e.may_have_side_effects(ctx)
     }
 
     pub fn fold_arguments_into_needed_expressions(
@@ -996,13 +952,14 @@ mod test {
 
         test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
         test_same("var foo = () => { bar() }; foo(), foo()");
+        test_same("const a = (x) => x, b = () => a(1);");
     }
 
     #[test]
     fn test_fold_iife() {
         test_same("var k = () => {}");
         test_same("var k = function () {}");
-        // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+        test("var a = (() => {})()", "var a = void 0;");
         test("(() => {})()", "");
         test("(() => a())()", "a();");
         test("(() => { a() })()", "a();");
@@ -1012,20 +969,39 @@ mod test {
         test_same("(a => { a() })()");
         test("((...a) => {})()", "");
         test_same("((...a) => { a() })()");
-        // test("(() => { let b = a; b() })()", "a();");
-        // test("(() => { let b = a; return b() })()", "a();");
+        test("(() => { let b = a; b() })()", "a();");
+        test("(() => { let b = a; return b() })()", "a();");
         test("(async () => {})()", "");
         test_same("(async () => { a() })()");
-        // test("(async () => { let b = a; b() })()", "(async () => a())();");
-        // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+        test("(async () => { let b = a; b() })()", "(async () => { a() })();");
+        test("var a = (function() {})()", "var a = void 0;");
+        test("a((() => b())());", "a(b())");
+        test("a((() => true)());", "a(!0)");
+        test("a((() => { return true })());", "a(!0)");
+
+        test_same("var a = (function () { b() })()");
+        test_same("var a = (function () { return b() })()");
+        test_same("var a = (function () { return this })()");
+        test_same("var a = (function () { return arguments })()");
+        test_same("var a = (function () { return new.target })()");
+        test_same("var a = (function () { return !0 })()");
+        test_same("a((function () { return !0 })());");
         test("(function() {})()", "");
         test("(function*() {})()", "");
         test("(async function() {})()", "");
         test_same("(function() { a() })()");
         test_same("(function*() { a() })()");
         test_same("(async function() { a() })()");
+
         test("(() => x)()", "x;");
+        test("(() => { return x })()", "x;");
+        test_same("(function () { return x })()");
+
+        test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
+        test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
+        test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
         test("/* @__PURE__ */ (() => x)()", "");
+        test("/* @__PURE__ */ (() => { return x })()", "");
         test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
 

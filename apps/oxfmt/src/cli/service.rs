@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{FormatFileStrategy, FormatResult, SourceFormatter, utils};
+use crate::core::{ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     Changed(String),
@@ -17,14 +17,20 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
+    config_resolver: ConfigResolver,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, format_mode: OutputMode, formatter: SourceFormatter) -> Self
+    pub fn new<T>(
+        cwd: T,
+        format_mode: OutputMode,
+        formatter: SourceFormatter,
+        config_resolver: ConfigResolver,
+    ) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter }
+        Self { cwd: cwd.into(), format_mode, formatter, config_resolver }
     }
 
     /// Process entries as they are received from the channel
@@ -57,20 +63,24 @@ impl FormatService {
                 return;
             };
 
+            // Resolve options for this specific file entry
+            let resolved_options = self.config_resolver.resolve(&entry);
+
             tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
-            let (code, is_changed) = match self.formatter.format(&entry, &source_text) {
-                FormatResult::Success { code, is_changed } => (code, is_changed),
-                FormatResult::Error(diagnostics) => {
-                    let errors = DiagnosticService::wrap_diagnostics(
-                        self.cwd.clone(),
-                        path,
-                        &source_text,
-                        diagnostics,
-                    );
-                    tx_error.send(errors).unwrap();
-                    return;
-                }
-            };
+            let (code, is_changed) =
+                match self.formatter.format(&entry, &source_text, &resolved_options) {
+                    FormatResult::Success { code, is_changed } => (code, is_changed),
+                    FormatResult::Error(diagnostics) => {
+                        let errors = DiagnosticService::wrap_diagnostics(
+                            self.cwd.clone(),
+                            path,
+                            &source_text,
+                            diagnostics,
+                        );
+                        tx_error.send(errors).unwrap();
+                        return;
+                    }
+                };
 
             // Write back if needed
             if matches!(self.format_mode, OutputMode::Write) && is_changed {

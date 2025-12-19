@@ -31,7 +31,7 @@ export declare const enum Severity {
  *
  * Since it internally uses `await prettier.format()` in JS side, `formatSync()` cannot be provided.
  */
-export declare function format(filename: string, sourceText: string, options: any | undefined | null, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
+export declare function format(filename: string, sourceText: string, options: any | undefined | null, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
 
 export interface FormatResult {
   /** The formatted code. */
@@ -46,7 +46,7 @@ export interface FormatResult {
  *
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
- * 2. `setup_config_cb`: Callback to setup Prettier config
+ * 2. `init_external_formatter_cb`: Callback to initialize external formatter
  * 3. `format_embedded_cb`: Callback to format embedded code in templates
  * 4. `format_file_cb`: Callback to format files
  *
@@ -54,4 +54,4 @@ export interface FormatResult {
  * - `mode`: If main logic will run in JS side, use this to indicate which mode
  * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
-export declare function runCli(args: Array<string>, setupConfigCb: (configJSON: string, numThreads: number) => Promise<string[]>, formatEmbeddedCb: (tagName: string, code: string) => Promise<string>, formatFileCb: (parserName: string, fileName: string, code: string) => Promise<string>): Promise<[string, number | undefined | null]>
+export declare function runCli(args: Array<string>, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<[string, number | undefined | null]>

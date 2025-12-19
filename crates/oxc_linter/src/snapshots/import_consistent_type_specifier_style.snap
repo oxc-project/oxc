@@ -84,3 +84,59 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Replace top‐level import type with an inline type specifier.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.ts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.ts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.mts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.mts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.cts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './index.d.cts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './app.d.css.ts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo } from './app.d.css.ts';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top-level import type statement.
