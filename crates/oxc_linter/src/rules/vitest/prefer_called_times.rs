@@ -97,13 +97,7 @@ impl PreferCalledTimes {
             return;
         }
 
-        let expect_argument = parsed_expect_call.head.parent.and_then(|parent| {
-            if let Expression::CallExpression(parent) = parent {
-                let expect_argument = parent.arguments.first();
-                return expect_argument;
-            }
-            None
-        });
+        let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
 
         ctx.diagnostic_with_fix(prefer_called_times_diagnostic(call_expr.span), |fixer| {
             let param_text = Self::build_expect_argument(expect_argument, fixer);

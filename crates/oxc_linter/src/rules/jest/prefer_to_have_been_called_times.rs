@@ -66,25 +66,22 @@ impl Rule for PreferToHaveBeenCalledTimes {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        Self::run(jest_node, ctx);
-    }
-}
-impl PreferToHaveBeenCalledTimes {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+        let node = jest_node.node;
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(parsed_expect_call) =
-            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
+        println!("jest_node: {:?}", ctx.source_range(call_expr.span()));
+
+        let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, jest_node, ctx) else {
             return;
         };
 
         Self::check_and_fix(&parsed_expect_call, call_expr, ctx);
     }
+}
+impl PreferToHaveBeenCalledTimes {
     fn check_and_fix<'a>(
         parsed_expect_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
@@ -99,18 +96,12 @@ impl PreferToHaveBeenCalledTimes {
             return;
         }
 
-        let matcher_argument = parsed_expect_call.args.first();
+        let matcher_argument = parsed_expect_call.matcher_arguments.and_then(|args| args.first());
         if matcher_argument.is_none() {
             return;
         }
 
-        let expect_argument = parsed_expect_call.head.parent.and_then(|parent| {
-            if let Expression::CallExpression(parent) = parent {
-                let expect_argument = parent.arguments.first();
-                return expect_argument;
-            }
-            None
-        });
+        let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
 
         let expect_argument_mem_expr =
             expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg {
@@ -148,20 +139,21 @@ impl PreferToHaveBeenCalledTimes {
                     return fixer.noop();
                 };
 
-                let method_text = Self::build_expect_argument(expect_argument_mem_expr, fixer);
+                let param_text = Self::build_expect_argument(expect_argument_mem_expr, fixer);
+
+                let modifier_text = parsed_expect_call.modifiers().iter().fold(
+                    String::new(),
+                    |mut acc, modifier| {
+                        use std::fmt::Write;
+                        write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
+                        acc
+                    },
+                );
+
+                let method_text = "toHaveBeenCalledTimes";
 
                 let code = format!(
-                    "expect({}){}.toHaveBeenCalledTimes({})",
-                    method_text,
-                    parsed_expect_call.modifiers().iter().fold(
-                        String::new(),
-                        |mut acc, modifier| {
-                            use std::fmt::Write;
-                            write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
-                            acc
-                        }
-                    ),
-                    matcher_arg_text
+                    "expect({param_text}){modifier_text}.{method_text}({matcher_arg_text})"
                 );
 
                 fixer.replace(call_expr.span, code)
