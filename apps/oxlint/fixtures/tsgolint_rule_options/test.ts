@@ -46,4 +46,8 @@ const allowedSpread = { ...allowedFunc };
 // This SHOULD error because notAllowedFunc is NOT in the allow list
 const notAllowedSpread = { ...notAllowedFunc };
 
-export { result, customStr, allowedSpread, notAllowedSpread };
+// Test no-unnecessary-type-assertion with checkLiteralConstAssertions option
+// When checkLiteralConstAssertions is true, this SHOULD error
+const literalConst = 'hello' as const;
+
+export { result, customStr, allowedSpread, notAllowedSpread, literalConst };
