@@ -216,7 +216,6 @@ fn analyze_variable_references(
 
         if !has_read_after {
             if cfg.is_cyclic(write_cfg_id) {
-                println!("Node is cyclic {:?}", nodes.get_node(reference.node_id()));
                 for r in references[..i].iter() {
                     if r.is_write() {
                         continue;
