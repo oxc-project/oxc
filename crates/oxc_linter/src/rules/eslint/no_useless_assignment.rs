@@ -14,7 +14,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
+use oxc_semantic::{NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
@@ -23,7 +23,6 @@ use crate::{context::LintContext, rule::Rule};
 use oxc_span::GetSpan;
 
 fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("This assigned value is not used in subsequent statements.")
         .with_help("Consider removing or reusing the assigned value.")
         .with_label(span)
@@ -32,7 +31,6 @@ fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessAssignment;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -103,7 +101,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessAssignment,
     eslint,
-    correctness,
+    nursery,
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
@@ -155,82 +153,83 @@ impl Rule for NoUselessAssignment {
         cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_symbols, &allocator));
 
         //walk through all symbols, collect their operations from declarations and references
-        for symbol_id in ctx.scoping().symbol_ids() {
+        for symbol_id in ctx.scoping().symbol_ids().filter(|&symbol_id| {
+            !ctx.scoping().symbol_flags(symbol_id).intersects(
+                SymbolFlags::ConstVariable
+                    | SymbolFlags::Import
+                    | SymbolFlags::Function
+                    | SymbolFlags::Class,
+            )
+        }) {
             let decl_node = ctx.symbol_declaration(symbol_id);
 
-            if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
-                //skip const declarations
-                if let AstKind::VariableDeclaration(var_declaration) =
-                    ctx.nodes().parent_node(decl_node.id()).kind()
-                    && var_declaration.kind == VariableDeclarationKind::Const
-                {
-                    continue;
+            let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else { continue };
+            //skip const declarations
+            if let AstKind::VariableDeclaration(var_declaration) =
+                ctx.nodes().parent_node(decl_node.id()).kind()
+                && var_declaration.kind == VariableDeclarationKind::Const
+            {
+                continue;
+            }
+
+            // Skip function and arrow function assignments
+            if !matches!(
+                &var_decl.init,
+                Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+            ) {
+                let block_id = Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(decl_node.id()));
+
+                // Ensure outer slot exists
+                if cfg_ops[block_id].is_none() {
+                    cfg_ops[block_id] = Some(Vec::new());
                 }
+                let block_ops_vec = cfg_ops[block_id].get_or_insert_with(Vec::new);
 
-                // Skip function and arrow function assignments
-                if !matches!(
-                    &var_decl.init,
-                    Some(
-                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-                    )
-                ) {
-                    let block_id =
-                        Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(decl_node.id()));
-
-                    // Ensure outer slot exists
-                    if cfg_ops[block_id].is_none() {
-                        cfg_ops[block_id] = Some(Vec::new());
-                    }
-                    let block_ops_vec = cfg_ops[block_id].as_mut().unwrap();
-
-                    // Find or Create entry in Vec (Linear Scan)
-                    let ops_vec = if let Some(pos) =
-                        block_ops_vec.iter().position(|(id, _)| *id == symbol_id)
-                    {
+                // Find or Create entry in Vec (Linear Scan)
+                let ops_vec =
+                    if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
                         &mut block_ops_vec[pos].1
                     } else {
                         block_ops_vec.push((symbol_id, Vec::new()));
                         &mut block_ops_vec.last_mut().unwrap().1
                     };
 
-                    // if there is an initializer, record a write operation at declaration
-                    if var_decl.init.is_some() {
-                        ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
+                // if there is an initializer, record a write operation at declaration
+                if var_decl.init.is_some() {
+                    ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
+                }
+
+                // reorder reference to handle assignment expression like a = a + 1
+                let references = ctx.symbol_references(symbol_id);
+                let ordered_refs = Self::reordered_references(ctx, references);
+
+                for reference in ordered_refs {
+                    let op_node = reference.node_id();
+
+                    if reference.is_read() {
+                        let ref_block = Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
+                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
+
+                        ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
+                        used_symbols.set_bit(symbol_id.index());
                     }
 
-                    // reorder reference to handle assignment expression like a = a + 1
-                    let references = ctx.symbol_references(symbol_id);
-                    let ordered_refs = Self::reordered_references(ctx, references);
-
-                    for reference in ordered_refs {
-                        let op_node = reference.node_id();
-
-                        if reference.is_read() {
-                            let ref_block =
-                                Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
-                            let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-
-                            ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
-                            used_symbols.set_bit(symbol_id.index());
+                    if reference.is_write() {
+                        if matches!(
+                            &var_decl.id.kind,
+                            BindingPatternKind::ObjectPattern(_)
+                                | BindingPatternKind::ArrayPattern(_)
+                        ) && decl_node
+                            .span()
+                            .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
+                        {
+                            continue;
                         }
 
-                        if reference.is_write() {
-                            if matches!(
-                                &var_decl.id.kind,
-                                BindingPatternKind::ObjectPattern(_)
-                                    | BindingPatternKind::ArrayPattern(_)
-                            ) && decl_node.span().contains_inclusive(
-                                ctx.nodes().get_node(reference.node_id()).span(),
-                            ) {
-                                continue;
-                            }
+                        let ref_block = Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
+                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
 
-                            let ref_block =
-                                Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
-                            let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-
-                            ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
-                        }
+                        ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
                     }
                 }
             }
@@ -292,7 +291,6 @@ impl Rule for NoUselessAssignment {
 
                                     live.union(&cfg_traverse_state[loop_header_block_id].live);
 
-                                    // FIX 2: Run robust loop analysis
                                     let mut loop_requirements =
                                         BitSet::new_in(num_symbols, &allocator);
                                     let mut visited = BitSet::new_in(num_blocks, &allocator);
@@ -307,7 +305,6 @@ impl Rule for NoUselessAssignment {
                                         &mut loop_requirements,
                                         &mut killed_on_path,
                                         &mut visited,
-                                        &allocator, // <--- Pass the allocator here
                                     );
 
                                     live.union(&loop_requirements);
@@ -348,12 +345,12 @@ impl Rule for NoUselessAssignment {
                                                 ctx.nodes().get_node(op.node).span(),
                                             ));
                                         }
-                                        // KILL: we are writing a new value here.
+                                        // we are writing a new value here.
                                         // Therefore, we do not need the value from before this point.
                                         live.unset_bit(sym_idx);
                                     }
                                     Operation::Read => {
-                                        // GEN: we are reading the variable.
+                                        // we are reading the variable.
                                         // Therefore, we need it to be live coming into this op.
                                         live.set_bit(sym_idx);
                                     }
@@ -513,7 +510,6 @@ impl NoUselessAssignment {
         result_gen: &mut BitSet,
         killed_on_path: &mut BitSet, // Changed to mutable reference
         visited: &mut BitSet,
-        allocator: &Allocator,
     ) {
         let block_id = Self::get_basic_block_id(ctx, node);
 
@@ -564,7 +560,6 @@ impl NoUselessAssignment {
                         result_gen,
                         killed_on_path,
                         visited,
-                        allocator,
                     );
                 }
                 _ => {}
@@ -573,7 +568,7 @@ impl NoUselessAssignment {
 
         // BACKTRACK: Remove only the bits that this specific block call added
         for sym_idx in newly_killed {
-            killed_on_path.remove(sym_idx);
+            killed_on_path.unset_bit(sym_idx);
         }
     }
 
@@ -591,7 +586,7 @@ impl NoUselessAssignment {
             cfg_ops[block_id] = Some(Vec::with_capacity(4));
         }
 
-        let block_ops_vec = cfg_ops[block_id].as_mut().unwrap();
+        let block_ops_vec = cfg_ops[block_id].get_or_insert_with(Vec::new);
 
         if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
             &mut block_ops_vec[pos].1
