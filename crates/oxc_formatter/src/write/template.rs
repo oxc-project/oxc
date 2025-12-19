@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     EmbeddedFormatter, IndentWidth,
-    ast_nodes::{AstNode, AstNodeIterator},
+    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
         Format, FormatElement, Formatter, VecBuffer,
@@ -20,6 +20,7 @@ use crate::{
     utils::{
         call_expression::is_test_each_pattern,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        tailwindicss::{is_tailwind_function_call, is_tailwind_jsx_attribute},
     },
     write,
 };
@@ -67,7 +68,29 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, text(self.value.raw.as_str()));
+        let is_sortable_literal = f.options().experimental_tailwindcss.as_ref().is_some_and(
+            |tailwind_options| match self.grand_parent() {
+                AstNodes::JSXExpressionContainer(container) => {
+                    if let AstNodes::JSXAttribute(attribute) = container.parent {
+                        is_tailwind_jsx_attribute(&attribute.name, tailwind_options)
+                    } else {
+                        false
+                    }
+                }
+                AstNodes::TaggedTemplateExpression(tagged) => {
+                    is_tailwind_function_call(&tagged.tag, tailwind_options)
+                }
+                _ => false,
+            },
+        );
+
+        if is_sortable_literal {
+            let source = f.source_text().text_for(&self).to_string();
+            let index = f.context_mut().add_tailwind_class(source);
+            f.write_element(FormatElement::TailwindClass(index));
+        } else {
+            write!(f, text(self.value.raw.as_str()));
+        }
     }
 }
 

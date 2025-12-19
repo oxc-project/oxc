@@ -47,7 +47,6 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    TailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
@@ -73,6 +72,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
+        tailwindicss::{is_tailwind_function_call, is_tailwind_jsx_attribute},
     },
     write,
     write::parameters::can_avoid_parentheses,
@@ -1027,7 +1027,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if this is a tailwind class string that needs sorting
-        let (is_tailwind_class, is_jsx) =
+        let (is_sortable_literal, is_jsx) =
             f.options().experimental_tailwindcss.as_ref().map_or_else(
                 || {
                     (false, /* is_jsx */ matches!(self.parent, AstNodes::JSXAttribute(_)))
@@ -1055,7 +1055,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
                 },
             );
 
-        if is_tailwind_class {
+        if is_sortable_literal {
             let quote = if is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
@@ -1076,46 +1076,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             .fmt(f);
         }
     }
-}
-
-/// Check if a JSX attribute is a tailwind class attribute (class/className or custom tailwindAttributes)
-fn is_tailwind_jsx_attribute(
-    attr_name: &JSXAttributeName<'_>,
-    tailwind_options: &crate::options::TailwindcssOptions,
-) -> bool {
-    let JSXAttributeName::Identifier(ident) = attr_name else {
-        return false;
-    };
-    let name = ident.name.as_str();
-
-    // Default attributes: `class` and `className`
-    let is_default_attr = name == "class" || name == "className";
-
-    if is_default_attr {
-        return true;
-    }
-
-    // Custom attributes from `tailwindAttributes` option
-    tailwind_options
-        .tailwind_attributes
-        .as_ref()
-        .is_some_and(|attrs| attrs.iter().any(|a| a == name))
-}
-
-/// Check if a callee expression is a tailwind function (e.g., `clsx`, `cn`, `tw`)
-fn is_tailwind_function_call(
-    callee: &Expression<'_>,
-    tailwind_options: &TailwindcssOptions,
-) -> bool {
-    let Some(functions) = &tailwind_options.tailwind_functions else {
-        return false;
-    };
-
-    let Expression::Identifier(ident) = callee else {
-        return false;
-    };
-
-    functions.iter().any(|f| f == ident.name.as_str())
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
