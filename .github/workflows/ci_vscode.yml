@@ -47,10 +47,6 @@ jobs:
           pnpm fmt
           git diff --exit-code
 
-      - name: Build Language Server
-        working-directory: editors/vscode
-        run: pnpm run server:build:debug
-
       - name: Build oxlint (with napi)
         working-directory: editors/vscode
         run: pnpm run oxlint:build:debug
