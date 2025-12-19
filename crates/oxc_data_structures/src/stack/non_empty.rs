@@ -442,6 +442,13 @@ impl<T: Default> Default for NonEmptyStack<T> {
     }
 }
 
+// SAFETY: `NonEmptyStack<T>` can be `Send` / `Sync` if `T` is `Send` / `Sync`.
+// It does not use interior mutability, and is essentially the same as `Vec<T>` in this respect,
+// which implements `Send` / `Sync` in the same way.
+unsafe impl<T: Send> Send for NonEmptyStack<T> {}
+// SAFETY: See above.
+unsafe impl<T: Sync> Sync for NonEmptyStack<T> {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

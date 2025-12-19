@@ -421,6 +421,13 @@ impl<T> DerefMut for Stack<T> {
     }
 }
 
+// SAFETY: `Stack<T>` can be `Send` / `Sync` if `T` is `Send` / `Sync`.
+// It does not use interior mutability, and is essentially the same as `Vec<T>`,
+// which implements `Send` / `Sync` in the same way.
+unsafe impl<T: Send> Send for Stack<T> {}
+// SAFETY: See above.
+unsafe impl<T: Sync> Sync for Stack<T> {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
