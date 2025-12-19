@@ -11,6 +11,7 @@
     "lint": "oxlint -c oxlintrc.json --deny-warnings --type-aware --type-check --report-unused-disable-directives"
   },
   "devDependencies": {
+    "@napi-rs/cli": "catalog:",
     "oxfmt": "^0.19.0",
     "oxlint": "^1.33.0",
     "oxlint-tsgolint": "0.9.2"

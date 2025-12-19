@@ -49,6 +49,9 @@ importers:
 
   .:
     devDependencies:
+      '@napi-rs/cli':
+        specifier: 'catalog:'
+        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
       oxfmt:
         specifier: ^0.19.0
         version: 0.19.0
