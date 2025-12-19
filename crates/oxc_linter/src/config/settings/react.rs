@@ -80,6 +80,14 @@ impl ReactPluginSettings {
         }
         self
     }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if !self.is_empty() {
+            base.form_components.clone_from(&self.form_components);
+            base.link_components.clone_from(&self.link_components);
+        }
+    }
 }
 
 // Deserialize helper types

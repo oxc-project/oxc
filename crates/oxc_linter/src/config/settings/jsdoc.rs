@@ -197,6 +197,27 @@ impl JSDocPluginSettings {
 
         self
     }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if self.is_empty() {
+            return;
+        }
+
+        // All primitive fields: override if self has non-default values
+        base.ignore_private = self.ignore_private;
+        base.ignore_internal = self.ignore_internal;
+        base.ignore_replaces_docs = self.ignore_replaces_docs;
+        base.override_replaces_docs = self.override_replaces_docs;
+        base.augments_extends_replaces_docs = self.augments_extends_replaces_docs;
+        base.implements_replaces_docs = self.implements_replaces_docs;
+        base.exempt_destructured_roots_from_checks = self.exempt_destructured_roots_from_checks;
+
+        // Merge tag_name_preference: self takes priority
+        for (key, value) in &self.tag_name_preference {
+            base.tag_name_preference.insert(key.clone(), value.clone());
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, PartialEq)]

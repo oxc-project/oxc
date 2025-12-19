@@ -556,6 +556,18 @@ expression: json
               "$ref": "#/definitions/OxlintRules"
             }
           ]
+        },
+        "settings": {
+          "description": "Plugin-specific settings for this override.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintSettings"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Plugin-specific settings for this override."
         }
       },
       "additionalProperties": false

@@ -380,6 +380,333 @@ type: `object`
 See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 
+#### overrides[n].settings
+
+type: `object | null`
+
+
+Plugin-specific settings for this override.
+
+
+##### overrides[n].settings.jsdoc
+
+type: `object`
+
+
+
+
+
+###### overrides[n].settings.jsdoc.augmentsExtendsReplacesDocs
+
+type: `boolean`
+
+default: `false`
+
+Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+###### overrides[n].settings.jsdoc.exemptDestructuredRootsFromChecks
+
+type: `boolean`
+
+default: `false`
+
+Only for `require-param-type` and `require-param-description` rule
+
+
+###### overrides[n].settings.jsdoc.ignoreInternal
+
+type: `boolean`
+
+default: `false`
+
+For all rules but NOT apply to `empty-tags` rule
+
+
+###### overrides[n].settings.jsdoc.ignorePrivate
+
+type: `boolean`
+
+default: `false`
+
+For all rules but NOT apply to `check-access` and `empty-tags` rule
+
+
+###### overrides[n].settings.jsdoc.ignoreReplacesDocs
+
+type: `boolean`
+
+default: `true`
+
+Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+###### overrides[n].settings.jsdoc.implementsReplacesDocs
+
+type: `boolean`
+
+default: `false`
+
+Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+###### overrides[n].settings.jsdoc.overrideReplacesDocs
+
+type: `boolean`
+
+default: `true`
+
+Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+###### overrides[n].settings.jsdoc.tagNamePreference
+
+type: `object`
+
+default: `{}`
+
+
+
+
+##### overrides[n].settings.jsx-a11y
+
+type: `object`
+
+
+Configure JSX A11y plugin rules.
+
+See
+[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s
+configuration for a full reference.
+
+
+###### overrides[n].settings.jsx-a11y.attributes
+
+type: `Record<string, array>`
+
+default: `{}`
+
+Map of attribute names to their DOM equivalents.
+This is useful for non-React frameworks that use different attribute names.
+
+Example:
+
+```json
+{
+"settings": {
+"jsx-a11y": {
+"attributes": {
+"for": ["htmlFor", "for"]
+}
+}
+}
+}
+```
+
+
+###### overrides[n].settings.jsx-a11y.components
+
+type: `Record<string, string>`
+
+default: `{}`
+
+To have your custom components be checked as DOM elements, you can
+provide a mapping of your component names to the DOM element name.
+
+Example:
+
+```json
+{
+"settings": {
+"jsx-a11y": {
+"components": {
+"Link": "a",
+"IconButton": "button"
+}
+}
+}
+}
+```
+
+
+###### overrides[n].settings.jsx-a11y.polymorphicPropName
+
+type: `string | null`
+
+
+An optional setting that define the prop your code uses to create polymorphic components.
+This setting will be used to determine the element type in rules that
+require semantic context.
+
+For example, if you set the `polymorphicPropName` to `as`, then this element:
+
+```jsx
+<Box as="h3">Hello</Box>
+```
+
+Will be treated as an `h3`. If not set, this component will be treated
+as a `Box`.
+
+
+##### overrides[n].settings.next
+
+type: `object`
+
+
+Configure Next.js plugin rules.
+
+
+###### overrides[n].settings.next.rootDir
+
+type: `array | string`
+
+
+
+
+
+####### overrides[n].settings.next.rootDir[n]
+
+type: `string`
+
+
+
+
+
+##### overrides[n].settings.react
+
+type: `object`
+
+
+Configure React plugin rules.
+
+Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
+
+
+###### overrides[n].settings.react.formComponents
+
+type: `array`
+
+default: `[]`
+
+Components used as alternatives to `<form>` for forms, such as `<Formik>`.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"formComponents": [
+"CustomForm",
+// OtherForm is considered a form component and has an endpoint attribute
+{ "name": "OtherForm", "formAttribute": "endpoint" },
+// allows specifying multiple properties if necessary
+{ "name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"] }
+]
+}
+}
+}
+```
+
+
+####### overrides[n].settings.react.formComponents[n]
+
+type: `object | string`
+
+
+
+
+
+######## overrides[n].settings.react.formComponents[n].attribute
+
+type: `string`
+
+
+
+
+
+######## overrides[n].settings.react.formComponents[n].name
+
+type: `string`
+
+
+
+
+
+###### overrides[n].settings.react.linkComponents
+
+type: `array`
+
+default: `[]`
+
+Components used as alternatives to `<a>` for linking, such as `<Link>`.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"linkComponents": [
+"HyperLink",
+// Use `linkAttribute` for components that use a different prop name
+// than `href`.
+{ "name": "MyLink", "linkAttribute": "to" },
+// allows specifying multiple properties if necessary
+{ "name": "Link", "linkAttribute": ["to", "href"] }
+]
+}
+}
+}
+```
+
+
+####### overrides[n].settings.react.linkComponents[n]
+
+type: `object | string`
+
+
+
+
+
+######## overrides[n].settings.react.linkComponents[n].attribute
+
+type: `string`
+
+
+
+
+
+######## overrides[n].settings.react.linkComponents[n].name
+
+type: `string`
+
+
+
+
+
+##### overrides[n].settings.vitest
+
+type: `object`
+
+
+Configure Vitest plugin rules.
+
+See [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s
+configuration for a full reference.
+
+
+###### overrides[n].settings.vitest.typecheck
+
+type: `boolean`
+
+default: `false`
+
+Whether to enable typecheck mode for Vitest rules.
+When enabled, some rules will skip certain checks for describe blocks
+to accommodate TypeScript type checking scenarios.
+
+
 ## plugins
 
 type: `array | null`

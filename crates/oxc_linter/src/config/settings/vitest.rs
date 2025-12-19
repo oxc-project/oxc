@@ -26,4 +26,11 @@ impl VitestPluginSettings {
         }
         self
     }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if !self.is_empty() {
+            base.typecheck = self.typecheck;
+        }
+    }
 }

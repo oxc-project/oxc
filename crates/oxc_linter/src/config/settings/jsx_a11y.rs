@@ -93,4 +93,24 @@ impl JSXA11yPluginSettings {
 
         self
     }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if self.is_empty() {
+            return;
+        }
+
+        // Primitives: override if self has value
+        if self.polymorphic_prop_name.is_some() {
+            base.polymorphic_prop_name.clone_from(&self.polymorphic_prop_name);
+        }
+
+        // HashMaps: merge entries, self takes priority on conflict
+        for (key, value) in &self.components {
+            base.components.insert(key.clone(), value.clone());
+        }
+        for (key, value) in &self.attributes {
+            base.attributes.insert(key.clone(), value.clone());
+        }
+    }
 }

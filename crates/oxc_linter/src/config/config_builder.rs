@@ -463,6 +463,7 @@ impl ConfigStoreBuilder {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
+                    settings: override_config.settings,
                     plugins: override_config.plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
@@ -1442,6 +1443,83 @@ mod test {
         assert_eq!(
             json["custom-plugin"]["setting3"], "child-only",
             "child-only value should be added"
+        );
+    }
+
+    #[test]
+    fn test_overrides_settings_merge() {
+        // Test that settings in overrides are merged into base settings
+        let config = config_store_from_str(
+            r#"
+            {
+                "settings": {
+                    "next": {
+                        "rootDir": "base/app"
+                    },
+                    "custom-plugin": {
+                        "setting1": "base-value",
+                        "setting2": "base-only"
+                    }
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.ts"],
+                        "settings": {
+                            "next": {
+                                "rootDir": "test/app"
+                            },
+                            "custom-plugin": {
+                                "setting1": "override-value",
+                                "setting3": "override-only"
+                            }
+                        }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        // Apply overrides for a test file
+        let resolved = config.apply_overrides(Path::new("foo.test.ts"));
+
+        // Next settings: override should replace base (array semantics)
+        assert_eq!(
+            resolved.config.settings.next.get_root_dirs().as_ref(),
+            &["test/app".to_string()],
+            "next.rootDir should be override's value"
+        );
+
+        // Arbitrary settings: should be deep merged
+        let json = resolved.config.settings.json.as_ref().expect("json settings should be present");
+        assert_eq!(
+            json["custom-plugin"]["setting1"], "override-value",
+            "override value should override base"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting2"], "base-only",
+            "base-only value should be preserved"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting3"], "override-only",
+            "override-only value should be added"
+        );
+
+        // Non-matching file should have base settings
+        let resolved_non_match = config.apply_overrides(Path::new("foo.ts"));
+        assert_eq!(
+            resolved_non_match.config.settings.next.get_root_dirs().as_ref(),
+            &["base/app".to_string()],
+            "non-matching file should have base next.rootDir"
+        );
+        let json_non_match = resolved_non_match
+            .config
+            .settings
+            .json
+            .as_ref()
+            .expect("json settings should be present");
+        assert_eq!(
+            json_non_match["custom-plugin"]["setting1"], "base-value",
+            "non-matching file should have base setting1"
         );
     }
 }

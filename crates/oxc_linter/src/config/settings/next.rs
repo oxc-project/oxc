@@ -47,6 +47,13 @@ impl NextPluginSettings {
         }
         self
     }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if !self.is_empty() {
+            base.root_dir = self.root_dir.clone();
+        }
+    }
 }
 
 // Deserialize helper types

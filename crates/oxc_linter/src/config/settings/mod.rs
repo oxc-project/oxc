@@ -126,39 +126,22 @@ impl OxlintSettings {
         }
     }
 
-    // Note: We don't merge settings in overrides at present.
-    // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
-    #[expect(dead_code)]
-    /// Mutates `settings_to_override` by reading from `self`.
-    fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
-        // If `None`, `self` has nothing configured, so we don't need to mutate `settings_to_override` at all.
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // Merge arbitrary JSON settings
         if let Some(self_json) = &self.json {
-            if let Some(override_json) = &settings_to_override.json {
-                let json = deep_merge(self_json, override_json);
-                match serde_json::from_value::<WellKnownOxlintSettings>(serde_json::Value::Object(
-                    json.clone(),
-                )) {
-                    Ok(well_known_settings) => {
-                        settings_to_override.json = Some(json);
-                        settings_to_override.jsx_a11y = well_known_settings.jsx_a11y;
-                        settings_to_override.next = well_known_settings.next;
-                        settings_to_override.react = well_known_settings.react;
-                        settings_to_override.jsdoc = well_known_settings.jsdoc;
-                        settings_to_override.vitest = well_known_settings.vitest;
-                    }
-                    Err(e) => {
-                        panic!("Failed to parse override settings: {e:?}");
-                    }
-                }
-            } else {
-                settings_to_override.json = Some(self_json.clone());
-                settings_to_override.jsx_a11y = self.jsx_a11y.clone();
-                settings_to_override.next = self.next.clone();
-                settings_to_override.react = self.react.clone();
-                settings_to_override.jsdoc = self.jsdoc.clone();
-                settings_to_override.vitest = self.vitest.clone();
-            }
+            base.json = match &base.json {
+                Some(base_json) => Some(deep_merge(self_json, base_json)),
+                None => Some(self_json.clone()),
+            };
         }
+
+        // Merge well-known plugin settings
+        self.jsx_a11y.merge_into(&mut base.jsx_a11y);
+        self.next.merge_into(&mut base.next);
+        self.react.merge_into(&mut base.react);
+        self.jsdoc.merge_into(&mut base.jsdoc);
+        self.vitest.merge_into(&mut base.vitest);
     }
 }
 
