@@ -50,6 +50,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
     let comment_type_id = schema.type_names["Comment"];
+    let token_type_id = schema.type_names["Token"];
 
     // Types with custom visitors (see comment above)
     let custom_visitor_type_ids = [
@@ -73,6 +74,10 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
         // Skip `Comment` because we handle adjusting comment spans separately
         if struct_def.id == comment_type_id {
+            return None;
+        }
+
+        if struct_def.id == token_type_id {
             return None;
         }
 

@@ -8,6 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
+use crate::ast::token::*;
 use crate::ast::ts::*;
 
 impl GetSpan for Program<'_> {
@@ -2178,5 +2179,12 @@ impl GetSpan for JSDocUnknownType {
     #[inline]
     fn span(&self) -> Span {
         self.span
+    }
+}
+
+impl GetSpan for Token<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        GetSpan::span(&self.span)
     }
 }

@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 use oxc::{
     allocator::{Allocator, FromIn, Vec},
-    ast::ast::{Comment, Program},
+    ast::ast::{Comment, Program, Token},
     diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
     span::{Atom, Span, format_atom},
     syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
@@ -21,6 +21,7 @@ use oxc_estree::ESTree;
 pub struct RawTransferData<'a> {
     pub program: Program<'a>,
     pub comments: Vec<'a, Comment>,
+    pub tokens: Vec<'a, Token<'a>>,
     pub module: EcmaScriptModule<'a>,
     pub errors: Vec<'a, Error<'a>>,
 }

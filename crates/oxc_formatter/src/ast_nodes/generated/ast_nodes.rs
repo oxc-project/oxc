@@ -810,6 +810,11 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
+    pub fn tokens(&self) -> &Vec<'a, Token<'a>> {
+        &self.inner.tokens
+    }
+
+    #[inline]
     pub fn hashbang(&self) -> Option<&AstNode<'a, Hashbang<'a>>> {
         let following_span = self
             .inner

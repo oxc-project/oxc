@@ -11,6 +11,7 @@ use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
+use crate::ast::token::*;
 use crate::ast::ts::*;
 
 impl ESTree for Program<'_> {
@@ -3244,6 +3245,18 @@ impl ESTree for Comment {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.kind);
         state.serialize_field("value", &crate::serialize::CommentValue(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for Token<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.r#type);
+        state.serialize_field("flags", &self.flags);
+        state.serialize_field("pattern", &self.pattern);
+        state.serialize_field("value", &crate::ast::token::TokenValue(self));
         state.serialize_span(self.span);
         state.end();
     }

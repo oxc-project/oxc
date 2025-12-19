@@ -39,15 +39,15 @@ function deserializeProgram(pos) {
     program = (parent = {
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 125),
+      sourceType: deserializeModuleKind(pos + 149),
       hashbang: null,
       start: 0,
       end,
       parent: null,
     });
-  program.hashbang = deserializeOptionHashbang(pos + 48);
-  let body = (program.body = deserializeVecDirective(pos + 72));
-  body.push(...deserializeVecStatement(pos + 96));
+  program.hashbang = deserializeOptionHashbang(pos + 72);
+  let body = (program.body = deserializeVecDirective(pos + 96));
+  body.push(...deserializeVecStatement(pos + 120));
   {
     let start;
     if (body.length > 0) {
@@ -5223,6 +5223,19 @@ function deserializeComment(pos) {
   };
 }
 
+function deserializeToken(pos) {
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4);
+  return {
+    type: deserializeStr(pos + 8),
+    flags: deserializeOptionStr(pos + 24),
+    pattern: deserializeOptionStr(pos + 40),
+    value: sourceText.slice(start, end),
+    start,
+    end,
+  };
+}
+
 function deserializeNameSpan(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4);
@@ -5547,9 +5560,10 @@ function deserializeModuleKind(pos) {
 function deserializeRawTransferData(pos) {
   return {
     program: deserializeProgram(pos),
-    comments: deserializeVecComment(pos + 128),
-    module: deserializeEcmaScriptModule(pos + 152),
-    errors: deserializeVecError(pos + 256),
+    comments: deserializeVecComment(pos + 152),
+    tokens: deserializeVecToken(pos + 176),
+    module: deserializeEcmaScriptModule(pos + 200),
+    errors: deserializeVecError(pos + 304),
   };
 }
 
@@ -5657,6 +5671,18 @@ function deserializeVecComment(pos) {
   for (; pos !== endPos; ) {
     arr.push(deserializeComment(pos));
     pos += 16;
+  }
+  return arr;
+}
+
+function deserializeVecToken(pos) {
+  let arr = [],
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  let endPos = pos + uint32[pos32 + 2] * 56;
+  for (; pos !== endPos; ) {
+    arr.push(deserializeToken(pos));
+    pos += 56;
   }
   return arr;
 }

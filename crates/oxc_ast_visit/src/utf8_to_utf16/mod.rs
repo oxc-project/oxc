@@ -139,6 +139,7 @@ mod test {
             SourceType::default(),
             ";'🤨' // 🤨",
             ast.vec1(Comment::new(8, 15, CommentKind::Line)),
+            ast.vec(),
             None,
             ast.vec(),
             ast.vec_from_array([

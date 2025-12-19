@@ -144,7 +144,9 @@ impl Program<'_> {
         /* END_IF */
         /* IF LINTER */
         get tokens() {
-            if (tokens === null) initTokens();
+            if (localAstId !== astId) throw new Error('Tokens are only accessible while linting the file');
+            const tokens = DESER[Vec<Token>](POS_OFFSET.tokens);
+            Object.defineProperty(this, 'tokens', { value: tokens });
             return tokens;
         },
         /* END_IF */
@@ -258,6 +260,13 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 
 impl ESTree for CommentValue<'_> {
+    #[expect(clippy::unimplemented)]
+    fn serialize<S: Serializer>(&self, _serializer: S) {
+        unimplemented!();
+    }
+}
+
+impl ESTree for crate::ast::token::TokenValue<'_, '_> {
     #[expect(clippy::unimplemented)]
     fn serialize<S: Serializer>(&self, _serializer: S) {
         unimplemented!();

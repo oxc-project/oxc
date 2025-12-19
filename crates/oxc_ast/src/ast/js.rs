@@ -57,6 +57,8 @@ pub struct Program<'a> {
     #[content_eq(skip)]
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
+    #[estree(skip)]
+    pub tokens: Vec<'a, Token<'a>>,
     pub hashbang: Option<Hashbang<'a>>,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,

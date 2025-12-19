@@ -207,6 +207,28 @@ pub enum Kind {
 use Kind::*;
 
 impl Kind {
+    /// TODO: investigate performance of doing this on the JS side
+    pub fn to_tseslint_type(self) -> Option<&'static str> {
+        let ty = match self {
+            Eof | Undetermined | Skip => return None,
+            True | False => "Boolean",
+            Null => "Null",
+            Ident | Constructor | Undefined | As | Any | Satisfies | Type | String | Number => {
+                "Identifier"
+            }
+            PrivateIdentifier => "PrivateIdentifier",
+            JSXText => "JSXText",
+            RegExp => "RegularExpression",
+            Str => "String",
+            NoSubstitutionTemplate | TemplateHead | TemplateMiddle | TemplateTail => "Template",
+            Decimal | Float | Binary | Octal | Hex | PositiveExponential | NegativeExponential
+            | DecimalBigInt | BinaryBigInt | OctalBigInt | HexBigInt => "Numeric",
+            _ if self.is_any_keyword() => "Keyword",
+            _ => "Punctuator",
+        };
+        Some(ty)
+    }
+
     #[inline]
     pub fn is_eof(self) -> bool {
         self == Eof

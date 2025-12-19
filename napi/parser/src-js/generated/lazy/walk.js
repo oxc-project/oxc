@@ -197,8 +197,8 @@ function walkProgram(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionHashbang(pos + 48, ast, visitors);
-  walkVecStatement(pos + 96, ast, visitors);
+  walkOptionHashbang(pos + 72, ast, visitors);
+  walkVecStatement(pos + 120, ast, visitors);
 
   if (exit !== null) exit(node);
 }

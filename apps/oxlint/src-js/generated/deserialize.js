@@ -1,8 +1,6 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-import { tokens, initTokens } from "../plugins/tokens.js";
-
 let uint8,
   uint32,
   float64,
@@ -53,7 +51,7 @@ function deserializeProgram(pos) {
       __proto__: NodeProto,
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 125),
+      sourceType: deserializeModuleKind(pos + 149),
       hashbang: null,
       get comments() {
         // Check AST in buffer is still the same AST (buffers are reused)
@@ -66,7 +64,9 @@ function deserializeProgram(pos) {
         return comments;
       },
       get tokens() {
-        tokens === null && initTokens();
+        if (localAstId !== astId) throw Error("Tokens are only accessible while linting the file");
+        let tokens = deserializeVecToken(pos + 48);
+        Object.defineProperty(this, "tokens", { value: tokens });
         return tokens;
       },
       start: 0,
@@ -74,9 +74,9 @@ function deserializeProgram(pos) {
       range: [0, end],
       parent: null,
     });
-  program.hashbang = deserializeOptionHashbang(pos + 48);
-  let body = (program.body = deserializeVecDirective(pos + 72));
-  body.push(...deserializeVecStatement(pos + 96));
+  program.hashbang = deserializeOptionHashbang(pos + 72);
+  let body = (program.body = deserializeVecDirective(pos + 96));
+  body.push(...deserializeVecStatement(pos + 120));
   {
     let start;
     if (body.length > 0) {
@@ -5672,6 +5672,21 @@ function deserializeComment(pos) {
   };
 }
 
+function deserializeToken(pos) {
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4);
+  return {
+    __proto__: NodeProto,
+    type: deserializeStr(pos + 8),
+    flags: deserializeOptionStr(pos + 24),
+    pattern: deserializeOptionStr(pos + 40),
+    value: sourceText.slice(start, end),
+    start,
+    end,
+    range: [start, end],
+  };
+}
+
 function deserializeAssignmentOperator(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -5858,6 +5873,18 @@ function deserializeVecComment(pos) {
   for (; pos !== endPos; ) {
     arr.push(deserializeComment(pos));
     pos += 16;
+  }
+  return arr;
+}
+
+function deserializeVecToken(pos) {
+  let arr = [],
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  let endPos = pos + uint32[pos32 + 2] * 56;
+  for (; pos !== endPos; ) {
+    arr.push(deserializeToken(pos));
+    pos += 56;
   }
   return arr;
 }

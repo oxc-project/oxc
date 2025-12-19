@@ -187,6 +187,14 @@
    `----
 
   x getNode-plugin(getNode): type: TemplateElement
+   ,-[files/index.ts:5:11]
+ 4 | 
+ 5 | `___${123}___`;
+   :           ^
+ 6 | 
+   `----
+
+  x getNode-plugin(getNode): type: TemplateElement
    ,-[files/index.ts:5:14]
  4 | 
  5 | `___${123}___`;
@@ -315,6 +323,14 @@
    `----
 
   x getNode-plugin(getNode): type: TemplateElement
+   ,-[files/index.ts:7:20]
+ 6 | 
+ 7 | type T = `___${123}___`;
+   :                    ^
+ 8 | 
+   `----
+
+  x getNode-plugin(getNode): type: TemplateElement
    ,-[files/index.ts:7:23]
  6 | 
  7 | type T = `___${123}___`;
@@ -355,7 +371,7 @@
  9 | // Comment
    `----
 
-Found 0 warnings and 45 errors.
+Found 0 warnings and 47 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

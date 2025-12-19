@@ -8,6 +8,7 @@ use oxc_span::{GetSpanMut, Span};
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
+use crate::ast::token::*;
 use crate::ast::ts::*;
 
 impl GetSpanMut for Program<'_> {
@@ -2178,5 +2179,12 @@ impl GetSpanMut for JSDocUnknownType {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
+    }
+}
+
+impl GetSpanMut for Token<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        GetSpanMut::span_mut(&mut self.span)
     }
 }

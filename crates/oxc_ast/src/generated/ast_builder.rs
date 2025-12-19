@@ -27,6 +27,7 @@ impl<'a> AstBuilder<'a> {
     /// * `source_type`
     /// * `source_text`
     /// * `comments`: Sorted comments
+    /// * `tokens`
     /// * `hashbang`
     /// * `directives`
     /// * `body`
@@ -37,6 +38,7 @@ impl<'a> AstBuilder<'a> {
         source_type: SourceType,
         source_text: &'a str,
         comments: Vec<'a, Comment>,
+        tokens: Vec<'a, Token<'a>>,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
@@ -46,6 +48,7 @@ impl<'a> AstBuilder<'a> {
             source_type,
             source_text,
             comments,
+            tokens,
             hashbang,
             directives,
             body,
@@ -60,6 +63,7 @@ impl<'a> AstBuilder<'a> {
     /// * `source_type`
     /// * `source_text`
     /// * `comments`: Sorted comments
+    /// * `tokens`
     /// * `hashbang`
     /// * `directives`
     /// * `body`
@@ -71,6 +75,7 @@ impl<'a> AstBuilder<'a> {
         source_type: SourceType,
         source_text: &'a str,
         comments: Vec<'a, Comment>,
+        tokens: Vec<'a, Token<'a>>,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
@@ -81,6 +86,7 @@ impl<'a> AstBuilder<'a> {
             source_type,
             source_text,
             comments,
+            tokens,
             hashbang,
             directives,
             body,

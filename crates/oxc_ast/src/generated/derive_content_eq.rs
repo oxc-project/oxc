@@ -9,11 +9,13 @@ use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
+use crate::ast::token::*;
 use crate::ast::ts::*;
 
 impl ContentEq for Program<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source_type, &other.source_type)
+            && ContentEq::content_eq(&self.tokens, &other.tokens)
             && ContentEq::content_eq(&self.hashbang, &other.hashbang)
             && ContentEq::content_eq(&self.directives, &other.directives)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -2523,5 +2525,13 @@ impl ContentEq for Comment {
             && ContentEq::content_eq(&self.position, &other.position)
             && ContentEq::content_eq(&self.newlines, &other.newlines)
             && ContentEq::content_eq(&self.content, &other.content)
+    }
+}
+
+impl ContentEq for Token<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.r#type, &other.r#type)
+            && ContentEq::content_eq(&self.flags, &other.flags)
+            && ContentEq::content_eq(&self.pattern, &other.pattern)
     }
 }

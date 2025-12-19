@@ -90,7 +90,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
-    AstBuilder,
+    AstBuilder, ast,
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -521,7 +521,8 @@ impl<'a> ParserImpl<'a> {
             return Err(vec![error]);
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        let errors: Vec<OxcDiagnostic> =
+            self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -540,11 +541,20 @@ impl<'a> ParserImpl<'a> {
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
+        let tokens = self.ast.vec_from_iter(self.lexer.tokens().iter().filter_map(|token| {
+            token.kind().to_tseslint_type().map(|ty| ast::Token {
+                span: token.span(),
+                r#type: self.ast.atom(ty),
+                flags: None,
+                pattern: None,
+            })
+        }));
         self.ast.program(
             span,
             self.source_type,
             self.source_text,
             comments,
+            tokens,
             hashbang,
             directives,
             statements,
