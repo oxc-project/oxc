@@ -6,8 +6,9 @@
 //!     * [v8](https://v8.dev/blog/scanner)
 
 use rustc_hash::FxHashMap;
+use std::fmt::Debug;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
@@ -45,6 +46,7 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
     errors_snapshot: ErrorSnapshot,
+    tokens_len: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -86,6 +88,11 @@ pub struct Lexer<'a> {
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    /// Tokens collected from the lexer.
+    ///
+    /// If `collect_tokens` is `false`, this will be `None`.
+    tokens: Option<ArenaVec<'a, Token>>,
 }
 
 impl<'a> Lexer<'a> {
@@ -97,6 +104,7 @@ impl<'a> Lexer<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        collect_tokens: bool,
         unique: UniquePromise,
     ) -> Self {
         let source = Source::new(source_text, unique);
@@ -114,6 +122,7 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
+            tokens: if collect_tokens { Some(ArenaVec::new_in(allocator)) } else { None },
         }
     }
 
@@ -126,7 +135,7 @@ impl<'a> Lexer<'a> {
         source_type: SourceType,
     ) -> Self {
         let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, unique)
+        Self::new(allocator, source_text, source_type, false, unique)
     }
 
     /// Get errors.
@@ -149,10 +158,15 @@ impl<'a> Lexer<'a> {
         } else {
             ErrorSnapshot::Count(self.errors.len())
         };
+        let tokens_len = match &self.tokens {
+            Some(tokens) => tokens.len(),
+            None => 0,
+        };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            tokens_len,
         }
     }
 
@@ -168,6 +182,10 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            tokens_len: match &self.tokens {
+                Some(tokens) => tokens.len(),
+                None => 0,
+            },
         }
     }
 
@@ -180,6 +198,9 @@ impl<'a> Lexer<'a> {
         }
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
+        if let Some(tokens) = self.tokens.as_mut() {
+            tokens.truncate(checkpoint.tokens_len);
+        }
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -229,6 +250,9 @@ impl<'a> Lexer<'a> {
         self.token.set_end(self.offset());
         let token = self.token;
         self.trivia_builder.handle_token(token);
+        if let Some(tokens) = self.tokens.as_mut() {
+            tokens.push(token);
+        }
         self.token = Token::default();
         token
     }
@@ -237,6 +261,19 @@ impl<'a> Lexer<'a> {
     #[inline]
     pub fn advance_to_end(&mut self) {
         self.source.advance_to_end();
+    }
+
+    /// Retrieve collected tokens.
+    /// This should only be called once per source text, as it consumes the tokens vec.
+    /// Panics if the lexer was not configured to collect tokens.
+    #[inline]
+    pub fn tokens(&mut self) -> ArenaVec<'a, Token> {
+        if let Some(tokens) = self.tokens.take() {
+            tokens
+        } else {
+            let backtrace = std::backtrace::Backtrace::capture();
+            panic!("Can't retrieve tokens because they were not collected\n{backtrace}");
+        }
     }
 
     // ---------- Private Methods ---------- //

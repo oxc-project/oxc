@@ -79,6 +79,8 @@ mod ts;
 
 mod diagnostics;
 
+pub use lexer::{Kind, Token};
+
 // Expose lexer only in benchmarks
 #[cfg(not(feature = "benchmarking"))]
 mod lexer;
@@ -86,7 +88,7 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
@@ -98,7 +100,7 @@ use oxc_syntax::module_record::ModuleRecord;
 use crate::{
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::Lexer,
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -180,6 +182,11 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+
+    /// All tokens collected from the lexer, in source order.
+    ///
+    /// If `ParseOptions::collect_tokens` is set to `false`, this will be `None`.
+    pub tokens: Option<ArenaVec<'a, Token>>,
 }
 
 /// Parse options
@@ -221,6 +228,13 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Whether the parser should collect all tokens from the lexer and return them in the `tokens` field of the `ParserReturn` struct.
+    ///
+    /// If this option is set to `false`, the `tokens` vec will be empty.
+    ///
+    /// Default: `false`
+    pub collect_tokens: bool,
 }
 
 impl Default for ParseOptions {
@@ -231,6 +245,7 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            collect_tokens: false,
         }
     }
 }
@@ -408,7 +423,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, unique),
+            lexer: Lexer::new(allocator, source_text, source_type, options.collect_tokens, unique),
             source_type,
             source_text,
             errors: vec![],
@@ -467,13 +482,14 @@ impl<'a> ParserImpl<'a> {
         let (module_record, module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors.reserve(self.lexer.errors.len() + self.errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
+            errors.append(&mut self.lexer.errors);
+            errors.append(&mut self.errors);
             // Skip checking for exports in TypeScript {
             if !self.source_type.is_typescript() {
                 errors.extend(module_record_errors);
             }
         }
+        let tokens = if self.options.collect_tokens { Some(self.lexer.tokens()) } else { None };
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
 
@@ -493,6 +509,7 @@ impl<'a> ParserImpl<'a> {
             irregular_whitespaces,
             panicked,
             is_flow_language,
+            tokens,
         }
     }
 

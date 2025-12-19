@@ -218,6 +218,7 @@ impl Oxc {
     ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
         let parser_options = ParseOptions {
             parse_regular_expression: true,
+            collect_tokens: false,
             allow_return_outside_function: parser_options.allow_return_outside_function,
             preserve_parens: parser_options.preserve_parens,
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
