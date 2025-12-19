@@ -10,7 +10,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression},
 };
 
 fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
