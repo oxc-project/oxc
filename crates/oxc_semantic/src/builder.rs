@@ -694,6 +694,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
 
+        if let Some(label) = &stmt.label {
+            self.unused_labels.reference(&label.name);
+        }
+
         /* cfg */
         #[cfg(feature = "cfg")]
         let node_id = self.current_node_id;
@@ -2212,8 +2216,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::ContinueStatement(ContinueStatement { label, .. })
-            | AstKind::BreakStatement(BreakStatement { label, .. }) => {
+            AstKind::ContinueStatement(ContinueStatement { label, .. }) => {
                 if let Some(label) = &label {
                     self.unused_labels.reference(&label.name);
                 }
