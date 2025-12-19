@@ -10,8 +10,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use crate::{
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
-        group_config::{GroupName, parse_groups_from_strings},
-        partitioned_chunk::PartitionedChunk,
+        group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
     },
 };
@@ -21,14 +20,11 @@ use crate::{
 /// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform {
     options: options::SortImportsOptions,
-    groups: Vec<Vec<GroupName>>,
 }
 
 impl SortImportsTransform {
     pub fn new(options: options::SortImportsOptions) -> Self {
-        // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&options.groups);
-        Self { options, groups }
+        Self { options }
     }
 
     /// Transform the given `Document` by sorting import statements according to the specified options.
@@ -43,6 +39,8 @@ impl SortImportsTransform {
             return document.clone();
         }
 
+        // Parse string based groups into our internal representation for performance
+        let groups = parse_groups_from_strings(&self.options.groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
@@ -184,7 +182,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&self.groups, &self.options);
+                        chunk.into_sorted_import_units(&groups, &self.options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
