@@ -72,8 +72,6 @@ impl Rule for PreferToHaveBeenCalledTimes {
             return;
         };
 
-        println!("jest_node: {:?}", ctx.source_range(call_expr.span()));
-
         let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, jest_node, ctx) else {
             return;
         };

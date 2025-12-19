@@ -161,7 +161,7 @@ fn parse_jest_expect_fn_call<'a>(
     });
 
     let matcher_arguments =
-        matcher.and_then(|matcher| members.get(matcher)).and_then(|_| Some(&call_expr.arguments));
+        matcher.and_then(|matcher| members.get(matcher)).map(|_| &call_expr.arguments);
 
     let parsed_expect_fn = ParsedExpectFnCall {
         kind,
