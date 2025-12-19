@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### ⚡ Performance
+
+- 1f3b19b ast: `#[ast]` macro use `#[repr(transparent)]` for single-field structs (#17052) (overlookmotel)
+
 ## [0.99.0] - 2025-11-24
 
 ### 💥 BREAKING CHANGES
