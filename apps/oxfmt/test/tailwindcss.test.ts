@@ -230,8 +230,7 @@ const A = (
   test("should sort classes after ignored first class", async () => {
     // When expression is directly followed by a class (no space), that class is ignored
     // But subsequent classes should still be sorted with proper spacing
-    const input =
-      "const A = <div className={`flex ${variant}items-center p-4`}>Hello</div>;";
+    const input = "const A = <div className={`flex ${variant}items-center p-4`}>Hello</div>;";
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {},
@@ -245,8 +244,7 @@ const A = (
 
   test("should sort classes before ignored last class", async () => {
     // When a class is directly followed by expression (no space), that class is ignored
-    const input =
-      "const A = <div className={`flex p-4${variant} items-center`}>Hello</div>;";
+    const input = "const A = <div className={`flex p-4${variant} items-center`}>Hello</div>;";
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {},
@@ -352,9 +350,7 @@ const A = (
     });
 
     // Multiple spaces should be collapsed to single space
-    expect(result.code).toContain(
-      "flex items-center ${variant} bg-blue-500 p-4"
-    );
+    expect(result.code).toContain("flex items-center ${variant} bg-blue-500 p-4");
     expect(result.errors).toStrictEqual([]);
   });
 
