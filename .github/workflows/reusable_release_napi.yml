@@ -207,8 +207,6 @@ jobs:
 
       - run: mkdir -p ${npm_dir}
 
-      - run: pnpm install @napi-rs/cli
-
       - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
       - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path}/src-js --npm-dir ${npm_dir}
