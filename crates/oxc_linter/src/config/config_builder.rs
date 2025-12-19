@@ -1394,4 +1394,54 @@ mod test {
             "SharedGlobal should be off (child overrides parent's writable)"
         );
     }
+
+    #[test]
+    fn test_extends_settings_merge() {
+        // Test that settings are deep merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/settings_parent.json"],
+                "settings": {
+                    "next": {
+                        "rootDir": "child/app"
+                    },
+                    "custom-plugin": {
+                        "setting1": "child-value",
+                        "setting3": "child-only"
+                    }
+                }
+            }
+            "#,
+        );
+
+        // Next settings: child should replace parent (array semantics)
+        assert_eq!(
+            config.base.config.settings.next.get_root_dirs().as_ref(),
+            &["child/app".to_string()],
+            "next.rootDir should be child's value (arrays are replaced)"
+        );
+
+        // React settings: parent should be preserved since child didn't specify
+        assert!(
+            config.base.config.settings.react.get_link_component_attrs("ParentLink").is_some(),
+            "react.linkComponents from parent should be preserved"
+        );
+
+        // Arbitrary settings: should be deep merged
+        let json =
+            config.base.config.settings.json.as_ref().expect("json settings should be present");
+        assert_eq!(
+            json["custom-plugin"]["setting1"], "child-value",
+            "child value should override parent"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting2"], "parent-only",
+            "parent-only value should be preserved"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting3"], "child-only",
+            "child-only value should be added"
+        );
+    }
 }

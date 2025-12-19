@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "next": {
+      "rootDir": "parent/app"
+    },
+    "react": {
+      "linkComponents": ["ParentLink"]
+    },
+    "custom-plugin": {
+      "setting1": "parent-value",
+      "setting2": "parent-only"
+    }
+  }
+}

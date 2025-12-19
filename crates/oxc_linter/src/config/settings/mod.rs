@@ -107,6 +107,25 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
+    /// Deep merge settings (ESLint compatible).
+    /// Self takes priority over other. Nested objects are merged recursively,
+    /// but arrays are replaced (not merged).
+    pub fn merge(self, other: Self) -> Self {
+        Self {
+            json: match (self.json, other.json) {
+                (Some(a), Some(b)) => Some(deep_merge(&a, &b)),
+                (Some(a), None) => Some(a),
+                (None, Some(b)) => Some(b),
+                (None, None) => None,
+            },
+            jsx_a11y: self.jsx_a11y.merge(other.jsx_a11y),
+            next: self.next.merge(other.next),
+            react: self.react.merge(other.react),
+            jsdoc: self.jsdoc.merge(other.jsdoc),
+            vitest: self.vitest.merge(other.vitest),
+        }
+    }
+
     // Note: We don't merge settings in overrides at present.
     // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
     #[expect(dead_code)]
@@ -291,5 +310,76 @@ mod test {
         assert_eq!(raw_json["jsx-a11y"]["polymorphicPropName"], "role");
         assert_eq!(raw_json["unknown-plugin"]["setting"], "value");
         assert_eq!(raw_json["globalSetting"], "value");
+    }
+
+    #[test]
+    fn test_merge_settings() {
+        let child = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": "child/app"
+            },
+            "jsx-a11y": {
+                "polymorphicPropName": "as",
+                "components": {
+                    "ChildLink": "a"
+                }
+            }
+        }))
+        .unwrap();
+
+        let parent = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": "parent/app"
+            },
+            "jsx-a11y": {
+                "polymorphicPropName": "role",
+                "components": {
+                    "ParentLink": "a",
+                    "ChildLink": "span"
+                }
+            },
+            "react": {
+                "linkComponents": ["ParentComponent"]
+            }
+        }))
+        .unwrap();
+
+        let merged = child.merge(parent);
+
+        // Next: child wins (arrays are replaced)
+        assert_eq!(merged.next.get_root_dirs().as_ref(), &["child/app".to_string()]);
+
+        // JSX-A11y: child's primitive wins
+        assert_eq!(merged.jsx_a11y.polymorphic_prop_name, Some("as".into()));
+        // JSX-A11y: components are merged, child wins on conflict
+        assert_eq!(&merged.jsx_a11y.components["ChildLink"], "a");
+        assert_eq!(&merged.jsx_a11y.components["ParentLink"], "a");
+
+        // React: parent preserved when child is empty
+        assert!(merged.react.get_link_component_attrs("ParentComponent").is_some());
+    }
+
+    #[test]
+    fn test_merge_arbitrary_settings() {
+        let child = OxlintSettings::deserialize(&serde_json::json!({
+            "custom-plugin": {
+                "setting1": "child-value"
+            }
+        }))
+        .unwrap();
+
+        let parent = OxlintSettings::deserialize(&serde_json::json!({
+            "custom-plugin": {
+                "setting1": "parent-value",
+                "setting2": "parent-only"
+            }
+        }))
+        .unwrap();
+
+        let merged = child.merge(parent);
+
+        let json = merged.json.as_ref().expect("json should be present after merge");
+        assert_eq!(json["custom-plugin"]["setting1"], "child-value", "child should win");
+        assert_eq!(json["custom-plugin"]["setting2"], "parent-only", "parent value preserved");
     }
 }

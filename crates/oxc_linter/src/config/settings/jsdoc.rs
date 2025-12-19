@@ -178,6 +178,25 @@ impl JSDocPluginSettings {
             _ => original_name,
         }
     }
+
+    /// Check if all settings have default values (empty/unset).
+    fn is_empty(&self) -> bool {
+        *self == Self::default()
+    }
+
+    /// Merge self into other (self takes priority).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        if self.is_empty() {
+            return other;
+        }
+
+        // Merge tag_name_preference: self takes priority
+        for (key, value) in other.tag_name_preference {
+            self.tag_name_preference.entry(key).or_insert(value);
+        }
+
+        self
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, PartialEq)]

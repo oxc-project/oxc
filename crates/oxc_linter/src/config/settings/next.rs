@@ -34,6 +34,19 @@ impl NextPluginSettings {
             OneOrMany::Many(vec) => Cow::Borrowed(vec),
         }
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        matches!(&self.root_dir, OneOrMany::Many(vec) if vec.is_empty())
+    }
+
+    /// Merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint v9 behavior).
+    pub(crate) fn merge(self, other: Self) -> Self {
+        if self.is_empty() {
+            return other;
+        }
+        self
+    }
 }
 
 // Deserialize helper types
