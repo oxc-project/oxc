@@ -60,17 +60,6 @@ export default defineConfig([
       experimental: { nativeMagicString: true },
     },
   },
-  // TypeScript.
-  // Bundled separately and lazy-loaded, as it's a lot of code.
-  // Only used for tokens APIs.
-  {
-    ...commonConfig,
-    entry: "src-js/plugins/typescript.cjs",
-    format: "commonjs",
-    // Minify as this bundle is just dependencies. We don't need to be able to debug it.
-    // Minification halves the size of the bundle.
-    minify: true,
-  },
 ]);
 
 /**
