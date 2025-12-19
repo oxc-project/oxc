@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - release-napi
     paths:
       - napi/transform/package.json
       - .github/workflows/release_napi_transform.yml

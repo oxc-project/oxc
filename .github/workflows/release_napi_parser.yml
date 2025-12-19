@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - release-napi
     paths:
       - napi/parser/package.json
       - .github/workflows/release_napi_parser.yml
