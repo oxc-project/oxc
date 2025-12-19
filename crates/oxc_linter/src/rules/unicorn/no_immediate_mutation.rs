@@ -887,6 +887,8 @@ fn test() {
 			array.push(3, 4);",
         "const array = [1, 2];
 			array.push( (( 0, 3 )), (( 0, 4 )) );",
+        "const array = [1, 2]; array.push(3, 4); foo()",
+        "const array = [1, 2]; array.push(3, 4);",
         "const array = [1, 2];
 			array.push(3, 4); // comment",
         "const array = [1, 2];
@@ -955,6 +957,8 @@ fn test() {
         "const otherVariable = 1,
 				object = {foo: 1};
 			object.bar = 2;",
+        "const object = {foo: 1}; object.bar = 2; foo()",
+        "const object = {foo: 1}; object.bar = 2;",
         "const object = {foo: 1};
 			object.bar = 2; // comment",
         "const object = {foo: 1};
@@ -998,6 +1002,8 @@ fn test() {
         "const otherVariable = 1,
 				object = {foo: 1};
 			Object.assign(object, bar);",
+        "const object = {foo: 1}; object.bar = 2; foo()",
+        "const object = {foo: 1}; object.bar = 2;",
         "const object = {foo: 1};
 			Object.assign(object, bar) // comment",
         "const object = {foo: 1};
@@ -1049,6 +1055,8 @@ fn test() {
 			set.add(3);",
         "const set = new Set([1, 2]);
 			set.add( ((0, 3)), );",
+        "const set = new Set([1, 2]); set.add(3); foo()",
+        "const set = new Set([1, 2]); set.add(3);",
         "const set = new Set([1, 2]);
 			set.add(3); // comment",
         "const set = new Set([1, 2]);
@@ -1100,6 +1108,8 @@ fn test() {
 			map.set("bar", 2);"#,
         r#"const map = new Map([["foo",1]]);
 			map.set( ((0, "bar")), ((0, 2)), );"#,
+        r#"const map = new Map([["foo", 1]]);    map.set("bar", 2);    foo()"#,
+        r#"const map = new Map([["foo", 1]]);    map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
 			map.set("bar", 2); // comment"#,
         r#"const map = new Map([["foo", 1]]);
