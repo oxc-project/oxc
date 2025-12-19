@@ -1167,8 +1167,8 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
             }
             return Err(format!(
                 "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' points to a directory but 'tsgolint' binary not found inside.\n\
-                 Resolved path: {absolute_path_display}\n\
-                 Hint: Either provide the full path to the tsgolint binary, or ensure 'tsgolint' exists in the directory."
+Resolved path: {absolute_path_display}\n\
+Hint: Either provide the full path to the tsgolint binary, or ensure 'tsgolint' exists in the directory."
             ));
         }
         if path.is_file() {
@@ -1179,8 +1179,8 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         let hint = if path.is_relative() {
             format!(
                 "Resolved path: {absolute_path_display}\n\
-                 Working directory: {}\n\
-                 Hint: Relative paths are resolved from the current working directory. Consider using an absolute path instead.",
+Working directory: {}\n\
+Hint: Relative paths are resolved from the current working directory. Consider using an absolute path instead.",
                 cwd.display()
             )
         } else {
@@ -1189,7 +1189,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 
         return Err(format!(
             "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' does not exist or is not accessible.\n\
-             {hint}"
+{hint}"
         ));
     }
 
