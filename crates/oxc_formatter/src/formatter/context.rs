@@ -11,6 +11,13 @@ use crate::{
 
 use super::{Comments, SourceText};
 
+/// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
+#[derive(Clone, Copy, Debug)]
+pub struct TailwindContextEntry {
+    /// Whether the context is inside a JSX attribute (affects quote style).
+    pub is_jsx: bool,
+}
+
 /// Context object storing data relevant when formatting an object.
 #[derive(Clone)]
 pub struct FormatContext<'ast> {
@@ -34,6 +41,10 @@ pub struct FormatContext<'ast> {
     /// Collected Tailwind CSS class strings from JSX attributes.
     /// These will be sorted by an external callback and replaced during printing.
     tailwind_classes: Vec<String>,
+
+    /// Stack tracking whether we're inside a Tailwind class context.
+    /// When non-empty, StringLiterals should be sorted as Tailwind classes.
+    tailwind_context_stack: Vec<TailwindContextEntry>,
 
     embedded_formatter: Option<EmbeddedFormatter>,
 
@@ -72,6 +83,7 @@ impl<'ast> FormatContext<'ast> {
             cached_elements: FxHashMap::default(),
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
+            tailwind_context_stack: Vec::new(),
             embedded_formatter,
             allocator,
         }
@@ -85,9 +97,10 @@ impl<'ast> FormatContext<'ast> {
             comments: Comments::new(SourceText::new(""), &[]),
             cached_elements: FxHashMap::default(),
             quote_needed_stack: Vec::new(),
+            tailwind_classes: Vec::new(),
+            tailwind_context_stack: Vec::new(),
             embedded_formatter: None,
             allocator,
-            tailwind_classes: Vec::new(),
         }
     }
 
@@ -168,5 +181,23 @@ impl<'ast> FormatContext<'ast> {
     /// Take all collected Tailwind classes, clearing the internal storage.
     pub fn take_tailwind_classes(&mut self) -> Vec<String> {
         mem::take(&mut self.tailwind_classes)
+    }
+
+    /// Push a Tailwind context entry onto the stack.
+    /// Call this when entering a JSXAttribute or CallExpression with Tailwind class context.
+    pub fn push_tailwind_context(&mut self, entry: TailwindContextEntry) {
+        self.tailwind_context_stack.push(entry);
+    }
+
+    /// Pop a Tailwind context entry from the stack.
+    /// Call this when leaving a JSXAttribute or CallExpression with Tailwind class context.
+    pub fn pop_tailwind_context(&mut self) {
+        self.tailwind_context_stack.pop();
+    }
+
+    /// Get the current Tailwind context, if any.
+    /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression).
+    pub fn tailwind_context(&self) -> Option<&TailwindContextEntry> {
+        self.tailwind_context_stack.last()
     }
 }

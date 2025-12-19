@@ -390,4 +390,91 @@ const A = (
     expect(result.code).toContain("m-2 inline  `");
     expect(result.errors).toStrictEqual([]);
   });
+
+  // Tests for nested expressions inside template literals (PR #396 fixes)
+  test("should not trim whitespace inside nested ternary string literals", async () => {
+    // The leading space in ' header-extendable' should NOT be trimmed
+    // because the quasi before the expression doesn't end with whitespace
+    const input =
+      "const A = <div className={`header${isExtendable ? ' header-extendable' : ''}`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Space should be preserved in the ternary string (formatter uses double quotes)
+    expect(result.code).toContain('`header${isExtendable ? " header-extendable" : ""}`');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should not trim whitespace inside concat expressions", async () => {
+    // Spaces inside concat expressions should be preserved
+    const input = "const A = <div className={a + ' p-4 ' + b} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Spaces in the middle of concat should be preserved (formatter uses double quotes)
+    expect(result.code).toContain('a + " p-4 " + b');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should not trim whitespace in nested ternary with leading space only", async () => {
+    // Issue #337: leading space removed incorrectly
+    const input =
+      "const A = <div className={`MuiApi-item-root${isExtendable ? ' MuiApi-item-header-extendable' : ''}`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Leading space must be preserved (formatter uses double quotes)
+    expect(result.code).toContain(
+      '`MuiApi-item-root${isExtendable ? " MuiApi-item-header-extendable" : ""}`',
+    );
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // Tests for nested template literals (inside ternary, concat, etc.)
+  test("should sort template literal inside ternary expression", async () => {
+    // Template literal nested inside a ternary should be sorted
+    const input = "const A = <div className={condition ? `p-4 flex` : `m-2 grid`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Both template literals should be sorted
+    expect(result.code).toContain("`flex p-4`");
+    expect(result.code).toContain("`m-2 grid`"); // m-2 grid is already in correct Tailwind order
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort template literal with expressions inside ternary", async () => {
+    // Template literal with expressions, nested inside ternary
+    const input =
+      "const A = <div className={condition ? `p-4 flex ${x} m-2 inline` : `grid`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Classes should be sorted within quasis
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 inline");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort template literal inside logical expression", async () => {
+    // Template literal nested inside logical OR
+    const input = "const A = <div className={variant || `p-4 flex`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    expect(result.code).toContain("`flex p-4`");
+    expect(result.errors).toStrictEqual([]);
+  });
 });

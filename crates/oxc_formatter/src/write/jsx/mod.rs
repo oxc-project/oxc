@@ -15,9 +15,11 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
+        TailwindContextEntry,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
+    utils::tailwindicss::is_tailwind_jsx_attribute,
     write,
 };
 
@@ -321,7 +323,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
         write!(f, self.name());
 
         if let Some(value) = &self.value() {
+            // Check if this is a Tailwind attribute and push context
+            let is_tailwind = f
+                .options()
+                .experimental_tailwindcss
+                .as_ref()
+                .is_some_and(|opts| is_tailwind_jsx_attribute(&self.name, opts));
+
+            if is_tailwind {
+                f.context_mut().push_tailwind_context(TailwindContextEntry { is_jsx: true });
+            }
+
             write!(f, ["=", value]);
+
+            if is_tailwind {
+                f.context_mut().pop_tailwind_context();
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ use crate::{
     utils::{
         call_expression::is_test_each_pattern,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        tailwindicss::{is_tailwind_function_call, is_tailwind_jsx_attribute},
+        tailwindicss::is_tailwind_function_call,
     },
     write,
 };
@@ -54,6 +54,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         write!(f, [line_suffix_boundary()]);
 
+        // Check if this is a Tailwind function call (e.g., tw`flex p-4`)
+        let is_tailwind = f
+            .options()
+            .experimental_tailwindcss
+            .as_ref()
+            .is_some_and(|opts| is_tailwind_function_call(&self.tag, opts));
+
+        if is_tailwind {
+            f.context_mut()
+                .push_tailwind_context(crate::formatter::TailwindContextEntry { is_jsx: false });
+        }
+
         if try_format_embedded_template(self, f) {
         } else if is_test_each_pattern(&self.tag) {
             let template = &EachTemplateTable::from_template(quasi, f);
@@ -62,6 +74,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         } else {
             let template = TemplateLike::TemplateLiteral(quasi);
             write!(f, template);
+        }
+
+        if is_tailwind {
+            f.context_mut().pop_tailwind_context();
         }
     }
 }
@@ -166,27 +182,16 @@ fn write_tailwind_template_element<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let source = f.source_text().text_for(self);
+
+        // Check if we're in a Tailwind context via the stack
+        // (handles JSXAttribute, CallExpression, TaggedTemplateExpression, and nested contexts)
+        let in_tailwind_context = f.context().tailwind_context().is_some();
+
         let tailwind_options =
-            f.options().experimental_tailwindcss.as_ref().filter(|tailwind_options| {
+            f.options().experimental_tailwindcss.as_ref().filter(|_tailwind_options| {
                 // No whitespace means only one class, so no need to sort
                 let has_whitespace = source.as_bytes().iter().any(|&b| b.is_ascii_whitespace());
-                has_whitespace
-                    && match self.grand_parent() {
-                        AstNodes::JSXExpressionContainer(container) => {
-                            if let AstNodes::JSXAttribute(attribute) = container.parent {
-                                is_tailwind_jsx_attribute(&attribute.name, tailwind_options)
-                            } else {
-                                false
-                            }
-                        }
-                        AstNodes::TaggedTemplateExpression(tagged) => {
-                            is_tailwind_function_call(&tagged.tag, tailwind_options)
-                        }
-                        AstNodes::CallExpression(call) => {
-                            is_tailwind_function_call(&call.callee, tailwind_options)
-                        }
-                        _ => false,
-                    }
+                has_whitespace && in_tailwind_context
             });
 
         if let Some(tailwind_options) = tailwind_options {

@@ -50,7 +50,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Buffer, Format, Formatter,
+        Buffer, Format, Formatter, TailwindContextEntry,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -72,7 +72,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindicss::{is_tailwind_function_call, is_tailwind_jsx_attribute},
+        tailwindicss::is_tailwind_function_call,
     },
     write,
     write::parameters::can_avoid_parentheses,
@@ -271,7 +271,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                         write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
                     }
                 }
-                write!(f, [optional.then_some("?."), type_arguments, arguments]);
+                write!(f, [optional.then_some("?."), type_arguments]);
+
+                // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
+                let is_tailwind = f
+                    .options()
+                    .experimental_tailwindcss
+                    .as_ref()
+                    .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
+
+                // Push Tailwind context before formatting arguments
+                if is_tailwind {
+                    f.context_mut().push_tailwind_context(TailwindContextEntry { is_jsx: false });
+                }
+
+                write!(f, arguments);
+
+                // Pop Tailwind context after formatting
+                if is_tailwind {
+                    f.context_mut().pop_tailwind_context();
+                }
             });
             if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)]);
@@ -1026,57 +1045,63 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        // Check if this is a tailwind class string that needs sorting
-        // Also get the preserve_whitespace option if applicable
-        let (tailwind_match, is_jsx) = f.options().experimental_tailwindcss.as_ref().map_or_else(
-            || {
-                (None, /* is_jsx */ matches!(self.parent, AstNodes::JSXAttribute(_)))
-            },
-            |tailwind_options| match self.parent {
-                // Check if parent is a JSX attribute (class/className or custom tailwindAttributes)
-                AstNodes::JSXAttribute(attr) => {
-                    if is_tailwind_jsx_attribute(&attr.name, tailwind_options) {
-                        (Some(tailwind_options), /* is_jsx */ true)
-                    } else {
-                        (None, /* is_jsx */ true)
-                    }
-                }
-                // Check if parent is a call expression with a tailwind function name
-                AstNodes::CallExpression(call) => {
-                    if is_tailwind_function_call(&call.callee, tailwind_options) {
-                        (Some(tailwind_options), /* is_jsx */ false)
-                    } else {
-                        (None, /* is_jsx */ false)
-                    }
-                }
-                _ => (None, /* is_jsx */ false),
-            },
-        );
+        // Check if we're in a Tailwind context via stack (O(1) lookup)
+        // This handles nested string literals inside JSXAttribute/CallExpression values
+        let tailwind_ctx = f.context().tailwind_context().copied();
 
-        if let Some(_tailwind_options) = tailwind_match {
-            let quote = if is_jsx {
+        if let Some(ctx) = tailwind_ctx {
+            // We're inside a Tailwind context - sort this string literal as Tailwind classes
+            let quote = if ctx.is_jsx {
                 f.options().jsx_quote_style.as_char()
             } else {
                 f.options().quote_style.as_char()
             };
             let quote_str = if quote == '"' { "\"" } else { "'" };
-
-            // For StringLiteral, it's always the entire content (first and last quasi)
-            // so collapse whitespace at both ends unless preserve_whitespace is true
-
-            // let preserve_whitespace =
-            //     tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
-
             let content = self.value.as_str();
 
+            // For nested string literals (not direct JSXAttribute children), preserve whitespace
+            // because the sorter will trim it otherwise
+            let is_direct_child = matches!(self.parent, AstNodes::JSXAttribute(_));
+
             write!(f, quote_str);
-            let index = f.context_mut().add_tailwind_class(content.to_string());
-            f.write_element(FormatElement::TailwindClass(index));
+
+            if is_direct_child {
+                // Direct attribute value - sorter handles everything
+                let index = f.context_mut().add_tailwind_class(content.to_string());
+                f.write_element(FormatElement::TailwindClass(index));
+            } else {
+                // Nested string literal - preserve leading/trailing whitespace
+                let leading_ws: String =
+                    content.chars().take_while(char::is_ascii_whitespace).collect();
+                let trailing_ws: String =
+                    content.chars().rev().take_while(char::is_ascii_whitespace).collect();
+                let trimmed = content.trim();
+
+                // Write leading whitespace
+                if !leading_ws.is_empty() {
+                    let ws = f.context().allocator().alloc_str(&leading_ws);
+                    write!(f, text(ws));
+                }
+
+                // Sort the trimmed content (if any)
+                if !trimmed.is_empty() {
+                    let index = f.context_mut().add_tailwind_class(trimmed.to_string());
+                    f.write_element(FormatElement::TailwindClass(index));
+                }
+
+                // Write trailing whitespace
+                if !trailing_ws.is_empty() {
+                    let ws = f.context().allocator().alloc_str(&trailing_ws);
+                    write!(f, text(ws));
+                }
+            }
+
             write!(f, quote_str);
         } else {
+            // Not in Tailwind context - use normal string literal formatting
+            let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
             FormatLiteralStringToken::new(
                 f.source_text().text_for(self),
-                /* jsx */
                 is_jsx,
                 StringLiteralParentKind::Expression,
             )
