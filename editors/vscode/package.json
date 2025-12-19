@@ -2,13 +2,17 @@
   "name": "oxc-vscode",
   "displayName": "Oxc",
   "version": "1.34.0",
-  "description": "oxc vs code extension",
+  "description": "Oxlint and Oxfmt editor integration",
   "categories": [
+    "Formatters",
     "Linters"
   ],
   "keywords": [
+    "formatter",
     "linter",
-    "oxc"
+    "oxc",
+    "oxfmt",
+    "oxlint"
   ],
   "bugs": {
     "url": "https://github.com/oxc-project/oxc/issues"
