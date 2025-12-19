@@ -625,7 +625,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.check_syntax_error {
             checker::check(kind, self);
         }
-        self.leave_kind(kind);
         self.pop_ast_node();
     }
 
@@ -2234,9 +2233,6 @@ impl<'a> SemanticBuilder<'a> {
             _ => {}
         }
     }
-
-    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
-    fn leave_kind(&mut self, _kind: AstKind<'a>) {}
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
