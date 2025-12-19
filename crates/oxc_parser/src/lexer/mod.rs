@@ -122,7 +122,11 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
-            tokens: if collect_tokens { Some(ArenaVec::new_in(allocator)) } else { None },
+            tokens: if collect_tokens {
+                Some(ArenaVec::with_capacity_in(source_text.len(), allocator))
+            } else {
+                None
+            },
         }
     }
 
