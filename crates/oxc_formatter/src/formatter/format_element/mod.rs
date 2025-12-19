@@ -288,8 +288,7 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::Space
             | FormatElement::Tag(_)
             | FormatElement::HardSpace
-            | FormatElement::TailwindClass(_)
-             => false,
+            | FormatElement::TailwindClass(_) => false,
         }
     }
 
