@@ -680,6 +680,7 @@ pub(crate) mod vue {
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
     pub mod max_props;
+    pub mod no_deprecated_destroyed_lifecycle;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
     pub mod no_multiple_slot_args;
@@ -1322,6 +1323,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::define_props_declaration,
     vue::define_props_destructuring,
     vue::max_props,
+    vue::no_deprecated_destroyed_lifecycle,
     vue::no_export_in_script_setup,
     vue::no_import_compiler_macros,
     vue::no_multiple_slot_args,
