@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 291b57b ast_tools: Generate TS declaration files for deserializer and walk files (#16912) (camc314)
+
+### 🐛 Bug Fixes
+
+- e59132b parser/napi: Fix lazy deser (#17069) (overlookmotel)
+- a92faf0 ast_tools: Support `u128` in `assert_layouts` generator (#17050) (overlookmotel)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🚀 Features

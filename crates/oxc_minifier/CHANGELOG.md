@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 3d2b492 minifier: Fold iife arrow functions in call expressions (#16477) (Armano)
+- 74eae13 minifier: Remove unused import specifiers (#16797) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47b4c2f minifier/docs: Correct hyperlink path in OPTIMIZATIONS.md  (#16986) (GRK)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🚀 Features
