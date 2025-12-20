@@ -155,10 +155,7 @@ fn has_done_callback(callback: &Expression, call_expr: &CallExpression) -> bool 
                 return false;
             }
             // Check if last param (the done callback) is a binding identifier
-            func.params
-                .items
-                .last()
-                .is_some_and(|p| p.pattern.kind.is_binding_identifier())
+            func.params.items.last().is_some_and(|p| p.pattern.kind.is_binding_identifier())
         }
         Expression::ArrowFunctionExpression(func) => {
             let params = &func.params.items;
