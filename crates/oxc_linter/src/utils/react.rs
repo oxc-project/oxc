@@ -428,34 +428,6 @@ pub fn find_innermost_function_with_jsx<'a>(
     }
 }
 
-/// Checks if an expression contains JSX elements
-pub fn contains_jsx(expr: &Expression) -> bool {
-    match expr {
-        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-        Expression::CallExpression(call) => {
-            if crate::utils::is_create_element_call(call) {
-                return true;
-            }
-            call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
-        }
-        Expression::ParenthesizedExpression(inner) => contains_jsx(&inner.expression),
-        Expression::StaticMemberExpression(member) => contains_jsx(&member.object),
-        Expression::ConditionalExpression(cond) => {
-            contains_jsx(&cond.consequent) || contains_jsx(&cond.alternate)
-        }
-        Expression::LogicalExpression(logical) => {
-            contains_jsx(&logical.left) || contains_jsx(&logical.right)
-        }
-        Expression::SequenceExpression(seq) => seq.expressions.iter().any(contains_jsx),
-        // TypeScript type assertions - unwrap and check inner expression
-        Expression::TSAsExpression(ts) => contains_jsx(&ts.expression),
-        Expression::TSSatisfiesExpression(ts) => contains_jsx(&ts.expression),
-        Expression::TSTypeAssertion(ts) => contains_jsx(&ts.expression),
-        Expression::TSNonNullExpression(ts) => contains_jsx(&ts.expression),
-        _ => false,
-    }
-}
-
 /// Visitor that searches for JSX elements within a function body.
 /// Stops at nested function boundaries to avoid detecting JSX from child components.
 struct JsxFinder {
