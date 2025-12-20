@@ -21,8 +21,6 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
-
-#[expect(unused)]
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 #[derive(Debug, Default, Clone)]
