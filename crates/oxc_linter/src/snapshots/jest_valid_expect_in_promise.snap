@@ -499,3 +499,12 @@ source: crates/oxc_linter/src/tester.rs
  7 │                   expect(anotherPromise).resolves.toBe(1);
    ╰────
   help: Return or await the promise to ensure Jest waits for the assertion
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Expect in promise should be awaited or returned to ensure the test waits for it.
+   ╭─[valid_expect_in_promise.tsx:3:6]
+ 2 │               const promise = getPromise();
+ 3 │               promise.then(() => expect(someThing).toEqual(true));
+   ·               ───────────────────────────────────────────────────
+ 4 │             });
+   ╰────
+  help: Return or await the promise to ensure Jest waits for the assertion

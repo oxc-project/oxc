@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{PossibleJestNode, parse_general_jest_fn_call},
+    utils::{PossibleJestNode, get_node_name, parse_general_jest_fn_call},
 };
 
 fn valid_expect_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
@@ -104,7 +104,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     };
 
     // Check if callback has a done parameter (skip if it does)
-    if has_done_callback(callback) {
+    if has_done_callback(callback, call_expr) {
         return;
     }
 
@@ -139,28 +139,36 @@ fn is_function_expression(expr: &Expression) -> bool {
     matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
 }
 
-fn has_done_callback(callback: &Expression) -> bool {
+fn has_done_callback(callback: &Expression, call_expr: &CallExpression) -> bool {
+    // Check if this is a .each call - in that case, first param is data row, not done
+    let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
+
+    // For .each, done would be the second parameter (first is data row)
+    // For regular test/it, done is the first parameter
+    let expected_param_count = if is_jest_each { 2 } else { 1 };
+
     match callback {
         Expression::FunctionExpression(func) => {
-            // Check if first param exists and is not destructuring pattern
-            func.params.items.first().is_some_and(|p| p.pattern.kind.is_binding_identifier())
-        }
-        Expression::ArrowFunctionExpression(func) => {
-            // For arrow functions, check if first param is an identifier (not destructuring)
-            // For each template syntax with destructuring first param, skip that param
-            let params = &func.params.items;
-            if params.is_empty() {
+            let param_count = func.params.items.len();
+            // Must have exactly the expected number of params, and last one must be identifier
+            if param_count != expected_param_count {
                 return false;
             }
-
-            // If first param is destructuring (like in it.each`...`({}, done)), check second param
-            if params.first().is_some_and(|p| !p.pattern.kind.is_binding_identifier()) {
-                // Check if there's a second param that's an identifier (done callback)
-                return params.get(1).is_some_and(|p| p.pattern.kind.is_binding_identifier());
+            // Check if last param (the done callback) is a binding identifier
+            func.params
+                .items
+                .last()
+                .is_some_and(|p| p.pattern.kind.is_binding_identifier())
+        }
+        Expression::ArrowFunctionExpression(func) => {
+            let params = &func.params.items;
+            let param_count = params.len();
+            // Must have exactly the expected number of params
+            if param_count != expected_param_count {
+                return false;
             }
-
-            // Otherwise, check if first param is identifier (done callback)
-            params.first().is_some_and(|p| p.pattern.kind.is_binding_identifier())
+            // Check if last param (the done callback) is a binding identifier
+            params.last().is_some_and(|p| p.pattern.kind.is_binding_identifier())
         }
         _ => false,
     }
@@ -1393,14 +1401,8 @@ fn test() {
             None,
             None,
         ),
-        (
-            "it.each([])('name of done param does not matter', (nameDoesNotMatter) => {
-			  const promise = getPromise();
-			  promise.then(() => expect(someThing).toEqual(true));
-			});",
-            None,
-            None,
-        ),
+        // NOTE: it.each([])(...) with only one param is NOT a done callback - first param is data row
+        // So this case is now correctly moved to fail array below
         (
             "it.each``('name of done param does not matter', ({}, nameDoesNotMatter) => {
 			  const promise = getPromise();
@@ -2166,6 +2168,15 @@ fn test() {
 			    return number + 1;
 			  });
 			  expect(anotherPromise).resolves.toBe(1);
+			});",
+            None,
+            None,
+        ),
+        // it.each([]) with single param - first param is data row, not done callback
+        (
+            "it.each([])('name of done param does not matter', (nameDoesNotMatter) => {
+			  const promise = getPromise();
+			  promise.then(() => expect(someThing).toEqual(true));
 			});",
             None,
             None,
