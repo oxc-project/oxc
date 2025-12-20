@@ -525,22 +525,7 @@ fn is_react_component_node<'a>(
             if let Some(name) = &class.name()
                 && is_react_component_name(name)
             {
-                // Check if class has static displayName
-                let has_static_display_name = class.body.body.iter().any(|element| match element {
-                    ClassElement::MethodDefinition(method_def) => {
-                        method_def.r#static
-                            && method_def.key.static_name()
-                                == Some(std::borrow::Cow::Borrowed("displayName"))
-                    }
-                    ClassElement::PropertyDefinition(prop_def) => {
-                        prop_def.r#static
-                            && prop_def.key.static_name()
-                                == Some(std::borrow::Cow::Borrowed("displayName"))
-                    }
-                    _ => false,
-                });
-
-                if has_static_display_name {
+                if class_has_static_display_name(class) {
                     return None; // Has static displayName
                 }
 
@@ -691,20 +676,7 @@ fn check_class_component(
     span: Span,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
-    // Check if class has static displayName
-    let has_static_display_name = class.body.body.iter().any(|element| match element {
-        ClassElement::MethodDefinition(method_def) => {
-            method_def.r#static
-                && method_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
-        }
-        ClassElement::PropertyDefinition(prop_def) => {
-            prop_def.r#static
-                && prop_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
-        }
-        _ => false,
-    });
-
-    if has_static_display_name {
+    if class_has_static_display_name(class) {
         return None;
     }
 
@@ -882,6 +854,21 @@ fn has_create_react_class_display_name(
         } else {
             false
         }
+    })
+}
+
+/// Check if a class has a static displayName property
+fn class_has_static_display_name(class: &oxc_ast::ast::Class) -> bool {
+    class.body.body.iter().any(|element| match element {
+        ClassElement::MethodDefinition(method_def) => {
+            method_def.r#static
+                && method_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+        }
+        ClassElement::PropertyDefinition(prop_def) => {
+            prop_def.r#static
+                && prop_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+        }
+        _ => false,
     })
 }
 
