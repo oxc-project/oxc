@@ -291,9 +291,10 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
-        let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+        // Merge settings, env, and globals with shallow merge semantics (self takes priority)
+        let settings = self.settings.clone().merge(other.settings.clone());
+        let env = self.env.clone().merge(other.env.clone());
+        let globals = self.globals.clone().merge(other.globals.clone());
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());

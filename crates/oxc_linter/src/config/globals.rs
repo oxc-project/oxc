@@ -50,6 +50,15 @@ impl OxlintGlobals {
         self.0.get(name).is_some_and(|value| *value != GlobalValue::Off)
     }
 
+    /// Merge this globals into another, overriding any conflicting keys.
+    /// This implements shallow merge semantics compatible with ESLint.
+    pub fn merge(self, mut other: Self) -> Self {
+        for (key, value) in self.0 {
+            other.0.insert(key, value);
+        }
+        other
+    }
+
     pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
         for (env, supported) in self.0.clone() {
             globals_to_override.0.insert(env, supported);

@@ -118,13 +118,8 @@ expression: json
           "components": {},
           "attributes": {}
         },
-        "next": {
-          "rootDir": []
-        },
-        "react": {
-          "formComponents": [],
-          "linkComponents": []
-        },
+        "next": {},
+        "react": {},
         "jsdoc": {
           "ignorePrivate": false,
           "ignoreInternal": false,
@@ -406,10 +401,12 @@ expression: json
       "properties": {
         "rootDir": {
           "description": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js\nproject is in a subfolder.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n}\n}\n}\n```",
-          "default": [],
-          "allOf": [
+          "anyOf": [
             {
               "$ref": "#/definitions/OneOrMany_for_String"
+            },
+            {
+              "type": "null"
             }
           ],
           "markdownDescription": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js\nproject is in a subfolder.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n}\n}\n}\n```"
@@ -556,6 +553,17 @@ expression: json
               "$ref": "#/definitions/OxlintRules"
             }
           ]
+        },
+        "settings": {
+          "description": "Plugin settings for this override.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -604,9 +612,7 @@ expression: json
           ]
         },
         "next": {
-          "default": {
-            "rootDir": []
-          },
+          "default": {},
           "allOf": [
             {
               "$ref": "#/definitions/NextPluginSettings"
@@ -614,10 +620,7 @@ expression: json
           ]
         },
         "react": {
-          "default": {
-            "formComponents": [],
-            "linkComponents": []
-          },
+          "default": {},
           "allOf": [
             {
               "$ref": "#/definitions/ReactPluginSettings"
@@ -643,8 +646,10 @@ expression: json
       "properties": {
         "formComponents": {
           "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```",
-          "default": [],
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "$ref": "#/definitions/CustomComponent"
           },
@@ -652,8 +657,10 @@ expression: json
         },
         "linkComponents": {
           "description": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```",
-          "default": [],
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "$ref": "#/definitions/CustomComponent"
           },
