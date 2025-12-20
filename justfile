@@ -35,7 +35,7 @@ install-hook:
 # When ready, run the same CI commands
 ready:
   git diff --exit-code --quiet
-  pnpm i
+  pnpm install
   typos
   just fmt
   just check
