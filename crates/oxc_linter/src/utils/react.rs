@@ -5,8 +5,8 @@ use oxc_ast::{
     ast::{
         ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
         JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
-        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, Statement, StaticMemberExpression,
+        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
+        JSXOpeningElement, Statement, StaticMemberExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -447,6 +447,11 @@ pub fn contains_jsx(expr: &Expression) -> bool {
             contains_jsx(&logical.left) || contains_jsx(&logical.right)
         }
         Expression::SequenceExpression(seq) => seq.expressions.iter().any(contains_jsx),
+        // TypeScript type assertions - unwrap and check inner expression
+        Expression::TSAsExpression(ts) => contains_jsx(&ts.expression),
+        Expression::TSSatisfiesExpression(ts) => contains_jsx(&ts.expression),
+        Expression::TSTypeAssertion(ts) => contains_jsx(&ts.expression),
+        Expression::TSNonNullExpression(ts) => contains_jsx(&ts.expression),
         _ => false,
     }
 }
