@@ -31,7 +31,8 @@ working directory:
     },
     "react": {
       "formComponents": [],
-      "linkComponents": []
+      "linkComponents": [],
+      "version": null
     },
     "jsdoc": {
       "ignorePrivate": false,
