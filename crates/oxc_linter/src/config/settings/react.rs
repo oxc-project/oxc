@@ -72,7 +72,7 @@ pub struct ReactPluginSettings {
     /// }
     /// ```
     #[serde(default)]
-    pub version: Option<CompactStr>,
+    pub version: Option<ReactVersion>,
     // TODO: More properties should be added
 }
 pub type ComponentAttrs<'c> = Cow<'c, Vec<CompactStr>>;

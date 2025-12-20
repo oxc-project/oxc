@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    config::ReactVersion,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{get_parent_component, is_es5_component},
@@ -96,12 +97,7 @@ impl Rule for NoUnsafe {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MethodDefinition(method_def) => {
-                let react_version = ctx
-                    .settings()
-                    .react
-                    .version
-                    .as_ref()
-                    .and_then(|v| parse_react_version(v.as_str()));
+                let react_version = ctx.settings().react.version.as_ref();
 
                 if let Some(name) = method_def.key.static_name()
                     && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
@@ -111,12 +107,7 @@ impl Rule for NoUnsafe {
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
-                let react_version = ctx
-                    .settings()
-                    .react
-                    .version
-                    .as_ref()
-                    .and_then(|v| parse_react_version(v.as_str()));
+                let react_version = ctx.settings().react.version.as_ref();
 
                 if let Some(name) = obj_prop.key.static_name()
                     && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
@@ -142,14 +133,10 @@ impl Rule for NoUnsafe {
 }
 
 /// Check if a method name is an unsafe lifecycle method
-fn is_unsafe_method(
-    name: &str,
-    check_aliases: bool,
-    react_version: Option<(u32, u32, u32)>,
-) -> bool {
+fn is_unsafe_method(name: &str, check_aliases: bool, react_version: Option<&ReactVersion>) -> bool {
     // React 16.3 introduced the UNSAFE_ prefixed lifecycle methods
     let check_unsafe_prefix =
-        react_version.is_none_or(|(major, minor, _)| major > 16 || (major == 16 && minor >= 3));
+        react_version.is_none_or(|v| v.major() > 16 || (v.major() == 16 && v.minor() >= 3));
 
     match name {
         "UNSAFE_componentWillMount"
@@ -166,20 +153,6 @@ fn is_unsafe_method(
         }
         _ => false,
     }
-}
-
-/// Parse React version string into (major, minor, patch) tuple
-fn parse_react_version(version: &str) -> Option<(u32, u32, u32)> {
-    let parts: Vec<&str> = version.split('.').collect();
-    if parts.len() < 2 {
-        return None;
-    }
-
-    let major = parts[0].parse::<u32>().ok()?;
-    let minor = parts[1].parse::<u32>().ok()?;
-    let patch = parts.get(2).and_then(|p| p.parse::<u32>().ok()).unwrap_or(0);
-
-    Some((major, minor, patch))
 }
 
 #[test]
