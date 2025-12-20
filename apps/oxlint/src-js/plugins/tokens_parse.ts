@@ -51,6 +51,9 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
+  // Determine ScriptKind based on file extension
+  const scriptKind = getScriptKind(filePath, tsModule);
+
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
     filePath,
@@ -62,8 +65,7 @@ export function parseTokens(): Token[] {
       setExternalModuleIndicator: undefined,
     },
     true, // `setParentNodes`
-    // TODO: Use `TS` or `TSX` depending on source type
-    tsModule.ScriptKind.TSX,
+    scriptKind,
   );
 
   // Check that TypeScript hasn't altered source text.
@@ -266,4 +268,32 @@ function hasJSXAncestor(node: ts.Node | undefined): boolean {
  */
 function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
   return kind >= tsSyntaxKind.JsxElement && kind <= tsSyntaxKind.JsxAttribute;
+}
+
+/**
+ * Determine TypeScript ScriptKind based on file extension.
+ *
+ * @param path - File path
+ * @param tsModule - TypeScript module
+ * @returns Appropriate ScriptKind for the file
+ */
+function getScriptKind(path: string, tsModule: typeof import("typescript")): ts.ScriptKind {
+  const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
+  switch (ext) {
+    case ".tsx":
+      return tsModule.ScriptKind.TSX;
+    case ".ts":
+    case ".mts":
+    case ".cts":
+      return tsModule.ScriptKind.TS;
+    case ".jsx":
+      return tsModule.ScriptKind.JSX;
+    case ".js":
+    case ".mjs":
+    case ".cjs":
+      return tsModule.ScriptKind.JS;
+    default:
+      // Default to TSX for unknown extensions to be permissive
+      return tsModule.ScriptKind.TSX;
+  }
 }
