@@ -3889,6 +3889,16 @@ impl RuleRunner for crate::rules::unicorn::require_array_join_separator::Require
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::require_module_attributes::RequireModuleAttributes {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ImportExpression,
+        AstType::ImportDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ExportAllDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::require_module_specifiers::RequireModuleSpecifiers {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ExportNamedDeclaration,
