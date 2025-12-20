@@ -259,9 +259,8 @@ fn generate(codegen: &Codegen) -> Codes {
         } else {
             let mut walk_fn_body = format!("
                 const enterExit = visitors[{node_id}];
-                let exit = null;
+                let exit = null, enter;
                 if (enterExit !== null) {{
-                    let enter;
                     ({{ enter, exit }} = enterExit);
                     if (enter !== null) enter(node);
                 }}
