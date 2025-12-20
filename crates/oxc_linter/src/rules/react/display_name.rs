@@ -465,23 +465,7 @@ fn is_react_component_node<'a>(
 
                 // Check for createReactClass
                 if callee_name == "createClass" || callee_name == "createReactClass" {
-                    // Check if it has displayName in the object
-                    let has_display_name = call.arguments.iter().any(|arg| {
-                        if let Some(Expression::ObjectExpression(obj_expr)) = arg.as_expression() {
-                            obj_expr.properties.iter().any(|prop| {
-                                if let Some((prop_name, _)) = prop.prop_name() {
-                                    prop_name == "displayName"
-                                        || (!ignore_transpiler_name && prop_name == "name")
-                                } else {
-                                    false
-                                }
-                            })
-                        } else {
-                            false
-                        }
-                    });
-
-                    if !has_display_name {
+                    if !has_create_react_class_display_name(call, ignore_transpiler_name) {
                         return Some(ReactComponentInfo {
                             span: decl.id.span(),
                             is_context: false,
@@ -613,26 +597,10 @@ fn is_react_component_node<'a>(
                                 && (callee_name == "createClass"
                                     || callee_name == "createReactClass")
                             {
-                                // Check if it has displayName in the object
-                                let has_display_name = call.arguments.iter().any(|arg| {
-                                    if let Some(Expression::ObjectExpression(obj_expr)) =
-                                        arg.as_expression()
-                                    {
-                                        obj_expr.properties.iter().any(|prop| {
-                                            if let Some((prop_name, _)) = prop.prop_name() {
-                                                prop_name == "displayName"
-                                                    || (!ignore_transpiler_name
-                                                        && prop_name == "name")
-                                            } else {
-                                                false
-                                            }
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                });
-
-                                if !has_display_name {
+                                if !has_create_react_class_display_name(
+                                    call,
+                                    ignore_transpiler_name,
+                                ) {
                                     return Some(ReactComponentInfo {
                                         span: func.span,
                                         is_context: false,
@@ -816,24 +784,7 @@ fn is_module_exports_component(
             Expression::CallExpression(call) => {
                 if let Some(callee_name) = call.callee_name() {
                     if callee_name == "createClass" || callee_name == "createReactClass" {
-                        let has_display_name = call.arguments.iter().any(|arg| {
-                            if let Some(Expression::ObjectExpression(obj_expr)) =
-                                arg.as_expression()
-                            {
-                                obj_expr.properties.iter().any(|prop| {
-                                    if let Some((prop_name, _)) = prop.prop_name() {
-                                        prop_name == "displayName"
-                                            || (!ignore_transpiler_name && prop_name == "name")
-                                    } else {
-                                        false
-                                    }
-                                })
-                            } else {
-                                false
-                            }
-                        });
-
-                        if !has_display_name {
+                        if !has_create_react_class_display_name(call, ignore_transpiler_name) {
                             return Some(ReactComponentInfo {
                                 span: assign.span,
                                 is_context: false,
@@ -912,6 +863,26 @@ fn test_react_version_for_memo_forwardref_internal(version: Option<&str>) -> boo
             true
         }
     }
+}
+
+/// Check if a createReactClass call has a displayName property
+fn has_create_react_class_display_name(
+    call: &oxc_ast::ast::CallExpression,
+    ignore_transpiler_name: bool,
+) -> bool {
+    call.arguments.iter().any(|arg| {
+        if let Some(Expression::ObjectExpression(obj_expr)) = arg.as_expression() {
+            obj_expr.properties.iter().any(|prop| {
+                if let Some((prop_name, _)) = prop.prop_name() {
+                    prop_name == "displayName" || (!ignore_transpiler_name && prop_name == "name")
+                } else {
+                    false
+                }
+            })
+        } else {
+            false
+        }
+    })
 }
 
 #[test]
