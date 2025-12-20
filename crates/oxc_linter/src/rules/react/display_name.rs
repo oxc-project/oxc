@@ -529,15 +529,7 @@ fn is_react_component_node<'a>(
                     return None; // Has static displayName
                 }
 
-                // Check if class contains JSX (uses visitor pattern to handle nested control flow)
-                let contains_jsx_in_class = class.body.body.iter().any(|element| {
-                    if let ClassElement::MethodDefinition(method_def) = element {
-                        return function_contains_jsx(&method_def.value);
-                    }
-                    false
-                });
-
-                if contains_jsx_in_class {
+                if class_contains_jsx(class) {
                     return Some(ReactComponentInfo {
                         span: class.span,
                         is_context: false,
@@ -680,15 +672,7 @@ fn check_class_component(
         return None;
     }
 
-    // Check if class contains JSX (uses visitor pattern to handle nested control flow)
-    let contains_jsx_in_class = class.body.body.iter().any(|element| {
-        if let ClassElement::MethodDefinition(method_def) = element {
-            return function_contains_jsx(&method_def.value);
-        }
-        false
-    });
-
-    if !contains_jsx_in_class {
+    if !class_contains_jsx(class) {
         return None;
     }
 
@@ -869,6 +853,16 @@ fn class_has_static_display_name(class: &oxc_ast::ast::Class) -> bool {
                 && prop_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
         }
         _ => false,
+    })
+}
+
+/// Check if a class contains JSX in any of its methods
+fn class_contains_jsx(class: &oxc_ast::ast::Class) -> bool {
+    class.body.body.iter().any(|element| {
+        if let ClassElement::MethodDefinition(method_def) = element {
+            return function_contains_jsx(&method_def.value);
+        }
+        false
     })
 }
 
