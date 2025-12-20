@@ -102,3 +102,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import("foo", {/* comment 1 */"with"/* comment 2 */:/* comment 3 */{/* comment 4 */}, }/* comment 5 */,)
    ·                                                                    ─────────────────
    ╰────
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:22]
+ 1 │ import("foo", {with: (({}))})
+   ·                      ──────
+   ╰────

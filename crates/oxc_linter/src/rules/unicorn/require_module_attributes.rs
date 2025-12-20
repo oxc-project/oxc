@@ -83,7 +83,7 @@ impl Rule for RequireModuleAttributes {
                         && !obj_prop.computed
                         && obj_prop.kind == PropertyKind::Init
                         && obj_prop.key.is_specific_static_name("with")
-                        && is_empty_object_expression(&obj_prop.value)
+                        && is_empty_object_expression(obj_prop.value.get_inner_expression())
                     {
                         Some(obj_prop)
                     } else {
@@ -155,6 +155,7 @@ fn test() {
         r#"import("foo", {unknown:"unknown", with:{}, unknown2:"unknown2", },)"#,
         r#"import("foo"/* comment 1 */, /* comment 2 */{/* comment 3 */}/* comment 4 */,/* comment 5 */)"#,
         r#"import("foo", {/* comment 1 */"with"/* comment 2 */:/* comment 3 */{/* comment 4 */}, }/* comment 5 */,)"#,
+        r#"import("foo", {with: (({}))})"#,
     ];
 
     Tester::new(RequireModuleAttributes::NAME, RequireModuleAttributes::PLUGIN, pass, fail)
