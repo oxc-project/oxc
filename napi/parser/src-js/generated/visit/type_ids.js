@@ -3,7 +3,6 @@
 
 // Mapping from node type name to node type ID
 export const NODE_TYPE_IDS_MAP = new Map([
-  // Leaf nodes
   ["DebuggerStatement", 0],
   ["EmptyStatement", 1],
   ["Literal", 2],
@@ -31,7 +30,6 @@ export const NODE_TYPE_IDS_MAP = new Map([
   ["TSUndefinedKeyword", 24],
   ["TSUnknownKeyword", 25],
   ["TSVoidKeyword", 26],
-  // Non-leaf nodes
   ["AccessorProperty", 27],
   ["ArrayExpression", 28],
   ["ArrayPattern", 29],
@@ -173,4 +171,5 @@ export const NODE_TYPE_IDS_MAP = new Map([
 ]);
 
 export const NODE_TYPES_COUNT = 165;
+
 export const LEAF_NODE_TYPES_COUNT = 27;

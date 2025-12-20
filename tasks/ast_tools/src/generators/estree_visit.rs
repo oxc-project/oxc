@@ -413,18 +413,22 @@ fn generate(codegen: &Codegen) -> Codes {
     ");
 
     let nodes_count = nodes.len();
+    function_node_ids.sort_unstable();
+
     #[rustfmt::skip]
     write_it!(type_ids_map, "]);
 
         export const NODE_TYPES_COUNT = {nodes_count};
-        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};");
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
 
-    function_node_ids.sort_unstable();
-    #[rustfmt::skip]
-    let type_ids_map_oxlint = format!("
-        {type_ids_map}
+        /* IF LINTER */
         export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
+        /* END_IF */
     ");
+
+    // Create 2 type ID map variants for parser and oxlint, by setting `LINTER` const,
+    // and running through minifier to shake out irrelevant code
+    let [type_ids_map_parser, type_ids_map_oxlint] = generate_variants!(&type_ids_map, ["LINTER"]);
 
     // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places.
     // Oxlint version also allows any arbitrary properties (selectors).
@@ -486,7 +490,7 @@ fn generate(codegen: &Codegen) -> Codes {
         walk_dts_parser,
         walk_dts_oxlint,
         visitor_keys,
-        type_ids_map_parser: type_ids_map,
+        type_ids_map_parser,
         type_ids_map_oxlint,
         visitor_type_parser,
         visitor_type_oxlint,
