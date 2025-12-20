@@ -82,39 +82,33 @@ impl VersionCache {
         Self { memo_forwardref_compatible: None, context_objects_compatible: None, version: None }
     }
 
-    fn get_memo_forwardref_compatible(&mut self, ctx: &LintContext) -> bool {
+    /// Ensure the cache is fresh for the current version, clearing cached values if version changed.
+    fn ensure_fresh(&mut self, ctx: &LintContext) {
         let current_version = ctx.settings().react.version.as_deref();
-
-        // Check if version changed
         if self.version.as_deref() != current_version {
             self.version = current_version.map(CompactStr::from);
             self.memo_forwardref_compatible = None;
             self.context_objects_compatible = None;
         }
+    }
 
+    fn get_memo_forwardref_compatible(&mut self, ctx: &LintContext) -> bool {
+        self.ensure_fresh(ctx);
         if let Some(compatible) = self.memo_forwardref_compatible {
             return compatible;
         }
-
+        let current_version = ctx.settings().react.version.as_deref();
         let compatible = test_react_version_for_memo_forwardref_internal(current_version);
         self.memo_forwardref_compatible = Some(compatible);
         compatible
     }
 
     fn get_context_objects_compatible(&mut self, ctx: &LintContext) -> bool {
-        let current_version = ctx.settings().react.version.as_deref();
-
-        // Check if version changed
-        if self.version.as_deref() != current_version {
-            self.version = current_version.map(CompactStr::from);
-            self.memo_forwardref_compatible = None;
-            self.context_objects_compatible = None;
-        }
-
+        self.ensure_fresh(ctx);
         if let Some(compatible) = self.context_objects_compatible {
             return compatible;
         }
-
+        let current_version = ctx.settings().react.version.as_deref();
         let compatible = check_react_version_internal(current_version, 16, 3);
         self.context_objects_compatible = Some(compatible);
         compatible
