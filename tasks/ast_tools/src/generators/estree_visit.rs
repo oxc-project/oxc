@@ -16,7 +16,7 @@ use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
-    output::{Output, javascript::VariantGenerator},
+    output::{Output, javascript::generate_variants},
     schema::Schema,
     utils::{FxIndexMap, string, write_it},
 };
@@ -127,7 +127,6 @@ struct NodeKeys {
 /// * Visitor keys.
 /// * `Map` from node type name to node type ID.
 /// * Visitor type definition.
-#[expect(clippy::items_after_statements)]
 fn generate(codegen: &Codegen) -> Codes {
     // Run `napi/parser/scripts/visitor-keys.js` to get visitor keys from TS-ESLint
     let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.js");
@@ -377,15 +376,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     // Create 2 walker variants for parser and oxlint, by setting `ANCESTORS` const,
     // and running through minifier to shake out irrelevant code
-    struct WalkVariantGenerator;
-    impl VariantGenerator<1> for WalkVariantGenerator {
-        const FLAG_NAMES: [&str; 1] = ["ANCESTORS"];
-    }
-
-    let mut walk_variants = WalkVariantGenerator.generate(&walk).into_iter();
-    assert!(walk_variants.len() == 2);
-    let walk_parser = walk_variants.next().unwrap();
-    let walk_oxlint = walk_variants.next().unwrap();
+    let [walk_parser, walk_oxlint] = generate_variants!(&walk, ["ANCESTORS"]);
 
     let leaf_nodes_count = leaf_nodes_count.unwrap();
 
