@@ -4,7 +4,7 @@ import path = require('path');
 
 type OxlintConfigPlugins = string[];
 type OxlintConfigCategories = Record<string, unknown>;
-type OxlintConfigGlobals = Record<string, 'readonly' | 'writeable' | 'off'>;
+type OxlintConfigGlobals = Record<string, 'readonly' | 'writable' | 'off'>;
 type OxlintConfigEnv = Record<string, boolean>;
 type OxlintConfigIgnorePatterns = string[];
 type OxlintRuleSeverity = 'off' | 'warn' | 'error';
@@ -100,16 +100,16 @@ export async function loadFixture(fixture: string, workspaceDir: Uri = fixturesW
   await workspace.fs.copy(Uri.file(absolutePath), Uri.joinPath(workspaceDir, 'fixtures'), { overwrite: true });
 }
 
-export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
-  const diagnostics = await getDiagnosticsWithoutClose(file, workspaceDir);
+export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 250): Promise<Diagnostic[]> {
+  const diagnostics = await getDiagnosticsWithoutClose(file, workspaceDir, sleepDuration);
   await commands.executeCommand('workbench.action.closeActiveEditor');
   return diagnostics;
 }
 
-export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
+export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 250): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
-  await sleep(250);
+  await sleep(sleepDuration);
   const diagnostics = languages.getDiagnostics(fileUri);
   return diagnostics;
 }

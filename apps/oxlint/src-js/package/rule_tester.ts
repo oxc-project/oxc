@@ -9,27 +9,20 @@
 
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
-import stringify from "json-stable-stringify-without-jsonify";
+import stableJsonStringify from "json-stable-stringify-without-jsonify";
+import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetFile } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import {
-  allOptions,
-  initAllOptions,
-  mergeOptions,
-  DEFAULT_OPTIONS_ID,
-} from "../plugins/options.ts";
+import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
 import { parse } from "./parse.ts";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
-
-const { hasOwn } = Object,
-  { isArray } = Array;
+import type { ParseOptions } from "./parse.ts";
 
 // ------------------------------------------------------------------------------
 // `describe` and `it` functions
@@ -77,7 +70,7 @@ let it: ItFn = typeof globalObj.it === "function" ? globalObj.it : defaultIt;
 
 // `it.only` function. Can be overwritten via `RuleTester.it` or `RuleTester.itOnly` setters.
 let itOnly: ItFn | null =
-  it !== defaultIt && typeof it.only === "function" ? Function.bind.call(it.only, it) : null;
+  it !== defaultIt && typeof it.only === "function" ? it.only.bind(it) : null;
 
 /**
  * Get `it` function.
@@ -117,26 +110,120 @@ interface Config {
    * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
    */
   eslintCompat?: boolean;
-  [key: string]: unknown;
+  languageOptions?: LanguageOptions;
 }
 
-// Default shared config
-const DEFAULT_SHARED_CONFIG: Config = {
-  eslintCompat: false,
-};
+/**
+ * Language options config.
+ */
+interface LanguageOptions {
+  sourceType?: SourceType;
+  globals?: Globals;
+  parserOptions?: ParserOptions;
+}
+
+/**
+ * Language options config, with `parser` and `ecmaVersion` properties.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface LanguageOptionsInternal extends LanguageOptions {
+  ecmaVersion?: number | "latest";
+  parser?: {
+    parse?: (code: string, options?: Record<string, unknown>) => unknown;
+    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
+  };
+}
+
+/**
+ * Source type.
+ *
+ * - `'unambiguous'` is not supported in ESLint compatibility mode.
+ * - `'commonjs'` is only supported in ESLint compatibility mode.
+ */
+type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+
+/**
+ * Value of a property in `globals` object.
+ *
+ * Note: `null` only supported in ESLint compatibility mode.
+ */
+type GlobalValue =
+  | boolean
+  | "true"
+  | "writable"
+  | "writeable"
+  | "false"
+  | "readonly"
+  | "readable"
+  | "off"
+  | null;
+
+/**
+ * Globals object.
+ */
+type Globals = Record<string, GlobalValue>;
+
+/**
+ * Parser options config.
+ */
+interface ParserOptions {
+  ecmaFeatures?: EcmaFeatures;
+  /**
+   * Language variant to parse file as.
+   */
+  lang?: Language;
+  /**
+   * `true` to ignore non-fatal parsing errors.
+   */
+  ignoreNonFatalErrors?: boolean;
+}
+
+/**
+ * ECMA features config.
+ */
+interface EcmaFeatures {
+  /**
+   * `true` to enable JSX parsing.
+   *
+   * `parserOptions.lang` takes priority over this option, if `lang` is specified.
+   */
+  jsx?: boolean;
+}
+
+/**
+ * Parser language.
+ */
+type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
-// Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it.
-let sharedConfig: Config = { ...DEFAULT_SHARED_CONFIG };
+let sharedConfig: Config = {};
 
 // ------------------------------------------------------------------------------
 // Test cases
 // ------------------------------------------------------------------------------
 
+// List of keys that `ValidTestCase` or `InvalidTestCase` can have.
+// Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
+const TEST_CASE_PROP_KEYS = new Set([
+  "code",
+  "name",
+  "only",
+  "filename",
+  "options",
+  "before",
+  "after",
+  "output",
+  "errors",
+  // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
+  "__proto__",
+]);
+
 /**
  * Test case.
  */
-interface TestCase {
+interface TestCase extends Config {
   code: string;
   name?: string;
   only?: boolean;
@@ -144,11 +231,6 @@ interface TestCase {
   options?: Options;
   before?: (this: this) => void;
   after?: (this: this) => void;
-  /**
-   * `true` to enable ESLint compatibility mode.
-   * See `Config` type.
-   */
-  eslintCompat?: boolean;
 }
 
 /**
@@ -177,8 +259,8 @@ interface ErrorBase {
   data?: DiagnosticData;
   line?: number;
   column?: number;
-  endLine?: number;
-  endColumn?: number;
+  endLine?: number | undefined;
+  endColumn?: number | undefined;
 }
 
 /**
@@ -208,8 +290,8 @@ interface Diagnostic {
   suggestions: Suggestion[] | null;
 }
 
-// Default path for test cases if not provided
-const DEFAULT_PATH = "file.js";
+// Default path (without extension) for test cases if not provided
+const DEFAULT_FILENAME_BASE = "file";
 
 // ------------------------------------------------------------------------------
 // `RuleTester` class
@@ -225,8 +307,14 @@ export class RuleTester {
    * Creates a new instance of RuleTester.
    * @param config? - Extra configuration for the tester (optional)
    */
-  constructor(config?: Config) {
-    this.#config = config === undefined ? null : config;
+  constructor(config?: Config | null) {
+    if (config === undefined) {
+      config = null;
+    } else if (config !== null && typeof config !== "object") {
+      throw new TypeError("`config` must be an object if provided");
+    }
+
+    this.#config = config;
   }
 
   /**
@@ -255,8 +343,7 @@ export class RuleTester {
    * @returns {void}
    */
   static resetDefaultConfig() {
-    // Clone, so that user can't get `DEFAULT_SHARED_CONFIG` with `getDefaultConfig()` and modify it
-    sharedConfig = { ...DEFAULT_SHARED_CONFIG };
+    sharedConfig = {};
   }
 
   // Getters/setters for `describe` and `it` functions
@@ -276,7 +363,7 @@ export class RuleTester {
   static set it(value: ItFn) {
     it = value;
     if (typeof it.only === "function") {
-      itOnly = Function.bind.call(it.only, it);
+      itOnly = it.only.bind(it);
     } else {
       itOnly = null;
     }
@@ -315,7 +402,7 @@ export class RuleTester {
       rules: { [ruleName]: rule },
     };
 
-    const config: Config = createConfigForRun(this.#config);
+    const config = createConfigForRun(this.#config);
 
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
@@ -345,6 +432,17 @@ export class RuleTester {
       }
     });
   }
+}
+
+// In debug builds only, we provide a hook to modify test cases before they're run.
+// Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
+// This is used in conformance tester.
+let modifyTestCase: ((test: TestCase) => void) | null = null;
+
+if (CONFORMANCE) {
+  (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
+    modifyTestCase = alter;
+  };
 }
 
 /**
@@ -378,9 +476,9 @@ function runValidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
   assertErrorCountIsCorrect(diagnostics, 0);
 }
 
@@ -416,9 +514,9 @@ function runInvalidTestCase(
  * @throws {AssertionError} If the test case fails
  */
 function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, config: Config): void {
-  config = createConfigForTest(test, config);
+  test = mergeConfigIntoTestCase(test, config);
 
-  const diagnostics = lint(test, plugin, config);
+  const diagnostics = lint(test, plugin);
 
   const { errors } = test;
   if (typeof errors === "number") {
@@ -427,6 +525,9 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   } else {
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
+
+    // Sort diagnostics by line and column before comparing to expected errors. ESLint does the same.
+    diagnostics.sort((diag1, diag2) => diag1.line - diag2.line || diag1.column - diag2.column);
 
     const rule = Object.values(plugin.rules)[0],
       messages = rule.meta?.messages ?? null;
@@ -445,7 +546,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
       } else {
         // `error` is an error object
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
-        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, config);
+        assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
 
         // TODO: Test suggestions
       }
@@ -468,18 +569,21 @@ function assertInvalidTestCaseMessageIsCorrect(
   messages: Record<string, string> | null,
 ): void {
   // Check `message` property
-  if (hasOwn(error, "message")) {
+  if (Object.hasOwn(error, "message")) {
     // Check `message` property
     assert(
-      !hasOwn(error, "messageId"),
+      !Object.hasOwn(error, "messageId"),
       "Error should not specify both `message` and a `messageId`",
     );
-    assert(!hasOwn(error, "data"), "Error should not specify both `data` and `message`");
+    assert(!Object.hasOwn(error, "data"), "Error should not specify both `data` and `message`");
     assertMessageMatches(diagnostic.message, error.message!);
     return;
   }
 
-  assert(hasOwn(error, "messageId"), "Test error must specify either a `messageId` or `message`");
+  assert(
+    Object.hasOwn(error, "messageId"),
+    "Test error must specify either a `messageId` or `message`",
+  );
 
   // Check `messageId` property
   assert(
@@ -488,7 +592,7 @@ function assertInvalidTestCaseMessageIsCorrect(
   );
 
   const messageId: string = error.messageId!;
-  if (!hasOwn(messages, messageId)) {
+  if (!Object.hasOwn(messages, messageId)) {
     const legalMessageIds = `[${Object.keys(messages)
       .map((key) => `'${key}'`)
       .join(", ")}]`;
@@ -520,7 +624,7 @@ function assertInvalidTestCaseMessageIsCorrect(
     );
   }
 
-  if (hasOwn(error, "data")) {
+  if (Object.hasOwn(error, "data")) {
     // If data was provided, then directly compare the returned message to a synthetic
     // interpolated message using the same message ID and data provided in the test
     const rehydratedMessage = replacePlaceholders(ruleMessage, error.data!);
@@ -543,7 +647,7 @@ function assertInvalidTestCaseMessageIsCorrect(
 function assertInvalidTestCaseLocationIsCorrect(
   diagnostic: Diagnostic,
   error: Error,
-  config: Config,
+  test: TestCase,
 ) {
   interface Location {
     line?: number;
@@ -555,25 +659,45 @@ function assertInvalidTestCaseLocationIsCorrect(
   const actualLocation: Location = {};
   const expectedLocation: Location = {};
 
-  const columnOffset = config.eslintCompat === true ? 1 : 0;
+  const columnOffset = test.eslintCompat === true ? 1 : 0;
 
-  if (hasOwn(error, "line")) {
+  if (Object.hasOwn(error, "line")) {
     actualLocation.line = diagnostic.line;
     expectedLocation.line = error.line;
   }
 
-  if (hasOwn(error, "column")) {
+  if (Object.hasOwn(error, "column")) {
     actualLocation.column = diagnostic.column + columnOffset;
     expectedLocation.column = error.column;
   }
 
-  if (hasOwn(error, "endLine")) {
-    actualLocation.endLine = diagnostic.endLine;
+  // `context.report()` accepts just `loc: { line, column }` for error location.
+  // ESLint translates that to `loc: { start: { line, column }, end: null }`.
+  // Oxlint instead sets `end` to same offset as `start`.
+  //
+  // Test cases can specify `endLine: undefined` and `endColumn: undefined` to match this case.
+  //
+  // In ESLint compat mode, deal with this incompatibility.
+  const canVoidEndLocation =
+    test.eslintCompat === true &&
+    diagnostic.endLine === diagnostic.line &&
+    diagnostic.endColumn === diagnostic.column;
+
+  if (Object.hasOwn(error, "endLine")) {
+    if (error.endLine === undefined && canVoidEndLocation) {
+      actualLocation.endLine = undefined;
+    } else {
+      actualLocation.endLine = diagnostic.endLine;
+    }
     expectedLocation.endLine = error.endLine;
   }
 
-  if (hasOwn(error, "endColumn")) {
-    actualLocation.endColumn = diagnostic.endColumn + columnOffset;
+  if (Object.hasOwn(error, "endColumn")) {
+    if (error.endColumn === undefined && canVoidEndLocation) {
+      actualLocation.endColumn = undefined;
+    } else {
+      actualLocation.endColumn = diagnostic.endColumn + columnOffset;
+    }
     expectedLocation.endColumn = error.endColumn;
   }
 
@@ -655,84 +779,208 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
+// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
+// This is used in conformance tests.
+type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
+
+function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
+  run: RunFunction<T>,
+): RunFunction<T> {
+  return function (test, plugin, config, seenTestCases) {
+    try {
+      run(test, plugin, config, seenTestCases);
+    } catch (err) {
+      // oxlint-disable-next-line no-ex-assign
+      if (typeof err !== "object" || err === null) err = new Error("Unknown error");
+      err.__testCase = test;
+      throw err;
+    }
+  };
+}
+
+if (CONFORMANCE) {
+  // oxlint-disable-next-line no-func-assign
+  (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
+  // oxlint-disable-next-line no-func-assign
+  (runInvalidTestCase as any) = wrapRunTestCaseFunction(runInvalidTestCase);
+}
+
 /**
  * Create config for a test run.
- * Merges config from `RuleTester` instance with shared config.
+ * Merges config from `RuleTester` instance on top of shared config.
+ * Removes properties which are not allowed in `Config`s, as they can only be properties of `TestCase`.
  *
  * @param config - Config from `RuleTester` instance
  * @returns Merged config
  */
 function createConfigForRun(config: Config | null): Config {
-  if (config === null) return sharedConfig;
-  // TODO: Merge deeply
-  return Object.assign({}, sharedConfig, config);
+  const merged: Config = {};
+  addConfigPropsFrom(sharedConfig, merged);
+  if (config !== null) addConfigPropsFrom(config, merged);
+  return merged;
+}
+
+function addConfigPropsFrom(config: Config, merged: Config): void {
+  // Note: `TEST_CASE_PROP_KEYS` includes `"__proto__"`, so using assignment `merged[key] = ...`
+  // cannot set prototype of `merged`, instead of setting a property
+  for (const key of Object.keys(config) as (keyof Config)[]) {
+    if (TEST_CASE_PROP_KEYS.has(key)) continue;
+    if (key === "languageOptions") {
+      merged.languageOptions = mergeLanguageOptions(config.languageOptions, merged.languageOptions);
+    } else {
+      (merged as Record<string, unknown>)[key] = config[key];
+    }
+  }
 }
 
 /**
  * Create config for a test case.
- * Merges config from `RuleTester` instance / shared config with properties of `test`.
+ * Merges properties of test case on top of config from `RuleTester` instance.
  *
  * @param test - Test case
  * @param config - Config from `RuleTester` instance / shared config
  * @returns Merged config
  */
-function createConfigForTest(test: TestCase, config: Config): Config {
-  let isCloned = false;
-  function clone(): void {
-    if (!isCloned) {
-      config = { ...config };
-      isCloned = true;
-    }
-  }
+function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
+  test: T,
+  config: Config,
+): T {
+  // `config` has already been cleansed of properties which are exclusive to `TestCase`,
+  // so no danger here of `config` having a property called e.g. `errors` which would affect the test case
+  const merged = {
+    ...config,
+    ...test,
+    languageOptions: mergeLanguageOptions(test.languageOptions, config.languageOptions),
+  };
 
-  // TODO: Merge more properties of `test` into `config`
-  if (hasOwn(test, "eslintCompat")) {
-    clone();
-    config.eslintCompat = test.eslintCompat;
-  }
-  return config;
+  // Call hook to modify test case before it is run.
+  // `modifyTestCase` is only available in conformance build - it's only for conformance testing.
+  if (CONFORMANCE && modifyTestCase !== null) modifyTestCase(merged);
+
+  return merged;
+}
+
+/**
+ * Merge language options from test case / config onto language options from base config.
+ * @param localLanguageOptions - Language options from test case / config
+ * @param baseLanguageOptions - Language options from base config
+ * @returns Merged language options, or `undefined` if neither has language options
+ */
+function mergeLanguageOptions(
+  localLanguageOptions?: LanguageOptions | null,
+  baseLanguageOptions?: LanguageOptions | null,
+): LanguageOptions | undefined {
+  if (localLanguageOptions == null) return baseLanguageOptions ?? undefined;
+  if (baseLanguageOptions == null) return localLanguageOptions;
+
+  return {
+    ...baseLanguageOptions,
+    ...localLanguageOptions,
+    parserOptions: mergeParserOptions(
+      localLanguageOptions.parserOptions,
+      baseLanguageOptions.parserOptions,
+    ),
+    globals: mergeGlobals(localLanguageOptions.globals, baseLanguageOptions.globals),
+  };
+}
+
+/**
+ * Merge parser options from test case / config onto language options from base config.
+ * @param localParserOptions - Parser options from test case / config
+ * @param baseParserOptions - Parser options from base config
+ * @returns Merged parser options, or `undefined` if neither has parser options
+ */
+function mergeParserOptions(
+  localParserOptions?: ParserOptions | null,
+  baseParserOptions?: ParserOptions | null,
+): ParserOptions | undefined {
+  if (localParserOptions == null) return baseParserOptions ?? undefined;
+  if (baseParserOptions == null) return localParserOptions;
+
+  return {
+    ...baseParserOptions,
+    ...localParserOptions,
+    ecmaFeatures: mergeEcmaFeatures(
+      localParserOptions.ecmaFeatures,
+      baseParserOptions.ecmaFeatures,
+    ),
+  };
+}
+
+/**
+ * Merge ecma features from test case / config onto ecma features from base config.
+ * @param localEcmaFeatures - Ecma features from test case / config
+ * @param baseEcmaFeatures - Ecma features from base config
+ * @returns Merged ecma features, or `undefined` if neither has ecma features
+ */
+function mergeEcmaFeatures(
+  localEcmaFeatures?: EcmaFeatures | null,
+  baseEcmaFeatures?: EcmaFeatures | null,
+): EcmaFeatures | undefined {
+  if (localEcmaFeatures == null) return baseEcmaFeatures ?? undefined;
+  if (baseEcmaFeatures == null) return localEcmaFeatures;
+  return { ...baseEcmaFeatures, ...localEcmaFeatures };
+}
+
+/**
+ * Merge globals from test case / config onto globals from base config.
+ * @param localGlobals - Globals from test case / config
+ * @param baseGlobals - Globals from base config
+ * @returns Merged globals
+ */
+function mergeGlobals(
+  localGlobals?: Globals | null,
+  baseGlobals?: Globals | null,
+): Globals | undefined {
+  if (localGlobals == null) return baseGlobals ?? undefined;
+  if (baseGlobals == null) return localGlobals;
+  return { ...baseGlobals, ...localGlobals };
 }
 
 /**
  * Lint a test case.
  * @param test - Test case
  * @param plugin - Plugin containing rule being tested
- * @param config - Config from `RuleTester` instance
  * @returns Array of diagnostics
  */
-function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
-  // TODO: Use config to set language options
-  const _ = config;
+function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
+  // Get parse options
+  const parseOptions = getParseOptions(test);
 
-  // Initialize `allOptions` if not already initialized
-  if (allOptions === null) initAllOptions();
-  debugAssertIsNonNull(allOptions);
+  // Determine filename.
+  // If not provided, use default filename based on `parseOptions.lang`.
+  let { filename } = test;
+  if (filename == null) {
+    let ext: string | undefined = parseOptions.lang;
+    if (ext == null) {
+      ext = "js";
+    } else if (ext === "dts") {
+      ext = "d.ts";
+    }
+    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+  }
 
   try {
-    registerPlugin(plugin, null);
+    // Register plugin. This adds rule to `registeredRules` array.
+    registerPlugin(plugin, null, false);
 
-    // Get options.
-    // * If no options provided, use default options for the rule with `optionsId: DEFAULT_OPTIONS_ID`.
-    // * If options provided, merge them with default options for the rule.
-    //   Push merged options to `allOptions`, and use `optionsId: 1` (the index within `allOptions`).
-    debugAssert(allOptions.length === 1);
-
-    let optionsId = DEFAULT_OPTIONS_ID;
-    const testOptions = test.options;
-    if (testOptions != null) {
-      const { defaultOptions } = registeredRules[0];
-      allOptions.push(mergeOptions(testOptions, defaultOptions));
-      optionsId = 1;
-    }
+    // Set up options
+    const optionsId = setupOptions(test);
 
     // Parse file into buffer
-    const path = test.filename ?? DEFAULT_PATH;
-    parse(path, test.code);
+    parse(filename, test.code, parseOptions);
+
+    // In conformance tests, set `context.languageOptions.ecmaVersion`.
+    // This is not supported outside of conformance tests.
+    if (CONFORMANCE) setEcmaVersionContext(test);
+
+    // Get globals and settings
+    const globalsJSON: string = getGlobalsJson(test);
+    const settingsJSON = "{}"; // TODO
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    const settingsJSON = "{}"; // TODO
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON);
+    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -757,11 +1005,201 @@ function lint(test: TestCase, plugin: Plugin, config: Config): Diagnostic[] {
   } finally {
     // Reset state
     registeredRules.length = 0;
-    allOptions.length = 1;
+    if (allOptions !== null) allOptions.length = 1;
     diagnostics.length = 0;
     resetFile();
   }
 }
+
+/**
+ * Get parse options for a test case.
+ * @param test - Test case
+ * @returns Parse options
+ */
+function getParseOptions(test: TestCase): ParseOptions {
+  const parseOptions: ParseOptions = {};
+
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) return parseOptions;
+
+  // Throw error if custom parser is provided
+  if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
+
+  // Handle `languageOptions.sourceType`
+  let { sourceType } = languageOptions;
+  if (sourceType != null) {
+    if (test.eslintCompat === true) {
+      // ESLint compatibility mode.
+      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
+      if (sourceType === "commonjs") {
+        sourceType = "script";
+      } else if (sourceType === "unambiguous") {
+        throw new Error(
+          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+        );
+      }
+    } else {
+      // Not ESLint compatibility mode.
+      // `commonjs` is disallowed.
+      if (sourceType === "commonjs") {
+        throw new Error(
+          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
+            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
+        );
+      }
+    }
+
+    parseOptions.sourceType = sourceType;
+  }
+
+  // Handle `languageOptions.parserOptions`
+  const { parserOptions } = languageOptions;
+  if (parserOptions != null) {
+    // Handle `parserOptions.ignoreNonFatalErrors`
+    if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
+
+    // Handle `parserOptions.lang`
+    const { lang } = parserOptions;
+    if (lang != null) {
+      parseOptions.lang = lang;
+    } else if (parserOptions.ecmaFeatures?.jsx === true) {
+      parseOptions.lang = "jsx";
+    }
+  }
+
+  return parseOptions;
+}
+
+/**
+ * Get globals as JSON for test case.
+ *
+ * Normalizes values to "readonly", "writable", or "off", same as Rust side does.
+ *
+ * `null` is only supported in ESLint compatibility mode.
+ *
+ * @param test - Test case
+ * @returns Globals as JSON string
+ */
+function getGlobalsJson(test: TestCase): string {
+  const globals = test.languageOptions?.globals;
+  if (globals == null) return "{}";
+
+  // Normalize values to `readonly`, `writable`, or `off` - same as Rust side does
+  const cloned = { ...globals },
+    eslintCompat = !!test.eslintCompat;
+
+  for (const key in cloned) {
+    let value = cloned[key];
+
+    switch (value) {
+      case "readonly":
+      case "writable":
+      case "off":
+        continue;
+
+      case "writeable":
+      case "true":
+      case true:
+        value = "writable";
+        break;
+
+      case "readable":
+      case "false":
+      case false:
+        value = "readonly";
+        break;
+
+      // ESLint treats `null` as `readonly` (undocumented).
+      // https://github.com/eslint/eslint/blob/ba71baa87265888b582f314163df1d727441e2f1/lib/languages/js/source-code/source-code.js#L119-L149
+      // But Oxlint (Rust code) doesn't support it, so we don't support it here either unless in ESLint compatibility mode.
+      case null:
+        if (eslintCompat) {
+          value = "readonly";
+          break;
+        }
+
+      default:
+        throw new Error(
+          `'${value}' is not a valid configuration for a global (use 'readonly', 'writable', or 'off')`,
+        );
+    }
+
+    cloned[key] = value;
+  }
+
+  return JSON.stringify(cloned);
+}
+
+/**
+ * Set up options for the test case.
+ *
+ * In linter, all options for all rules are sent over from Rust as a JSON string,
+ * and `setOptions` is called to merge them with the default options for each rule.
+ * The merged options are stored in a global variable `allOptions`.
+ *
+ * This function builds a JSON string in same format as Rust does, and calls `setOptions` with it.
+ *
+ * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
+ *
+ * @param test - Test case
+ * @returns Options ID to pass to `lintFileImpl`
+ */
+function setupOptions(test: TestCase): number {
+  // Initial entries for default options
+  const allOptions: Options[] = [[]],
+    allRuleIds: number[] = [0];
+
+  // If options are provided for test case, add them to `allOptions`
+  let optionsId = DEFAULT_OPTIONS_ID;
+
+  const testOptions = test.options;
+  if (testOptions != null) {
+    allOptions.push(testOptions);
+    allRuleIds.push(0);
+    optionsId = 1;
+  }
+
+  // Serialize to JSON and pass to `setOptions`
+  let allOptionsJson: string;
+  try {
+    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
+  } catch (err) {
+    throw new Error(`Failed to serialize options: ${err}`);
+  }
+  setOptions(allOptionsJson);
+
+  return optionsId;
+}
+
+/**
+ * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * This is only supported in conformance tests, where it's necessary to pass some tests.
+ * Oxlint doesn't support any version except latest.
+ * @param test - Test case
+ */
+function setEcmaVersionContext(test: TestCase) {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
+  // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
+  // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
+  // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
+  // in an early step of config parsing.
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  const ecmaVersion = languageOptions?.ecmaVersion;
+
+  let version = ECMA_VERSION;
+  if (typeof ecmaVersion === "number") {
+    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+  }
+
+  setEcmaVersion(version);
+}
+
+// Regex to match other control characters (except tab, newline, carriage return)
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/gu;
 
 /**
  * Get name of test case.
@@ -775,7 +1213,7 @@ function getTestName(test: TestCase): string {
   if (typeof name !== "string") return "";
 
   return name.replace(
-    /[\u0000-\u0009\u000b-\u001a]/gu, // oxlint-disable-line no-control-regex -- Escaping controls
+    CONTROL_CHAR_REGEX,
     (c) => `\\u${c.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 }
@@ -787,7 +1225,7 @@ function getTestName(test: TestCase): string {
  * @throws {*} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
-  if (hasOwn(test, "before")) runHook(test, test.before, "before");
+  if (Object.hasOwn(test, "before")) runHook(test, test.before, "before");
 }
 
 /**
@@ -797,7 +1235,7 @@ function runBeforeHook(test: TestCase): void {
  * @throws {*} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
-  if (hasOwn(test, "after")) runHook(test, test.after, "after");
+  if (Object.hasOwn(test, "after")) runHook(test, test.after, "after");
 }
 
 /**
@@ -873,7 +1311,7 @@ function assertInvalidTestCaseIsWellFormed(
       `Did not specify errors for an invalid test of rule \`${ruleName}\``,
     );
     assert(
-      isArray(errors),
+      Array.isArray(errors),
       `Invalid 'errors' property for invalid test of rule \`${ruleName}\`:` +
         `expected a number or an array but got ${errors === null ? "null" : typeof errors}`,
     );
@@ -881,7 +1319,7 @@ function assertInvalidTestCaseIsWellFormed(
   }
 
   // `output` is optional, but if it exists it must be a string or `null`
-  if (hasOwn(test, "output")) {
+  if (Object.hasOwn(test, "output")) {
     assert(
       test.output === null || typeof test.output === "string",
       "Test property `output`, if specified, must be a string or null. " +
@@ -904,16 +1342,16 @@ function assertTestCaseCommonPropertiesAreWellFormed(test: TestCase): void {
   if (test.name) {
     assert(typeof test.name === "string", "Optional test case property `name` must be a string");
   }
-  if (hasOwn(test, "only")) {
+  if (Object.hasOwn(test, "only")) {
     assert(typeof test.only === "boolean", "Optional test case property `only` must be a boolean");
   }
-  if (hasOwn(test, "filename")) {
+  if (Object.hasOwn(test, "filename")) {
     assert(
       typeof test.filename === "string",
       "Optional test case property `filename` must be a string",
     );
   }
-  if (hasOwn(test, "options")) {
+  if (Object.hasOwn(test, "options")) {
     assert(Array.isArray(test.options), "Optional test case property `options` must be an array");
   }
 }
@@ -933,7 +1371,7 @@ function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>):
   // `languageOptions.parserOptions`.
   if (!isSerializable(test)) return;
 
-  const serializedTestCase = stringify(test, {
+  const serializedTestCase = stableJsonStringify(test, {
     replacer(key, value) {
       // `this` is the currently stringified object --> only ignore top-level properties
       return test !== this || !DUPLICATION_IGNORED_PROPS.has(key) ? value : undefined;
@@ -987,12 +1425,17 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
     typeof value === "string" ||
     typeof value === "boolean" ||
     typeof value === "number" ||
-    (typeof value === "object" && (value.constructor === Object || isArray(value)))
+    (typeof value === "object" && (value.constructor === Object || Array.isArray(value)))
   );
 }
 
 // Add types to `RuleTester` namespace
 type _Config = Config;
+type _LanguageOptions = LanguageOptions;
+type _ParserOptions = ParserOptions;
+type _SourceType = SourceType;
+type _Language = Language;
+type _EcmaFeatures = EcmaFeatures;
 type _DescribeFn = DescribeFn;
 type _ItFn = ItFn;
 type _ValidTestCase = ValidTestCase;
@@ -1002,6 +1445,11 @@ type _Error = Error;
 
 export namespace RuleTester {
   export type Config = _Config;
+  export type LanguageOptions = _LanguageOptions;
+  export type ParserOptions = _ParserOptions;
+  export type SourceType = _SourceType;
+  export type Language = _Language;
+  export type EcmaFeatures = _EcmaFeatures;
   export type DescribeFn = _DescribeFn;
   export type ItFn = _ItFn;
   export type ValidTestCase = _ValidTestCase;

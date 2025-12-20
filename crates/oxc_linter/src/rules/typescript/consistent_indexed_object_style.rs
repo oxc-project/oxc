@@ -32,7 +32,7 @@ fn consistent_indexed_object_style_diagnostic(
     OxcDiagnostic::warn(warning_message).with_help(help_message).with_label(span)
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct ConsistentIndexedObjectStyle(ConsistentIndexedObjectStyleConfig);
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -109,11 +109,9 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(
-            serde_json::from_value::<DefaultRuleConfig<ConsistentIndexedObjectStyleConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        )
+        serde_json::from_value::<DefaultRuleConfig<ConsistentIndexedObjectStyle>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

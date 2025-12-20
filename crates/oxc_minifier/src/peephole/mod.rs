@@ -169,6 +169,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::remove_unused_function_declaration(stmt, ctx);
             }
             Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+            Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
             _ => {}
         }
         Self::try_fold_expression_stmt(stmt, ctx);
@@ -246,6 +247,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::CallExpression(_) => {
                 Self::fold_call_expression(expr, ctx);
+                Self::substitute_iife_call(expr, ctx);
                 Self::remove_dead_code_call_expression(expr, ctx);
                 Self::replace_concat_chain(expr, ctx);
                 Self::replace_known_global_methods(expr, ctx);
@@ -488,6 +490,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Statement::ExpressionStatement(_) => {
                 PeepholeOptimizations::try_fold_expression_stmt(stmt, ctx);
             }
+            Statement::ImportDeclaration(_) => {
+                PeepholeOptimizations::remove_unused_import_specifiers(stmt, ctx);
+            }
             _ => {}
         }
     }
@@ -519,6 +524,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expr(e, ctx),
             Expression::CallExpression(_) => {
                 PeepholeOptimizations::fold_call_expression(e, ctx);
+                PeepholeOptimizations::substitute_iife_call(e, ctx);
                 PeepholeOptimizations::remove_dead_code_call_expression(e, ctx);
             }
             Expression::ConditionalExpression(_) => {

@@ -76,7 +76,7 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
-} from "../../generated/visit/type_ids.js";
+} from "../generated/visit/type_ids.js";
 
 const { isArray } = Array;
 
@@ -194,8 +194,9 @@ export function initCompiledVisitor() {
  * @param visitor - Visitor object
  */
 export function addVisitorToCompiled(visitor) {
-  if (visitor === null || typeof visitor !== "object")
+  if (visitor === null || typeof visitor !== "object") {
     throw new TypeError("Visitor must be an object");
+  }
 
   // Exit if is empty visitor
   const keys = Object.keys(visitor),

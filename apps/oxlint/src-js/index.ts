@@ -9,7 +9,7 @@ export type * as ESTree from "./generated/types.d.ts";
 export type { Context, LanguageOptions } from "./plugins/context.ts";
 export type { Fix, Fixer, FixFn } from "./plugins/fix.ts";
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from "./plugins/load.ts";
-export type { Options } from "./plugins/options.ts";
+export type { Options, RuleOptionsSchema } from "./plugins/options.ts";
 export type { Diagnostic, DiagnosticData, Suggestion } from "./plugins/report.ts";
 export type {
   Definition,
@@ -28,7 +28,6 @@ export type {
   RangeOptions,
   SkipOptions,
   Token,
-  CommentToken,
   BooleanToken,
   IdentifierToken,
   JSXIdentifierToken,
@@ -45,7 +44,6 @@ export type {
 export type {
   RuleMeta,
   RuleDocs,
-  RuleOptionsSchema,
   RuleDeprecatedInfo,
   RuleReplacedByInfo,
   RuleReplacedByExternalSpecifier,
@@ -56,7 +54,6 @@ export type {
   BeforeHook,
   Comment,
   Node,
-  NodeOrToken,
   Visitor,
   VisitorWithHooks,
 } from "./plugins/types.ts";

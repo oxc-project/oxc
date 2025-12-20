@@ -24,9 +24,6 @@ declare_oxc_lint!(
     /// While it is legal to place it before or between `case` clauses, doing so is confusing and may
     /// lead to unexpected "fall-through" behavior.
     ///
-    /// ### Options
-    /// No options available for this rule
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

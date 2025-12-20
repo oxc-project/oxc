@@ -8,6 +8,9 @@ import { buffers } from "../plugins/lint.ts";
 import { BUFFER_SIZE, BUFFER_ALIGN, DATA_POINTER_POS_32 } from "../generated/constants.ts";
 
 import type { BufferWithArrays } from "../plugins/types.ts";
+import type { ParserOptions as ParseOptions } from "../bindings.js";
+
+export type { ParseOptions };
 
 // Size array buffer for raw transfer
 const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;
@@ -28,9 +31,10 @@ let rawTransferIsSupported: boolean | null = null;
  * Parser source text into buffer.
  * @param path - Path of file to parse
  * @param sourceText - Source text to parse
+ * @param options - Parsing options
  * @throws {Error} If raw transfer is not supported on this platform, or parsing failed
  */
-export function parse(path: string, sourceText: string) {
+export function parse(path: string, sourceText: string, options?: ParseOptions) {
   if (!rawTransferSupported()) {
     throw new Error(
       "`RuleTester` is not supported on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, " +
@@ -50,7 +54,7 @@ export function parse(path: string, sourceText: string) {
   if (read !== sourceText.length) throw new Error("Failed to write source text into buffer");
 
   // Parse into buffer
-  parseRawSync(path, buffer, sourceByteLen);
+  parseRawSync(path, buffer, sourceByteLen, options);
 
   // Check parsing succeeded.
   // 0 is used as sentinel value to indicate parsing failed.

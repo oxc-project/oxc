@@ -1,6 +1,6 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
         TextEdit, Uri, WorkspaceEdit,
     },
@@ -13,6 +13,8 @@ pub trait ToolBuilder: Send + Sync {
     /// Build a boxed instance of the tool for the given root URI and options.
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
+
+pub type DiagnosticResult = Vec<(Uri, Vec<Diagnostic>)>;
 
 pub trait Tool: Send + Sync {
     /// Get the name of the tool.
@@ -68,7 +70,7 @@ pub trait Tool: Send + Sync {
         &self,
         _uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
@@ -84,38 +86,29 @@ pub trait Tool: Send + Sync {
 
     /// Run diagnostics on the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
-    /// Returns a vector of `Diagnostic` representing the diagnostic results.
-    /// Not all tools will implement diagnostics, so the default implementation returns `None`.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<Diagnostic>> {
-        None
+    /// Not all tools will implement diagnostics, so the default implementation returns an empty vector.
+    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+        Vec::new()
     }
 
     /// Run diagnostics on save for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
-    /// Returns a vector of `Diagnostic` representing the diagnostic results.
-    /// Not all tools will implement diagnostics on save, so the default implementation returns `None`.
-    fn run_diagnostic_on_save(
-        &self,
-        _uri: &Uri,
-        _content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
-        None
+    /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
+    /// Not all tools will implement diagnostics on save, so the default implementation returns an empty vector.
+    fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+        Vec::new()
     }
 
     /// Run diagnostics on change for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
-    /// Returns a vector of `Diagnostic` representing the diagnostic results.
-    /// Not all tools will implement diagnostics on change, so the default implementation returns `None`.
-    fn run_diagnostic_on_change(
-        &self,
-        _uri: &Uri,
-        _content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
-        None
+    /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
+    /// Not all tools will implement diagnostics on change, so the default implementation returns an empty vector.
+    fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+        Vec::new()
     }
 
-    /// Remove diagnostics associated with the given URI.
-    fn remove_diagnostics(&self, _uri: &Uri) {
+    /// Remove internal cache for the given URI, if any.
+    fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
 

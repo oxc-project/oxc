@@ -183,9 +183,7 @@ fn test() {
 }
 
 #[test]
+// This needs to be sorted or else binary_search will not work correctly.
 fn test_array_is_sorted() {
-    let mut sorted_array = ARRAY_METHODS.to_vec();
-    sorted_array.sort_unstable();
-
-    assert_eq!(sorted_array, ARRAY_METHODS);
+    assert!(ARRAY_METHODS.is_sorted());
 }

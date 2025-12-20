@@ -6,6 +6,8 @@ import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+import { setGlobalsForFile, resetGlobals } from "./globals.ts";
+
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -19,7 +21,6 @@ import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 import { walkProgram } from '../generated/walk.js';
 */
 
-// @ts-expect-error we need to generate `.d.ts` file for this module
 import { walkProgram } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
@@ -48,6 +49,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -57,9 +59,10 @@ export function lintFile(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ): string | null {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 
     // Avoid JSON serialization in common case that there are no diagnostics to report
     if (diagnostics.length === 0) return null;
@@ -84,6 +87,7 @@ export function lintFile(
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -94,6 +98,7 @@ export function lintFileImpl(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -115,14 +120,11 @@ export function lintFileImpl(
   }
   typeAssertIs<BufferWithArrays>(buffer);
 
-  if (DEBUG) {
-    if (typeof filePath !== "string" || filePath.length === 0) {
-      throw new Error("Expected filePath to be a non-zero length string");
-    }
-    if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-      throw new Error("Expected `ruleIds` to be a non-zero length array");
-    }
-  }
+  // Debug asserts that input is valid
+  debugAssert(typeof filePath === "string" && filePath.length > 0);
+  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0);
+  debugAssert(Array.isArray(optionsIds));
+  debugAssert(ruleIds.length === optionsIds.length);
 
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);
@@ -139,16 +141,12 @@ export function lintFileImpl(
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 
-  // Pass settings JSON to context module
+  // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);
+  setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
-
-  debugAssert(
-    ruleIds.length === optionsIds.length,
-    "Rule IDs and options IDs arrays must be the same length",
-  );
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
@@ -196,6 +194,7 @@ export function lintFileImpl(
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
     if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
     walkProgram(ast, compiledVisitor);
 
     // Lazy implementation
@@ -233,4 +232,5 @@ export function resetFile() {
   resetFileContext();
   resetSourceAndAst();
   resetSettings();
+  resetGlobals();
 }

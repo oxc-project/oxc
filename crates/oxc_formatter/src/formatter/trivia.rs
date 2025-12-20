@@ -56,12 +56,14 @@
 //! 2. Applies indentation based on container type (block, soft, none)
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
+use oxc_allocator::StringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::write;
 
-use super::{SourceText, prelude::*};
+use super::prelude::*;
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -76,18 +78,12 @@ use super::{SourceText, prelude::*};
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-#[expect(clippy::suspicious_operation_groupings)]
-// `current.span.end == next.span.start` is correct, which checks whether the next comment starts exactly where the current comment ends.
-fn should_nestle_adjacent_doc_comments(
-    current: &Comment,
-    next: &Comment,
-    source_text: SourceText,
-) -> bool {
+fn should_nestle_adjacent_doc_comments(current: &Comment, next: &Comment) -> bool {
     matches!(current.content, CommentContent::Jsdoc)
         && matches!(next.content, CommentContent::Jsdoc)
+        && current.is_multiline_block()
+        && next.is_multiline_block()
         && current.span.end == next.span.start
-        && source_text.contains_newline(current.span)
-        && source_text.contains_newline(next.span)
 }
 
 /// Formats the leading comments of `node`
@@ -115,28 +111,27 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                 write!(f, comment);
 
                 match comment.kind {
-                    CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
-                        0 => {
-                            let should_nestle =
-                                leading_comments_iter.peek().is_some_and(|next_comment| {
-                                    should_nestle_adjacent_doc_comments(
-                                        comment,
-                                        next_comment,
-                                        f.source_text(),
-                                    )
-                                });
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                        match f.source_text().lines_after(comment.span.end) {
+                            0 => {
+                                let should_nestle =
+                                    leading_comments_iter.peek().is_some_and(|next_comment| {
+                                        should_nestle_adjacent_doc_comments(comment, next_comment)
+                                    });
 
-                            write!(f, [maybe_space(!should_nestle)]);
-                        }
-                        1 => {
-                            if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
-                                write!(f, [soft_line_break_or_space()]);
-                            } else {
-                                write!(f, [hard_line_break()]);
+                                write!(f, [maybe_space(!should_nestle)]);
                             }
+                            1 => {
+                                if f.source_text().get_lines_before(comment.span, f.comments()) == 0
+                                {
+                                    write!(f, [soft_line_break_or_space()]);
+                                } else {
+                                    write!(f, [hard_line_break()]);
+                                }
+                            }
+                            _ => write!(f, [empty_line()]),
                         }
-                        _ => write!(f, [empty_line()]),
-                    },
+                    }
                     CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
                         0 | 1 => write!(f, [hard_line_break()]),
                         _ => write!(f, [empty_line()]),
@@ -197,7 +192,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                    should_nestle_adjacent_doc_comments(previous_comment, comment, f.source_text())
+                    should_nestle_adjacent_doc_comments(previous_comment, comment)
                 });
 
                 // This allows comments at the end of nested structures:
@@ -368,11 +363,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                     f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                        should_nestle_adjacent_doc_comments(
-                            previous_comment,
-                            comment,
-                            f.source_text(),
-                        )
+                        should_nestle_adjacent_doc_comments(previous_comment, comment)
                     });
 
                     write!(
@@ -426,32 +417,33 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 }
 
 impl<'a> Format<'a> for Comment {
-    #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let source_text = f.source_text().text_for(&self.span).trim_end();
-        if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+        let content = f.source_text().text_for(&self.span);
+        if self.is_multiline_block() {
+            let mut lines = LineTerminatorSplitter::new(content);
+            if is_alignable_comment(content) {
+                // `unwrap` is safe because `content` contains at least one line.
+                let first_line = lines.next().unwrap();
+                write!(f, [text(first_line.trim_end())]);
 
-            let mut lines = source_text.lines();
+                // Indent the remaining lines by one space so that all `*` are aligned.
+                for line in lines {
+                    write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+            } else {
+                // Normalize line endings `\r\n` to `\n`
+                let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                // `unwrap` is safe because `content` contains at least one line.
+                string.push_str(lines.next().unwrap().trim_end());
 
-            // `is_alignable_comment` only returns `true` for multiline comments
-            let first_line = lines.next().unwrap();
-            write!(f, [text(first_line.trim_end())]);
-
-            source_offset += first_line.len() as u32;
-
-            // Indent the remaining lines by one space so that all `*` are aligned.
-            write!(
-                f,
-                [&format_once(|f| {
-                    for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())]);
-                        source_offset += line.len() as u32;
-                    }
-                })]
-            );
+                for str in lines {
+                    string.push('\n');
+                    string.push_str(str);
+                }
+                write!(f, [text(string.into_str())]);
+            }
         } else {
-            write!(f, [text(source_text)]);
+            write!(f, [text(content.trim_end())]);
         }
     }
 }
@@ -486,11 +478,6 @@ impl<'a> Format<'a> for Comment {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(source_text: &str) -> bool {
-    if !source_text.contains('\n') {
-        return false;
-    }
-    source_text.lines().enumerate().all(|(index, line)| {
-        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-    })
+pub fn is_alignable_comment(lines: &str) -> bool {
+    LineTerminatorSplitter::new(lines).skip(1).all(|line| line.trim_start().starts_with('*'))
 }

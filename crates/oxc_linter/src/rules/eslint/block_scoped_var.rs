@@ -40,10 +40,6 @@ declare_oxc_lint!(
     /// This can lead to hard-to-find bugs.
     /// By enforcing block scoping, this rule helps avoid hoisting issues and aligns more closely with how other languages treat block variables.
     ///
-    /// ### Options
-    ///
-    /// No options available for this rule.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

@@ -10,7 +10,7 @@ workspace = true
 
 [[bin]]
 name = "rulegen"
-test = false
+test = true
 doctest = false
 
 [dependencies]
@@ -26,3 +26,6 @@ handlebars = { workspace = true }
 lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+insta = { workspace = true }

@@ -2,7 +2,7 @@
 
 Complete list of optimizations for maximum size reduction.
 
-Many optimizations rely on [`oxc_ecmascript`](../oxc_ecmascript) for ECMAScript operations like constant evaluation, type conversion, and side effect analysis.
+Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScript operations like constant evaluation, type conversion, and side effect analysis.
 
 ## Current Optimizations (18)
 

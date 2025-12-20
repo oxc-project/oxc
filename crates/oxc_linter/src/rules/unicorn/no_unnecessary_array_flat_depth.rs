@@ -1,9 +1,11 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, context::LintContext, fixer::RuleFixer, rule::Rule,
+};
 
 fn no_unnecessary_array_flat_depth_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing `1` as the `depth` argument is unnecessary.")
@@ -37,7 +39,7 @@ declare_oxc_lint!(
     NoUnnecessaryArrayFlatDepth,
     unicorn,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for NoUnnecessaryArrayFlatDepth {
@@ -50,13 +52,18 @@ impl Rule for NoUnnecessaryArrayFlatDepth {
         let Some(arg) = call_expr.arguments[0].as_expression() else { return };
         let arg = arg.get_inner_expression();
         if arg.is_number_value(1.0) {
-            ctx.diagnostic(no_unnecessary_array_flat_depth_diagnostic(
-                call_expr
-                    .callee
-                    .as_member_expression()
-                    .and_then(oxc_ast::ast::MemberExpression::static_property_info)
-                    .map_or(call_expr.span, |(span, _)| span),
-            ));
+            let diagnostic_span = call_expr
+                .callee
+                .as_member_expression()
+                .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+                .map_or(call_expr.span, |(span, _)| span);
+
+            ctx.diagnostic_with_suggestion(
+                no_unnecessary_array_flat_depth_diagnostic(diagnostic_span),
+                |fixer: RuleFixer<'_, 'a>| {
+                    fixer.delete_range(Span::new(arg.span().start, call_expr.span.end - 1))
+                },
+            );
         }
     }
 }
@@ -77,6 +84,15 @@ fn test() {
 
     let fail = vec!["foo.flat(1)", "foo.flat(1.0)", "foo.flat(0b01)", "foo?.flat(1)"];
 
+    let fix = vec![
+        ("foo.flat(1)", "foo.flat()"),
+        ("foo.flat(1.0)", "foo.flat()"),
+        ("foo.flat(0b01)", "foo.flat()"),
+        ("foo?.flat(1)", "foo?.flat()"),
+        ("foo?.flat(1,)", "foo?.flat()"),
+    ];
+
     Tester::new(NoUnnecessaryArrayFlatDepth::NAME, NoUnnecessaryArrayFlatDepth::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

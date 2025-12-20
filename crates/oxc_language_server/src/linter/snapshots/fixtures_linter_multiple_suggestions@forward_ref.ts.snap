@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/multiple_suggestions/forward_ref.ts
+Linted file: fixtures/linter/multiple_suggestions/forward_ref.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/multiple_suggestions/forward_ref.ts
 
 code: "eslint-plugin-react(forward-ref-uses-ref)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/react/forward-ref-uses-ref.html"
@@ -16,6 +17,7 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: remove `forwardRef` wrapper

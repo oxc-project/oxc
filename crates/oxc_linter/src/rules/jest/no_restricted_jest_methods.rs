@@ -26,7 +26,8 @@ pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedJestMethodsConfig {
-    /// A mapping of restricted Jest method names to custom messages.
+    /// A mapping of restricted Jest method names to custom messages - or
+    /// `null`, for a generic message.
     restricted_jest_methods: FxHashMap<String, String>,
 }
 
@@ -45,9 +46,12 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Certain Jest methods may be deprecated, discouraged in specific
+    /// Certain Jest or Vitest methods may be deprecated, discouraged in specific
     /// contexts, or incompatible with your testing environment. Restricting
     /// them helps maintain consistent and reliable test practices.
+    ///
+    /// By default, no methods are restricted by this rule.
+    /// You must configure the rule for it to disable anything.
     ///
     /// ### Examples
     ///
@@ -67,6 +71,17 @@ declare_oxc_lint!(
     ///
     ///   // ...
     /// });
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-restricted-vi-methods.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-restricted-vi-methods": ["error", { "badFunction": "Don't use `badFunction`, it is bad." }]
+    ///   }
+    /// }
     /// ```
     NoRestrictedJestMethods,
     jest,

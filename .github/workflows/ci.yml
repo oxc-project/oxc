@@ -144,10 +144,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/playground
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
-          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
+          pnpm run build-wasm-dev
           git diff --exit-code # Must commit everything
       - name: Test wasi in browser
         if: steps.filter.outputs.src == 'true'
@@ -156,6 +153,7 @@ jobs:
           rm -rf *.wasm
           pnpm exec playwright install chromium
           pnpm run build-wasi
+          pnpm run build-wasm-dev
           pnpm run build-npm-dir
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir
@@ -196,10 +194,8 @@ jobs:
           pnpm run test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run test
         working-directory: tasks/e2e
+        run: pnpm run test
       - if: steps.filter.outputs.src == 'true'
         run: |
           git diff --exit-code # Must commit everything
@@ -274,11 +270,8 @@ jobs:
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
-      # Need to build Oxlint's JS bundle before linting `apps/oxlint`, because the tests reference
-      # the `index.d.ts` file produced by TSDown. Type-aware rules rely on this `.d.ts` file being present.
-      - name: Build Oxlint
-        working-directory: apps/oxlint
-        run: pnpm run build-js
+      - run: pnpm --filter oxlint-app build-js
+      - run: pnpm --filter oxfmt-app build-js
       - run: node --run lint
 
   conformance:

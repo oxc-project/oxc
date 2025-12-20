@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 394
+---
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).toBeCalledTimes(0);
+   · ─────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).not.toBeCalledTimes(0);
+   · ─────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).toHaveBeenCalledTimes(0);
+   · ───────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).not.toHaveBeenCalledTimes(0);
+   · ───────────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).not.toHaveBeenCalledTimes(0, 1, 2);
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).resolves.toHaveBeenCalledTimes(0);
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).rejects.not.toHaveBeenCalledTimes(0);
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called
+
+  ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
+   ╭─[prefer_to_have_been_called.tsx:1:1]
+ 1 │ expect(method).toBeCalledTimes(0 as number);
+   · ───────────────────────────────────────────
+   ╰────
+  help: Use `toHaveBeenCalled()` to check if function was called, or `not.toHaveBeenCalled()` to check if it wasn't called

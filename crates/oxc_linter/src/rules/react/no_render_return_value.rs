@@ -10,7 +10,7 @@ use crate::{
 };
 
 fn no_render_return_value_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
+    OxcDiagnostic::warn("Do not depend on the return value from `ReactDOM.render`.")
         .with_help("Using the return value is a legacy feature.")
         .with_label(span)
 }
@@ -21,11 +21,11 @@ pub struct NoRenderReturnValue;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule will warn you if you try to use the ReactDOM.render() return value.
+    /// This rule will warn you if you try to use the `ReactDOM.render()` return value.
     ///
     /// ### Why is this bad?
     ///
-    /// Using the return value from ReactDOM.render() is a legacy feature and should not be used.
+    /// Using the return value from `ReactDOM.render()` is a legacy feature and should not be used.
     ///
     /// ### Examples
     ///

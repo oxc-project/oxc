@@ -46,6 +46,8 @@ impl Generator for ESTreeVisitGenerator {
         let Codes {
             walk_parser,
             walk_oxlint,
+            walk_dts_parser,
+            walk_dts_oxlint,
             visitor_keys,
             type_ids_map_parser,
             type_ids_map_oxlint,
@@ -55,24 +57,32 @@ impl Generator for ESTreeVisitGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.js"),
                 code: walk_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.d.ts"),
+                code: walk_dts_parser,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/keys.js"),
                 code: visitor_keys.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/type_ids.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/type_ids.js"),
                 code: type_ids_map_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/visitor.d.ts"),
                 code: visitor_type_parser,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
                 code: walk_oxlint,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.d.ts"),
+                code: walk_dts_oxlint,
             },
             Output::Javascript {
                 // This file is also valid as TS
@@ -96,6 +106,8 @@ impl Generator for ESTreeVisitGenerator {
 struct Codes {
     walk_parser: String,
     walk_oxlint: String,
+    walk_dts_parser: String,
+    walk_dts_oxlint: String,
     visitor_keys: String,
     type_ids_map_parser: String,
     type_ids_map_oxlint: String,
@@ -436,16 +448,52 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let visitor_type_oxlint = format!("
-        import * as ESTree from './types.d.ts';
+        import type * as ESTree from './types.d.ts';
 
         export interface VisitorObject {{
             {visitor_type} [key: string]: (node: ESTree.Node) => void;
         }}
     ");
 
+    // Type definitions for walk.js.
+    // The visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_parser = "
+        import type * as ESTree from '@oxc-project/types';
+
+        type VisitFn = ((node: ESTree.Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;
+    ".to_string();
+
+    // For oxlint, the visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_oxlint = "
+        import type { Node, Program } from './types.d.ts';
+
+        type VisitFn = ((node: Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: Program, visitors: CompiledVisitors): void;
+        export declare const ancestors: Node[];
+    ".to_string();
+
     Codes {
         walk_parser,
         walk_oxlint,
+        walk_dts_parser,
+        walk_dts_oxlint,
         visitor_keys,
         type_ids_map_parser: type_ids_map,
         type_ids_map_oxlint,

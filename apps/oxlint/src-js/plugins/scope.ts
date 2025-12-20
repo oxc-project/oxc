@@ -115,7 +115,7 @@ function initTsScopeManager() {
   typeAssertIs<AnalyzeOptions>(analyzeOptions);
   // The effectiveness of this assertion depends on our alignment with ESTree.
   // It could eventually be removed as we align the remaining corner cases and the typegen.
-  // @ts-expect-error // TODO: Our types don't quite align yet
+  // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
 }
 
@@ -146,7 +146,7 @@ export const SCOPE_MANAGER = Object.freeze({
    */
   get scopes(): Scope[] {
     if (tsScopeManager === null) initTsScopeManager();
-    // @ts-expect-error // TODO: Our types don't quite align yet
+    // @ts-expect-error - TODO: Our types don't quite align yet
     return tsScopeManager.scopes;
   },
 
@@ -155,7 +155,7 @@ export const SCOPE_MANAGER = Object.freeze({
    */
   get globalScope(): Scope | null {
     if (tsScopeManager === null) initTsScopeManager();
-    // @ts-expect-error // TODO: Our types don't quite align yet
+    // @ts-expect-error - TODO: Our types don't quite align yet
     return tsScopeManager.globalScope;
   },
 
@@ -167,7 +167,7 @@ export const SCOPE_MANAGER = Object.freeze({
    */
   getDeclaredVariables(node: ESTree.Node): Variable[] {
     if (tsScopeManager === null) initTsScopeManager();
-    // @ts-expect-error // TODO: Our types don't quite align yet
+    // @ts-expect-error - TODO: Our types don't quite align yet
     return tsScopeManager.getDeclaredVariables(node);
   },
 
@@ -182,7 +182,7 @@ export const SCOPE_MANAGER = Object.freeze({
    */
   acquire(node: ESTree.Node, inner?: boolean): Scope | null {
     if (tsScopeManager === null) initTsScopeManager();
-    // @ts-expect-error // TODO: Our types don't quite align yet
+    // @ts-expect-error - TODO: Our types don't quite align yet
     return tsScopeManager.acquire(node, inner);
   },
 });
@@ -233,7 +233,7 @@ export function getDeclaredVariables(node: ESTree.Node): Variable[] {
   if (tsScopeManager === null) initTsScopeManager();
   debugAssertIsNonNull(tsScopeManager);
 
-  // @ts-expect-error // TODO: Our types don't quite align yet
+  // @ts-expect-error - TODO: Our types don't quite align yet
   return tsScopeManager.getDeclaredVariables(node);
 }
 
@@ -253,7 +253,7 @@ export function getScope(node: ESTree.Node): Scope {
 
   // Traverse up the AST to find a `Node` whose scope can be acquired.
   do {
-    // @ts-expect-error // TODO: Our types don't quite align yet
+    // @ts-expect-error - TODO: Our types don't quite align yet
     const scope = tsScopeManager.acquire(node, inner) as Scope;
     if (scope !== null) {
       return scope.type === "function-expression-name" ? scope.childScopes[0] : scope;
@@ -264,7 +264,7 @@ export function getScope(node: ESTree.Node): Scope {
   } while (node !== null);
 
   // TODO: Is it possible to get here? Doesn't `Program` always have a scope?
-  // @ts-expect-error // TODO: Our types don't quite align yet
+  // @ts-expect-error - TODO: Our types don't quite align yet
   return tsScopeManager.scopes[0];
 }
 

@@ -1,35 +1,15 @@
 {
   "name": "oxc-parser",
-  "version": "0.101.0",
-  "type": "module",
-  "main": "src-js/index.js",
-  "browser": "src-js/wasm.js",
-  "scripts": {
-    "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
-    "build-test": "pnpm run build-dev --profile coverage",
-    "build": "pnpm run build-dev --features allocator --release",
-    "postbuild": "publint",
-    "postbuild-dev": "node scripts/patch.js",
-    "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
-    "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
-    "build-browser-bundle": "node scripts/build-browser-bundle.js",
-    "test": "tsc && pnpm run test-node run",
-    "test-node": "vitest --dir ./test",
-    "test-browser": "vitest -c vitest.config.browser.ts",
-    "bench": "vitest bench --run ./bench.bench.js"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
+  "version": "0.104.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "oxc",
     "parser"
   ],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
@@ -39,55 +19,77 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "files": [
-    "generated/constants.js",
-    "generated/deserialize/js.js",
-    "generated/deserialize/ts.js",
-    "generated/deserialize/js_range.js",
-    "generated/deserialize/ts_range.js",
-    "generated/lazy/constructors.js",
-    "generated/lazy/type_ids.js",
-    "generated/lazy/walk.js",
-    "generated/visit/keys.js",
-    "generated/visit/type_ids.js",
-    "generated/visit/visitor.d.ts",
-    "generated/visit/walk.js",
     "src-js/bindings.js",
     "src-js/index.d.ts",
     "src-js/index.js",
     "src-js/wasm.js",
     "src-js/webcontainer-fallback.cjs",
     "src-js/wrap.js",
+    "src-js/generated/constants.js",
     "src-js/raw-transfer/common.js",
     "src-js/raw-transfer/eager.js",
-    "src-js/raw-transfer/lazy.js",
     "src-js/raw-transfer/lazy-common.js",
+    "src-js/raw-transfer/lazy.js",
     "src-js/raw-transfer/node-array.js",
     "src-js/raw-transfer/supported.js",
     "src-js/raw-transfer/visitor.js",
     "src-js/visit/index.js",
-    "src-js/visit/visitor.js"
+    "src-js/visit/visitor.js",
+    "src-js/generated/deserialize/js.js",
+    "src-js/generated/deserialize/js_range.js",
+    "src-js/generated/deserialize/ts.js",
+    "src-js/generated/deserialize/ts_range.js",
+    "src-js/generated/lazy/constructors.js",
+    "src-js/generated/lazy/type_ids.js",
+    "src-js/generated/lazy/walk.js",
+    "src-js/generated/visit/keys.js",
+    "src-js/generated/visit/type_ids.js",
+    "src-js/generated/visit/visitor.d.ts",
+    "src-js/generated/visit/walk.js"
   ],
+  "type": "module",
+  "main": "src-js/index.js",
+  "browser": "src-js/wasm.js",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
+    "build-test": "pnpm run build-dev --profile coverage",
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
+    "postbuild-dev": "node scripts/patch.js",
+    "build-wasi": "napi build --target wasm32-wasip1-threads",
+    "build-wasm": "pnpm run build-wasm-dev --release",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
+    "build-browser-bundle": "node scripts/build-browser-bundle.js",
+    "test": "pnpm run test-node run",
+    "test-node": "vitest --dir ./test",
+    "test-browser": "vitest -c vitest.config.browser.ts",
+    "bench": "vitest bench --run ./bench.bench.js"
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^5.0.0",
+    "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "catalog:",
+    "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.44.0",
-    "@vitest/browser": "4.0.6",
-    "@vitest/browser-playwright": "4.0.6",
-    "esbuild": "^0.25.0",
+    "@vitest/browser": "4.0.15",
+    "@vitest/browser-playwright": "4.0.15",
+    "esbuild": "^0.27.0",
     "playwright": "^1.51.0",
+    "publint": "catalog:",
     "tinypool": "^2.0.0",
-    "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "parser",
+    "dtsHeaderFile": "src-js/header.d.ts",
     "packageName": "@oxc-parser/binding",
     "targets": [
       "aarch64-apple-darwin",
@@ -110,7 +112,9 @@
       "browser": {
         "fs": false
       }
-    },
-    "dtsHeaderFile": "src-js/header.d.ts"
+    }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

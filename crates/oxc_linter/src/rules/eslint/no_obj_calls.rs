@@ -26,8 +26,8 @@ declare_oxc_lint!(
     ///
     /// Disallow calling some global objects as functions.
     ///
-    /// It is safe to disable this rule when using TypeScript, because
-    /// TypeScript's compiler enforces this check.
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///

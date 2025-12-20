@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -319,21 +320,37 @@ impl TsGoLintState {
     /// A human-readable error message indicating why the linting failed.
     pub fn lint_source(
         &self,
-        path: &Arc<OsStr>,
-        source_text: String,
+        paths: &[Arc<OsStr>],
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) -> Result<Vec<Message>, String> {
-        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
-        let mut source_overrides = FxHashMap::default();
-        source_overrides.insert(path.to_string_lossy().to_string(), source_text.clone());
+        if paths.is_empty() {
+            return Ok(vec![]);
+        }
 
-        let json_input = self.json_input(
-            std::slice::from_ref(path),
-            Some(source_overrides),
-            &mut resolved_configs,
-        );
+        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        let mut source_overrides: FxHashMap<String, String> = FxHashMap::default();
+        let allocator = Allocator::default();
+
+        // Read all sources into overrides
+        for path in paths {
+            let path_ref = Path::new(path.as_ref());
+            let Ok(source_text) = file_system.read_to_arena_str(path_ref, &allocator) else {
+                return Err(format!(
+                    "Failed to read source text for file: {}",
+                    path.to_string_lossy()
+                ));
+            };
+            source_overrides.insert(path.to_string_lossy().to_string(), source_text.to_string());
+        }
+
+        let json_input =
+            self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
+
+        //  Get the file name of the first path for internal diagnostic filtering
         let path_file_name =
-            Path::new(path.as_ref()).file_name().unwrap_or_default().to_os_string();
+            Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
+
         let mut child = self.spawn_tsgolint(&json_input)?;
         let handler = std::thread::spawn(move || {
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
@@ -381,9 +398,18 @@ impl TsGoLintState {
                                         continue;
                                     }
 
+                                    // Use the corresponding source override text
+                                    let Some(source_text_owned) = source_overrides
+                                        .get(&path.to_string_lossy().to_string())
+                                        .cloned()
+                                    else {
+                                        // should never happen, because we populated source_overrides above
+                                        continue;
+                                    };
+
                                     let mut message = Message::from_tsgo_lint_diagnostic(
                                         tsgolint_diagnostic,
-                                        &source_text,
+                                        &source_text_owned,
                                     );
 
                                     message.error.severity = if severity == AllowWarnDeny::Deny {

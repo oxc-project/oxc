@@ -14,20 +14,25 @@ let lintFile: typeof lintFileWrapper | null = null;
  * Lazy-loads plugins code on first call, so that overhead is skipped if user doesn't use JS plugins.
  *
  * @param path - Absolute path of plugin file
- * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin details or error serialized to JSON string
  */
-function loadPluginWrapper(path: string, packageName: string | null): Promise<string> {
+function loadPluginWrapper(
+  path: string,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): Promise<string> {
   if (loadPlugin === null) {
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
       ({ loadPlugin, lintFile, setupConfigs } = mod);
-      return loadPlugin(path, packageName);
+      return loadPlugin(path, pluginName, pluginNameIsAlias);
     });
   }
   debugAssertIsNonNull(loadPlugin);
-  return loadPlugin(path, packageName);
+  return loadPlugin(path, pluginName, pluginNameIsAlias);
 }
 
 /**
@@ -36,10 +41,11 @@ function loadPluginWrapper(path: string, packageName: string | null): Promise<st
  * Delegates to `setupConfigs`, which was lazy-loaded by `loadPluginWrapper`.
  *
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
+ * @returns `null` if success, or error message string
  */
-function setupConfigsWrapper(optionsJSON: string): void {
+function setupConfigsWrapper(optionsJSON: string): string | null {
   debugAssertIsNonNull(setupConfigs);
-  setupConfigs(optionsJSON);
+  return setupConfigs(optionsJSON);
 }
 
 /**
@@ -53,6 +59,7 @@ function setupConfigsWrapper(optionsJSON: string): void {
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
+ * @param globalsJSON - Globals for file, as JSON
  * @returns Diagnostics or error serialized to JSON string
  */
 function lintFileWrapper(
@@ -62,11 +69,12 @@ function lintFileWrapper(
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
+  globalsJSON: string,
 ): string | null {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
   debugAssertIsNonNull(lintFile);
-  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON);
+  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

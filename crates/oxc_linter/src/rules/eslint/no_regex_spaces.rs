@@ -12,7 +12,12 @@ use oxc_regular_expression::{
 };
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn no_regex_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Multiple consecutive spaces are hard to count.")
@@ -47,7 +52,7 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
-    pending // TODO: This is somewhat autofixable, but the fixer does not exist yet.
+    fix
 );
 
 impl Rule for NoRegexSpaces {
@@ -55,19 +60,25 @@ impl Rule for NoRegexSpaces {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
                 if let Some(span) = Self::find_literal_to_report(lit) {
-                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // /a  b/
+                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                        Self::fix_spaces(fixer, span)
+                    }); // /a  b/
                 }
             }
 
             AstKind::CallExpression(expr) if Self::is_regexp_call_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
-                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // RegExp('a  b')
+                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                        Self::fix_spaces(fixer, span)
+                    }); // RegExp('a  b')
                 }
             }
 
             AstKind::NewExpression(expr) if Self::is_regexp_new_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
-                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // new RegExp('a  b')
+                    ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
+                        Self::fix_spaces(fixer, span)
+                    }); // new RegExp('a  b')
                 }
             }
             _ => {}
@@ -76,6 +87,11 @@ impl Rule for NoRegexSpaces {
 }
 
 impl NoRegexSpaces {
+    fn fix_spaces(fixer: RuleFixer<'_, '_>, span: Span) -> RuleFix {
+        let replacement = format!(" {{{}}}", span.size());
+        fixer.replace(span, replacement)
+    }
+
     fn find_literal_to_report(literal: &RegExpLiteral) -> Option<Span> {
         let pattern_text = literal.regex.pattern.text.as_str();
         if !Self::has_double_space(pattern_text) {
@@ -220,6 +236,14 @@ fn test() {
         "var foo = /[\\q{    }]/v;",
         "var foo = new RegExp('[  ');",
         "new RegExp('[[abc]  ]', flags + 'v')",
+        r"var foo = new RegExp('\\x20\\x20');",
+        r"var foo = new RegExp('\\u0020\\u0020');",
+        r"var foo = new RegExp(' \\x20');",
+        r"var foo = new RegExp('\\x20 ');",
+        r"var foo = /\x20\x20/;",
+        r"var foo = /\u0020\u0020/;",
+        r#"var foo = new RegExp("\\x20\\x20");"#,
+        r#"var foo = new RegExp("\\u0020\\u0020");"#,
     ];
 
     let fail = vec![
@@ -251,5 +275,40 @@ fn test() {
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
     ];
 
-    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var foo = /  /;", "var foo = / {2}/;", None),
+        ("var foo = /bar  baz/;", "var foo = /bar {2}baz/;", None),
+        ("var foo = /bar    baz/;", "var foo = /bar {4}baz/;", None),
+        ("var foo = / a b  c d /;", "var foo = / a b {2}c d /;", None),
+        ("var foo = RegExp(' a b c d  ');", "var foo = RegExp(' a b c d {2}');", None),
+        ("var foo = RegExp('bar    baz');", "var foo = RegExp('bar {4}baz');", None),
+        ("var foo = new RegExp('bar    baz');", "var foo = new RegExp('bar {4}baz');", None),
+        ("var foo = /bar   {3}baz/;", "var foo = /bar {2} {3}baz/;", None),
+        ("var foo = /bar    ?baz/;", "var foo = /bar {3} ?baz/;", None),
+        ("var foo = new RegExp('bar   *baz')", "var foo = new RegExp('bar {2} *baz')", None),
+        ("var foo = RegExp('bar   +baz')", "var foo = RegExp('bar {2} +baz')", None),
+        ("var foo = new RegExp('bar    ');", "var foo = new RegExp('bar {4}');", None),
+        (r"var foo = /bar\\  baz/;", r"var foo = /bar\\ {2}baz/;", None),
+        ("var foo = /(?:  )/;", "var foo = /(?: {2})/;", None),
+        ("var foo = RegExp('^foo(?=   )');", "var foo = RegExp('^foo(?= {3})');", None),
+        (r"var foo = /\\  /", r"var foo = /\\ {2}/", None),
+        (r"var foo = / \\  /", r"var foo = / \\ {2}/", None),
+        ("var foo = /  foo   /;", "var foo = / {2}foo   /;", None),
+        (r"var foo = new RegExp('\\d  ')", r"var foo = new RegExp('\\d {2}')", None),
+        (r"var foo = RegExp('\\u0041   ')", r"var foo = RegExp('\\u0041 {3}')", None),
+        ("var foo = /[   ]  /;", "var foo = /[   ] {2}/;", None),
+        ("var foo = /  [   ] /;", "var foo = / {2}[   ] /;", None),
+        ("var foo = RegExp('  [ ]');", "var foo = RegExp(' {2}[ ]');", None),
+        ("var foo = /[[    ]    ]    /v;", "var foo = /[[    ]    ] {4}/v;", None),
+        ("var foo = new RegExp('[   ]  ');", "var foo = new RegExp('[   ] {2}');", None),
+        (
+            "var foo = new RegExp('[[    ]    ]    ', 'v');",
+            "var foo = new RegExp('[[    ] {4}]    ', 'v');",
+            None,
+        ),
+    ];
+
+    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

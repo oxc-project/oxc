@@ -3,9 +3,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn max_params_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message.to_string())
@@ -15,10 +20,10 @@ fn max_params_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MaxParams(Box<MaxParamsConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct MaxParamsConfig {
     /// Maximum number of parameters allowed in function definitions.
@@ -93,25 +98,17 @@ declare_oxc_lint!(
 
 impl Rule for MaxParams {
     fn from_configuration(value: Value) -> Self {
-        let config = value.get(0);
-        if let Some(max) = config
+        if let Some(max) = value
+            .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
             Self(Box::new(MaxParamsConfig { max, count_void_this: false }))
         } else {
-            let max = config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(3, |v| usize::try_from(v).unwrap_or(3));
-            let count_void_this = config
-                .and_then(|config| config.get("countVoidThis"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-
-            Self(Box::new(MaxParamsConfig { max, count_void_this }))
+            serde_json::from_value::<DefaultRuleConfig<MaxParams>>(value)
+                .unwrap_or_default()
+                .into_inner()
         }
     }
 

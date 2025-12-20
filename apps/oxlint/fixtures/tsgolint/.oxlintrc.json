@@ -31,6 +31,7 @@
     "typescript/non-nullable-type-assertion-style": "error",
     "typescript/only-throw-error": "error",
     "typescript/prefer-includes": "error",
+    "typescript/prefer-nullish-coalescing": "error",
     "typescript/prefer-promise-reject-errors": "error",
     "typescript/prefer-reduce-type-parameter": "error",
     "typescript/prefer-return-this-type": "error",

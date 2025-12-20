@@ -10,9 +10,6 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import type { Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
-const { defineProperty } = Object,
-  { isArray } = Array;
-
 /**
  * Range of source offsets.
  */
@@ -234,9 +231,7 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
     }
   }
 
-  throw new TypeError(
-    "Expected `loc` to be an object with integer `line` and `column` properties.",
-  );
+  throw new TypeError("Expected `loc` to be an object with integer `line` and `column` properties");
 }
 
 /**
@@ -261,7 +256,7 @@ export function getNodeLoc(node: Node): Location {
   };
 
   // Replace `loc` getter with the calculated value
-  defineProperty(node, "loc", { value: loc, writable: true });
+  Object.defineProperty(node, "loc", { value: loc, writable: true });
 
   return loc;
 }
@@ -306,7 +301,7 @@ function traverse(node: ESTreeNode): ESTreeNode {
   for (let keyIndex = 0, keysLen = keys.length; keyIndex < keysLen; keyIndex++) {
     const child = (node as unknown as Record<string, ESTreeNode | ESTreeNode[]>)[keys[keyIndex]];
 
-    if (isArray(child)) {
+    if (Array.isArray(child)) {
       // TODO: Binary search would be faster, especially for arrays of statements, which can be large
       for (let arrIndex = 0, arrLen = child.length; arrIndex < arrLen; arrIndex++) {
         const entry = child[arrIndex];

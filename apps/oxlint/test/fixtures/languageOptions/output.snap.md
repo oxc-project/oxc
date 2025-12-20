@@ -7,7 +7,7 @@
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script"}
-  | globals: null
+  | globals: {}
    ,-[files/index.cjs:1:1]
  1 | let x;
    : ^
@@ -634,7 +634,7 @@
   |     "moduleReference"
   |   ],
   |   "TSImportType": [
-  |     "argument",
+  |     "source",
   |     "options",
   |     "qualifier",
   |     "typeArguments"
@@ -794,7 +794,7 @@
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module"}
-  | globals: null
+  | globals: {}
    ,-[files/index.js:1:1]
  1 | let x;
    : ^
@@ -804,7 +804,7 @@
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module"}
-  | globals: null
+  | globals: {}
    ,-[files/index.mjs:1:1]
  1 | let x;
    : ^

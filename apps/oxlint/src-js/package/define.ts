@@ -11,16 +11,6 @@ import type { SourceCode } from "../plugins/source_code.ts";
 import type { BeforeHook, Visitor, VisitorWithHooks } from "../plugins/types.ts";
 import type { SetNullable } from "../utils/types.ts";
 
-const {
-  defineProperty,
-  getPrototypeOf,
-  hasOwn,
-  setPrototypeOf,
-  create: ObjectCreate,
-  freeze,
-  assign: ObjectAssign,
-} = Object;
-
 // Empty visitor object, returned by `create` when `before` hook returns `false`.
 const EMPTY_VISITOR: Visitor = {};
 
@@ -42,12 +32,13 @@ export function definePlugin(plugin: Plugin): Plugin {
   if (plugin === null || typeof plugin !== "object") throw new Error("Plugin must be an object");
 
   const { rules } = plugin;
-  if (rules === null || typeof rules !== "object")
+  if (rules === null || typeof rules !== "object") {
     throw new Error("Plugin must have an object as `rules` property");
+  }
 
   // Make each rule in the plugin ESLint-compatible by calling `defineRule` on it
   for (const ruleName in rules) {
-    if (hasOwn(rules, ruleName)) {
+    if (Object.hasOwn(rules, ruleName)) {
       rules[ruleName] = defineRule(rules[ruleName]);
     }
   }
@@ -90,10 +81,12 @@ export function defineRule(rule: Rule): Rule {
     // Copy properties from ESLint's context object to `context`.
     // ESLint's context object is an object of form `{ id, options, report }`, with all other properties
     // and methods on another object which is its prototype.
-    defineProperty(context, "id", { value: eslintContext.id });
-    defineProperty(context, "options", { value: eslintContext.options });
-    defineProperty(context, "report", { value: eslintContext.report });
-    setPrototypeOf(context, getPrototypeOf(eslintContext));
+    Object.defineProperties(context, {
+      id: { value: eslintContext.id },
+      options: { value: eslintContext.options },
+      report: { value: eslintContext.report },
+    });
+    Object.setPrototypeOf(context, Object.getPrototypeOf(eslintContext));
 
     // If `before` hook returns `false`, skip traversal by returning an empty object as visitor
     if (beforeHook !== null) {
@@ -118,7 +111,7 @@ let cwd: string | null = null;
 // All other getters/methods throw, same as they do in main implementation.
 //
 // See `FILE_CONTEXT` in `plugins/context.ts` for details of all the getters/methods.
-const FILE_CONTEXT: FileContext = freeze({
+const FILE_CONTEXT: FileContext = Object.freeze({
   get filename(): string {
     throw new Error("Cannot access `context.filename` in `createOnce`");
   },
@@ -164,7 +157,7 @@ const FILE_CONTEXT: FileContext = freeze({
 
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
     // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
-    return freeze(ObjectAssign(ObjectCreate(this), extension));
+    return Object.freeze(Object.assign(Object.create(this), extension));
   },
 
   get parserOptions(): Record<string, unknown> {
@@ -189,16 +182,18 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 } {
   // Validate type of `createOnce`
   const { createOnce } = rule;
-  if (createOnce == null)
+  if (createOnce == null) {
     throw new Error("Rules must define either a `create` or `createOnce` method");
-  if (typeof createOnce !== "function")
+  }
+  if (typeof createOnce !== "function") {
     throw new Error("Rule `createOnce` property must be a function");
+  }
 
   // Call `createOnce` with empty context object.
   // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
   // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
   // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
-  const context: Context = ObjectCreate(FILE_CONTEXT, {
+  const context: Context = Object.create(FILE_CONTEXT, {
     id: { value: "", enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },
     report: { value: null, enumerable: true, configurable: true },
@@ -218,8 +213,9 @@ function createContextAndVisitor(rule: CreateOnceRule): {
 
   // Add `after` hook to `Program:exit` visit fn
   if (afterHook != null) {
-    if (typeof afterHook !== "function")
+    if (typeof afterHook !== "function") {
       throw new Error("`after` property of visitor must be a function if defined");
+    }
 
     const programExit = visitor["Program:exit"];
     visitor["Program:exit"] =

@@ -18,7 +18,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn for_direction_diagnostic(test_span: Span, update_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The update clause in this loop moves the variable in the wrong direction")
-        .with_help("Use while loop for intended infinite loop")
+        .with_help("Use `while` loop for intended infinite loop")
         .with_labels([
             test_span.label("This test moves in the wrong direction"),
             update_span.label("with this update"),
@@ -40,16 +40,12 @@ declare_oxc_lint!(
     /// infinitely. While infinite loops can be intentional, they are usually written
     /// as `while` loops. More often, an infinite `for` loop is a bug.
     ///
-    /// ### Options
-    ///
-    /// No options available for this rule.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///
     /// ```js
-    /// /* eslint for-direction: "error" */
+    /// /* for-direction: "error" */
     ///
     /// for (var i = 0; i < 10; i--) {
     /// }
@@ -71,7 +67,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     ///
     /// ```js
-    /// /* eslint for-direction: "error" */
+    /// /* for-direction: "error" */
     ///
     /// for (var i = 0; i < 10; i++) {
     /// }

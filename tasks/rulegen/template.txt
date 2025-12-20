@@ -15,14 +15,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    {{#if rule_config}}rule::{DefaultRuleConfig, Rule},{{else}}rule::Rule,{{/if}}
     AstNode,
 };
 
 fn {{snake_rule_name}}_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
         .with_label(span)
 }
 
@@ -67,7 +67,9 @@ declare_oxc_lint!(
 impl Rule for {{pascal_rule_name}} {
 {{#if rule_config}}
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value(value).unwrap()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
 {{/if}}

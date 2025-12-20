@@ -41,7 +41,7 @@ pub struct StructDetails {
     pub field_order: Option<&'static [u8]>,
 }
 
-/// Add `#[repr(C)]` and `#[derive(::oxc_ast_macros::Ast)]` to struct,
+/// Add `#[repr(C)]` / `#[repr(transparent)]`, and `#[derive(::oxc_ast_macros::Ast)]` to struct,
 /// and static assertions for `#[generate_derive]`.
 /// Re-order struct fields if instructed by `STRUCTS` data.
 fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
@@ -50,8 +50,13 @@ fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
     let reorder_result = reorder_struct_fields(item, args);
     let error = reorder_result.err().map(|message| compile_error(&item.ident, message));
 
+    // `#[repr(transparent)]` for structs with only one field.
+    // `#[repr(C)]` otherwise.
+    let field_count = item.fields.len();
+    let repr = if field_count == 1 { quote!(#[repr(transparent)]) } else { quote!(#[repr(C)]) };
+
     quote! {
-        #[repr(C)]
+        #repr
         #[derive(::oxc_ast_macros::Ast)]
         #item
         #error

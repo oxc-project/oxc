@@ -65,7 +65,7 @@ const es2015 = [
       'arrow functions / "this" unchanged by call or apply',
       "arrow functions / can't be bound, can be curried",
       'arrow functions / lexical "arguments" binding',
-      "arrow functions / no line break between params and <code>=></code>",
+      "arrow functions / no line break between params and =>",
       "arrow functions / correct precedence",
       'arrow functions / no "prototype" property',
     ],

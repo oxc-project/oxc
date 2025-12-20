@@ -8,7 +8,7 @@ use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer,
     jsonrpc::{Error, ErrorCode, Result},
-    lsp_types::{
+    ls_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
@@ -86,14 +86,14 @@ impl LanguageServer for Backend {
                 return Some(new_settings);
             }
 
-            let deprecated_settings = value.get("settings");
-
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
-            if deprecated_settings.is_some() && params.root_uri.is_some() {
+            if let (Some(deprecated_settings), Some(root_uri)) =
+                (value.get("settings"), params.root_uri.as_ref())
+            {
                 return Some(vec![WorkspaceOption {
-                    workspace_uri: params.root_uri.clone().unwrap(),
-                    options: deprecated_settings.unwrap().clone(),
+                    workspace_uri: root_uri.clone(),
+                    options: deprecated_settings.clone(),
                 }]);
             }
 
@@ -129,10 +129,10 @@ impl LanguageServer for Backend {
         // start the linter. We do not start the linter when the client support the request,
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
+            let options = options.unwrap_or_default();
+
             for worker in &workers {
                 let option = options
-                    .as_deref()
-                    .unwrap_or_default()
                     .iter()
                     .find(|workspace_option| {
                         worker.is_responsible_for_uri(&workspace_option.workspace_uri)
@@ -214,15 +214,13 @@ impl LanguageServer for Backend {
                         continue;
                     }
                     let content = self.file_system.read().await.get(uri);
-                    if let Some(diagnostics) = worker.run_diagnostic(uri, content.as_deref()).await
-                    {
-                        new_diagnostics.push((uri.clone(), diagnostics));
-                    }
+                    let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+                    new_diagnostics.extend(diagnostics);
                 }
             }
 
             if !new_diagnostics.is_empty() {
-                self.publish_all_diagnostics(new_diagnostics).await;
+                self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
             }
         }
 
@@ -353,7 +351,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
         if !removing_registrations.is_empty()
@@ -401,7 +399,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics).await;
+            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -504,9 +502,9 @@ impl LanguageServer for Backend {
             return;
         };
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await
-        {
-            self.client.publish_diagnostics(uri, diagnostics, None).await;
+        let diagnostics = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await;
+        if !diagnostics.is_empty() {
+            self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default()).await;
         }
     }
     /// It will update the in-memory file content if the client supports dynamic formatting.
@@ -522,13 +520,14 @@ impl LanguageServer for Backend {
         let content = params.content_changes.first().map(|c| c.text.clone());
 
         if let Some(content) = &content {
-            self.file_system.write().await.set(&uri, content.clone());
+            self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
-        if let Some(diagnostics) = worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
-            self.client
-                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
-                .await;
+        let diagnostics = worker.run_diagnostic_on_change(&uri, content.as_deref()).await;
+        if !diagnostics.is_empty() {
+            let version_map = ConcurrentHashMap::default();
+            version_map.pin().insert(uri.clone(), params.text_document.version);
+            self.publish_all_diagnostics(diagnostics, version_map).await;
         }
     }
 
@@ -545,12 +544,13 @@ impl LanguageServer for Backend {
 
         let content = params.text_document.text;
 
-        self.file_system.write().await.set(&uri, content.clone());
+        self.file_system.write().await.set(uri.clone(), content.clone());
 
-        if let Some(diagnostics) = worker.run_diagnostic(&uri, Some(&content)).await {
-            self.client
-                .publish_diagnostics(uri, diagnostics, Some(params.text_document.version))
-                .await;
+        let diagnostics = worker.run_diagnostic(&uri, Some(&content)).await;
+        if !diagnostics.is_empty() {
+            let version_map = ConcurrentHashMap::default();
+            version_map.pin().insert(uri.clone(), params.text_document.version);
+            self.publish_all_diagnostics(diagnostics, version_map).await;
         }
     }
 
@@ -566,7 +566,7 @@ impl LanguageServer for Backend {
         };
 
         self.file_system.write().await.remove(uri);
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_uri_cache(&params.text_document.uri).await;
     }
 
     /// It will return code actions or commands for the given range.
@@ -677,16 +677,23 @@ impl Backend {
     }
 
     async fn clear_diagnostics(&self, uris: Vec<Uri>) {
-        self.publish_all_diagnostics(uris.into_iter().map(|uri| (uri, vec![])).collect()).await;
+        self.publish_all_diagnostics(
+            uris.into_iter().map(|uri| (uri, vec![])).collect(),
+            ConcurrentHashMap::default(),
+        )
+        .await;
     }
 
     /// Publish diagnostics for all files.
-    async fn publish_all_diagnostics(&self, result: Vec<(Uri, Vec<Diagnostic>)>) {
-        join_all(
-            result
-                .into_iter()
-                .map(|(uri, diagnostics)| self.client.publish_diagnostics(uri, diagnostics, None)),
-        )
+    async fn publish_all_diagnostics(
+        &self,
+        result: Vec<(Uri, Vec<Diagnostic>)>,
+        version_map: ConcurrentHashMap<Uri, i32>,
+    ) {
+        join_all(result.into_iter().map(|(uri, diagnostics)| {
+            let version = version_map.pin().get(&uri).copied();
+            self.client.publish_diagnostics(uri, diagnostics, version)
+        }))
         .await;
     }
 }

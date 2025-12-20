@@ -4,6 +4,121 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- a0f74a0 linter/config: Allow aliasing plugin names to allow names the same as builtin plugins (#15569) (Cameron)
+- a43d251 linter/plugins: `RuleTester` support `languageOptions.globals` (#17009) (overlookmotel)
+- 8bc4287 linter/plugins: Validate options against schema (#16974) (overlookmotel)
+- 291b57b ast_tools: Generate TS declaration files for deserializer and walk files (#16912) (camc314)
+- cd3db21 linter: Add ignoredTypeNames option to no-base-to-string rule (#16898) (camc314)
+
+### 🐛 Bug Fixes
+
+- fb9e193 linter: OOM problems with custom plugins (#17082) (overlookmotel)
+- fd03131 linter/plugins: Handle plugin names containing slashes (#17073) (overlookmotel)
+- b2a4fac linter/plugins: Error if plugin name alias is not normalized (#17071) (overlookmotel)
+- e046c4e linter/no-misused-spread: Add rule options support (#17054) (camc314)
+- 5c1a9e0 linter/no-deprecated: Add rule options support (#17053) (camc314)
+- 67f8c5d linter/plugins: Get correct plugin name in all cases (#17033) (overlookmotel)
+- 674dab9 linter/plugins: Fix indentation in error message (#17018) (overlookmotel)
+- 6524f72 linter/plugins: Add `@types/node` dev dependency to `oxlint` package (#17016) (overlookmotel)
+- 7a35513 linter/plugins: Better error for `null` in `globals` in `RuleTester` (#17011) (overlookmotel)
+- 42603ba linter/plugins: Always define `languageOptions.globals` (#17008) (overlookmotel)
+- 477bb57 linter: Fix `vitest/no-restricted-vi-methods` and add tests for it. (#16971) (connorshea)
+- 23ac6b1 linter/plugins: Apply defaults from `meta.schema` to options (#16930) (overlookmotel)
+- 2f946cf linter/plugins: Error if `defaultOptions` is not JSON-serializable (#16959) (overlookmotel)
+- d8b8a57 linter/plugins: Freeze whole of merged options (#16958) (overlookmotel)
+- b845871 linter/plugins: Correctly handle object with `__proto__` keys in options merging (#16928) (overlookmotel)
+
+### ⚡ Performance
+
+- fd8e9c6 linter/plugins: Speed up cloning JSON objects (#16997) (overlookmotel)
+- d77e22d linter/plugins: Use `DEFAULT_OPTIONS` for rules with empty array as default options (#16913) (overlookmotel)
+
+### 📚 Documentation
+
+- ca26a11 linter/plugins: Fix typo in doc comment (#16966) (overlookmotel)
+- 3183bf8 linter/plugins: Fix typo in JSDoc comment (#16900) (overlookmotel)
+
+## [1.33.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- e654c13 linter/plugins: [**BREAKING**] Do not export `NodeOrToken` type (#16806) (overlookmotel)
+- f814c82 linter/plugins: [**BREAKING**] Use TypeScript parser directly for getting tokens (#16805) (overlookmotel)
+
+### 🚀 Features
+
+- 1bdaab1 linter/prefer-nullish-coalescing: Add rule (#16778) (camc314)
+- 2b73b14 linter/plugins: Support `parserOptions.ecmaFeatures.jsx` option in `RuleTester` (#16690) (overlookmotel)
+- 563eab7 linter/plugins: Add `parserOptions.lang` option to `RuleTester` (#16688) (overlookmotel)
+- e39f487 linter/plugins: Add `ignoreNonFatalErrors` option to `RuleTester` (#16672) (overlookmotel)
+- 4cf1353 linter/plugins: `RuleTester` support `languageOptions.sourceType` (#16660) (overlookmotel)
+- 8c8b6d9 linter/plugins: Add `languageOptions` types to `RuleTester` config types (#16642) (overlookmotel)
+- 554250e linter/plugins: `RuleTester` parser support options (#16641) (overlookmotel)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+- 767db50 linter: Promote constructor_super rule from nursery to correctness (#16605) (camc314)
+
+### 🐛 Bug Fixes
+
+- eccffcf linter/plugins: `report()` accept `loc` with no `end` (#16859) (overlookmotel)
+- d3208dc parser: Parse `let?.x` (#16840) (Copilot)
+- 3302fcb linter/plugins: Sort visitors in order of specificity (#16834) (overlookmotel)
+- 36c9097 linter/plugins: `RuleTester` sort diagnostics before comparing to errors (#16741) (overlookmotel)
+- 32e23f7 linter/plugins: Correct punctuation in error message (#16718) (overlookmotel)
+- 6832464 linter/plugins: Do not escape tab or CR in test case names in `RuleTester` (#16712) (overlookmotel)
+
+### ⚡ Performance
+
+- 6b1a7b5 linter/plugins: Store specificity in a single integer (#16835) (overlookmotel)
+- 3b7d345 linter/plugins: Use `start` and `end` instead of `range` in tokens methods (#16808) (overlookmotel)
+- 4f9d17f linter/plugins: Remove unnecessary check (#16750) (overlookmotel)
+- a5dc4c6 oxlint: Run e2e tests concurrently (#16651) (camc314)
+- 0241b9a linter/plugins: Remove code for renaming global values (#16610) (overlookmotel)
+
+### 📚 Documentation
+
+- 32b641a linter/plugins: Fix typo in JSDoc comment (#16699) (overlookmotel)
+
+## [1.32.0] - 2025-12-08
+
+### 🚀 Features
+
+- 5c62c16 linter/plugins: Allow JS plugins to access `globals` (#16512) (Arsh)
+- 7584938 linter/plugins: Add ESLint compat mode to `RuleTester` (#16538) (overlookmotel)
+- b38c2d0 linter/plugins: Add `SourceCode#lineStartIndices` getter (#16510) (overlookmotel)
+- ba93ffc linter/plugins: Add `SourceCode#tokensAndComments` getter (#16503) (overlookmotel)
+- d2ca540 linter/plugins: Add `SourceCode#isESTree` property (#16499) (overlookmotel)
+- 9001234 linter: Add fix support for tsgolint diagnostics (#16344) (camc314)
+- 0ec454c linter/plugins: Merge default options into options (#16358) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a806d74 linter: Use import type for ESTree in visitor.d.ts (#16472) (camc314)
+- 1a69b06 linter: Junit support for multiple files/errors/diagnostics (#16568) (Shrey Sudhir)
+- fd84dcc linter/plugins: `RuleTester` parser catch fatal errors (#16558) (overlookmotel)
+- ab4deb0 linter/plugins: Improve safety of options merging (#16549) (overlookmotel)
+- f7751cc linter/plugins: Fix TS types for `RuleTester` (#16546) (overlookmotel)
+- 6d33320 linter/plugins: Prevent user modifying the default config (#16545) (overlookmotel)
+- b4483c5 linter/plugins: Add config support skeleton to `RuleTester` (#16537) (overlookmotel)
+- 3a49158 linter/plugins: Improve TS types for tokens (#16502) (overlookmotel)
+- 2d3217e linter/plugins: Remove panics from `lint_file` and `setup_configs` (#16453) (overlookmotel)
+
+### ⚡ Performance
+
+- 793b989 linter/plugins: Move result-processing work off main JS thread (#16456) (overlookmotel)
+- 44dff7b linter/plugins: Skip serialization overhead when no errors (#16443) (overlookmotel)
+- 1aa2409 linter/plugins: Do not remove `messageId` field from `DiagnosticReport` before sending to Rust (#16442) (overlookmotel)
+
+### 📚 Documentation
+
+- e24aabd linter/plugins: Correct comment (#16559) (overlookmotel)
+- 8c85e08 linter/plugins: Add TODO comment (#16511) (overlookmotel)
+- a9b9298 linter/plugins: Add JSDoc comments to `SourceCode` properties (#16497) (overlookmotel)
+- 467cc1a linter/plugins: Improve comment on error branch (#16464) (overlookmotel)
+
 ## [1.31.0] - 2025-12-01
 
 ### 💥 BREAKING CHANGES

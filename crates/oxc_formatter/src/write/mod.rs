@@ -69,7 +69,7 @@ use crate::{
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::MemberChain,
-        object::format_property_key,
+        object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
@@ -99,7 +99,23 @@ pub trait FormatWrite<'ast, T = ()> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, text_without_whitespace(self.name().as_str()));
+        let text = text_without_whitespace(self.name().as_str());
+        let is_property_key_parent = matches!(
+            self.parent,
+            AstNodes::ObjectProperty(_)
+                | AstNodes::TSPropertySignature(_)
+                | AstNodes::TSMethodSignature(_)
+                | AstNodes::MethodDefinition(_)
+                | AstNodes::PropertyDefinition(_)
+                | AstNodes::AccessorProperty(_)
+                | AstNodes::ImportAttribute(_)
+        );
+        if is_property_key_parent && f.context().is_quote_needed() {
+            let quote_str = f.options().quote_style.as_str();
+            write!(f, [quote_str, text, quote_str]);
+        } else {
+            write!(f, text);
+        }
     }
 }
 
@@ -139,7 +155,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Elision> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self.properties.iter().any(|kind| {
+                kind.as_property().is_some_and(|property| should_preserve_quote(&property.key, f))
+            });
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         ObjectLike::ObjectExpression(self).fmt(f);
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
+        }
     }
 }
 
@@ -221,7 +248,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
-            && !callee.needs_parentheses(f)
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)
         {
@@ -948,32 +974,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let group_id = f.group_id("assignment");
-        let format_inner = format_with(|f| {
-            if self.computed() {
-                write!(f, "[");
-            }
-            if !self.shorthand() {
-                write!(f, self.key());
-            }
-            if self.computed() {
-                write!(f, "]");
-            }
-            if self.shorthand() {
-                write!(f, self.value());
-            } else {
-                write!(
-                    f,
-                    [
-                        ":",
-                        group(&indent(&soft_line_break_or_space())).with_group_id(Some(group_id)),
-                        line_suffix_boundary(),
-                        indent_if_group_breaks(&self.value(), group_id)
-                    ]
-                );
-            }
-        });
-        write!(f, group(&format_inner));
+        AssignmentLike::BindingProperty(self).fmt(f);
     }
 }
 
@@ -1476,12 +1477,11 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
                 }
             }
             Semicolons::AsNeeded => {
-                let [is_computed, has_no_type_annotation] = match self.signature.as_ref() {
-                    TSSignature::TSPropertySignature(property) => {
-                        [property.computed, property.type_annotation.is_none()]
-                    }
-                    _ => [false, false],
+                let TSSignature::TSPropertySignature(property) = self.signature.as_ref() else {
+                    return;
                 };
+
+                let has_no_type_annotation = property.type_annotation.is_none();
 
                 // Needs semicolon anyway when:
                 // 1. It's a non-computed property signature with type annotation followed by
@@ -1490,7 +1490,7 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
                 // 2. It's a non-computed property signature without type annotation followed by
                 //    a call signature or method signature
                 //    e.g for: `a; () => void` or `a; method(): void`
-                let needs_semicolon = !is_computed
+                let needs_semicolon = !property.computed
                     && self.next_signature.is_some_and(|signature| match signature.as_ref() {
                         TSSignature::TSCallSignatureDeclaration(call) => {
                             has_no_type_annotation || call.type_parameters.is_some()
@@ -1511,6 +1511,18 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        if f.options().quote_properties.is_consistent() {
+            let quote_needed = self.as_ref().iter().any(|signature| {
+                let key = match signature {
+                    TSSignature::TSPropertySignature(property) => &property.key,
+                    TSSignature::TSMethodSignature(property) => &property.key,
+                    _ => return false,
+                };
+                should_preserve_quote(key, f)
+            });
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         let mut joiner = f.join_nodes_with_soft_line();
 
         let mut iter = self.iter().peekable();
@@ -1519,6 +1531,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
                 signature.span(),
                 &FormatTSSignature { signature, next_signature: iter.peek().copied() },
             );
+        }
+
+        if f.options().quote_properties.is_consistent() {
+            f.context_mut().pop_quote_needed();
         }
     }
 }

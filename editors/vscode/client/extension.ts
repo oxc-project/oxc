@@ -75,48 +75,29 @@ export async function activate(context: ExtensionContext) {
     ),
   );
 
-  // remove this block, when `oxfmt` binary is always required. This will be a breaking change.
-  if (
-    binaryPaths.some((path) => path?.includes("oxc_language_server")) &&
-    !configService.vsCodeConfig.binPathOxfmt
-  ) {
-    configService.useOxcLanguageServerForFormatting = true;
-  }
-
   await Promise.all(
     tools.map((tool): Promise<void> => {
       const binaryPath = binaryPaths[tools.indexOf(tool)];
 
-      // For the linter this should never happen, but just in case.
       if (!binaryPath && tool instanceof Linter) {
         statusBarItemHandler.setColorAndIcon("statusBarItem.errorBackground", "error");
         statusBarItemHandler.updateToolTooltip(
           "linter",
-          "**oxlint disabled**\n\nError: No valid oxc language server binary found.",
+          "**oxlint disabled**\n\nError: No valid oxlint binary found.",
         );
         return Promise.resolve();
       }
 
-      if (tool instanceof Formatter) {
-        if (configService.useOxcLanguageServerForFormatting) {
-          // The formatter is already handled by the linter tool in this case.
-          statusBarItemHandler.updateToolTooltip(
-            "formatter",
-            "**oxfmt disabled**\n\noxc_language_server is used for formatting.",
-          );
-          outputChannelFormat.appendLine("oxc_language_server is used for formatting.");
-          return Promise.resolve();
-        } else if (!binaryPath) {
-          // No valid binary found for the formatter.
-          statusBarItemHandler.updateToolTooltip(
-            "formatter",
-            "**oxfmt disabled**\n\nNo valid oxfmt binary found.",
-          );
-          outputChannelFormat.appendLine(
-            "No valid oxfmt binary found. Formatter will not be activated.",
-          );
-          return Promise.resolve();
-        }
+      if (!binaryPath && tool instanceof Formatter) {
+        // No valid binary found for the formatter.
+        statusBarItemHandler.updateToolTooltip(
+          "formatter",
+          "**oxfmt disabled**\n\nNo valid oxfmt binary found.",
+        );
+        outputChannelFormat.appendLine(
+          "No valid oxfmt binary found. Formatter will not be activated.",
+        );
+        return Promise.resolve();
       }
 
       // binaryPath is guaranteed to be defined here.

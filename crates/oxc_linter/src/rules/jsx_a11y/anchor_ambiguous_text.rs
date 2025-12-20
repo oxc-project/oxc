@@ -215,7 +215,7 @@ fn test() {
         (r#"<a><img alt="documentation" /></a>;"#, None, None),
         (
             "<a>click here</a>",
-            Some(serde_json::json!([{        "words": ["disabling the defaults"],      }])),
+            Some(serde_json::json!([{ "words": ["disabling the defaults"] }])),
             None,
         ),
         (
@@ -248,9 +248,7 @@ fn test() {
         ),
         (
             "<Link>click here</Link>",
-            Some(
-                serde_json::json!([{        "words": ["disabling the defaults with components"],      }]),
-            ),
+            Some(serde_json::json!([{ "words": ["disabling the defaults with components"] }])),
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
             ),
@@ -303,7 +301,7 @@ fn test() {
         ),
         (
             "<a>a disallowed word</a>",
-            Some(serde_json::json!([{        "words": ["a disallowed word"],      }])),
+            Some(serde_json::json!([{ "words": ["a disallowed word"] }])),
             None,
         ),
     ];

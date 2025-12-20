@@ -10,8 +10,45 @@ use crate::fixer::Fix;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
-    All { comment_span: Span, is_next_line: bool },
-    Single { rule_name: String, name_span: Span, comment_span: Span, is_next_line: bool },
+    /// Disables all linting rules for a span of code.
+    /// Used by directives like `eslint-disable`, `eslint-disable-next-line`, or `eslint-disable-line` without specific rule names.
+    ///
+    /// # Example
+    /// ```text
+    /// /* eslint-disable */
+    ///    ^^^^^^^^^^^^^^^ comment_span
+    /// ```
+    All {
+        /// Span of the comment containing the disable directive
+        comment_span: Span,
+        /// Whether this is a line-specific directive (`-next-line` or `-line`).
+        is_next_line: bool,
+    },
+    /// Disables a single specific linting rule for a span of code.
+    /// Used by directives like `eslint-disable rule-name`, `eslint-disable-next-line rule-name`, or `eslint-disable-line rule-name`.
+    ///
+    /// # Example
+    /// ```text
+    /// /* eslint-disable no-debugger */
+    ///   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment_span
+    ///                   ^^^^^^^^^^^  name_span (for "no-debugger")
+    /// ```
+    Single {
+        /// Name of the disabled rule (e.g., "no-debugger", "no-console")
+        rule_name: String,
+        /// Span of the rule name within the comment.
+        ///
+        /// For `/* eslint-disable no-debugger */`, this points to "no-debugger".
+        name_span: Span,
+        /// Span of the entire comment content containing the disable directive.
+        ///
+        /// For `/* eslint-disable no-debugger */`, this points to "eslint-disable no-debugger".
+        comment_span: Span,
+        /// Whether this is a line-specific directive (`-next-line` or `-line`).
+        /// When true, only diagnostics starting within the interval are suppressed.
+        /// When false, any diagnostic overlapping the interval is suppressed.
+        is_next_line: bool,
+    },
 }
 
 impl DisabledRule {
@@ -32,9 +69,25 @@ impl DisabledRule {
     }
 }
 
+/// Represents a single rule within a disable/enable comment directive.
+///
+/// Used when reporting unused disable directives or creating fixes to remove
+/// specific rules from a comment.
+///
+/// # Example
+/// ```text
+/// /* eslint-disable no-debugger, no-console */
+///                   ^^^^^^^^^^^              name_span (for this RuleCommentRule)
+///                   no-debugger              rule_name
+/// ```
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RuleCommentRule {
+    /// Name of the rule (e.g., "no-debugger", "no-console")
     pub rule_name: String,
+    /// Span of the rule name within the comment.
+    ///
+    /// For `/* eslint-disable no-debugger, no-console */`, the first
+    /// `RuleCommentRule` would have a `name_span` pointing to "no-debugger".
     pub name_span: Span,
 }
 
@@ -143,10 +196,21 @@ impl DisableDirectives {
                 // Check if this rule should be disabled
                 let rule_matches = match &interval.val {
                     DisabledRule::All { .. } => true,
-                    // Our rule name currently does not contain the prefix.
-                    // For example, this will match `@typescript-eslint/no-var-requires` given
-                    // our rule_name is `no-var-requires`.
-                    DisabledRule::Single { rule_name: name, .. } => name.contains(rule_name),
+                    // `rule_name` does not contain the prefix.
+                    // - `vitest/foobar` will be just `foobar`.
+                    // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
+                    //
+                    // This enables matching rules across different plugins that share the same
+                    // rule name, such as jest<->vitest rules and eslint<->typescript rules.
+                    DisabledRule::Single { rule_name: name, .. } => {
+                        if name.contains(rule_name) {
+                            return true;
+                        }
+
+                        // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
+                        return name == "vitest/no-restricted-vi-methods"
+                            && rule_name == "no-restricted-jest-methods";
+                    }
                 };
 
                 if !rule_matches {
@@ -307,7 +371,7 @@ impl DisableDirectivesBuilder {
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
             {
-                rule_name_start += 14; // eslint-disable is 14 bytes
+                rule_name_start += 14; // eslint-disable and oxlint-disable are each 14 bytes
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {

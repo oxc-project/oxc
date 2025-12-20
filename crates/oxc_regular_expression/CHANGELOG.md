@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- 5a2af88 regular_expression: Correct named capture group reference error (#16952) (sapphi-red)
+
 ## [0.96.0] - 2025-10-30
 
 ### 🚜 Refactor

@@ -6,9 +6,12 @@ expression: snapshot
 search: false
 ---
 
-# Configuration options for the formatter.
+# Configuration options for the Oxfmt.
+
 Most options are the same as Prettier's options.
 See also <https://prettier.io/docs/options>
+
+In addition, some options are our own extensions.
 
 
 ## arrowParens
@@ -16,7 +19,7 @@ See also <https://prettier.io/docs/options>
 type: `string | null`
 
 
-Include parentheses around a sole arrow function parameter. (Default: "always")
+Include parentheses around a sole arrow function parameter. (Default: `"always"`)
 
 
 ## bracketSameLine
@@ -24,7 +27,8 @@ Include parentheses around a sole arrow function parameter. (Default: "always")
 type: `boolean | null`
 
 
-Put the > of a multi-line JSX element at the end of the last line instead of being alone on the next line. (Default: false)
+Put the `>` of a multi-line JSX element at the end of the last line
+instead of being alone on the next line. (Default: `false`)
 
 
 ## bracketSpacing
@@ -32,7 +36,7 @@ Put the > of a multi-line JSX element at the end of the last line instead of bei
 type: `boolean | null`
 
 
-Print spaces between brackets in object literals. (Default: true)
+Print spaces between brackets in object literals. (Default: `true`)
 
 
 ## embeddedLanguageFormatting
@@ -40,7 +44,7 @@ Print spaces between brackets in object literals. (Default: true)
 type: `string | null`
 
 
-Control whether formats quoted code embedded in the file. (Default: "auto")
+Control whether formats quoted code embedded in the file. (Default: `"auto"`)
 
 
 ## endOfLine
@@ -48,7 +52,7 @@ Control whether formats quoted code embedded in the file. (Default: "auto")
 type: `string | null`
 
 
-Which end of line characters to apply. (Default: "lf")
+Which end of line characters to apply. (Default: `"lf"`)
 
 
 ## experimentalSortImports
@@ -79,11 +83,10 @@ type: `string[]`
 
 ### experimentalSortImports.ignoreCase
 
-type: `boolean`
-
-default: `true`
+type: `boolean | null`
 
 
+Ignore case when sorting. (Default: `true`)
 
 
 ### experimentalSortImports.internalPattern
@@ -91,16 +94,15 @@ default: `true`
 type: `string[]`
 
 
-
+Glob patterns to identify internal imports.
 
 
 ### experimentalSortImports.newlinesBetween
 
-type: `boolean`
-
-default: `true`
+type: `boolean | null`
 
 
+Add newlines between import groups. (Default: `true`)
 
 
 ### experimentalSortImports.order
@@ -108,34 +110,39 @@ default: `true`
 type: `string | null`
 
 
-
+Sort order. (Default: `"asc"`)
 
 
 ### experimentalSortImports.partitionByComment
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Partition imports by comments. (Default: `false`)
 
 
 ### experimentalSortImports.partitionByNewline
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Partition imports by newlines. (Default: `false`)
 
 
 ### experimentalSortImports.sortSideEffects
 
-type: `boolean`
-
-default: `false`
+type: `boolean | null`
 
 
+Sort side-effect imports. (Default: `false`)
+
+
+## experimentalSortPackageJson
+
+type: `boolean | null`
+
+
+Experimental: Sort `package.json` keys. (Default: `true`)
 
 
 ## ignorePatterns
@@ -151,7 +158,7 @@ Ignore files matching these glob patterns. Current working directory is used as 
 type: `boolean | null`
 
 
-Use single quotes instead of double quotes in JSX. (Default: false)
+Use single quotes instead of double quotes in JSX. (Default: `false`)
 
 
 ## objectWrap
@@ -159,8 +166,8 @@ Use single quotes instead of double quotes in JSX. (Default: false)
 type: `string | null`
 
 
-How to wrap object literals when they could fit on one line or span multiple lines. (Default: "preserve")
-NOTE: In addition to Prettier's "preserve" and "collapse", we also support "always".
+How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
+NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
 
 
 ## printWidth
@@ -168,7 +175,7 @@ NOTE: In addition to Prettier's "preserve" and "collapse", we also support "alwa
 type: `integer | null`
 
 
-The line length that the printer will wrap on. (Default: 100)
+The line length that the printer will wrap on. (Default: `100`)
 
 
 ## quoteProps
@@ -176,7 +183,7 @@ The line length that the printer will wrap on. (Default: 100)
 type: `string | null`
 
 
-Change when properties in objects are quoted. (Default: "as-needed")
+Change when properties in objects are quoted. (Default: `"as-needed"`)
 
 
 ## semi
@@ -184,7 +191,7 @@ Change when properties in objects are quoted. (Default: "as-needed")
 type: `boolean | null`
 
 
-Print semicolons at the ends of statements. (Default: true)
+Print semicolons at the ends of statements. (Default: `true`)
 
 
 ## singleAttributePerLine
@@ -192,7 +199,7 @@ Print semicolons at the ends of statements. (Default: true)
 type: `boolean | null`
 
 
-Put each attribute on a new line in JSX. (Default: false)
+Put each attribute on a new line in JSX. (Default: `false`)
 
 
 ## singleQuote
@@ -200,7 +207,7 @@ Put each attribute on a new line in JSX. (Default: false)
 type: `boolean | null`
 
 
-Use single quotes instead of double quotes. (Default: false)
+Use single quotes instead of double quotes. (Default: `false`)
 
 
 ## tabWidth
@@ -208,7 +215,7 @@ Use single quotes instead of double quotes. (Default: false)
 type: `integer | null`
 
 
-Number of spaces per indentation level. (Default: 2)
+Number of spaces per indentation level. (Default: `2`)
 
 
 ## trailingComma
@@ -216,7 +223,7 @@ Number of spaces per indentation level. (Default: 2)
 type: `string | null`
 
 
-Print trailing commas wherever possible. (Default: "all")
+Print trailing commas wherever possible. (Default: `"all"`)
 
 
 ## useTabs
@@ -224,4 +231,4 @@ Print trailing commas wherever possible. (Default: "all")
 type: `boolean | null`
 
 
-Use tabs for indentation or spaces. (Default: false)
+Use tabs for indentation or spaces. (Default: `false`)

@@ -4,12 +4,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnnecessaryTypeAssertion(Box<NoUnnecessaryTypeAssertionConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnnecessaryTypeAssertionConfig {
+    /// Whether to check literal const assertions like `'foo' as const`.
+    /// When `false` (default), const assertions on literal types are not flagged.
+    /// When `true`, these will be reported as unnecessary since the type is already a literal.
+    pub check_literal_const_assertions: bool,
+
     /// A list of type names to ignore when checking for unnecessary assertions.
     /// Type assertions to these types will not be flagged even if they appear unnecessary.
     /// Example: `["Foo", "Bar"]` to allow `x as Foo` or `x as Bar`.
@@ -67,11 +72,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryTypeAssertion {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryTypeAssertionConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryTypeAssertion>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

@@ -310,7 +310,7 @@ fn test() {
         (
             "function foo(a, z) { a.b = 0; x.y = 0; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsFor": ["a", "x"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsFor": ["a", "x"] }, ]),
             ),
         ),
         (
@@ -320,31 +320,31 @@ fn test() {
         (
             "function foo(aFoo) { aFoo.b = 0; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(aFoo) { ++aFoo.b; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(aFoo) { delete aFoo.b; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
             "function foo(a, z) { aFoo.b = 0; x.y = 0; }",
             Some(
-                serde_json::json!([				{					"props": true,					"ignorePropertyModificationsForRegex": ["^a.*$", "^x.*$"],				},			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$", "^x.*$"], }, ]),
             ),
         ),
         (
             "function foo(aFoo) { aFoo.b.c = 0;}",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ),
         (
@@ -368,7 +368,7 @@ fn test() {
         (
             "function foo(bar, baz) { bar.a = true; baz.b = false; }",
             Some(
-                serde_json::json!([				{					"props": true,					"ignorePropertyModificationsForRegex": ["^(foo|bar)$"],					"ignorePropertyModificationsFor": ["baz"],				},			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^(foo|bar)$"], "ignorePropertyModificationsFor": ["baz"], }, ]),
             ),
         ),
     ];
@@ -419,13 +419,13 @@ fn test() {
         (
             "function foo(bar) { [bar.a] = []; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^a.*$"] }, ]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "function foo(bar) { [bar.a] = []; }",
             Some(
-                serde_json::json!([				{ "props": true, "ignorePropertyModificationsForRegex": ["^B.*$"] },			]),
+                serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^B.*$"] }, ]),
             ),
         ), // { "ecmaVersion": 6 },
         (

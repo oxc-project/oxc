@@ -9,9 +9,9 @@ use napi_derive::napi;
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
+use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 
 use crate::generated::raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE};
 
@@ -22,6 +22,22 @@ const BUMP_ALIGN: usize = 16;
 /// 0 cannot be a valid offset as it's the start of the buffer, which contains the source text.
 /// Allocator bumps downwards, so if source text was empty, the program would be somewhere at end of the buffer.
 const PARSE_FAIL_SENTINEL: u32 = 0;
+
+// Parser options
+#[napi(object)]
+#[derive(Default)]
+pub struct ParserOptions {
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
+    pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
+
+    /// Ignore non-fatal parsing errors
+    pub ignore_non_fatal_errors: Option<bool>,
+}
 
 /// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
 ///
@@ -62,13 +78,18 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
 #[napi]
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub unsafe fn parse_raw_sync(filename: String, mut buffer: Uint8Array, source_len: u32) {
+pub unsafe fn parse_raw_sync(
+    filename: String,
+    mut buffer: Uint8Array,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
     // SAFETY: This function is called synchronously, so buffer cannot be mutated outside this function
     // during the time this `&mut [u8]` exists
     let buffer = unsafe { buffer.as_mut() };
 
     // SAFETY: `parse_raw_impl` has same safety requirements as this function
-    unsafe { parse_raw_impl(&filename, buffer, source_len) };
+    unsafe { parse_raw_impl(&filename, buffer, source_len, options) };
 }
 
 /// Parse AST into buffer.
@@ -83,7 +104,12 @@ pub unsafe fn parse_raw_sync(filename: String, mut buffer: Uint8Array, source_le
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
 #[allow(clippy::items_after_statements, clippy::allow_attributes)]
-unsafe fn parse_raw_impl(filename: &str, buffer: &mut [u8], source_len: u32) {
+unsafe fn parse_raw_impl(
+    filename: &str,
+    buffer: &mut [u8],
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
@@ -117,10 +143,14 @@ unsafe fn parse_raw_impl(filename: &str, buffer: &mut [u8], source_len: u32) {
         unsafe { Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size) };
     let allocator = ManuallyDrop::new(allocator);
 
+    // Get source type
+    let options = options.unwrap_or_default();
+    let source_type =
+        get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
+    let ignore_non_fatal_errors = options.ignore_non_fatal_errors.unwrap_or(false);
+
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
-    let source_type = SourceType::from_path(filename).unwrap_or_default();
-
     let program_offset = {
         // SAFETY: We checked above that `source_len` does not exceed length of buffer
         let source_text = unsafe { buffer.get_unchecked(..source_len) };
@@ -137,11 +167,18 @@ unsafe fn parse_raw_impl(filename: &str, buffer: &mut [u8], source_len: u32) {
             .parse();
         let program = allocator.alloc(parser_ret.program);
 
-        // Check for semantic errors
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
+        let mut parsing_failed =
+            parser_ret.panicked || (!parser_ret.errors.is_empty() && !ignore_non_fatal_errors);
 
-        if !parser_ret.errors.is_empty() || !semantic_ret.errors.is_empty() {
-            // Parsing failed. Return sentinel value to indicate this.
+        // Check for semantic errors.
+        // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
+        if !parsing_failed && !ignore_non_fatal_errors {
+            let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
+            parsing_failed = !semantic_ret.errors.is_empty();
+        }
+
+        if parsing_failed {
+            // Use sentinel value for program offset to indicate that parsing failed
             PARSE_FAIL_SENTINEL
         } else {
             // Convert spans to UTF-16

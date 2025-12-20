@@ -4,26 +4,30 @@ packages:
   - wasm/*
   - npm/*
   - editors/*
+  - plugins/
+  - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
   - tasks/mcp
 
 catalog:
-  '@napi-rs/cli': 3.5.0
-  '@napi-rs/wasm-runtime': 1.0.7
-  '@types/node': ^24.0.0
+  "@arethetypeswrong/core": 0.18.2
+  "@napi-rs/cli": 3.5.0
+  "@napi-rs/wasm-runtime": 1.1.0
+  "@types/node": 24.1.0
   cross-env: ^10.1.0
+  eslint: 9.36.0
   publint: 0.3.15
-  rolldown: 1.0.0-beta.53
-  tsdown: 0.16.8
+  rolldown: 1.0.0-beta.55
+  tsdown: 0.18.1
   typescript: 5.9.3
-  vitest: 4.0.10
+  vitest: 4.0.15
 
 onlyBuiltDependencies:
-  - '@vscode/vsce-sign@2.0.8'
+  - "@vscode/vsce-sign@2.0.8"
   - esbuild@0.25.11
 
 patchedDependencies:
-  '@typescript-eslint/scope-manager': patches/@typescript-eslint__scope-manager.patch
+  "@typescript-eslint/scope-manager": patches/@typescript-eslint__scope-manager.patch
 
 verifyDepsBeforeRun: install

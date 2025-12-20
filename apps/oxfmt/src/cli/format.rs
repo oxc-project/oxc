@@ -1,22 +1,17 @@
-use std::{
-    env,
-    io::Write,
-    path::{Path, PathBuf},
-    sync::mpsc,
-    time::Instant,
-};
+use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::Oxfmtrc;
 
 use super::{
-    command::{FormatCommand, OutputOptions},
+    command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::SourceFormatter;
+use crate::core::{
+    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -50,33 +45,75 @@ impl FormatRunner {
         self
     }
 
-    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
+    /// # Panics
+    /// Panics if `napi` feature is enabled but external_formatter is not set.
+    pub fn run(self) -> CliRunResult {
+        // stdio is blocked by `LineWriter`, use a `BufWriter` to reduce syscalls.
+        // See https://github.com/rust-lang/rust/issues/60673
+        let stdout = &mut BufWriter::new(std::io::stdout());
+        let stderr = &mut BufWriter::new(std::io::stderr());
+
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, output_options, basic_options, ignore_options, misc_options } =
+        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
             self.options;
+        // If `napi` feature is disabled, there is no other mode.
+        #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
+        let Mode::Cli(format_mode) = mode else {
+            unreachable!("`FormatRunner` should only be called with Mode::Cli");
+        };
+        let num_of_threads = rayon::current_num_threads();
 
-        // Find and load config
+        // Find and load config file
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config = match load_config(&cwd, basic_options.config.as_deref()) {
-            Ok(config) => config,
+        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
+        let editorconfig_path = resolve_editorconfig_path(&cwd);
+        let mut config_resolver = match ConfigResolver::from_config_paths(
+            &cwd,
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
+            Ok(r) => r,
             Err(err) => {
-                print_and_flush(stderr, &format!("Failed to load configuration file.\n{err}\n"));
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        let ignore_patterns = match config_resolver.build_and_validate() {
+            Ok(patterns) => patterns,
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
 
-        let ignore_patterns = config.ignore_patterns.clone().unwrap_or_default();
-        let format_options = match config.into_format_options() {
-            Ok(options) => options,
+        // Use `block_in_place()` to avoid nested async runtime access
+        #[cfg(feature = "napi")]
+        match tokio::task::block_in_place(|| {
+            self.external_formatter
+                .as_ref()
+                .expect("External formatter must be set when `napi` feature is enabled")
+                .init(num_of_threads)
+        }) {
+            // TODO: Plugins support
+            // - Parse returned `languages`
+            // - Allow its `extensions` and `filenames` in `walk.rs`
+            // - Pass `parser` to `SourceFormatter`
+            Ok(_) => {}
             Err(err) => {
-                print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to setup external formatter.\n{err}\n"),
+                );
                 return CliRunResult::InvalidOptionConfig;
             }
-        };
+        }
 
         let walker = match Walk::build(
             &cwd,
@@ -85,9 +122,18 @@ impl FormatRunner {
             ignore_options.with_node_modules,
             &ignore_patterns,
         ) {
-            Ok(walker) => walker,
+            Ok(Some(walker)) => walker,
+            // All target paths are ignored
+            Ok(None) => {
+                if runtime_options.no_error_on_unmatched_pattern {
+                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    return CliRunResult::None;
+                }
+                utils::print_and_flush(stderr, "Expected at least one target file\n");
+                return CliRunResult::NoFilesFound;
+            }
             Err(err) => {
-                print_and_flush(
+                utils::print_and_flush(
                     stderr,
                     &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
                 );
@@ -103,23 +149,22 @@ impl FormatRunner {
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
-        if matches!(output_options, OutputOptions::Check) {
-            print_and_flush(stdout, "Checking formatting...\n");
-            print_and_flush(stdout, "\n");
+        if matches!(format_mode, OutputMode::Check) {
+            utils::print_and_flush(stdout, "Checking formatting...\n");
+            utils::print_and_flush(stdout, "\n");
         }
 
-        let num_of_threads = rayon::current_num_threads();
-
         // Create `SourceFormatter` instance
-        let source_formatter = SourceFormatter::new(num_of_threads, format_options);
+        let source_formatter = SourceFormatter::new(num_of_threads);
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
-        let output_options_clone = output_options.clone();
+        let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service = FormatService::new(cwd, output_options_clone, source_formatter);
+            let format_service =
+                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 
@@ -136,7 +181,7 @@ impl FormatRunner {
         // Print sorted changed file paths to stdout
         if !changed_paths.is_empty() {
             changed_paths.sort_unstable();
-            print_and_flush(stdout, &changed_paths.join("\n"));
+            utils::print_and_flush(stdout, &changed_paths.join("\n"));
         }
 
         // Then, output diagnostics errors to stderr
@@ -149,7 +194,7 @@ impl FormatRunner {
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout| {
             let elapsed_ms = start_time.elapsed().as_millis();
-            print_and_flush(
+            utils::print_and_flush(
                 stdout,
                 &format!(
                     "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
@@ -159,38 +204,38 @@ impl FormatRunner {
 
         // Check if no files were found
         if total_target_files_count == 0 {
-            if misc_options.no_error_on_unmatched_pattern {
-                print_and_flush(stderr, "No files found matching the given patterns.\n");
+            if runtime_options.no_error_on_unmatched_pattern {
+                utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
                 print_stats(stdout);
                 return CliRunResult::None;
             }
 
-            print_and_flush(stderr, "Expected at least one target file\n");
+            utils::print_and_flush(stderr, "Expected at least one target file\n");
             return CliRunResult::NoFilesFound;
         }
 
         if 0 < error_count {
             // Each error is already printed in reporter
-            print_and_flush(
+            utils::print_and_flush(
                 stderr,
                 "Error occurred when checking code style in the above files.\n",
             );
             return CliRunResult::FormatFailed;
         }
 
-        match (&output_options, changed_paths.len()) {
+        match (&format_mode, changed_paths.len()) {
             // `--list-different` outputs nothing here, mismatched paths are already printed to stdout
-            (OutputOptions::ListDifferent, 0) => CliRunResult::FormatSucceeded,
-            (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
+            (OutputMode::ListDifferent, 0) => CliRunResult::FormatSucceeded,
+            (OutputMode::ListDifferent, _) => CliRunResult::FormatMismatch,
             // `--check` outputs friendly summary
-            (OutputOptions::Check, 0) => {
-                print_and_flush(stdout, "All matched files use the correct format.\n");
+            (OutputMode::Check, 0) => {
+                utils::print_and_flush(stdout, "All matched files use the correct format.\n");
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
-            (OutputOptions::Check, changed_count) => {
-                print_and_flush(stdout, "\n\n");
-                print_and_flush(
+            (OutputMode::Check, changed_count) => {
+                utils::print_and_flush(stdout, "\n\n");
+                utils::print_and_flush(
                     stdout,
                     &format!(
                         "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
@@ -200,7 +245,7 @@ impl FormatRunner {
                 CliRunResult::FormatMismatch
             }
             // Default (write) does not output anything
-            (OutputOptions::Write, changed_count) => {
+            (OutputMode::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,
@@ -210,53 +255,4 @@ impl FormatRunner {
             }
         }
     }
-}
-
-/// # Errors
-///
-/// Returns error if:
-/// - Config file is specified but not found or invalid
-/// - Config file parsing fails
-fn load_config(cwd: &Path, config_path: Option<&Path>) -> Result<Oxfmtrc, String> {
-    let config_path = if let Some(config_path) = config_path {
-        // If `--config` is explicitly specified, use that path
-        Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        })
-    } else {
-        // If `--config` is not specified, search the nearest config file from cwd upwards
-        // Support both `.json` and `.jsonc`, but prefer `.json` if both exist
-        cwd.ancestors().find_map(|dir| {
-            for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
-                let config_path = dir.join(filename);
-                if config_path.exists() {
-                    return Some(config_path);
-                }
-            }
-            None
-        })
-    };
-
-    match config_path {
-        Some(ref path) => Oxfmtrc::from_file(path),
-        // Default if not specified and not found
-        None => Ok(Oxfmtrc::default()),
-    }
-}
-
-fn print_and_flush(writer: &mut dyn Write, message: &str) {
-    use std::io::{Error, ErrorKind};
-    fn check_for_writer_error(error: Error) -> Result<(), Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
-        }
-    }
-
-    writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
 }

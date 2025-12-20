@@ -1,4 +1,4 @@
-commit: 669c25c0
+commit: b78f0899
 
 ---
 NOTE: If you are seeing this file with Git diffs, please follow the instructions below to review the changes.
@@ -362,6 +362,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1537
 1538
 1539
+1540
 1541
 1542
 1543

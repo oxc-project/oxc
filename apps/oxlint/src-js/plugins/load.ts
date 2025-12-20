@@ -1,17 +1,15 @@
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
-import { DEFAULT_OPTIONS } from "./options.ts";
+import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
-import type { Options } from "./options.ts";
+import type { Options, SchemaValidator } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
 import type { SetNullable } from "../utils/types.ts";
-
-const ObjectKeys = Object.keys,
-  { isArray } = Array;
 
 /**
  * Linter plugin, comprising multiple rules
@@ -55,10 +53,15 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
+  readonly fullName: string;
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
+  // Function to validate options against schema.
+  // `false` means validation is disabled. Rule accepts any options.
+  // `null` means no validator provided. Rule does not accept any options.
+  readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
   options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
@@ -104,10 +107,15 @@ interface PluginDetails {
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
  * @param url - Absolute path of plugin file as a `file://...` URL
- * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
+export async function loadPlugin(
+  url: string,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): Promise<string> {
   try {
     if (DEBUG) {
       if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
@@ -115,7 +123,7 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
     }
 
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, packageName);
+    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -126,52 +134,93 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * Register a plugin.
  *
  * @param plugin - Plugin
- * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+export function registerPlugin(
+  plugin: Plugin,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
-  const pluginName = getPluginName(plugin, packageName);
+  pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
 
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = ObjectKeys(rules);
+  const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
+    const fullRuleName = `${pluginName}/${ruleName}`;
+
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
       messages: Record<string, string> | null = null,
-      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS;
+      defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
+      schemaValidator: SchemaValidator | false | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== "code" && fixable !== "whitespace")
+        if (fixable !== "code" && fixable !== "whitespace") {
           throw new TypeError("Invalid `rule.meta.fixable`");
+        }
         isFixable = true;
       }
 
+      // If `schema` provided, compile schema to validator for applying schema defaults to options
+      schemaValidator = compileSchema(ruleMeta.schema);
+
+      // Get default options
       const inputDefaultOptions = ruleMeta.defaultOptions;
       if (inputDefaultOptions != null) {
-        // TODO: Validate is JSON-serializable, and validate against provided options schema
-        if (!isArray(inputDefaultOptions)) {
+        if (!Array.isArray(inputDefaultOptions)) {
           throw new TypeError("`rule.meta.defaultOptions` must be an array if provided");
         }
-        // TODO: This isn't quite safe, as `defaultOptions` isn't from JSON, and `deepFreezeJsonArray`
-        // assumes it is. We should perform options merging on Rust side instead, and also validate
-        // `defaultOptions` against options schema.
-        deepFreezeJsonArray(inputDefaultOptions);
-        defaultOptions = inputDefaultOptions;
+
+        // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
+        // and does not validate against schema
+        if (inputDefaultOptions.length !== 0) {
+          // Serialize to JSON and deserialize again.
+          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
+          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+          try {
+            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
+          } catch (err) {
+            throw new Error(
+              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+            );
+          }
+
+          // Validate default options against schema, if schema was provided.
+          // This also applies any defaults from schema.
+          // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
+          // but that's what ESLint does, so it's OK.
+          if (schemaValidator === null) {
+            throw new Error(
+              `Rule ${fullRuleName}:\n` +
+                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
+                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+            );
+          }
+          // Note: `defaultOptions` is not frozen yet
+          if (schemaValidator !== false) {
+            schemaValidator(defaultOptions as Writable<typeof defaultOptions>, fullRuleName);
+          }
+
+          deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
+        }
       }
 
       // Extract messages for messageId support
@@ -186,11 +235,13 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
+      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
       messages,
       defaultOptions,
+      optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
       options: null,
       visitor: null,
@@ -199,7 +250,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
     };
 
     // Create `Context` object for rule. This will be re-used for every file.
-    const context = createContext(`${pluginName}/${ruleName}`, ruleDetails);
+    const context = createContext(ruleDetails);
     (ruleDetails as Writable<RuleDetails>).context = context;
 
     if ("createOnce" in rule) {
@@ -224,7 +275,7 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
       // and if not, skip calling into JS entirely. In that case, the `before` hook won't get called.
       // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
       // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
-      if (ObjectKeys(visitor).length === 0) {
+      if (Object.keys(visitor).length === 0) {
         beforeHook = neverRunBeforeHook;
         afterHook = null;
       }
@@ -242,32 +293,81 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
 /**
  * Get plugin name.
+ *
+ * - Plugin is named with an alias in config, return the alias.
  * - If `plugin.meta.name` is defined, return it.
  * - Otherwise, fall back to `packageName`, if defined.
  * - If neither is defined, throw an error.
  *
  * @param plugin - Plugin object
- * @param packageName - Package name from `package.json`
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin name
  * @throws {TypeError} If `plugin.meta.name` is not a string
  * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
  */
-function getPluginName(plugin: Plugin, packageName: string | null): string {
-  const pluginMeta = plugin.meta;
-  if (pluginMeta != null) {
-    const pluginMetaName = pluginMeta.name;
-    if (pluginMetaName != null) {
-      if (typeof pluginMetaName !== "string")
-        throw new TypeError("`plugin.meta.name` must be a string if defined");
-      return pluginMetaName;
-    }
+function getPluginName(
+  plugin: Plugin,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): string {
+  // If plugin is defined with an alias in config, that takes priority
+  if (pluginNameIsAlias) {
+    debugAssertIsNonNull(pluginName);
+    return pluginName;
   }
 
-  if (packageName !== null) return packageName;
+  // If plugin defines its own name, that takes priority over package name.
+  // Normalize plugin name.
+  const pluginMetaName = plugin.meta?.name;
+  if (pluginMetaName != null) {
+    if (typeof pluginMetaName !== "string") {
+      throw new TypeError("`plugin.meta.name` must be a string if defined");
+    }
+    return normalizePluginName(pluginMetaName);
+  }
+
+  // Fallback to package name (which is already normalized on Rust side)
+  if (pluginName !== null) return pluginName;
 
   throw new Error(
-    "Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`",
+    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
+      "or be given an alias in config",
   );
+}
+
+/**
+ * Normalize plugin name by stripping common ESLint plugin prefixes and suffixes.
+ *
+ * This handles the various naming conventions used in the ESLint ecosystem:
+ * - `eslint-plugin-foo` -> `foo`
+ * - `@scope/eslint-plugin` -> `@scope`
+ * - `@scope/eslint-plugin-foo` -> `@scope/foo`
+ *
+ * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter/src/config/plugins.rs`.
+ * The 2 implementations must be kept in sync.
+ *
+ * @param name - Plugin name defined by plugin
+ * @returns Normalized plugin name
+ */
+function normalizePluginName(name: string): string {
+  const slashIndex = name.indexOf("/");
+
+  // If no slash, it's a non-scoped package. Trim off `eslint-plugin-` prefix.
+  if (slashIndex === -1) {
+    return name.startsWith("eslint-plugin-") ? name.slice("eslint-plugin-".length) : name;
+  }
+
+  const scope = name.slice(0, slashIndex),
+    rest = name.slice(slashIndex + 1);
+
+  // `@scope/eslint-plugin` -> `@scope`
+  if (rest === "eslint-plugin") return scope;
+  // `@scope/eslint-plugin-foo` -> `@scope/foo`
+  if (rest.startsWith("eslint-plugin-")) return `${scope}/${rest.slice("eslint-plugin-".length)}`;
+
+  // No normalization needed
+  return name;
 }
 
 /**
@@ -279,7 +379,8 @@ function getPluginName(plugin: Plugin, packageName: string | null): string {
  */
 function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
   if (hookFn == null) return null;
-  if (typeof hookFn !== "function")
+  if (typeof hookFn !== "function") {
     throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  }
   return hookFn;
 }

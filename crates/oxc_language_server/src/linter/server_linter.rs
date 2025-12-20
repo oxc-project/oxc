@@ -1,14 +1,12 @@
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::{
-    UriExt,
     jsonrpc::ErrorCode,
-    lsp_types::{
+    ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
         Diagnostic, ExecuteCommandOptions, Pattern, Range, ServerCapabilities, Uri,
         WorkDoneProgressOptions, WorkspaceEdit,
@@ -20,7 +18,6 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::linter::error_with_position::LinterCodeAction;
 use crate::{
     ConcurrentHashMap,
     linter::{
@@ -31,10 +28,11 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
+        error_with_position::LinterCodeAction,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
     utils::normalize_path,
 };
 
@@ -352,6 +350,7 @@ impl Tool for ServerLinter {
         let patterns = {
             if old_option.config_path == new_options.config_path
                 && old_option.use_nested_configs() == new_options.use_nested_configs()
+                && old_option.type_aware == new_options.type_aware
             {
                 None
             } else {
@@ -386,6 +385,11 @@ impl Tool for ServerLinter {
 
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
+
+        if options.type_aware {
+            watchers.push("**/tsconfig*.json".to_string());
+        }
+
         watchers
     }
 
@@ -428,7 +432,7 @@ impl Tool for ServerLinter {
         }
 
         let args = FixAllCommandArgs::try_from(arguments).map_err(|_| ErrorCode::InvalidParams)?;
-        let uri = Uri::from_str(&args.uri).map_err(|_| ErrorCode::InvalidParams)?;
+        let uri: Uri = args.uri.parse().map_err(|_| ErrorCode::InvalidParams)?;
 
         if !self.is_responsible_for_uri(&uri) {
             return Ok(None);
@@ -458,7 +462,7 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
     ) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(uri);
 
@@ -493,39 +497,35 @@ impl Tool for ServerLinter {
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
-        self.run_file(uri, content)
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+        let Some(diagnostics) = self.run_file(uri, content) else {
+            return vec![];
+        };
+        vec![(uri.clone(), diagnostics)]
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnType`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_change(
-        &self,
-        uri: &Uri,
-        content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnType`, an empty vector is returned
+    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnType {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnSave`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnSave`, an empty vector is returned
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnSave {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }
 
-    fn remove_diagnostics(&self, uri: &Uri) {
+    fn remove_uri_cache(&self, uri: &Uri) {
         self.code_actions.pin().remove(uri);
     }
 }
@@ -640,7 +640,7 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests_builder {
-    use tower_lsp_server::lsp_types::{
+    use tower_lsp_server::ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionProviderCapability, ExecuteCommandOptions,
         ServerCapabilities, WorkDoneProgressOptions,
     };
@@ -846,6 +846,21 @@ mod test_watchers {
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
         }
+
+        #[test]
+        fn test_linter_with_type_aware() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/default",
+                json!({
+                    "typeAware": true
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "**/tsconfig*.json".to_string());
+        }
     }
 
     mod handle_configuration_change {
@@ -884,6 +899,19 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_lint_type_aware_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        "typeAware": true
+                    }));
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/tsconfig*.json".to_string());
         }
     }
 }
@@ -959,13 +987,12 @@ mod test {
 
     #[test]
     fn test_frameworks() {
-        Tester::new("fixtures/linter/astro", json!({}))
-            .test_and_snapshot_single_file("debugger.astro");
-        Tester::new("fixtures/linter/vue", json!({})).test_and_snapshot_single_file("debugger.vue");
-        Tester::new("fixtures/linter/svelte", json!({}))
-            .test_and_snapshot_single_file("debugger.svelte");
-        // ToDo: fix Tester to work only with Uris and do not access the file system
-        // Tester::new("fixtures/linter/nextjs").test_and_snapshot_single_file("%5B%5B..rest%5D%5D/debugger.ts");
+        Tester::new("fixtures/linter/frameworks", json!({})).test_and_snapshot_multiple_file(&[
+            "astro/debugger.astro",
+            "vue/debugger.vue",
+            "svelte/debugger.svelte",
+            "nextjs/[[..rest]]/debugger.ts",
+        ]);
     }
 
     #[test]

@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/unused_disabled_directives/test.js
+Linted file: fixtures/linter/unused_disabled_directives/test.js
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/unused_disabled_directives/test.js
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
@@ -60,6 +61,7 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-console for this line

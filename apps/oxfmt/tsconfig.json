@@ -7,11 +7,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src-js",
-    "test/**/*.ts"
-  ],
-  "exclude": [
-    "test/fixtures"
-  ]
+  "include": ["src-js", "test/**/*.ts"],
+  "exclude": ["test/fixtures"]
 }

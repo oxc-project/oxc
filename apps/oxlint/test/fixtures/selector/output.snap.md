@@ -20,13 +20,13 @@
   | :not(Identifier): Property
   | *: Identifier(a)
   | Identifier: Identifier(a)
-  | Identifier[name=a]: Identifier(a)
   | :matches(Identifier, FunctionDeclaration): Identifier(a)
-  | :matches(Identifier[name=a], FunctionDeclaration[id.name=foo]): Identifier(a)
+  | ObjectExpression Identifier: Identifier(a)
   | Property > Identifier: Identifier(a)
   | ObjectExpression > Property > Identifier: Identifier(a)
+  | Identifier[name=a]: Identifier(a)
   | ObjectExpression > Property > Identifier[name=a]: Identifier(a)
-  | ObjectExpression Identifier: Identifier(a)
+  | :matches(Identifier[name=a], FunctionDeclaration[id.name=foo]): Identifier(a)
   | *:exit: Identifier(a)
   | *: ArrayExpression
   | :not(Identifier): ArrayExpression
@@ -35,47 +35,47 @@
   | Identifier: Identifier(b)
   | :matches(Identifier, FunctionDeclaration): Identifier(b)
   | ArrayExpression > Identifier: Identifier(b)
-  | Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier: Identifier(b)
-  | ObjectExpression Identifier: Identifier(b)
   | ArrayExpression Identifier: Identifier(b)
+  | ObjectExpression Identifier: Identifier(b)
+  | Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier: Identifier(b)
   | ArrayExpression Identifier[name=b]: Identifier(b)
   | *:exit: Identifier(b)
   | *: Identifier(c)
   | Identifier: Identifier(c)
   | :matches(Identifier, FunctionDeclaration): Identifier(c)
   | ArrayExpression > Identifier: Identifier(c)
-  | ArrayExpression > Identifier[name=c]: Identifier(c)
-  | Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier: Identifier(c)
-  | ObjectExpression Identifier: Identifier(c)
   | ArrayExpression Identifier: Identifier(c)
   | Identifier ~ Identifier: Identifier(c)
+  | ObjectExpression Identifier: Identifier(c)
+  | Program > VariableDeclaration > VariableDeclarator > ObjectExpression > Property > ArrayExpression > Identifier: Identifier(c)
+  | ArrayExpression > Identifier[name=c]: Identifier(c)
   | *:exit: Identifier(c)
   | *:exit: ArrayExpression
   | *:exit: Property
   | *: SpreadElement
   | :not(Identifier): SpreadElement
-  | Property ~ [type]: SpreadElement
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration): SpreadElement
+  | Property ~ [type]: SpreadElement
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration[id.name=bar]): SpreadElement
   | *: Identifier(d)
   | Identifier: Identifier(d)
-  | Identifier[name=d]: Identifier(d)
   | :matches(Identifier, FunctionDeclaration): Identifier(d)
   | ObjectExpression Identifier: Identifier(d)
+  | Identifier[name=d]: Identifier(d)
   | *:exit: Identifier(d)
   | *:exit: SpreadElement
   | *:exit: ObjectExpression
   | *:exit: VariableDeclarator
   | *:exit: VariableDeclaration
   | *: FunctionDeclaration(foo)
-  | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(foo)
-  | :matches(Identifier[name=a], FunctionDeclaration[id.name=foo]): FunctionDeclaration(foo)
-  | :not(Identifier): FunctionDeclaration(foo)
   | :function: FunctionDeclaration(foo)
+  | :not(Identifier): FunctionDeclaration(foo)
+  | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(foo)
   | Program > FunctionDeclaration: FunctionDeclaration(foo)
-  | VariableDeclaration ~ FunctionDeclaration: FunctionDeclaration(foo)
   | VariableDeclaration + FunctionDeclaration: FunctionDeclaration(foo)
+  | VariableDeclaration ~ FunctionDeclaration: FunctionDeclaration(foo)
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration): FunctionDeclaration(foo)
+  | :matches(Identifier[name=a], FunctionDeclaration[id.name=foo]): FunctionDeclaration(foo)
   | *: Identifier(foo)
   | Identifier: Identifier(foo)
   | :matches(Identifier, FunctionDeclaration): Identifier(foo)
@@ -85,9 +85,9 @@
   | *:exit: BlockStatement
   | *:exit: FunctionDeclaration(foo)
   | *: FunctionDeclaration(bar)
-  | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(bar)
-  | :not(Identifier): FunctionDeclaration(bar)
   | :function: FunctionDeclaration(bar)
+  | :not(Identifier): FunctionDeclaration(bar)
+  | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(bar)
   | Program > FunctionDeclaration: FunctionDeclaration(bar)
   | VariableDeclaration ~ FunctionDeclaration: FunctionDeclaration(bar)
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration): FunctionDeclaration(bar)
@@ -103,8 +103,8 @@
   | *: ExpressionStatement
   | :not(Identifier): ExpressionStatement
   | *: ArrowFunctionExpression
-  | :not(Identifier): ArrowFunctionExpression
   | :function: ArrowFunctionExpression
+  | :not(Identifier): ArrowFunctionExpression
   | *: BlockStatement
   | :not(Identifier): BlockStatement
   | *:exit: BlockStatement

@@ -1,6 +1,6 @@
-commit: 79586034
+commit: 84d21e4e
 
-Passed: 200/331
+Passed: 201/333
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (6/30)
+# babel-plugin-transform-typescript (6/31)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -505,6 +505,17 @@ rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
+
+* remove-unused-import-equals/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
+rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved reference IDs mismatch for "foo":
+after transform: [ReferenceId(0), ReferenceId(3), ReferenceId(6)]
+rebuilt        : [ReferenceId(0)]
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
@@ -1770,7 +1781,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (24/39)
+# plugin-styled-components (25/40)
 * minify-comments/input.js
 Unresolved references mismatch:
 after transform: ["x", "y", "z"]

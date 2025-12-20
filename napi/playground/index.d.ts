@@ -81,7 +81,7 @@ export interface OxcFormatterOptions {
   singleQuote?: boolean
   /** Use single quotes in JSX (default: false) */
   jsxSingleQuote?: boolean
-  /** When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed") */
+  /** When to add quotes around object properties: "as-needed" | "consistent" | "preserve" (default: "as-needed") */
   quoteProps?: string
   /** Print trailing commas: "all" | "es5" | "none" (default: "all") */
   trailingComma?: string

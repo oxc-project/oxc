@@ -6,6 +6,7 @@ use crate::ir_transform::sort_imports::{options::SortImportsOptions, source_line
 
 #[derive(Debug)]
 pub struct SortableImport<'a> {
+    /// Comments directly before this import (no empty line between).
     pub leading_lines: Vec<SourceLine<'a>>,
     pub import_line: SourceLine<'a>,
     // These are used for sorting and computed by `compute_import_metadata()`

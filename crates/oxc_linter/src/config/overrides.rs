@@ -1,14 +1,15 @@
 use std::{
     borrow::Cow,
     ops::{Deref, DerefMut},
-    path::PathBuf,
 };
 
 use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+
+use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -76,6 +77,7 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
+#[serde(deny_unknown_fields)]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
@@ -98,17 +100,9 @@ pub struct OxlintOverride {
     ///
     /// Note: JS plugins are experimental and not subject to semver.
     /// They are not supported in language server at present.
-    #[serde(
-        rename = "jsPlugins",
-        deserialize_with = "deserialize_external_plugins_override",
-        serialize_with = "serialize_external_plugins_override",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
-    #[schemars(with = "Option<FxHashSet<String>>")]
-    pub external_plugins: Option<
-        FxHashSet<(PathBuf /* config file directory */, String /* plugin specifier */)>,
-    >,
+    #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "external_plugins_schema")]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
     #[serde(default)]
     pub rules: OxlintRules,
@@ -146,32 +140,6 @@ impl GlobSet {
 
     pub fn is_match(&self, path: &str) -> bool {
         self.0.iter().any(|glob| fast_glob::glob_match(glob, path))
-    }
-}
-
-fn deserialize_external_plugins_override<'de, D>(
-    deserializer: D,
-) -> Result<Option<FxHashSet<(PathBuf, String)>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt_set: Option<FxHashSet<String>> = Option::deserialize(deserializer)?;
-    Ok(opt_set
-        .map(|set| set.into_iter().map(|specifier| (PathBuf::default(), specifier)).collect()))
-}
-
-#[expect(clippy::ref_option)]
-fn serialize_external_plugins_override<S>(
-    plugins: &Option<FxHashSet<(PathBuf, String)>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    // Serialize as an array of original specifiers (the values in the map)
-    match plugins {
-        Some(set) => serializer.collect_seq(set.iter().map(|(_, specifier)| specifier)),
-        None => serializer.serialize_none(),
     }
 }
 
