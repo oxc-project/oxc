@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
-// Mapping from node type name to node type ID
+/** Mapping from node type name to node type ID */
 export const NODE_TYPE_IDS_MAP = new Map([
   ["DebuggerStatement", 0],
   ["EmptyStatement", 1],
@@ -170,6 +170,8 @@ export const NODE_TYPE_IDS_MAP = new Map([
   ["TSUnionType", 164],
 ]);
 
+/** Count of all node types (both leaf and non-leaf nodes) */
 export const NODE_TYPES_COUNT = 165;
 
+/** Count of leaf node types */
 export const LEAF_NODE_TYPES_COUNT = 27;

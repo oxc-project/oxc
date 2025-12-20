@@ -222,7 +222,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let mut type_ids_map = string!("
-        // Mapping from node type name to node type ID
+        /** Mapping from node type name to node type ID */
         export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
     ");
@@ -416,13 +416,20 @@ fn generate(codegen: &Codegen) -> Codes {
     function_node_ids.sort_unstable();
 
     #[rustfmt::skip]
-    write_it!(type_ids_map, "]);
+    write_it!(type_ids_map, "
+        ]);
 
+        /** Count of all node types (both leaf and non-leaf nodes) */
         export const NODE_TYPES_COUNT = {nodes_count};
+
+        /** Count of leaf node types */
         export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
 
         /* IF LINTER */
+
+        /** Type IDs which match `:function` selector class */
         export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
+
         /* END_IF */
     ");
 
