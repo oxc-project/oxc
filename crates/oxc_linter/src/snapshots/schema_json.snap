@@ -646,13 +646,13 @@ expression: json
       "type": "object",
       "properties": {
         "componentWrapperFunctions": {
-          "description": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n```",
+          "description": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n}\n```",
           "default": [],
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n```"
+          "markdownDescription": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n}\n```"
         },
         "formComponents": {
           "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```",
