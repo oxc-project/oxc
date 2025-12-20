@@ -1,16 +1,23 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, PropertyKind, WithClause},
+    ast::{Expression, ObjectProperty, PropertyKind, WithClause},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_empty_object_expression};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+    utils::is_empty_object_expression,
+};
 
 fn require_module_attributes_diagnostic(span: Span, import_type: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{import_type} with empty attribute list is not allowed."))
         .with_label(span)
+        .with_help("Remove the unused import attribute.")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -53,7 +60,7 @@ declare_oxc_lint!(
     RequireModuleAttributes,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 impl Rule for RequireModuleAttributes {
@@ -67,10 +74,15 @@ impl Rule for RequireModuleAttributes {
                 };
 
                 if obj_expr.properties.is_empty() {
-                    ctx.diagnostic(require_module_attributes_diagnostic(
-                        obj_expr.span,
-                        "import expression",
-                    ));
+                    ctx.diagnostic_with_suggestion(
+                        require_module_attributes_diagnostic(obj_expr.span, "import expression"),
+                        |fixer| {
+                            fixer.delete_range(Span::new(
+                                import_expr.source.span().end,
+                                options.span().end,
+                            ))
+                        },
+                    );
                     return;
                 }
 
@@ -91,28 +103,95 @@ impl Rule for RequireModuleAttributes {
 
                 if let Some(empty_with_prop) = empty_with_prop {
                     let span = empty_with_prop.value.span();
-                    ctx.diagnostic(require_module_attributes_diagnostic(span, "import expression"));
+                    ctx.diagnostic_with_suggestion(
+                        require_module_attributes_diagnostic(span, "import expression"),
+                        |fixer| {
+                            // If `with: {}` is the only property, remove the entire options argument
+                            if obj_expr.properties.len() == 1 {
+                                fixer.delete_range(Span::new(
+                                    import_expr.source.span().end,
+                                    options.span().end,
+                                ))
+                            } else {
+                                // Remove just the `with: {}` property
+                                fix_empty_with_property(
+                                    fixer,
+                                    empty_with_prop,
+                                    &obj_expr.properties,
+                                )
+                            }
+                        },
+                    );
                 }
             }
             AstKind::ImportDeclaration(decl) => {
-                check_with_clause(ctx, decl.with_clause.as_deref(), "import statement");
+                check_with_clause(
+                    ctx,
+                    decl.with_clause.as_deref(),
+                    decl.source.span,
+                    "import statement",
+                );
             }
             AstKind::ExportNamedDeclaration(decl) => {
-                check_with_clause(ctx, decl.with_clause.as_deref(), "export statement");
+                if let Some(source) = &decl.source {
+                    check_with_clause(
+                        ctx,
+                        decl.with_clause.as_deref(),
+                        source.span,
+                        "export statement",
+                    );
+                }
             }
             AstKind::ExportAllDeclaration(decl) => {
-                check_with_clause(ctx, decl.with_clause.as_deref(), "export statement");
+                check_with_clause(
+                    ctx,
+                    decl.with_clause.as_deref(),
+                    decl.source.span,
+                    "export statement",
+                );
             }
             _ => {}
         }
     }
 }
 
-fn check_with_clause(ctx: &LintContext, with_clause: Option<&WithClause>, import_type: &str) {
+fn check_with_clause(
+    ctx: &LintContext,
+    with_clause: Option<&WithClause>,
+    source_span: Span,
+    import_type: &str,
+) {
     if let Some(with_clause) = with_clause
         && with_clause.with_entries.is_empty()
     {
-        ctx.diagnostic(require_module_attributes_diagnostic(with_clause.span, import_type));
+        ctx.diagnostic_with_suggestion(
+            require_module_attributes_diagnostic(with_clause.span, import_type),
+            |fixer| fixer.delete_range(Span::new(source_span.end, with_clause.span.end)),
+        );
+    }
+}
+
+/// Fix for empty `with: {}` property when there are other properties
+fn fix_empty_with_property(
+    fixer: RuleFixer<'_, '_>,
+    empty_with_prop: &ObjectProperty<'_>,
+    properties: &oxc_allocator::Vec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
+) -> RuleFix {
+    // Find the position of the empty_with_prop in properties
+    let prop_index = properties
+        .iter()
+        .position(|p| p.as_property().is_some_and(|prop| prop.span() == empty_with_prop.span()));
+
+    let Some(idx) = prop_index else {
+        return fixer.noop();
+    };
+
+    if idx == 0 {
+        let next_prop = &properties[1];
+        fixer.delete_range(Span::new(empty_with_prop.span.start, next_prop.span().start))
+    } else {
+        let prev_prop = &properties[idx - 1];
+        fixer.delete_range(Span::new(prev_prop.span().end, empty_with_prop.span.end))
     }
 }
 
@@ -156,6 +235,60 @@ fn test() {
         r#"import("foo", {with: (({}))})"#,
     ];
 
+    let fix = vec![
+        (r#"import "foo" with {}"#, r#"import "foo""#, None),
+        (r#"import foo from "foo" with {}"#, r#"import foo from "foo""#, None),
+        (r#"export {foo} from "foo" with {}"#, r#"export {foo} from "foo""#, None),
+        (r#"export * from "foo" with {}"#, r#"export * from "foo""#, None),
+        (r#"export * from "foo"with{}"#, r#"export * from "foo""#, None),
+        (
+            r#"export * from "foo"/* comment 1 */with/* comment 2 */{/* comment 3 */}/* comment 4 */"#,
+            r#"export * from "foo"/* comment 4 */"#,
+            None,
+        ),
+        (r#"import("foo", {})"#, r#"import("foo")"#, None),
+        (r#"import("foo", (( {} )))"#, r#"import("foo")"#, None),
+        (r#"import("foo", {},)"#, r#"import("foo",)"#, None),
+        (r#"import("foo", {with:{},},)"#, r#"import("foo",)"#, None),
+        (
+            r#"import("foo", {with:{}, unknown:"unknown"},)"#,
+            r#"import("foo", {unknown:"unknown"},)"#,
+            None,
+        ),
+        (
+            r#"import("foo", {"with":{}, unknown:"unknown"},)"#,
+            r#"import("foo", {unknown:"unknown"},)"#,
+            None,
+        ),
+        (
+            r#"import("foo", {unknown:"unknown", with:{}, },)"#,
+            r#"import("foo", {unknown:"unknown", },)"#,
+            None,
+        ),
+        (
+            r#"import("foo", {unknown:"unknown", with:{} },)"#,
+            r#"import("foo", {unknown:"unknown" },)"#,
+            None,
+        ),
+        (
+            r#"import("foo", {unknown:"unknown", with:{}, unknown2:"unknown2", },)"#,
+            r#"import("foo", {unknown:"unknown", unknown2:"unknown2", },)"#,
+            None,
+        ),
+        (
+            r#"import("foo"/* comment 1 */, /* comment 2 */{/* comment 3 */}/* comment 4 */,/* comment 5 */)"#,
+            r#"import("foo"/* comment 4 */,/* comment 5 */)"#,
+            None,
+        ),
+        (
+            r#"import("foo", {/* comment 1 */"with"/* comment 2 */:/* comment 3 */{/* comment 4 */}, }/* comment 5 */,)"#,
+            r#"import("foo"/* comment 5 */,)"#,
+            None,
+        ),
+        (r#"import("foo", {with: (({}))})"#, r#"import("foo")"#, None),
+    ];
+
     Tester::new(RequireModuleAttributes::NAME, RequireModuleAttributes::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
