@@ -6,13 +6,13 @@ arguments: -c .oxlintrc.json
 working directory: fixtures/issue_10394
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "Should not have an empty title"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: Should not have an empty title
    ,-[foo.test.ts:1:10]
  1 | describe("", () => {
    :          ^^
  2 |   //
    `----
-  help: "Write a meaningful title for your test"
+  help: Write a meaningful title for your test
 
 Found 1 warning and 0 errors.
 Finished in <variable>ms on 1 file with 90 rules using 1 threads.
