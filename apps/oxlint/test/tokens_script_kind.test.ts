@@ -97,8 +97,7 @@ export { obj };
           kind <= ts.SyntaxKind.LastToken &&
           kind !== ts.SyntaxKind.EndOfFileToken
         ) {
-          const start =
-            kind === ts.SyntaxKind.JsxText ? node.getFullStart() : node.getStart(tsAst);
+          const start = kind === ts.SyntaxKind.JsxText ? node.getFullStart() : node.getStart(tsAst);
           const end = node.getEnd();
           if (start !== end) {
             tokens.push({ kind: ts.SyntaxKind[kind], start, end });
@@ -143,8 +142,7 @@ export { obj };
           kind <= ts.SyntaxKind.LastToken &&
           kind !== ts.SyntaxKind.EndOfFileToken
         ) {
-          const start =
-            kind === ts.SyntaxKind.JsxText ? node.getFullStart() : node.getStart(tsAst);
+          const start = kind === ts.SyntaxKind.JsxText ? node.getFullStart() : node.getStart(tsAst);
           const end = node.getEnd();
           if (start !== end) {
             tokens.push({ kind: ts.SyntaxKind[kind], start, end });
@@ -162,7 +160,6 @@ export { obj };
   });
 
   describe("generic arrow functions with comments", () => {
-
     it("should parse .ts file without token/comment overlap", () => {
       setup("test.ts", SOURCE_WITH_GENERIC_ARROW);
 
