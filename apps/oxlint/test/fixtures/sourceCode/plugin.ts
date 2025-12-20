@@ -23,6 +23,7 @@ const createRule: Rule = {
     const { ast, text } = sourceCode;
 
     assert(context.getSourceCode() === sourceCode);
+    assert(sourceCode.getLines() === lines);
 
     let locs = "";
     for (let offset = 0; offset <= text.length; offset++) {
