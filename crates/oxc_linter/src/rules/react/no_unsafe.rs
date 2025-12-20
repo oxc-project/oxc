@@ -87,27 +87,45 @@ impl Rule for NoUnsafe {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let react_version =
-            ctx.settings().react.version.as_ref().and_then(|v| parse_react_version(v.as_str()));
+        match node.kind() {
+            AstKind::MethodDefinition(method_def) => {
+                let react_version = ctx
+                    .settings()
+                    .react
+                    .version
+                    .as_ref()
+                    .and_then(|v| parse_react_version(v.as_str()));
 
-        if let AstKind::MethodDefinition(method_def) = node.kind()
-            && let Some(name) = method_def.key.static_name()
-            && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
-            && get_parent_component(node, ctx).is_some()
-        {
-            ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
-        }
-
-        if let AstKind::ObjectProperty(obj_prop) = node.kind()
-            && let Some(name) = obj_prop.key.static_name()
-            && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
-        {
-            for ancestor in ctx.nodes().ancestors(node.id()) {
-                if is_es5_component(ancestor) {
-                    ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), obj_prop.key.span()));
-                    break;
+                if let Some(name) = method_def.key.static_name()
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                    && get_parent_component(node, ctx).is_some()
+                {
+                    ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
                 }
             }
+            AstKind::ObjectProperty(obj_prop) => {
+                let react_version = ctx
+                    .settings()
+                    .react
+                    .version
+                    .as_ref()
+                    .and_then(|v| parse_react_version(v.as_str()));
+
+                if let Some(name) = obj_prop.key.static_name()
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                {
+                    for ancestor in ctx.nodes().ancestors(node.id()) {
+                        if is_es5_component(ancestor) {
+                            ctx.diagnostic(no_unsafe_diagnostic(
+                                name.as_ref(),
+                                obj_prop.key.span(),
+                            ));
+                            break;
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
