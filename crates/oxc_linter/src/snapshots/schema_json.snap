@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/lib.rs
-assertion_line: 595
 expression: json
 ---
 {

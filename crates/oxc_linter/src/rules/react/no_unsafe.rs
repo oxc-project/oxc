@@ -24,7 +24,7 @@ fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
 
     OxcDiagnostic::warn(format!("Unsafe lifecycle method `{method_name}` is not allowed"))
         .with_help(format!(
-            "Use `{replacement}` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering"
+            "Use `{replacement}` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html"
         ))
         .with_label(span)
 }
@@ -88,11 +88,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafe {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(
-            serde_json::from_value::<DefaultRuleConfig<NoUnsafeConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        )
+        serde_json::from_value::<DefaultRuleConfig<NoUnsafe>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
