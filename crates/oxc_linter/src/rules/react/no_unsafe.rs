@@ -13,9 +13,18 @@ use crate::{
 };
 
 fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
+    let replacement = match method_name {
+        "componentWillMount" | "UNSAFE_componentWillMount" => "componentDidMount",
+        "componentWillReceiveProps" | "UNSAFE_componentWillReceiveProps" => {
+            "getDerivedStateFromProps"
+        }
+        "componentWillUpdate" | "UNSAFE_componentWillUpdate" => "componentDidUpdate",
+        _ => "alternative lifecycle methods",
+    };
+
     OxcDiagnostic::warn(format!("Unsafe lifecycle method `{method_name}` is not allowed"))
         .with_help(format!(
-            "`{method_name}` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks."
+            "Use `{replacement}` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering"
         ))
         .with_label(span)
 }

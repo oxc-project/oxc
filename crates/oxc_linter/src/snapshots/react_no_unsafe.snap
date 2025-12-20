@@ -8,7 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────
  4 │                       componentWillReceiveProps() {}
    ╰────
-  help: `componentWillMount` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidMount` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
@@ -17,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────────
  5 │                       componentWillUpdate() {}
    ╰────
-  help: `componentWillReceiveProps` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `getDerivedStateFromProps` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────────────────
  6 │                     }
    ╰────
-  help: `componentWillUpdate` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidUpdate` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────────
  4 │                       UNSAFE_componentWillReceiveProps() {}
    ╰────
-  help: `UNSAFE_componentWillMount` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidMount` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────────────────────────────
  5 │                       UNSAFE_componentWillUpdate() {}
    ╰────
-  help: `UNSAFE_componentWillReceiveProps` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `getDerivedStateFromProps` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
@@ -53,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────────────
  6 │                     }
    ╰────
-  help: `UNSAFE_componentWillUpdate` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidUpdate` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────
  4 │                       componentWillReceiveProps: function() {},
    ╰────
-  help: `componentWillMount` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidMount` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────────
  5 │                       componentWillUpdate: function() {},
    ╰────
-  help: `componentWillReceiveProps` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `getDerivedStateFromProps` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────────────────
  6 │                     });
    ╰────
-  help: `componentWillUpdate` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidUpdate` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────────
  4 │                       UNSAFE_componentWillReceiveProps: function() {},
    ╰────
-  help: `UNSAFE_componentWillMount` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidMount` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────────────────────────────
  5 │                       UNSAFE_componentWillUpdate: function() {},
    ╰────
-  help: `UNSAFE_componentWillReceiveProps` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `getDerivedStateFromProps` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
 
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
@@ -107,4 +107,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────────────
  6 │                     });
    ╰────
-  help: `UNSAFE_componentWillUpdate` is deprecated and may be removed in future React versions. Consider using alternative lifecycle methods or hooks.
+  help: Use `componentDidUpdate` instead. See https://react.dev/blog/2018/03/27/update-on-async-rendering
