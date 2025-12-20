@@ -16,6 +16,7 @@ use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     ast_util::iter_outer_expressions,
+    config::ReactVersion,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
@@ -69,12 +70,12 @@ struct ReactComponentInfo {
     name: Option<CompactStr>,
 }
 
-// Version cache to avoid repeated parsing
+// Version cache to avoid repeated version checks
 #[derive(Debug, Clone)]
 struct VersionCache {
     memo_forwardref_compatible: Option<bool>,
     context_objects_compatible: Option<bool>,
-    version: Option<CompactStr>,
+    version: Option<ReactVersion>,
 }
 
 impl VersionCache {
@@ -84,9 +85,9 @@ impl VersionCache {
 
     /// Ensure the cache is fresh for the current version, clearing cached values if version changed.
     fn ensure_fresh(&mut self, ctx: &LintContext) {
-        let current_version = ctx.settings().react.version.as_deref();
-        if self.version.as_deref() != current_version {
-            self.version = current_version.map(CompactStr::from);
+        let current_version = ctx.settings().react.version;
+        if self.version != current_version {
+            self.version = current_version;
             self.memo_forwardref_compatible = None;
             self.context_objects_compatible = None;
         }
@@ -97,7 +98,7 @@ impl VersionCache {
         if let Some(compatible) = self.memo_forwardref_compatible {
             return compatible;
         }
-        let current_version = ctx.settings().react.version.as_deref();
+        let current_version = ctx.settings().react.version.as_ref();
         let compatible = test_react_version_for_memo_forwardref_internal(current_version);
         self.memo_forwardref_compatible = Some(compatible);
         compatible
@@ -108,7 +109,7 @@ impl VersionCache {
         if let Some(compatible) = self.context_objects_compatible {
             return compatible;
         }
-        let current_version = ctx.settings().react.version.as_deref();
+        let current_version = ctx.settings().react.version.as_ref();
         let compatible = check_react_version_internal(current_version, 16, 3);
         self.context_objects_compatible = Some(compatible);
         compatible
@@ -756,28 +757,17 @@ fn is_module_exports_component(
     None
 }
 
-/// Parse version string like "16.14.0" into (major, minor, patch)
-fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
-    // Avoid Vec allocation by using split_once and split_once again
-    let (major_str, rest) = version.split_once('.')?;
-    let (minor_str, patch_str) = rest.split_once('.')?;
-
-    let major = major_str.parse::<u32>().ok()?;
-    let minor = minor_str.parse::<u32>().ok()?;
-    let patch = patch_str.parse::<u32>().ok()?;
-
-    Some((major, minor, patch))
-}
-
-/// Internal version checking function to avoid repeated parsing
-fn check_react_version_internal(version: Option<&str>, min_major: u32, min_minor: u32) -> bool {
+/// Internal version checking function
+fn check_react_version_internal(
+    version: Option<&ReactVersion>,
+    min_major: u32,
+    min_minor: u32,
+) -> bool {
     match version {
-        Some(version) => {
-            if let Some((major, minor, _)) = parse_version(version) {
-                major >= min_major && (major > min_major || minor >= min_minor)
-            } else {
-                false
-            }
+        Some(v) => {
+            let major = v.major();
+            let minor = v.minor();
+            major >= min_major && (major > min_major || minor >= min_minor)
         }
         None => {
             // If no version specified, assume modern React
@@ -787,26 +777,25 @@ fn check_react_version_internal(version: Option<&str>, min_major: u32, min_minor
 }
 
 /// Internal memo/forwardRef version checking function
-fn test_react_version_for_memo_forwardref_internal(version: Option<&str>) -> bool {
+fn test_react_version_for_memo_forwardref_internal(version: Option<&ReactVersion>) -> bool {
     match version {
-        Some(version) => {
-            if let Some((major, minor, patch)) = parse_version(version) {
-                // ^0.14.10: major == 0 && minor >= 14 && patch >= 10
-                if major == 0 && minor >= 14 && patch >= 10 {
-                    return true;
-                }
-                // ^15.7.0: major == 15 && minor >= 7
-                if major == 15 && minor >= 7 {
-                    return true;
-                }
-                // >= 16.12.0: major >= 16 && (major > 16 || minor >= 12)
-                if major >= 16 && (major > 16 || minor >= 12) {
-                    return true;
-                }
-                false
-            } else {
-                false
+        Some(v) => {
+            let major = v.major();
+            let minor = v.minor();
+            let patch = v.patch();
+            // ^0.14.10: major == 0 && minor >= 14 && patch >= 10
+            if major == 0 && minor >= 14 && patch >= 10 {
+                return true;
             }
+            // ^15.7.0: major == 15 && minor >= 7
+            if major == 15 && minor >= 7 {
+                return true;
+            }
+            // >= 16.12.0: major >= 16 && (major > 16 || minor >= 12)
+            if major >= 16 && (major > 16 || minor >= 12) {
+                return true;
+            }
+            false
         }
         None => {
             // If no version specified, assume modern React (>= 16.12.0)
@@ -1696,7 +1685,7 @@ fn test() {
         	      "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             Some(
-                serde_json::json!({ "settings": {        "react": {          "version": ">16.3.0",        },      } }),
+                serde_json::json!({ "settings": {        "react": {          "version": "16.4.0",        },      } }),
             ),
         ),
         (
@@ -1718,7 +1707,7 @@ fn test() {
         	      ",
             Some(serde_json::json!([{ "checkContextObjects": false }])),
             Some(
-                serde_json::json!({ "settings": {        "react": {          "version": ">16.3.0",        },      } }),
+                serde_json::json!({ "settings": {        "react": {          "version": "16.4.0",        },      } }),
             ),
         ),
         (
