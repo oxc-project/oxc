@@ -127,11 +127,19 @@ fn is_unsafe_method(
         react_version.is_none_or(|(major, minor, _)| major > 16 || (major == 16 && minor >= 3));
 
     match name {
-       "UNSAFE_componentWillMount"
+        "UNSAFE_componentWillMount"
         | "UNSAFE_componentWillReceiveProps"
-        | "UNSAFE_componentWillUpdate" if check_unsafe_prefix => true,
-        "componentWillMount" | "componentWillReceiveProps" | "componentWillUpdate" if check_aliases => true,
-       _ => false
+        | "UNSAFE_componentWillUpdate"
+            if check_unsafe_prefix =>
+        {
+            true
+        }
+        "componentWillMount" | "componentWillReceiveProps" | "componentWillUpdate"
+            if check_aliases =>
+        {
+            true
+        }
+        _ => false,
     }
 }
 
