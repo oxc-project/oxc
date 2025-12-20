@@ -199,7 +199,7 @@ const source = `{}`;{}
 
                         // If it's a mapped type with no rendered properties, add example
                         let example = if is_mapped_type && rendered.trim().is_empty() {
-                            format!("\n**Example:**\n\n```json\n{{\n  \"methodName\": \"Custom error message\",\n  \"anotherMethod\": null\n}}\n```\n")
+                            "\n**Example:**\n\n```json\n{\n  \"methodName\": \"Custom error message\",\n  \"anotherMethod\": null\n}\n```\n".to_string()
                         } else {
                             String::new()
                         };
