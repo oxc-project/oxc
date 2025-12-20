@@ -1,4 +1,9 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
+import {
+  DATA_POINTER_POS_32,
+  IS_JSX_FLAG_POS,
+  IS_TS_FLAG_POS,
+  SOURCE_LEN_OFFSET,
+} from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
@@ -64,6 +69,30 @@ export function initSourceText(): void {
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
   sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+}
+
+/**
+ * Check if the source type is JSX/TSX based on the parsed AST's SourceType.
+ * This reads the `is_jsx` flag from the buffer metadata.
+ *
+ * @returns `true` if the source is JSX/TSX
+ */
+export function isJsx(): boolean {
+  debugAssertIsNonNull(buffer);
+  // IS_JSX_FLAG_POS contains a bool: 0 = not JSX, 1 = JSX
+  return buffer[IS_JSX_FLAG_POS] === 1;
+}
+
+/**
+ * Check if the source is TypeScript (as opposed to JavaScript).
+ * This reads the `is_ts` flag from the buffer metadata.
+ *
+ * @returns `true` if the source is TypeScript
+ */
+export function isTypescript(): boolean {
+  debugAssertIsNonNull(buffer);
+  // IS_TS_FLAG_POS contains a bool: 0 = JS, 1 = TS
+  return buffer[IS_TS_FLAG_POS] === 1;
 }
 
 /**

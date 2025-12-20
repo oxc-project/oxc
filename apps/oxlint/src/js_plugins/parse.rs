@@ -148,6 +148,7 @@ unsafe fn parse_raw_impl(
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ignore_non_fatal_errors = options.ignore_non_fatal_errors.unwrap_or(false);
+    let is_ts = source_type.is_typescript();
 
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
@@ -193,7 +194,7 @@ unsafe fn parse_raw_impl(
 
     // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let metadata = RawTransferMetadata::new(program_offset);
+    let metadata = RawTransferMetadata::new(program_offset, is_ts, source_type.is_jsx());
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
     const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
