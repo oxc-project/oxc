@@ -1351,7 +1351,19 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
             if let Some(source) = source {
                 if is_parent_call_expr {
-                    self.found_dependencies.insert(source);
+                    // When calling a method like `form.reset()`, the dependency should be
+                    // `form.reset` (the method reference), not just `form`. This allows
+                    // users to list `form.reset` in their dependency array instead of `form`.
+                    let new_chain = Vec::from([it.property.name]);
+                    let symbol_id =
+                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
+                    self.found_dependencies.insert(Dependency {
+                        name: source.name,
+                        reference_id: source.reference_id,
+                        span: source.span,
+                        chain: [source.chain, new_chain].concat(),
+                        symbol_id,
+                    });
                 } else {
                     let new_chain = Vec::from([it.property.name]);
 
@@ -1664,6 +1676,19 @@ fn test() {
           useEffect(() => {
             return history.listen();
           }, [history]);
+        }",
+        r"function MyComponent(props) {
+          const [skillsCount] = useState();
+          useEffect(() => {
+            if (skillsCount === 0 && !props.isEditMode) {
+              props.toggleEditMode();
+            }
+          }, [skillsCount, props.isEditMode, props.toggleEditMode]);
+        }",
+        r"function MyComponent({ form }) {
+          useEffect(() => {
+            form.reset();
+          }, [form]);
         }",
         r"function MyComponent(props) {
           useEffect(() => {});
@@ -3235,14 +3260,6 @@ fn test() {
               props.foo.onChange();
             }
           }, []);
-        }",
-        r"function MyComponent(props) {
-          const [skillsCount] = useState();
-          useEffect(() => {
-            if (skillsCount === 0 && !props.isEditMode) {
-              props.toggleEditMode();
-            }
-          }, [skillsCount, props.isEditMode, props.toggleEditMode]);
         }",
         r"function MyComponent(props) {
           const [skillsCount] = useState();
