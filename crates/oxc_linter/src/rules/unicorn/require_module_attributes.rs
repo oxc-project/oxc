@@ -112,9 +112,10 @@ impl Rule for RequireModuleAttributes {
 
 fn check_with_clause(ctx: &LintContext, with_clause: Option<&WithClause>, import_type: &str) {
     if let Some(with_clause) = with_clause
-        && with_clause.with_entries.is_empty() {
-            ctx.diagnostic(require_module_attributes_diagnostic(with_clause.span, import_type));
-        }
+        && with_clause.with_entries.is_empty()
+    {
+        ctx.diagnostic(require_module_attributes_diagnostic(with_clause.span, import_type));
+    }
 }
 
 #[test]
