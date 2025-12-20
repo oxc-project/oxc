@@ -2,6 +2,7 @@
 
 Please refer to https://oxc.rs/docs/contribute/security.html for our established security practices.
 
-## Reporting a Vulnerability
+## Security contact information
 
-If you discover a potential vulnerability, please join our [Discord channel](https://discord.gg/9uXCAwqQZW) and contact Boshen.
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security).
+Tidelift will coordinate the fix and disclosure.

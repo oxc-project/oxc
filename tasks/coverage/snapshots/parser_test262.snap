@@ -1,8 +1,8 @@
-commit: 947fee33
+commit: 84082e27
 
 parser_test262 Summary:
-AST Parsed     : 46445/46453 (99.98%)
-Positive Passed: 46437/46453 (99.97%)
+AST Parsed     : 46459/46467 (99.98%)
+Positive Passed: 46451/46467 (99.97%)
 Negative Passed: 4579/4581 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
 
@@ -87,6 +87,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ──────────
  25 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:29:15]
@@ -95,6 +96,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  30 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:34:11]
@@ -103,6 +105,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ──────────
  35 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:39:11]
@@ -111,6 +114,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  40 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:55:15]
@@ -119,6 +123,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ──────────
  56 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:60:15]
@@ -127,6 +132,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  61 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:65:11]
@@ -135,6 +141,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ──────────
  66 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:70:11]
@@ -143,6 +150,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  71 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
 
@@ -153,6 +161,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ───────
  24 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:28:15]
@@ -161,6 +170,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  29 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:33:11]
@@ -169,6 +179,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ───────
  34 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:38:11]
@@ -177,6 +188,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  39 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:53:15]
@@ -185,6 +197,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ───────
  54 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:58:15]
@@ -193,6 +206,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  59 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:63:11]
@@ -201,6 +215,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ───────
  64 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:68:11]
@@ -209,6 +224,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  69 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
 
@@ -219,6 +235,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ──────
  26 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:30:15]
@@ -227,6 +244,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  31 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:35:11]
@@ -235,6 +253,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ──────
  36 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:40:11]
@@ -243,6 +262,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  41 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:58:15]
@@ -251,6 +271,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ──────
  59 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:63:15]
@@ -259,6 +280,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  64 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:68:11]
@@ -267,6 +289,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ──────
  69 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:73:11]
@@ -275,6 +298,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  74 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
 
@@ -285,6 +309,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ───────────
  25 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:29:15]
@@ -293,6 +318,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  30 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:34:11]
@@ -301,6 +327,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ───────────
  35 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:39:11]
@@ -309,6 +336,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  40 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:55:15]
@@ -317,6 +345,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ───────────
  56 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:60:15]
@@ -325,6 +354,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·               ────
  61 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:65:11]
@@ -333,6 +363,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ───────────
  66 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:70:11]
@@ -341,6 +372,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·           ────
  71 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
 
@@ -351,6 +383,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ──────────
  25 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:29:26]
@@ -359,6 +392,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  30 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:34:12]
@@ -367,6 +401,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ──────────
  35 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:39:12]
@@ -375,6 +410,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  40 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:55:26]
@@ -383,6 +419,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ──────────
  56 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:60:26]
@@ -391,6 +428,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  61 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:65:12]
@@ -399,6 +437,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ──────────
  66 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:70:12]
@@ -407,6 +446,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  71 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
 
@@ -417,6 +457,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ───────
  24 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:28:26]
@@ -425,6 +466,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  29 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:33:12]
@@ -433,6 +475,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ───────
  34 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:38:12]
@@ -441,6 +484,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  39 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:53:26]
@@ -449,6 +493,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ───────
  54 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:58:26]
@@ -457,6 +502,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  59 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:63:12]
@@ -465,6 +511,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ───────
  64 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:68:12]
@@ -473,6 +520,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  69 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
 
@@ -483,6 +531,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ──────
  26 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:30:26]
@@ -491,6 +540,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  31 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:35:12]
@@ -499,6 +549,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ──────
  36 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:40:12]
@@ -507,6 +558,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  41 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:58:26]
@@ -515,6 +567,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ──────
  59 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:63:26]
@@ -523,6 +576,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  64 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:68:12]
@@ -531,6 +585,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ──────
  69 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:73:12]
@@ -539,6 +594,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  74 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
 
@@ -549,6 +605,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ───────────
  25 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:29:26]
@@ -557,6 +614,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  30 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:34:12]
@@ -565,6 +623,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ───────────
  35 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:39:12]
@@ -573,6 +632,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  40 │   matchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:55:26]
@@ -581,6 +641,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ───────────
  56 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:60:26]
@@ -589,6 +650,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·                          ────
  61 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:65:12]
@@ -597,6 +659,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ───────────
  66 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:70:12]
@@ -605,6 +668,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/g
     ·            ────
  71 │   nonMatchSymbols,
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
 Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
 
@@ -675,6 +739,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=F}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_F.js:19:11]
@@ -682,6 +747,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=F}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid-negated.js:19:11]
@@ -689,6 +755,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=Invalid}/u;
     ·           ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid.js:19:11]
@@ -696,6 +763,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=Invalid}/u;
     ·           ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N-negated.js:19:11]
@@ -703,6 +771,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=N}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N.js:19:11]
@@ -710,6 +779,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=N}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No-negated.js:19:11]
@@ -717,6 +787,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=No}/u;
     ·           ──
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No.js:19:11]
@@ -724,6 +795,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=No}/u;
     ·           ──
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T-negated.js:19:11]
@@ -731,6 +803,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=T}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T.js:19:11]
@@ -738,6 +811,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=T}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y-negated.js:19:11]
@@ -745,6 +819,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=Y}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y.js:19:11]
@@ -752,6 +827,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=Y}/u;
     ·           ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes-negated.js:19:11]
@@ -759,6 +835,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASCII=Yes}/u;
     ·           ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes.js:19:11]
@@ -766,6 +843,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASCII=Yes}/u;
     ·           ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-end.js:21:3]
@@ -773,6 +851,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[--\p{Hex}]/u;
     ·   ─────────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-no-dash-end.js:21:3]
@@ -780,6 +859,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[\uFFFF-\p{Hex}]/u;
     ·   ──────────────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-no-dash-start.js:21:3]
@@ -787,6 +867,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[\p{Hex}-\uFFFF]/u;
     ·   ──────────────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-start.js:21:3]
@@ -794,6 +875,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[\p{Hex}--]/u;
     ·   ─────────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Invalid character class with strings unicode property
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-CharacterClass.js:21:2]
@@ -801,13 +883,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{Basic_Emoji}]/v;
     ·  ──────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `Basic_Emoji`(negative + property of strings)
+  × Invalid regular expression: Property name `Basic_Emoji` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-P.js:21:2]
  20 │ 
  21 │ /\P{Basic_Emoji}/v;
     ·  ───────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `Basic_Emoji`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-u.js:21:5]
@@ -823,13 +907,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{Emoji_Keycap_Sequence}]/v;
     ·  ────────────────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `Emoji_Keycap_Sequence`(negative + property of strings)
+  × Invalid regular expression: Property name `Emoji_Keycap_Sequence` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-P.js:21:2]
  20 │ 
  21 │ /\P{Emoji_Keycap_Sequence}/v;
     ·  ─────────────────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `Emoji_Keycap_Sequence`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-u.js:21:5]
@@ -845,13 +931,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{RGI_Emoji}]/v;
     ·  ────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `RGI_Emoji`(negative + property of strings)
+  × Invalid regular expression: Property name `RGI_Emoji` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-P.js:21:2]
  20 │ 
  21 │ /\P{RGI_Emoji}/v;
     ·  ─────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `RGI_Emoji`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-u.js:21:5]
@@ -867,13 +955,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{RGI_Emoji_Flag_Sequence}]/v;
     ·  ──────────────────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `RGI_Emoji_Flag_Sequence`(negative + property of strings)
+  × Invalid regular expression: Property name `RGI_Emoji_Flag_Sequence` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-P.js:21:2]
  20 │ 
  21 │ /\P{RGI_Emoji_Flag_Sequence}/v;
     ·  ───────────────────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `RGI_Emoji_Flag_Sequence`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-u.js:21:5]
@@ -889,13 +979,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{RGI_Emoji_Modifier_Sequence}]/v;
     ·  ──────────────────────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `RGI_Emoji_Modifier_Sequence`(negative + property of strings)
+  × Invalid regular expression: Property name `RGI_Emoji_Modifier_Sequence` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-P.js:21:2]
  20 │ 
  21 │ /\P{RGI_Emoji_Modifier_Sequence}/v;
     ·  ───────────────────────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `RGI_Emoji_Modifier_Sequence`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-u.js:21:5]
@@ -911,13 +1003,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{RGI_Emoji_Tag_Sequence}]/v;
     ·  ─────────────────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `RGI_Emoji_Tag_Sequence`(negative + property of strings)
+  × Invalid regular expression: Property name `RGI_Emoji_Tag_Sequence` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-P.js:21:2]
  20 │ 
  21 │ /\P{RGI_Emoji_Tag_Sequence}/v;
     ·  ──────────────────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `RGI_Emoji_Tag_Sequence`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-u.js:21:5]
@@ -933,13 +1027,15 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /[^\p{RGI_Emoji_ZWJ_Sequence}]/v;
     ·  ─────────────────────────────
     ╰────
+  help: Properties that match string related unicode properties require the `v` flag
 
-  × Invalid regular expression: Invalid property name `RGI_Emoji_ZWJ_Sequence`(negative + property of strings)
+  × Invalid regular expression: Property name `RGI_Emoji_ZWJ_Sequence` is not allowed here
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-P.js:21:2]
  20 │ 
  21 │ /\P{RGI_Emoji_ZWJ_Sequence}/v;
     ·  ──────────────────────────
     ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
 
   × Invalid regular expression: Invalid unicode property `RGI_Emoji_ZWJ_Sequence`
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-u.js:21:5]
@@ -955,6 +1051,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{InAdlam}/u;
     ·     ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Block-implicit.js:22:5]
@@ -962,6 +1059,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{InAdlam}/u;
     ·     ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit-negated.js:22:5]
@@ -969,6 +1067,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{InAdlam}/u;
     ·     ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit.js:22:5]
@@ -976,6 +1075,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{InAdlam}/u;
     ·     ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-negated.js:22:14]
@@ -983,6 +1083,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{InScript=Adlam}/u;
     ·              ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script.js:22:14]
@@ -990,6 +1091,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{InScript=Adlam}/u;
     ·              ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script-negated.js:22:14]
@@ -997,6 +1099,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{IsScript=Adlam}/u;
     ·              ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script.js:22:14]
@@ -1004,6 +1107,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{IsScript=Adlam}/u;
     ·              ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation-negated.js:22:2]
@@ -1011,6 +1115,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{^General_Category=Letter}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation.js:22:2]
@@ -1018,6 +1123,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{^General_Category=Letter}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-empty-negated.js:22:3]
@@ -1025,6 +1131,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /[\p{}]/u;
     ·   ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-empty.js:22:3]
@@ -1032,6 +1139,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /[\P{}]/u;
     ·   ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-invalid-negated.js:22:6]
@@ -1039,6 +1147,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /[\P{invalid}]/u;
     ·      ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-invalid.js:22:6]
@@ -1046,6 +1155,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /[\p{invalid}]/u;
     ·      ───────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-negated.js:22:2]
@@ -1053,6 +1163,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-value-negated.js:22:2]
@@ -1060,6 +1171,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\PL/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-value.js:22:2]
@@ -1067,6 +1179,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\pL/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces.js:22:2]
@@ -1074,6 +1187,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only-negated.js:22:2]
@@ -1081,6 +1195,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{=Letter}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only.js:22:2]
@@ -1088,6 +1203,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{=Letter}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-negated.js:22:5]
@@ -1095,6 +1211,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{General_Category:Letter}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-only-negated.js:22:2]
@@ -1102,6 +1219,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{=}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-only.js:22:2]
@@ -1109,6 +1227,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{=}/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator.js:22:5]
@@ -1116,6 +1235,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{General_Category:Letter}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unclosed-negated.js:22:2]
@@ -1123,6 +1243,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P{/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unclosed.js:22:2]
@@ -1130,6 +1251,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p{/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unopened-negated.js:22:2]
@@ -1137,6 +1259,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\P}/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unopened.js:22:2]
@@ -1144,6 +1267,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ /\p}/u;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-01-negated.js:19:2]
@@ -1151,6 +1275,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ General_Category=Uppercase_Letter }/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-01.js:19:2]
@@ -1158,6 +1283,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ General_Category=Uppercase_Letter }/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-02-negated.js:19:2]
@@ -1165,6 +1291,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ Lowercase }/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-02.js:19:2]
@@ -1172,6 +1299,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ Lowercase }/u;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-03-negated.js:19:5]
@@ -1179,6 +1307,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ANY}/u;
     ·     ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-03.js:19:5]
@@ -1186,6 +1315,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ANY}/u;
     ·     ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-04-negated.js:19:5]
@@ -1193,6 +1323,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ASSIGNED}/u;
     ·     ────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-04.js:19:5]
@@ -1200,6 +1331,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ASSIGNED}/u;
     ·     ────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-05-negated.js:19:5]
@@ -1207,6 +1339,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Ascii}/u;
     ·     ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-05.js:19:5]
@@ -1214,6 +1347,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Ascii}/u;
     ·     ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-06-negated.js:19:5]
@@ -1221,6 +1355,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{General_Category = Uppercase_Letter}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-06.js:19:5]
@@ -1228,6 +1363,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{General_Category = Uppercase_Letter}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-07-negated.js:19:5]
@@ -1235,6 +1371,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{_-_lOwEr_C-A_S-E_-_}/u;
     ·     ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-07.js:19:5]
@@ -1242,6 +1379,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{_-_lOwEr_C-A_S-E_-_}/u;
     ·     ─
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-08-negated.js:19:5]
@@ -1249,6 +1387,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{any}/u;
     ·     ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-08.js:19:5]
@@ -1256,6 +1395,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{any}/u;
     ·     ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-09-negated.js:19:5]
@@ -1263,6 +1403,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{ascii}/u;
     ·     ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-09.js:19:5]
@@ -1270,6 +1411,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{ascii}/u;
     ·     ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-10-negated.js:19:5]
@@ -1277,6 +1419,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{assigned}/u;
     ·     ────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-10.js:19:5]
@@ -1284,6 +1427,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{assigned}/u;
     ·     ────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-11-negated.js:19:8]
@@ -1291,6 +1435,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{gC=uppercase_letter}/u;
     ·        ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-11.js:19:8]
@@ -1298,6 +1443,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{gC=uppercase_letter}/u;
     ·        ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-12-negated.js:19:8]
@@ -1305,6 +1451,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{gc=uppercaseletter}/u;
     ·        ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-12.js:19:8]
@@ -1312,6 +1459,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{gc=uppercaseletter}/u;
     ·        ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-13-negated.js:19:5]
@@ -1319,6 +1467,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{lowercase}/u;
     ·     ─────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-13.js:19:5]
@@ -1326,6 +1475,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{lowercase}/u;
     ·     ─────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-14-negated.js:19:5]
@@ -1333,6 +1483,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{lowercase}/u;
     ·     ─────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-14.js:19:5]
@@ -1340,6 +1491,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{lowercase}/u;
     ·     ─────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals-negated.js:18:5]
@@ -1347,6 +1499,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{General_Category=}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals.js:18:5]
@@ -1354,6 +1507,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{General_Category=}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-negated.js:18:5]
@@ -1361,6 +1515,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{General_Category}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category.js:18:5]
@@ -1368,6 +1523,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{General_Category}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals-negated.js:18:5]
@@ -1375,6 +1531,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{Script=}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals.js:18:5]
@@ -1382,6 +1539,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{Script=}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-negated.js:18:5]
@@ -1389,6 +1547,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{Script}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script.js:18:5]
@@ -1396,6 +1555,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{Script}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals-negated.js:18:5]
@@ -1403,6 +1563,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{Script_Extensions=}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals.js:18:5]
@@ -1410,6 +1571,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{Script_Extensions=}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-negated.js:18:5]
@@ -1417,6 +1579,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{Script_Extensions}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions.js:18:5]
@@ -1424,6 +1587,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{Script_Extensions}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-binary-property-negated.js:18:5]
@@ -1431,6 +1595,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{UnknownBinaryProperty}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-binary-property.js:18:5]
@@ -1438,6 +1603,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{UnknownBinaryProperty}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-and-value-negated.js:19:17]
@@ -1445,6 +1611,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Line_Breakz=WAT}/u;
     ·                 ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-and-value.js:19:17]
@@ -1452,6 +1619,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Line_Breakz=WAT}/u;
     ·                 ───
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-existing-value-negated.js:18:17]
@@ -1459,6 +1627,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\P{Line_Breakz=Alphabetic}/u;
     ·                 ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-existing-value.js:18:17]
@@ -1466,6 +1635,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /\p{Line_Breakz=Alphabetic}/u;
     ·                 ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-General_Category-negated.js:19:5]
@@ -1473,6 +1643,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\P{General_Category=WAT}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script-negated.js:19:5]
@@ -1480,6 +1651,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\P{Script=FooBarBazInvalid}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script.js:19:5]
@@ -1487,6 +1659,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\p{Script=FooBarBazInvalid}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions-negated.js:19:5]
@@ -1494,6 +1667,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\P{Script_Extensions=H_e_h}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions.js:19:5]
@@ -1501,6 +1675,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\p{Script_Extensions=H_e_h}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-general-category.js:19:5]
@@ -1508,6 +1683,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\\p{General_Category=WAT}/u;
     ·     ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion-negated.js:19:5]
@@ -1515,6 +1691,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Composition_Exclusion}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion.js:19:5]
@@ -1522,6 +1699,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Composition_Exclusion}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC-negated.js:19:5]
@@ -1529,6 +1707,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Expands_On_NFC}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC.js:19:5]
@@ -1536,6 +1715,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Expands_On_NFC}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD-negated.js:19:5]
@@ -1543,6 +1723,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Expands_On_NFD}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD.js:19:5]
@@ -1550,6 +1731,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Expands_On_NFD}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC-negated.js:19:5]
@@ -1557,6 +1739,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Expands_On_NFKC}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC.js:19:5]
@@ -1564,6 +1747,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Expands_On_NFKC}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD-negated.js:19:5]
@@ -1571,6 +1755,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Expands_On_NFKD}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD.js:19:5]
@@ -1578,6 +1763,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Expands_On_NFKD}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure-negated.js:19:5]
@@ -1585,6 +1771,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{FC_NFKC_Closure}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure.js:19:5]
@@ -1592,6 +1779,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{FC_NFKC_Closure}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion-negated.js:19:5]
@@ -1599,6 +1787,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Full_Composition_Exclusion}/u;
     ·     ──────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion.js:19:5]
@@ -1606,6 +1795,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Full_Composition_Exclusion}/u;
     ·     ──────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link-negated.js:19:5]
@@ -1613,6 +1803,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Grapheme_Link}/u;
     ·     ─────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link.js:19:5]
@@ -1620,6 +1811,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Grapheme_Link}/u;
     ·     ─────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen-negated.js:19:5]
@@ -1627,6 +1819,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Hyphen}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen.js:19:5]
@@ -1634,6 +1827,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Hyphen}/u;
     ·     ──────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic-negated.js:19:5]
@@ -1641,6 +1835,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Alphabetic}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic.js:19:5]
@@ -1648,6 +1843,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Alphabetic}/u;
     ·     ────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point-negated.js:19:5]
@@ -1655,6 +1851,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Default_Ignorable_Code_Point}/u;
     ·     ──────────────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point.js:19:5]
@@ -1662,6 +1859,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Default_Ignorable_Code_Point}/u;
     ·     ──────────────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend-negated.js:19:5]
@@ -1669,6 +1867,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Grapheme_Extend}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend.js:19:5]
@@ -1676,6 +1875,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Grapheme_Extend}/u;
     ·     ─────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue-negated.js:19:5]
@@ -1683,6 +1883,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_ID_Continue}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue.js:19:5]
@@ -1690,6 +1891,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_ID_Continue}/u;
     ·     ─────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start-negated.js:19:5]
@@ -1697,6 +1899,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_ID_Start}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start.js:19:5]
@@ -1704,6 +1907,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_ID_Start}/u;
     ·     ──────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase-negated.js:19:5]
@@ -1711,6 +1915,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Lowercase}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase.js:19:5]
@@ -1718,6 +1923,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Lowercase}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math-negated.js:19:5]
@@ -1725,6 +1931,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Math}/u;
     ·     ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math.js:19:5]
@@ -1732,6 +1939,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Math}/u;
     ·     ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase-negated.js:19:5]
@@ -1739,6 +1947,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Other_Uppercase}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase.js:19:5]
@@ -1746,6 +1955,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Other_Uppercase}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark-negated.js:19:5]
@@ -1753,6 +1963,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Prepended_Concatenation_Mark}/u;
     ·     ────────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark.js:19:5]
@@ -1760,6 +1971,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Prepended_Concatenation_Mark}/u;
     ·     ────────────────────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Block-with-value-negated.js:19:11]
@@ -1767,6 +1979,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Block=Adlam}/u;
     ·           ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Block-with-value.js:19:11]
@@ -1774,6 +1987,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Block=Adlam}/u;
     ·           ─────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure-negated.js:19:5]
@@ -1781,6 +1995,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{FC_NFKC_Closure}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure.js:19:5]
@@ -1788,6 +2003,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{FC_NFKC_Closure}/u;
     ·     ───────────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-negated.js:19:16]
@@ -1795,6 +2011,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Line_Break=Alphabetic}/u;
     ·                ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value-negated.js:19:16]
@@ -1802,6 +2019,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\P{Line_Break=Alphabetic}/u;
     ·                ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value.js:19:16]
@@ -1809,6 +2027,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Line_Break=Alphabetic}/u;
     ·                ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break.js:19:5]
@@ -1816,6 +2035,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /\p{Line_Break}/u;
     ·     ──────────
     ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js:20:3]
@@ -1823,6 +2043,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[(]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js:20:3]
@@ -1830,6 +2051,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[)]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Unterminated character class
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-03.js:20:2]
@@ -1837,6 +2059,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[[]/v;
     ·  ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-04.js:20:3]
@@ -1844,6 +2067,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[{]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-05.js:20:3]
@@ -1851,6 +2075,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[}]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-06.js:20:3]
@@ -1858,6 +2083,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[/]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-07.js:20:3]
@@ -1865,6 +2091,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[-]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-08.js:20:3]
@@ -1872,6 +2099,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[|]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-09.js:20:3]
@@ -1879,6 +2107,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[&&]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-10.js:20:3]
@@ -1886,6 +2115,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[!!]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-11.js:20:3]
@@ -1893,6 +2123,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[##]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-12.js:20:3]
@@ -1900,6 +2131,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[$$]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-13.js:20:3]
@@ -1907,6 +2139,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[%%]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-14.js:20:3]
@@ -1914,6 +2147,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[**]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-15.js:20:3]
@@ -1921,6 +2155,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[++]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-16.js:20:3]
@@ -1928,6 +2163,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[,,]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-17.js:20:3]
@@ -1935,6 +2171,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[..]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-18.js:20:3]
@@ -1942,6 +2179,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[::]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-19.js:20:3]
@@ -1949,6 +2187,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[;;]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-20.js:20:3]
@@ -1956,6 +2195,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[<<]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-21.js:20:3]
@@ -1963,6 +2203,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[==]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-22.js:20:3]
@@ -1970,6 +2211,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[>>]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-23.js:20:3]
@@ -1977,6 +2219,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[??]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-24.js:20:3]
@@ -1984,6 +2227,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[@@]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-25.js:20:3]
@@ -1991,6 +2235,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[``]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js:20:3]
@@ -1998,6 +2243,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[~~]/v;
     ·   ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Expected nonempty class set expression
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js:20:4]
@@ -2005,6 +2251,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[^^^]/v;
     ·    ▲
     ╰────
+  help: Add characters or properties to the class set expression
 
   × Invalid regular expression: Unterminated character class
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js:20:2]
@@ -2012,6 +2259,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /[_^^]/v;
     ·  ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid unicode flags combination `u` and `v`
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:5]
@@ -2019,6 +2267,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /./uv;
     ·     ─
     ╰────
+  help: The `v` flag is a superset of `u`. Use only either of them
 
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:1]
@@ -23170,6 +23419,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?i-i:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-m.js:20:4]
@@ -23177,6 +23427,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?m-m:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-multi-duplicate.js:20:4]
@@ -23184,6 +23435,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?ims-m:a)//*{ global-modifiers }*/;
     ·    ─────
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s-escape.js:20:4]
@@ -23191,6 +23443,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?\u{0073}-s:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s.js:20:4]
@@ -23198,27 +23451,31 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s-s:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Empty modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-both-empty.js:20:4]
  19 │ 
  20 │ /(?-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Use `(?:...)` for non-capturing groups or add modifiers
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-1.js:20:4]
  19 │ 
  20 │ /(?-ii:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: Each modifier can only appear once
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-2.js:20:4]
  19 │ 
  20 │ /(?-imsi:a)//*{ global-modifiers }*/;
     ·    ─────
     ╰────
+  help: Each modifier can only appear once
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-1.js:19:4]
@@ -23226,6 +23483,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /(?ms-i)/;
     ·    ────
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-2.js:19:4]
@@ -23233,6 +23491,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /(?-s)/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-3.js:19:4]
@@ -23240,6 +23499,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ /(?i-)/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-arbitrary.js:20:4]
@@ -23247,6 +23507,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-1:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-i.js:20:4]
@@ -23254,6 +23515,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-iͥ:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-m.js:20:4]
@@ -23261,6 +23523,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-mͫ:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-s.js:20:4]
@@ -23268,6 +23531,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s̀:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-d.js:20:4]
@@ -23275,6 +23539,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-d:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-g.js:20:4]
@@ -23282,6 +23547,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-g:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-1.js:20:4]
@@ -23289,6 +23555,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s :a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-2.js:20:4]
@@ -23296,6 +23563,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s‎:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-flag.js:20:4]
@@ -23303,6 +23571,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-Q:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-u.js:20:4]
@@ -23310,6 +23579,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-u:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-uppercase-I.js:20:4]
@@ -23317,6 +23587,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-I:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-y.js:20:4]
@@ -23324,6 +23595,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-y:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwj.js:20:4]
@@ -23331,6 +23603,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s‍:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnbsp.js:20:4]
@@ -23338,6 +23611,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s﻿:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnj.js:20:4]
@@ -23345,6 +23619,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-s‌:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-i.js:20:4]
@@ -23352,6 +23627,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?i-i:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-m.js:20:4]
@@ -23359,6 +23635,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?m-m:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-multi-duplicate.js:20:4]
@@ -23366,6 +23643,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?m-ims:a)//*{ global-modifiers }*/;
     ·    ─────
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s-escape.js:20:4]
@@ -23373,6 +23651,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s-\u{0073}:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Invalid modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s.js:20:4]
@@ -23380,20 +23659,23 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s-s:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: A modifier cannot be both enabled and disabled
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-1.js:20:4]
  19 │ 
  20 │ /(?ii-:a)//*{ global-modifiers }*/;
     ·    ───
     ╰────
+  help: Each modifier can only appear once
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-2.js:20:4]
  19 │ 
  20 │ /(?imsi-:a)//*{ global-modifiers }*/;
     ·    ─────
     ╰────
+  help: Each modifier can only appear once
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-arbitrary.js:20:4]
@@ -23401,6 +23683,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?1-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-i.js:20:4]
@@ -23408,6 +23691,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?iͥ-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-m.js:20:4]
@@ -23415,6 +23699,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?mͫ-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-s.js:20:4]
@@ -23422,6 +23707,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s̀-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-d.js:20:4]
@@ -23429,6 +23715,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?d-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-g.js:20:4]
@@ -23436,6 +23723,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?g-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-1.js:20:4]
@@ -23443,6 +23731,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s -:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-2.js:20:4]
@@ -23450,6 +23739,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‎-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-flag.js:20:4]
@@ -23457,6 +23747,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?Q-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-u.js:20:4]
@@ -23464,6 +23755,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?u-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-uppercase-I.js:20:4]
@@ -23471,6 +23763,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?I-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-y.js:20:4]
@@ -23478,6 +23771,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?y-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwj.js:20:4]
@@ -23485,6 +23779,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‍-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnbsp.js:20:4]
@@ -23492,6 +23787,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s﻿-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnj.js:20:4]
@@ -23499,6 +23795,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‌-:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-i.js:20:4]
@@ -23506,6 +23803,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?I-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-m.js:20:4]
@@ -23513,6 +23811,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?M-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-s.js:20:4]
@@ -23520,6 +23819,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?S-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-i.js:20:4]
@@ -23527,6 +23827,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?İ-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-s.js:20:4]
@@ -23534,6 +23835,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?ſ-:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-i.js:20:4]
@@ -23541,6 +23843,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-I:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-m.js:20:4]
@@ -23548,6 +23851,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-M:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-s.js:20:4]
@@ -23555,6 +23859,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-S:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-i.js:20:4]
@@ -23562,6 +23867,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-İ:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-s.js:20:4]
@@ -23569,6 +23875,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?-ſ:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Unexpected flag G in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:4]
@@ -23608,19 +23915,21 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Try inserting a semicolon here
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-code-point-repeat-i-1.js:20:4]
  19 │ 
  20 │ /(?ii:a)//*{ global-modifiers }*/;
     ·    ──
     ╰────
+  help: Each modifier can only appear once
 
-  × Invalid regular expression: Invalid modifiers
+  × Invalid regular expression: Duplicated modifier
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-code-point-repeat-i-2.js:20:4]
  19 │ 
  20 │ /(?imsi:a)//*{ global-modifiers }*/;
     ·    ────
     ╰────
+  help: Each modifier can only appear once
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-arbitrary.js:20:4]
@@ -23628,6 +23937,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?1:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-i.js:20:4]
@@ -23635,6 +23945,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?iͥ:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-m.js:20:4]
@@ -23642,6 +23953,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?mͫ:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-s.js:20:4]
@@ -23649,6 +23961,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s̀:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-d.js:20:4]
@@ -23656,6 +23969,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?d:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-g.js:20:4]
@@ -23663,6 +23977,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?g:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-display-1.js:20:4]
@@ -23670,6 +23985,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s :a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-display-2.js:20:4]
@@ -23677,6 +23993,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‎:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-flag.js:20:4]
@@ -23684,6 +24001,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?Q:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-u.js:20:4]
@@ -23691,6 +24009,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?u:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-uppercase-I.js:20:4]
@@ -23698,6 +24017,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?I:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-y.js:20:4]
@@ -23705,6 +24025,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?y:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwj.js:20:4]
@@ -23712,6 +24033,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‍:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwnbsp.js:20:4]
@@ -23719,6 +24041,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s﻿:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwnj.js:20:4]
@@ -23726,6 +24049,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?s‌:a)//*{ global-modifiers }*/;
     ·    ─
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-i.js:20:4]
@@ -23733,6 +24057,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?I:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-m.js:20:4]
@@ -23740,6 +24065,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?M:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-s.js:20:4]
@@ -23747,6 +24073,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?S:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-i.js:20:4]
@@ -23754,6 +24081,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?İ:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-s.js:20:4]
@@ -23761,6 +24089,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?ſ:a)//*{ global-modifiers }*/;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-i.js:20:4]
@@ -23768,6 +24097,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?\u0069:a)/u /* i */;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-m.js:20:4]
@@ -23775,6 +24105,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?\u006D:a)/u /* m */;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Unknown modifiers
     ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-s.js:20:4]
@@ -23782,6 +24113,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?\u0073:a)/u /* s */;
     ·    ▲
     ╰────
+  help: Valid modifiers are: i, m, s
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/early-err-pattern.js:18:2]
@@ -23789,6 +24121,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ /?/;
     ·  ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-exact.js:26:2]
@@ -23796,6 +24129,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ /{2}/;
     ·  ───
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-lower.js:26:2]
@@ -23803,6 +24137,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ /{2,}/;
     ·  ────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-range.js:26:2]
@@ -23810,6 +24145,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ /{2,3}/;
     ·  ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-optional-lookbehind.js:21:9]
@@ -23817,6 +24153,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<=.)?/;
     ·         ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-optional-negative-lookbehind.js:21:9]
@@ -23824,6 +24161,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<!.)?/;
     ·         ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-range-lookbehind.js:21:9]
@@ -23831,6 +24169,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<=.){2,3}/;
     ·         ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-range-negative-lookbehind.js:21:9]
@@ -23838,6 +24177,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<!.){2,3}/;
     ·         ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js:21:9]
@@ -23845,6 +24185,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<a>a)\k<ab>/u;
     ·         ──────
     ╰────
+  help: Valid group names are: a
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2.js:21:9]
@@ -23852,6 +24193,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<a>a)\k<ab>/;
     ·         ──────
     ╰────
+  help: Valid group names are: a
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js:21:10]
@@ -23859,6 +24201,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<ab>a)\k<a>/u;
     ·          ─────
     ╰────
+  help: Valid group names are: ab
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3.js:21:10]
@@ -23866,6 +24209,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<ab>a)\k<a>/;
     ·          ─────
     ╰────
+  help: Valid group names are: ab
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js:21:2]
@@ -23873,6 +24217,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\k<a>(?<ab>a)/u;
     ·  ─────
     ╰────
+  help: Valid group names are: ab
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4.js:21:2]
@@ -23880,6 +24225,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\k<a>(?<ab>a)/;
     ·  ─────
     ╰────
+  help: Valid group names are: ab
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-5.js:21:2]
@@ -23887,6 +24233,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\k<a>(?<b>x)/;
     ·  ─────
     ╰────
+  help: Valid group names are: b
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-u.js:21:9]
@@ -23894,6 +24241,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<a>.)\k<b>/u;
     ·         ─────
     ╰────
+  help: Valid group names are: a
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js:21:2]
@@ -23901,6 +24249,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\k<a>/u;
     ·  ─────
     ╰────
+  help: There are no named capturing groups defined in this pattern
 
   × Invalid regular expression: Invalid named reference
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname.js:21:9]
@@ -23908,6 +24257,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /(?<a>.)\k<b>/;
     ·         ─────
     ╰────
+  help: Valid group names are: a
 
   × Invalid regular expression: Duplicated capturing group names
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2-u.js:20:5]
@@ -23915,6 +24265,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?<a>a)(?<b>b)(?<a>a)/u;
     ·     ─             ─
     ╰────
+  help: Duplicate names must be in different alternatives
 
   × Invalid regular expression: Duplicated capturing group names
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2.js:20:5]
@@ -23922,6 +24273,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?<a>a)(?<b>b)(?<a>a)/;
     ·     ─             ─
     ╰────
+  help: Duplicate names must be in different alternatives
 
   × Invalid regular expression: Duplicated capturing group names
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-u.js:20:5]
@@ -23929,6 +24281,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?<a>a)(?<a>a)/u;
     ·     ─      ─
     ╰────
+  help: Duplicate names must be in different alternatives
 
   × Invalid regular expression: Duplicated capturing group names
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier.js:20:5]
@@ -23936,6 +24289,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  20 │ /(?<a>a)(?<a>a)/;
     ·     ─      ─
     ╰────
+  help: Duplicate names must be in different alternatives
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-empty-groupspecifier-u.js:16:4]
@@ -23943,6 +24297,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<>a)/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-empty-groupspecifier.js:16:4]
@@ -23950,6 +24305,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<>a)/;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:2]
@@ -23957,6 +24313,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>\a)/u;
     ·  ──────
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:16:11]
@@ -23964,6 +24321,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k<a/u;
     ·           ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2.js:16:11]
@@ -23971,6 +24329,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k<a/;
     ·           ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-3-u.js:16:11]
@@ -23978,6 +24337,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k<>/u;
     ·           ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-3.js:16:11]
@@ -23985,6 +24345,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k<>/;
     ·           ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-4.js:16:4]
@@ -23992,6 +24353,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k<a(?<a>a)/;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-5.js:16:4]
@@ -23999,6 +24361,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k<a(?<a>.)/;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js:16:2]
@@ -24006,6 +24369,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k(?<a>.)/;
     ·  ──
     ╰────
+  help: Provide a name for the capturing group: `(?<name>...)`
 
   × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js:16:9]
@@ -24013,6 +24377,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k/u;
     ·         ──
     ╰────
+  help: Provide a name for the capturing group: `(?<name>...)`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-2-u.js:16:4]
@@ -24020,6 +24385,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k<>/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js:16:2]
@@ -24027,6 +24393,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k/u;
     ·  ──
     ╰────
+  help: Provide a name for the capturing group: `(?<name>...)`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-u.js:16:4]
@@ -24034,6 +24401,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\k<a/u;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Group specifier is empty
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname.js:16:9]
@@ -24041,6 +24409,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a>.)\k/;
     ·         ──
     ╰────
+  help: Provide a name for the capturing group: `(?<name>...)`
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4-u.js:16:6]
@@ -24048,6 +24417,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\>.)/u;
     ·      ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4.js:16:6]
@@ -24055,6 +24425,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\>.)/;
     ·      ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier.js:16:4]
@@ -24062,6 +24433,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<$❞>a)/;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2-u.js:16:4]
@@ -24069,6 +24441,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<𐒤>a)/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid surrogate pair
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js:16:5]
@@ -24076,6 +24449,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<𐒤>a)/;
     ·     ─
     ╰────
+  help: A high surrogate (0xD800-0xDBFF) must be followed by a low surrogate (0xDC00-0xDFFF)
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-3.js:16:6]
@@ -24083,6 +24457,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\uD83D\uDF12>.)/;
     ·      ────────────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4-u.js:16:6]
@@ -24090,6 +24465,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\uD801>.)/u;
     ·      ──────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4.js:16:6]
@@ -24097,6 +24473,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\uD801>.)/;
     ·      ──────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5-u.js:16:6]
@@ -24104,6 +24481,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\uDCA4>.)/u;
     ·      ──────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5.js:16:6]
@@ -24111,6 +24489,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\uDCA4>.)/;
     ·      ──────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-6.js:16:6]
@@ -24118,6 +24497,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\u{1F08B}>.)/;
     ·      ─────────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-7.js:16:6]
@@ -24125,6 +24505,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\u{10FFFF}>.)/;
     ·      ──────────
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8-u.js:16:5]
@@ -24132,6 +24513,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<\>.)/u;
     ·     ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8.js:16:5]
@@ -24139,6 +24521,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<\>.)/;
     ·     ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-9-u.js:16:7]
@@ -24146,6 +24529,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a\u{110000}>.)/u;
     ·       ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-u.js:16:4]
@@ -24153,6 +24537,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<❤>a)/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier.js:16:4]
@@ -24160,6 +24545,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<❤>a)/;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-numeric-groupspecifier-u.js:16:4]
@@ -24167,6 +24553,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<42a>a)/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-numeric-groupspecifier.js:16:4]
@@ -24174,6 +24561,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<42a>a)/;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier-u.js:16:4]
@@ -24181,6 +24569,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<:a>a)/u;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier.js:16:4]
@@ -24188,6 +24577,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<:a>a)/;
     ·    ─
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier-u.js:16:4]
@@ -24195,6 +24585,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a:>a)/u;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier.js:16:4]
@@ -24202,6 +24593,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<a:>a)/;
     ·    ──
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-unterminated-groupspecifier-u.js:16:4]
@@ -24209,6 +24601,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<aa)/u;
     ·    ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-unterminated-groupspecifier.js:16:4]
@@ -24216,6 +24609,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /(?<aa)/;
     ·    ───
     ╰────
+  help: Add the missing closing delimiter
 
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:30:1]
@@ -24295,6 +24689,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  24 │ /\c0/u;
     ·   ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:21:2]
@@ -24302,6 +24697,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /{/u;
     ·  ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:3]
@@ -24309,6 +24705,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  23 │ /\M/u;
     ·   ▲
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:26:2]
@@ -24316,6 +24713,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ /\1/u;
     ·  ──
     ╰────
+  help: There are no capturing groups defined in this pattern
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-a.js:33:3]
@@ -24323,6 +24721,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  33 │ /[\d-a]/u;
     ·   ────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-ab.js:33:3]
@@ -24330,6 +24729,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  33 │ /[\s-\d]/u;
     ·   ─────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-b.js:33:3]
@@ -24337,6 +24737,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  33 │ /[%-\d]/u;
     ·   ────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Character class range with invalid atom
     ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges.js:32:3]
@@ -24344,6 +24745,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  32 │ /[--\d]/u;
     ·   ────
     ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-oob-decimal-escape.js:21:2]
@@ -24351,6 +24753,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\8/u;
     ·  ──
     ╰────
+  help: There are no capturing groups defined in this pattern
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-optional-lookahead.js:21:8]
@@ -24358,6 +24761,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?=.)?/u;
     ·        ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-optional-lookbehind.js:21:9]
@@ -24365,6 +24769,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<=.)?/u;
     ·         ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-optional-negative-lookahead.js:21:8]
@@ -24372,6 +24777,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?!.)?/u;
     ·        ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-optional-negative-lookbehind.js:21:9]
@@ -24379,6 +24785,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<!.)?/u;
     ·         ─
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-lookahead.js:21:8]
@@ -24386,6 +24793,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?=.){2,3}/u;
     ·        ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-lookbehind.js:21:9]
@@ -24393,6 +24801,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<=.){2,3}/u;
     ·         ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-negative-lookahead.js:21:8]
@@ -24400,6 +24809,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?!.){2,3}/u;
     ·        ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-negative-lookbehind.js:21:9]
@@ -24407,6 +24817,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /.(?<!.){2,3}/u;
     ·         ─────
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/u-unicode-esc-bounds.js:21:3]
@@ -24414,6 +24825,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ /\u{110000}/u;
     ·   ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/u-unicode-esc-non-hex.js:16:3]
@@ -24421,6 +24833,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ /\u{1,}/u;
     ·   ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
     ╭─[test262/test/language/literals/regexp/unicode-escape-nls-err.js:74:3]
@@ -24428,6 +24841,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  74 │ /\u{1F_639}/u;
     ·   ─
     ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.1_T1.js:19:3]

@@ -46,6 +46,20 @@ pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
     Cow::Borrowed(plugin_name)
 }
 
+/// Checks if the given plugin name is valid.
+///
+/// Returns `true` if the given plugin name is already in its normalized form.
+///
+/// Returns `false` if it starts with `eslint-plugin-`, or is of the form `@scope/eslint-plugin`
+/// or `@scope/eslint-plugin-something`.
+pub fn is_normal_plugin_name(plugin_name: &str) -> bool {
+    let normalized = normalize_plugin_name(plugin_name);
+    match normalized {
+        Cow::Owned(_) => false,
+        Cow::Borrowed(normalized) => normalized.len() == plugin_name.len(),
+    }
+}
+
 bitflags! {
     // NOTE: may be increased to a u32 if needed
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

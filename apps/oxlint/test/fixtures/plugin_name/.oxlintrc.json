@@ -11,6 +11,8 @@
     // `/eslint-plugin` suffix stripped
     "@scope/eslint-plugin",
     "@scope2/eslint-plugin",
+    // `eslint-plugin-` prefix stripped from scoped package name (split at last `/`)
+    "@scope3/eslint-plugin-subplugin",
     // Plugin name is `jsdoc`, but that's overridden by alias
     { "name": "js-jsdoc", "specifier": "./plugins/jsdoc.ts" },
     { "name": "js-jsdoc2", "specifier": "jsdoc" },
@@ -32,6 +34,8 @@
     "@scope/rule": "error",
     // `@scope2/eslint-plugin`
     "@scope2/rule": "error",
+    // `@scope3/eslint-plugin-subplugin` (split at last `/`)
+    "@scope3/subplugin/rule": "error",
     // Aliased
     "js-jsdoc/rule": "error",
     "js-jsdoc2/rule": "error",

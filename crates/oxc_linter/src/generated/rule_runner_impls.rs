@@ -1116,8 +1116,9 @@ impl RuleRunner for crate::rules::import::exports_last::ExportsLast {
 }
 
 impl RuleRunner for crate::rules::import::extensions::Extensions {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
 impl RuleRunner for crate::rules::import::first::First {
@@ -2742,6 +2743,7 @@ impl RuleRunner for crate::rules::typescript::no_import_type_side_effects::NoImp
 
 impl RuleRunner for crate::rules::typescript::no_inferrable_types::NoInferrableTypes {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
         AstType::ArrowFunctionExpression,
         AstType::Function,
         AstType::PropertyDefinition,
@@ -3297,6 +3299,12 @@ impl RuleRunner for crate::rules::unicorn::no_hex_escape::NoHexEscape {
         AstType::StringLiteral,
         AstType::TemplateLiteral,
     ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::unicorn::no_immediate_mutation::NoImmediateMutation {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ExpressionStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3878,6 +3886,16 @@ impl RuleRunner for crate::rules::unicorn::prefer_type_error::PreferTypeError {
 impl RuleRunner for crate::rules::unicorn::require_array_join_separator::RequireArrayJoinSeparator {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::unicorn::require_module_attributes::RequireModuleAttributes {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

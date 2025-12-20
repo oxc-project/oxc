@@ -435,6 +435,7 @@ pub(crate) mod unicorn {
     pub mod no_document_cookie;
     pub mod no_empty_file;
     pub mod no_hex_escape;
+    pub mod no_immediate_mutation;
     pub mod no_instanceof_array;
     pub mod no_instanceof_builtins;
     pub mod no_invalid_fetch_options;
@@ -521,6 +522,7 @@ pub(crate) mod unicorn {
     pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
+    pub mod require_module_attributes;
     pub mod require_module_specifiers;
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
@@ -1196,6 +1198,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_immediate_mutation,
     unicorn::no_unnecessary_array_splice_count,
     unicorn::no_array_callback_reference,
     unicorn::no_useless_collection_argument,
@@ -1296,6 +1299,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_module_attributes,
     unicorn::require_module_specifiers,
     unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,

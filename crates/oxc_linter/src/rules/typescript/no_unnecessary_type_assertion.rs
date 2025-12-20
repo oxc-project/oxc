@@ -10,6 +10,11 @@ pub struct NoUnnecessaryTypeAssertion(Box<NoUnnecessaryTypeAssertionConfig>);
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUnnecessaryTypeAssertionConfig {
+    /// Whether to check literal const assertions like `'foo' as const`.
+    /// When `false` (default), const assertions on literal types are not flagged.
+    /// When `true`, these will be reported as unnecessary since the type is already a literal.
+    pub check_literal_const_assertions: bool,
+
     /// A list of type names to ignore when checking for unnecessary assertions.
     /// Type assertions to these types will not be flagged even if they appear unnecessary.
     /// Example: `["Foo", "Bar"]` to allow `x as Foo` or `x as Bar`.

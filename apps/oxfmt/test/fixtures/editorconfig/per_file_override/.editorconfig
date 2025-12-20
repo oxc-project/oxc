@@ -9,5 +9,5 @@ indent_size = 4
 indent_size = 8
 
 [nested/deep/*.json]
-indent_size = 8
+indent_style = tab
 max_line_length = 40
