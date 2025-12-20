@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-##########
+########## 
 arguments: --type-aware
 working directory: fixtures/tsgolint_rule_options
 ----------
@@ -11,7 +11,7 @@ working directory: fixtures/tsgolint_rule_options
  35 | // This SHOULD error because notAllowedDeprecated is NOT in the allow list
  36 | notAllowedDeprecated();
     : ^^^^^^^^^^^^^^^^^^^^
- 37 |
+ 37 | 
     `----
 
   x typescript-eslint(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior. Did you forget to call the function?
@@ -19,7 +19,7 @@ working directory: fixtures/tsgolint_rule_options
  46 | // This SHOULD error because notAllowedFunc is NOT in the allow list
  47 | const notAllowedSpread = { ...notAllowedFunc };
     :                            ^^^^^^^^^^^^^^^^^
- 48 |
+ 48 | 
     `----
 
   x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
@@ -27,7 +27,7 @@ working directory: fixtures/tsgolint_rule_options
  57 | // This SHOULD error because it's not using optional chaining
  58 | const unsafeAccess = anyValue.bar;
     :                               ^^^
- 59 |
+ 59 | 
     `----
 
   x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
@@ -35,7 +35,7 @@ working directory: fixtures/tsgolint_rule_options
  62 | // This SHOULD error because checkUnknown is true
  63 | const unknownStr = unknownValue.toString();
     :                    ^^^^^^^^^^^^
- 64 |
+ 64 | 
     `----
 
 Found 0 warnings and 4 errors.
