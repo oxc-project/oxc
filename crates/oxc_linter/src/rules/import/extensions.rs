@@ -75,14 +75,14 @@ pub enum PathGroupAction {
 /// Allows fine-grained control over extension validation for custom import protocols
 /// (e.g., monorepo tools, custom resolvers, framework-specific imports).
 ///
-/// # Pattern Matching
+/// **Pattern matching:**
 ///
 /// Uses fast-glob patterns to match import specifiers:
 /// - `*`: Match any characters except `/`
 /// - `**`: Match any characters including `/` (recursive)
 /// - `{a,b}`: Match alternatives
 ///
-/// # Examples
+/// **Examples:**
 ///
 /// ```json
 /// {
@@ -119,23 +119,60 @@ impl PathGroupOverride {
 /// This rule accepts three types of configuration:
 ///
 /// 1. **Global rule** (string): `"always"`, `"never"`, or `"ignorePackages"`
-/// 2. **Per-extension rules** (object): `{ "js": "always", "jsx": "never", ... }`
-/// 3. **Combined** (array): `["always", { "js": "never" }]` or `[{ "js": "always" }]`
 ///
-/// **Default behavior (no configuration)**: All imports pass. Unconfigured file extensions are ignored to avoid false positives.
+/// ```json
+/// {
+///   "rules": {
+///     // this would require extensions for all imports
+///     "import/extensions": ["error", "always"]
+///   }
+/// }
+/// ```
+///
+/// 2. **Per-extension rules** (object): `{ "js": "always", "jsx": "never", ... }`
+///
+/// ```json
+/// {
+///   "rules": {
+///     "import/extensions": [
+///       "error",
+///       // per-extension rules:
+///       // require extensions for .js imports and disallow them for .ts imports
+///       { "js": "always", "ts": "never" }
+///     ]
+///   }
+/// }
+/// ```
+///
+/// 3. **Combined** (array): `["error", "always", { "js": "never" }]` or `["error", { "js": "always" }]`
+///
+/// ```json
+/// {
+///   "rules": {
+///     "import/extensions": [
+///       "error",
+///       "always", // by default, require extensions for all imports
+///       { "ts": "never" } // override the global value and disallow extensions on imports for specific file types
+///     ]
+///   }
+/// }
+/// ```
+///
+/// **Default behavior (no configuration)**: All imports pass.
+/// Unconfigured file extensions are ignored, to avoid false positives.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///
     /// A boolean option (not per-extension) that exempts package imports from the "always" rule.
-    /// Can be set in the config object: `["always", { "ignorePackages": true }]`
-    /// Legacy shorthand: `["ignorePackages"]` is equivalent to `["always", { "ignorePackages": true }]`
+    /// Can be set in the config object: `["error", "always", { "ignorePackages": true }]`
+    /// Legacy shorthand: `["error", "ignorePackages"]` is equivalent to `["error", "always", { "ignorePackages": true }]`
     ///
     /// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
     /// - **With "never"**: This option has no effect; extensions are still forbidden on package imports
     ///
-    /// Example: `["always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
+    /// Example: `["error", "always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
     ignore_packages: bool,
     #[serde(skip)]
     require_extension: Option<ExtensionRule>,
@@ -156,7 +193,7 @@ pub struct ExtensionsConfig {
     ///
     /// **Precedence**: First matching pattern wins.
     ///
-    /// Example: `["always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
+    /// Example: `["error", "always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
     /// - Allows `import { x } from 'rootverse+debug:src'` without extension
     /// - Still requires extensions for standard imports
     path_group_overrides: Vec<PathGroupOverride>,
