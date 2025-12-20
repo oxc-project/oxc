@@ -35,6 +35,7 @@ install-hook:
 # When ready, run the same CI commands
 ready:
   git diff --exit-code --quiet
+  pnpm i
   typos
   just fmt
   just check
