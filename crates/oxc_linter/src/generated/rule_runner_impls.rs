@@ -3891,10 +3891,10 @@ impl RuleRunner for crate::rules::unicorn::require_array_join_separator::Require
 
 impl RuleRunner for crate::rules::unicorn::require_module_attributes::RequireModuleAttributes {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ImportExpression,
-        AstType::ImportDeclaration,
-        AstType::ExportNamedDeclaration,
         AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
