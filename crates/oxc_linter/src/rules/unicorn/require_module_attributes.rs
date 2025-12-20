@@ -33,18 +33,18 @@ declare_oxc_lint!(
     /// ```js
     /// import foo from 'foo' with {};
     ///
-    /// export {foo} from 'foo' with {};
+    /// export { foo } from 'foo' with {};
     ///
     /// const foo = await import('foo', {});
     ///
-    /// const foo = await import('foo', {with: {}});
+    /// const foo = await import('foo', { with: {} });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// import foo from 'foo';
     ///
-    /// export {foo} from 'foo';
+    /// export { foo } from 'foo';
     ///
     /// const foo = await import('foo');
     ///
@@ -60,9 +60,7 @@ impl Rule for RequireModuleAttributes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportExpression(import_expr) => {
-                let Some(options) = &import_expr.options else {
-                    return;
-                };
+                let Some(options) = &import_expr.options else { return };
 
                 let Expression::ObjectExpression(obj_expr) = options.get_inner_expression() else {
                     return;
@@ -105,7 +103,7 @@ impl Rule for RequireModuleAttributes {
             AstKind::ExportAllDeclaration(decl) => {
                 check_with_clause(ctx, decl.with_clause.as_deref(), "export statement");
             }
-            _ => (),
+            _ => {}
         }
     }
 }
