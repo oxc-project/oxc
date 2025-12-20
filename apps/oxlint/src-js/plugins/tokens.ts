@@ -261,7 +261,7 @@ export function initTokensAndComments() {
     } while (commentStart < tokenStart);
   }
 
-  debugAssert(false, "Unreachable");
+  debugAssert(false, "End of `initTokensAndComments` should be unreachable");
 }
 
 /**

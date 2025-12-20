@@ -67,7 +67,7 @@ export function parseTokens(): Token[] {
 
   // Check that TypeScript hasn't altered source text.
   // If it had, token ranges would be incorrect.
-  debugAssert(tsAst.text === sourceText);
+  debugAssert(tsAst.text === sourceText, "TS AST text and source text should match");
 
   // Extract tokens from TypeScript AST
   return convertTokens(tsAst);

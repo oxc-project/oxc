@@ -135,7 +135,10 @@ function analyzeSelector(
 ): NodeTypeId[] | null {
   switch (esquerySelector.type) {
     case "identifier": {
-      debugAssert(identifierCount(selector.specificity) < IDENTIFIER_COUNT_MAX);
+      debugAssert(
+        identifierCount(selector.specificity) < IDENTIFIER_COUNT_MAX,
+        "Exceeded maximum identifier count in selector",
+      );
       selector.specificity += IDENTIFIER_COUNT_INCREMENT;
 
       const typeId = NODE_TYPE_IDS_MAP.get(esquerySelector.value);
@@ -208,7 +211,10 @@ function analyzeSelector(
     case "nth-child":
     case "nth-last-child":
       selector.isComplex = true;
-      debugAssert(attributeCount(selector.specificity) < ATTRIBUTE_COUNT_MAX);
+      debugAssert(
+        attributeCount(selector.specificity) < ATTRIBUTE_COUNT_MAX,
+        "Exceeded maximum attribute count in selector",
+      );
       selector.specificity += ATTRIBUTE_COUNT_INCREMENT;
       return null;
 
