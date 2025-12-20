@@ -11,6 +11,16 @@ const rule: Rule = {
 
     const { ast } = sourceCode;
 
+    for (const tokenOrComment of tokensAndComments) {
+      // Check getting `range` / `loc` properties twice results in same objects
+      const { range, loc } = tokenOrComment;
+      assert(range === tokenOrComment.range);
+      assert(loc === tokenOrComment.loc);
+      // Check `getRange` and `getLoc` return the same objects too
+      assert(sourceCode.getRange(tokenOrComment) === range);
+      assert(sourceCode.getLoc(tokenOrComment) === loc);
+    }
+
     // `ast.tokens` does not include comments
     context.report({
       message:

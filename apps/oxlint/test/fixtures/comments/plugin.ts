@@ -21,8 +21,20 @@ const testCommentsRule: Rule = {
     const { sourceCode } = context;
     const { ast } = sourceCode;
 
+    const comments = sourceCode.getAllComments();
+
+    for (const comment of comments) {
+      // Check getting `range` / `loc` properties twice results in same objects
+      const { range, loc } = comment;
+      assert(range === comment.range);
+      assert(loc === comment.loc);
+      // Check `getRange` and `getLoc` return the same objects too
+      assert(sourceCode.getRange(comment) === range);
+      assert(sourceCode.getLoc(comment) === loc);
+    }
+
     context.report({
-      message: `getAllComments: ${formatComments(sourceCode.getAllComments())}`,
+      message: `getAllComments: ${formatComments(comments)}`,
       node: ast,
     });
 

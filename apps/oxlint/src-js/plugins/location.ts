@@ -241,6 +241,29 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
 }
 
 /**
+ * Get the range of the given node or token.
+ * @param nodeOrToken - Node or token to get the range of
+ * @returns Range of the node or token
+ */
+export function getRange(nodeOrToken: NodeOrToken): Range {
+  return nodeOrToken.range;
+}
+
+/**
+ * Get the location of the given node or token.
+ * @param nodeOrToken - Node or token to get the location of
+ * @returns Location of the node or token
+ */
+// Note: We cannot expose `getNodeLoc` as public method, because it always recalculates the location,
+// and returns a new object each time. It would be misleading if `node.loc !== sourceCode.getLoc(node)`.
+export function getLoc(nodeOrToken: NodeOrToken): Location {
+  // If location is already calculated for this node or token, return it
+  if (Object.hasOwn(nodeOrToken, "loc")) return nodeOrToken.loc;
+  // Calculate location
+  return getNodeLoc(nodeOrToken);
+}
+
+/**
  * Calculate the `Location` for an AST node or token.
  *
  * Used in `loc` getters on AST nodes.
