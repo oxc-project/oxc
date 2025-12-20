@@ -126,27 +126,13 @@ fn is_unsafe_method(
     let check_unsafe_prefix =
         react_version.is_none_or(|(major, minor, _)| major > 16 || (major == 16 && minor >= 3));
 
-    if check_unsafe_prefix
-        && matches!(
-            name,
-            "UNSAFE_componentWillMount"
-                | "UNSAFE_componentWillReceiveProps"
-                | "UNSAFE_componentWillUpdate"
-        )
-    {
-        return true;
+    match name {
+       "UNSAFE_componentWillMount"
+        | "UNSAFE_componentWillReceiveProps"
+        | "UNSAFE_componentWillUpdate" if check_unsafe_prefix => true,
+        "componentWillMount" | "componentWillReceiveProps" | "componentWillUpdate" if check_aliases => true,
+       _ => false
     }
-
-    if check_aliases
-        && matches!(
-            name,
-            "componentWillMount" | "componentWillReceiveProps" | "componentWillUpdate"
-        )
-    {
-        return true;
-    }
-
-    false
 }
 
 /// Parse React version string into (major, minor, patch) tuple
