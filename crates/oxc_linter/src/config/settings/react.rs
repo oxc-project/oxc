@@ -82,7 +82,9 @@ pub struct ReactPluginSettings {
     /// ```jsonc
     /// {
     ///   "settings": {
-    ///     "componentWrapperFunctions": ["observer", "withRouter"]
+    ///     "react": {
+    ///       "componentWrapperFunctions": ["observer", "withRouter"]
+    ///     }
     ///   }
     /// }
     /// ```

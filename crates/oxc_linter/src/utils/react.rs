@@ -354,11 +354,9 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
 
 /// Checks if a function call is a Higher-Order Component (HOC)
 pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
-    // Check built-in HOCs
-    if matches!(callee_name, "memo" | "forwardRef")
-        || callee_name.ends_with("memo")
-        || callee_name.ends_with("forwardRef")
-    {
+    // Check built-in HOCs with exact matching (matches ESLint behavior)
+    // Matches: memo, forwardRef, React.memo, React.forwardRef
+    if matches!(callee_name, "memo" | "forwardRef" | "React.memo" | "React.forwardRef") {
         return true;
     }
 
