@@ -350,22 +350,14 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
     // Print
     let code = Codegen::new().build(program).code;
 
-    // Add back line breaks between function declarations and exports, to aid readability
+    // Add back line breaks before function, variable, and export declarations, to aid readability.
+    // Insert a line break before lines which begin with `export`, `function`, `class`, `const`, or `let`.
+    // If the statement is preceded by comments, insert the line break before the comments.
     #[expect(clippy::items_after_statements)]
-    static REGEX: Lazy<Regex> = lazy_regex!(r"\n(export|function|class|const|let) ");
-
-    REGEX
-        .replace_all(&code, |caps: &Captures| {
-            // `format!("\n\n{} ", &caps[1])` would be simpler, but this avoids allocations
-            match &caps[1] {
-                "export" => "\n\nexport ",
-                "function" => "\n\nfunction ",
-                "class" => "\n\nclass ",
-                "const" => "\n\nconst ",
-                _ => "\n\nlet ",
-            }
-        })
-        .into_owned()
+    static REGEX: Lazy<Regex> = lazy_regex!(
+        r"(?:^|\n)(?:(?:(?://[^\n]*|/\*[\s\S]*?\*/)\n)*)(?:export|function|class|const|let) "
+    );
+    REGEX.replace_all(&code, |caps: &Captures| format!("\n{}", &caps[0])).into_owned()
 }
 
 /// Visitor which converts `!0` to `true` and `!1` to `false`.
