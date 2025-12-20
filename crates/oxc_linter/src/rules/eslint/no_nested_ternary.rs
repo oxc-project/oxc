@@ -44,8 +44,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNestedTernary {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ConditionalExpression(node) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ConditionalExpression(node) = kind
             && (matches!(
                 node.consequent.get_inner_expression(),
                 Expression::ConditionalExpression(_)

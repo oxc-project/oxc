@@ -58,8 +58,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInvalidFetchOptions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.callee.is_specific_id("fetch") || call_expr.arguments.len() < 2 {
                     return;

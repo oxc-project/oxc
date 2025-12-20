@@ -64,8 +64,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireModuleAttributes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ImportExpression(import_expr) => {
                 let Some(options) = &import_expr.options else { return };
 

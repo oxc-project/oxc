@@ -134,8 +134,8 @@ impl Rule for StateInConstructor {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::PropertyDefinition(prop_def) => {
                 if self.is_always()
                     && !prop_def.r#static

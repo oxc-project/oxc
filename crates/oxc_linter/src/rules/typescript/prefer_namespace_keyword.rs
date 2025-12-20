@@ -54,8 +54,8 @@ fn is_valid_module(module: &TSModuleDeclaration) -> bool {
 }
 
 impl Rule for PreferNamespaceKeyword {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSModuleDeclaration(module) = kind else { return };
 
         if !is_valid_module(module) {
             return;

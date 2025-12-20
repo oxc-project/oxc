@@ -51,8 +51,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTypeError {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ThrowStatement(throw_stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ThrowStatement(throw_stmt) = kind else {
             return;
         };
 

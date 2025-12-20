@@ -59,8 +59,8 @@ const REFLECT_MUTATION_METHODS: [&str; 4] =
     ["defineProperty", "deleteProperty", "set", "setPrototypeOf"];
 
 impl Rule for NoImportAssign {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ImportDeclaration(import_decl) = kind else { return };
 
         let symbol_table = ctx.scoping();
         if let Some(specifiers) = &import_decl.specifiers {

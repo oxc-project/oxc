@@ -176,8 +176,8 @@ impl Rule for NoNull {
         serde_json::from_value::<DefaultRuleConfig<NoNull>>(value).unwrap_or_default().into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NullLiteral(null_literal) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::NullLiteral(null_literal) = kind else {
             return;
         };
 

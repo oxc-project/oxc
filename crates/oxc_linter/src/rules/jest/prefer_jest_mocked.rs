@@ -63,12 +63,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferJestMocked {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSAsExpression(ts_expr) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::TSAsExpression(ts_expr) = kind {
             if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TSAsExpression(_)) {
                 Self::check_ts_as_expression(node, ts_expr, ctx);
             }
-        } else if let AstKind::TSTypeAssertion(assert_type) = node.kind() {
+        } else if let AstKind::TSTypeAssertion(assert_type) = kind {
             Self::check_assert_type(node, assert_type, ctx);
         }
     }

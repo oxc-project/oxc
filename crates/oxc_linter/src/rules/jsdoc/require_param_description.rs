@@ -50,9 +50,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireParamDescription {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
-        let params_to_check = match node.kind() {
+        let params_to_check = match kind {
             AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),
             AstKind::ArrowFunctionExpression(arrow_func) => collect_params(&arrow_func.params),
             // If not a function, skip

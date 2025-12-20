@@ -460,8 +460,8 @@ impl Rule for NewCap {
     fn from_configuration(value: serde_json::Value) -> Self {
         NewCap::from(&value)
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NewExpression(expression) if self.new_is_cap => {
                 let callee = expression.callee.without_parentheses();
 

@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
@@ -155,7 +156,7 @@ impl Rule for NoMisleadingCharacterClass {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         run_on_regex_node(node, ctx, |pattern, _span| {
             let mut collector = CharacterSequenceCollector::new();
             collector.visit_pattern(pattern);

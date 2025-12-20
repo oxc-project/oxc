@@ -1,3 +1,4 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_macros::declare_oxc_lint;
@@ -66,7 +67,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessBackreference {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         run_on_regex_node(node, ctx, |pattern, _span| {
             let mut collector = RegexCollector::new();
             collector.visit_pattern(pattern);

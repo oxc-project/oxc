@@ -127,8 +127,8 @@ impl Rule for NoAnonymousDefaultExport {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExportDefaultDeclaration(export_decl) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExportDefaultDeclaration(export_decl) = kind else {
             return;
         };
         match &export_decl.declaration {

@@ -66,8 +66,8 @@ impl Rule for NoDefaults {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::Function(f) if f.is_function_declaration() || f.is_expression() => {}
             AstKind::ArrowFunctionExpression(_) => {}
             _ => return,

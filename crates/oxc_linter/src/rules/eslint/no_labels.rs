@@ -125,8 +125,8 @@ impl Rule for NoLabels {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::LabeledStatement(labeled_stmt) if !self.is_allowed(&labeled_stmt.body) => {
                 ctx.diagnostic(no_labels_diagnostic(
                     "Labeled statement is not allowed",

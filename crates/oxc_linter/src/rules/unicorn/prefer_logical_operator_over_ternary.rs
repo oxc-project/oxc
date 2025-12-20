@@ -44,8 +44,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ConditionalExpression(conditional_expression) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ConditionalExpression(conditional_expression) = kind else {
             return;
         };
 

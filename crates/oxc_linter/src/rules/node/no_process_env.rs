@@ -76,9 +76,9 @@ impl Rule for NoProcessEnv {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // Match `process.env` as either static `process.env` or computed `process["env"]`
-        let span = match node.kind() {
+        let span = match kind {
             AstKind::StaticMemberExpression(mem)
                 if mem.property.name.as_str() == "env"
                     && is_process_global_object(&mem.object, ctx) =>

@@ -324,10 +324,10 @@ impl Rule for NoMapSpread {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // Find `<expr>.map(<callback>)` calls.
         // look for both `map` and `flatMap`
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
         let Some(mapper) = get_map_callback(call_expr) else {

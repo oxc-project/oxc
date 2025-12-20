@@ -72,8 +72,8 @@ impl Rule for NoUselessPromiseResolveReject {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
         let Some(member_expr) = call_expr.callee.get_member_expr() else {
@@ -132,7 +132,7 @@ impl Rule for NoUselessPromiseResolveReject {
         match static_member_expr.property.name.as_str() {
             "resolve" => {
                 ctx.diagnostic_with_fix(
-                    resolve(node.kind().span(), if is_yield { "yield" } else { "return" }),
+                    resolve(kind.span(), if is_yield { "yield" } else { "return" }),
                     |fixer| {
                         generate_fix(
                             call_expr,
@@ -151,7 +151,7 @@ impl Rule for NoUselessPromiseResolveReject {
                     return;
                 }
                 ctx.diagnostic_with_fix(
-                    reject(node.kind().span(), if is_yield { "yield" } else { "return" }),
+                    reject(kind.span(), if is_yield { "yield" } else { "return" }),
                     |fixer| {
                         generate_fix(
                             call_expr,

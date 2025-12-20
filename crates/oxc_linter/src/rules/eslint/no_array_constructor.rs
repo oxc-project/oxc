@@ -52,8 +52,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoArrayConstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (span, callee, arguments, type_parameters, optional) = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let (span, callee, arguments, type_parameters, optional) = match kind {
             AstKind::CallExpression(call_expr) => (
                 call_expr.span,
                 &call_expr.callee,

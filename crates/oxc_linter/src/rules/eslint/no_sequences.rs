@@ -84,8 +84,8 @@ impl Rule for NoSequences {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SequenceExpression(seq_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::SequenceExpression(seq_expr) = kind else {
             return;
         };
 

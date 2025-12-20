@@ -258,11 +258,12 @@ impl Linter {
 
                     // Run rules on nodes
                     for node in semantic.nodes() {
-                        for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
-                            rule.run(node, ctx);
+                        let kind = node.kind();
+                        for (rule, ctx) in &rules_by_ast_type[kind.ty() as usize] {
+                            rule.run(node, kind, ctx);
                         }
                         for (rule, ctx) in &rules_any_ast_type {
-                            rule.run(node, ctx);
+                            rule.run(node, kind, ctx);
                         }
                     }
 
@@ -290,13 +291,14 @@ impl Linter {
                             if with_runtime_optimization && let Some(ast_types) = rule.types_info()
                             {
                                 for node in semantic.nodes() {
-                                    if ast_types.has(node.kind().ty()) {
-                                        rule.run(node, ctx);
+                                    let kind = node.kind();
+                                    if ast_types.has(kind.ty()) {
+                                        rule.run(node, kind, ctx);
                                     }
                                 }
                             } else {
                                 for node in semantic.nodes() {
-                                    rule.run(node, ctx);
+                                    rule.run(node, node.kind(), ctx);
                                 }
                             }
                         }

@@ -81,8 +81,8 @@ impl Rule for NoUselessRename {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ObjectPattern(object_pattern) => {
                 if self.ignore_destructuring {
                     return;

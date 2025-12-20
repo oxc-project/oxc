@@ -56,8 +56,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferBigintLiterals {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call) = kind else { return };
         let Some(reference) = call.callee.get_identifier_reference() else {
             return;
         };

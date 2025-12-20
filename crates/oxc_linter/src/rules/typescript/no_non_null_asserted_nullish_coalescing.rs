@@ -68,8 +68,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::LogicalExpression(expr) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::LogicalExpression(expr) = kind else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
         if let Expression::Identifier(ident) = &ts_non_null_expr.expression
             && let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), &ident.name)

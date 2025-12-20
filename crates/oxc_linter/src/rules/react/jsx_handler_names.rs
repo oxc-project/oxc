@@ -223,8 +223,8 @@ impl Rule for JsxHandlerNames {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXAttribute(jsx_attribute) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(jsx_attribute) = kind else {
             return;
         };
 

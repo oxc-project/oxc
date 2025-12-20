@@ -53,8 +53,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWebpackLoaderSyntax {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr) => {
                 if let Expression::Identifier(identifier) = &call_expr.callee {
                     if identifier.name != "require" {

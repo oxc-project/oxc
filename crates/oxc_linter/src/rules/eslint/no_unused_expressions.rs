@@ -67,8 +67,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnusedExpressions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExpressionStatement(expression_stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExpressionStatement(expression_stmt) = kind else {
             return;
         };
 

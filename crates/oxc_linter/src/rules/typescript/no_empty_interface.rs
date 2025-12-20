@@ -71,8 +71,8 @@ impl Rule for NoEmptyInterface {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSInterfaceDeclaration(interface) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::TSInterfaceDeclaration(interface) = kind
             && interface.body.body.is_empty()
         {
             if interface.extends.is_empty() {

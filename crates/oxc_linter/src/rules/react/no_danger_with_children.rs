@@ -49,8 +49,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDangerWithChildren {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXElement(jsx) => {
                 // Either children are passed in as a prop like `children={}` or they are nested between the tags.
                 let has_children = has_jsx_prop(ctx, node, "children")

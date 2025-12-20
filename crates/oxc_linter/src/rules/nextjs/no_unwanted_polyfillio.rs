@@ -71,8 +71,8 @@ impl Rule for NoUnwantedPolyfillio {
         ctx.source_type().is_jsx()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_el) = kind else {
             return;
         };
 

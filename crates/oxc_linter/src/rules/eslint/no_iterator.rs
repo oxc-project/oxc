@@ -1,3 +1,4 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -60,8 +61,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoIterator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(member_expression) = node.kind().as_member_expression_kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let Some(member_expression) = kind.as_member_expression_kind() else {
             return;
         };
         if let Some(static_property_name) = member_expression.static_property_name()

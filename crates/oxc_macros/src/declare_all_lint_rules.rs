@@ -82,6 +82,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             utils::PossibleJestNode,
             AstNode
         };
+        use oxc_ast::AstKind;
         use oxc_semantic::{AstTypesBitset, SymbolId};
 
         #[derive(Debug, Clone)]
@@ -150,9 +151,9 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            pub(super) fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
+                    #(Self::#struct_names(rule) => rule.run(node, kind, ctx)),*
                 }
             }
 

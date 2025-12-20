@@ -155,8 +155,8 @@ impl Rule for NoRestrictedTypes {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             // Handle type references like `let x: Foo` or `let x: NS.Foo`
             AstKind::TSTypeReference(type_ref) => {
                 // Check the type name (e.g., `Banned` in `Banned<any>`)

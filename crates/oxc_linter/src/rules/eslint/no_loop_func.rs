@@ -55,9 +55,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLoopFunc {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // Check for function expressions, arrow functions, and function declarations
-        let (func_span, is_async_or_generator) = match node.kind() {
+        let (func_span, is_async_or_generator) = match kind {
             AstKind::Function(func) => {
                 // Skip if not inside a statement (i.e., method definitions, etc.)
                 if !func.is_expression() && !func.is_declaration() {

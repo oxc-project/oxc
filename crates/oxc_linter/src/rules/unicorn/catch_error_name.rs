@@ -122,8 +122,8 @@ impl Rule for CatchErrorName {
         Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CatchParameter(catch_param) => {
                 self.check_binding_identifier(ctx, &catch_param.pattern.kind);
             }

@@ -108,8 +108,8 @@ impl Rule for AriaRole {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_el) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXElement(jsx_el) = kind
             && let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role")
         {
             let element_type = get_element_type(ctx, &jsx_el.opening_element);

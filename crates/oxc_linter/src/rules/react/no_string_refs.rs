@@ -120,8 +120,8 @@ impl Rule for NoStringRefs {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXAttribute(attr) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {
                     ctx.diagnostic(string_in_ref_deprecated(attr.span));

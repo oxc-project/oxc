@@ -87,8 +87,8 @@ impl Rule for ArrayCallbackReturn {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return) = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let (function_body, always_explicit_return) = match kind {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
             AstKind::ArrowFunctionExpression(arrow) => {

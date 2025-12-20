@@ -143,8 +143,8 @@ impl Rule for ArrayType {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::TSArrayType(ts_array_type) => {
                 check(
                     &ts_array_type.element_type,

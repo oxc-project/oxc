@@ -109,8 +109,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConditionalInTest {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::IfStatement(_)
             | AstKind::SwitchStatement(_)
             | AstKind::ConditionalExpression(_)
@@ -119,7 +119,7 @@ impl Rule for NoConditionalInTest {
         }
 
         let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
-            let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+            let AstKind::CallExpression(call_expr) = kind else { return false };
             let vitest_node = PossibleJestNode { node, original: None };
 
             is_type_of_jest_fn_call(
@@ -131,7 +131,7 @@ impl Rule for NoConditionalInTest {
         });
 
         if is_if_statement_in_test {
-            let span = match node.kind() {
+            let span = match kind {
                 AstKind::IfStatement(stmt) => stmt.span,
                 AstKind::SwitchStatement(stmt) => stmt.span,
                 AstKind::ConditionalExpression(expr) => expr.span,

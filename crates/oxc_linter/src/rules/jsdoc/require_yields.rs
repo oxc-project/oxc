@@ -110,7 +110,7 @@ impl Rule for RequireYields {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // This rule checks generator function should have JSDoc `@yields` tag.
         // By default, this rule only checks:
         // ```
@@ -124,7 +124,7 @@ impl Rule for RequireYields {
         // ```
         //
         // If generator function does not have JSDoc, it will be skipped.
-        match node.kind() {
+        match kind {
             AstKind::Function(func)
                 if func.generator && (func.is_expression() || func.is_declaration()) =>
             {

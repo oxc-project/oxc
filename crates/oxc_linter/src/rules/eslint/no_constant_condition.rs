@@ -118,8 +118,8 @@ impl Rule for NoConstantCondition {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::IfStatement(if_stmt) => check(ctx, &if_stmt.test),
             AstKind::ConditionalExpression(condition_expr) => check(ctx, &condition_expr.test),
             AstKind::WhileStatement(while_stmt) => self.check_loop(ctx, &while_stmt.test, true),

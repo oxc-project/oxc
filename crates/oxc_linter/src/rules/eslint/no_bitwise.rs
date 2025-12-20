@@ -104,8 +104,8 @@ impl Rule for NoBitwise {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BinaryExpression(bin_expr) => {
                 let op = bin_expr.operator.as_str();
 

@@ -42,8 +42,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ReturnStatement(stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ReturnStatement(stmt) = kind else {
             return;
         };
         if stmt.argument.is_none() {

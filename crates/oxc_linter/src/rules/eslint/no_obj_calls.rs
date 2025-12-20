@@ -122,8 +122,8 @@ fn resolve_global_binding<'a, 'b: 'a>(
 }
 
 impl Rule for NoObjCalls {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NewExpression(expr) => check_callee(&expr.callee, expr.span, node, ctx),
             AstKind::CallExpression(expr) => check_callee(&expr.callee, expr.span, node, ctx),
             _ => {}

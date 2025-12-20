@@ -956,8 +956,8 @@ impl Rule for NoRestrictedImports {
         Self(Box::new(NoRestrictedImportsConfig { paths, patterns }))
     }
 
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSImportEqualsDeclaration(declaration) = node.kind() else {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSImportEqualsDeclaration(declaration) = kind else {
             return;
         };
 

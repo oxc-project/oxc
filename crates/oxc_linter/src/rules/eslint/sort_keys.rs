@@ -139,8 +139,8 @@ impl Rule for SortKeys {
         )))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ObjectExpression(dec) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ObjectExpression(dec) = kind {
             let options = self.options();
             if dec.properties.len() < options.min_keys {
                 return;

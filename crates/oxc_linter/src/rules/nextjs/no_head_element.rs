@@ -70,8 +70,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoHeadElement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(elem) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(elem) = kind {
             let JSXElementName::Identifier(id) = &elem.name else {
                 return;
             };

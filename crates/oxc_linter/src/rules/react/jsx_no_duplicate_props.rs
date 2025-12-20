@@ -59,8 +59,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoDuplicateProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_opening_elem) = kind else {
             return;
         };
 

@@ -344,8 +344,8 @@ impl Rule for JsxCurlyBracePresence {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXElement(el) => {
                 el.opening_element.attributes.iter().for_each(|attr| {
                     self.check_jsx_attribute(ctx, attr, node);

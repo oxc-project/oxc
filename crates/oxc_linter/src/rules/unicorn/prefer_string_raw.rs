@@ -66,8 +66,8 @@ fn unescape_backslash(input: &str, quote: char) -> String {
 }
 
 impl Rule for PreferStringRaw {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::StringLiteral(string_literal) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::StringLiteral(string_literal) = kind else {
             return;
         };
 

@@ -50,8 +50,8 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-amd.md>
 impl Rule for NoAmd {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::CallExpression(call_expr) = kind
             && let Expression::Identifier(identifier) = &call_expr.callee
             // must be in top level
             && node.scope_id() == ctx.scoping().root_scope_id()

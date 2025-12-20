@@ -54,8 +54,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferEnumInitializers {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSEnumBody(enum_body) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSEnumBody(enum_body) = kind else {
             return;
         };
 

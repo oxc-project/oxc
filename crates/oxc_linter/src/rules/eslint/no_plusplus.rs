@@ -100,8 +100,8 @@ impl Rule for NoPlusplus {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::UpdateExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::UpdateExpression(expr) = kind else {
             return;
         };
 

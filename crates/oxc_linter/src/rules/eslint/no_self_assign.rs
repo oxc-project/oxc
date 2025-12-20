@@ -109,8 +109,8 @@ impl Rule for NoSelfAssign {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assignment) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AssignmentExpression(assignment) = kind else {
             return;
         };
         if matches!(

@@ -44,8 +44,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAsyncAwait {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::Function(func_decl) => {
                 if func_decl.r#async {
                     let parent_kind = ctx.nodes().parent_kind(node.id());

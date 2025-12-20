@@ -86,8 +86,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLonelyIf {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IfStatement(if_stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::IfStatement(if_stmt) = kind else {
             return;
         };
 

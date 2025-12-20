@@ -55,8 +55,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (ident_name, ident_span, reference_id) = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let (ident_name, ident_span, reference_id) = match kind {
             AstKind::TSTypeReference(type_ref) => {
                 if let TSTypeName::IdentifierReference(type_name) = &type_ref.type_name {
                     (type_name.name.as_str(), type_name.span, type_name.reference_id())
@@ -87,7 +87,7 @@ impl Rule for NoWrapperObjectTypes {
                 return;
             }
 
-            let can_fix = matches!(node.kind(), AstKind::TSTypeReference(_));
+            let can_fix = matches!(kind, AstKind::TSTypeReference(_));
 
             if can_fix {
                 ctx.diagnostic_with_fix(no_wrapper_object_types(ident_span), |fixer| {

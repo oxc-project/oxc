@@ -77,8 +77,8 @@ const COMPILER_MACROS: &[&str; 7] = &[
 const VUE_MODULES: &[&str; 3] = &["vue", "@vue/runtime-core", "@vue/runtime-dom"];
 
 impl Rule for NoImportCompilerMacros {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ImportDeclaration(import_decl) = kind else {
             return;
         };
 

@@ -85,8 +85,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferObjectFromEntries {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else { return };
 
         if call_expr.arguments.len() == 1
             && call_expr.arguments[0].is_expression()

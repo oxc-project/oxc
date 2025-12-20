@@ -132,8 +132,8 @@ impl Rule for PreferDestructuring {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::AssignmentExpression(assign_expr) if assign_expr.operator.is_assign() => {
                 let Some(right) = assign_expr.right.without_parentheses().as_member_expression()
                 else {

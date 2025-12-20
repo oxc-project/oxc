@@ -47,8 +47,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSetSize {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::StaticMemberExpression(member_expr) = kind else {
             return;
         };
 

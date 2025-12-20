@@ -112,8 +112,8 @@ impl Rule for JsxKey {
         serde_json::from_value::<DefaultRuleConfig<JsxKey>>(value).unwrap_or_default().into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);
                 if self.check_key_must_before_spread {

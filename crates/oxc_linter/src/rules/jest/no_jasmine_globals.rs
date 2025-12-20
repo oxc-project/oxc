@@ -95,10 +95,10 @@ impl Rule for NoJasmineGlobals {
         }
     }
 
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::AssignmentExpression(assign_expr) = node.kind() {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::AssignmentExpression(assign_expr) = kind {
             diagnostic_assign_expr(assign_expr, ctx);
-        } else if let AstKind::CallExpression(call_expr) = node.kind() {
+        } else if let AstKind::CallExpression(call_expr) = kind {
             diagnostic_call_expr(call_expr, ctx);
         }
     }

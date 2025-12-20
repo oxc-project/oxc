@@ -69,8 +69,8 @@ declare_oxc_lint!(
 
 const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
 impl Rule for NoThrowLiteral {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ThrowStatement(stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ThrowStatement(stmt) = kind else {
             return;
         };
 

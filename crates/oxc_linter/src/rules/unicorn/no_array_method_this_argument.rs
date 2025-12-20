@@ -54,8 +54,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoArrayMethodThisArgument {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else { return };
 
         check_array_prototype_methods(call_expr, ctx);
         check_array_from(call_expr, ctx);

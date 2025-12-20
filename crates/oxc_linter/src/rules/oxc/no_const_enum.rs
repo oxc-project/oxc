@@ -43,8 +43,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstEnum {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSEnumDeclaration(enum_decl) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::TSEnumDeclaration(enum_decl) = kind {
             if !enum_decl.r#const {
                 return;
             }

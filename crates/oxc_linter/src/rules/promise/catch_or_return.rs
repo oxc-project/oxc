@@ -122,8 +122,8 @@ impl Rule for CatchOrReturn {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExpressionStatement(expr_stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExpressionStatement(expr_stmt) = kind else {
             return;
         };
 

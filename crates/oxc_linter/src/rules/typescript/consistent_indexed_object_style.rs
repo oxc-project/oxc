@@ -114,11 +114,11 @@ impl Rule for ConsistentIndexedObjectStyle {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         let preferred_style = self.0;
 
         if self.0 == ConsistentIndexedObjectStyleConfig::Record {
-            match node.kind() {
+            match kind {
                 AstKind::TSInterfaceDeclaration(inf) => {
                     if inf.body.body.len() > 1 {
                         return;
@@ -237,7 +237,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                 }
                 _ => {}
             }
-        } else if let AstKind::TSTypeReference(tref) = node.kind()
+        } else if let AstKind::TSTypeReference(tref) = kind
             && let TSTypeName::IdentifierReference(ide) = &tref.type_name
         {
             if ide.name != "Record" {

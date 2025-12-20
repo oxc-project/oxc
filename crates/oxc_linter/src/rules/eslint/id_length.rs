@@ -201,8 +201,8 @@ impl Rule for IdLength {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BindingIdentifier(ident) => {
                 self.handle_binding_identifier(ident, node, ctx);
             }

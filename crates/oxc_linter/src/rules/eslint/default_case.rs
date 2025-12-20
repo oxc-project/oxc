@@ -123,8 +123,8 @@ impl Rule for DefaultCase {
         Self(Box::new(case_config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SwitchStatement(switch) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::SwitchStatement(switch) = kind else {
             return;
         };
 

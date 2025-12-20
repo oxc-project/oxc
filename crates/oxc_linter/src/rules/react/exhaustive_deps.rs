@@ -274,8 +274,8 @@ impl Rule for ExhaustiveDeps {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else { return };
 
         let Some(hook_name) = get_node_name_without_react_namespace(&call_expr.callee) else {
             return;

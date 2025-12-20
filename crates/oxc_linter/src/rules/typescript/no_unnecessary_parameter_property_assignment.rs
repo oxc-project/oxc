@@ -58,8 +58,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MethodDefinition(method) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::MethodDefinition(method) = kind else {
             return;
         };
         if method.kind != MethodDefinitionKind::Constructor {

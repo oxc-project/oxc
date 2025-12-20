@@ -45,8 +45,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
         // ignore "foo.postMessage?.(...message)" and "foo.postMessage(...message)"

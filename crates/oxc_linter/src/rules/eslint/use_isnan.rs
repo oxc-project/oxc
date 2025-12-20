@@ -92,8 +92,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for UseIsnan {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
                 if is_nan_identifier(&expr.left) {
                     ctx.diagnostic(comparison_with_na_n(expr.left.span()));

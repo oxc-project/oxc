@@ -64,8 +64,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTernary {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ConditionalExpression(cond_expr) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ConditionalExpression(cond_expr) = kind {
             ctx.diagnostic(no_ternary_diagnostic(cond_expr.span));
         }
     }

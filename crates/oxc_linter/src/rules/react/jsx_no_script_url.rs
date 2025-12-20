@@ -99,8 +99,8 @@ impl JsxNoScriptUrl {
 }
 
 impl Rule for JsxNoScriptUrl {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(element) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(element) = kind {
             let Some(component_name) = element.name.get_identifier_name() else {
                 return;
             };

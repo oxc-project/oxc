@@ -204,8 +204,8 @@ impl Rule for NoEmptyFunction {
         Self { allow: allow_option }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::FunctionBody(fb) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::FunctionBody(fb) = kind else {
             return;
         };
         if !fb.is_empty() || ctx.has_comments_between(fb.span) {

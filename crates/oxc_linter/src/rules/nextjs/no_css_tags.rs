@@ -69,8 +69,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCssTags {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_opening_element) = kind else {
             return;
         };
 

@@ -78,8 +78,8 @@ impl Rule for NoOptionalChaining {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ChainExpression(expr) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ChainExpression(expr) = kind {
             ctx.diagnostic(no_optional_chaining_diagnostic(expr.span, &self.message));
         }
     }

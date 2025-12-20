@@ -43,8 +43,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for MissingThrow {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::NewExpression(new_expr) = kind else {
             return;
         };
         if new_expr.callee.is_specific_id("Error") && Self::has_missing_throw(node, ctx) {

@@ -52,8 +52,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLoneBlocks {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BlockStatement(stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BlockStatement(stmt) = kind else {
             return;
         };
 

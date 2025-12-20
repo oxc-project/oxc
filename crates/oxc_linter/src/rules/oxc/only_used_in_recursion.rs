@@ -72,8 +72,8 @@ fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
 }
 
 impl Rule for OnlyUsedInRecursion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_id, function_parameters, function_span) = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let (function_id, function_parameters, function_span) = match kind {
             AstKind::Function(function) => {
                 if function.is_typescript_syntax() {
                     return;

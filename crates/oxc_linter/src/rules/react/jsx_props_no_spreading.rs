@@ -96,8 +96,8 @@ impl Rule for JsxPropsNoSpreading {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXSpreadAttribute(spread_attr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXSpreadAttribute(spread_attr) = kind else {
             return;
         };
 

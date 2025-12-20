@@ -1,4 +1,4 @@
-use oxc_ast::ast::Expression;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -80,8 +80,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(ss) = node.kind().as_switch_statement() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let Some(ss) = kind.as_switch_statement() else { return };
         let mut previous_tests: Vec<&Expression<'_>> = vec![];
         for test in ss.cases.iter().filter_map(|c| c.test.as_ref()) {
             let test = test.without_parentheses();

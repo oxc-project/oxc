@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
+use oxc_ast::AstKind;
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
@@ -39,7 +40,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// Visit each AST Node
     #[expect(unused_variables)]
     #[inline]
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     #[expect(unused_variables)]

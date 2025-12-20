@@ -57,8 +57,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for ReactInJsxScope {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let node_span = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let node_span = match kind {
             AstKind::JSXOpeningElement(v) => v.name.span(),
             AstKind::JSXFragment(v) => v.opening_fragment.span,
             _ => return,

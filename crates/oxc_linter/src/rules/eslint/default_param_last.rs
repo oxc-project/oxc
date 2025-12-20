@@ -71,8 +71,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultParamLast {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::Function(function) if is_function_decl_or_expr(function) => {
                 check_params(&function.params.items, ctx);
             }

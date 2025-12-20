@@ -57,8 +57,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMutableExports {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ExportNamedDeclaration(export_name_decl) => {
                 // e.g. "export let a = 4;"
                 if let Some(declaration) = &export_name_decl.declaration {

@@ -97,8 +97,8 @@ impl Rule for NoEval {
         serde_json::from_value::<DefaultRuleConfig<NoEval>>(value).unwrap_or_default().into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::Program(_) if !self.allow_indirect => {
                 let globals =
                     ["eval", "global", "window", "globalThis"].into_iter().filter(|name| {

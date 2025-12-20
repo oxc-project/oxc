@@ -92,8 +92,8 @@ impl Rule for NoExtraBooleanCast {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(expr)
                 if expr.callee.is_specific_id("Boolean")
                     && is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) =>

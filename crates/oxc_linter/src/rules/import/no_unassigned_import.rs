@@ -89,8 +89,8 @@ impl Rule for NoUnassignedImport {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ImportDeclaration(import_decl) => {
                 if import_decl.specifiers.is_some() {
                     return;

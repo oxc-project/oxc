@@ -146,8 +146,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {}
             _ => return,
         }
@@ -156,7 +156,7 @@ impl Rule for NoUselessSpread {
             return;
         }
 
-        match node.kind() {
+        match kind {
             AstKind::ArrayExpression(array_expr) => {
                 let Some(spread_elem) = as_single_array_spread(array_expr) else {
                     return;

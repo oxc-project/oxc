@@ -134,8 +134,8 @@ impl Rule for InitDeclarations {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::VariableDeclaration(decl) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::VariableDeclaration(decl) = kind {
             let parent = ctx.nodes().parent_node(node.id());
             // support for TypeScript's declare variables
             if self.mode == Mode::Always {

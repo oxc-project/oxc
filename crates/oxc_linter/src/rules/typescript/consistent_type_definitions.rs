@@ -97,8 +97,8 @@ impl Rule for ConsistentTypeDefinitions {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::TSTypeAliasDeclaration(decl) => {
                 let type_annotation = decl.type_annotation.without_parenthesized();
                 match type_annotation {

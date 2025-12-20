@@ -150,8 +150,8 @@ impl Rule for JsxNoTargetBlank {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_ele) = kind {
             let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
                 return;
             };

@@ -80,8 +80,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLossOfPrecision {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NumericLiteral(node) if Self::lose_precision(node) => {
                 ctx.diagnostic(no_loss_of_precision_diagnostic(node.span));
             }

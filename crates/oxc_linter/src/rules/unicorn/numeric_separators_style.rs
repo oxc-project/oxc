@@ -156,8 +156,8 @@ impl Rule for NumericSeparatorsStyle {
         Self(Box::new(cfg))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NumericLiteral(number) => {
                 let raw = number.raw.as_ref().unwrap().as_str();
                 if self.only_if_contains_separator && !raw.contains('_') {

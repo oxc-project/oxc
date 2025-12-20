@@ -72,8 +72,8 @@ impl Rule for NoInferrableTypes {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::VariableDeclarator(variable_decl) => {
                 if let (Some(init), Some(type_annotation)) =
                     (&variable_decl.init, &variable_decl.id.type_annotation)

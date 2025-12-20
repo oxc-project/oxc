@@ -104,9 +104,9 @@ enum InitType {
 }
 
 impl Rule for NoImmediateMutation {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // We look for ExpressionStatements that might be mutations
-        let AstKind::ExpressionStatement(expr_stmt) = node.kind() else {
+        let AstKind::ExpressionStatement(expr_stmt) = kind else {
             return;
         };
 

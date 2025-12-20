@@ -42,8 +42,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyNamedBlocks {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ImportDeclaration(import_decl) = kind else {
             return;
         };
 

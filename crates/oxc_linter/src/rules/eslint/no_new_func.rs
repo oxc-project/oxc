@@ -46,8 +46,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewFunc {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NewExpression(new_expr) => {
                 let Some(id) = new_expr.callee.get_identifier_reference() else {
                     return;

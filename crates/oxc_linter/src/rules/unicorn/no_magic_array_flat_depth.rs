@@ -47,8 +47,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMagicArrayFlatDepth {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expression) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expression) = kind else {
             return;
         };
 

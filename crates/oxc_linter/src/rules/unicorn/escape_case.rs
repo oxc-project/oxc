@@ -123,8 +123,8 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
 }
 
 impl Rule for EscapeCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::StringLiteral(lit) => {
                 let text = lit.span.source_text(ctx.source_text());
                 if let Some(fixed) = check_case(text, false) {

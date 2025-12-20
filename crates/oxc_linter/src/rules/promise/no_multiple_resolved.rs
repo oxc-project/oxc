@@ -82,8 +82,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMultipleResolved {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(new_expr) = node.kind().as_new_expression() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let Some(new_expr) = kind.as_new_expression() else { return };
         let Some(executor_expr) = get_promise_constructor_inline_executor(new_expr) else { return };
         let (resolve_symbol_id, reject_symbol_id) = get_resolve_symbol_id(executor_expr);
         let resolve_findler =

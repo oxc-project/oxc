@@ -121,8 +121,8 @@ impl Rule for NoParamReassign {
         rule
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::FormalParameter(param) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::FormalParameter(param) = kind else {
             return;
         };
 

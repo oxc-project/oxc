@@ -74,8 +74,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXOpeningElement(jsx_opening_el) => {
                 let element_type = get_element_type(ctx, jsx_opening_el);
 

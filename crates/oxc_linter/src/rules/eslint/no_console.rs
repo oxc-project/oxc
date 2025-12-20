@@ -95,8 +95,8 @@ impl Rule for NoConsole {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let object = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let object = match kind {
             AstKind::StaticMemberExpression(member_expr) => &member_expr.object,
             AstKind::ComputedMemberExpression(member_expr) => &member_expr.object,
             _ => return,
@@ -112,7 +112,7 @@ impl Rule for NoConsole {
             return;
         }
 
-        let (mem_span, prop_name) = match node.kind() {
+        let (mem_span, prop_name) = match kind {
             AstKind::StaticMemberExpression(member_expr) => member_expr.static_property_info(),
             AstKind::ComputedMemberExpression(member_expr) => {
                 match member_expr.static_property_info() {

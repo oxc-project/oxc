@@ -47,8 +47,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyCharacterClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::RegExpLiteral(lit) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::RegExpLiteral(lit) = kind {
             let Some(pattern) = &lit.regex.pattern.pattern else {
                 return;
             };

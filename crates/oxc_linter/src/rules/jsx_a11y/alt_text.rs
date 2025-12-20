@@ -174,8 +174,8 @@ impl Rule for AltText {
         Self(Box::new(alt_text))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_el) = kind else {
             return;
         };
 

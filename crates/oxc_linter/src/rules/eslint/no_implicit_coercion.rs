@@ -185,8 +185,8 @@ impl Rule for NoImplicitCoercion {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::UnaryExpression(unary_expr) => {
                 // Check for !!foo (boolean coercion)
                 if self.boolean

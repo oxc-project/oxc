@@ -93,8 +93,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentGenericConstructors {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::VariableDeclarator(variable_declarator) => {
                 let type_ann = variable_declarator.id.type_annotation.as_ref();
                 let init = variable_declarator.init.as_ref();

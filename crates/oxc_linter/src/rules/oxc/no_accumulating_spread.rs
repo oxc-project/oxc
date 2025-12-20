@@ -124,9 +124,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAccumulatingSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // only check spreads on identifiers
-        let AstKind::SpreadElement(spread) = node.kind() else {
+        let AstKind::SpreadElement(spread) = kind else {
             return;
         };
         let Expression::Identifier(ident) = &spread.argument else {

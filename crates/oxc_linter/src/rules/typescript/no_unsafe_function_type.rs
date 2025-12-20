@@ -59,8 +59,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeFunctionType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::TSTypeReference(reference) => {
                 if let TSTypeName::IdentifierReference(ident_ref) = &reference.type_name {
                     handle_function_type(ident_ref, ctx);

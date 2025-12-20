@@ -203,8 +203,8 @@ impl Rule for GroupedAccessorPairs {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ObjectExpression(obj_expr) => {
                 let mut prop_map =
                     FxHashMap::<(String, bool), Vec<(usize, &Box<ObjectProperty>)>>::default();

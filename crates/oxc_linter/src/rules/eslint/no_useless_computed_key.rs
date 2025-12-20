@@ -124,8 +124,8 @@ impl Rule for NoUselessComputedKey {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ObjectProperty(property) if property.computed => {
                 if let Some(expr) =
                     property.key.as_expression().map(Expression::get_inner_expression)

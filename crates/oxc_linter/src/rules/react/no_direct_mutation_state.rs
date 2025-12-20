@@ -83,8 +83,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDirectMutationState {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::AssignmentExpression(assignment_expr) => {
                 if should_ignore_component(node, ctx) {
                     return;

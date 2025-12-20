@@ -230,8 +230,8 @@ impl Rule for Eqeqeq {
         Self { compare_type, null_type }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(binary_expr) = kind else {
             return;
         };
         let is_null_comparison = is_null_check(binary_expr);

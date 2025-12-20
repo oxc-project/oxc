@@ -310,8 +310,8 @@ impl Rule for PreserveCaughtError {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TryStatement(try_stmt) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TryStatement(try_stmt) = kind else {
             return;
         };
         self.check_try_statement(try_stmt, ctx);

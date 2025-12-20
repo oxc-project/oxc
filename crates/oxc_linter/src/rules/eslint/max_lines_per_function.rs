@@ -161,7 +161,7 @@ impl Rule for MaxLinesPerFunction {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         if !is_function_node(node) || (!self.iifes && is_iife(node, ctx.semantic())) {
             return;
         }

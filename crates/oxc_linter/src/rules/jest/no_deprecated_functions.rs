@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::Expression;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -130,8 +130,8 @@ impl Rule for NoDeprecatedFunctions {
         }))
     }
 
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(mem_expr) = node.kind().as_member_expression_kind() else {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let Some(mem_expr) = kind.as_member_expression_kind() else {
             return;
         };
         let mut chain: Vec<Cow<'a, str>> = Vec::new();

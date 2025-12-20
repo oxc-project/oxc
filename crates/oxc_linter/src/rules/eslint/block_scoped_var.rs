@@ -124,8 +124,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for BlockScopedVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclaration(decl) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::VariableDeclaration(decl) = kind else {
             return;
         };
         if decl.kind != VariableDeclarationKind::Var {

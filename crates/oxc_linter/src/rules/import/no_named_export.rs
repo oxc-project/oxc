@@ -48,8 +48,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNamedExport {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ExportAllDeclaration(all_decl) => {
                 ctx.diagnostic(no_named_export_diagnostic(all_decl.span));
             }

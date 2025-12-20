@@ -196,8 +196,8 @@ impl Rule for ArrowBodyStyle {
         Self { mode, require_return_for_object_literal }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ArrowFunctionExpression(arrow_func_expr) = kind else {
             return;
         };
 

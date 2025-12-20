@@ -81,8 +81,8 @@ fn get_tags_from_role(role: &str) -> Option<&'static str> {
 }
 
 impl Rule for PreferTagOverRole {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_el) = kind {
             let name = get_element_type(ctx, jsx_el);
             if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {
                 Self::check_roles(role_prop, &name, ctx);

@@ -49,8 +49,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAriaHiddenOnFocusable {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_el) = kind else {
             return;
         };
         if let Some(aria_hidden_prop) = has_jsx_prop_ignore_case(jsx_el, "aria-hidden")

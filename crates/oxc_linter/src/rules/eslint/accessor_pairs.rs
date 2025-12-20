@@ -127,8 +127,8 @@ impl Rule for AccessorPairs {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ObjectExpression(obj) => {
                 self.check_object_expression(obj, ctx);
             }

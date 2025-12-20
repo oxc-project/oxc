@@ -48,9 +48,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAwaitInLoop {
-    fn run(&self, node: &AstNode, ctx: &LintContext) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // if node is AwaitExpression or AwaitForOfStatement
-        let span = match node.kind() {
+        let span = match kind {
             // if the await attr of ForOfStatement is false, return
             AstKind::ForOfStatement(for_of_stmt) => {
                 if !for_of_stmt.r#await {

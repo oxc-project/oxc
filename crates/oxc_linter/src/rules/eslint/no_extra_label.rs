@@ -89,8 +89,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExtraLabel {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BreakStatement(break_stmt) => {
                 if let Some(label) = &break_stmt.label {
                     report_label_if_extra(label, node, ctx);

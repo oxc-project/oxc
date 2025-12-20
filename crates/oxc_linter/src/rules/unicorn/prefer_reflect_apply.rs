@@ -58,8 +58,8 @@ fn is_static_property_name_equal(expr: &MemberExpression, value: &str) -> bool {
 }
 
 impl Rule for PreferReflectApply {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
 

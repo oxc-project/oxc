@@ -91,8 +91,8 @@ fn is_confusable_operator(operator: BinaryOperator) -> bool {
 }
 
 impl Rule for NoConfusingNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BinaryExpression(binary_expr)
                 if is_confusable_operator(binary_expr.operator) =>
             {

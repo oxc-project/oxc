@@ -84,8 +84,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultCaseLast {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SwitchStatement(switch) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::SwitchStatement(switch) = kind else {
             return;
         };
 

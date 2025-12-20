@@ -78,8 +78,8 @@ impl Rule for NoReturnAssign {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assign) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AssignmentExpression(assign) = kind else {
             return;
         };
 

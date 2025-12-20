@@ -100,8 +100,8 @@ enum CounterPosition {
 }
 
 impl Rule for ForDirection {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ForStatement(for_loop) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ForStatement(for_loop) = kind else {
             return;
         };
 

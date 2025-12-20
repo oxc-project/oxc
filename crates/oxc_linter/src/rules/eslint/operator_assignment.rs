@@ -102,8 +102,8 @@ impl Rule for OperatorAssignment {
         Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AssignmentExpression(assign_expr) = kind else {
             return;
         };
         if self.mode == Mode::Never {

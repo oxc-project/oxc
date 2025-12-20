@@ -61,8 +61,8 @@ impl Rule for NoEmpty {
         serde_json::from_value::<DefaultRuleConfig<NoEmpty>>(value).unwrap_or_default().into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 let parent = ctx.nodes().parent_kind(node.id());
                 if self.allow_empty_catch && matches!(parent, AstKind::CatchClause(_)) {

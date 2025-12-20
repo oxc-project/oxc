@@ -195,7 +195,7 @@ impl Rule for AlwaysReturn {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         if !is_inline_then_function_expression(node, ctx) {
             return;
         }

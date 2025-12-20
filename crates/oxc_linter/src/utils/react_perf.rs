@@ -57,7 +57,7 @@ impl<R> Rule for R
 where
     R: ReactPerfRule,
 {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
         if node.scope_id() == ctx.scoping().root_scope_id() {
@@ -66,7 +66,7 @@ where
 
         // look for JSX attributes whose values are expressions (foo={bar}) (as opposed to
         // spreads ({...foo}) or just boolean attributes) (<div foo />)
-        let AstKind::JSXAttribute(attr) = node.kind() else {
+        let AstKind::JSXAttribute(attr) = kind else {
             return;
         };
         let Some(JSXAttributeValue::ExpressionContainer(container)) = attr.value.as_ref() else {

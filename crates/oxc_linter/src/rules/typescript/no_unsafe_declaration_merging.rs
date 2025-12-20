@@ -48,8 +48,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeDeclarationMerging {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
                     for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {

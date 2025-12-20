@@ -110,7 +110,7 @@ impl Rule for MaxDepth {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         if should_count(node, ctx.nodes()) {
             let depth = 1 + ctx
                 .nodes()

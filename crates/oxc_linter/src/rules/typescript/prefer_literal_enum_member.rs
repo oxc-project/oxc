@@ -64,8 +64,8 @@ impl Rule for PreferLiteralEnumMember {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSEnumMember(decl) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSEnumMember(decl) = kind else {
             return;
         };
         let Some(initializer) = &decl.initializer else {

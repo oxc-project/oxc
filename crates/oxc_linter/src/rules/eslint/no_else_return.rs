@@ -344,8 +344,8 @@ impl Rule for NoElseReturn {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IfStatement(_) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::IfStatement(_) = kind else {
             return;
         };
 

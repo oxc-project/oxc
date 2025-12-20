@@ -83,8 +83,8 @@ impl Rule for NoExplicitAny {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSAnyKeyword(any) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSAnyKeyword(any) = kind else {
             return;
         };
         if self.ignore_rest_args && Self::is_in_rest(node, ctx) {

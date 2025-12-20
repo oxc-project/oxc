@@ -53,8 +53,8 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Opti
 }
 
 impl Rule for NoUnreadableArrayDestructuring {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ArrayPattern(array_pattern)
                 if is_unreadable_array_destructuring(
                     &array_pattern.elements,

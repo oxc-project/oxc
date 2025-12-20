@@ -302,8 +302,8 @@ impl Rule for NoMagicNumbers {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_) => {}
             _ => return,
         }

@@ -78,8 +78,8 @@ impl Rule for NoCondAssign {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::IfStatement(stmt) => self.check_expression(ctx, &stmt.test),
             AstKind::WhileStatement(stmt) => self.check_expression(ctx, &stmt.test),
             AstKind::DoWhileStatement(stmt) => self.check_expression(ctx, &stmt.test),

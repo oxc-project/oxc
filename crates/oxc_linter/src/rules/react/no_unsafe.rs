@@ -94,8 +94,8 @@ impl Rule for NoUnsafe {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::MethodDefinition(method_def) => {
                 let react_version = ctx.settings().react.version.as_ref();
 

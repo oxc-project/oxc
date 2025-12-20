@@ -87,8 +87,8 @@ impl Rule for PreferPromiseRejectErrors {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, Some(&["Promise"]), Some(&["reject"]), None, None) {
                     return;

@@ -136,8 +136,8 @@ impl Rule for NoRequireImports {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr) => {
                 if node.scope_id() != ctx.scoping().root_scope_id()
                     && let Some(id) = call_expr.callee.get_identifier_reference()

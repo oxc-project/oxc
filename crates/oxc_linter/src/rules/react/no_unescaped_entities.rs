@@ -51,8 +51,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnescapedEntities {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXText(jsx_text) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXText(jsx_text) = kind {
             let source = jsx_text.raw.unwrap().as_str();
             for (i, &byte) in source.as_bytes().iter().enumerate() {
                 if matches!(byte, b'\'' | b'\"') {

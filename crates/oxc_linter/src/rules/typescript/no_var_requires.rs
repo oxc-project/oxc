@@ -39,8 +39,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVarRequires {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(expr) = kind else {
             return;
         };
 
@@ -61,7 +61,7 @@ impl Rule for NoVarRequires {
             // If this is an expression statement, it means the `require()`'s return value is unused.
             // If the return value is unused, this isn't a problem.
             if !is_expression_statement {
-                ctx.diagnostic(no_var_requires_diagnostic(node.kind().span()));
+                ctx.diagnostic(no_var_requires_diagnostic(kind.span()));
             }
         }
     }

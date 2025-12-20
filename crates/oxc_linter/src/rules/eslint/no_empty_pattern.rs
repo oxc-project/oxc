@@ -81,8 +81,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyPattern {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ArrayPattern(array) => {
                 if array.is_empty() {
                     ctx.diagnostic(no_empty_array_pattern_diagnostic(array.span));

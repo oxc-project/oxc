@@ -166,7 +166,7 @@ impl Rule for ConsistentFunctionScoping {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         let (
             function_declaration_symbol_id,
             function_name,
@@ -174,7 +174,7 @@ impl Rule for ConsistentFunctionScoping {
             reporter_span,
             function_scope_id,
         ) =
-            match node.kind() {
+            match kind {
                 AstKind::Function(function) => {
                     if function.is_typescript_syntax() {
                         return;
@@ -264,7 +264,7 @@ impl Rule for ConsistentFunctionScoping {
             (rf.references, rf.is_parent_this_referenced)
         };
 
-        if is_parent_this_referenced && matches!(node.kind(), AstKind::ArrowFunctionExpression(_)) {
+        if is_parent_this_referenced && matches!(kind, AstKind::ArrowFunctionExpression(_)) {
             return;
         }
 

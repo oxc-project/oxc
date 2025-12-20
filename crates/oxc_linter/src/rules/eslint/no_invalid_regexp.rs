@@ -76,8 +76,8 @@ impl Rule for NoInvalidRegexp {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (pattern_arg, flags_arg) = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let (pattern_arg, flags_arg) = match kind {
             AstKind::NewExpression(expr) if expr.callee.is_specific_id("RegExp") => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))
             }

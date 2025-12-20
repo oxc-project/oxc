@@ -58,8 +58,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferDateNow {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr) => {
                 // `new Date().{getTime,valueOf}()`
                 if let Some(member_expr) =

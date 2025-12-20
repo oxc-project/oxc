@@ -276,8 +276,8 @@ impl Rule for Curly {
         Self(CurlyConfig { curly_type, consistent })
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
             AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
             AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),

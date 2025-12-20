@@ -107,8 +107,8 @@ impl Rule for PreferAt {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ComputedMemberExpression(computed) => {
                 if !is_assignment_target(node, ctx) {
                     self.handle_computed_member(computed, node, ctx);

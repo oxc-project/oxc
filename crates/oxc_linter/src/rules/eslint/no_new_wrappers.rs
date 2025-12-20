@@ -68,8 +68,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewWrappers {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::NewExpression(expr) = kind else {
             return;
         };
         let Expression::Identifier(ident) = &expr.callee else {

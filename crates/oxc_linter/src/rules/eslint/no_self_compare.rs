@@ -40,8 +40,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSelfCompare {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(binary_expr) = kind else {
             return;
         };
         if !binary_expr.operator.is_compare() && !binary_expr.operator.is_equality() {

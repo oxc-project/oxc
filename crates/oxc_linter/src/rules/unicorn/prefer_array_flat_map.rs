@@ -47,8 +47,8 @@ declare_oxc_lint!(
 const IGNORE_OBJECTS: [&str; 1] = [/* "React.Children", */ "Children"];
 
 impl Rule for PreferArrayFlatMap {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(flat_call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(flat_call_expr) = kind else {
             return;
         };
 

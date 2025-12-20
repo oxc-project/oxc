@@ -69,8 +69,8 @@ declare_oxc_lint!(
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.1/docs/rules/prefer-array-some.md>
 impl Rule for PreferArraySome {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             // `.find(…)`
             // `.findLast(…)`
             AstKind::CallExpression(call_expr) => {

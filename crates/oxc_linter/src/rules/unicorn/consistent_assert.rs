@@ -49,8 +49,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentAssert {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ImportDeclaration(import_decl) = kind else { return };
 
         if !is_assert_module_import(import_decl) {
             return;

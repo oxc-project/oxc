@@ -60,8 +60,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExtraBind {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
         if !is_method_call(call_expr, None, Some(&["bind"]), Some(1), Some(1)) {

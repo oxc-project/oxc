@@ -113,8 +113,8 @@ impl Rule for NoAbsolutePath {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ImportDeclaration(import_decl) if self.esmodule => {
                 if check_path_is_absolute(import_decl.source.value.as_str()) {
                     ctx.diagnostic(no_absolute_path_diagnostic(import_decl.source.span));

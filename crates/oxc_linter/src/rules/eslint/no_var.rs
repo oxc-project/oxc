@@ -53,8 +53,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::VariableDeclaration(dec) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::VariableDeclaration(dec) = kind
             && dec.kind == VariableDeclarationKind::Var
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)

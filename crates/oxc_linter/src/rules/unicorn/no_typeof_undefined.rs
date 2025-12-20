@@ -54,8 +54,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTypeofUndefined {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(bin_expr) = kind else {
             return;
         };
 

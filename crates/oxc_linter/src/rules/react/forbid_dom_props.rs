@@ -136,8 +136,8 @@ impl Rule for ForbidDomProps {
         Self(Box::new(ForbidDomPropsConfig { forbid: forbid_map }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(jsx_elem) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_elem) = kind {
             let Some(tag_name) = jsx_elem.name.get_identifier_name() else {
                 return;
             };

@@ -240,8 +240,8 @@ impl Rule for FuncNames {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::Function(func) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::Function(func) = kind {
             let parent_node = ctx.nodes().parent_node(node.id());
             let config =
                 if func.generator { self.config.generators } else { self.config.functions };

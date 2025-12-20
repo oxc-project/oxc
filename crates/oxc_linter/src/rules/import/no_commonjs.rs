@@ -135,8 +135,8 @@ impl Rule for NoCommonjs {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             member_expr if member_expr.is_member_expression_kind() => {
                 // module.exports
                 let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {

@@ -67,8 +67,8 @@ fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {
 }
 
 impl Rule for NoUndefined {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::IdentifierReference(ident) => {
                 diagnostic_undefined_keyword(ident.name.as_str(), ident.span, ctx);
             }

@@ -72,8 +72,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ReturnStatement(ret) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ReturnStatement(ret) = kind else {
             return;
         };
 

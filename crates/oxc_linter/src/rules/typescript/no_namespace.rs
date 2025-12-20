@@ -130,8 +130,8 @@ impl Rule for NoNamespace {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::TSModuleDeclaration(declaration) = kind else {
             return;
         };
         if !matches!(&declaration.id, TSModuleDeclarationName::Identifier(_)) {

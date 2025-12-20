@@ -44,8 +44,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNew {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::NewExpression(expr) = kind else {
             return;
         };
 
@@ -55,10 +55,10 @@ impl Rule for NoNew {
             .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)));
         let Some(node) = ancestors.next() else { return };
 
-        if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
+        if matches!(kind, AstKind::ExpressionStatement(_)) {
             ancestors.next(); // skip `FunctionBody`
             if let Some(node) = ancestors.next()
-                && matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression)
+                && matches!(kind, AstKind::ArrowFunctionExpression(e) if e.expression)
             {
                 return;
             }

@@ -54,8 +54,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireModuleSpecifiers {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::ImportDeclaration(import_decl) => {
                 let Some(span) = find_empty_braces_in_import(ctx, import_decl) else {
                     return;

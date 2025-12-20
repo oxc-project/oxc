@@ -101,8 +101,8 @@ impl Rule for NoCallbackInPromise {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(call_expr) = node.kind().as_call_expression() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let Some(call_expr) = kind.as_call_expression() else {
             return;
         };
 

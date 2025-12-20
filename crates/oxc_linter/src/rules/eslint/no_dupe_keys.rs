@@ -67,8 +67,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDupeKeys {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ObjectExpression(obj_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ObjectExpression(obj_expr) = kind else {
             return;
         };
         let len = obj_expr.properties.len();

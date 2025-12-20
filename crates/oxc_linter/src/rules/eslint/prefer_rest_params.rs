@@ -65,8 +65,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferRestParams {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(identifier) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::IdentifierReference(identifier) = kind {
             if identifier.name != "arguments"
                 || !is_inside_of_function(node, ctx)
                 || is_not_normal_member_access(node, ctx)

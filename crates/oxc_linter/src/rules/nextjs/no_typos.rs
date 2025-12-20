@@ -74,8 +74,8 @@ impl Rule for NoTypos {
         false
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ExportNamedDeclaration(en_decl) = node.kind()
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ExportNamedDeclaration(en_decl) = kind
             && let Some(decl) = &en_decl.declaration
         {
             match decl {

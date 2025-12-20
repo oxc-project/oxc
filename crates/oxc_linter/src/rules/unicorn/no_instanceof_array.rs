@@ -44,8 +44,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInstanceofArray {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(expr) = kind else {
             return;
         };
         if expr.operator != BinaryOperator::Instanceof {

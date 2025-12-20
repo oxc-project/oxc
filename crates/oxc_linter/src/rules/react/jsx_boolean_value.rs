@@ -124,8 +124,8 @@ impl Rule for JsxBooleanValue {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_opening_elem) = kind else { return };
 
         for attr in &jsx_opening_elem.attributes {
             let JSXAttributeItem::Attribute(jsx_attr) = attr else { continue };

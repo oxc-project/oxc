@@ -75,8 +75,8 @@ fn check_escape(value: &str) -> Option<String> {
 }
 
 impl Rule for NoHexEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());
                 let quote = text.chars().next().unwrap_or('\'');

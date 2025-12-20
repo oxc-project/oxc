@@ -51,8 +51,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExAssign {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CatchParameter(catch_param) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CatchParameter(catch_param) = kind else {
             return;
         };
 

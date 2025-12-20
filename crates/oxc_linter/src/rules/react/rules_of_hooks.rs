@@ -176,8 +176,8 @@ impl Rule for RulesOfHooks {
         !ctx.file_extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call) = kind else { return };
 
         if !is_react_hook(&call.callee) {
             return;

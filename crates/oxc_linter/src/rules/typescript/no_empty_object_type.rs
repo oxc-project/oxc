@@ -192,8 +192,8 @@ impl Rule for NoEmptyObjectType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::TSInterfaceDeclaration(interface) if interface.body.body.is_empty() => {
                 check_interface_declaration(
                     ctx,

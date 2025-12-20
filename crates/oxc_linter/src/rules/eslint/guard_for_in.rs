@@ -65,8 +65,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for GuardForIn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ForInStatement(for_in_statement) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ForInStatement(for_in_statement) = kind {
             match &for_in_statement.body {
                 Statement::EmptyStatement(_) | Statement::IfStatement(_) => return,
                 Statement::BlockStatement(block_body) if block_body.body.is_empty() => return,

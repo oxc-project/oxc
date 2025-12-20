@@ -68,8 +68,8 @@ impl Rule for PreferEs6Class {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::CallExpression(call_expr)
                 if matches!(self.0, PreferES6ClassOptionType::Always) && is_es5_component(node) =>
             {

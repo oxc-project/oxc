@@ -73,8 +73,8 @@ declare_oxc_lint!(
 const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];
 
 impl Rule for ConsistentExistenceIndexCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expression) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(binary_expression) = kind else {
             return;
         };
 
@@ -94,7 +94,7 @@ impl Rule for ConsistentExistenceIndexCheck {
         let declaration_node_id = ctx.scoping().symbol_declaration(symbol_id);
         let node = ctx.nodes().get_node(declaration_node_id);
 
-        if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
+        if let AstKind::VariableDeclarator(variables_declarator) = kind {
             if variables_declarator.kind != VariableDeclarationKind::Const {
                 return;
             }

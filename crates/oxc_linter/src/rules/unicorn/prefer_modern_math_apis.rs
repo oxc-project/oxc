@@ -60,7 +60,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferModernMathApis {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         // there are two main cases to check:
         // Bin expression:
         //     `Math.log(x) * Math.LOG10E`
@@ -76,7 +76,7 @@ impl Rule for PreferModernMathApis {
         //     where the contents are a bin expression (a * a + b * b) OR (a ** 2 + b ** 2)
         //
         //
-        match node.kind() {
+        match kind {
             AstKind::BinaryExpression(bin_expr) => {
                 check_prefer_log(bin_expr, ctx);
             }

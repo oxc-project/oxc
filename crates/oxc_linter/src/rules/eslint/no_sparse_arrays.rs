@@ -56,8 +56,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSparseArrays {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ArrayExpression(array_expr) = node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ArrayExpression(array_expr) = kind {
             let violations = array_expr
                 .elements
                 .iter()

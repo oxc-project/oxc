@@ -86,7 +86,7 @@ impl Rule for MaxProps {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         if ctx.frameworks_options() == FrameworkOptions::VueSetup {
             self.run_on_setup(node, ctx);
         } else {

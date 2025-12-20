@@ -65,8 +65,8 @@ fn get_member_ident<'a>(
 }
 
 impl Rule for JsxNoUndef {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(elem) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(elem) = kind else { return };
 
         if let Some(ident) = get_resolvable_ident(&elem.name) {
             let reference = ctx.scoping().get_reference(ident.reference_id());

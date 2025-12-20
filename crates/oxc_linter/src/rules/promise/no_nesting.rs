@@ -192,8 +192,8 @@ fn uses_closest_cb_vars(closest_cb_scope_id: ScopeId, cb_span: Span, ctx: &LintC
 }
 
 impl Rule for NoNesting {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = kind else {
             return;
         };
 

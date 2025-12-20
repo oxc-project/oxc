@@ -178,8 +178,8 @@ impl Rule for NoAsyncEndpointHandlers {
         Self(Box::new(NoAsyncEndpointHandlersConfig { allowed_names }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let kind = kind;
         let Some((_endpoint, args)) = utils::as_endpoint_registration(&kind) else {
             return;
         };

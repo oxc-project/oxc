@@ -178,18 +178,18 @@ impl Rule for ConsistentTypeImports {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
         if self.disallow_type_annotations {
             // `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
-            if let AstKind::TSImportType(import_type) = node.kind() {
+            if let AstKind::TSImportType(import_type) = kind {
                 ctx.diagnostic(no_import_type_annotations_diagnostic(import_type.span));
                 return;
             }
         }
 
         if matches!(self.prefer, Prefer::NoTypeImports) {
-            match node.kind() {
+            match kind {
                 // `import type { Foo } from 'foo'`
                 AstKind::ImportDeclaration(import_decl) => {
                     if import_decl.import_kind.is_type() {
@@ -225,7 +225,7 @@ impl Rule for ConsistentTypeImports {
             return;
         }
 
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
+        let AstKind::ImportDeclaration(import_decl) = kind else {
             return;
         };
 

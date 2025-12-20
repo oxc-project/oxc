@@ -153,8 +153,8 @@ impl Rule for ClassMethodsUseThis {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let function_pair = match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let function_pair = match kind {
             AstKind::AccessorProperty(accessor) => {
                 if accessor.r#static
                     || !self.enforce_for_class_fields

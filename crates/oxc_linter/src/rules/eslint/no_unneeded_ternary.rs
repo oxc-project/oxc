@@ -86,8 +86,8 @@ impl Rule for NoUnneededTernary {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ConditionalExpression(expr) = node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ConditionalExpression(expr) = kind else {
             return;
         };
         if matches!(expr.consequent, Expression::BooleanLiteral(_))

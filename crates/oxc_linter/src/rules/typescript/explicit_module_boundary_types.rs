@@ -168,8 +168,8 @@ impl Rule for ExplicitModuleBoundaryTypes {
             .into_inner()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             // look for `export function foo() { ... }`, `export const foo = () => { ... }`,
             // etc.
             AstKind::ExportNamedDeclaration(export) => {

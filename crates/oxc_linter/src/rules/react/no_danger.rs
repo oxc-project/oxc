@@ -54,8 +54,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDanger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        match kind {
             AstKind::JSXElement(jsx_elem) => {
                 if let Some(JSXAttributeItem::Attribute(prop)) =
                     has_jsx_prop(&jsx_elem.opening_element, "dangerouslySetInnerHTML")

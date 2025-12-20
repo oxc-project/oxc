@@ -196,8 +196,8 @@ impl SuperCallState {
 }
 
 impl Rule for ConstructorSuper {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.kind() else { return };
+    fn run<'a>(&self, node: &AstNode<'a>, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Class(class) = kind else { return };
 
         let super_class_type = Self::classify_super_class(class.super_class.as_ref());
 
