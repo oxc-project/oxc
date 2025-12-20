@@ -105,17 +105,16 @@ impl Rule for RequireModuleAttributes {
             AstKind::ExportAllDeclaration(decl) => {
                 check_with_clause(ctx, decl.with_clause.as_deref(), "export statement");
             }
-            _ => return,
+            _ => (),
         }
     }
 }
 
 fn check_with_clause(ctx: &LintContext, with_clause: Option<&WithClause>, import_type: &str) {
-    if let Some(with_clause) = with_clause {
-        if with_clause.with_entries.is_empty() {
+    if let Some(with_clause) = with_clause
+        && with_clause.with_entries.is_empty() {
             ctx.diagnostic(require_module_attributes_diagnostic(with_clause.span, import_type));
         }
-    }
 }
 
 #[test]
