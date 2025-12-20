@@ -523,6 +523,7 @@ pub(crate) mod unicorn {
     pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
+    pub mod require_module_attributes;
     pub mod require_module_specifiers;
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
@@ -660,6 +661,7 @@ pub(crate) mod promise {
 pub(crate) mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod prefer_called_times;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -1299,6 +1301,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_module_attributes,
     unicorn::require_module_specifiers,
     unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,
@@ -1308,6 +1311,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
+    vitest::prefer_called_times,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,

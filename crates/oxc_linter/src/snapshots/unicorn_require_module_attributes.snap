@@ -1,0 +1,128 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:19]
+ 1 │ import "foo" with {}
+   ·                   ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:28]
+ 1 │ import foo from "foo" with {}
+   ·                            ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): export statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:30]
+ 1 │ export {foo} from "foo" with {}
+   ·                              ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): export statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:26]
+ 1 │ export * from "foo" with {}
+   ·                          ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): export statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:24]
+ 1 │ export * from "foo"with{}
+   ·                        ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): export statement with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:54]
+ 1 │ export * from "foo"/* comment 1 */with/* comment 2 */{/* comment 3 */}/* comment 4 */
+   ·                                                      ─────────────────
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:15]
+ 1 │ import("foo", {})
+   ·               ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:18]
+ 1 │ import("foo", (( {} )))
+   ·                  ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:15]
+ 1 │ import("foo", {},)
+   ·               ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:21]
+ 1 │ import("foo", {with:{},},)
+   ·                     ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:21]
+ 1 │ import("foo", {with:{}, unknown:"unknown"},)
+   ·                     ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:23]
+ 1 │ import("foo", {"with":{}, unknown:"unknown"},)
+   ·                       ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:40]
+ 1 │ import("foo", {unknown:"unknown", with:{}, },)
+   ·                                        ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:40]
+ 1 │ import("foo", {unknown:"unknown", with:{} },)
+   ·                                        ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:40]
+ 1 │ import("foo", {unknown:"unknown", with:{}, unknown2:"unknown2", },)
+   ·                                        ──
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:45]
+ 1 │ import("foo"/* comment 1 */, /* comment 2 */{/* comment 3 */}/* comment 4 */,/* comment 5 */)
+   ·                                             ─────────────────
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:68]
+ 1 │ import("foo", {/* comment 1 */"with"/* comment 2 */:/* comment 3 */{/* comment 4 */}, }/* comment 5 */,)
+   ·                                                                    ─────────────────
+   ╰────
+  help: Remove the unused import attribute.
+
+  ⚠ eslint-plugin-unicorn(require-module-attributes): import expression with empty attribute list is not allowed.
+   ╭─[require_module_attributes.tsx:1:22]
+ 1 │ import("foo", {with: (({}))})
+   ·                      ──────
+   ╰────
+  help: Remove the unused import attribute.

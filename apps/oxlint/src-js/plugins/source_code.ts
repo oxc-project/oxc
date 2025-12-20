@@ -246,6 +246,14 @@ export const SOURCE_CODE = Object.freeze({
     return ancestors.reverse();
   },
 
+  /**
+   * Get source text as array of lines, split according to specification's definition of line breaks.
+   */
+  getLines(): string[] {
+    if (lines.length === 0) initLines();
+    return lines;
+  },
+
   // Location methods
   getNodeByRangeIndex,
   getLocFromIndex: getLineColumnFromOffset,

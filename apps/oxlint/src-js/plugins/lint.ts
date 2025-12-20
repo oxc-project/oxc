@@ -121,10 +121,16 @@ export function lintFileImpl(
   typeAssertIs<BufferWithArrays>(buffer);
 
   // Debug asserts that input is valid
-  debugAssert(typeof filePath === "string" && filePath.length > 0);
-  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0);
-  debugAssert(Array.isArray(optionsIds));
-  debugAssert(ruleIds.length === optionsIds.length);
+  debugAssert(
+    typeof filePath === "string" && filePath.length > 0,
+    "`filePath` should be a non-empty string",
+  );
+  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0, "`ruleIds` should be non-empty array");
+  debugAssert(Array.isArray(optionsIds), "`optionsIds` should be an array");
+  debugAssert(
+    ruleIds.length === optionsIds.length,
+    "`ruleIds` and `optionsIds` should be same length",
+  );
 
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);

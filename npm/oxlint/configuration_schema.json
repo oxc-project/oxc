@@ -6,10 +6,7 @@
   "properties": {
     "$schema": {
       "description": "Schema URI for editor tooling.",
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "markdownDescription": "Schema URI for editor tooling."
     },
     "categories": {
@@ -152,13 +149,7 @@
         {
           "description": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code).",
           "type": "string",
-          "enum": [
-            "allow",
-            "off",
-            "warn",
-            "error",
-            "deny"
-          ],
+          "enum": ["allow", "off", "warn", "error", "deny"],
           "markdownDescription": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code)."
         },
         {
@@ -178,10 +169,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "attribute",
-            "name"
-          ],
+          "required": ["attribute", "name"],
           "properties": {
             "attribute": {
               "type": "string"
@@ -193,10 +181,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "attributes",
-            "name"
-          ],
+          "required": ["attributes", "name"],
           "properties": {
             "attributes": {
               "type": "array",
@@ -240,10 +225,7 @@
         {
           "description": "Plugin with custom name/alias",
           "type": "object",
-          "required": [
-            "name",
-            "specifier"
-          ],
+          "required": ["name", "specifier"],
           "properties": {
             "name": {
               "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
@@ -271,11 +253,7 @@
     },
     "GlobalValue": {
       "type": "string",
-      "enum": [
-        "readonly",
-        "writable",
-        "off"
-      ]
+      "enum": ["readonly", "writable", "off"]
     },
     "JSDocPluginSettings": {
       "type": "object",
@@ -358,10 +336,7 @@
         },
         "polymorphicPropName": {
           "description": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`.",
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "markdownDescription": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`."
         }
       },
@@ -480,9 +455,7 @@
     },
     "OxlintOverride": {
       "type": "object",
-      "required": [
-        "files"
-      ],
+      "required": ["files"],
       "properties": {
         "env": {
           "description": "Environments enable and disable collections of global variables.",
@@ -658,13 +631,10 @@
           "markdownDescription": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```"
         },
         "version": {
-          "description": "React version to use for version-specific rules.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
+          "description": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
           "default": null,
-          "type": [
-            "string",
-            "null"
-          ],
-          "markdownDescription": "React version to use for version-specific rules.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
+          "type": ["string", "null"],
+          "markdownDescription": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
         }
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
@@ -676,10 +646,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "message",
-            "replacement"
-          ],
+          "required": ["message", "replacement"],
           "properties": {
             "message": {
               "type": "string"
@@ -691,9 +658,7 @@
         },
         {
           "type": "object",
-          "required": [
-            "message"
-          ],
+          "required": ["message"],
           "properties": {
             "message": {
               "type": "string"

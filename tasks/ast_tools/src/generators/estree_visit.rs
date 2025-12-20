@@ -16,7 +16,7 @@ use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
-    output::{Output, javascript::VariantGenerator},
+    output::{Output, javascript::generate_variants},
     schema::Schema,
     utils::{FxIndexMap, string, write_it},
 };
@@ -127,7 +127,6 @@ struct NodeKeys {
 /// * Visitor keys.
 /// * `Map` from node type name to node type ID.
 /// * Visitor type definition.
-#[expect(clippy::items_after_statements)]
 fn generate(codegen: &Codegen) -> Codes {
     // Run `napi/parser/scripts/visitor-keys.js` to get visitor keys from TS-ESLint
     let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.js");
@@ -223,7 +222,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let mut type_ids_map = string!("
-        // Mapping from node type name to node type ID
+        /** Mapping from node type name to node type ID */
         export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
     ");
@@ -260,9 +259,8 @@ fn generate(codegen: &Codegen) -> Codes {
         } else {
             let mut walk_fn_body = format!("
                 const enterExit = visitors[{node_id}];
-                let exit = null;
+                let exit = null, enter;
                 if (enterExit !== null) {{
-                    let enter;
                     ({{ enter, exit }} = enterExit);
                     if (enter !== null) enter(node);
                 }}
@@ -377,15 +375,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     // Create 2 walker variants for parser and oxlint, by setting `ANCESTORS` const,
     // and running through minifier to shake out irrelevant code
-    struct WalkVariantGenerator;
-    impl VariantGenerator<1> for WalkVariantGenerator {
-        const FLAG_NAMES: [&str; 1] = ["ANCESTORS"];
-    }
-
-    let mut walk_variants = WalkVariantGenerator.generate(&walk).into_iter();
-    assert!(walk_variants.len() == 2);
-    let walk_parser = walk_variants.next().unwrap();
-    let walk_oxlint = walk_variants.next().unwrap();
+    let [walk_parser, walk_oxlint] = generate_variants!(&walk, ["ANCESTORS"]);
 
     let leaf_nodes_count = leaf_nodes_count.unwrap();
 
@@ -422,18 +412,29 @@ fn generate(codegen: &Codegen) -> Codes {
     ");
 
     let nodes_count = nodes.len();
-    #[rustfmt::skip]
-    write_it!(type_ids_map, "]);
-
-        export const NODE_TYPES_COUNT = {nodes_count};
-        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};");
-
     function_node_ids.sort_unstable();
+
     #[rustfmt::skip]
-    let type_ids_map_oxlint = format!("
-        {type_ids_map}
+    write_it!(type_ids_map, "
+        ]);
+
+        /** Count of all node types (both leaf and non-leaf nodes) */
+        export const NODE_TYPES_COUNT = {nodes_count};
+
+        /** Count of leaf node types */
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
+
+        /* IF LINTER */
+
+        /** Type IDs which match `:function` selector class */
         export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
+
+        /* END_IF */
     ");
+
+    // Create 2 type ID map variants for parser and oxlint, by setting `LINTER` const,
+    // and running through minifier to shake out irrelevant code
+    let [type_ids_map_parser, type_ids_map_oxlint] = generate_variants!(&type_ids_map, ["LINTER"]);
 
     // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places.
     // Oxlint version also allows any arbitrary properties (selectors).
@@ -495,7 +496,7 @@ fn generate(codegen: &Codegen) -> Codes {
         walk_dts_parser,
         walk_dts_oxlint,
         visitor_keys,
-        type_ids_map_parser: type_ids_map,
+        type_ids_map_parser,
         type_ids_map_oxlint,
         visitor_type_parser,
         visitor_type_oxlint,

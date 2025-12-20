@@ -84,8 +84,11 @@ export function initLines(): void {
 
   // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
   // Debug check that `lines` and `lineStartIndices` are not already initialized.
-  debugAssert(lines.length === 0);
-  debugAssert(lineStartIndices.length === 1);
+  debugAssert(lines.length === 0, "`lines` should be empty at start of `initLines`");
+  debugAssert(
+    lineStartIndices.length === 1,
+    "`lineStartIndices` should have length 1 at start of `initLines`",
+  );
 
   let lastOffset = 0,
     offset,
@@ -105,8 +108,11 @@ export function initLines(): void {
  * No-op in release build - TSDown will remove this function and all calls to it.
  */
 function debugAssertLinesIsInitialized(): void {
-  debugAssert(lines.length > 0);
-  debugAssert(lines.length === lineStartIndices.length);
+  debugAssert(lines.length > 0, "`lines` should be initialized");
+  debugAssert(
+    lines.length === lineStartIndices.length,
+    "`lines` and `lineStartIndices` should be same length",
+  );
 }
 
 /**

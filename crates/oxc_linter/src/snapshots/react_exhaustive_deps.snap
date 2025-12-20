@@ -700,12 +700,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo.bar'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo'
    ╭─[exhaustive_deps.tsx:6:14]
  3 │           useEffect(() => {
  4 │             const { bar } = foo();
    ·                             ─┬─
-   ·                              ╰── useEffect uses `foo.bar` here
+   ·                              ╰── useEffect uses `foo` here
  5 │             console.log(bar);
  6 │           }, [props.foo.bar]);
    ·              ───────────────

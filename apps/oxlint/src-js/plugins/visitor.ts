@@ -449,7 +449,7 @@ const visitFns: VisitFn[] = [];
 function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
   const numVisitFns = visitProps.length;
 
-  debugAssert(numVisitFns > 0);
+  debugAssert(numVisitFns > 0, "`visitProps` should have at least 1 element");
 
   let mergedFn: VisitFn;
   if (numVisitFns === 1) {
@@ -488,7 +488,7 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
     // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
-    debugAssert(visitFns.length === 0);
+    debugAssert(visitFns.length === 0, "`visitFns` should be empty");
 
     for (let i = 0; i < numVisitFns; i++) {
       debugAssertIsNonNull(visitProps[i].fn);
