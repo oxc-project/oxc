@@ -503,7 +503,7 @@ pub fn function_contains_jsx(func: &Function) -> bool {
 }
 
 /// Checks if a function body contains JSX anywhere.
-fn function_body_contains_jsx(body: &FunctionBody) -> bool {
+pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     let mut finder = JsxFinder::new();
     finder.visit_function_body(body);
     finder.found

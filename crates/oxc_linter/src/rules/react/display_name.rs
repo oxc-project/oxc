@@ -19,8 +19,8 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        InnermostFunction, contains_jsx, expression_contains_jsx, find_innermost_function_with_jsx,
-        function_contains_jsx, is_hoc_call, is_react_component_name,
+        InnermostFunction, expression_contains_jsx, find_innermost_function_with_jsx,
+        function_body_contains_jsx, function_contains_jsx, is_hoc_call, is_react_component_name,
     },
 };
 
@@ -560,19 +560,10 @@ fn is_react_component_node<'a>(
                     return None; // Has static displayName
                 }
 
-                // Check if class contains JSX
+                // Check if class contains JSX (uses visitor pattern to handle nested control flow)
                 let contains_jsx_in_class = class.body.body.iter().any(|element| {
-                    if let ClassElement::MethodDefinition(method_def) = element
-                        && let Some(body) = &method_def.value.body
-                    {
-                        for stmt in &body.statements {
-                            if let Statement::ReturnStatement(ret_stmt) = stmt
-                                && let Some(expr) = &ret_stmt.argument
-                                && contains_jsx(expr)
-                            {
-                                return true;
-                            }
-                        }
+                    if let ClassElement::MethodDefinition(method_def) = element {
+                        return function_contains_jsx(&method_def.value);
                     }
                     false
                 });
@@ -686,49 +677,23 @@ fn is_anonymous_export_component(
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
         ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
-            if func.expression {
-                if func.body.statements.len() == 1
-                    && let Statement::ExpressionStatement(expr_stmt) = &func.body.statements[0]
-                    && contains_jsx(&expr_stmt.expression)
-                {
-                    return Some(ReactComponentInfo {
-                        span: export.span,
-                        is_context: false,
-                        name: None,
-                    });
-                }
-            } else {
-                for stmt in &func.body.statements {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt
-                        && let Some(expr) = &ret_stmt.argument
-                        && contains_jsx(expr)
-                    {
-                        return Some(ReactComponentInfo {
-                            span: export.span,
-                            is_context: false,
-                            name: None,
-                        });
-                    }
-                }
+            // Uses visitor pattern to handle JSX in nested control flow
+            if function_body_contains_jsx(&func.body) {
+                return Some(ReactComponentInfo {
+                    span: export.span,
+                    is_context: false,
+                    name: None,
+                });
             }
         }
         ExportDefaultDeclarationKind::FunctionExpression(func) => {
-            if let Some(body) = &func.body {
-                for stmt in &body.statements {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt
-                        && let Some(expr) = &ret_stmt.argument
-                        && contains_jsx(expr)
-                    {
-                        // Check if function has a name
-                        if func.id.is_none() || ignore_transpiler_name {
-                            return Some(ReactComponentInfo {
-                                span: export.span,
-                                is_context: false,
-                                name: None,
-                            });
-                        }
-                    }
-                }
+            // Uses visitor pattern to handle JSX in nested control flow
+            if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+                return Some(ReactComponentInfo {
+                    span: export.span,
+                    is_context: false,
+                    name: None,
+                });
             }
         }
         ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
@@ -775,19 +740,10 @@ fn check_class_component(
         return None;
     }
 
-    // Check if class contains JSX
+    // Check if class contains JSX (uses visitor pattern to handle nested control flow)
     let contains_jsx_in_class = class.body.body.iter().any(|element| {
-        if let ClassElement::MethodDefinition(method_def) = element
-            && let Some(body) = &method_def.value.body
-        {
-            for stmt in &body.statements {
-                if let Statement::ReturnStatement(ret_stmt) = stmt
-                    && let Some(expr) = &ret_stmt.argument
-                    && contains_jsx(expr)
-                {
-                    return true;
-                }
-            }
+        if let ClassElement::MethodDefinition(method_def) = element {
+            return function_contains_jsx(&method_def.value);
         }
         false
     });
@@ -838,47 +794,23 @@ fn is_module_exports_component(
     {
         match &assign.right {
             Expression::ArrowFunctionExpression(func) => {
-                if func.expression {
-                    if func.body.statements.len() == 1
-                        && let Statement::ExpressionStatement(expr_stmt) = &func.body.statements[0]
-                        && contains_jsx(&expr_stmt.expression)
-                    {
-                        return Some(ReactComponentInfo {
-                            span: assign.span,
-                            is_context: false,
-                            name: None,
-                        });
-                    }
-                } else {
-                    for stmt in &func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt
-                            && let Some(expr) = &ret_stmt.argument
-                            && contains_jsx(expr)
-                        {
-                            return Some(ReactComponentInfo {
-                                span: assign.span,
-                                is_context: false,
-                                name: None,
-                            });
-                        }
-                    }
+                // Uses visitor pattern to handle JSX in nested control flow
+                if function_body_contains_jsx(&func.body) {
+                    return Some(ReactComponentInfo {
+                        span: assign.span,
+                        is_context: false,
+                        name: None,
+                    });
                 }
             }
             Expression::FunctionExpression(func) => {
-                if let Some(body) = &func.body {
-                    for stmt in &body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt
-                            && let Some(expr) = &ret_stmt.argument
-                            && contains_jsx(expr)
-                            && (func.id.is_none() || ignore_transpiler_name)
-                        {
-                            return Some(ReactComponentInfo {
-                                span: assign.span,
-                                is_context: false,
-                                name: None,
-                            });
-                        }
-                    }
+                // Uses visitor pattern to handle JSX in nested control flow
+                if function_contains_jsx(func) && (func.id.is_none() || ignore_transpiler_name) {
+                    return Some(ReactComponentInfo {
+                        span: assign.span,
+                        is_context: false,
+                        name: None,
+                    });
                 }
             }
             Expression::CallExpression(call) => {
