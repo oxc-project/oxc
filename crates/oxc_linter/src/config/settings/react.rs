@@ -72,9 +72,11 @@ pub struct ReactPluginSettings {
     /// }
     /// ```
     #[serde(default)]
+    #[schemars(with = "Option<String>")]
     pub version: Option<ReactVersion>,
     // TODO: More properties should be added
 }
+
 pub type ComponentAttrs<'c> = Cow<'c, Vec<CompactStr>>;
 impl ReactPluginSettings {
     pub fn get_form_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
