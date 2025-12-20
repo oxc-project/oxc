@@ -14,7 +14,6 @@ use oxc_ast::{
 };
 
 fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`")
         .with_help("Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency")
         .with_label(span)
@@ -23,7 +22,6 @@ fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferCalledTimes;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 // See <https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-called-times.md> for rule details.
 declare_oxc_lint!(
     /// ### What it does

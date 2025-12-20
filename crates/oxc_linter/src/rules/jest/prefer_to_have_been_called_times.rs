@@ -66,20 +66,25 @@ impl Rule for PreferToHaveBeenCalledTimes {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        let node = jest_node.node;
+        Self::run(jest_node, ctx);
+    }
+}
+impl PreferToHaveBeenCalledTimes {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+        let node = possible_jest_node.node;
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, jest_node, ctx) else {
+        let Some(parsed_expect_call) =
+            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
             return;
         };
 
         Self::check_and_fix(&parsed_expect_call, call_expr, ctx);
     }
-}
-impl PreferToHaveBeenCalledTimes {
     fn check_and_fix<'a>(
         parsed_expect_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
