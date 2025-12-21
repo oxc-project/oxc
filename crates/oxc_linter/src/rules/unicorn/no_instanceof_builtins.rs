@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -82,7 +83,7 @@ pub struct NoInstanceofBuiltinsConfig {
     strategy: Strategy,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Serialize)]
 #[serde(rename_all = "camelCase")]
 enum Strategy {
     Strict,
@@ -128,43 +129,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInstanceofBuiltins {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin) = node.kind() else { return };
-        if bin.operator != BinaryOperator::Instanceof {
-            return;
-        }
-
-        let ctor_expr = bin.right.get_inner_expression();
-
-        let Expression::Identifier(ident) = ctor_expr else { return };
-        let ctor_name = ident.name.as_str();
-
-        if self.0.exclude.iter().any(|s| s == ctor_name) {
-            return;
-        }
-
-        if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-            return;
-        }
-        if ctor_name == "Function" {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-            return;
-        }
-
-        if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-            return;
-        }
-
-        if self.0.include.iter().any(|s| s == ctor_name)
-            || (self.0.strategy == Strategy::Strict
-                && STRICT_STRATEGY_CONSTRUCTORS.contains(&ctor_name))
-        {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-        }
-    }
-
     fn from_configuration(value: Value) -> Self {
         let mut include = Vec::<String>::new();
         let mut exclude = Vec::<String>::new();
@@ -206,6 +170,43 @@ impl Rule for NoInstanceofBuiltins {
             use_error_is_error,
             strategy,
         }))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(bin) = node.kind() else { return };
+        if bin.operator != BinaryOperator::Instanceof {
+            return;
+        }
+
+        let ctor_expr = bin.right.get_inner_expression();
+
+        let Expression::Identifier(ident) = ctor_expr else { return };
+        let ctor_name = ident.name.as_str();
+
+        if self.0.exclude.iter().any(|s| s == ctor_name) {
+            return;
+        }
+
+        if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
+        if ctor_name == "Function" {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
+
+        if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
+
+        if self.0.include.iter().any(|s| s == ctor_name)
+            || (self.0.strategy == Strategy::Strict
+                && STRICT_STRATEGY_CONSTRUCTORS.contains(&ctor_name))
+        {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+        }
     }
 }
 

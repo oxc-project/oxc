@@ -11,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Serialize;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -49,6 +50,7 @@ pub struct SortImportsOptions {
     /// When `true`, the rule allows import groups separated by blank lines to be treated independently.
     allow_separated_groups: bool,
     /// Specifies the sort order of different import syntaxes.
+    /// Must include all 4 kinds or else this will fall back to default.
     member_syntax_sort_order: MemberSyntaxSortOrder,
 }
 
@@ -70,6 +72,8 @@ declare_oxc_lint!(
     /// the code and find necessary imports later.
     ///
     /// ### Why is this bad?
+    ///
+    /// Consistent import sorting can be useful for readability and maintainability of code.
     ///
     /// ### Examples
     ///
@@ -359,7 +363,8 @@ impl SortImports {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Serialize)]
+#[schemars(transparent)]
 struct MemberSyntaxSortOrder(Vec<ImportKind>);
 
 impl Default for MemberSyntaxSortOrder {
@@ -380,6 +385,7 @@ impl std::ops::Deref for MemberSyntaxSortOrder {
         &self.0
     }
 }
+
 impl MemberSyntaxSortOrder {
     fn get_group_index_by_import_decl(&self, decl: &ImportDeclaration) -> usize {
         // import "foo.js" -> ImportKind::None
@@ -411,17 +417,17 @@ impl MemberSyntaxSortOrder {
     }
 }
 
-#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema)]
+#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum ImportKind {
-    // import from 'foo.js'
+    // `import 'foo.js';`
     #[default]
     None,
-    // import * from 'foo.js'
+    // `import * as foo from 'foo.js';`
     All,
-    // import { a, b } from 'foo.js'
+    // `import { a, b } from 'foo.js';`
     Multiple,
-    // import a from 'foo.js'
+    // `import a from 'foo.js';`
     Single,
 }
 

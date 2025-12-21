@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
@@ -20,8 +20,8 @@ fn jsx_props_no_spreading_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prop spreading is forbidden").with_label(span)
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum IgnoreEnforceOption {
     Ignore,
     #[default]

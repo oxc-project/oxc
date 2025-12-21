@@ -20,6 +20,7 @@ fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
 const DEFAULT_MAX_DEPTH: usize = 4;
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxDepth {
     /// The `max` enforces a maximum depth that blocks can be nested
     max: usize,
