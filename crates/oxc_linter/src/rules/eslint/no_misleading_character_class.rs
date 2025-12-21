@@ -151,7 +151,7 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
 impl Rule for NoMisleadingCharacterClass {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoMisleadingCharacterClass>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

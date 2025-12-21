@@ -148,7 +148,7 @@ fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
 impl Rule for ExplicitFunctionReturnType {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<ExplicitFunctionReturnType>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

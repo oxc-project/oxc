@@ -66,9 +66,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyInterface {
     fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoEmptyInterface>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoEmptyInterface>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

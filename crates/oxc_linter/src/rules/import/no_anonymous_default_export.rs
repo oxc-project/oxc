@@ -123,7 +123,7 @@ declare_oxc_lint!(
 impl Rule for NoAnonymousDefaultExport {
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoAnonymousDefaultExport>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

@@ -106,9 +106,7 @@ impl Rule for MaxParams {
         {
             Self(Box::new(MaxParamsConfig { max, count_void_this: false }))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxParams>>(value)
-                .unwrap_or_default()
-                .into_inner()
+            serde_json::from_value::<DefaultRuleConfig<MaxParams>>(value).unwrap().into_inner()
         }
     }
 

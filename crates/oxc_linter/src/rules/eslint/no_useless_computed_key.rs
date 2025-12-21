@@ -120,7 +120,7 @@ declare_oxc_lint!(
 impl Rule for NoUselessComputedKey {
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoUselessComputedKey>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

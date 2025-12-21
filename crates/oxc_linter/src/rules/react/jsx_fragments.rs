@@ -107,9 +107,7 @@ impl Rule for JsxFragments {
     // Generally we should prefer the string-only syntax for compatibility with the original ESLint rule,
     // but we originally implemented the rule with only the object syntax, so we support both now.
     fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxFragments>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<JsxFragments>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

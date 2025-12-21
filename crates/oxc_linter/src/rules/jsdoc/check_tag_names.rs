@@ -232,9 +232,7 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
 
 impl Rule for CheckTagNames {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<CheckTagNames>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<CheckTagNames>>(value).unwrap().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

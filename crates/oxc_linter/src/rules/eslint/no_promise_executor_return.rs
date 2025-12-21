@@ -122,7 +122,7 @@ declare_oxc_lint!(
 impl Rule for NoPromiseExecutorReturn {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoPromiseExecutorReturn>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

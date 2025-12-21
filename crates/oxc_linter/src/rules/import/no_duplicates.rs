@@ -93,9 +93,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoDuplicates>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoDuplicates>>(value).unwrap().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

@@ -81,7 +81,7 @@ impl Rule for NoUnusedExpressions {
 
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoUnusedExpressions>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 }

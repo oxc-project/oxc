@@ -80,7 +80,7 @@ declare_oxc_lint!(
 impl Rule for PreferDefaultExport {
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PreferDefaultExport>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

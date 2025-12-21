@@ -159,9 +159,7 @@ impl Rule for ValidTypeof {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<ValidTypeof>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<ValidTypeof>>(value).unwrap().into_inner()
     }
 }
 

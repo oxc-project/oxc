@@ -102,7 +102,7 @@ declare_oxc_lint!(
 impl Rule for ConsistentTypeSpecifierStyle {
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<ConsistentTypeSpecifierStyle>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
