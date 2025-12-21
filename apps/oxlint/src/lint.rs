@@ -357,6 +357,14 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        if self.options.list_files {
+            for path in &files_to_lint {
+                let path_str = Path::new(path).display();
+                print_and_flush_stdout(stdout, &format!("{path_str}\n"));
+            }
+            return CliRunResult::None;
+        }
+
         let has_external_linter = external_linter.is_some();
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -1331,6 +1339,12 @@ mod test {
     #[test]
     fn test_dot_folder() {
         Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_list_files() {
+        let args = &["--list-files", "fixtures/linter"];
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
