@@ -28,7 +28,9 @@ const DEFAULT_MAX_STATEMENTS: usize = 10;
 pub struct MaxStatementsConfig {
     /// Maximum number of statements allowed in a function.
     max: usize,
-    /// When set to true, top-level functions are not counted.
+    /// When set to true, a single top-level function with too many statements
+    /// is ignored, but if multiple top-level functions exceed the limit,
+    /// they are all reported (matching ESLint behavior).
     ignore_top_level_functions: bool,
 }
 
@@ -65,8 +67,9 @@ declare_oxc_lint!(
     /// ### Options
     ///
     /// - `max` (default: `10`): Maximum number of statements allowed.
-    /// - `ignoreTopLevelFunctions` (default: `false`): When `true`, top-level
-    ///   function declarations are not checked.
+    /// - `ignoreTopLevelFunctions` (default: `false`): When `true`, a single
+    ///   top-level function with too many statements is ignored, but if multiple
+    ///   top-level functions exceed the limit they are all reported (matching ESLint).
     ///
     /// ### Examples
     ///
@@ -100,18 +103,23 @@ impl Rule for MaxStatements {
         let max = config
             .and_then(|c| {
                 // First try as number directly
-                c.as_u64().and_then(|v| usize::try_from(v).ok()).or_else(|| {
-                    // Then try as object with max property
-                    c.get("max")
-                        .and_then(serde_json::Value::as_u64)
-                        .and_then(|v| usize::try_from(v).ok())
-                        .or_else(|| {
-                            // Also support deprecated "maximum" property
-                            c.get("maximum")
-                                .and_then(serde_json::Value::as_u64)
-                                .and_then(|v| usize::try_from(v).ok())
-                        })
-                })
+                c.as_number()
+                    .and_then(serde_json::Number::as_u64)
+                    .and_then(|v| usize::try_from(v).ok())
+                    .or_else(|| {
+                        // Then try as object with max property
+                        c.get("max")
+                            .and_then(serde_json::Value::as_number)
+                            .and_then(serde_json::Number::as_u64)
+                            .and_then(|v| usize::try_from(v).ok())
+                            .or_else(|| {
+                                // Also support deprecated "maximum" property
+                                c.get("maximum")
+                                    .and_then(serde_json::Value::as_number)
+                                    .and_then(serde_json::Number::as_u64)
+                                    .and_then(|v| usize::try_from(v).ok())
+                            })
+                    })
             })
             .unwrap_or(DEFAULT_MAX_STATEMENTS);
 
