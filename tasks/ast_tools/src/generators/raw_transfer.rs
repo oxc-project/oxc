@@ -15,7 +15,7 @@ use oxc_ast::{
         Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKind,
     },
 };
-use oxc_ast_visit::VisitMut;
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 
 use crate::{
@@ -1410,20 +1410,21 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
                 false
             }
         });
-        if !has_range_field {
-            return;
+
+        if has_range_field {
+            // Insert `__proto__: NodeProto` as first field
+            let prop = self.ast.object_property_kind_object_property(
+                SPAN,
+                PropertyKind::Init,
+                self.ast.property_key_static_identifier(SPAN, "__proto__"),
+                self.ast.expression_identifier(SPAN, "NodeProto"),
+                false,
+                false,
+                false,
+            );
+            obj_expr.properties.insert(0, prop);
         }
 
-        // Insert `__proto__: NodeProto` as first field
-        let prop = self.ast.object_property_kind_object_property(
-            SPAN,
-            PropertyKind::Init,
-            self.ast.property_key_static_identifier(SPAN, "__proto__"),
-            self.ast.expression_identifier(SPAN, "NodeProto"),
-            false,
-            false,
-            false,
-        );
-        obj_expr.properties.insert(0, prop);
+        walk_mut::walk_object_expression(self, obj_expr);
     }
 }
