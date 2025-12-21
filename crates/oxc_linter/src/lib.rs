@@ -546,7 +546,8 @@ impl Linter {
         let program_offset = ptr::from_ref(program) as u32;
 
         // Write offset of `Program` in metadata at end of buffer
-        let metadata = RawTransferMetadata::new(program_offset);
+        let is_ts = program.source_type.is_typescript();
+        let metadata = RawTransferMetadata::new(program_offset, is_ts);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -686,8 +687,8 @@ pub struct RawTransferMetadata2 {
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32) -> Self {
-        Self { data_offset, is_ts: false, _padding: 0 }
+    pub fn new(data_offset: u32, is_ts: bool) -> Self {
+        Self { data_offset, is_ts, _padding: 0 }
     }
 }
 

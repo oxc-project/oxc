@@ -5,7 +5,7 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { isJsx, isTypescript, sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -51,7 +51,8 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
-  const scriptKind = getScriptKind(filePath);
+  // Determine ScriptKind based on the parsed AST's SourceType
+  const scriptKind = getScriptKind(tsModule);
 
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
@@ -270,29 +271,24 @@ function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
 }
 
 /**
- * Determine TypeScript ScriptKind based on file extension.
+ * Determine TypeScript ScriptKind based on the parsed AST's SourceType.
  *
- * @param path - File path
+ * This reads the JSX flag and TypeScript flag from the buffer to determine
+ * the correct ScriptKind for TypeScript's parser. This is more accurate than
+ * using file extensions because it reflects what Oxc actually parsed.
+ *
+ * @param tsModule - TypeScript module
  * @returns Appropriate ScriptKind for the file
  */
-function getScriptKind(path: string): ts.ScriptKind {
-  debugAssertIsNonNull(tsModule);
-  const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
-  switch (ext) {
-    case ".tsx":
-      return tsModule.ScriptKind.TSX;
-    case ".ts":
-    case ".mts":
-    case ".cts":
-      return tsModule.ScriptKind.TS;
-    case ".jsx":
-      return tsModule.ScriptKind.JSX;
-    case ".js":
-    case ".mjs":
-    case ".cjs":
-      return tsModule.ScriptKind.JS;
-    default:
-      // Default to TSX for unknown extensions to be permissive
-      return tsModule.ScriptKind.TSX;
+function getScriptKind(tsModule: typeof import("typescript")): ts.ScriptKind {
+  // Check if this is TypeScript (as opposed to JavaScript)
+  const isTs = isTypescript();
+
+  // Check if this is JSX/TSX based on SourceType.variant
+  const isJsxSource = isJsx();
+
+  if (isTs) {
+    return isJsxSource ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
   }
+  return isJsxSource ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
 }
