@@ -1271,6 +1271,8 @@ struct Constants {
     program_offset: u32,
     /// Offset of `u32` source text length, relative to position of `Program`
     source_len_offset: u32,
+    /// Offset of `SourceType` relative to position of `Program`
+    source_type_offset: u32,
     /// Size of `RawTransferData` in bytes
     raw_metadata_size: u32,
 }
@@ -1283,6 +1285,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         is_ts_pos,
         program_offset,
         source_len_offset,
+        source_type_offset,
         raw_metadata_size,
     } = consts;
 
@@ -1296,6 +1299,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const IS_TS_FLAG_POS = {is_ts_pos};
         export const PROGRAM_OFFSET = {program_offset};
         export const SOURCE_LEN_OFFSET = {source_len_offset};
+        export const SOURCE_TYPE_OFFSET = {source_type_offset};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);
@@ -1362,13 +1366,12 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    let source_len_offset = schema
-        .type_by_name("Program")
-        .as_struct()
-        .unwrap()
-        .field_by_name("source_text")
-        .offset_64()
-        + STR_LEN_OFFSET;
+    let program_struct = schema.type_by_name("Program").as_struct().unwrap();
+
+    let source_len_offset =
+        program_struct.field_by_name("source_text").offset_64() + STR_LEN_OFFSET;
+
+    let source_type_offset = program_struct.field_by_name("source_type").offset_64();
 
     Constants {
         buffer_size,
@@ -1376,6 +1379,7 @@ fn get_constants(schema: &Schema) -> Constants {
         is_ts_pos,
         program_offset,
         source_len_offset,
+        source_type_offset,
         raw_metadata_size,
     }
 }
