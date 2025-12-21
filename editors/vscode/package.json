@@ -129,7 +129,7 @@
             "messages",
             "verbose"
           ],
-          "enumDescriptions": [
+          "markdownEnumDescriptions": [
             "No traces",
             "Error only",
             "Full log"
@@ -163,10 +163,10 @@
             "warn",
             "deny"
           ],
-          "enumDescriptions": [
-            "Allow",
-            "Warn",
-            "Deny"
+          "markdownEnumDescriptions": [
+            "Allow all `oxlint-disable` and `eslint-disable` directives, even if they do nothing.",
+            "Warn about `oxlint-disable` and `eslint-disable` directives that do nothing.",
+            "Error on `oxlint-disable` and `eslint-disable` directives that do nothing."
           ],
           "default": "allow",
           "markdownDescription": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
@@ -194,7 +194,7 @@
             "none",
             "all"
           ],
-          "enumDescriptions": [
+          "markdownEnumDescriptions": [
             "Only safe fixes will be applied",
             "Safe fixes or suggestions will be applied",
             "Safe and dangerous fixes will be applied",
