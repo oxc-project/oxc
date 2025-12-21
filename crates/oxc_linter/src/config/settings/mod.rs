@@ -12,6 +12,8 @@ use self::{
     react::ReactPluginSettings, vitest::VitestPluginSettings,
 };
 
+pub use self::react::ReactVersion;
+
 /// # Oxlint Plugin Settings
 ///
 /// Configure the behavior of linter plugins.

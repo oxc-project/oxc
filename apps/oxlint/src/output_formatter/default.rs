@@ -40,12 +40,12 @@ impl InternalFormatter for DefaultOutputFormatter {
         }
     }
 
-    #[cfg(not(any(test, feature = "force_test_reporter")))]
+    #[cfg(not(any(test, feature = "testing")))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GraphicalReporter::default())
     }
 
-    #[cfg(any(test, feature = "force_test_reporter"))]
+    #[cfg(any(test, feature = "testing"))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
 
@@ -63,7 +63,7 @@ impl DefaultOutputFormatter {
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
-#[cfg_attr(all(not(test), feature = "force_test_reporter"), expect(dead_code))]
+#[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
@@ -114,7 +114,7 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     output
 }
 
-#[cfg(any(test, feature = "force_test_reporter"))]
+#[cfg(any(test, feature = "testing"))]
 mod test_implementation {
     use oxc_diagnostics::{
         Error, GraphicalReportHandler, GraphicalTheme,

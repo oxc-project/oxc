@@ -153,6 +153,15 @@ fn parse_jest_expect_fn_call<'a>(
     }
 
     let kind = if is_type_of { JestFnKind::ExpectTypeOf } else { JestFnKind::Expect };
+    let expect_arguments = head.parent.and_then(|parent| {
+        if let Expression::CallExpression(parent) = parent {
+            return Some(&parent.arguments);
+        }
+        None
+    });
+
+    let matcher_arguments =
+        matcher.and_then(|matcher| members.get(matcher)).map(|_| &call_expr.arguments);
 
     let parsed_expect_fn = ParsedExpectFnCall {
         kind,
@@ -164,6 +173,8 @@ fn parse_jest_expect_fn_call<'a>(
         matcher_index: matcher,
         modifier_indices: modifiers,
         expect_error,
+        expect_arguments,
+        matcher_arguments,
     };
 
     Some(if is_type_of {
@@ -367,6 +378,9 @@ pub struct ParsedExpectFnCall<'a> {
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,
+    /// this args changed bases on condition
+    /// In `expect(fn).toBeCalledTimes(2)`, it will be `[2]`
+    /// In `expect(fn)`, it will be `fn`
     pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
@@ -375,6 +389,14 @@ pub struct ParsedExpectFnCall<'a> {
     // it save the matcher index from members
     pub matcher_index: Option<usize>,
     pub expect_error: Option<ExpectError>,
+
+    /// the arguments passed to the expect function
+    /// In `expect(1).toBe(2)`, it will be `[1]`
+    pub expect_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    /// the arguments passed to the matcher function
+    /// In `expect(1).toBe(2)`, it will be `[2]
+    /// In `expect(1)`, it will be `None`
+    pub matcher_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {

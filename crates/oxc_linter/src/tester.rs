@@ -132,6 +132,7 @@ pub struct ExpectFixTestCase {
     source: String,
     expected: Vec<ExpectFix>,
     rule_config: Option<Value>,
+    path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -147,6 +148,7 @@ impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFixTestCase {
             source: value.0.into(),
             expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: value.2,
+            path: None,
         }
     }
 }
@@ -157,6 +159,7 @@ impl<S: Into<String>> From<(S, S)> for ExpectFixTestCase {
             source: value.0.into(),
             expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: None,
+            path: None,
         }
     }
 }
@@ -170,6 +173,7 @@ impl<S: Into<String>> From<(S, (S, S))> for ExpectFixTestCase {
                 ExpectFix { expected: value.1.1.into(), kind: ExpectFixKind::Any },
             ],
             rule_config: None,
+            path: None,
         }
     }
 }
@@ -184,6 +188,7 @@ impl<S: Into<String>> From<(S, (S, S, S))> for ExpectFixTestCase {
                 ExpectFix { expected: value.1.2.into(), kind: ExpectFixKind::Any },
             ],
             rule_config: None,
+            path: None,
         }
     }
 }
@@ -198,6 +203,18 @@ where
             source: source.into(),
             expected: vec![ExpectFix { expected: expected.into(), kind: kind.into() }],
             rule_config: config,
+            path: None,
+        }
+    }
+}
+
+impl<S: Into<String>> From<(S, S, Option<Value>, Option<PathBuf>)> for ExpectFixTestCase {
+    fn from((source, expected, config, path): (S, S, Option<Value>, Option<PathBuf>)) -> Self {
+        Self {
+            source: source.into(),
+            expected: vec![ExpectFix { expected: expected.into(), kind: ExpectFixKind::Any }],
+            rule_config: config,
+            path,
         }
     }
 }
@@ -482,10 +499,10 @@ impl Tester {
         };
 
         for fix in fix_test_cases {
-            let ExpectFixTestCase { source, expected, rule_config: config } = fix;
+            let ExpectFixTestCase { source, expected, rule_config: config, path } = fix;
             for (index, expect) in expected.iter().enumerate() {
                 let result =
-                    self.run(&source, config.clone(), None, None, expect.kind, index as u8);
+                    self.run(&source, config.clone(), None, path.clone(), expect.kind, index as u8);
                 match result {
                     TestResult::Fixed(fixed_str) => {
                         if expect.expected != fixed_str {
@@ -526,6 +543,16 @@ impl Tester {
         fix_kind: ExpectFixKind,
         fix_index: u8,
     ) -> TestResult {
+        // Raise an error if the rule config is not either None or an array. This helps catch mistakes in test cases.
+        if let Some(config) = rule_config.as_ref() {
+            assert!(
+                config.is_array(),
+                "Rule config for {}/{} must be an array or None, got: {}",
+                self.plugin_name,
+                self.rule_name,
+                config
+            );
+        }
         let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default());
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(

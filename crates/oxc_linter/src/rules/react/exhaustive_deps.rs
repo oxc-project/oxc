@@ -1226,6 +1226,16 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             return None;
         };
 
+        // Only apply destructuring logic when the identifier is directly the RHS of
+        // the destructuring assignment, not when it's nested inside another expression
+        // like a function call.
+        // For example:
+        // - `const { headers } = props` -> props.headers is the dependency
+        // - `const { headers } = fn(booleanValue)` -> booleanValue is the dependency, not booleanValue.headers
+        if self.stack.contains(&AstType::CallExpression) {
+            return None;
+        }
+
         if obj.rest.is_some() {
             return Some(true);
         }
@@ -4296,6 +4306,12 @@ fn test() {
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
             "const x = {}; function Comp() { useEffect(() => {}, []) }",
+        ),
+        // Issue #17159: fixer should suggest `booleanValue`, not `booleanValue.headers`
+        // The destructuring pattern `{ headers }` should not affect the dependency name
+        (
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, []); }",
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, [booleanValue]); }",
         ),
     ];
 

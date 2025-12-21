@@ -6,16 +6,8 @@ import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js
 
 import visitorKeys from "../generated/keys.ts";
 import * as commentMethods from "./comments.ts";
-import {
-  getLineColumnFromOffset,
-  getNodeByRangeIndex,
-  getNodeLoc,
-  getOffsetFromLineColumn,
-  initLines,
-  lines,
-  lineStartIndices,
-  resetLines,
-} from "./location.ts";
+import * as locationMethods from "./location.ts";
+import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
@@ -246,10 +238,20 @@ export const SOURCE_CODE = Object.freeze({
     return ancestors.reverse();
   },
 
+  /**
+   * Get source text as array of lines, split according to specification's definition of line breaks.
+   */
+  getLines(): string[] {
+    if (lines.length === 0) initLines();
+    return lines;
+  },
+
   // Location methods
-  getNodeByRangeIndex,
-  getLocFromIndex: getLineColumnFromOffset,
-  getIndexFromLoc: getOffsetFromLineColumn,
+  getRange: locationMethods.getRange,
+  getLoc: locationMethods.getLoc,
+  getNodeByRangeIndex: locationMethods.getNodeByRangeIndex,
+  getLocFromIndex: locationMethods.getLineColumnFromOffset,
+  getIndexFromLoc: locationMethods.getOffsetFromLineColumn,
 
   // Comment methods
   getAllComments: commentMethods.getAllComments,

@@ -22117,12 +22117,18 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ─────────
     ╰────
 
-  × Expected `from` but found `Identifier`
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:14]
+  × TS(18058): Default imports are not allowed in a deferred import.
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:8]
  33 │ 
  34 │ import defer x, * as ns from "./dep_FIXTURE.js";
-    ·              ┬
-    ·              ╰── `from` expected
+    ·        ─────
+    ╰────
+
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+ 33 │ 
+ 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+    · ──────
     ╰────
 
   × Expected `from` but found `as`
@@ -22140,20 +22146,32 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ─────
     ╰────
 
-  × Expected `from` but found `Identifier`
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:14]
+  × TS(18058): Default imports are not allowed in a deferred import.
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:8]
  33 │ 
  34 │ import defer x from "./dep_FIXTURE.js";
-    ·              ┬
-    ·              ╰── `from` expected
+    ·        ─────
     ╰────
 
-  × Expected `from` but found `{`
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:14]
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+ 33 │ 
+ 34 │ import defer x from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
+  × TS(18059): Named imports are not allowed in a deferred import.
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:8]
  33 │ 
  34 │ import defer { default as x } from "./dep_FIXTURE.js";
-    ·              ┬
-    ·              ╰── `from` expected
+    ·        ─────
+    ╰────
+
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
+ 33 │ 
+ 34 │ import defer { default as x } from "./dep_FIXTURE.js";
+    · ──────
     ╰────
 
   × Unexpected token

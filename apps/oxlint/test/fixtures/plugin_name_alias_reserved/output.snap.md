@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to parse configuration file.
+Failed to parse oxlint configuration file.
 
   x Plugin name 'jsdoc' is reserved, and cannot be used for JS plugins.
   | 

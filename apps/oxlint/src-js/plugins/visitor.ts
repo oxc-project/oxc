@@ -82,6 +82,7 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
+  TYPE_IDS_COUNT,
 } from "../generated/type_ids.ts";
 import {
   parseSelector,
@@ -126,19 +127,38 @@ interface CompilingNonLeafVisitorEntry {
   exit: VisitProp[];
 }
 
+// Visitor state.
+// Returned by `finalizeCompiledVisitor`.
+// This a "poor man's enum", which compiles down better than TS enums.
+export type VisitorState = 0 | 1 | 2;
+
+export const VISITOR_EMPTY = 0; // Empty visitor (no need to walk AST)
+export const VISITOR_NOT_EMPTY = 1; // Not empty visitor (need to walk AST)
+export const VISITOR_CFG = 2; // Not empty visitor, and contains CFG event listeners (need to construct CFG)
+
+// Count of non-leaf node types
+const NON_LEAF_NODE_TYPES_COUNT = NODE_TYPES_COUNT - LEAF_NODE_TYPES_COUNT;
+// Count of CFG event types
+const CFG_EVENTS_COUNT = TYPE_IDS_COUNT - NODE_TYPES_COUNT;
+
 // During compilation, arrays of visitor props are stored in these arrays.
 // These arrays are initialized with empty arrays, and never modified thereafter.
 // Only the arrays they contain are modified - they're filled up during compilation,
 // and emptied at the end in `finalizeCompiledVisitor`, so can be reused for next compilation.
 const compilingLeafVisitor: VisitProp[][] = [];
 const compilingNonLeafVisitor: CompilingNonLeafVisitorEntry[] = [];
+const compilingCfgVisitor: VisitProp[][] = [];
 
 for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   compilingLeafVisitor.push([]);
 }
 
-for (let i = NODE_TYPES_COUNT - LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
+for (let i = NON_LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   compilingNonLeafVisitor.push({ enter: [], exit: [] });
+}
+
+for (let i = CFG_EVENTS_COUNT; i !== 0; i--) {
+  compilingCfgVisitor.push([]);
 }
 
 // Compiled visitor used for visiting each file.
@@ -154,7 +174,7 @@ for (let i = NODE_TYPES_COUNT - LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
 // https://v8.dev/blog/elements-kinds
 export const compiledVisitor: (VisitFn | EnterExit | null)[] = [];
 
-for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
+for (let i = TYPE_IDS_COUNT; i !== 0; i--) {
   compiledVisitor.push(null);
 }
 
@@ -164,18 +184,24 @@ for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
 // 1. These arrays never need to grow.
 // 2. V8 treats these arrays as "PACKED_SMI_ELEMENTS".
 const activeLeafVisitorTypeIds: number[] = [],
-  activeNonLeafVisitorTypeIds: number[] = [];
+  activeNonLeafVisitorTypeIds: number[] = [],
+  activeCfgVisitorTypeIds: number[] = [];
 
 for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   activeLeafVisitorTypeIds.push(0);
 }
 
-for (let i = NODE_TYPES_COUNT - LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
+for (let i = NON_LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   activeNonLeafVisitorTypeIds.push(0);
+}
+
+for (let i = CFG_EVENTS_COUNT; i !== 0; i--) {
+  activeCfgVisitorTypeIds.push(0);
 }
 
 activeLeafVisitorTypeIds.length = 0;
 activeNonLeafVisitorTypeIds.length = 0;
+activeCfgVisitorTypeIds.length = 0;
 
 // `true` if `addVisitor` has been called with a visitor which visits at least one AST type
 let hasActiveVisitors = false;
@@ -205,7 +231,7 @@ let visitPropsCacheNextIndex = 0;
  */
 export function initCompiledVisitor(): void {
   // Reset `compiledVisitor` array after previous compilation
-  for (let i = 0; i < NODE_TYPES_COUNT; i++) {
+  for (let i = 0; i < TYPE_IDS_COUNT; i++) {
     compiledVisitor[i] = null;
   }
 
@@ -277,7 +303,15 @@ export function addVisitorToCompiled(visitor: Visitor): void {
       // Single type visit function e.g. `Program`.
       // Add a single identifier to `specificity`. Use `|=` to keep exit flag.
       visitProp.specificity |= IDENTIFIER_COUNT_INCREMENT;
-      addVisitFn(typeId, visitProp, isExit);
+
+      if (typeId < LEAF_NODE_TYPES_COUNT) {
+        addLeafVisitFn(typeId, visitProp);
+      } else if (typeId < NODE_TYPES_COUNT) {
+        addNonLeafVisitFn(typeId, visitProp, isExit);
+      } else {
+        addCfgVisitFn(typeId, visitProp, isExit);
+      }
+
       continue;
     }
 
@@ -302,7 +336,13 @@ export function addVisitorToCompiled(visitor: Visitor): void {
         // Note: If `typeIds` is empty, `visitProp` will not be used.
         // We could return it to the cache, but this should be a very rare case, so don't bother.
         for (let i = 0, len = typeIds.length; i < len; i++) {
-          addVisitFn(typeIds[i], visitProp, isExit);
+          const typeId = typeIds[i];
+          // `typeId` can't refer to a CFG event
+          if (typeId < LEAF_NODE_TYPES_COUNT) {
+            addLeafVisitFn(typeId, visitProp);
+          } else {
+            addNonLeafVisitFn(typeId, visitProp, isExit);
+          }
         }
         continue;
       }
@@ -315,20 +355,6 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     for (; typeId < NODE_TYPES_COUNT; typeId++) {
       addNonLeafVisitFn(typeId, visitProp, isExit);
     }
-  }
-}
-
-/**
- * Add visit function to compiled visitor.
- * @param typeId - Node type ID
- * @param visitProp - Visitor property
- * @param isExit - `true` if is an exit visit fn
- */
-function addVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean): void {
-  if (typeId < LEAF_NODE_TYPES_COUNT) {
-    addLeafVisitFn(typeId, visitProp);
-  } else {
-    addNonLeafVisitFn(typeId, visitProp, isExit);
   }
 }
 
@@ -369,14 +395,31 @@ function addNonLeafVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean
 }
 
 /**
+ * Add visit function for a CFG event to compiled visitor.
+ *
+ * Stored as just 1 function, not enter+exit pair.
+ *
+ * @param typeId - Node type ID
+ * @param visitProp - Visitor property
+ * @param isExit - `true` if is an exit visit fn
+ */
+function addCfgVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean): void {
+  if (isExit) throw new Error(`Invalid visitor key: \`${visitProp.selectorStr}:exit\``);
+
+  const visitProps = compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!;
+  if (visitProps.length === 0) activeCfgVisitorTypeIds.push(typeId);
+  visitProps.push(visitProp);
+}
+
+/**
  * Finalize compiled visitor.
  *
  * After calling this function, `compiledVisitor` is ready to be used to walk the AST.
  *
  * @returns - `true` if compiled visitor visits at least 1 AST type
  */
-export function finalizeCompiledVisitor(): boolean {
-  if (hasActiveVisitors === false) return false;
+export function finalizeCompiledVisitor(): VisitorState {
+  if (hasActiveVisitors === false) return VISITOR_EMPTY;
 
   // Merge visitors for leaf nodes
   for (let i = activeLeafVisitorTypeIds.length - 1; i >= 0; i--) {
@@ -411,6 +454,21 @@ export function finalizeCompiledVisitor(): boolean {
     compiledVisitor[typeId] = enterExit;
   }
 
+  // Merge visitors for CFG events
+  let visitState: VisitorState = VISITOR_NOT_EMPTY;
+
+  if (activeCfgVisitorTypeIds.length > 0) {
+    visitState = VISITOR_CFG;
+
+    for (let i = activeCfgVisitorTypeIds.length - 1; i >= 0; i--) {
+      const typeId = activeCfgVisitorTypeIds[i]!;
+      compiledVisitor[typeId] = mergeVisitFns(compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!);
+    }
+
+    // Reset state, ready for next time
+    activeCfgVisitorTypeIds.length = 0;
+  }
+
   // Reset `visitPropsCache`.
   // Setting these properties to `null` is not necessary for correctness, but it allows them to be garbage collected.
   for (let i = visitPropsCacheNextIndex - 1; i >= 0; i--) {
@@ -425,7 +483,7 @@ export function finalizeCompiledVisitor(): boolean {
 
   hasActiveVisitors = false;
 
-  return true;
+  return visitState;
 }
 
 // Array used by `mergeVisitFns` to store visit functions extracted from an array of `VisitProp`s.
@@ -449,7 +507,7 @@ const visitFns: VisitFn[] = [];
 function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
   const numVisitFns = visitProps.length;
 
-  debugAssert(numVisitFns > 0);
+  debugAssert(numVisitFns > 0, "`visitProps` should have at least 1 element");
 
   let mergedFn: VisitFn;
   if (numVisitFns === 1) {
@@ -488,7 +546,7 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
     // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
-    debugAssert(visitFns.length === 0);
+    debugAssert(visitFns.length === 0, "`visitFns` should be empty");
 
     for (let i = 0; i < numVisitFns; i++) {
       debugAssertIsNonNull(visitProps[i].fn);

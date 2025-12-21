@@ -23,6 +23,7 @@ const createRule: Rule = {
     const { ast, text } = sourceCode;
 
     assert(context.getSourceCode() === sourceCode);
+    assert(sourceCode.getLines() === lines);
 
     let locs = "";
     for (let offset = 0; offset <= text.length; offset++) {
@@ -68,6 +69,15 @@ const createRule: Rule = {
         assert(sourceCode.getIndexFromLoc(startLoc) === node.start);
         assert(sourceCode.getIndexFromLoc(endLoc) === node.end);
 
+        const { range, loc } = node;
+
+        // Check getting `range` / `loc` properties twice results in same objects
+        assert(range === node.range);
+        assert(loc === node.loc);
+        // Check `getRange` and `getLoc` return the same objects too
+        assert(sourceCode.getRange(node) === range);
+        assert(sourceCode.getLoc(node) === loc);
+
         context.report({
           message:
             `ident "${node.name}":\n` +
@@ -75,6 +85,8 @@ const createRule: Rule = {
             `source with before: "${sourceCode.getText(node, 2)}"\n` +
             `source with after: "${sourceCode.getText(node, null, 1)}"\n` +
             `source with both: "${sourceCode.getText(node, 2, 1)}"\n` +
+            `range: ${JSON.stringify(range)}\n` +
+            `loc: ${JSON.stringify(loc)}\n` +
             `start loc: ${JSON.stringify(startLoc)}\n` +
             `end loc: ${JSON.stringify(endLoc)}`,
           node,

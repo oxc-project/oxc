@@ -1139,19 +1139,24 @@ fn test_namespaces() {
         ",
         "
         interface Foo {}
-        namespace Foo {
-            export const a = {};
-        }
+        namespace Foo { export const a = {}; }
         const foo: Foo = Foo.a
         console.log(foo)
         ",
+        "
+        export declare namespace Foo {
+            type foo = 123;
+        }
+        ",
+        "export declare namespace Foo { interface Bar { baz: string; } }",
+        "
+        declare namespace Foo { type foo = 123; }
+        export { Foo }
+        ",
+        "declare module 'tsdown' { function bar(): void; }",
     ];
 
-    let fail = vec![
-        "namespace N {}",
-        // FIXME
-        // "export namespace N { function foo() }",
-    ];
+    let fail = vec!["namespace N {}", "export namespace N { function foo() }"];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()

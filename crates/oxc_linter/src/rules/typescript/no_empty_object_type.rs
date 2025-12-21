@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -69,7 +69,7 @@ pub struct NoEmptyObjectTypeConfig {
     allow_with_name: Option<Regex>,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AllowInterfaces {
     #[default]
@@ -88,7 +88,7 @@ impl From<&str> for AllowInterfaces {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AllowObjectTypes {
     #[default]

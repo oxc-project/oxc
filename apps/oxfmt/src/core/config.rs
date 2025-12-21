@@ -4,6 +4,7 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength,
 };
+use oxc_toml::formatter::Options as TomlFormatterOptions;
 use serde_json::Value;
 
 use oxc_formatter::{
@@ -53,6 +54,8 @@ pub enum ResolvedOptions {
         /// For embedded language formatting (e.g., CSS in template literals)
         external_options: Value,
     },
+    /// For TOML files.
+    OxfmtToml { toml_options: TomlFormatterOptions },
     /// For non-JS files formatted by external formatter (Prettier).
     #[cfg(feature = "napi")]
     ExternalFormatter { external_options: Value },
@@ -189,6 +192,9 @@ impl ConfigResolver {
             FormatFileStrategy::OxcFormatter { .. } => {
                 ResolvedOptions::OxcFormatter { format_options, external_options }
             }
+            FormatFileStrategy::OxfmtToml { .. } => {
+                ResolvedOptions::OxfmtToml { toml_options: build_toml_options(&format_options) }
+            }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
                 ResolvedOptions::ExternalFormatter { external_options }
@@ -317,5 +323,25 @@ fn apply_editorconfig(oxfmtrc: &mut Oxfmtrc, props: &EditorConfigProperties) {
         && let EditorConfigProperty::Value(size) = props.indent_size
     {
         oxfmtrc.tab_width = Some(size as u8);
+    }
+}
+
+// ---
+
+/// Build `toml` formatter options.
+/// The same as `prettier-plugin-toml`.
+/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
+fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
+    TomlFormatterOptions {
+        column_width: format_options.line_width.value() as usize,
+        indent_string: if format_options.indent_style.is_tab() {
+            "\t".to_string()
+        } else {
+            " ".repeat(format_options.indent_width.value() as usize)
+        },
+        trailing_newline: true,
+        array_trailing_comma: !format_options.trailing_commas.is_none(),
+        crlf: format_options.line_ending.is_carriage_return_line_feed(),
+        ..Default::default()
     }
 }

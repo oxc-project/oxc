@@ -227,7 +227,54 @@ pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
             })
             .collect()
     }
+
+    /// Generate variants as an array.
+    ///
+    /// Useful when you want to destructure into multiple variables.
+    ///
+    /// ```ignore
+    /// struct Gen;
+    /// impl VariantGenerator<1> for Gen {
+    ///     const FLAG_NAMES: [&str; 1] = ["ENABLED"];
+    /// }
+    /// let [disabled, enabled] = Gen.generate_array(code);
+    /// ```
+    ///
+    /// # Panics
+    /// Panics if `N` is not equal to the number of variants.
+    fn generate_array<const N: usize>(&mut self, code: &str) -> [String; N] {
+        let variants = self.generate(code);
+
+        assert_eq!(
+            variants.len(),
+            N,
+            "Wrong number of variants - expected {N}, got {}",
+            variants.len()
+        );
+
+        variants.try_into().unwrap()
+    }
 }
+
+/// Macro to generate variants where all you want is all the possible permutations of a set of flags.
+///
+/// ```ignore
+/// let [disabled, enabled] = generate_variants!(code, ["ENABLED"]);
+/// ```
+macro_rules! generate_variants {
+    ($code:expr, [$($variant:literal),+]) => {{
+        use $crate::output::javascript::VariantGenerator;
+        const FLAG_COUNT: usize = [$($variant),+].len();
+        const VARIANT_COUNT: usize = 1 << FLAG_COUNT;
+
+        struct Gen;
+        impl VariantGenerator<FLAG_COUNT> for Gen {
+            const FLAG_NAMES: [&str; FLAG_COUNT] = [$($variant),+];
+        }
+        Gen.generate_array::<VARIANT_COUNT>($code)
+    }};
+}
+pub(crate) use generate_variants;
 
 /// Parse file.
 pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> Program<'a> {
@@ -303,22 +350,14 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
     // Print
     let code = Codegen::new().build(program).code;
 
-    // Add back line breaks between function declarations and exports, to aid readability
+    // Add back line breaks before function, variable, and export declarations, to aid readability.
+    // Insert a line break before lines which begin with `export`, `function`, `class`, `const`, or `let`.
+    // If the statement is preceded by comments, insert the line break before the comments.
     #[expect(clippy::items_after_statements)]
-    static REGEX: Lazy<Regex> = lazy_regex!(r"\n(export|function|class|const|let) ");
-
-    REGEX
-        .replace_all(&code, |caps: &Captures| {
-            // `format!("\n\n{} ", &caps[1])` would be simpler, but this avoids allocations
-            match &caps[1] {
-                "export" => "\n\nexport ",
-                "function" => "\n\nfunction ",
-                "class" => "\n\nclass ",
-                "const" => "\n\nconst ",
-                _ => "\n\nlet ",
-            }
-        })
-        .into_owned()
+    static REGEX: Lazy<Regex> = lazy_regex!(
+        r"(?:^|\n)(?:(?:(?://[^\n]*|/\*[\s\S]*?\*/)\n)*)(?:export|function|class|const|let) "
+    );
+    REGEX.replace_all(&code, |caps: &Captures| format!("\n{}", &caps[0])).into_owned()
 }
 
 /// Visitor which converts `!0` to `true` and `!1` to `false`.

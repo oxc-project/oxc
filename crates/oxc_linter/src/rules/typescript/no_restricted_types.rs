@@ -32,7 +32,7 @@ fn no_restricted_types_diagnostic(
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRestrictedTypes(Box<NoRestrictedTypesConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
@@ -150,11 +150,9 @@ declare_oxc_lint!(
 
 impl Rule for NoRestrictedTypes {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<NoRestrictedTypesConfig>>(value)
-                .unwrap_or_default()
-                .into_inner(),
-        ))
+        serde_json::from_value::<DefaultRuleConfig<NoRestrictedTypes>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

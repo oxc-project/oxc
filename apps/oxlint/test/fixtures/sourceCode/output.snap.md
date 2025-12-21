@@ -114,6 +114,8 @@
   | source with before: "t foo"
   | source with after: "foo,"
   | source with both: "t foo,"
+  | range: [4,7]
+  | loc: {"start":{"line":1,"column":4},"end":{"line":1,"column":7}}
   | start loc: {"line":1,"column":4}
   | end loc: {"line":1,"column":7}
    ,-[files/1.js:1:5]
@@ -140,6 +142,8 @@
   | source with before: ", bar"
   | source with after: "bar;"
   | source with both: ", bar;"
+  | range: [9,12]
+  | loc: {"start":{"line":1,"column":9},"end":{"line":1,"column":12}}
   | start loc: {"line":1,"column":9}
   | end loc: {"line":1,"column":12}
    ,-[files/1.js:1:10]
@@ -235,6 +239,8 @@
   | source with before: "t qux"
   | source with after: "qux;"
   | source with both: "t qux;"
+  | range: [4,7]
+  | loc: {"start":{"line":1,"column":4},"end":{"line":1,"column":7}}
   | start loc: {"line":1,"column":4}
   | end loc: {"line":1,"column":7}
    ,-[files/2.js:1:5]

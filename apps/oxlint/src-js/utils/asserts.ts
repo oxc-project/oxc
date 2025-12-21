@@ -18,14 +18,32 @@ export function typeAssertIs<T>(value: unknown): asserts value is T {}
  * Use this for testing conditions which would indicate a bug in the code.
  * Do NOT use this for validating user input.
  *
+ * If creating the error message is expensive, or potentially creating the message itself can result in an error
+ * when the assertion passes, pass a function which returns the message.
+ *
+ * ```ts
+ * debugAssertIsNonNull(thing, () => `Should not be null: ${getErrorMessage()}`);
+ * ```
+ *
  * @param value - Value
+ * @param message - Message to include in error if `value == null`, or a function which returns the message
+ *   to include in error (optional).
  */
-export function debugAssertIsNonNull<T>(value: T | null | undefined): asserts value is T {
+export function debugAssertIsNonNull<T>(
+  value: T | null | undefined,
+  message?: string | (() => string),
+): asserts value is T {
   if (!DEBUG) return;
 
   if (value === null || value === undefined) {
-    // oxlint-disable-next-line typescript/restrict-template-expressions
-    throw new Error(`Expected non-null value, got ${value}`);
+    if (typeof message === "function") {
+      message = message();
+    } else if (message === undefined) {
+      // oxlint-disable-next-line typescript/restrict-template-expressions
+      message = `Expected non-null value, got ${value}`;
+    }
+
+    throw new Error(message);
   }
 }
 

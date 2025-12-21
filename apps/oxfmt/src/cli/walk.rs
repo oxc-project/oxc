@@ -228,22 +228,22 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 if file_type.is_file() {
                     // Determine this file should be handled or NOT
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
-                    // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
-                    // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
-                    // Tier 4 = everything else: Not handled
-                    let Ok(format_file_source) = FormatFileStrategy::try_from(entry.into_path())
-                    else {
+                    // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
+                    // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
+                    // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Everything else: Ignored
+                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
                         return ignore::WalkState::Continue;
                     };
 
                     #[cfg(not(feature = "napi"))]
-                    if !matches!(format_file_source, FormatFileStrategy::OxcFormatter { .. }) {
+                    if !strategy.can_format_without_external() {
                         return ignore::WalkState::Continue;
                     }
 
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking
-                    if self.sender.send(format_file_source).is_err() {
+                    if self.sender.send(strategy).is_err() {
                         return ignore::WalkState::Quit;
                     }
                 }

@@ -54,7 +54,10 @@ export function initGlobals(): void {
   }
 
   debugAssertIsNonNull(globals);
-  debugAssert(typeof globals === "object" && !Array.isArray(globals));
+  debugAssert(
+    typeof globals === "object" && !Array.isArray(globals),
+    "`globals` should be an object",
+  );
 }
 
 /**

@@ -52,7 +52,7 @@ fn duplicate_key_prop(key_value: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[schemars(transparent)]
 pub struct JsxKey(Box<JsxKeyConfig>);
 
@@ -109,10 +109,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxKey {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = serde_json::from_value::<DefaultRuleConfig<JsxKeyConfig>>(value)
-            .unwrap_or_default()
-            .into_inner();
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<JsxKey>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -43,6 +43,10 @@ const plugin: Plugin = {
             const loc2 = ident.loc;
             assert(loc2 === loc);
 
+            // Check node can be converted to a string without an error
+            // oxlint-disable-next-line typescript/no-base-to-string
+            assert.equal(`${ident}`, "[object Object]");
+
             context.report({
               message:
                 `ident "${ident.name}":\n` +

@@ -7,7 +7,7 @@ import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Node } from "./types.ts";
+import type { NodeOrToken } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
 /**
@@ -84,8 +84,11 @@ export function initLines(): void {
 
   // `lineStartIndices` starts as `[0]`, and is reset to length 1 in `resetLines`.
   // Debug check that `lines` and `lineStartIndices` are not already initialized.
-  debugAssert(lines.length === 0);
-  debugAssert(lineStartIndices.length === 1);
+  debugAssert(lines.length === 0, "`lines` should be empty at start of `initLines`");
+  debugAssert(
+    lineStartIndices.length === 1,
+    "`lineStartIndices` should have length 1 at start of `initLines`",
+  );
 
   let lastOffset = 0,
     offset,
@@ -105,8 +108,11 @@ export function initLines(): void {
  * No-op in release build - TSDown will remove this function and all calls to it.
  */
 function debugAssertLinesIsInitialized(): void {
-  debugAssert(lines.length > 0);
-  debugAssert(lines.length === lineStartIndices.length);
+  debugAssert(lines.length > 0, "`lines` should be initialized");
+  debugAssert(
+    lines.length === lineStartIndices.length,
+    "`lines` and `lineStartIndices` should be same length",
+  );
 }
 
 /**
@@ -235,28 +241,61 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
 }
 
 /**
- * Get the `Location` for an AST node. Used in `loc` getters on AST nodes.
+ * Get the range of the given node or token.
+ * @param nodeOrToken - Node or token to get the range of
+ * @returns Range of the node or token
+ */
+export function getRange(nodeOrToken: NodeOrToken): Range {
+  return nodeOrToken.range;
+}
+
+/**
+ * Get the location of the given node or token.
+ * @param nodeOrToken - Node or token to get the location of
+ * @returns Location of the node or token
+ */
+// Note: We cannot expose `getNodeLoc` as public method, because it always recalculates the location,
+// and returns a new object each time. It would be misleading if `node.loc !== sourceCode.getLoc(node)`.
+export function getLoc(nodeOrToken: NodeOrToken): Location {
+  // If location is already calculated for this node or token, return it
+  if (Object.hasOwn(nodeOrToken, "loc")) return nodeOrToken.loc;
+  // Calculate location
+  return getNodeLoc(nodeOrToken);
+}
+
+/**
+ * Calculate the `Location` for an AST node or token.
  *
- * Overwrites the `loc` getter with the calculated `Location`, so accessing `loc` twice on same node
+ * Used in `loc` getters on AST nodes.
+ *
+ * Defines a `loc` property on the node/token with the calculated `Location`, so accessing `loc` twice on same node
  * results in the same object each time.
  *
  * For internal use only.
  *
- * @param node - AST node object
+ * @param nodeOrToken - AST node or token
  * @returns Location
  */
-export function getNodeLoc(node: Node): Location {
+export function getNodeLoc(nodeOrToken: NodeOrToken): Location {
   // Build `lines` and `lineStartIndices` tables if they haven't been already.
   // This also decodes `sourceText` if it wasn't already.
   if (lines.length === 0) initLines();
 
   const loc = {
-    start: getLineColumnFromOffsetUnchecked(node.start),
-    end: getLineColumnFromOffsetUnchecked(node.end),
+    start: getLineColumnFromOffsetUnchecked(nodeOrToken.start),
+    end: getLineColumnFromOffsetUnchecked(nodeOrToken.end),
   };
 
-  // Replace `loc` getter with the calculated value
-  Object.defineProperty(node, "loc", { value: loc, writable: true });
+  // Define `loc` property with the calculated `Location`, so accessing `loc` twice on same node/token
+  // results in the same object each time.
+  //
+  // We do not make the `loc` property enumerable, because it wasn't present before.
+  // It would be weird if `Object.keys(node)` included `loc` if the property had been accessed previously,
+  // but not if it hadn't.
+  //
+  // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
+  // because the access would fall through to the getter on the prototype.
+  Object.defineProperty(nodeOrToken, "loc", { value: loc, writable: true });
 
   return loc;
 }

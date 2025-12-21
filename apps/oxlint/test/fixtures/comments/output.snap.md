@@ -229,6 +229,70 @@
     `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable1):
+  | getCommentsBefore: 3 comments
+  |   [0] Shebang: "/usr/bin/env node" at [0, 19]
+  |   [1] Line: " Line comment after hashbang" at [20, 50]
+  |   [2] Block: " Block comment after hashbang " at [51, 85]
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+   ,-[files/hashbang.js:4:1]
+ 3 | /* Block comment after hashbang */
+ 4 | const topLevelVariable1 = 1;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | const topLevelVariable2 = 2;
+   `----
+
+  x test-comments(test-comments): getAllComments: 3 comments
+  |   [0] Shebang: "/usr/bin/env node" at [0, 19]
+  |   [1] Line: " Line comment after hashbang" at [20, 50]
+  |   [2] Block: " Block comment after hashbang " at [51, 85]
+   ,-[files/hashbang.js:4:1]
+ 3 |     /* Block comment after hashbang */
+ 4 | ,-> const topLevelVariable1 = 1;
+ 5 | |   const topLevelVariable2 = 2;
+ 6 | |   
+ 7 | `-> export function topLevelFunction() {}
+   `----
+
+  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
+   ,-[files/hashbang.js:5:1]
+ 4 | const topLevelVariable1 = 1;
+ 5 | const topLevelVariable2 = 2;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+   ,-[files/hashbang.js:5:1]
+ 4 | const topLevelVariable1 = 1;
+ 5 | const topLevelVariable2 = 2;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
+   ,-[files/hashbang.js:7:8]
+ 6 | 
+ 7 | export function topLevelFunction() {}
+   :        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+   ,-[files/hashbang.js:7:8]
+ 6 | 
+ 7 | export function topLevelFunction() {}
+   :        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable1):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
   | getCommentsAfter: 0 comments
@@ -391,8 +455,8 @@
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-Found 0 warnings and 26 errors.
-Finished in Xms on 2 files using X threads.
+Found 0 warnings and 32 errors.
+Finished in Xms on 3 files using X threads.
 ```
 
 # stderr

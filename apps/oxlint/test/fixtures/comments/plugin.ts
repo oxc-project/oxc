@@ -21,8 +21,25 @@ const testCommentsRule: Rule = {
     const { sourceCode } = context;
     const { ast } = sourceCode;
 
+    const comments = sourceCode.getAllComments();
+
+    for (const comment of comments) {
+      // Check getting `range` / `loc` properties twice results in same objects
+      const { range, loc } = comment;
+      assert(range === comment.range);
+      assert(loc === comment.loc);
+
+      // Check `getRange` and `getLoc` return the same objects too
+      assert(sourceCode.getRange(comment) === range);
+      assert(sourceCode.getLoc(comment) === loc);
+
+      // Check comment can be converted to a string without an error
+      // oxlint-disable-next-line typescript/no-base-to-string, typescript/restrict-template-expressions
+      assert.equal(`${comment}`, "[object Object]");
+    }
+
     context.report({
-      message: `getAllComments: ${formatComments(sourceCode.getAllComments())}`,
+      message: `getAllComments: ${formatComments(comments)}`,
       node: ast,
     });
 

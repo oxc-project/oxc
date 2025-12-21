@@ -10,6 +10,11 @@ pub struct NoBaseToString(Box<NoBaseToStringConfig>);
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoBaseToStringConfig {
+    /// Whether to also check values of type `unknown`.
+    /// When `true`, calling toString on `unknown` values will be flagged.
+    /// Default is `false`.
+    pub check_unknown: bool,
+
     /// A list of type names to ignore when checking for unsafe toString usage.
     /// These types are considered safe to call toString on even if they don't
     /// provide a custom implementation.
@@ -19,6 +24,7 @@ pub struct NoBaseToStringConfig {
 impl Default for NoBaseToStringConfig {
     fn default() -> Self {
         Self {
+            check_unknown: false,
             ignored_type_names: vec![
                 "Error".to_string(),
                 "RegExp".to_string(),

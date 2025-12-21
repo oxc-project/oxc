@@ -19,7 +19,7 @@ export enum FixKind {
 /**
  * See `"contributes.configuration"` in `package.json`
  */
-export interface WorkspaceConfigInterface {
+interface WorkspaceConfigInterface {
   /**
    * oxlint config path
    *
@@ -266,13 +266,6 @@ export class WorkspaceConfig {
   updateFormattingConfigPath(value: string | null): PromiseLike<void> {
     this._formattingConfigPath = value;
     return this.configuration.update("fmt.configPath", value, ConfigurationTarget.WorkspaceFolder);
-  }
-
-  public toLanguageServerConfig(): WorkspaceConfigInterface {
-    return {
-      ...this.toOxlintConfig(),
-      ...this.toOxfmtConfig(),
-    };
   }
 
   public toOxlintConfig(): OxlintWorkspaceConfigInterface {

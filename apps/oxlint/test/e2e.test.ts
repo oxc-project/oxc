@@ -45,7 +45,7 @@ async function runFixture(fixture: Fixture, expect: ExpectStatic): Promise<void>
   // Run Oxlint without `--fix` option
   await testFixtureWithCommand({
     command: NODE_BIN_PATH,
-    args: [CLI_PATH, "files"],
+    args: [CLI_PATH, ...(fixture.options.singleThread ? ["--threads", "1"] : []), "files"],
     fixture,
     snapshotName: "output",
     isESLint: false,
@@ -56,7 +56,12 @@ async function runFixture(fixture: Fixture, expect: ExpectStatic): Promise<void>
   if (fixture.options.fix) {
     await testFixtureWithCommand({
       command: NODE_BIN_PATH,
-      args: [CLI_PATH, "--fix", "files"],
+      args: [
+        CLI_PATH,
+        "--fix",
+        ...(fixture.options.singleThread ? ["--threads", "1"] : []),
+        "files",
+      ],
       fixture,
       snapshotName: "fix",
       isESLint: false,

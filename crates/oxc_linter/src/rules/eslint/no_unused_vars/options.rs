@@ -3,11 +3,12 @@ use std::{borrow::Cow, ops::Deref};
 use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
 // See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
@@ -19,7 +20,6 @@ pub struct NoUnusedVarsOptions {
     /// 2. `local` checks only that locally-declared variables are used but will
     ///    allow global variables to be unused.
     pub vars: VarsOption,
-
     /// Specifies exceptions to this rule for unused variables. Variables whose
     /// names match this pattern will be ignored.
     ///
@@ -36,9 +36,7 @@ pub struct NoUnusedVarsOptions {
     /// var b = 10;
     /// console.log(b);
     /// ```
-    #[schemars(skip)]
     pub vars_ignore_pattern: IgnorePattern<Regex>,
-
     /// Controls how unused arguments are checked.
     ///
     /// This option has three settings:
@@ -49,7 +47,6 @@ pub struct NoUnusedVarsOptions {
     /// 2. `all` - All named arguments must be used.
     /// 3. `none` - Do not check arguments.
     pub args: ArgsOption,
-
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
     ///
@@ -68,14 +65,11 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// foo(1, 2);
     /// ```
-    #[schemars(skip)]
     pub args_ignore_pattern: IgnorePattern<Regex>,
-
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
     /// With this option enabled the rest property's siblings are ignored.
     ///
-    /// By default this option is `false`.
     ///
     /// #### Example
     /// Examples of **correct** code when this option is set to `true`:
@@ -87,16 +81,15 @@ pub struct NoUnusedVarsOptions {
     /// ({ bar, ...coords } = data);
     /// ```
     pub ignore_rest_siblings: bool,
-
     /// Used for `catch` block validation.
     ///
     /// It has two settings:
     /// * `none` - do not check error objects. This is the default setting.
-    /// * `all` - all named arguments must be used`.
-    #[doc(hidden)]
+    /// * `all` - all named arguments must be used.
+    ///
     /// `none` corresponds to `false`, while `all` corresponds to `true`.
+    #[schemars(with = "CaughtErrorsJson")]
     pub caught_errors: CaughtErrors,
-
     /// Specifies exceptions to this rule for errors caught within a `catch` block.
     /// Variables declared within a `catch` block whose names match this pattern
     /// will be ignored.
@@ -112,14 +105,12 @@ pub struct NoUnusedVarsOptions {
     ///   console.error("Error caught in catch block");
     /// }
     /// ```
-    #[schemars(skip)]
     pub caught_errors_ignore_pattern: IgnorePattern<Regex>,
-
     /// This option specifies exceptions within destructuring patterns that will
     /// not be checked for usage. Variables declared within array destructuring
     /// whose names match this pattern will be ignored.
     ///
-    /// By default this pattern is [`None`].
+    /// By default this pattern is unset.
     ///
     /// #### Example
     ///
@@ -137,14 +128,12 @@ pub struct NoUnusedVarsOptions {
     ///     console.log(n);
     /// });
     /// ```
-    #[schemars(skip)]
     pub destructured_array_ignore_pattern: IgnorePattern<Regex>,
-
-    /// The `ignoreClassWithStaticInitBlock` option is a boolean (default:
-    /// `false`). Static initialization blocks allow you to initialize static
-    /// variables and execute code during the evaluation of a class definition,
-    /// meaning the static block code is executed without creating a new
-    /// instance of the class. When set to true, this option ignores classes
+    /// The `ignoreClassWithStaticInitBlock` option is a boolean. Static
+    /// initialization blocks allow you to initialize static variables and
+    /// execute code during the evaluation of a class definition, meaning
+    /// the static block code is executed without creating a new instance
+    /// of the class. When set to `true`, this option ignores classes
     /// containing static initialization blocks.
     ///
     /// #### Example
@@ -152,7 +141,7 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **incorrect** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
+    /// /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
     ///
     /// class Foo {
     ///     static myProperty = "some string";
@@ -171,7 +160,7 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **correct** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
+    /// /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
     ///
     /// class Foo {
     ///     static {
@@ -182,8 +171,6 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// ```
     pub ignore_class_with_static_init_block: bool,
-
-    /// The `ignoreUsingDeclarations` option is a boolean (default: `false`).
     /// When set to `true`, the rule will ignore variables declared with
     /// `using` or `await using` declarations, even if they are unused.
     ///
@@ -196,14 +183,13 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **correct** code for the `{ "ignoreUsingDeclarations": true }` option:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "ignoreUsingDeclarations": true }]*/
+    /// /* no-unused-vars: ["error", { "ignoreUsingDeclarations": true }]*/
     ///
     /// using resource = getResource();
     /// await using anotherResource = getAnotherResource();
     /// ```
     pub ignore_using_declarations: bool,
-
-    /// The `reportUsedIgnorePattern` option is a boolean (default: `false`).
+    /// The `reportUsedIgnorePattern` option is a boolean.
     /// Using this option will report variables that match any of the valid
     /// ignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,
     /// `caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if
@@ -214,7 +200,7 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **incorrect** code for the `{ "reportUsedIgnorePattern": true }` option:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
+    /// /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
     ///
     /// var firstVarIgnored = 1;
     /// var secondVar = 2;
@@ -224,15 +210,14 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **correct** code for the `{ "reportUsedIgnorePattern": true }` option:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
+    /// /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
     ///
     /// var firstVar = 1;
     /// var secondVar = 2;
     /// console.log(firstVar, secondVar);
     /// ```
     pub report_used_ignore_pattern: bool,
-
-    /// The `reportVarsOnlyUsedAsTypes` option is a boolean (default: `false`).
+    /// The `reportVarsOnlyUsedAsTypes` option is a boolean.
     ///
     /// If `true`, the rule will also report variables that are only used as types.
     ///
@@ -241,7 +226,7 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **incorrect** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
     ///
     /// ```javascript
-    /// /* eslint no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] */
+    /// /*  no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] */
     ///
     /// const myNumber: number = 4;
     /// export type MyNumber = typeof myNumber
@@ -261,10 +246,10 @@ pub struct NoUnusedVarsOptions {
     pub report_vars_only_used_as_types: bool,
 }
 
-/// Represents an `Option<Regex>` with an additional `Default` variant,
-/// which represents the default ignore pattern for when no pattern is
-/// explicitly provided.
-#[derive(Debug, Clone, Copy)]
+// Represents an `Option<Regex>` with an additional `Default` variant,
+// which represents the default ignore pattern for when no pattern is
+// explicitly provided.
+#[derive(Debug, Clone, Copy, JsonSchema)]
 pub enum IgnorePattern<R> {
     /// No ignore pattern was provided, use the default pattern. This
     /// means that the pattern is `^_`.
@@ -374,8 +359,8 @@ impl Default for NoUnusedVarsOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
     #[default]
@@ -390,8 +375,8 @@ impl VarsOption {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ArgsOption {
     /// Unused positional arguments that occur before the last used argument
     /// will not be checked, but all named arguments and all positional
@@ -421,9 +406,17 @@ impl ArgsOption {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 #[repr(transparent)]
 pub struct CaughtErrors(bool);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Default)]
+#[serde(rename_all = "kebab-case")]
+#[expect(dead_code)]
+enum CaughtErrorsJson {
+    All,
+    #[default]
+    None,
+}
 
 impl Default for CaughtErrors {
     fn default() -> Self {

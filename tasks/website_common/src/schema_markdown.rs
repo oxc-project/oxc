@@ -452,10 +452,12 @@ impl Section {
 }
 
 fn sanitize(s: &mut String) {
-    let Some(start) = s.find("```json") else { return };
-    let start = start + 7;
-    let end = s[start..].find("```").unwrap();
-    let json: serde_json::Value = serde_json::from_str(&s[start..start + end]).unwrap();
+    let marker = "```json";
+    let Some(start) = s.find(marker) else { return };
+    let start = start + marker.len();
+    let Some(end) = s[start..].find("```") else { return };
+    let json_str = &s[start..start + end];
+    let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str.trim()) else { return };
     let json = serde_json::to_string_pretty(&json).unwrap();
     let json = format!("\n{json}\n");
     s.replace_range(start..start + end, &json);

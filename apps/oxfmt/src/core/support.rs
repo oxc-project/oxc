@@ -10,6 +10,10 @@ pub enum FormatFileStrategy {
         path: PathBuf,
         source_type: SourceType,
     },
+    /// TOML files formatted by taplo (Pure Rust).
+    OxfmtToml {
+        path: PathBuf,
+    },
     ExternalFormatter {
         path: PathBuf,
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
@@ -27,13 +31,36 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        // Check JS/TS files first
         // TODO: This logic should(can) move to this file, after LSP support is also moved here.
         if let Some(source_type) = get_supported_source_type(&path) {
             return Ok(Self::OxcFormatter { path, source_type });
         }
 
-        if let Some(source) = get_external_format_source(path) {
-            return Ok(source);
+        // Extract file_name and extension once for all subsequent checks
+        let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
+            return Err(());
+        };
+
+        // Excluded files like lock files
+        if EXCLUDE_FILENAMES.contains(file_name) {
+            return Err(());
+        }
+
+        // Then TOML files
+        if is_toml_file(file_name) {
+            return Ok(Self::OxfmtToml { path });
+        }
+
+        // Then external formatter files
+        // `package.json` is special: sorted then formatted
+        if file_name == "package.json" {
+            return Ok(Self::ExternalFormatterPackageJson { path, parser_name: "json-stringify" });
+        }
+
+        let extension = path.extension().and_then(|ext| ext.to_str());
+        if let Some(parser_name) = get_external_parser_name(file_name, extension) {
+            return Ok(Self::ExternalFormatter { path, parser_name });
         }
 
         Err(())
@@ -41,128 +68,23 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 }
 
 impl FormatFileStrategy {
+    #[cfg(not(feature = "napi"))]
+    pub fn can_format_without_external(&self) -> bool {
+        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
+    }
+
     pub fn path(&self) -> &Path {
         match self {
             Self::OxcFormatter { path, .. }
+            | Self::OxfmtToml { path }
             | Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
     }
 }
 
-// ---
-
-/// Returns `FormatFileSource` for external formatter, if supported.
-/// See also `prettier --support-info | jq '.languages[]'`
-/// NOTE: The order matters: more specific matches (like `package.json`) must come before generic ones.
-fn get_external_format_source(path: PathBuf) -> Option<FormatFileStrategy> {
-    let file_name = path.file_name()?.to_str()?;
-    let extension = path.extension().and_then(|ext| ext.to_str());
-
-    // Excluded files like lock files
-    if EXCLUDE_FILENAMES.contains(file_name) {
-        return None;
-    }
-
-    // JSON and variants
-    // `package.json` is special case
-    if file_name == "package.json" {
-        return Some(FormatFileStrategy::ExternalFormatterPackageJson {
-            path,
-            parser_name: "json-stringify",
-        });
-    }
-    if JSON_STRINGIFY_FILENAMES.contains(file_name) || extension == Some("importmap") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json-stringify" });
-    }
-    if JSON_FILENAMES.contains(file_name) {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json" });
-    }
-    if let Some(ext) = extension
-        && JSON_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json" });
-    }
-    if let Some(ext) = extension
-        && JSONC_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "jsonc" });
-    }
-    if extension == Some("json5") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "json5" });
-    }
-
-    // YAML
-    if YAML_FILENAMES.contains(file_name) {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "yaml" });
-    }
-    if let Some(ext) = extension
-        && YAML_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "yaml" });
-    }
-
-    // Markdown and variants
-    if MARKDOWN_FILENAMES.contains(file_name) {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "markdown" });
-    }
-    if let Some(ext) = extension
-        && MARKDOWN_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "markdown" });
-    }
-    if extension == Some("mdx") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "mdx" });
-    }
-
-    // HTML and variants
-    // Must be checked before generic HTML
-    if file_name.ends_with(".component.html") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "angular" });
-    }
-    if let Some(ext) = extension
-        && HTML_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "html" });
-    }
-    if extension == Some("vue") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "vue" });
-    }
-    if extension == Some("mjml") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "mjml" });
-    }
-
-    // CSS and variants
-    if let Some(ext) = extension
-        && CSS_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "css" });
-    }
-    if extension == Some("less") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "less" });
-    }
-    if extension == Some("scss") {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "scss" });
-    }
-
-    // GraphQL
-    if let Some(ext) = extension
-        && GRAPHQL_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "graphql" });
-    }
-
-    // Handlebars
-    if let Some(ext) = extension
-        && HANDLEBARS_EXTENSIONS.contains(ext)
-    {
-        return Some(FormatFileStrategy::ExternalFormatter { path, parser_name: "glimmer" });
-    }
-
-    None
-}
-
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
+    // JSON, YAML lock files
     "package-lock.json",
     "pnpm-lock.yaml",
     "yarn.lock",
@@ -174,12 +96,131 @@ static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     "Pipfile.lock",
     "flake.lock",
     "mcmod.info",
+    // TOML lock files
+    "Cargo.lock",
+    "Gopkg.lock",
+    "pdm.lock",
+    "poetry.lock",
+    "uv.lock",
 };
 
-static JSON_STRINGIFY_FILENAMES: phf::Set<&'static str> = phf_set! {
-    // NOTE: `package.json` is handled separately as `ExternalFormatterPackageJson`
-    "composer.json",
+// ---
+
+/// Returns `true` if this is a TOML file.
+fn is_toml_file(file_name: &str) -> bool {
+    if TOML_FILENAMES.contains(file_name) {
+        return true;
+    }
+
+    #[expect(clippy::case_sensitive_file_extension_comparisons)]
+    if file_name.ends_with(".toml.example") || file_name.ends_with(".toml") {
+        return true;
+    }
+
+    false
+}
+
+static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "Pipfile",
+    "Cargo.toml.orig",
 };
+
+// ---
+
+/// Returns parser name for external formatter, if supported.
+/// See also `prettier --support-info | jq '.languages[]'`
+fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
+    // JSON and variants
+    // NOTE: `package.json` is handled separately in `FormatFileStrategy::try_from()`
+    if file_name == "composer.json" || extension == Some("importmap") {
+        return Some("json-stringify");
+    }
+    if JSON_FILENAMES.contains(file_name) {
+        return Some("json");
+    }
+    if let Some(ext) = extension
+        && JSON_EXTENSIONS.contains(ext)
+    {
+        return Some("json");
+    }
+    if let Some(ext) = extension
+        && JSONC_EXTENSIONS.contains(ext)
+    {
+        return Some("jsonc");
+    }
+    if extension == Some("json5") {
+        return Some("json5");
+    }
+
+    // YAML
+    if YAML_FILENAMES.contains(file_name) {
+        return Some("yaml");
+    }
+    if let Some(ext) = extension
+        && YAML_EXTENSIONS.contains(ext)
+    {
+        return Some("yaml");
+    }
+
+    // Markdown and variants
+    if MARKDOWN_FILENAMES.contains(file_name) {
+        return Some("markdown");
+    }
+    if let Some(ext) = extension
+        && MARKDOWN_EXTENSIONS.contains(ext)
+    {
+        return Some("markdown");
+    }
+    if extension == Some("mdx") {
+        return Some("mdx");
+    }
+
+    // HTML and variants
+    // Must be checked before generic HTML
+    if file_name.ends_with(".component.html") {
+        return Some("angular");
+    }
+    if let Some(ext) = extension
+        && HTML_EXTENSIONS.contains(ext)
+    {
+        return Some("html");
+    }
+    if extension == Some("vue") {
+        return Some("vue");
+    }
+    if extension == Some("mjml") {
+        return Some("mjml");
+    }
+
+    // CSS and variants
+    if let Some(ext) = extension
+        && CSS_EXTENSIONS.contains(ext)
+    {
+        return Some("css");
+    }
+    if extension == Some("less") {
+        return Some("less");
+    }
+    if extension == Some("scss") {
+        return Some("scss");
+    }
+
+    // GraphQL
+    if let Some(ext) = extension
+        && GRAPHQL_EXTENSIONS.contains(ext)
+    {
+        return Some("graphql");
+    }
+
+    // Handlebars
+    if let Some(ext) = extension
+        && HANDLEBARS_EXTENSIONS.contains(ext)
+    {
+        return Some("glimmer");
+    }
+
+    None
+}
 
 static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "json",
@@ -319,20 +360,15 @@ mod tests {
     use super::*;
 
     fn get_parser_name(file_name: &str) -> Option<&'static str> {
-        match get_external_format_source(PathBuf::from(file_name)) {
-            Some(
-                FormatFileStrategy::ExternalFormatter { parser_name, .. }
-                | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. },
-            ) => Some(parser_name),
-            _ => None,
-        }
+        let path = Path::new(file_name);
+        let extension = path.extension().and_then(|ext| ext.to_str());
+        get_external_parser_name(file_name, extension)
     }
 
     #[test]
-    fn test_get_external_format_source() {
+    fn test_get_external_parser_name() {
         let test_cases = vec![
-            // JSON
-            ("package.json", Some("json-stringify")),
+            // JSON (NOTE: `package.json` is handled in TryFrom, not here)
             ("config.importmap", Some("json-stringify")),
             ("data.json", Some("json")),
             ("schema.avsc", Some("json")),
@@ -375,10 +411,6 @@ mod tests {
             ("config.yml", Some("yaml")),
             ("settings.yaml", Some("yaml")),
             ("grammar.sublime-syntax", Some("yaml")),
-            // Excluded lock files
-            ("package-lock.json", None),
-            ("pnpm-lock.yaml", None),
-            ("yarn.lock", None),
             // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
@@ -393,10 +425,39 @@ mod tests {
 
     #[test]
     fn test_package_json_is_special() {
-        let source = get_external_format_source(PathBuf::from("package.json")).unwrap();
+        let source = FormatFileStrategy::try_from(PathBuf::from("package.json")).unwrap();
         assert!(matches!(source, FormatFileStrategy::ExternalFormatterPackageJson { .. }));
 
-        let source = get_external_format_source(PathBuf::from("composer.json")).unwrap();
+        let source = FormatFileStrategy::try_from(PathBuf::from("composer.json")).unwrap();
         assert!(matches!(source, FormatFileStrategy::ExternalFormatter { .. }));
+    }
+
+    #[test]
+    fn test_toml_files() {
+        // Files that should be detected as TOML
+        let toml_files = vec![
+            "Cargo.toml",
+            "pyproject.toml",
+            "config.toml",
+            "config.toml.example",
+            "Pipfile",
+            "Cargo.toml.orig",
+        ];
+
+        for file_name in toml_files {
+            let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
+            assert!(
+                matches!(result, Ok(FormatFileStrategy::OxfmtToml { .. })),
+                "`{file_name}` should be detected as TOML"
+            );
+        }
+
+        // Lock files that should be excluded
+        let excluded_files = vec!["Cargo.lock", "poetry.lock", "pdm.lock", "uv.lock", "Gopkg.lock"];
+
+        for file_name in excluded_files {
+            let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
+            assert!(result.is_err(), "`{file_name}` should be excluded (lock file)");
+        }
     }
 }

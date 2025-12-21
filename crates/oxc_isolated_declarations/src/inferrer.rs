@@ -80,13 +80,6 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
-        if param.pattern.type_annotation.is_some() {
-            param
-                .pattern
-                .type_annotation
-                .as_ref()
-                .map(|x| x.type_annotation.clone_in(self.ast.allocator));
-        }
         if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
             if let Some(annotation) = pattern.left.type_annotation.as_ref() {
                 Some(annotation.type_annotation.clone_in(self.ast.allocator))

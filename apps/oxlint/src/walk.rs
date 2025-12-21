@@ -122,7 +122,9 @@ impl Walk {
             return false;
         }
         let Some(file_name) = dir_entry.path().file_name() else { return false };
-        if [".min.", "-min.", "_min."].iter().any(|e| file_name.to_string_lossy().contains(e)) {
+        let file_name = file_name.to_string_lossy();
+        let file_name = file_name.as_ref();
+        if [".min.", "-min.", "_min."].iter().any(|e| file_name.contains(e)) {
             return false;
         }
         let Some(extension) = dir_entry.path().extension() else { return false };

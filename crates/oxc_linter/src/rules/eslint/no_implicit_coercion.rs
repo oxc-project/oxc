@@ -54,16 +54,12 @@ fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &
 #[serde(rename_all = "camelCase", default)]
 pub struct NoImplicitCoercionConfig {
     /// When `true`, warns on implicit boolean coercion (e.g., `!!foo`).
-    /// Default: `true`
     boolean: bool,
     /// When `true`, warns on implicit number coercion (e.g., `+foo`).
-    /// Default: `true`
     number: bool,
     /// When `true`, warns on implicit string coercion (e.g., `"" + foo`).
-    /// Default: `true`
     string: bool,
     /// When `true`, disallows using template literals for string coercion (e.g., `` `${foo}` ``).
-    /// Default: `false`
     disallow_template_shorthand: bool,
     /// List of operators to allow. Valid values: `"!!"`, `"~"`, `"+"`, `"-"`, `"- -"`, `"*"`
     #[schemars(with = "Vec<String>")]
@@ -138,7 +134,7 @@ impl Default for NoImplicitCoercionConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoImplicitCoercion(Box<NoImplicitCoercionConfig>);
 
 impl std::ops::Deref for NoImplicitCoercion {
@@ -184,10 +180,9 @@ declare_oxc_lint!(
 
 impl Rule for NoImplicitCoercion {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = serde_json::from_value::<DefaultRuleConfig<NoImplicitCoercionConfig>>(value)
+        serde_json::from_value::<DefaultRuleConfig<NoImplicitCoercion>>(value)
             .unwrap_or_default()
-            .into_inner();
-        Self(Box::new(config))
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

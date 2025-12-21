@@ -32,7 +32,7 @@ export type NodeOrToken = Node | Token | Comment;
 
 // Comment.
 export interface Comment extends Span {
-  type: "Line" | "Block";
+  type: "Line" | "Block" | "Shebang";
   value: string;
 }
 

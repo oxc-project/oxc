@@ -77,7 +77,7 @@ impl CliRunner {
             }
         };
 
-        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
+        let handler = if cfg!(any(test, feature = "testing")) {
             GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
@@ -92,7 +92,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &err)
                     ),
                 );
@@ -165,7 +165,18 @@ impl CliRunner {
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
-        let paths = walker.paths();
+        let mut paths = walker.paths();
+
+        // NAPI tests build `oxlint` with `testing` feature enabled.
+        // In NAPI tests, sort file paths if oxlint is run with `--threads 1`.
+        // This guarantees files are linted in a deterministic order.
+        //
+        // Note: Sorting paths would not be sufficient to guarantee deterministic linting order unless
+        // `--threads 1` is also used, because otherwise linting happens in parallel on multiple threads,
+        // which also produces non-determinism.
+        if cfg!(feature = "testing") && misc_options.threads == Some(1) {
+            paths.sort_unstable();
+        }
 
         let mut external_plugin_store = ExternalPluginStore::default();
 
@@ -220,7 +231,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &OxcDiagnostic::error(e.to_string()))
                     ),
                 );
@@ -580,7 +591,7 @@ impl CliRunner {
                     print_and_flush_stdout(
                         stdout,
                         &format!(
-                            "Failed to parse configuration file.\n{}\n",
+                            "Failed to parse oxlint configuration file.\n{}\n",
                             render_report(handler, &OxcDiagnostic::error(e.to_string()))
                         ),
                     );

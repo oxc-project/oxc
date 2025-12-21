@@ -4,12 +4,18 @@
 # stdout
 ```
   x Error running JS plugin.
-  | File path: <fixture>/files/index.js
-  | Error: Whoops!
-  |     at Identifier (<fixture>/plugin.ts:12:19)
+  | File path: <fixture>/files/1.js
+  | Error: Identifier in 1st file: x
+  |     at Identifier (<fixture>/plugin.ts:41:32)
 
-Found 0 warnings and 1 error.
-Finished in Xms on 1 file using X threads.
+  x error-plugin(error): Identifier in 2nd file: y
+   ,-[files/2.js:1:5]
+ 1 | let y;
+   :     ^
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in Xms on 2 files using X threads.
 ```
 
 # stderr

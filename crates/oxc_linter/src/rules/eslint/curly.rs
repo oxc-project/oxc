@@ -356,12 +356,6 @@ fn get_if_branches_from_statement<'a>(
     branches
 }
 
-fn get_node_by_statement<'a>(statement: &'a Statement, ctx: &'a LintContext) -> &'a AstNode<'a> {
-    let span = statement.span();
-
-    ctx.nodes().iter().find(|n| n.span() == span).expect("Failed to get node by statement")
-}
-
 fn get_if_else_keyword(is_else: bool) -> &'static str {
     if is_else { "else" } else { "if" }
 }
@@ -413,6 +407,7 @@ fn apply_rule_fix<'a>(
     fixer: &RuleFixer<'_, 'a>,
     body: &Statement<'a>,
     should_have_braces: bool,
+    is_do_while: bool,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
     let source = ctx.source_range(body.span());
@@ -421,10 +416,7 @@ fn apply_rule_fix<'a>(
         format!("{{{source}}}")
     } else {
         let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
-        if matches!(
-            ctx.nodes().parent_kind(get_node_by_statement(body, ctx).id()),
-            AstKind::DoWhileStatement(_)
-        ) {
+        if is_do_while {
             trimmed.insert(0, ' ');
         }
         trimmed
@@ -448,14 +440,13 @@ fn report_if_needed<'a>(
     }
 
     ctx.diagnostic_with_fix(curly_diagnostic(body.span(), keyword, should_have_braces), |fixer| {
-        apply_rule_fix(&fixer, body, should_have_braces, ctx)
+        apply_rule_fix(&fixer, body, should_have_braces, keyword == "do", ctx)
     });
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
-    let node = get_node_by_statement(node, ctx);
-    let span = node.span();
+fn is_collapsed_one_liner(stmt: &Statement, ctx: &LintContext) -> bool {
+    let span = stmt.span();
     let node_string = ctx.source_range(span);
 
     let trimmed = node_string.trim_end_matches(|c: char| c.is_whitespace() || c == ';');
@@ -464,28 +455,18 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         Err(_) => return false, // length too large for u32
     };
 
-    let before_node_span = get_token_before(node, ctx).map_or_else(
-        || {
-            let parent = ctx.nodes().parent_node(node.id());
+    let src = ctx.source_text();
+    let stmt_start = span.start as usize;
 
-            if parent.span().start < span.start {
-                Span::empty(parent.span().start)
-            } else {
-                Span::empty(0)
-            }
-        },
-        oxc_span::GetSpan::span,
-    );
-
-    let Some(next_char_offset) = get_next_char_offset(before_node_span, ctx) else {
-        return true;
-    };
+    let before_stmt = &src[..stmt_start];
+    let prev_token_end =
+        before_stmt.bytes().rposition(|b| !b.is_ascii_whitespace()).map_or(0, |pos| pos + 1);
 
     let end_offset =
         span.end.saturating_sub((node_string.len() as u32).saturating_sub(trimmed_len));
-    let text = ctx.source_range(Span::new(next_char_offset, end_offset));
+    let text_to_check = &src[prev_token_end..end_offset as usize];
 
-    !text.contains('\n')
+    !text_to_check.contains('\n')
 }
 
 fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
@@ -497,12 +478,6 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     let trimmed = source.trim_end_matches(|c: char| c.is_whitespace() || c == ';');
 
     !trimmed.contains('\n')
-}
-
-fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
-    let span_start = node.span().start;
-
-    ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
 }
 
 pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
@@ -972,6 +947,20 @@ fn test() {
             };",
             Some(serde_json::json!(["multi"])),
         ),
+        ("if (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("while (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("for (;;) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* 日本語コメント */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* émojis: 🎉🚀 */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* special: @#$%^&*() */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo)\t\tbar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo)   \t   bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* { */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* } */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* { } */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("if (foo) /* {{ nested }} */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("while (foo) /* [brackets] */ bar()", Some(serde_json::json!(["multi-line"]))),
+        ("for (;;) /* (parens) { braces } */ bar()", Some(serde_json::json!(["multi-line"]))),
     ];
 
     let fail = vec![

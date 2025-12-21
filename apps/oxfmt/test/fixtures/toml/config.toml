@@ -1,0 +1,8 @@
+[package]
+name="test"
+version    =    "0.1.0"
+description   =  "A test package"
+
+[dependencies]
+foo={version="1.0"}
+bar   =   {   version   =   "2.0"  ,  features   =   [  "a"  ,  "b"  ]   }

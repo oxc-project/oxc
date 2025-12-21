@@ -320,7 +320,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
-            AstKind::TSInterfaceDeclaration(_) => {
+            AstKind::TSInterfaceDeclaration(_) | AstKind::TSTypeAliasDeclaration(_) => {
                 if symbol.is_in_declared_module() {
                     return;
                 }

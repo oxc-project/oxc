@@ -16,11 +16,11 @@ doctest = false
 bpaf = { workspace = true, features = ["docgen"] }
 itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
-oxlint = { path = "../../apps/oxlint", default-features = false }
+oxlint = { workspace = true }
 pico-args = { workspace = true }
 project-root = { workspace = true }
 schemars = { workspace = true }
-website_common = { path = "../website_common" }
+website_common = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

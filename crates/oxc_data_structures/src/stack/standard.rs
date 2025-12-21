@@ -1,5 +1,6 @@
 use std::{
     marker::PhantomData,
+    mem::ManuallyDrop,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -384,6 +385,36 @@ impl<T> Stack<T> {
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         <Self as StackCommon<T>>::as_mut_slice(self)
     }
+
+    /// Convert [`Stack`] into a [`Vec`].
+    ///
+    /// This is a cheap conversion. The `Vec` takes over ownership of the `Stack`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    #[inline] // This method is just a few arithmetic operations
+    pub fn into_vec(self) -> Vec<T> {
+        debug_assert!(self.len() <= self.capacity());
+
+        // Wrap `self` in `ManuallyDrop` to prevent it from being dropped
+        let stack = ManuallyDrop::new(self);
+
+        // SAFETY:
+        // T is not zero-sized. It's impossible to create a `Stack<T>` with a ZST `T`.
+        //
+        // If the `Stack` has allocated:
+        // * `start` is the pointer is was allocated with.
+        // * `start` is aligned for `T`.
+        // * `size_of::<T>() * capacity` is equal to the size of the allocation which backs the `Stack`.
+        // * This is the size the allocation was originally allocated with.
+        // * `len <= capacity`
+        // * The first `len` values are properly initialized values of type `T`.
+        //
+        // If the `Stack` has not allocated
+        // * `start` is a dangling pointer, aligned for `T`.
+        //
+        // In short, `Stack` manages it's allocation exactly the same way as `Vec`,
+        // so it's safe to convert between the two.
+        unsafe { Vec::from_raw_parts(stack.start.as_ptr(), stack.len(), stack.capacity()) }
+    }
 }
 
 impl<T> Drop for Stack<T> {
@@ -420,6 +451,76 @@ impl<T> DerefMut for Stack<T> {
         self.as_mut_slice()
     }
 }
+
+impl<T> From<Vec<T>> for Stack<T> {
+    /// Convert a [`Vec`] into a [`Stack`].
+    ///
+    /// This is a cheap conversion. The `Stack` takes over ownership of the `Vec`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    #[inline] // This method is just a few arithmetic operations
+    fn from(vec: Vec<T>) -> Self {
+        // ZSTs are not supported for simplicity
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
+
+        // Wrap `vec` in `ManuallyDrop` to prevent it from being dropped
+        let mut vec = ManuallyDrop::new(vec);
+
+        // SAFETY: `Vec`'s pointer is always non-null, even when the `Vec` has not allocated
+        // (in that case, it's a dangling pointer)
+        let ptr = unsafe { NonNull::new_unchecked(vec.as_mut_ptr()) };
+
+        // SAFETY:
+        // We ensured that `T` is not zero-sized above.
+        //
+        // If the `Vec` has allocated, then `ptr` is valid.
+        // `ptr + len` for an allocated `Vec` is always in bounds of the `Vec`'s allocation,
+        // and `ptr + capacity` is always the end of the `Vec`'s allocation.
+        //
+        // If the `Vec` has not allocated, then `ptr` is a dangling pointer, and `len` and `capacity` are 0.
+        // Adding 0 to an invalid pointer is legal.
+        //
+        // Therefore these `add` operations are sound.
+        //
+        // The `Stack` takes ownership of the allocation, and will deallocate it correctly when dropped.
+        unsafe {
+            Self {
+                cursor: ptr.add(vec.len()),
+                start: ptr,
+                end: ptr.add(vec.capacity()),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<T> From<Stack<T>> for Vec<T> {
+    /// Convert a [`Stack`] into a [`Vec`].
+    ///
+    /// This is a cheap conversion. The `Vec` takes over ownership of the `Stack`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    #[inline]
+    fn from(stack: Stack<T>) -> Self {
+        stack.into_vec()
+    }
+}
+
+impl<T> FromIterator<T> for Stack<T> {
+    /// Create a [`Stack`] from an iterator.
+    #[inline] // It mostly just delegates to `Vec::from_iter`
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        // Collect into a `Vec` first, because `Vec` has specialized implementations of `from_iter`
+        // for various kinds of iterators, which we cannot replicate in stable Rust
+        let vec = Vec::from_iter(iter);
+        Self::from(vec)
+    }
+}
+
+// SAFETY: `Stack<T>` can be `Send` / `Sync` if `T` is `Send` / `Sync`.
+// It does not use interior mutability, and is essentially the same as `Vec<T>`,
+// which implements `Send` / `Sync` in the same way.
+unsafe impl<T: Send> Send for Stack<T> {}
+// SAFETY: See above.
+unsafe impl<T: Sync> Sync for Stack<T> {}
 
 #[cfg(test)]
 mod tests {
@@ -463,6 +564,85 @@ mod tests {
     fn with_capacity_zero() {
         let stack = Stack::<u64>::with_capacity(0);
         assert_len_cap_last!(stack, 0, 0, None);
+    }
+
+    #[test]
+    fn from_vec() {
+        let vec = vec![10_u64, 20, 30];
+        let stack = Stack::from(vec);
+        assert_len_cap_last!(stack, 3, 3, Some(&30));
+    }
+
+    #[test]
+    fn from_empty_vec() {
+        let vec: Vec<u64> = vec![];
+        let stack = Stack::from(vec);
+        assert_len_cap_last!(stack, 0, 0, None);
+    }
+
+    #[test]
+    fn from_iterator() {
+        let arr = [10_u64, 20, 30];
+        let stack = Stack::from_iter(arr);
+        assert_len_cap_last!(stack, 3, 3, Some(&30));
+    }
+
+    #[test]
+    fn collect_iterator() {
+        let arr = [10_u64, 20, 30];
+        let stack = arr.into_iter().collect::<Stack<_>>();
+        assert_len_cap_last!(stack, 3, 3, Some(&30));
+    }
+
+    #[test]
+    fn from_empty_iterator() {
+        let arr: [u64; 0] = [];
+        #[expect(clippy::from_iter_instead_of_collect)]
+        let stack = Stack::from_iter(arr.iter());
+        assert_len_cap_last!(stack, 0, 0, None);
+    }
+
+    #[test]
+    fn collect_empty_iterator() {
+        let arr: [u64; 0] = [];
+        let stack = arr.into_iter().collect::<Stack<_>>();
+        assert_len_cap_last!(stack, 0, 0, None);
+    }
+
+    #[test]
+    fn into_vec() {
+        let stack = Stack::from(vec![10_u64, 20, 30]);
+        assert_len_cap_last!(stack, 3, 3, Some(&30));
+        let vec = stack.into_vec();
+        assert_eq!(vec, vec![10, 20, 30]);
+        assert_eq!(vec.capacity(), 3);
+    }
+
+    #[test]
+    fn into_empty_vec() {
+        let stack = Stack::<u64>::new();
+        assert_len_cap_last!(stack, 0, 0, None);
+        let vec = stack.into_vec();
+        assert_eq!(vec, vec![]);
+        assert_eq!(vec.capacity(), 0);
+    }
+
+    #[test]
+    fn into_vec_via_from_trait() {
+        let stack = Stack::from(vec![10_u64, 20, 30]);
+        assert_len_cap_last!(stack, 3, 3, Some(&30));
+        let vec = Vec::from(stack);
+        assert_eq!(vec, vec![10, 20, 30]);
+        assert_eq!(vec.capacity(), 3);
+    }
+
+    #[test]
+    fn into_empty_vec_via_from_trait() {
+        let stack = Stack::<u64>::new();
+        assert_len_cap_last!(stack, 0, 0, None);
+        let vec = Vec::from(stack);
+        assert_eq!(vec, vec![]);
+        assert_eq!(vec.capacity(), 0);
     }
 
     #[test]

@@ -22,7 +22,23 @@ working directory: fixtures/tsgolint_rule_options
  48 | 
     `----
 
-Found 0 warnings and 2 errors.
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
+    ,-[test.ts:58:31]
+ 57 | // This SHOULD error because it's not using optional chaining
+ 58 | const unsafeAccess = anyValue.bar;
+    :                               ^^^
+ 59 | 
+    `----
+
+  x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
+    ,-[test.ts:63:20]
+ 62 | // This SHOULD error because checkUnknown is true
+ 63 | const unknownStr = unknownValue.toString();
+    :                    ^^^^^^^^^^^^
+ 64 | 
+    `----
+
+Found 0 warnings and 4 errors.
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors

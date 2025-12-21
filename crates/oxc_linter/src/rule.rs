@@ -83,9 +83,9 @@ pub trait Rule: Sized + Default + fmt::Debug {
 /// ```ignore
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Self {
-///         let config = serde_json::from_value::<DefaultRuleConfig<MyRuleConfig>>(value)
-///             .unwrap_or_default();
-///         Self(config.into_inner())
+///         serde_json::from_value::<DefaultRuleConfig<MyRule>>(value)
+///             .unwrap_or_default()
+///             .into_inner()
 ///     }
 /// }
 /// ```

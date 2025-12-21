@@ -1,5 +1,7 @@
 use std::{iter, sync::Mutex};
 
+use oxc_data_structures::stack::Stack;
+
 use crate::Allocator;
 
 /// A thread-safe pool for reusing [`Allocator`] instances, that uses standard allocators.
@@ -7,7 +9,11 @@ use crate::Allocator;
 /// Unlike `FixedSizeAllocatorPool`, the `Allocator`s used in this pool are suitable for general use,
 /// but not for raw transfer.
 pub struct StandardAllocatorPool {
-    allocators: Mutex<Vec<Allocator>>,
+    /// Allocators currently in the pool.
+    /// We use a `Stack` because it's faster than `Vec` for `push` and `pop`,
+    /// and those are the operations we do while `Mutex` lock is held.
+    /// The shorter the time lock is held, the less contention there is.
+    allocators: Mutex<Stack<Allocator>>,
 }
 
 impl StandardAllocatorPool {

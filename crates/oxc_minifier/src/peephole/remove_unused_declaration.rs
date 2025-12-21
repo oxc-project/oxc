@@ -139,7 +139,15 @@ impl<'a> PeepholeOptimizations {
 
         let Statement::ImportDeclaration(import_decl) = stmt else { return };
 
-        if import_decl.phase.is_some() {
+        if let Some(phase) = import_decl.phase {
+            let (ImportPhase::Defer | ImportPhase::Source) = phase;
+            if ctx.scoping().symbol_is_unused(
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+            ) {
+                *stmt = ctx.ast.statement_empty(import_decl.span);
+                ctx.state.changed = true;
+            }
+
             return;
         }
 
@@ -344,5 +352,28 @@ mod test {
         test_same_options("import a from 'a'; eval('a');", &options);
         test_same_options("import * as a from 'a'; eval('a');", &options);
         test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
+    }
+
+    #[test]
+    fn remove_unused_import_source_statement() {
+        let options = CompressOptions::smallest();
+
+        test_options("import source a from 'a'", "", &options);
+        test_options("import source a from 'a'; if (false) { console.log(a) }", "", &options);
+        test_same_options("import source a from 'a'; foo(a);", &options);
+    }
+
+    #[test]
+    fn remove_unused_import_defer_statements() {
+        let options = CompressOptions::smallest();
+
+        test_options("import defer * as a from 'a'", "", &options);
+        test_options(
+            "import defer * as a from 'a'; if (false) { console.log(a.foo) }",
+            "",
+            &options,
+        );
+        test_same_options("import defer * as a from 'a'; foo(a);", &options);
+        test_same_options("import defer * as a from 'a'; foo(a.bar);", &options);
     }
 }

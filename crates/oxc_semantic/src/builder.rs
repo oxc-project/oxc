@@ -625,7 +625,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.check_syntax_error {
             checker::check(kind, self);
         }
-        self.leave_kind(kind);
         self.pop_ast_node();
     }
 
@@ -2075,6 +2074,39 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&it.expression);
         self.leave_node(kind);
     }
+
+    fn visit_catch_parameter(&mut self, param: &CatchParameter<'a>) {
+        let kind = AstKind::CatchParameter(self.alloc(param));
+        self.enter_node(kind);
+        self.visit_span(&param.span);
+        self.visit_binding_pattern(&param.pattern);
+        self.resolve_references_for_current_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
+        let kind = AstKind::TSTypeQuery(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_span(&ty.span);
+        self.visit_ts_type_query_expr_name(&ty.expr_name);
+        if let Some(type_arguments) = &ty.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.current_reference_flags = ReferenceFlags::empty();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_property_signature(&mut self, sig: &TSPropertySignature<'a>) {
+        let kind = AstKind::TSPropertySignature(self.alloc(sig));
+        self.enter_node(kind);
+        self.visit_span(&sig.span);
+        self.visit_property_key(&sig.key);
+        if let Some(type_annotation) = &sig.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        self.current_reference_flags = ReferenceFlags::empty();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2197,19 +2229,6 @@ impl<'a> SemanticBuilder<'a> {
                         .scope_flags_mut(self.current_scope_id)
                         .insert(ScopeFlags::DirectEval);
                 }
-            }
-            _ => {}
-        }
-    }
-
-    fn leave_kind(&mut self, kind: AstKind<'a>) {
-        match kind {
-            AstKind::CatchParameter(_) => {
-                self.resolve_references_for_current_scope();
-            }
-            AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
-                // Clear the reference flags that may have been set when entering the node.
-                self.current_reference_flags = ReferenceFlags::empty();
             }
             _ => {}
         }

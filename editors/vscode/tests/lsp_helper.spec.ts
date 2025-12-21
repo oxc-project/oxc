@@ -58,4 +58,12 @@ suite('runExecutable', () => {
 
     strictEqual(result.options?.env?.PATH, '/custom/node/path:/usr/bin:/bin');
   });
+
+  test('should set path in quotes on Windows for binary executables', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+
+    const result = runExecutable('C:\\Path With Spaces\\oxc-language-server');
+
+    strictEqual(result.command, '"C:\\Path With Spaces\\oxc-language-server"');
+  });
 });

@@ -69,7 +69,13 @@ impl NoUnusedVars {
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
             AstKind::Function(func) => {
-                func.r#type.is_typescript_syntax() || self.is_ignored_var(declared_binding)
+                // Functions with TypeScript syntax are ignored only if they are truly ambient
+                // (i.e., declared or in a declared module). Functions without bodies inside
+                // non-declared namespaces should still be checked.
+                if func.r#type.is_typescript_syntax() || func.body.is_none() {
+                    return func.declare || symbol.is_in_declared_module();
+                }
+                self.is_ignored_var(declared_binding)
             }
             AstKind::Class(class) => {
                 if class.declare

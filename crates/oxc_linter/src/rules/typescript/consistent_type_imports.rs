@@ -13,7 +13,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -71,7 +71,7 @@ impl Default for ConsistentTypeImportsConfig {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy, JsonSchema, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum FixStyle {
     /// Will add the type keyword after the import keyword `import type { A } from '...'`
@@ -81,7 +81,7 @@ enum FixStyle {
     InlineTypeImports,
 }
 
-#[derive(Default, Debug, Clone, JsonSchema, Deserialize)]
+#[derive(Default, Debug, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum Prefer {
     /// Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.
