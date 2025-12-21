@@ -97,33 +97,31 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
-        let cfg = match ctx.semantic().cfg() {
-            Some(cfg) => cfg,
-            None => return,
+        let Some(cfg) = ctx.semantic().cfg() else {
+            return;
         };
 
         let nodes = ctx.nodes();
         let scoping = ctx.scoping();
 
         for node in nodes {
-            match node.kind() {
-                AstKind::VariableDeclarator(_) => {
-                    let declarator = node.kind().as_variable_declarator().unwrap();
-                    let Some(ident) = declarator.id.get_binding_identifier() else {
-                        continue;
-                    };
+            if let AstKind::VariableDeclarator(_) = node.kind() {
+                let Some(declarator) = node.kind().as_variable_declarator() else {
+                    continue;
+                };
+                let Some(ident) = declarator.id.get_binding_identifier() else {
+                    continue;
+                };
 
-                    let symbol_id = ident.symbol_id();
-                    let references: Vec<&Reference> =
-                        scoping.get_resolved_references(symbol_id).collect();
+                let symbol_id = ident.symbol_id();
+                let references: Vec<&Reference> =
+                    scoping.get_resolved_references(symbol_id).collect();
 
-                    if references.is_empty() {
-                        continue;
-                    }
-
-                    analyze_variable_references(ident, &references, node, ctx, cfg);
+                if references.is_empty() {
+                    continue;
                 }
-                _ => continue,
+
+                analyze_variable_references(ident, &references, node, ctx, cfg);
             }
         }
     }
@@ -147,7 +145,7 @@ fn analyze_variable_references(
         check_write_usage(
             ident,
             references,
-            ReferenceIndex::Init,
+            &ReferenceIndex::Init,
             init_cfg_id,
             decl_node.span(),
             ctx,
@@ -167,7 +165,7 @@ fn analyze_variable_references(
         check_write_usage(
             ident,
             references,
-            ReferenceIndex::NonInit(i),
+            &ReferenceIndex::NonInit(i),
             write_cfg_id,
             write_span,
             ctx,
@@ -184,21 +182,21 @@ enum ReferenceIndex {
 fn check_write_usage(
     ident: &BindingIdentifier,
     references: &[&Reference],
-    idx: ReferenceIndex,
+    idx: &ReferenceIndex,
     write_cfg_id: NodeIndex,
     write_span: Span,
     ctx: &LintContext,
     cfg: &ControlFlowGraph,
 ) {
     let nodes = ctx.nodes();
-    let references_after = match idx {
-        ReferenceIndex::NonInit(i) => &references[i + 1..],
+    let references_after = match &idx {
+        ReferenceIndex::NonInit(i) => &references[*i + 1..],
         ReferenceIndex::Init => references,
     };
 
     let mut assignment_used = false;
     let mut last_reachable_write: Option<&Reference> = None;
-    for r in references_after.iter() {
+    for r in references_after {
         if r.is_write() && cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
             last_reachable_write = Some(r);
             continue;
@@ -209,34 +207,34 @@ fn check_write_usage(
                 break;
             }
 
-            if let Some(last_reachable_write) = last_reachable_write {
-                if !cfg.is_reachable(
+            if let Some(last_reachable_write) = last_reachable_write
+                && !cfg.is_reachable(
                     nodes.cfg_id(last_reachable_write.node_id()),
                     nodes.cfg_id(r.node_id()),
-                ) {
-                    assignment_used = true;
-                    break;
-                }
+                )
+            {
+                assignment_used = true;
+                break;
             }
         }
     }
 
     if !assignment_used {
-        let references_before = match idx {
-            ReferenceIndex::NonInit(i) => Some(&references[..i]),
+        let references_before = match &idx {
+            ReferenceIndex::NonInit(i) => Some(&references[..*i]),
             ReferenceIndex::Init => None,
         };
 
-        if let Some(references_before) = references_before {
-            if cfg.is_cyclic(write_cfg_id) {
-                for r in references_before.iter() {
-                    if r.is_write() {
-                        continue;
-                    }
-                    if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
-                        assignment_used = true;
-                        break;
-                    }
+        if let Some(references_before) = references_before
+            && cfg.is_cyclic(write_cfg_id)
+        {
+            for r in references_before {
+                if r.is_write() {
+                    continue;
+                }
+                if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
+                    assignment_used = true;
+                    break;
                 }
             }
         }
