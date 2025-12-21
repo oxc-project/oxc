@@ -92,7 +92,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &err)
                     ),
                 );
@@ -220,7 +220,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &OxcDiagnostic::error(e.to_string()))
                     ),
                 );
@@ -580,7 +580,7 @@ impl CliRunner {
                     print_and_flush_stdout(
                         stdout,
                         &format!(
-                            "Failed to parse configuration file.\n{}\n",
+                            "Failed to parse oxlint configuration file.\n{}\n",
                             render_report(handler, &OxcDiagnostic::error(e.to_string()))
                         ),
                     );
