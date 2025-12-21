@@ -116,7 +116,7 @@ pub struct Oxlintrc {
     #[serde(skip)]
     pub path: PathBuf,
     /// Linter related options. This groups linter-specific toggles to keep top-level config clean.
-    #[serde(rename = "linterOptions", default)]
+    #[serde(rename = "linterOptions")]
     pub linter_options: LinterOptions,
     /// Globs to ignore during linting. These are resolved from the configuration file path.
     #[serde(rename = "ignorePatterns")]
@@ -131,7 +131,7 @@ pub struct Oxlintrc {
 
 /// Linter options that control Oxlint behavior.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema, PartialEq, Eq)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct LinterOptions {
     /// Enable type-aware rules (via tsgolint) for Oxlint.
     /// When enabled, Oxlint will run type-aware rules that require type information.
@@ -142,7 +142,7 @@ pub struct LinterOptions {
     /// or via an editor setting.
     ///
     /// Note: Type-aware rules will _only_ work if the `oxlint-tsgolint` package is installed.
-    #[serde(rename = "typeAware", default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
 }
 
