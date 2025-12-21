@@ -1,9 +1,11 @@
-use crate::ast_util::get_function_name_with_kind;
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
-use oxc_ast::ast::{ArrowFunctionExpression, BlockStatement, Class, Function, StaticBlock};
+use oxc_ast::ast::{
+    ArrowFunctionExpression, BlockStatement, Class, Function, FunctionBody, StaticBlock,
+};
 use oxc_ast_visit::Visit;
-use oxc_ast_visit::walk::{walk_arrow_function_expression, walk_block_statement, walk_function};
+use oxc_ast_visit::walk::{
+    walk_arrow_function_expression, walk_class, walk_function, walk_function_body,
+    walk_static_block,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -12,13 +14,26 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-fn max_statements_diagnostic(name: &str, count: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "{name} has too many statements ({count}). Maximum allowed is {max}."
-    ))
-    .with_help("Consider splitting it into smaller functions.")
-    .with_label(span)
+use crate::{context::LintContext, rule::Rule};
+
+fn max_statements_diagnostic(
+    name: Option<&str>,
+    count: usize,
+    max: usize,
+    span: Span,
+) -> OxcDiagnostic {
+    let message = if let Some(name) = name {
+        format!("function `{name}` has too many statements ({count}). Maximum allowed is {max}.")
+    } else {
+        format!("function has too many statements ({count}). Maximum allowed is {max}.")
+    };
+
+    OxcDiagnostic::warn(message)
+        .with_help("Consider splitting it into smaller functions.")
+        .with_label(span)
 }
+
+const DEFAULT_MAX_STATEMENTS: usize = 10;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -28,8 +43,6 @@ pub struct MaxStatementsConfig {
     /// Whether to ignore top-level functions.
     ignore_top_level_functions: bool,
 }
-
-const DEFAULT_MAX_STATEMENTS: usize = 10;
 
 impl Default for MaxStatementsConfig {
     fn default() -> Self {
@@ -58,7 +71,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Some people consider large functions a code smell. Large functions tend to
-    /// do a lot of things and can make it hard to follow what’s going on.
+    /// do a lot of things and can make it hard to follow what's going on.
     /// This rule can help avoid large functions.
     ///
     /// ### Examples
@@ -214,115 +227,102 @@ impl Rule for MaxStatements {
         Self(Box::new(MaxStatementsConfig { max, ignore_top_level_functions }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let func_body = match node.kind() {
-            AstKind::Function(f) => f.body.as_ref(),
-            AstKind::ArrowFunctionExpression(f) => Some(&f.body),
-            _ => return,
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let mut visitor = StatementCounter {
+            max: self.max,
+            ignore_top_level_functions: self.ignore_top_level_functions,
+            function_stack: Vec::new(),
+            top_level_functions: Vec::new(),
+            diagnostics: Vec::new(),
         };
+        visitor.visit_program(ctx.nodes().program());
 
-        let Some(func_body) = func_body else {
+        for (name, count, span) in visitor.diagnostics {
+            ctx.diagnostic(max_statements_diagnostic(name, count, self.max, span));
+        }
+
+        if visitor.top_level_functions.len() > 1 {
+            for (name, count, span) in visitor.top_level_functions {
+                ctx.diagnostic(max_statements_diagnostic(name, count, self.max, span));
+            }
+        }
+    }
+}
+
+struct StatementCounter<'a> {
+    max: usize,
+    ignore_top_level_functions: bool,
+    /// Stack of statement counts for each function we're currently inside
+    function_stack: Vec<usize>,
+    /// Top-level functions that exceed the limit (reported only if > 1)
+    top_level_functions: Vec<(Option<&'a str>, usize, Span)>,
+    /// Diagnostics for non-top-level functions
+    diagnostics: Vec<(Option<&'a str>, usize, Span)>,
+}
+
+impl<'a> StatementCounter<'a> {
+    fn start_function(&mut self) {
+        self.function_stack.push(0);
+    }
+
+    fn end_function(&mut self, name: Option<&'a str>, span: Span, is_static_block: bool) {
+        let count = self.function_stack.pop().unwrap_or(0);
+
+        if is_static_block {
             return;
-        };
-
-        if self.ignore_top_level_functions && is_top_level_function(node.span(), ctx) {
-            return;
         }
 
-        let mut statements_visitor =
-            StatementsCounter { function_depth: 0, statements_count: func_body.statements.len() };
-        statements_visitor.visit_function_body(func_body);
+        if count > self.max {
+            if self.ignore_top_level_functions && self.function_stack.is_empty() {
+                self.top_level_functions.push((name, count, span));
+            } else {
+                self.diagnostics.push((name, count, span));
+            }
+        }
+    }
 
-        if statements_visitor.statements_count > self.max {
-            let name = get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()));
-            ctx.diagnostic(max_statements_diagnostic(
-                &name,
-                statements_visitor.statements_count,
-                self.max,
-                node.span(),
-            ));
+    fn count_statements(&mut self, count: usize) {
+        if let Some(current) = self.function_stack.last_mut() {
+            *current += count;
         }
     }
 }
 
-struct TopLevelFunctionFinder {
-    function_depth: usize,
-    top_level_functions: Vec<Span>,
-}
+impl<'a> Visit<'a> for StatementCounter<'a> {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        self.start_function();
+        walk_function(self, func, flags);
+        self.end_function(func.id.as_ref().map(|id| id.name.as_str()), func.span(), false);
+    }
 
-impl<'a> Visit<'a> for TopLevelFunctionFinder {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if is_function(kind) {
-            self.function_depth += 1;
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        self.start_function();
+        walk_arrow_function_expression(self, arrow);
+        self.end_function(None, arrow.span(), false);
+    }
+
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        self.start_function();
+        walk_static_block(self, block);
+        self.end_function(None, block.span, true);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.start_function();
+        walk_class(self, class);
+        self.function_stack.pop();
+    }
+
+    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
+        self.count_statements(body.statements.len());
+        walk_function_body(self, body);
+    }
+
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
+        self.count_statements(block.body.len());
+        for stmt in &block.body {
+            self.visit_statement(stmt);
         }
-    }
-
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if is_function(kind) {
-            self.function_depth -= 1;
-        }
-    }
-
-    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
-        if self.function_depth == 0 {
-            self.top_level_functions.push(it.span);
-        }
-        walk_function(self, it, flags);
-    }
-
-    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
-        if self.function_depth == 0 {
-            self.top_level_functions.push(it.span);
-        }
-        walk_arrow_function_expression(self, it);
-    }
-
-    fn visit_class(&mut self, _it: &Class<'a>) {
-        // ignore classes since its functions are never top-level
-    }
-}
-
-struct StatementsCounter {
-    function_depth: usize,
-    statements_count: usize,
-}
-
-impl<'a> Visit<'a> for StatementsCounter {
-    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
-        self.function_depth += 1;
-        walk_function(self, it, flags);
-        self.function_depth -= 1;
-    }
-
-    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
-        if self.function_depth == 0 {
-            self.statements_count += it.body.len();
-            walk_block_statement(self, it);
-        }
-    }
-
-    fn visit_static_block(&mut self, _: &StaticBlock<'a>) {
-        // ignore static blocks
-    }
-}
-
-fn is_function(kind: AstKind) -> bool {
-    matches!(kind, AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-}
-
-fn is_top_level_function(function_span: Span, ctx: &LintContext) -> bool {
-    let mut top_level_functions_finder =
-        TopLevelFunctionFinder { function_depth: 0, top_level_functions: vec![] };
-    top_level_functions_finder.visit_program(ctx.nodes().program());
-
-    // If there are several top-level functions, it means that the actual top-level function is the module (i.e., the file) itself.
-    // If there is only one top-level function, it should be ignored.
-    if top_level_functions_finder.top_level_functions.len() > 1 {
-        return false;
-    }
-    match top_level_functions_finder.top_level_functions.pop() {
-        Some(top_level_function) => top_level_function.span() == function_span,
-        None => false,
     }
 }
 

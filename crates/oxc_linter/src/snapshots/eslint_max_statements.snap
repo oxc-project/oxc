@@ -120,28 +120,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-statements): function `thing` has too many statements (3). Maximum allowed is 2.
+  ⚠ eslint(max-statements): function has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:20]
  1 │ var foo = { thing: function() { var bar = 1; var baz = 2; var baz2; } }
    ·                    ──────────────────────────────────────────────────
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-statements): function `thing` has too many statements (3). Maximum allowed is 2.
+  ⚠ eslint(max-statements): function has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:18]
  1 │ var foo = { thing() { var bar = 1; var baz = 2; var baz2; } }
    ·                  ──────────────────────────────────────────
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-statements): function `thing` has too many statements (3). Maximum allowed is 2.
+  ⚠ eslint(max-statements): function has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:20]
  1 │ var foo = { thing: () => { var bar = 1; var baz = 2; var baz2; } }
    ·                    ─────────────────────────────────────────────
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-statements): function `thing` has too many statements (3). Maximum allowed is 2.
+  ⚠ eslint(max-statements): function has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:20]
  1 │ var foo = { thing: function() { var bar = 1; var baz = 2; var baz2; } }
    ·                    ──────────────────────────────────────────────────
