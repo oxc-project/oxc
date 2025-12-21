@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter/tests/schema_validation_test.rs
+expression: snapshot_body
+---
+File: invalid_settings.json
+
+.oxlintrc.json:
+{
+  "$schema": "../../../../../../npm/oxlint/configuration_schema.json",
+  "plugins": [
+    "react"
+  ],
+  "settings": {
+    "react": {
+      "version": "invalid"
+    }
+  }
+}
+
+Errors:
+- "invalid" does not match "^[1-9][0-9]*(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?$"
