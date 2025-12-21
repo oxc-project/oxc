@@ -20,7 +20,7 @@ fn no_labels_diagnostic(message: &'static str, label_span: Span) -> OxcDiagnosti
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLabels {
     /// If set to `true`, this rule ignores labels which are sticking to loop statements.
     /// Examples of **correct** code with this option set to `true`:

@@ -11,7 +11,7 @@ use crate::{
 pub struct OnlyThrowError(Box<OnlyThrowErrorConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct OnlyThrowErrorConfig {
     /// An array of type or value specifiers for additional types that are allowed to be thrown.
     /// Use this to allow throwing custom error types.

@@ -24,7 +24,7 @@ fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoSelfAssign {
     /// The `props` option when set to `false`, disables the checking of properties.
     ///

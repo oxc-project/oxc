@@ -49,7 +49,7 @@ fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Namespace {
     /// Whether to allow computed references to an imported namespace.
     allow_computed: bool,

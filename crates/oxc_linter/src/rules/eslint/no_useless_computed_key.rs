@@ -22,7 +22,7 @@ fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagn
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessComputedKey {
     /// The `enforceForClassMembers` option controls whether the rule applies to
     /// class members (methods and properties).

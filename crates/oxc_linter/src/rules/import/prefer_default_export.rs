@@ -29,7 +29,7 @@ enum Target {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDefaultExport {
     /// Configuration option to specify the target type for preferring default exports.
     /// - `"single"`: Prefer default export when there is only one export in the module.

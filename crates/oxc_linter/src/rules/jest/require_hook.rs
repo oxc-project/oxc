@@ -26,7 +26,7 @@ fn use_hook(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireHookConfig {
     /// An array of function names that are allowed to be called outside of hooks.
     allowed_function_calls: Vec<CompactStr>,

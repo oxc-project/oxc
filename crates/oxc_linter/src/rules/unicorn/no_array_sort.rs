@@ -22,7 +22,7 @@ fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoArraySort {
     /// When set to `true` (default), allows `array.sort()` as an expression statement.
     /// Set to `false` to forbid `Array#sort()` even if it's an expression statement.

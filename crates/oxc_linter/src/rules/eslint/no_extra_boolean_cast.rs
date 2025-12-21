@@ -32,7 +32,7 @@ fn no_extra_boolean_cast_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtraBooleanCast {
     /// when set to `true`, in addition to checking default contexts, checks
     /// whether extra boolean casts are present in expressions whose result is

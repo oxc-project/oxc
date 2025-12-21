@@ -18,7 +18,7 @@ fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEval {
     /// This `allowIndirect` option allows indirect `eval()` calls.
     ///

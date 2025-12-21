@@ -51,7 +51,7 @@ fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoImplicitCoercionConfig {
     /// When `true`, warns on implicit boolean coercion (e.g., `!!foo`).
     boolean: bool,

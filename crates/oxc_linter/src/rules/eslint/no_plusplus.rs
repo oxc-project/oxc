@@ -29,7 +29,7 @@ fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoPlusplus {
     /// Whether to allow `++` and `--` in for loop afterthoughts.
     allow_for_loop_afterthoughts: bool,

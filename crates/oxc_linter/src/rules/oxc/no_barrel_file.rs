@@ -19,7 +19,7 @@ fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> O
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBarrelFile {
     /// The maximum number of modules that can be re-exported via `export *`
     /// before the rule is triggered.

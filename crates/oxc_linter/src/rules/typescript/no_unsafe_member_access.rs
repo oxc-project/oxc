@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoUnsafeMemberAccess(Box<NoUnsafeMemberAccessConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeMemberAccessConfig {
     /// Whether to allow `?.` optional chains on `any` values.
     /// When `true`, optional chaining on `any` values will not be flagged.

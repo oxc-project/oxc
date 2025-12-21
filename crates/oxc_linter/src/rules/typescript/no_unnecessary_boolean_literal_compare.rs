@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoUnnecessaryBooleanLiteralCompare(Box<NoUnnecessaryBooleanLiteralCompareConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnnecessaryBooleanLiteralCompareConfig {
     /// Whether to allow comparing nullable boolean expressions to `false`.
     /// When false, `x === false` where x is `boolean | null` will be flagged.

@@ -34,7 +34,7 @@ impl std::ops::Deref for PreferNumberProperties {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferNumberPropertiesConfig {
     /// If set to `true`, checks for usage of `Infinity` and `-Infinity` as global variables.
     check_infinity: bool,

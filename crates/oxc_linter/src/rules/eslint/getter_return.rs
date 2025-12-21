@@ -32,7 +32,7 @@ fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct GetterReturn {
     /// When set to `true`, allows getters to implicitly return `undefined` with a `return` statement containing no expression.
     pub allow_implicit: bool,

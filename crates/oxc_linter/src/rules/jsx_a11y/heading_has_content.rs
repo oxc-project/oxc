@@ -24,7 +24,7 @@ fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct HeadingHasContentConfig {
     /// Additional custom component names to treat as heading elements.
     /// These will be validated in addition to the standard h1-h6 elements.

@@ -22,7 +22,7 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoNamespace(Box<NoNamespaceConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNamespaceConfig {
     /// An array of glob strings for modules that should be ignored by the rule.
     /// For example, `["*.json"]` will ignore all JSON imports.

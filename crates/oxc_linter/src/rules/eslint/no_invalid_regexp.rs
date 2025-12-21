@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 #[derive(Debug, Clone, Deserialize, Default, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoInvalidRegexpConfig {
     /// Case-sensitive array of flags that will be allowed.
     allow_constructor_flags: Vec<char>,

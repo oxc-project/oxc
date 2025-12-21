@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct UnboundMethod(Box<UnboundMethodConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UnboundMethodConfig {
     /// Whether to ignore unbound methods that are static.
     /// When true, static methods can be referenced without binding.

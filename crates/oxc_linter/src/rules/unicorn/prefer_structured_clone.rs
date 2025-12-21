@@ -28,7 +28,7 @@ fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferStructuredClone(Box<PreferStructuredCloneConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferStructuredCloneConfig {
     /// List of functions that are allowed to be used for deep cloning instead of structuredClone.
     functions: Vec<String>,

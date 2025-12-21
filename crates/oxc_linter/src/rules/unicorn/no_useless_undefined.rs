@@ -29,7 +29,7 @@ fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessUndefined {
     /// Whether to check for useless `undefined` in function call arguments.
     check_arguments: bool,

@@ -25,7 +25,7 @@ fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoUnusedExpressions(Box<NoUnusedExpressionsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnusedExpressionsConfig {
     /// When set to `true`, allows short circuit evaluations in expressions.
     allow_short_circuit: bool,

@@ -26,7 +26,7 @@ fn no_promise_executor_return_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoPromiseExecutorReturn(Box<NoPromiseExecutorReturnConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoPromiseExecutorReturnConfig {
     /// If `true`, allows returning `void` expressions (e.g., `return void resolve()`).
     allow_void: bool,

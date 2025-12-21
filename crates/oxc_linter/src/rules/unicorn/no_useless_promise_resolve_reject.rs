@@ -32,7 +32,7 @@ fn reject(span: Span, preferred: &str) -> OxcDiagnostic {
 pub struct NoUselessPromiseResolveReject(Box<NoUselessPromiseResolveRejectOptions>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessPromiseResolveRejectOptions {
     /// If set to `true`, allows the use of `Promise.reject` in async functions and promise callbacks.
     pub allow_reject: bool,

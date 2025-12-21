@@ -26,7 +26,7 @@ fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
 pub struct MaxDependencies(Box<MaxDependenciesConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxDependenciesConfig {
     /// Maximum number of dependencies allowed in a module.
     max: usize,

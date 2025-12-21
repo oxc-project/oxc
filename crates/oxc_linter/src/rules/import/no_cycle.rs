@@ -22,7 +22,7 @@ fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
     max_depth: u32,

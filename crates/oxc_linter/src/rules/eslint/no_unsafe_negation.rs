@@ -24,7 +24,7 @@ fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeNegation {
     /// The `enforceForOrderingRelations` option determines whether negation is allowed
     /// on the left-hand side of ordering relational operators (<, >, <=, >=).
