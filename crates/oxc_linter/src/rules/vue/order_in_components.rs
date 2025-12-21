@@ -10,6 +10,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
+/// Information about a property in the component definition
+struct PropertyInfo {
+    /// The name of the property
+    name: String,
+    /// The position in the order configuration (None if not in order list)
+    order_position: Option<usize>,
+    /// The span of the property for error reporting
+    span: Span,
+}
+
 fn order_in_components_diagnostic(
     current_name: &str,
     should_be_before: &str,
@@ -279,14 +289,14 @@ impl OrderInComponents {
         let order = self.get_order();
 
         // Collect properties with their names and order positions
-        let mut properties: Vec<(String, Option<usize>, Span, usize)> = Vec::new();
+        let mut properties: Vec<PropertyInfo> = Vec::new();
 
-        for (idx, prop) in obj.properties.iter().enumerate() {
+        for prop in &obj.properties {
             if let ObjectPropertyKind::ObjectProperty(property) = prop
                 && let Some(name) = get_property_name(&property.key)
             {
-                let position = get_order_position(&name, &order);
-                properties.push((name, position, property.span, idx));
+                let order_position = get_order_position(&name, &order);
+                properties.push(PropertyInfo { name, order_position, span: property.span });
             }
         }
 
@@ -294,22 +304,22 @@ impl OrderInComponents {
         let mut max_position: Option<usize> = None;
         let mut max_position_name = String::new();
 
-        for (name, position, span, _idx) in &properties {
-            if let Some(pos) = position {
+        for prop in &properties {
+            if let Some(pos) = prop.order_position {
                 if let Some(max) = max_position
-                    && *pos < max
+                    && pos < max
                 {
                     // This property should be before the previous one
                     ctx.diagnostic(order_in_components_diagnostic(
-                        name,
+                        &prop.name,
                         &max_position_name,
-                        *span,
+                        prop.span,
                     ));
-                    return; // Report one error at a time
+                    // Continue checking remaining properties to report all ordering errors
                 }
-                if max_position.is_none() || *pos >= max_position.unwrap_or(0) {
-                    max_position = Some(*pos);
-                    max_position_name.clone_from(name);
+                if max_position.is_none() || pos >= max_position.unwrap_or(0) {
+                    max_position = Some(pos);
+                    max_position_name.clone_from(&prop.name);
                 }
             }
         }
@@ -350,7 +360,13 @@ fn is_vue_component_registration(call: &oxc_ast::ast::CallExpression) -> bool {
         return matches!(id.name.as_str(), "Vue" | "app");
     }
 
-    // Also handle destructured: const { component } = Vue; component(...)
+    // Also handle destructured: `const { component } = Vue; component(...)`.
+    //
+    // NOTE: This is a heuristic and will treat *any* identifier named `component`
+    // as a Vue component registration call, even if it was not actually
+    // destructured from `Vue` or `app`. This can introduce false positives for
+    // unrelated functions named `component`, but is currently accepted in
+    // order to support common destructuring patterns.
     if let Expression::Identifier(id) = &call.callee {
         return id.name == "component";
     }
