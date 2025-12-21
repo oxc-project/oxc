@@ -30,12 +30,14 @@ fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "camelCase", default)]
-#[derive(Default)]
 struct NoUnsafeConfig {
-    #[serde(default)]
+    /// Whether to check for the non-prefixed lifecycle methods.
+    /// If `true`, this means `componentWillMount`, `componentWillReceiveProps`,
+    /// and `componentWillUpdate` will also be flagged, rather than just the
+    /// UNSAFE_ versions. It is recommended to set this to `true` to fully
+    /// avoid unsafe lifecycle methods.
     check_aliases: bool,
 }
 
