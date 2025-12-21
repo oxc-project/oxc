@@ -1,3 +1,5 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_ast::{
@@ -13,7 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
@@ -23,113 +25,10 @@ fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
 const EXPECTED_BLOCK_MSG: &str = "Expected block statement surrounding arrow body.";
 const UNEXPECTED_BLOCK_SINGLE_MSG: &str = "Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.";
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
-    #[default]
-    AsNeeded,
-    Always,
-    Never,
-}
-
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::AsNeeded,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct ArrowBodyStyle {
-    mode: Mode,
-    require_return_for_object_literal: bool,
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// This rule can enforce or disallow the use of braces around arrow function body.
-    /// Arrow functions can use either:
-    /// - a block body `() => { ... }`
-    /// - or a concise body `() => expression` with an implicit return.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Inconsistent use of block vs. concise bodies makes code harder to read.
-    /// Concise bodies are limited to a single expression, whose value is implicitly returned.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Enum: `"always"`, `"as-needed"`, `"never"`
-    /// - Default: `"as-needed"`
-    ///
-    /// Possible values:
-    /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
-    /// * `always` enforces braces around the function body
-    /// * `as-needed` enforces no braces where they can be omitted (default)
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `requireReturnForObjectLiteral`: `boolean` (default: `false`) - requires braces and an explicit return for object literals.
-    ///
-    /// Note: This option only applies when the first option is `"as-needed"`.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
-    /// }
-    /// ```
-    ///
-    /// ### Examples
-    ///
-    /// #### `"never"` (default)
-    ///
-    /// Examples of **incorrect** code for this rule with the `never` option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "never"] */
-    ///
-    /// /* ✘ Bad: */
-    /// const foo = () => {
-    ///     return 0;
-    /// };
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `never` option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "never"] */
-    ///
-    /// /* ✔ Good: */
-    /// const foo = () => 0;
-    /// const bar = () => ({ foo: 0 });
-    /// ```
-    ///
-    /// #### `"always"`
-    ///
-    /// Examples of **incorrect** code for this rule with the `always` option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "always"] */
-    ///
-    /// /* ✘ Bad: */
-    /// const foo = () => 0;
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `always` option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "always"] */
-    ///
-    /// /* ✔ Good: */
-    /// const foo = () => {
-    ///     return 0;
-    /// };
-    /// ```
-    ///
-    /// #### `"as-needed"`
+    /// `as-needed` enforces no braces where they can be omitted (default).
     ///
     /// Examples of **incorrect** code for this rule with the `as-needed` option:
     /// ```js
@@ -157,8 +56,61 @@ declare_oxc_lint!(
     ///     bar();
     /// };
     /// ```
+    #[default]
+    AsNeeded,
+    /// `always` enforces braces around the function body.
     ///
-    /// #### `"as-needed"` with `requireReturnForObjectLiteral`
+    /// Examples of **incorrect** code for this rule with the `always` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "always"] */
+    ///
+    /// /* ✘ Bad: */
+    /// const foo = () => 0;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `always` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "always"] */
+    ///
+    /// /* ✔ Good: */
+    /// const foo = () => {
+    ///     return 0;
+    /// };
+    /// ```
+    Always,
+    /// `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
+    ///
+    /// Examples of **incorrect** code for this rule with the `never` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "never"] */
+    ///
+    /// /* ✘ Bad: */
+    /// const foo = () => {
+    ///     return 0;
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `never` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "never"] */
+    ///
+    /// /* ✔ Good: */
+    /// const foo = () => 0;
+    /// const bar = () => ({ foo: 0 });
+    /// ```
+    Never,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default)]
+pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct ArrowBodyStyleConfig {
+    /// If `true`, requires braces and an explicit return for object literals.
+    ///
+    /// Note: This option only applies when the first option is `"as-needed"`.
     ///
     /// Examples of **incorrect** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
     /// ```js
@@ -177,23 +129,42 @@ declare_oxc_lint!(
     /// const foo = () => {};
     /// const bar = () => { return { bar: 0 }; };
     /// ```
+    require_return_for_object_literal: bool,
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// This rule can enforce or disallow the use of braces around arrow function body.
+    /// Arrow functions can use either:
+    /// - a block body `() => { ... }`
+    /// - or a concise body `() => expression` with an implicit return.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Inconsistent use of block vs. concise bodies makes code harder to read.
+    /// Concise bodies are limited to a single expression, whose value is implicitly returned.
+    ///
+    /// ### Options
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
+    /// }
+    /// ```
     ArrowBodyStyle,
     eslint,
     style,
     fix,
+    config = ArrowBodyStyle,
 );
 
 impl Rule for ArrowBodyStyle {
     fn from_configuration(value: Value) -> Self {
-        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
-
-        let require_return_for_object_literal = value
-            .get(1)
-            .and_then(|v| v.get("requireReturnForObjectLiteral"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-
-        Self { mode, require_return_for_object_literal }
+        serde_json::from_value::<DefaultRuleConfig<ArrowBodyStyle>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -218,12 +189,13 @@ impl ArrowBodyStyle {
         arrow_func_expr: &ArrowFunctionExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let ArrowBodyStyle(mode, config) = &self;
         let body = &arrow_func_expr.body;
         let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
-        let should_report = self.mode == Mode::Always
-            || (self.mode == Mode::AsNeeded
-                && self.require_return_for_object_literal
+        let should_report = mode == &Mode::Always
+            || (mode == &Mode::AsNeeded
+                && config.require_return_for_object_literal
                 && matches!(inner_expr, Some(Expression::ObjectExpression(_))));
 
         if !should_report {
@@ -247,8 +219,9 @@ impl ArrowBodyStyle {
         ctx: &LintContext<'a>,
     ) {
         let body = &arrow_func_expr.body;
+        let ArrowBodyStyle(mode, config) = &self;
 
-        match self.mode {
+        match mode {
             Mode::Never => {
                 // Mode::Never: report any block body
                 if body.statements.is_empty() {
@@ -289,7 +262,7 @@ impl ArrowBodyStyle {
             Mode::AsNeeded if body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     // Skip if requireReturnForObjectLiteral and returning an object
-                    if self.require_return_for_object_literal
+                    if config.require_return_for_object_literal
                         && matches!(
                             return_statement.argument,
                             Some(Expression::ObjectExpression(_))
