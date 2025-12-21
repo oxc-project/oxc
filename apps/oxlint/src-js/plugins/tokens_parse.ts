@@ -51,8 +51,7 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
-  // Determine ScriptKind based on file extension
-  const scriptKind = getScriptKind(filePath, tsModule);
+  const scriptKind = getScriptKind(filePath);
 
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
@@ -274,10 +273,10 @@ function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
  * Determine TypeScript ScriptKind based on file extension.
  *
  * @param path - File path
- * @param tsModule - TypeScript module
  * @returns Appropriate ScriptKind for the file
  */
-function getScriptKind(path: string, tsModule: typeof import("typescript")): ts.ScriptKind {
+function getScriptKind(path: string): ts.ScriptKind {
+  debugAssertIsNonNull(tsModule);
   const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
   switch (ext) {
     case ".tsx":
