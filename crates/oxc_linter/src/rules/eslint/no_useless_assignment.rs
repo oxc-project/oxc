@@ -1,4 +1,5 @@
 use oxc_ast::{AstKind, ast::BindingIdentifier};
+use oxc_cfg::{ControlFlowGraph, graph::graph::NodeIndex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Reference;
@@ -143,58 +144,17 @@ fn analyze_variable_references(
     if has_init {
         let init_cfg_id = nodes.cfg_id(decl_node.id());
 
-        /*
-         * Initialization is used if:
-         *   - There exists a read reachable from init, AND
-         *   - There is no write reachable from init that is before the read
-         */
-
-        let mut init_value_is_used = false;
-
-        let writes_after_init: Vec<_> = references
-            .iter()
-            .filter(|r| r.is_write() && cfg.is_reachable(init_cfg_id, nodes.cfg_id(r.node_id())))
-            .collect();
-
-        for r in references.iter() {
-            if r.is_write() {
-                continue;
-            }
-
-            let read_cfg_id = nodes.cfg_id(r.node_id());
-            let read_span = nodes.get_node(r.node_id()).span();
-
-            if !cfg.is_reachable(init_cfg_id, read_cfg_id) {
-                continue;
-            }
-
-            let mut init_is_used_for_read = true;
-            for w in &writes_after_init {
-                let write_cfg_id = nodes.cfg_id(w.node_id());
-                let write_span = nodes.get_node(w.node_id()).span();
-
-                if cfg.is_reachable(write_cfg_id, read_cfg_id) && write_span.start < read_span.start
-                {
-                    init_is_used_for_read = false;
-                    break;
-                }
-            }
-
-            if init_is_used_for_read {
-                init_value_is_used = true;
-                break;
-            }
-        }
-
-        if !init_value_is_used {
-            ctx.diagnostic(no_useless_assignment_diagnostic(&ident.name, decl_node.span()));
-        }
+        check_write_usage(
+            ident,
+            references,
+            ReferenceIndex::Init,
+            init_cfg_id,
+            decl_node.span(),
+            ctx,
+            cfg,
+        );
     }
 
-    /*
-     * Non-initial writes are used if:
-     *   - There exists a read reachable from the write
-     */
     for (i, reference) in references.iter().enumerate() {
         if !reference.is_write() {
             continue;
@@ -203,34 +163,86 @@ fn analyze_variable_references(
         let write_cfg_id = nodes.cfg_id(reference.node_id());
         let write_span = nodes.get_node(reference.node_id()).span();
 
-        let mut has_read_after = false;
-        for r in references[i + 1..].iter() {
-            if r.is_write() {
+        check_write_usage(
+            ident,
+            references,
+            ReferenceIndex::NonInit(i),
+            write_cfg_id,
+            write_span,
+            ctx,
+            cfg,
+        );
+    }
+}
+
+enum ReferenceIndex {
+    NonInit(usize),
+    Init,
+}
+
+fn check_write_usage(
+    ident: &BindingIdentifier,
+    references: &[&Reference],
+    idx: ReferenceIndex,
+    write_cfg_id: NodeIndex,
+    write_span: Span,
+    ctx: &LintContext,
+    cfg: &ControlFlowGraph,
+) {
+    let nodes = ctx.nodes();
+    let references_after = match idx {
+        ReferenceIndex::NonInit(i) => &references[i + 1..],
+        ReferenceIndex::Init => references,
+    };
+
+    let mut assignment_used = false;
+    let mut last_reachable_write: Option<&Reference> = None;
+    for r in references_after.iter() {
+        if r.is_write() && cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
+            last_reachable_write = Some(r);
+            continue;
+        }
+        if r.is_read() && cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
+            if last_reachable_write.is_none() {
+                assignment_used = true;
                 break;
             }
-            if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
-                has_read_after = true;
-                break;
+
+            if let Some(last_reachable_write) = last_reachable_write {
+                if !cfg.is_reachable(
+                    nodes.cfg_id(last_reachable_write.node_id()),
+                    nodes.cfg_id(r.node_id()),
+                ) {
+                    assignment_used = true;
+                    break;
+                }
             }
         }
+    }
 
-        if !has_read_after {
+    if !assignment_used {
+        let references_before = match idx {
+            ReferenceIndex::NonInit(i) => Some(&references[..i]),
+            ReferenceIndex::Init => None,
+        };
+
+        if let Some(references_before) = references_before {
             if cfg.is_cyclic(write_cfg_id) {
-                for r in references[..i].iter() {
+                for r in references_before.iter() {
                     if r.is_write() {
                         continue;
                     }
                     if cfg.is_reachable(write_cfg_id, nodes.cfg_id(r.node_id())) {
-                        has_read_after = true;
+                        assignment_used = true;
                         break;
                     }
                 }
             }
         }
+    }
 
-        if !has_read_after {
-            ctx.diagnostic(no_useless_assignment_diagnostic(&ident.name, write_span));
-        }
+    if !assignment_used {
+        ctx.diagnostic(no_useless_assignment_diagnostic(&ident.name, write_span));
     }
 }
 
