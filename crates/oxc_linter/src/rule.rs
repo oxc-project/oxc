@@ -124,6 +124,8 @@ where
                 .and_then(|v| serde_json::from_value(v).ok())
                 .unwrap_or_else(T::default);
             Ok(DefaultRuleConfig(config))
+        } else if value == serde_json::Value::Null {
+            return Ok(DefaultRuleConfig(T::default()));
         } else {
             Err(D::Error::custom("Expected array for rule configuration"))
         }
