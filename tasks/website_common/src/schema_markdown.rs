@@ -464,12 +464,13 @@ fn sanitize(s: &mut String) {
 }
 
 fn as_mapped_type(schema: &SchemaObject) -> Option<&SchemaObject> {
-    let obj = schema.object.as_ref()?;
     // Treat as a mapped type if:
     // 1. Properties are empty (traditional mapped type), OR
     // 2. Properties count exceeds a threshold (e.g., OxlintRules with 600+ rules)
     //    In this case, we don't want to render each property as a section.
     const MAX_PROPERTIES_THRESHOLD: usize = 50;
+
+    let obj = schema.object.as_ref()?;
     let treat_as_mapped =
         obj.properties.is_empty() || obj.properties.len() > MAX_PROPERTIES_THRESHOLD;
     treat_as_mapped
