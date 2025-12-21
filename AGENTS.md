@@ -140,7 +140,6 @@ Oxc uses multiple testing approaches tailored to each crate:
 - **Conformance tests**: Against external suites (Test262, Babel, TypeScript, Prettier)
 - **Snapshot tests**: Track failures and expected outputs using `cargo insta`
 
-
 ### Quick Test Commands
 
 ```bash
