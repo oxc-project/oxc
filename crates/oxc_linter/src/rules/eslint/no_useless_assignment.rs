@@ -161,7 +161,8 @@ fn analyze_variable_references(
         }
 
         let write_cfg_id = nodes.cfg_id(reference.node_id());
-        let write_span = nodes.get_node(reference.node_id()).span();
+        let assignment_node = nodes.parent_node(reference.node_id());
+        let write_span = assignment_node.span();
 
         check_write_usage(
             ident,
