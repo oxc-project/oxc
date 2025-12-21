@@ -31,5 +31,13 @@
   "types": "dist/index.d.ts",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "peerDependencies": {
+    "oxlint-tsgolint": ">=0.10.0"
+  },
+  "peerDependenciesMeta": {
+    "oxlint-tsgolint": {
+      "optional": true
+    }
   }
 }
