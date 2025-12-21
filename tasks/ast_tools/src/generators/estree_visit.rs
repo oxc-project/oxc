@@ -203,6 +203,21 @@ fn generate(codegen: &Codegen) -> Codes {
 
         /* IF ANCESTORS */
         export const ancestors = [];
+
+        /**
+         * Check that `ancestors` array is kept in sync with traversal.
+         * This function is only included in debug build. Minifier will remove it in release build.
+         */
+        function debugCheckAncestorsOnExit(lenBefore, node) {
+            if (!DEBUG) return;
+            if (ancestors.length !== lenBefore) {
+                throw new Error(
+                    '`ancestors` is out of sync with traversal. '
+                    + `Its length has changed from ${lenBefore} to ${ancestors.length} `
+                    + `while visiting children of \\`${node.type}\\`.`
+                );
+            }
+        }
         /* END_IF */
 
         const { isArray } = Array;
@@ -265,6 +280,7 @@ fn generate(codegen: &Codegen) -> Codes {
                     if (enter !== null) enter(node);
                 }}
                 if (ANCESTORS) ancestors.unshift(node);
+                const ancestorsLen = ANCESTORS && DEBUG ? ancestors.length : 0;
             ");
 
             for key in &node.keys {
@@ -272,7 +288,10 @@ fn generate(codegen: &Codegen) -> Codes {
             }
 
             walk_fn_body.push_str("
-                if (ANCESTORS) ancestors.shift();
+                if (ANCESTORS) {
+                    debugCheckAncestorsOnExit(ancestorsLen, node);
+                    ancestors.shift();
+                }
                 if (exit !== null) exit(node);
             ");
 

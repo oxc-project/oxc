@@ -21,7 +21,7 @@ import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 import { walkProgram } from '../generated/walk.js';
 */
 
-import { walkProgram } from "../generated/walk.js";
+import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
@@ -209,7 +209,12 @@ export function lintFileImpl(
   if (needsVisit) {
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
+
     walkProgram(ast, compiledVisitor);
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
 
     // Lazy implementation
     /*
@@ -255,5 +260,6 @@ export function resetFile() {
  */
 export function resetStateAfterError() {
   diagnostics.length = 0;
+  ancestors.length = 0;
   resetFile();
 }
