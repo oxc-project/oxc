@@ -66,23 +66,17 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDeprecatedDestroyedLifecycle {
-    fn run_once(&self, ctx: &LintContext) {
-        for node in ctx.nodes() {
-            let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
-                continue;
-            };
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else { return };
 
-            // Handle `export default { ... }`
-            match &export_default_decl.declaration {
-                ExportDefaultDeclarationKind::ObjectExpression(obj_expr) => {
-                    check_object_properties(obj_expr, ctx);
-                }
-                ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                    // Handle `export default defineComponent({ ... })`
-                    check_define_component(call_expr, ctx);
-                }
-                _ => {}
+        match &export_default_decl.declaration {
+            ExportDefaultDeclarationKind::ObjectExpression(obj_expr) => {
+                check_object_properties(obj_expr, ctx);
             }
+            ExportDefaultDeclarationKind::CallExpression(call_expr) => {
+                check_define_component(call_expr, ctx);
+            }
+            _ => {}
         }
     }
 }
