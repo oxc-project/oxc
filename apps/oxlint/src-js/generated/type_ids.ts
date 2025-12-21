@@ -176,5 +176,34 @@ export const NODE_TYPES_COUNT = 165;
 /** Count of leaf node types */
 export const LEAF_NODE_TYPES_COUNT = 27;
 
+/** Type IDs which match `:statement` selector class */
+export const STATEMENT_NODE_TYPE_IDS = [
+  0, 1, 35, 36, 41, 44, 46, 47, 48, 49, 51, 52, 53, 54, 55, 58, 60, 65, 78, 83, 86, 87, 91, 93, 94,
+  111, 114, 119, 124, 131, 140, 142, 153, 159,
+];
+
+/** Type IDs which match `:declaration` selector class */
+export const DECLARATION_NODE_TYPE_IDS = [
+  41, 47, 48, 49, 55, 60, 91, 111, 114, 119, 124, 131, 140, 142, 153, 159,
+];
+
+/**
+ * Type IDs which may match `:pattern` selector class.
+ * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+ */
+export const PATTERN_NODE_TYPE_IDS = [
+  2, 6, 8, 28, 29, 30, 31, 32, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 72, 73, 79,
+  84, 85, 88, 89, 90, 95, 101, 110, 117, 129, 143, 150, 156,
+];
+
+/**
+ * Type IDs which may match `:expression` selector class.
+ * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+ */
+export const EXPRESSION_NODE_TYPE_IDS = [
+  2, 6, 8, 28, 30, 31, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 73, 79, 84, 85, 88,
+  89, 90, 95, 101, 110, 117, 129, 143, 150, 156,
+];
+
 /** Type IDs which match `:function` selector class */
 export const FUNCTION_NODE_TYPE_IDS = [30, 55, 56];

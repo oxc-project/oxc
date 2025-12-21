@@ -9,6 +9,7 @@ import {
   initCompiledVisitor,
 } from "../src-js/plugins/visitor.ts";
 
+import type { Mock } from "vitest";
 import type { Node } from "../src-js/plugins/types.ts";
 import type { EnterExit, VisitFn } from "../src-js/plugins/visitor.ts";
 
@@ -565,6 +566,191 @@ describe("compile visitor", () => {
       ident = { type: "Identifier", name: "foo", ...SPAN };
       identEnterExit.exit!(ident);
       expect(exit).toHaveBeenCalledWith(ident);
+    });
+
+    it("class adds visitor function only for node types in those classes", () => {
+      type ClassName = "statement" | "declaration" | "pattern" | "expression" | "function";
+
+      const enterStatement = vi.fn(() => {});
+      const exitStatement = vi.fn(() => {});
+      const enterDeclaration = vi.fn(() => {});
+      const exitDeclaration = vi.fn(() => {});
+      const enterPattern = vi.fn(() => {});
+      const exitPattern = vi.fn(() => {});
+      const enterExpression = vi.fn(() => {});
+      const exitExpression = vi.fn(() => {});
+      const enterFunction = vi.fn(() => {});
+      const exitFunction = vi.fn(() => {});
+
+      // `:pattern` and `:expression` are "complex" selectors.
+      // Visit fns are wrapped for them. The rest of classes are simple.
+      const classes = new Map<
+        ClassName,
+        { enter: Mock<VisitFn>; exit: Mock<VisitFn>; isComplex: boolean }
+      >([
+        ["statement", { enter: enterStatement, exit: exitStatement, isComplex: false }],
+        ["declaration", { enter: enterDeclaration, exit: exitDeclaration, isComplex: false }],
+        ["pattern", { enter: enterPattern, exit: exitPattern, isComplex: true }],
+        ["expression", { enter: enterExpression, exit: exitExpression, isComplex: true }],
+        ["function", { enter: enterFunction, exit: exitFunction, isComplex: false }],
+      ]);
+
+      function resetSpies() {
+        for (const { enter, exit } of classes.values()) {
+          enter.mockClear();
+          exit.mockClear();
+        }
+      }
+
+      addVisitorToCompiled({
+        ":statement": enterStatement,
+        ":statement:exit": exitStatement,
+        ":declaration": enterDeclaration,
+        ":declaration:exit": exitDeclaration,
+        ":pattern": enterPattern,
+        ":pattern:exit": exitPattern,
+        ":expression": enterExpression,
+        ":expression:exit": exitExpression,
+        ":function": enterFunction,
+        ":function:exit": exitFunction,
+      });
+
+      expect(finalizeCompiledVisitor()).toBe(true);
+
+      for (const [typeName, typeId] of NODE_TYPE_IDS_MAP.entries()) {
+        // Check that compiled visitor is set up correctly
+
+        // Get classes that this node type matches
+        const classNames: ClassName[] = [];
+
+        if (typeName.endsWith("Statement")) {
+          classNames.push("statement");
+        } else if (typeName.endsWith("Declaration")) {
+          // Declarations are also statements
+          classNames.push("declaration", "statement");
+        } else if (typeName.endsWith("Pattern")) {
+          classNames.push("pattern");
+        } else if (
+          typeName.endsWith("Expression") ||
+          typeName.endsWith("Literal") ||
+          typeName === "Identifier" ||
+          typeName === "MetaProperty"
+        ) {
+          // Expressions are also patterns
+          classNames.push("expression", "pattern");
+        }
+
+        if (
+          ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(
+            typeName,
+          )
+        ) {
+          classNames.push("function");
+        }
+
+        const visit = compiledVisitor[typeId];
+
+        // If no classes match this node type, then visitor should be `null`
+        if (classNames.length === 0) {
+          expect(visit).toBeNull();
+          continue;
+        }
+
+        // Check the compiler visitor for this type is what it should be.
+        // Check that visit fns have/have not been wrapped/merged, depending on the class.
+        if (
+          classNames.length === 1 && // Type is only matched by 1 class
+          typeId >= LEAF_NODE_TYPES_COUNT && // Non leaf node
+          !classes.get(classNames[0])!.isComplex // Class is not complex
+        ) {
+          const enterExit = visit as EnterExit;
+          const { enter, exit } = classes.get(classNames[0])!;
+          expect(enterExit.enter).toBe(enter);
+          expect(enterExit.exit).toBe(exit);
+        } else {
+          expect(visit).not.toBeNull();
+
+          // Check visit fn has been wrapped/merged
+          if (typeId < LEAF_NODE_TYPES_COUNT) {
+            // Leaf node
+            expect(typeof visit).toBe("function");
+
+            for (const { enter, exit } of classes.values()) {
+              expect(visit).not.toBe(enter);
+              expect(visit).not.toBe(exit);
+            }
+          } else {
+            // Non-leaf node
+            expect(typeof visit).toBe("object");
+
+            const enterExit = visit as EnterExit;
+            expect(typeof enterExit.enter).toBe("function");
+            expect(typeof enterExit.exit).toBe("function");
+
+            for (const { enter, exit } of classes.values()) {
+              expect(enterExit.enter).not.toBe(enter);
+              expect(enterExit.enter).not.toBe(exit);
+              expect(enterExit.exit).not.toBe(enter);
+              expect(enterExit.exit).not.toBe(exit);
+            }
+          }
+        }
+
+        // Check that correct functions are called when visiting a node of this type
+        const node = {
+          type: typeName,
+          parent: { type: "Program", ...SPAN },
+          ...SPAN,
+        };
+
+        if (typeId < LEAF_NODE_TYPES_COUNT) {
+          // Leaf node
+          (visit as VisitFn)(node);
+
+          for (const [className, { enter, exit }] of classes.entries()) {
+            if (classNames.includes(className)) {
+              expect(enter).toHaveBeenCalledWith(node);
+              expect(exit).toHaveBeenCalledWith(node);
+            } else {
+              expect(enter).not.toHaveBeenCalled();
+              expect(exit).not.toHaveBeenCalled();
+            }
+          }
+
+          resetSpies();
+        } else {
+          // Non-leaf node
+          const enterExit = visit as EnterExit;
+
+          // Test enter
+          enterExit.enter!(node);
+
+          for (const [className, { enter, exit }] of classes.entries()) {
+            if (classNames.includes(className)) {
+              expect(enter).toHaveBeenCalledWith(node);
+            } else {
+              expect(enter).not.toHaveBeenCalled();
+            }
+            expect(exit).not.toHaveBeenCalled();
+          }
+
+          resetSpies();
+
+          // Test exit
+          enterExit.exit!(node);
+
+          for (const [className, { enter, exit }] of classes.entries()) {
+            expect(enter).not.toHaveBeenCalled();
+            if (classNames.includes(className)) {
+              expect(exit).toHaveBeenCalledWith(node);
+            } else {
+              expect(exit).not.toHaveBeenCalled();
+            }
+          }
+
+          resetSpies();
+        }
+      }
     });
 
     it("combined", () => {

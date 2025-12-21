@@ -33,10 +33,6 @@ impl Display for NodeId {
     }
 }
 
-/// Names of ESTree function types.
-const FUNCTION_TYPE_NAMES: &[&str] =
-    &["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"];
-
 pub struct ESTreeVisitGenerator;
 
 define_generator!(ESTreeVisitGenerator);
@@ -254,7 +250,9 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut visitor_type = string!("");
 
     let mut leaf_nodes_count = None;
-    let mut function_node_ids = vec![];
+
+    let mut selector_classes = SelectorClasses::new();
+
     for (node_id, node) in nodes.iter_enumerated() {
         let is_leaf = node.keys.is_empty();
         if leaf_nodes_count.is_none() && !is_leaf {
@@ -325,9 +323,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
 
-        if FUNCTION_TYPE_NAMES.contains(&node_name) {
-            function_node_ids.push(node_id);
-        }
+        selector_classes.add(node_name, node_id);
 
         // Convert ESTree type name to Oxc type names where they diverge
         let type_names: Option<&[&str]> = match node_name {
@@ -431,7 +427,14 @@ fn generate(codegen: &Codegen) -> Codes {
     ");
 
     let nodes_count = nodes.len();
-    function_node_ids.sort_unstable();
+
+    let (
+        statement_node_ids,
+        declaration_node_ids,
+        pattern_node_ids,
+        expression_node_ids,
+        function_node_ids,
+    ) = selector_classes.into_vecs();
 
     #[rustfmt::skip]
     write_it!(type_ids_map, "
@@ -444,6 +447,24 @@ fn generate(codegen: &Codegen) -> Codes {
         export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
 
         /* IF LINTER */
+
+        /** Type IDs which match `:statement` selector class */
+        export const STATEMENT_NODE_TYPE_IDS = {statement_node_ids:?};
+
+        /** Type IDs which match `:declaration` selector class */
+        export const DECLARATION_NODE_TYPE_IDS = {declaration_node_ids:?};
+
+        /**
+         * Type IDs which may match `:pattern` selector class.
+         * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+         */
+        export const PATTERN_NODE_TYPE_IDS = {pattern_node_ids:?};
+
+        /**
+         * Type IDs which may match `:expression` selector class.
+         * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+         */
+        export const EXPRESSION_NODE_TYPE_IDS = {expression_node_ids:?};
 
         /** Type IDs which match `:function` selector class */
         export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
@@ -519,5 +540,77 @@ fn generate(codegen: &Codegen) -> Codes {
         type_ids_map_oxlint,
         visitor_type_parser,
         visitor_type_oxlint,
+    }
+}
+
+/// Node IDs which are matched by selector classes.
+/// e.g. `FunctionDeclaration` is matched by `:function` selector class.
+struct SelectorClasses {
+    statement: Vec<NodeId>,
+    declaration: Vec<NodeId>,
+    pattern: Vec<NodeId>,
+    expression: Vec<NodeId>,
+    function: Vec<NodeId>,
+}
+
+impl SelectorClasses {
+    fn new() -> Self {
+        Self {
+            statement: vec![],
+            declaration: vec![],
+            pattern: vec![],
+            expression: vec![],
+            function: vec![],
+        }
+    }
+
+    /// If AST node name matches 1 or more selector classes, add its node type ID to lists for those classes.
+    ///
+    /// The method replicates the logic in `matchesSelectorClass` in `apps/oxlint/src-js/plugins/selector.ts`.
+    /// Must be kept in sync.
+    fn add(&mut self, node_name: &str, node_id: NodeId) {
+        // Function types are also declarations / expressions / patterns
+        if matches!(
+            node_name,
+            "FunctionDeclaration" | "FunctionExpression" | "ArrowFunctionExpression"
+        ) {
+            self.function.push(node_id);
+        }
+
+        match node_name {
+            _ if node_name.ends_with("Statement") => self.statement.push(node_id),
+            _ if node_name.ends_with("Declaration") => {
+                self.declaration.push(node_id);
+                // Declarations are also statements
+                self.statement.push(node_id);
+            }
+            _ if node_name.ends_with("Pattern") => self.pattern.push(node_id),
+            _ if node_name.ends_with("Expression")
+                || node_name.ends_with("Literal")
+                || node_name == "Identifier"
+                || node_name == "MetaProperty" =>
+            {
+                // `Identifier` nodes are only members of these classes if their `parent` is not a `MetaProperty`.
+                // That is handled in `analyzeSelector` in `apps/oxlint/src-js/plugins/selector.ts`.
+                self.expression.push(node_id);
+                // Expressions are also patterns
+                self.pattern.push(node_id);
+            }
+            _ => {}
+        }
+    }
+
+    fn sort(&mut self) {
+        self.statement.sort_unstable();
+        self.declaration.sort_unstable();
+        self.pattern.sort_unstable();
+        self.expression.sort_unstable();
+        self.function.sort_unstable();
+    }
+
+    #[expect(clippy::type_complexity)]
+    fn into_vecs(mut self) -> (Vec<NodeId>, Vec<NodeId>, Vec<NodeId>, Vec<NodeId>, Vec<NodeId>) {
+        self.sort();
+        (self.statement, self.declaration, self.pattern, self.expression, self.function)
     }
 }

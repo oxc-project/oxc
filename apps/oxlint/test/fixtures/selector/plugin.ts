@@ -21,6 +21,10 @@ const plugin: Plugin = {
           // :not
           ":not(Identifier)",
           // class
+          ":statement",
+          ":Declaration",
+          ":paTTern",
+          ":expression",
           ":FUNCTION",
           ":function > Identifier",
           // Child
