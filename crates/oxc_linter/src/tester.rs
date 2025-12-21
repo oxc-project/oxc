@@ -526,6 +526,16 @@ impl Tester {
         fix_kind: ExpectFixKind,
         fix_index: u8,
     ) -> TestResult {
+        // Raise an error if the rule config is not either None or an array. This helps catch mistakes in test cases.
+        if let Some(config) = rule_config.as_ref() {
+            assert!(
+                config.is_array(),
+                "Rule config for {}/{} must be an array or None, got: {}",
+                self.plugin_name,
+                self.rule_name,
+                config
+            );
+        }
         let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default());
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(

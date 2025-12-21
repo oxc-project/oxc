@@ -779,7 +779,7 @@ fn test() {
                 import a from "a";
                 import packageConfig from "./package.json";
             "#,
-            Some(json!({"json": "always", "js": "never"})),
+            Some(json!([{"json": "always", "js": "never"}])),
         ),
         (
             r#"
