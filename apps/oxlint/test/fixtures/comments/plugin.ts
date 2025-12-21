@@ -28,9 +28,14 @@ const testCommentsRule: Rule = {
       const { range, loc } = comment;
       assert(range === comment.range);
       assert(loc === comment.loc);
+
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(comment) === range);
       assert(sourceCode.getLoc(comment) === loc);
+
+      // Check comment can be converted to a string without an error
+      // oxlint-disable-next-line typescript/no-base-to-string, typescript/restrict-template-expressions
+      assert.equal(`${comment}`, "[object Object]");
     }
 
     context.report({

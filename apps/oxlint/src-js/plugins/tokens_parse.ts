@@ -22,8 +22,9 @@ let tsSyntaxKind: typeof import("typescript").SyntaxKind = null as any;
 // Prototype for `Token` objects, which calculates `loc` property lazily.
 // This is the same as `NodeProto` used for AST nodes (in `generated/deserialize.js`).
 // TODO: De-duplicate this code between here and `generated/deserialize.js`.
-const TokenProto = Object.create(null, {
+const TokenProto = Object.create(Object.prototype, {
   loc: {
+    // Note: Not configurable
     get() {
       return getNodeLoc(this);
     },

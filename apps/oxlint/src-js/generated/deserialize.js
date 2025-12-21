@@ -16,7 +16,7 @@ let uint8,
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String,
-  NodeProto = Object.create(null, {
+  NodeProto = Object.create(Object.prototype, {
     loc: {
       get() {
         return getLoc(this);

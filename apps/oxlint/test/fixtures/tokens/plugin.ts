@@ -16,9 +16,14 @@ const rule: Rule = {
       const { range, loc } = tokenOrComment;
       assert(range === tokenOrComment.range);
       assert(loc === tokenOrComment.loc);
+
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(tokenOrComment) === range);
       assert(sourceCode.getLoc(tokenOrComment) === loc);
+
+      // Check token can be converted to a string without an error
+      // oxlint-disable-next-line typescript/no-base-to-string, typescript/restrict-template-expressions
+      assert.equal(`${tokenOrComment}`, "[object Object]");
     }
 
     // `ast.tokens` does not include comments

@@ -148,14 +148,17 @@ fn generate_deserializers(
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        const NodeProto = Object.create(null, {{
+        /* IF LOC */
+        const NodeProto = Object.create(Object.prototype, {{
             loc: {{
+                // Note: Not configurable
                 get() {{
                     return getLoc(this);
                 }},
                 enumerable: true,
             }}
         }});
+        /* END_IF */
 
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
