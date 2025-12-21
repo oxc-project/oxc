@@ -32,7 +32,6 @@ pub struct LintOptions {
     pub unused_disable_directives: UnusedDisableDirectives,
     // Default to None so we can allow the config file
     // to be used when this is unset.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
     pub disable_nested_config: bool,
     pub fix_kind: LintFixKindFlag,

@@ -1,0 +1,12 @@
+{
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "linterOptions": {
+    "typeAware": true
+  },
+  "rules": {
+    "@typescript-eslint/require-await": "error"
+  }
+}
