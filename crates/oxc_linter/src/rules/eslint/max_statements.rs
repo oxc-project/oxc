@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -213,7 +213,7 @@ fn count_statements(node: &AstNode) -> usize {
 }
 
 /// Count statements in a block, recursively counting nested blocks but not nested functions
-fn count_statements_in_block(statements: &[oxc_ast::ast::Statement]) -> usize {
+fn count_statements_in_block(statements: &[Statement]) -> usize {
     let mut count = 0;
 
     for stmt in statements {
@@ -222,38 +222,38 @@ fn count_statements_in_block(statements: &[oxc_ast::ast::Statement]) -> usize {
         // Recursively count statements in nested blocks (if, for, while, etc.)
         // but NOT in nested function declarations (those count as 1 statement)
         match stmt {
-            oxc_ast::ast::Statement::BlockStatement(block) => {
+            Statement::BlockStatement(block) => {
                 // Block statements don't count as a statement themselves in ESLint
                 count -= 1;
                 count += count_statements_in_block(&block.body);
             }
-            oxc_ast::ast::Statement::IfStatement(if_stmt) => {
+            Statement::IfStatement(if_stmt) => {
                 count += count_statement_body(&if_stmt.consequent);
                 if let Some(alternate) = &if_stmt.alternate {
                     count += count_statement_body(alternate);
                 }
             }
-            oxc_ast::ast::Statement::ForStatement(for_stmt) => {
+            Statement::ForStatement(for_stmt) => {
                 count += count_statement_body(&for_stmt.body);
             }
-            oxc_ast::ast::Statement::ForInStatement(for_in) => {
+            Statement::ForInStatement(for_in) => {
                 count += count_statement_body(&for_in.body);
             }
-            oxc_ast::ast::Statement::ForOfStatement(for_of) => {
+            Statement::ForOfStatement(for_of) => {
                 count += count_statement_body(&for_of.body);
             }
-            oxc_ast::ast::Statement::WhileStatement(while_stmt) => {
+            Statement::WhileStatement(while_stmt) => {
                 count += count_statement_body(&while_stmt.body);
             }
-            oxc_ast::ast::Statement::DoWhileStatement(do_while) => {
+            Statement::DoWhileStatement(do_while) => {
                 count += count_statement_body(&do_while.body);
             }
-            oxc_ast::ast::Statement::SwitchStatement(switch) => {
+            Statement::SwitchStatement(switch) => {
                 for case in &switch.cases {
                     count += count_statements_in_block(&case.consequent);
                 }
             }
-            oxc_ast::ast::Statement::TryStatement(try_stmt) => {
+            Statement::TryStatement(try_stmt) => {
                 count += count_statements_in_block(&try_stmt.block.body);
                 if let Some(handler) = &try_stmt.handler {
                     count += count_statements_in_block(&handler.body.body);
@@ -262,10 +262,10 @@ fn count_statements_in_block(statements: &[oxc_ast::ast::Statement]) -> usize {
                     count += count_statements_in_block(&finalizer.body);
                 }
             }
-            oxc_ast::ast::Statement::WithStatement(with_stmt) => {
+            Statement::WithStatement(with_stmt) => {
                 count += count_statement_body(&with_stmt.body);
             }
-            oxc_ast::ast::Statement::LabeledStatement(labeled) => {
+            Statement::LabeledStatement(labeled) => {
                 // The labeled statement itself counts as 1, plus its body
                 count += count_statement_body(&labeled.body);
             }
@@ -279,9 +279,9 @@ fn count_statements_in_block(statements: &[oxc_ast::ast::Statement]) -> usize {
 }
 
 /// Count statements for a single statement that might be a block
-fn count_statement_body(stmt: &oxc_ast::ast::Statement) -> usize {
+fn count_statement_body(stmt: &Statement) -> usize {
     match stmt {
-        oxc_ast::ast::Statement::BlockStatement(block) => count_statements_in_block(&block.body),
+        Statement::BlockStatement(block) => count_statements_in_block(&block.body),
         _ => 0, // Single statements are already counted by the parent
     }
 }
@@ -381,6 +381,16 @@ fn test() {
             "function foo() { let one; let two = class { static { let three; let four; let five; if (six) { let seven; let eight; let nine; } } }; }",
             Some(serde_json::json!([2])),
         ), // { "ecmaVersion": 2022 }
+        // Test deprecated "maximum" property for backward compatibility
+        (
+            "var foo = { thing: function() { var bar = 1; var baz = 2; } }",
+            Some(serde_json::json!([{ "maximum": 2 }])),
+        ),
+        // Test combined config object with both max and ignoreTopLevelFunctions
+        (
+            "function foo() { var bar = 1; var baz = 2; }",
+            Some(serde_json::json!([{ "max": 1, "ignoreTopLevelFunctions": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -463,6 +473,11 @@ fn test() {
             "class C { static { { one; two; three; four; } function not_top_level() { 1; 2; 3; } { five; six; seven; eight; } } }",
             Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
         ), // { "ecmaVersion": 2022 }
+        // Test deprecated "maximum" property for backward compatibility (fail case)
+        (
+            "var foo = { thing: function() { var bar = 1; var baz = 2; var baz2; } }",
+            Some(serde_json::json!([{ "maximum": 2 }])),
+        ),
     ];
 
     Tester::new(MaxStatements::NAME, MaxStatements::PLUGIN, pass, fail).test_and_snapshot();

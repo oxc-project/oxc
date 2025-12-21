@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 413
 ---
   ⚠ eslint(max-statements): function `foo` has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:1]
@@ -160,5 +159,12 @@ assertion_line: 413
    ╭─[max_statements.tsx:1:47]
  1 │ class C { static { { one; two; three; four; } function not_top_level() { 1; 2; 3; } { five; six; seven; eight; } } }
    ·                                               ─────────────────────────
+   ╰────
+  help: Consider refactoring this function to reduce the number of statements.
+
+  ⚠ eslint(max-statements): function `thing` has too many statements (3). Maximum allowed is 2.
+   ╭─[max_statements.tsx:1:20]
+ 1 │ var foo = { thing: function() { var bar = 1; var baz = 2; var baz2; } }
+   ·                    ───────────
    ╰────
   help: Consider refactoring this function to reduce the number of statements.
