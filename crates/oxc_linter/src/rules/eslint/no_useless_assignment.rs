@@ -284,6 +284,47 @@ fn test() {
                 v = 'used in next iteration';
             }
         }",
+        "function fn5() {
+            let x;
+            let result = (x = 5) > 3 ? 'yes' : 'no';
+            console.log(x);
+        }",
+        "function fn6() {
+            let result = 'initial';
+            try {
+                doSomething(result);
+                result = 'success';
+                doSomething(result);
+            } catch (e) {
+                // empty
+            }
+        }",
+        "function fn7() {
+            let v = 'initial';
+            switch (x) {
+                case 1:
+                    console.log(v);
+                    break;
+                case 2:
+                    console.log(v);
+                    break;
+                default:
+                    v = 'default';
+                    console.log(v);
+            }
+        }",
+        "function fn8() {
+            let i = 0;
+            while (i < 10) {
+                console.log(i);
+                i = i + 1;
+            }
+        }",
+        "function fn9() {
+            let x = 1;
+            let result = x || 5;
+            console.log(result);
+        }",
     ];
     let fail = vec![
         "let x = 5; x = 7;",
@@ -324,6 +365,46 @@ fn test() {
                 v = 'unused';
             }
             console.log(v);
+        }",
+        "function fn6() {
+            let x = 1;
+            x = 2;
+            x = 3;
+        }",
+        "function fn7() {
+            let result = 'unused';
+            try {
+                result = 'error';
+            } catch (e) {
+                // empty
+            }
+        }",
+        "function fn8() {
+            let v = 'initial';
+            switch (x) {
+                case 1:
+                    console.log(v);
+                    break;
+                case 2:
+                    v = 'unused';
+                    break;
+            }
+        }",
+        "function fn9() {
+            let x = 1;
+            function inner() {
+                x = 2;
+                console.log(x);
+            }
+            inner();
+        }",
+        "function fn10() {
+            let result = 'initial';
+            doSomething(result);
+            if (condition) {
+                result = 'unused';
+                return;
+            }
         }",
     ];
 
