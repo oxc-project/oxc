@@ -317,7 +317,6 @@ impl CliRunner {
         let effective_type_aware = if self.options.type_aware {
             true
         } else {
-            // ConfigStore::type_aware_enabled returns whether the base config requested it
             config_store.type_aware_enabled()
         };
 

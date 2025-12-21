@@ -316,7 +316,7 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
-    /// Whether the base configuration has type-aware rules enabled.
+    /// Whether the configuration file has type-aware rules enabled.
     pub fn type_aware_enabled(&self) -> bool {
         self.base.base.config.linter_options.type_aware.unwrap_or(false)
     }

@@ -81,7 +81,7 @@ impl ServerLinterBuilder {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None, &mut external_plugin_store)
                 .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
@@ -121,12 +121,16 @@ impl ServerLinterBuilder {
             external_plugin_store,
         );
 
+        // This will prioritize the `typeAware` option from the LSP options,
+        // but if that is unset it will use the typeAware option in the config file.
+        let type_aware = options.type_aware.unwrap_or(oxlintrc.linter_options.type_aware.unwrap_or(false));
+
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
             config_store,
             &IsolatedLintHandlerOptions {
                 use_cross_module,
-                type_aware: options.type_aware,
+                type_aware: type_aware,
                 fix_kind,
                 root_path: root_path.to_path_buf(),
                 tsconfig_path: options.ts_config_path.as_ref().map(|path| {
@@ -224,6 +228,7 @@ impl ToolBuilder for ServerLinterBuilder {
 impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
+    // TODO: Add the linterOptions object from the config file as an argument here?
     fn create_nested_configs(
         root_path: &Path,
         options: &LSPLintOptions,
@@ -400,7 +405,8 @@ impl Tool for ServerLinter {
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
 
-        if options.type_aware {
+        // TODO: May need to check for the type-aware setting from the config file as well?
+        if options.type_aware.unwrap_or(false) {
             watchers.push("**/tsconfig*.json".to_string());
         }
 
@@ -630,6 +636,7 @@ impl ServerLinter {
             || old_options.fix_kind != new_options.fix_kind
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
+            // TODO: Does this need to be updated to also support the linterOptions from the oxlintrc?
             || old_options.type_aware != new_options.type_aware
     }
 
