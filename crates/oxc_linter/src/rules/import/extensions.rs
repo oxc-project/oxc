@@ -468,22 +468,20 @@ impl Rule for Extensions {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Process require() calls
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            let Expression::Identifier(ident) = &call_expr.callee else {
-                return;
-            };
-            if ident.name.as_str() == "require" {
-                for argument in &call_expr.arguments {
-                    if let Argument::StringLiteral(s) = argument {
-                        self.process_import(
-                            ctx,
-                            s.value.as_str(),
-                            call_expr.span,
-                            false, // require() is never a type import
-                            true,  // treat require as import for diagnostics
-                        );
-                    }
-                }
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Expression::Identifier(ident) = &call_expr.callee else { return };
+        if ident.name.as_str() != "require" {
+            return;
+        }
+        for argument in &call_expr.arguments {
+            if let Argument::StringLiteral(s) = argument {
+                self.process_import(
+                    ctx,
+                    s.value.as_str(),
+                    call_expr.span,
+                    false, // require() is never a type import
+                    true,  // treat require as import for diagnostics
+                );
             }
         }
     }
