@@ -125,7 +125,7 @@ struct OptionsJson {
 /// - Second element: Optional object with additional configuration properties
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-#[allow(dead_code)] // Only used for schema generation
+#[expect(dead_code)] // Only used for schema generation
 struct CapitalizedCommentsSchema(
     #[schemars(
         description = "Controls whether comments should start with an uppercase or lowercase letter. Default: \"always\""
