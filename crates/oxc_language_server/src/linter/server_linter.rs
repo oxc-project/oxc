@@ -1145,10 +1145,7 @@ mod test {
     fn test_config_file_type_aware_disabled_when_lsp_set() {
         // Config file sets `linterOptions.typeAware = true`. But when the LSP option is set to false,
         // the linter should use the LSP's typeAware setting and disable type-aware rules.
-        let tester = Tester::new(
-            "fixtures/linter/tsgolint",
-            json!({ "typeAware": false }),
-        );
+        let tester = Tester::new("fixtures/linter/tsgolint", json!({ "typeAware": false }));
         tester.test_and_snapshot_single_file("type_aware_config/test-with-lsp-config.ts");
     }
 
