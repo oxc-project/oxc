@@ -59,3 +59,75 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ╰── v is written to here but never read
  7 │             }
    ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:2:17]
+ 1 │ function fn6() {
+ 2 │             let x = 1;
+   ·                 ──┬──
+   ·                   ╰── x is written to here but never read
+ 3 │             x = 2;
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:3:13]
+ 2 │             let x = 1;
+ 3 │             x = 2;
+   ·             ──┬──
+   ·               ╰── x is written to here but never read
+ 4 │             x = 3;
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:4:13]
+ 3 │             x = 2;
+ 4 │             x = 3;
+   ·             ──┬──
+   ·               ╰── x is written to here but never read
+ 5 │         }
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable result
+   ╭─[no_useless_assignment.tsx:2:17]
+ 1 │ function fn7() {
+ 2 │             let result = 'unused';
+   ·                 ────────┬────────
+   ·                         ╰── result is written to here but never read
+ 3 │             try {
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable result
+   ╭─[no_useless_assignment.tsx:4:17]
+ 3 │             try {
+ 4 │                 result = 'error';
+   ·                 ────────┬───────
+   ·                         ╰── result is written to here but never read
+ 5 │             } catch (e) {
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable v
+   ╭─[no_useless_assignment.tsx:8:21]
+ 7 │                 case 2:
+ 8 │                     v = 'unused';
+   ·                     ──────┬─────
+   ·                           ╰── v is written to here but never read
+ 9 │                     break;
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:2:17]
+ 1 │ function fn9() {
+ 2 │             let x = 1;
+   ·                 ──┬──
+   ·                   ╰── x is written to here but never read
+ 3 │             function inner() {
+   ╰────
+
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable result
+   ╭─[no_useless_assignment.tsx:5:17]
+ 4 │             if (condition) {
+ 5 │                 result = 'unused';
+   ·                 ────────┬────────
+   ·                         ╰── result is written to here but never read
+ 6 │                 return;
+   ╰────
