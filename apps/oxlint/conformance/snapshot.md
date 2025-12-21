@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   277 | 100.0% |
-| Fully passing     |   219 |  79.1% |
-| Partially passing |    58 |  20.9% |
+| Fully passing     |   220 |  79.4% |
+| Partially passing |    57 |  20.6% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 29765 | 100.0% |
-| Passing     | 28684 |  96.4% |
-| Failing     |   974 |   3.3% |
+| Passing     | 28686 |  96.4% |
+| Failing     |   972 |   3.3% |
 | Skipped     |   107 |   0.4% |
 
 ## Fully Passing Rules
@@ -172,6 +172,7 @@
 - `no-sequences` (42 tests)
 - `no-spaced-func` (28 tests)
 - `no-sparse-arrays` (6 tests)
+- `no-sync` (10 tests)
 - `no-tabs` (11 tests)
 - `no-template-curly-in-string` (22 tests)
 - `no-ternary` (4 tests)
@@ -282,7 +283,6 @@
 - `no-setter-return` - 161 / 164 (98.2%)
 - `no-shadow-restricted-names` - 43 / 44 (97.7%)
 - `no-shadow` - 300 / 308 (97.4%)
-- `no-sync` - 8 / 10 (80.0%)
 - `no-trailing-spaces` - 53 / 54 (98.1%)
 - `no-undef` - 54 / 94 (57.4%)
 - `no-undefined` - 37 / 53 (69.8%)
@@ -81343,80 +81343,6 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
         "name": "has"
       },
       "messageId": "noShadowGlobal"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-sync`
-
-Pass: 8 / 10 (80.0%)
-Fail: 2 / 10 (20.0%)
-Skip: 0 / 10 (0.0%)
-
-#### no-sync > invalid
-
-```js
-function someFunction() {fs.fooSync();}
-```
-
-```json
-{
-  "options": [
-    {
-      "allowAtRootLevel": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "noSync",
-      "data": {
-        "propertyName": "fooSync"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-sync > invalid
-
-```js
-var a = function someFunction() {fs.fooSync();}
-```
-
-```json
-{
-  "options": [
-    {
-      "allowAtRootLevel": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "noSync",
-      "data": {
-        "propertyName": "fooSync"
-      }
     }
   ]
 }

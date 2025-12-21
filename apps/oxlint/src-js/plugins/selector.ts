@@ -17,10 +17,35 @@ type NodeTypeId = number;
 const ESQUERY_OPTIONS: ESQueryOptions = {
   nodeTypeKey: "type",
   visitorKeys,
-  fallback: (node: EsqueryNode) => Object.keys(node).filter(filterKey),
-  matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
+  fallback(node: EsqueryNode) {
+    // Our visitor keys should cover all AST node types
+    throw new Error(`Unknown node type: ${node.type}`);
+  },
+  matchClass: matchesSelectorClass,
 };
-const filterKey = (key: string) => key !== "parent" && key !== "range" && key !== "loc";
+
+/**
+ * Check if an AST node matches a selector class.
+ * @param className - Class name parsed from selector
+ * @param node - AST node
+ * @param _ancestors - AST node's ancestors
+ * @returns `true` if node matches class
+ */
+function matchesSelectorClass(
+  className: string,
+  node: EsqueryNode,
+  _ancestors: EsqueryNode[],
+): boolean {
+  if (className.toLowerCase() === "function") {
+    const { type } = node;
+    return (
+      type === "FunctionDeclaration" ||
+      type === "FunctionExpression" ||
+      type === "ArrowFunctionExpression"
+    );
+  }
+  return false;
+}
 
 // Specificity is a combination of:
 //
@@ -230,7 +255,7 @@ function analyzeSelector(
       // TODO: Should TS function types be included in `FUNCTION_NODE_TYPE_IDS`?
       // This TODO comment is from ESLint's implementation. Not sure what it means!
       // TODO: Abstract into JSLanguage somehow.
-      if (esquerySelector.name === "function") return FUNCTION_NODE_TYPE_IDS;
+      if (esquerySelector.name.toLowerCase() === "function") return FUNCTION_NODE_TYPE_IDS;
       selector.isComplex = true;
       return null;
 

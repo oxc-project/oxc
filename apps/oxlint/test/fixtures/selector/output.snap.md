@@ -68,7 +68,7 @@
   | *:exit: VariableDeclarator
   | *:exit: VariableDeclaration
   | *: FunctionDeclaration(foo)
-  | :function: FunctionDeclaration(foo)
+  | :FUNCTION: FunctionDeclaration(foo)
   | :not(Identifier): FunctionDeclaration(foo)
   | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(foo)
   | Program > FunctionDeclaration: FunctionDeclaration(foo)
@@ -77,6 +77,7 @@
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration): FunctionDeclaration(foo)
   | :matches(Identifier[name=a], FunctionDeclaration[id.name=foo]): FunctionDeclaration(foo)
   | *: Identifier(foo)
+  | :function > Identifier: Identifier(foo)
   | Identifier: Identifier(foo)
   | :matches(Identifier, FunctionDeclaration): Identifier(foo)
   | *:exit: Identifier(foo)
@@ -85,7 +86,7 @@
   | *:exit: BlockStatement
   | *:exit: FunctionDeclaration(foo)
   | *: FunctionDeclaration(bar)
-  | :function: FunctionDeclaration(bar)
+  | :FUNCTION: FunctionDeclaration(bar)
   | :not(Identifier): FunctionDeclaration(bar)
   | :matches(Identifier, FunctionDeclaration): FunctionDeclaration(bar)
   | Program > FunctionDeclaration: FunctionDeclaration(bar)
@@ -93,6 +94,7 @@
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration): FunctionDeclaration(bar)
   | :matches(ObjectExpression > SpreadElement, FunctionDeclaration[id.name=bar]): FunctionDeclaration(bar)
   | *: Identifier(bar)
+  | :function > Identifier: Identifier(bar)
   | Identifier: Identifier(bar)
   | :matches(Identifier, FunctionDeclaration): Identifier(bar)
   | *:exit: Identifier(bar)
@@ -103,7 +105,7 @@
   | *: ExpressionStatement
   | :not(Identifier): ExpressionStatement
   | *: ArrowFunctionExpression
-  | :function: ArrowFunctionExpression
+  | :FUNCTION: ArrowFunctionExpression
   | :not(Identifier): ArrowFunctionExpression
   | *: BlockStatement
   | :not(Identifier): BlockStatement

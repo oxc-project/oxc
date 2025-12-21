@@ -21,7 +21,8 @@ const plugin: Plugin = {
           // :not
           ":not(Identifier)",
           // class
-          ":function",
+          ":FUNCTION",
+          ":function > Identifier",
           // Child
           "Property > Identifier",
           "ObjectExpression > Identifier", // does not match

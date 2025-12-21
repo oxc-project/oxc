@@ -578,7 +578,8 @@ describe("compile visitor", () => {
       const exit2 = vi.fn(() => {});
       addVisitorToCompiled({
         ":function": enter2,
-        ":function:exit": exit2,
+        // Check case insensitivity
+        ":FunCtioN:exit": exit2,
       });
 
       expect(finalizeCompiledVisitor()).toBe(true);
