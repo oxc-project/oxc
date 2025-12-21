@@ -288,16 +288,10 @@ struct StatementsCounter {
 }
 
 impl<'a> Visit<'a> for StatementsCounter {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if is_function(kind) {
-            self.function_depth += 1;
-        }
-    }
-
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if is_function(kind) {
-            self.function_depth -= 1;
-        }
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        self.function_depth += 1;
+        walk_function(self, it, flags);
+        self.function_depth -= 1;
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
