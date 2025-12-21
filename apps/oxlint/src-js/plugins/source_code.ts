@@ -1,4 +1,10 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_LEN_OFFSET,
+  SOURCE_TYPE_OFFSET,
+  SOURCE_TYPE_LANGUAGE_OFFSET,
+  SOURCE_TYPE_VARIANT_OFFSET,
+} from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
@@ -64,6 +70,32 @@ export function initSourceText(): void {
     programPos = uint32[DATA_POINTER_POS_32];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
   sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+}
+
+/**
+ * Check if the current source is JSX/TSX.
+ * Reads the `SourceType.variant` (LanguageVariant) from the Program in the buffer.
+ * @returns `true` if the source is JSX or TSX
+ */
+export function isJsxSource(): boolean {
+  debugAssertIsNonNull(buffer);
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceTypePos = programPos + SOURCE_TYPE_OFFSET;
+  return buffer[sourceTypePos + SOURCE_TYPE_VARIANT_OFFSET] === 1;
+}
+
+/**
+ * Check if the current source is TypeScript.
+ * Reads the `SourceType.language` (Language) from the Program in the buffer.
+ * @returns `true` if the source is TypeScript or TypeScript Definition
+ */
+export function isTypescriptSource(): boolean {
+  debugAssertIsNonNull(buffer);
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceTypePos = programPos + SOURCE_TYPE_OFFSET;
+  return buffer[sourceTypePos + SOURCE_TYPE_LANGUAGE_OFFSET] >= 1;
 }
 
 /**

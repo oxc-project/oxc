@@ -5,7 +5,7 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { isJsxSource, isTypescriptSource, sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -51,6 +51,8 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
+  const scriptKind = getScriptKind();
+
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
     filePath,
@@ -62,8 +64,7 @@ export function parseTokens(): Token[] {
       setExternalModuleIndicator: undefined,
     },
     true, // `setParentNodes`
-    // TODO: Use `TS` or `TSX` depending on source type
-    tsModule.ScriptKind.TSX,
+    scriptKind,
   );
 
   // Check that TypeScript hasn't altered source text.
@@ -266,4 +267,21 @@ function hasJSXAncestor(node: ts.Node | undefined): boolean {
  */
 function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
   return kind >= tsSyntaxKind.JsxElement && kind <= tsSyntaxKind.JsxAttribute;
+}
+
+/**
+ * Determine TypeScript ScriptKind based on source type from the buffer.
+ * Reads the JSX flag from `SourceType.variant` and TypeScript flag from metadata.
+ *
+ * @returns Appropriate ScriptKind for the file
+ */
+function getScriptKind(): ts.ScriptKind {
+  debugAssertIsNonNull(tsModule);
+  const isJsx = isJsxSource();
+  const isTs = isTypescriptSource();
+
+  if (isTs) {
+    return isJsx ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
+  }
+  return isJsx ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
 }

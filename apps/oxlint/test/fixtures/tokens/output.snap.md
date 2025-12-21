@@ -3,6 +3,330 @@
 
 # stdout
 ```
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:9    range= 6-9     "obj"
+  | Punctuator        loc= 1:10 - 1:11  range= 10-11   "="
+  | Punctuator        loc= 1:12 - 1:13  range= 12-13   "{"
+  | Identifier        loc= 2:2 - 2:4    range= 16-18   "fn"
+  | Punctuator        loc= 2:4 - 2:5    range= 18-19   ":"
+  | Punctuator        loc= 2:6 - 2:7    range= 20-21   "<"
+  | Identifier        loc= 2:7 - 2:8    range= 21-22   "T"
+  | Punctuator        loc= 2:8 - 2:9    range= 22-23   ">"
+  | Punctuator        loc= 2:9 - 2:10   range= 23-24   "("
+  | Identifier        loc= 2:10 - 2:13  range= 24-27   "arg"
+  | Punctuator        loc= 2:13 - 2:14  range= 27-28   ":"
+  | Identifier        loc= 2:15 - 2:16  range= 29-30   "T"
+  | Punctuator        loc= 2:16 - 2:17  range= 30-31   ")"
+  | Punctuator        loc= 2:17 - 2:18  range= 31-32   ":"
+  | Identifier        loc= 2:19 - 2:20  range= 33-34   "T"
+  | Punctuator        loc= 2:21 - 2:23  range= 35-37   "=>"
+  | Punctuator        loc= 2:24 - 2:25  range= 38-39   "{"
+  | Keyword           loc= 3:4 - 3:10   range= 44-50   "return"
+  | Identifier        loc= 3:11 - 3:14  range= 51-54   "arg"
+  | Punctuator        loc= 3:14 - 3:15  range= 54-55   ";"
+  | Punctuator        loc= 4:2 - 4:3    range= 58-59   "}"
+  | Punctuator        loc= 4:3 - 4:4    range= 59-60   ","
+  | Punctuator        loc= 5:0 - 5:1    range= 61-62   "}"
+  | Punctuator        loc= 5:1 - 5:2    range= 62-63   ";"
+  | Keyword           loc= 8:0 - 8:6    range= 95-101  "export"
+  | Punctuator        loc= 8:7 - 8:8    range= 102-103 "{"
+  | Identifier        loc= 8:9 - 8:12   range= 104-107 "obj"
+  | Punctuator        loc= 8:13 - 8:14  range= 108-109 "}"
+  | Punctuator        loc= 8:14 - 8:15  range= 109-110 ";"
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | ,-> const obj = {
+ 2 | |     fn: <T>(arg: T): T => {
+ 3 | |       return arg;
+ 4 | |     },
+ 5 | |   };
+ 6 | |   
+ 7 | |   // A comment after the object
+ 8 | `-> export { obj };
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:9    range= 6-9     "obj"
+  | Punctuator        loc= 1:10 - 1:11  range= 10-11   "="
+  | Punctuator        loc= 1:12 - 1:13  range= 12-13   "{"
+  | Identifier        loc= 2:2 - 2:4    range= 16-18   "fn"
+  | Punctuator        loc= 2:4 - 2:5    range= 18-19   ":"
+  | Punctuator        loc= 2:6 - 2:7    range= 20-21   "<"
+  | Identifier        loc= 2:7 - 2:8    range= 21-22   "T"
+  | Punctuator        loc= 2:8 - 2:9    range= 22-23   ">"
+  | Punctuator        loc= 2:9 - 2:10   range= 23-24   "("
+  | Identifier        loc= 2:10 - 2:13  range= 24-27   "arg"
+  | Punctuator        loc= 2:13 - 2:14  range= 27-28   ":"
+  | Identifier        loc= 2:15 - 2:16  range= 29-30   "T"
+  | Punctuator        loc= 2:16 - 2:17  range= 30-31   ")"
+  | Punctuator        loc= 2:17 - 2:18  range= 31-32   ":"
+  | Identifier        loc= 2:19 - 2:20  range= 33-34   "T"
+  | Punctuator        loc= 2:21 - 2:23  range= 35-37   "=>"
+  | Punctuator        loc= 2:24 - 2:25  range= 38-39   "{"
+  | Keyword           loc= 3:4 - 3:10   range= 44-50   "return"
+  | Identifier        loc= 3:11 - 3:14  range= 51-54   "arg"
+  | Punctuator        loc= 3:14 - 3:15  range= 54-55   ";"
+  | Punctuator        loc= 4:2 - 4:3    range= 58-59   "}"
+  | Punctuator        loc= 4:3 - 4:4    range= 59-60   ","
+  | Punctuator        loc= 5:0 - 5:1    range= 61-62   "}"
+  | Punctuator        loc= 5:1 - 5:2    range= 62-63   ";"
+  | Line              loc= 7:0 - 7:29   range= 65-94   " A comment after the object"
+  | Keyword           loc= 8:0 - 8:6    range= 95-101  "export"
+  | Punctuator        loc= 8:7 - 8:8    range= 102-103 "{"
+  | Identifier        loc= 8:9 - 8:12   range= 104-107 "obj"
+  | Punctuator        loc= 8:13 - 8:14  range= 108-109 "}"
+  | Punctuator        loc= 8:14 - 8:15  range= 109-110 ";"
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | ,-> const obj = {
+ 2 | |     fn: <T>(arg: T): T => {
+ 3 | |       return arg;
+ 4 | |     },
+ 5 | |   };
+ 6 | |   
+ 7 | |   // A comment after the object
+ 8 | `-> export { obj };
+   `----
+
+  x tokens-plugin(tokens): Identifier ("obj")
+   ,-[files/generic_arrow.ts:1:7]
+ 1 | const obj = {
+   :       ^^^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/generic_arrow.ts:1:11]
+ 1 | const obj = {
+   :           ^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/generic_arrow.ts:1:13]
+ 1 | const obj = {
+   :             ^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
+  x tokens-plugin(tokens): Identifier ("fn")
+   ,-[files/generic_arrow.ts:2:3]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :   ^^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/generic_arrow.ts:2:5]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :     ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<")
+   ,-[files/generic_arrow.ts:2:7]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :       ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("T")
+   ,-[files/generic_arrow.ts:2:8]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :        ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (">")
+   ,-[files/generic_arrow.ts:2:9]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :         ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("(")
+   ,-[files/generic_arrow.ts:2:10]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :          ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("arg")
+   ,-[files/generic_arrow.ts:2:11]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :           ^^^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/generic_arrow.ts:2:14]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :              ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("T")
+   ,-[files/generic_arrow.ts:2:16]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (")")
+   ,-[files/generic_arrow.ts:2:17]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                 ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/generic_arrow.ts:2:18]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                  ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("T")
+   ,-[files/generic_arrow.ts:2:20]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                    ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=>")
+   ,-[files/generic_arrow.ts:2:22]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                      ^^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/generic_arrow.ts:2:25]
+ 1 | const obj = {
+ 2 |   fn: <T>(arg: T): T => {
+   :                         ^
+ 3 |     return arg;
+   `----
+
+  x tokens-plugin(tokens): Keyword ("return")
+   ,-[files/generic_arrow.ts:3:5]
+ 2 |   fn: <T>(arg: T): T => {
+ 3 |     return arg;
+   :     ^^^^^^
+ 4 |   },
+   `----
+
+  x tokens-plugin(tokens): Identifier ("arg")
+   ,-[files/generic_arrow.ts:3:12]
+ 2 |   fn: <T>(arg: T): T => {
+ 3 |     return arg;
+   :            ^^^
+ 4 |   },
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/generic_arrow.ts:3:15]
+ 2 |   fn: <T>(arg: T): T => {
+ 3 |     return arg;
+   :               ^
+ 4 |   },
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/generic_arrow.ts:4:3]
+ 3 |     return arg;
+ 4 |   },
+   :   ^
+ 5 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/generic_arrow.ts:4:4]
+ 3 |     return arg;
+ 4 |   },
+   :    ^
+ 5 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/generic_arrow.ts:5:1]
+ 4 |   },
+ 5 | };
+   : ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/generic_arrow.ts:5:2]
+ 4 |   },
+ 5 | };
+   :  ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Line (" A comment after the object")
+   ,-[files/generic_arrow.ts:7:1]
+ 6 | 
+ 7 | // A comment after the object
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 8 | export { obj };
+   `----
+
+  x tokens-plugin(tokens): Keyword ("export")
+   ,-[files/generic_arrow.ts:8:1]
+ 7 | // A comment after the object
+ 8 | export { obj };
+   : ^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/generic_arrow.ts:8:8]
+ 7 | // A comment after the object
+ 8 | export { obj };
+   :        ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("obj")
+   ,-[files/generic_arrow.ts:8:10]
+ 7 | // A comment after the object
+ 8 | export { obj };
+   :          ^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/generic_arrow.ts:8:14]
+ 7 | // A comment after the object
+ 8 | export { obj };
+   :              ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/generic_arrow.ts:8:15]
+ 7 | // A comment after the object
+ 8 | export { obj };
+   :               ^
+   `----
+
   x tokens-plugin(tokens): Line (" Leading comment")
    ,-[files/index.js:1:1]
  1 | // Leading comment
@@ -161,8 +485,8 @@
    : ^^^^^^^^^^^^^^^^^^^
    `----
 
-Found 0 warnings and 16 errors.
-Finished in Xms on 1 file using X threads.
+Found 0 warnings and 49 errors.
+Finished in Xms on 2 files using X threads.
 ```
 
 # stderr

@@ -7,3 +7,6 @@ export const DATA_POINTER_POS_32 = 536870902;
 export const IS_TS_FLAG_POS = 2147483612;
 export const PROGRAM_OFFSET = 0;
 export const SOURCE_LEN_OFFSET = 16;
+export const SOURCE_TYPE_OFFSET = 124;
+export const SOURCE_TYPE_LANGUAGE_OFFSET = 0;
+export const SOURCE_TYPE_VARIANT_OFFSET = 2;
