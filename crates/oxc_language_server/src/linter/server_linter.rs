@@ -80,9 +80,13 @@ impl ServerLinterBuilder {
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None, &mut external_plugin_store)
-                .unwrap_or_default();
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            None,
+            &mut external_plugin_store,
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -123,14 +127,15 @@ impl ServerLinterBuilder {
 
         // This will prioritize the `typeAware` option from the LSP options,
         // but if that is unset it will use the typeAware option in the config file.
-        let type_aware = options.type_aware.unwrap_or(oxlintrc.linter_options.type_aware.unwrap_or(false));
+        let type_aware =
+            options.type_aware.unwrap_or(oxlintrc.linter_options.type_aware.unwrap_or(false));
 
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
             config_store,
             &IsolatedLintHandlerOptions {
                 use_cross_module,
-                type_aware: type_aware,
+                type_aware,
                 fix_kind,
                 root_path: root_path.to_path_buf(),
                 tsconfig_path: options.ts_config_path.as_ref().map(|path| {

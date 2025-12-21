@@ -314,11 +314,8 @@ impl CliRunner {
 
         // Determine whether type-aware rules should be enabled.
         // CLI flag has precedence; otherwise fall back to configuration file.
-        let effective_type_aware = if self.options.type_aware {
-            true
-        } else {
-            config_store.type_aware_enabled()
-        };
+        let effective_type_aware =
+            if self.options.type_aware { true } else { config_store.type_aware_enabled() };
 
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
