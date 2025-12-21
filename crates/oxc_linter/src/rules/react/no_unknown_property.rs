@@ -52,7 +52,7 @@ fn unknown_prop(span: Span) -> OxcDiagnostic {
 pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnknownPropertyConfig {
     /// List of properties to ignore.
     ignore: FxHashSet<Cow<'static, str>>,

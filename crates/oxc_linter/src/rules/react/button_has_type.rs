@@ -32,7 +32,7 @@ fn invalid_type_prop(span: Span, allowed_types: &str) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ButtonHasType {
     /// If true, allow `type="button"`.
     button: bool,

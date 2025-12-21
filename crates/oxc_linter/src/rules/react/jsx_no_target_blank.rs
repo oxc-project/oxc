@@ -38,7 +38,7 @@ fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoTargetBlank {
     /// Whether to enforce dynamic links or enforce static links.
     enforce_dynamic_links: EnforceDynamicLinksEnum,

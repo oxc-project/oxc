@@ -28,7 +28,7 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
 pub struct AriaRole(Box<AriaRoleConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AriaRoleConfig {
     /// Determines if developer-created components are checked.
     #[serde(rename = "ignoreNonDOM")]

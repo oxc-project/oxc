@@ -36,7 +36,7 @@ fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RequireReturnsConfig {
     /// Tags that exempt functions from requiring `@returns`.
     exempted_by: Vec<String>,

@@ -28,7 +28,7 @@ fn exclusive_checked_attribute(checked_span: Span, default_checked_span: Span) -
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CheckedRequiresOnchangeOrReadonly {
     /// Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
     ignore_missing_properties: bool,

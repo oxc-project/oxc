@@ -28,7 +28,7 @@ impl std::ops::Deref for PreferAwaitToThen {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAwaitToThenConfig {
     /// If true, enforces the rule even after an `await` or `yield` expression.
     strict: bool,

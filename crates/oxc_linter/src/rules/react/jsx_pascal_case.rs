@@ -30,7 +30,7 @@ fn jsx_pascal_case_diagnostic(
 pub struct JsxPascalCase(Box<JsxPascalCaseConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPascalCaseConfig {
     /// Whether to allow all-caps component names.
     pub allow_all_caps: bool,

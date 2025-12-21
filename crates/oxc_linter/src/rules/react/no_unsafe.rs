@@ -32,7 +32,7 @@ fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 #[derive(Default)]
 struct NoUnsafeConfig {
     #[serde(default)]

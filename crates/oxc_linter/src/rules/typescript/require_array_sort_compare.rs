@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct RequireArraySortCompare(Box<RequireArraySortCompareConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireArraySortCompareConfig {
     /// Whether to ignore arrays in which all elements are strings.
     pub ignore_string_arrays: bool,

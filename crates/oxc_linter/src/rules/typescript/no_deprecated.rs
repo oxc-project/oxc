@@ -11,7 +11,7 @@ use crate::{
 pub struct NoDeprecated(Box<NoDeprecatedConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDeprecatedConfig {
     /// An array of type or value specifiers that are allowed to be used even if deprecated.
     /// Use this to allow specific deprecated APIs that you intentionally want to continue using.

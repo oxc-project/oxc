@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct StrictBooleanExpressions(Box<StrictBooleanExpressionsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct StrictBooleanExpressionsConfig {
     /// Whether to allow `any` type in boolean contexts.
     pub allow_any: bool,

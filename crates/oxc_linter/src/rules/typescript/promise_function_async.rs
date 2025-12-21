@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct PromiseFunctionAsync(Box<PromiseFunctionAsyncConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PromiseFunctionAsyncConfig {
     /// Whether to allow functions returning `any` type without requiring `async`.
     pub allow_any: bool,

@@ -19,7 +19,7 @@ fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExplicitAny {
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
     fix_to_unknown: bool,

@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct PreferPromiseRejectErrors(Box<PreferPromiseRejectErrorsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferPromiseRejectErrorsConfig {
     /// Whether to allow calling `Promise.reject()` with no arguments.
     pub allow_empty_reject: bool,

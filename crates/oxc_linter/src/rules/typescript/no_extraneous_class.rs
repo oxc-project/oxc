@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtraneousClass {
     /// Allow classes that only have a constructor.
     allow_constructor_only: bool,
