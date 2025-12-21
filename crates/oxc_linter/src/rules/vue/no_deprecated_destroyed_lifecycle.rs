@@ -372,34 +372,124 @@ fn test() {
         ),
     ];
 
-    // Fix tests use pure JavaScript (no <script> tags) because the fix test
-    // framework doesn't support custom file paths
     let fix = vec![
         (
-            "export default { beforeDestroy() {}, destroyed() {} }",
-            "export default { beforeUnmount() {}, unmounted() {} }",
+            "
+			      <script>
+			      export default {
+			        beforeDestroy () {},
+			        destroyed () {},
+			      }
+			      </script>
+			      ",
+            "
+			      <script>
+			      export default {
+			        beforeUnmount () {},
+			        unmounted () {},
+			      }
+			      </script>
+			      ",
             None,
+            Some(PathBuf::from("test.vue")),
         ),
         (
-            "export default { beforeDestroy, destroyed }",
-            "export default { beforeUnmount:beforeDestroy, unmounted:destroyed }",
+            "
+			      <script>
+			      export default {
+			        beforeDestroy,
+			        destroyed,
+			      }
+			      </script>
+			      ",
+            "
+			      <script>
+			      export default {
+			        beforeUnmount:beforeDestroy,
+			        unmounted:destroyed,
+			      }
+			      </script>
+			      ",
             None,
+            Some(PathBuf::from("test.vue")),
         ),
         (
-            "export default { ['beforeDestroy']() {}, ['destroyed']() {} }",
-            "export default { ['beforeUnmount']() {}, ['unmounted']() {} }",
+            "
+			      <script>
+			      export default {
+			        beforeCreate,
+			        created,
+			        beforeMount,
+			        mounted,
+			        beforeUpdate,
+			        updated,
+			        activated,
+			        deactivated,
+			        beforeDestroy,
+			        destroyed,
+			        errorCaptured,
+			      }
+			      </script>
+			      ",
+            "
+			      <script>
+			      export default {
+			        beforeCreate,
+			        created,
+			        beforeMount,
+			        mounted,
+			        beforeUpdate,
+			        updated,
+			        activated,
+			        deactivated,
+			        beforeUnmount:beforeDestroy,
+			        unmounted:destroyed,
+			        errorCaptured,
+			      }
+			      </script>
+			      ",
             None,
+            Some(PathBuf::from("test.vue")),
         ),
         (
-            "export default { [`beforeDestroy`]() {}, [`destroyed`]() {} }",
-            "export default { [`beforeUnmount`]() {}, [`unmounted`]() {} }",
+            "
+			      <script>
+			      export default {
+			        ['beforeDestroy']() {},
+			        ['destroyed']() {},
+			      }
+			      </script>
+			      ",
+            "
+			      <script>
+			      export default {
+			        ['beforeUnmount']() {},
+			        ['unmounted']() {},
+			      }
+			      </script>
+			      ",
             None,
+            Some(PathBuf::from("test.vue")),
         ),
-        // Do not autofix when the replacement hook already exists (avoids duplicate keys).
         (
-            "export default { unmounted() {}, destroyed() {} }",
-            "export default { unmounted() {}, destroyed() {} }",
+            "
+			      <script>
+			      export default {
+			        [`beforeDestroy`]() {},
+			        [`destroyed`]() {},
+			      }
+			      </script>
+			      ",
+            "
+			      <script>
+			      export default {
+			        [`beforeUnmount`]() {},
+			        [`unmounted`]() {},
+			      }
+			      </script>
+			      ",
             None,
+            Some(PathBuf::from("test.vue")),
         ),
     ];
     Tester::new(
