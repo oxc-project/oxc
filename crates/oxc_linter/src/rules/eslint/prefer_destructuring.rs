@@ -86,7 +86,7 @@ declare_oxc_lint!(
     PreferDestructuring,
     eslint,
     style,
-    pending,
+    fix,
     config = PreferDestructuring,
 );
 
@@ -161,7 +161,22 @@ impl Rule for PreferDestructuring {
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
-                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
+                                // Safe autofix for assignments: foo = object['foo']; -> ({ foo } = object);
+                                let prop = string_literal.value.to_string();
+                                let object_span = get_object_span_without_redundant_parentheses(
+                                    &comp_expr.object,
+                                );
+                                ctx.diagnostic_with_fix(
+                                    prefer_object_destructuring(assign_expr.span),
+                                    move |fixer| {
+                                        let replacement = format!(
+                                            "({{ {} }} = {})",
+                                            prop,
+                                            fixer.source_range(object_span)
+                                        );
+                                        fixer.replace(assign_expr.span, replacement)
+                                    },
+                                );
                             }
                         }
                     }
@@ -171,7 +186,21 @@ impl Rule for PreferDestructuring {
                         if get_target_name(&assign_expr.left)
                             .is_some_and(|name| name == static_expr.property.name.as_str())
                         {
-                            ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
+                            // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
+                            let prop = static_expr.property.name.as_str().to_string();
+                            let object_span =
+                                get_object_span_without_redundant_parentheses(&static_expr.object);
+                            ctx.diagnostic_with_fix(
+                                prefer_object_destructuring(assign_expr.span),
+                                move |fixer| {
+                                    let replacement = format!(
+                                        "({{ {} }} = {})",
+                                        prop,
+                                        fixer.source_range(object_span)
+                                    );
+                                    fixer.replace(assign_expr.span, replacement)
+                                },
+                            );
                         }
                     }
                     _ => {}
@@ -210,7 +239,22 @@ impl Rule for PreferDestructuring {
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
-                                    ctx.diagnostic(prefer_object_destructuring(init.span()));
+                                    // Safe autofix: var foo = object['foo']; -> var {foo} = object;
+                                    let prop = string_literal.value.to_string();
+                                    let object_span = get_object_span_without_redundant_parentheses(
+                                        &comp_expr.object,
+                                    );
+                                    ctx.diagnostic_with_fix(
+                                        prefer_object_destructuring(init.span()),
+                                        move |fixer| {
+                                            let replacement = format!(
+                                                "{{{}}} = {}",
+                                                prop,
+                                                fixer.source_range(object_span)
+                                            );
+                                            fixer.replace(declarator.span(), replacement)
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -221,7 +265,22 @@ impl Rule for PreferDestructuring {
                                 ctx.diagnostic(prefer_object_destructuring(right.span()));
                             }
                             if name.is_some_and(|name| name == static_expr.property.name.as_str()) {
-                                ctx.diagnostic(prefer_object_destructuring(init.span()));
+                                // Safe autofix: var foo = object.foo; -> var {foo} = object;
+                                let prop = static_expr.property.name.as_str().to_string();
+                                let object_span = get_object_span_without_redundant_parentheses(
+                                    &static_expr.object,
+                                );
+                                ctx.diagnostic_with_fix(
+                                    prefer_object_destructuring(init.span()),
+                                    move |fixer| {
+                                        let replacement = format!(
+                                            "{{{}}} = {}",
+                                            prop,
+                                            fixer.source_range(object_span)
+                                        );
+                                        fixer.replace(declarator.span(), replacement)
+                                    },
+                                );
                             }
                         }
                         _ => {}
@@ -247,6 +306,17 @@ fn check_expr(expr: &MemberExpression) -> bool {
         return false;
     }
     true
+}
+
+fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
+    match object.without_parentheses() {
+        Expression::CallExpression(_)
+        | Expression::Identifier(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::ThisExpression(_) => object.without_parentheses().span(),
+        _ => object.span(),
+    }
 }
 
 #[test]
@@ -572,44 +642,47 @@ fn test() {
         ("var foo = object.foo, /* comment */ a;", None),
     ];
 
-    // pending
-    // let fix = vec![
-    //     ("var foo = object.foo;", "var {foo} = object;", None),
-    //     ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
-    //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
-    //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
-    //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
-    //     ("var foo = (f()).foo;", "var {foo} = f();", None),
-    //     ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
-    //     (
-    //         "class Foo extends Bar { static foo() {var bar = super.foo.bar} }",
-    //         "class Foo extends Bar { static foo() {var {bar} = super.foo} }",
-    //         None,
-    //     ),
-    //     ("var /* comment */ foo = object.foo;", "var /* comment */ {foo} = object;", None),
-    //     ("var a, /* comment */foo = object.foo;", "var a, /* comment */{foo} = object;", None),
-    //     ("var foo = bar(/* comment */).foo;", "var {foo} = bar(/* comment */);", None),
-    //     ("var foo = bar/* comment */.baz.foo;", "var {foo} = bar/* comment */.baz;", None),
-    //     (
-    //         "var foo = bar[// comment
-    // 		baz].foo;",
-    //         "var {foo} = bar[// comment
-    // 		baz];",
-    //         None,
-    //     ),
-    //     ("var foo = object.foo/* comment */;", "var {foo} = object/* comment */;", None),
-    //     ("var foo = object.foo// comment", "var {foo} = object// comment", None),
-    //     ("var foo = object.foo/* comment */, a;", "var {foo} = object/* comment */, a;", None),
-    //     (
-    //         "var foo = object.foo// comment
-    // 		, a;",
-    //         "var {foo} = object// comment
-    // 		, a;",
-    //         None,
-    //     ),
-    //     ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
-    // ];
+    let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
+        ("var foo = object.foo;", "var {foo} = object;", None),
+        ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
+        //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
+        //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
+        //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
+        ("var foo = (f()).foo;", "var {foo} = f();", None),
+        ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
+        (
+            "class Foo extends Bar { static foo() {var bar = super.foo.bar} }",
+            "class Foo extends Bar { static foo() {var {bar} = super.foo} }",
+            None,
+        ),
+        ("var /* comment */ foo = object.foo;", "var /* comment */ {foo} = object;", None),
+        ("var a, /* comment */foo = object.foo;", "var a, /* comment */{foo} = object;", None),
+        ("var foo = bar(/* comment */).foo;", "var {foo} = bar(/* comment */);", None),
+        ("var foo = bar/* comment */.baz.foo;", "var {foo} = bar/* comment */.baz;", None),
+        (
+            "var foo = bar[// comment
+        		baz].foo;",
+            "var {foo} = bar[// comment
+        		baz];",
+            None,
+        ),
+        ("var foo = (bar[baz]).foo;", "var {foo} = bar[baz];", None),
+        ("var foo = object.foo/* comment */;", "var {foo} = object/* comment */;", None),
+        ("var foo = object.foo// comment", "var {foo} = object// comment", None),
+        ("var foo = object.foo/* comment */, a;", "var {foo} = object/* comment */, a;", None),
+        (
+            "var foo = object.foo// comment
+        		, a;",
+            "var {foo} = object// comment
+        		, a;",
+            None,
+        ),
+        ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
+        ("var foo = object['foo'];", "var {foo} = object;", None),
+        ("foo = object.foo;", "({ foo } = object);", None),
+    ];
 
     Tester::new(PreferDestructuring::NAME, PreferDestructuring::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
