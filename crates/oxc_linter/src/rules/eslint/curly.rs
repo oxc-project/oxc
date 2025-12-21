@@ -413,6 +413,7 @@ fn apply_rule_fix<'a>(
     fixer: &RuleFixer<'_, 'a>,
     body: &Statement<'a>,
     should_have_braces: bool,
+    is_do_while: bool,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
     let source = ctx.source_range(body.span());
@@ -421,10 +422,7 @@ fn apply_rule_fix<'a>(
         format!("{{{source}}}")
     } else {
         let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
-        if matches!(
-            ctx.nodes().parent_kind(get_node_by_statement(body, ctx).id()),
-            AstKind::DoWhileStatement(_)
-        ) {
+        if is_do_while {
             trimmed.insert(0, ' ');
         }
         trimmed
@@ -448,7 +446,7 @@ fn report_if_needed<'a>(
     }
 
     ctx.diagnostic_with_fix(curly_diagnostic(body.span(), keyword, should_have_braces), |fixer| {
-        apply_rule_fix(&fixer, body, should_have_braces, ctx)
+        apply_rule_fix(&fixer, body, should_have_braces, keyword == "do", ctx)
     });
 }
 
