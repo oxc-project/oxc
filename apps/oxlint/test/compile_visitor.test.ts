@@ -1,12 +1,18 @@
 // oxlint-disable jest/no-conditional-expect
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from "../src-js/generated/type_ids.ts";
+import {
+  NODE_TYPES_COUNT,
+  LEAF_NODE_TYPES_COUNT,
+  NODE_TYPE_IDS_MAP,
+} from "../src-js/generated/type_ids.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
   initCompiledVisitor,
+  VISITOR_EMPTY,
+  VISITOR_NOT_EMPTY,
 } from "../src-js/plugins/visitor.ts";
 
 import type { Mock } from "vitest";
@@ -20,6 +26,8 @@ const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get("Program")!,
   FUNC_DECL_TYPE_ID = NODE_TYPE_IDS_MAP.get("FunctionDeclaration")!,
   FUNC_EXPR_TYPE_ID = NODE_TYPE_IDS_MAP.get("FunctionExpression")!,
   ARROW_FUNC_TYPE_ID = NODE_TYPE_IDS_MAP.get("ArrowFunctionExpression")!;
+
+// TODO: Add tests for CFG events
 
 const SPAN: Node = {
   start: 0,
@@ -61,14 +69,14 @@ describe("compile visitor", () => {
     it("for leaf node", () => {
       const enter = () => {};
       addVisitorToCompiled({ EmptyStatement: enter });
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
       expect(compiledVisitor[EMPTY_STMT_TYPE_ID]).toBe(enter);
     });
 
     it("for non-leaf node", () => {
       const enter = () => {};
       addVisitorToCompiled({ Program: enter });
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit).toEqual({ enter, exit: null });
@@ -80,14 +88,14 @@ describe("compile visitor", () => {
     it("for leaf node", () => {
       const exit = () => {};
       addVisitorToCompiled({ "EmptyStatement:exit": exit });
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
       expect(compiledVisitor[EMPTY_STMT_TYPE_ID]).toBe(exit);
     });
 
     it("for non-leaf node", () => {
       const exit = () => {};
       addVisitorToCompiled({ "Program:exit": exit });
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit).toEqual({ enter: null, exit });
@@ -101,7 +109,7 @@ describe("compile visitor", () => {
         const enter = vi.fn(() => {});
         const exit = vi.fn(() => {});
         addVisitorToCompiled({ EmptyStatement: enter, "EmptyStatement:exit": exit });
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -114,7 +122,7 @@ describe("compile visitor", () => {
         const enter = vi.fn(() => {});
         const exit = vi.fn(() => {});
         addVisitorToCompiled({ "EmptyStatement:exit": exit, EmptyStatement: enter });
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -129,7 +137,7 @@ describe("compile visitor", () => {
         const enter = () => {};
         const exit = () => {};
         addVisitorToCompiled({ Program: enter, "Program:exit": exit });
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
         expect(enterExit).toEqual({ enter, exit });
@@ -141,7 +149,7 @@ describe("compile visitor", () => {
         const enter = () => {};
         const exit = () => {};
         addVisitorToCompiled({ "Program:exit": exit, Program: enter });
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
         expect(enterExit).toEqual({ enter, exit });
@@ -162,7 +170,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ EmptyStatement: enter2, "EmptyStatement:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -184,7 +192,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "EmptyStatement:exit": exit2, EmptyStatement: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -206,7 +214,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "EmptyStatement:exit": exit2, EmptyStatement: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -228,7 +236,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ EmptyStatement: enter2, "EmptyStatement:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const node = { type: "EmptyStatement", ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -252,7 +260,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ Program: enter2, "Program:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -276,7 +284,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "Program:exit": exit2, Program: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -300,7 +308,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "Program:exit": exit2, Program: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -324,7 +332,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ Program: enter2, "Program:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(true);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -365,7 +373,7 @@ describe("compile visitor", () => {
       const exit6 = vi.fn(() => {});
       addVisitorToCompiled({ EmptyStatement: enter6, "EmptyStatement:exit": exit6 });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const node = { type: "EmptyStatement", ...SPAN };
       (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
@@ -402,9 +410,11 @@ describe("compile visitor", () => {
       const exit = vi.fn(() => {});
       addVisitorToCompiled({ "*": enter, "*:exit": exit });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       for (const [typeName, typeId] of NODE_TYPE_IDS_MAP) {
+        if (typeId >= NODE_TYPES_COUNT) continue; // Skip CFG events
+
         if (typeId < LEAF_NODE_TYPES_COUNT) {
           const node = { type: typeName, ...SPAN };
           (compiledVisitor[typeId] as VisitFn)(node);
@@ -427,7 +437,7 @@ describe("compile visitor", () => {
         ":matches(Program, EmptyStatement, EmptyStatement):exit": exit,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit.enter).toBe(enter);
@@ -452,7 +462,7 @@ describe("compile visitor", () => {
         ":matches(Program, EmptyStatement[type]):exit": exit,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit.enter).not.toBe(enter);
@@ -485,9 +495,10 @@ describe("compile visitor", () => {
         "[name=foo]:exit": exit,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
-      for (const typeId of NODE_TYPE_IDS_MAP.values()) {
+      // Skip CFG events
+      for (let typeId = 0; typeId < NODE_TYPES_COUNT; typeId++) {
         if (typeId < LEAF_NODE_TYPES_COUNT) {
           expect(compiledVisitor[typeId]).toBeTypeOf("function");
         } else {
@@ -541,7 +552,7 @@ describe("compile visitor", () => {
         "Identifier[name=foo]:exit": exit,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const identEnterExit = compiledVisitor[IDENTIFIER_TYPE_ID] as EnterExit;
       expect(identEnterExit.enter).toBeTypeOf("function");
@@ -615,9 +626,11 @@ describe("compile visitor", () => {
         ":function:exit": exitFunction,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       for (const [typeName, typeId] of NODE_TYPE_IDS_MAP.entries()) {
+        if (typeId >= NODE_TYPES_COUNT) continue; // Skip CFG events
+
         // Check that compiled visitor is set up correctly
 
         // Get classes that this node type matches
@@ -768,7 +781,7 @@ describe("compile visitor", () => {
         ":FunCtioN:exit": exit2,
       });
 
-      expect(finalizeCompiledVisitor()).toBe(true);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
 
       const funcDeclEnterExit = compiledVisitor[FUNC_DECL_TYPE_ID] as EnterExit;
       expect(funcDeclEnterExit.enter).toBeTypeOf("function");
@@ -831,19 +844,19 @@ describe("compile visitor", () => {
 
   describe("`finalizeCompiledVisitor` returns false if all visitors empty", () => {
     it("no visitors", () => {
-      expect(finalizeCompiledVisitor()).toBe(false);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_EMPTY);
     });
 
     it("1 visitor", () => {
       addVisitorToCompiled({});
-      expect(finalizeCompiledVisitor()).toBe(false);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_EMPTY);
     });
 
     it("multiple visitors", () => {
       addVisitorToCompiled({});
       addVisitorToCompiled({});
       addVisitorToCompiled({});
-      expect(finalizeCompiledVisitor()).toBe(false);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_EMPTY);
     });
   });
 });

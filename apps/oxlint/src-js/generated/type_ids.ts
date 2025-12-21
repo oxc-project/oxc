@@ -168,6 +168,13 @@ export const NODE_TYPE_IDS_MAP = new Map([
   ["TSTypeQuery", 162],
   ["TSTypeReference", 163],
   ["TSUnionType", 164],
+  ["onCodePathStart", 165],
+  ["onCodePathEnd", 166],
+  ["onCodePathSegmentStart", 167],
+  ["onCodePathSegmentEnd", 168],
+  ["onUnreachableCodePathSegmentStart", 169],
+  ["onUnreachableCodePathSegmentEnd", 170],
+  ["onCodePathSegmentLoop", 171],
 ]);
 
 /** Count of all node types (both leaf and non-leaf nodes) */
@@ -175,6 +182,9 @@ export const NODE_TYPES_COUNT = 165;
 
 /** Count of leaf node types */
 export const LEAF_NODE_TYPES_COUNT = 27;
+
+/** Total count of node types and CFG events */
+export const TYPE_IDS_COUNT = 172;
 
 /** Type IDs which match `:statement` selector class */
 export const STATEMENT_NODE_TYPE_IDS = [

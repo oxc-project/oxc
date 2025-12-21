@@ -1,3 +1,4 @@
+import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
@@ -13,6 +14,8 @@ import {
   compiledVisitor,
   finalizeCompiledVisitor,
   initCompiledVisitor,
+  VISITOR_EMPTY,
+  VISITOR_CFG,
 } from "./visitor.ts";
 
 // Lazy implementation
@@ -200,19 +203,23 @@ export function lintFileImpl(
     addVisitorToCompiled(visitor);
   }
 
-  const needsVisit = finalizeCompiledVisitor();
+  const visitorState = finalizeCompiledVisitor();
 
   // Visit AST.
   // Skip this if no visitors visit any nodes.
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
-  if (needsVisit) {
+  if (visitorState !== VISITOR_EMPTY) {
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
 
-    walkProgram(ast, compiledVisitor);
+    if (visitorState === VISITOR_CFG) {
+      walkProgramWithCfg(ast, compiledVisitor);
+    } else {
+      walkProgram(ast, compiledVisitor);
+    }
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
 
@@ -262,4 +269,5 @@ export function resetStateAfterError() {
   diagnostics.length = 0;
   ancestors.length = 0;
   resetFile();
+  resetCfgWalk();
 }

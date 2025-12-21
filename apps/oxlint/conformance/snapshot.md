@@ -6,9 +6,9 @@
 
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
-| Total rules       |   277 | 100.0% |
-| Fully passing     |   222 |  80.1% |
-| Partially passing |    55 |  19.9% |
+| Total rules       |   292 | 100.0% |
+| Fully passing     |   232 |  79.5% |
+| Partially passing |    60 |  20.5% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -17,16 +17,17 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 29765 | 100.0% |
-| Passing     | 28968 |  97.3% |
-| Failing     |   690 |   2.3% |
-| Skipped     |   107 |   0.4% |
+| Total tests | 33090 | 100.0% |
+| Passing     | 32189 |  97.3% |
+| Failing     |   794 |   2.4% |
+| Skipped     |   107 |   0.3% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
 - `array-bracket-newline` (209 tests)
 - `array-bracket-spacing` (143 tests) (4 skipped)
+- `array-callback-return` (216 tests)
 - `array-element-newline` (155 tests)
 - `arrow-body-style` (87 tests)
 - `arrow-parens` (109 tests) (21 skipped)
@@ -38,7 +39,10 @@
 - `class-methods-use-this` (156 tests)
 - `comma-spacing` (173 tests)
 - `comma-style` (96 tests)
+- `complexity` (165 tests)
 - `computed-property-spacing` (125 tests)
+- `consistent-return` (44 tests)
+- `constructor-super` (82 tests)
 - `curly` (216 tests)
 - `default-case-last` (37 tests)
 - `default-case` (23 tests)
@@ -54,6 +58,7 @@
 - `function-call-argument-newline` (58 tests)
 - `function-paren-newline` (177 tests) (2 skipped)
 - `generator-star-spacing` (201 tests)
+- `getter-return` (70 tests)
 - `global-require` (22 tests)
 - `grouped-accessor-pairs` (150 tests)
 - `guard-for-in` (12 tests)
@@ -99,6 +104,7 @@
 - `no-confusing-arrow` (30 tests)
 - `no-console` (44 tests)
 - `no-const-assign` (33 tests)
+- `no-constructor-return` (20 tests)
 - `no-continue` (6 tests)
 - `no-control-regex` (36 tests)
 - `no-debugger` (2 tests)
@@ -177,6 +183,7 @@
 - `no-tabs` (11 tests)
 - `no-template-curly-in-string` (22 tests)
 - `no-ternary` (4 tests)
+- `no-this-before-super` (63 tests)
 - `no-throw-literal` (41 tests)
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
@@ -184,6 +191,8 @@
 - `no-unexpected-multiline` (56 tests) (4 skipped)
 - `no-unmodified-loop-condition` (37 tests)
 - `no-unneeded-ternary` (47 tests) (2 skipped)
+- `no-unreachable-loop` (1628 tests)
+- `no-unreachable` (67 tests)
 - `no-unsafe-finally` (28 tests)
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
@@ -196,6 +205,7 @@
 - `no-useless-constructor` (49 tests) (1 skipped)
 - `no-useless-escape` (288 tests)
 - `no-useless-rename` (163 tests) (1 skipped)
+- `no-useless-return` (49 tests)
 - `no-var` (52 tests) (1 skipped)
 - `no-void` (12 tests)
 - `no-warning-comments` (61 tests)
@@ -265,9 +275,11 @@
 - `no-constant-condition` - 305 / 307 (99.3%)
 - `no-eval` - 76 / 101 (75.2%)
 - `no-extra-parens` - 1068 / 1072 (99.6%)
+- `no-fallthrough` - 86 / 87 (98.9%)
 - `no-global-assign` - 12 / 18 (66.7%)
 - `no-implicit-globals` - 153 / 245 (62.4%)
 - `no-implied-eval` - 83 / 138 (60.1%)
+- `no-invalid-this` - 520 / 562 (92.5%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
 - `no-lone-blocks` - 49 / 50 (98.0%)
 - `no-misleading-character-class` - 185 / 190 (97.4%)
@@ -278,6 +290,7 @@
 - `no-new-wrappers` - 9 / 11 (81.8%)
 - `no-obj-calls` - 73 / 107 (68.2%)
 - `no-object-constructor` - 55 / 56 (98.2%)
+- `no-promise-executor-return` - 66 / 124 (53.2%)
 - `no-redeclare` - 51 / 75 (68.0%)
 - `no-restricted-globals` - 143 / 166 (86.1%)
 - `no-restricted-imports` - 253 / 254 (99.6%)
@@ -290,6 +303,7 @@
 - `no-unused-expressions` - 120 / 124 (96.8%)
 - `no-unused-vars` - 340 / 436 (78.0%)
 - `no-use-before-define` - 323 / 347 (93.1%)
+- `no-useless-assignment` - 83 / 85 (97.6%)
 - `no-useless-backreference` - 188 / 190 (98.9%)
 - `prefer-const` - 136 / 138 (98.6%)
 - `prefer-exponentiation-operator` - 164 / 167 (98.2%)
@@ -298,6 +312,7 @@
 - `prefer-object-spread` - 82 / 87 (94.3%)
 - `prefer-regex-literals` - 239 / 251 (95.2%)
 - `radix` - 33 / 54 (61.1%)
+- `require-atomic-updates` - 62 / 63 (98.4%)
 - `require-unicode-regexp` - 76 / 79 (96.2%)
 - `semi` - 307 / 308 (99.7%)
 - `strict` - 106 / 126 (84.1%)
@@ -6155,6 +6170,47 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     column: 0,
     endLine: 1,
     endColumn: 1,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `no-fallthrough`
+
+Pass: 86 / 87 (98.9%)
+Fail: 1 / 87 (1.1%)
+Skip: 0 / 87 (0.0%)
+
+#### no-fallthrough > valid
+
+```js
+switch (foo) { case 0: a(); 
+// eslint-disable-next-line rule-to-test/no-fallthrough
+ case 1: }
+```
+
+```json
+{}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-fallthrough',
+    message: "Expected a 'break' statement before 'case'.",
+    messageId: 'case',
+    severity: 1,
+    nodeType: 'SwitchCase',
+    line: 3,
+    column: 1,
+    endLine: 3,
+    endColumn: 8,
     suggestions: null
   }
 ]
@@ -49401,6 +49457,1587 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
+### `no-invalid-this`
+
+Pass: 520 / 562 (92.5%)
+Fail: 42 / 562 (7.5%)
+Skip: 0 / 562 (0.0%)
+
+#### no-invalid-this > valid
+
+```js
+function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 31,
+    endLine: 1,
+    endColumn: 35,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+"use strict"; function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 45,
+    endLine: 1,
+    endColumn: 49,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+/* implied strict mode */ function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 57,
+    endLine: 1,
+    endColumn: 61,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+"use strict"; console.log(this); z(x => console.log(x, this)); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ console.log(this); z(x => console.log(x, this)); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true,
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); })(); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function Foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ return function() { console.log(this); z(x => console.log(x, this)); }; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true,
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var foo = (function() { console.log(this); z(x => console.log(x, this)); }).bar(obj); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo: function() { function foo() { console.log(this); z(x => console.log(x, this)); } foo(); }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo() { function foo() { console.log(this); z(x => console.log(x, this)); } foo(); }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo: function() { return function() { console.log(this); z(x => console.log(x, this)); }; }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ obj.foo = function() { return function() { console.log(this); z(x => console.log(x, this)); }; }; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ obj.foo = (function() { return () => { console.log(this); z(x => console.log(x, this)); }; })(); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var foo = function() { console.log(this); z(x => console.log(x, this)); }.bind(null); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); }).call(undefined); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); }).apply(void 0); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ Array.from([], function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.every(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.filter(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.find(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findIndex(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findLast(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findLastIndex(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.flatMap(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.forEach(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.map(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.some(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.forEach(function() { console.log(this); z(x => console.log(x, this)); }, null); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ /** @returns {void} */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ /** @this Obj */ foo(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var Ctor = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ Ctor = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo(func = function() { console.log(this); z(x => console.log(x, this)); }) {} /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ [func = function() { console.log(this); z(x => console.log(x, this)); }] = a /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+
+    z(function (x, this: context) {
+      console.log(x, this);
+    });
+        
+```
+
+```json
+{}
+```
+
+Error: Parsing failed
+    at parse (apps/oxlint/dist/index.js)
+    at lint (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+
+
 ### `no-irregular-whitespace`
 
 Pass: 279 / 280 (99.6%)
@@ -57141,6 +58778,1893 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `no-promise-executor-return`
+
+Pass: 66 / 124 (53.2%)
+Fail: 58 / 124 (46.8%)
+Skip: 0 / 124 (0.0%)
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 42,
+      "endColumn": 51,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => resolve(1))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 34,
+      "endColumn": 44,
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise((resolve, reject) => void resolve(1))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {resolve(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return 1 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 36,
+      "endColumn": 44,
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise((resolve, reject) => { return void 1 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => 1)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void 1)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => 1 ? 2 : 3)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1 ? 2 : 3))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {1 ? 2 : 3})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => (1 ? 2 : 3))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1 ? 2 : 3))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {(1 ? 2 : 3)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => (1))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => () => {})
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (() => {}))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {() => {}})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => null)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void null)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => null)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => /*hi*/ ~0)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => /*hi*/ void ~0)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => /*hi*/ {~0})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => /*hi*/ ~0)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => /*hi*/ {~0})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { return void 0 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { if (foo) { return void 0 } return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { if (foo) { return void 0 } return void 0 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(resolve => { return (foo = resolve(1)); })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(resolve => { return void (foo = resolve(1)); })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(resolve => r = resolve)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(resolve => void (r = resolve))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(resolve => {r = resolve})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return(1) })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { return void (1) })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r =>1)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r =>void 1)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r =>{1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => ((1)))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void ((1)))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {((1))})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function foo(resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return undefined; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return null; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return false; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => resolve)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {resolve})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => null)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return resolve(foo); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return reject(foo); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => x + y)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {x + y})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return Promise.resolve(42); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { if (foo) { return 1; } })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { try { return 1; } catch(e) {} })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { while (foo){ if (bar) break; else return 1; } })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => { return void 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => (1))
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 20,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(() => {(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => ({}));
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 26,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {({})});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function () { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => 1)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 19,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(() => {1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() {} new Promise(function () { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 45,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return; } new Promise(() => { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 48,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return 1; } new Promise(() => { return 2; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 50,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo () { return new Promise(function () { return 1; }); }
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 52,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return new Promise(() => { bar(() => { return 1; }); return false; }); }
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 71,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => { if (foo) { return 0; } else bar(() => { return 1; }); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 38,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo () { return 1; return new Promise(function () { return 2; }); return 3;}
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 62,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => 1; new Promise(() => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 30,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function () { return 1; }); function foo() { return 1; } 
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 27,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 27,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => 1);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => () => 1);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {() => 1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => async () => 1);
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 2017
+  },
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {async () => 1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => function () {});
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": []
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => function foo() {});
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {function foo() {}});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => []);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {[]});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((Promise) => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function Promise(resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
 
 
@@ -96040,6 +99564,89 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
+### `no-useless-assignment`
+
+Pass: 83 / 85 (97.6%)
+Fail: 2 / 85 (2.4%)
+Skip: 0 / 85 (0.0%)
+
+#### no-useless-assignment > valid
+
+```js
+/* exported foo */
+            let foo = 'used';
+            console.log(foo);
+            foo = 'unused like but exported with directive';
+```
+
+```json
+{
+  "languageOptions": {
+    "sourceType": "script"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-useless-assignment',
+    message: 'This assigned value is not used in subsequent statements.',
+    messageId: 'unnecessaryAssignment',
+    severity: 1,
+    nodeType: 'Identifier',
+    line: 4,
+    column: 12,
+    endLine: 4,
+    endColumn: 15,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-useless-assignment > valid
+
+```js
+/*eslint test/use-a:1*/
+        let a = 'used';
+        console.log(a);
+        a = 'unused like but marked by markVariableAsUsed()';
+        
+```
+
+```json
+{}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-useless-assignment',
+    message: 'This assigned value is not used in subsequent statements.',
+    messageId: 'unnecessaryAssignment',
+    severity: 1,
+    nodeType: 'Identifier',
+    line: 4,
+    column: 8,
+    endLine: 4,
+    endColumn: 9,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
 ### `no-useless-backreference`
 
 Pass: 188 / 190 (98.9%)
@@ -97728,6 +101335,67 @@ parseInt("10", 1);
 AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `require-atomic-updates`
+
+Pass: 62 / 63 (98.4%)
+Fail: 1 / 63 (1.6%)
+Skip: 0 / 63 (0.0%)
+
+#### require-atomic-updates > invalid
+
+```js
+
+                async () => {
+                    opts.spec = process.stdin;
+                    try {
+                        const { exit_code } = await run(opts);
+                        process.exitCode = exit_code;
+                    } catch (e) {
+                        process.exitCode = 1;
+                    }
+              };
+            
+```
+
+```json
+{
+  "languageOptions": {
+    "sourceType": "commonjs",
+    "globals": {
+      "process": "readonly"
+    }
+  },
+  "errors": [
+    {
+      "messageId": "nonAtomicObjectUpdate",
+      "data": {
+        "value": "process.exitCode",
+        "object": "process"
+      },
+      "line": 6
+    },
+    {
+      "messageId": "nonAtomicObjectUpdate",
+      "data": {
+        "value": "process.exitCode",
+        "object": "process"
+      },
+      "line": 8
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
 
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)

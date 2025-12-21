@@ -7,6 +7,7 @@ import {
   EXPRESSION_NODE_TYPE_IDS,
   FUNCTION_NODE_TYPE_IDS,
   NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
 } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
 import { debugAssert, typeAssertIs } from "../utils/asserts.ts";
@@ -234,7 +235,8 @@ function analyzeSelector(
       // If the type is invalid, just treat this selector as not matching any types.
       // But still increment identifier count.
       // This matches ESLint's behavior.
-      return typeId === undefined ? EMPTY_TYPE_IDS_ARRAY : [typeId];
+      // Ignore when `typeId >= NODE_TYPES_COUNT` - those are names of CFG events.
+      return typeId === undefined || typeId >= NODE_TYPES_COUNT ? EMPTY_TYPE_IDS_ARRAY : [typeId];
     }
 
     case "not":

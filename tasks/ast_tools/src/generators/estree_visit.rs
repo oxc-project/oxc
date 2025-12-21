@@ -436,6 +436,25 @@ fn generate(codegen: &Codegen) -> Codes {
         function_node_ids,
     ) = selector_classes.into_vecs();
 
+    // Add CFG event names to type ID map
+    let cfg_event_names = [
+        "onCodePathStart",
+        "onCodePathEnd",
+        "onCodePathSegmentStart",
+        "onCodePathSegmentEnd",
+        "onUnreachableCodePathSegmentStart",
+        "onUnreachableCodePathSegmentEnd",
+        "onCodePathSegmentLoop",
+    ];
+
+    type_ids_map.push_str("/* IF LINTER */ // CFG selectors\n");
+    let mut event_id = nodes_count;
+    for event_name in cfg_event_names {
+        write_it!(type_ids_map, "[\"{event_name}\", {event_id}],\n");
+        event_id += 1;
+    }
+    type_ids_map.push_str("/* END_IF */\n");
+
     #[rustfmt::skip]
     write_it!(type_ids_map, "
         ]);
@@ -447,6 +466,9 @@ fn generate(codegen: &Codegen) -> Codes {
         export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
 
         /* IF LINTER */
+
+        /** Total count of node types and CFG events */
+        export const TYPE_IDS_COUNT = {event_id};
 
         /** Type IDs which match `:statement` selector class */
         export const STATEMENT_NODE_TYPE_IDS = {statement_node_ids:?};

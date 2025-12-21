@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
+    "@eslint/plugin-kit": "^0.5.0",
     "@napi-rs/cli": "catalog:",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
