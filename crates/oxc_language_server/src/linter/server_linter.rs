@@ -1136,8 +1136,10 @@ mod test {
     fn test_config_file_type_aware_used_when_lsp_not_set() {
         // Config file sets `linterOptions.typeAware = true`. When the LSP option is not set,
         // the linter should use the config file's typeAware setting and enable type-aware rules.
-        let tester = Tester::new("fixtures/linter/tsgolint", json!({}));
-        tester.test_and_snapshot_single_file("type_aware_config/test.ts");
+        // The root directory must contain the .oxlintrc.json with typeAware: true, since only
+        // the root config's linterOptions are used for determining type-aware mode.
+        let tester = Tester::new("fixtures/linter/tsgolint/type_aware_config", json!({}));
+        tester.test_and_snapshot_single_file("test.ts");
     }
 
     #[test]
@@ -1145,8 +1147,9 @@ mod test {
     fn test_config_file_type_aware_disabled_when_lsp_set() {
         // Config file sets `linterOptions.typeAware = true`. But when the LSP option is set to false,
         // the linter should use the LSP's typeAware setting and disable type-aware rules.
-        let tester = Tester::new("fixtures/linter/tsgolint", json!({ "typeAware": false }));
-        tester.test_and_snapshot_single_file("type_aware_config/test-with-lsp-config.ts");
+        let tester =
+            Tester::new("fixtures/linter/tsgolint/type_aware_config", json!({ "typeAware": false }));
+        tester.test_and_snapshot_single_file("test-with-lsp-config.ts");
     }
 
     #[test]
