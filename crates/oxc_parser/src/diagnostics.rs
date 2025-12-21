@@ -1162,3 +1162,21 @@ pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnosti
         .with_label(span)
         .with_help("Wrap this with quotes")
 }
+
+// TS18058
+#[cold]
+pub fn default_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18058", "Default imports are not allowed in a deferred import.").with_label(span)
+}
+
+// TS18059
+#[cold]
+pub fn named_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18059", "Named imports are not allowed in a deferred import.").with_label(span)
+}
+
+#[cold]
+pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
+        .with_label(span)
+}
