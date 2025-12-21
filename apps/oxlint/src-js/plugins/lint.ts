@@ -64,17 +64,25 @@ export function lintFile(
   try {
     lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 
-    // Avoid JSON serialization in common case that there are no diagnostics to report
-    if (diagnostics.length === 0) return null;
+    let ret: string | null = null;
 
-    // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
-    // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
-    return JSON.stringify({ Success: diagnostics });
-  } catch (err) {
-    return JSON.stringify({ Failure: getErrorMessage(err) });
-  } finally {
-    diagnostics.length = 0;
+    // Avoid JSON serialization in common case that there are no diagnostics to report
+    if (diagnostics.length !== 0) {
+      // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
+      // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
+      ret = JSON.stringify({ Success: diagnostics });
+
+      // Empty `diagnostics` array, so it starts empty when linting next file
+      diagnostics.length = 0;
+    }
+
     resetFile();
+
+    return ret;
+  } catch (err) {
+    resetStateAfterError();
+
+    return JSON.stringify({ Failure: getErrorMessage(err) });
   }
 }
 
@@ -239,4 +247,13 @@ export function resetFile() {
   resetSourceAndAst();
   resetSettings();
   resetGlobals();
+}
+
+/**
+ * After an error, reset global state which otherwise may not be left
+ * in the correct initial state for linting the next file.
+ */
+export function resetStateAfterError() {
+  diagnostics.length = 0;
+  resetFile();
 }

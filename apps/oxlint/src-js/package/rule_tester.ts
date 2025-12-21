@@ -12,7 +12,7 @@ import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
-import { lintFileImpl, resetFile } from "../plugins/lint.ts";
+import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
@@ -1006,8 +1006,10 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     // Reset state
     registeredRules.length = 0;
     if (allOptions !== null) allOptions.length = 1;
-    diagnostics.length = 0;
-    resetFile();
+
+    // Even if there hasn't been an error, do a full reset of state just to be sure.
+    // This includes emptying `diagnostics`.
+    resetStateAfterError();
   }
 }
 
