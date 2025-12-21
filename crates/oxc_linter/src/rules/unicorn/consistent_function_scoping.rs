@@ -54,7 +54,7 @@ fn consistent_function_scoping(
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentFunctionScoping {
     /// Whether to check scoping with arrow functions.
     check_arrow_functions: bool,
@@ -162,7 +162,7 @@ declare_oxc_lint!(
 impl Rule for ConsistentFunctionScoping {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<ConsistentFunctionScoping>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

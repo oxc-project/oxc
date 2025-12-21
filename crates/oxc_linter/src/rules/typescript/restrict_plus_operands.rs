@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct RestrictPlusOperands(Box<RestrictPlusOperandsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RestrictPlusOperandsConfig {
     /// Whether to allow `any` type in plus operations.
     pub allow_any: bool,
@@ -99,7 +99,7 @@ declare_oxc_lint!(
 impl Rule for RestrictPlusOperands {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<RestrictPlusOperands>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

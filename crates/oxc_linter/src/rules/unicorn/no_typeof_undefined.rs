@@ -19,7 +19,7 @@ fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoTypeofUndefined {
     /// If set to `true`, also report `typeof x === "undefined"` when `x` may be a global
     /// variable that is not declared (commonly checked via `typeof foo === "undefined"`).
@@ -89,9 +89,7 @@ impl Rule for NoTypeofUndefined {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoTypeofUndefined>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoTypeofUndefined>>(value).unwrap().into_inner()
     }
 }
 

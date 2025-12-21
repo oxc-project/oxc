@@ -22,7 +22,7 @@ fn no_array_reverse_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoArrayReverse {
     /// This rule allows `array.reverse()` as an expression statement by default.
     /// Set to `false` to forbid `Array#reverse()` even if it's an expression statement.
@@ -70,9 +70,7 @@ declare_oxc_lint!(
 
 impl Rule for NoArrayReverse {
     fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoArrayReverse>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoArrayReverse>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -150,9 +150,7 @@ declare_oxc_lint!(
 
 impl Rule for NoRestrictedTypes {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoRestrictedTypes>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoRestrictedTypes>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

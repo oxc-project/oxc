@@ -35,7 +35,7 @@ enum Destructure {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct DefinePropsDestructuring {
     /// Require or prohibit destructuring.
     destructure: Destructure,
@@ -83,7 +83,7 @@ declare_oxc_lint!(
 impl Rule for DefinePropsDestructuring {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<DefinePropsDestructuring>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

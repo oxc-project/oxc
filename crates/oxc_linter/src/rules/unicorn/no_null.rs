@@ -26,7 +26,7 @@ fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNull {
     /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
     check_strict_equality: bool,

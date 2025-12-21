@@ -21,7 +21,7 @@ fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnosti
 pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct TripleSlashReferenceConfig {
     /// What to enforce for `/// <reference lib="..." />` references.
     lib: LibOption,
@@ -103,7 +103,7 @@ declare_oxc_lint!(
 impl Rule for TripleSlashReference {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<TripleSlashReference>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

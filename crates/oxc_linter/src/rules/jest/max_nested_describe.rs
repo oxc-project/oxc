@@ -23,8 +23,7 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-#[schemars(default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxNestedDescribe {
     /// Maximum allowed depth of nested describe calls.
     pub max: usize,
@@ -139,9 +138,7 @@ declare_oxc_lint!(
 
 impl Rule for MaxNestedDescribe {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<MaxNestedDescribe>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<MaxNestedDescribe>>(value).unwrap().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext) {

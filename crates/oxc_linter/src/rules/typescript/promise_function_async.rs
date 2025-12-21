@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct PromiseFunctionAsync(Box<PromiseFunctionAsyncConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PromiseFunctionAsyncConfig {
     /// Whether to allow functions returning `any` type without requiring `async`.
     pub allow_any: bool,
@@ -110,7 +110,7 @@ declare_oxc_lint!(
 impl Rule for PromiseFunctionAsync {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PromiseFunctionAsync>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

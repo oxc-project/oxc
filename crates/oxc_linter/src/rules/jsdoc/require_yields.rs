@@ -49,7 +49,7 @@ impl Deref for RequireYields {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireYieldsConfig {
     /// Functions with these tags will be exempted from the lint rule.
     exempted_by: Vec<String>,
@@ -105,9 +105,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireYields {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<RequireYields>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<RequireYields>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

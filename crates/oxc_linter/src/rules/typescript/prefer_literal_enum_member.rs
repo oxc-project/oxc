@@ -21,7 +21,7 @@ fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferLiteralEnumMember {
     /// When set to `true`, allows bitwise expressions in enum member initializers.
     /// This includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`).
@@ -60,7 +60,7 @@ declare_oxc_lint!(
 impl Rule for PreferLiteralEnumMember {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PreferLiteralEnumMember>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

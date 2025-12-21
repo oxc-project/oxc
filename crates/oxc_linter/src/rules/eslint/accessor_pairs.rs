@@ -32,7 +32,7 @@ fn getter_without_setter_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AccessorPairsConfig {
     /// Report a setter without a getter.
     set_without_get: bool,
@@ -122,9 +122,7 @@ declare_oxc_lint!(
 
 impl Rule for AccessorPairs {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<AccessorPairs>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<AccessorPairs>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

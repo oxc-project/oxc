@@ -20,7 +20,7 @@ fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
 pub struct NoHooks(Box<NoHooksConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoHooksConfig {
     /// An array of hook function names that are permitted for use.
     allow: Vec<CompactStr>,

@@ -20,7 +20,7 @@ fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoVoid {
     /// If set to `true`, using `void` as a standalone statement is allowed.
     pub allow_as_statement: bool,

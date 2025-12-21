@@ -34,7 +34,7 @@ impl std::ops::Deref for PreferNumberProperties {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferNumberPropertiesConfig {
     /// If set to `true`, checks for usage of `Infinity` and `-Infinity` as global variables.
     check_infinity: bool,
@@ -89,7 +89,7 @@ declare_oxc_lint!(
 impl Rule for PreferNumberProperties {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PreferNumberProperties>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

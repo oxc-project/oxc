@@ -104,9 +104,7 @@ impl Rule for MaxDepth {
         {
             MaxDepth { max }
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxDepth>>(value)
-                .unwrap_or_default()
-                .into_inner()
+            serde_json::from_value::<DefaultRuleConfig<MaxDepth>>(value).unwrap().into_inner()
         }
     }
 

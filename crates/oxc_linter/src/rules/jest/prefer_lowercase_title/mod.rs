@@ -23,7 +23,7 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferLowercaseTitleConfig {
     /// This array option allows specifying prefixes, which contain capitals that titles
     /// can start with. This can be useful when writing tests for API endpoints, where
@@ -172,7 +172,7 @@ declare_oxc_lint!(
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PreferLowercaseTitle>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

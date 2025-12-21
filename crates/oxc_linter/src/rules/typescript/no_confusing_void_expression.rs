@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoConfusingVoidExpression(Box<NoConfusingVoidExpressionConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConfusingVoidExpressionConfig {
     /// Whether to ignore arrow function shorthand that returns void.
     /// When true, allows expressions like `() => someVoidFunction()`.
@@ -75,7 +75,7 @@ declare_oxc_lint!(
 impl Rule for NoConfusingVoidExpression {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoConfusingVoidExpression>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

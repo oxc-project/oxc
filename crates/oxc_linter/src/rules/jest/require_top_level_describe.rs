@@ -37,7 +37,7 @@ fn unexpected_hook(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireTopLevelDescribe {
     /// The maximum number of top-level `describe` blocks allowed in a test file.
     pub max_number_of_top_level_describes: usize,
@@ -120,7 +120,7 @@ declare_oxc_lint!(
 impl Rule for RequireTopLevelDescribe {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<RequireTopLevelDescribe>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

@@ -19,7 +19,7 @@ fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> O
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBarrelFile {
     /// The maximum number of modules that can be re-exported via `export *`
     /// before the rule is triggered.
@@ -75,9 +75,7 @@ declare_oxc_lint!(
 
 impl Rule for NoBarrelFile {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoBarrelFile>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoBarrelFile>>(value).unwrap().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

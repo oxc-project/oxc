@@ -28,7 +28,7 @@ fn no_unsafe_arithmetic_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeOptionalChaining {
     /// Disallow arithmetic operations on optional chaining expressions.
     /// If this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN.
@@ -66,7 +66,7 @@ declare_oxc_lint!(
 impl Rule for NoUnsafeOptionalChaining {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoUnsafeOptionalChaining>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

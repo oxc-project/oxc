@@ -27,7 +27,7 @@ use crate::{
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExplicitFunctionReturnTypeConfig {
     /// Whether to allow expressions as function return types. When `true`, allows functions that immediately return an expression without a return type annotation.
     allow_expressions: bool,
@@ -148,7 +148,7 @@ fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
 impl Rule for ExplicitFunctionReturnType {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<ExplicitFunctionReturnType>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

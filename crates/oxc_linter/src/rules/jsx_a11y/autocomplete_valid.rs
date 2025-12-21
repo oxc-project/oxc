@@ -28,7 +28,7 @@ fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnosti
 pub struct AutocompleteValid(Box<AutocompleteValidConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AutocompleteValidConfig {
     /// List of custom component names that should be treated as input elements.
     input_components: FxHashSet<CompactStr>,

@@ -24,7 +24,7 @@ fn max_params_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
 pub struct MaxParams(Box<MaxParamsConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxParamsConfig {
     /// Maximum number of parameters allowed in function definitions.
     max: usize,
@@ -106,9 +106,7 @@ impl Rule for MaxParams {
         {
             Self(Box::new(MaxParamsConfig { max, count_void_this: false }))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxParams>>(value)
-                .unwrap_or_default()
-                .into_inner()
+            serde_json::from_value::<DefaultRuleConfig<MaxParams>>(value).unwrap().into_inner()
         }
     }
 

@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoUnnecessaryTypeAssertion(Box<NoUnnecessaryTypeAssertionConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnnecessaryTypeAssertionConfig {
     /// Whether to check literal const assertions like `'foo' as const`.
     /// When `false` (default), const assertions on literal types are not flagged.
@@ -73,7 +73,7 @@ declare_oxc_lint!(
 impl Rule for NoUnnecessaryTypeAssertion {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoUnnecessaryTypeAssertion>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

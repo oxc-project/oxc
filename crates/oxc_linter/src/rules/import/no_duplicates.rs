@@ -39,7 +39,7 @@ where
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicates {
     /// When set to `true`, prefer inline type imports instead of separate type import
     /// statements for TypeScript code.
@@ -93,9 +93,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoDuplicates>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoDuplicates>>(value).unwrap().into_inner()
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

@@ -27,7 +27,7 @@ fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct StylePropObject(Box<StylePropObjectConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct StylePropObjectConfig {
     /// List of component names on which to allow `style` prop values of any type.
     allow: Vec<CompactStr>,
@@ -146,9 +146,7 @@ fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContex
 
 impl Rule for StylePropObject {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<StylePropObject>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<StylePropObject>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

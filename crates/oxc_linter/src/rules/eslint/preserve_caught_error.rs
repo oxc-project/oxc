@@ -38,7 +38,7 @@ fn missing_catch_parameter_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct PreserveCaughtErrorOptions {
     /// When set to `true`, requires that catch clauses always have a parameter.
     require_catch_parameter: bool,
@@ -306,7 +306,7 @@ impl PreserveCaughtError {
 impl Rule for PreserveCaughtError {
     fn from_configuration(value: serde_json::Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<PreserveCaughtError>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 

@@ -21,7 +21,7 @@ fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcD
 pub struct MaxClassesPerFile(Box<MaxClassesPerFileConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxClassesPerFileConfig {
     /// The maximum number of classes allowed per file.
     pub max: usize,
@@ -87,7 +87,7 @@ impl Rule for MaxClassesPerFile {
             Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false }))
         } else {
             serde_json::from_value::<DefaultRuleConfig<MaxClassesPerFile>>(value)
-                .unwrap_or_default()
+                .unwrap()
                 .into_inner()
         }
     }

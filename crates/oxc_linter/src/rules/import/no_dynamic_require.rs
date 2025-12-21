@@ -18,7 +18,7 @@ fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDynamicRequire {
     /// When `true`, also check `import()` expressions for dynamic module specifiers.
     esmodule: bool,
@@ -58,9 +58,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDynamicRequire {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoDynamicRequire>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<NoDynamicRequire>>(value).unwrap().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

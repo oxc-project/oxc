@@ -21,7 +21,7 @@ fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcD
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAnonymousDefaultExport {
     /// Allow anonymous array as default export.
     allow_array: bool,
@@ -123,7 +123,7 @@ declare_oxc_lint!(
 impl Rule for NoAnonymousDefaultExport {
     fn from_configuration(value: Value) -> Self {
         serde_json::from_value::<DefaultRuleConfig<NoAnonymousDefaultExport>>(value)
-            .unwrap_or_default()
+            .unwrap()
             .into_inner()
     }
 
