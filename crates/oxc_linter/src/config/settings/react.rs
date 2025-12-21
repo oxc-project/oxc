@@ -1,8 +1,13 @@
 use std::{borrow::Cow, fmt};
 
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
+
+/// Regex to validate React version strings like "18.2.0", "17.0", or "16".
+static REACT_VERSION_REGEX: Lazy<Regex> =
+    lazy_regex!(r"^[1-9]\d*(\.(0|[1-9]\d*))?(\.(0|[1-9]\d*))?$");
 
 /// Configure React plugin rules.
 ///
@@ -72,6 +77,7 @@ pub struct ReactPluginSettings {
     /// }
     /// ```
     #[serde(default)]
+    #[validate(regex = "REACT_VERSION_REGEX")]
     #[schemars(with = "Option<String>")]
     pub version: Option<ReactVersion>,
     // TODO: More properties should be added
@@ -184,33 +190,35 @@ impl<'de> Deserialize<'de> for ReactVersion {
 
             fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
                 if value.is_empty() {
-                    return Err(E::custom("version string cannot be empty"));
+                    return Err(E::custom(
+                        "version string cannot be empty for settings.react.version",
+                    ));
                 }
 
                 let mut parts = value.split('.');
                 let major = parts
                     .next()
-                    .ok_or_else(|| E::custom("missing major version"))?
+                    .ok_or_else(|| E::custom("missing major version in settings.react.version"))?
                     .parse::<u32>()
-                    .map_err(|_| E::custom("invalid major version"))?;
+                    .map_err(|_| E::custom("invalid major version in settings.react.version"))?;
 
                 let minor = parts
                     .next()
                     .map(str::parse::<u32>)
                     .transpose()
-                    .map_err(|_| E::custom("invalid minor version"))?
+                    .map_err(|_| E::custom("invalid minor version in settings.react.version"))?
                     .unwrap_or(0);
 
                 let patch = parts
                     .next()
                     .map(str::parse::<u32>)
                     .transpose()
-                    .map_err(|_| E::custom("invalid patch version"))?
+                    .map_err(|_| E::custom("invalid patch version in settings.react.version"))?
                     .unwrap_or(0);
 
                 if parts.next().is_some() {
                     return Err(E::custom(
-                        "version string has too many components, expected major.minor.patch",
+                        "version string in settings.react.version has too many components, expected major.minor.patch",
                     ));
                 }
 
@@ -271,5 +279,20 @@ mod test {
         assert!(serde_json::from_str::<ReactVersion>(r#"" 18.2.0""#).is_err());
         assert!(serde_json::from_str::<ReactVersion>(r#""18.2.0 ""#).is_err());
         assert!(serde_json::from_str::<ReactVersion>(r#""18. 2.0""#).is_err());
+    }
+
+    #[test]
+    fn test_version_regex() {
+        let re = &*REACT_VERSION_REGEX;
+
+        let valid_versions = vec!["18.2.0", "17.0", "16", "1.0.0", "10.20.30", "2.5"];
+        for version in valid_versions {
+            assert!(re.is_match(version), "Expected version '{version}' to match regex");
+        }
+
+        let invalid_versions = vec!["018.2.0", "17.-1", "18.2.0.1", "invalid", "", " "];
+        for version in invalid_versions {
+            assert!(!re.is_match(version), "Expected version '{version}' to not match regex");
+        }
     }
 }
