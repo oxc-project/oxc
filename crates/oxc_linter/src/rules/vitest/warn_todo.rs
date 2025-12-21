@@ -59,13 +59,13 @@ impl Rule for WarnTodo {
         possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
-            self.run(possible_jest_node, ctx);
+            WarnTodo::run(possible_jest_node, ctx);
         }
     }
 }
 
 impl WarnTodo {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         if let AstKind::CallExpression(call_expr) = node.kind() {
             if !is_type_of_jest_fn_call(
@@ -78,7 +78,7 @@ impl WarnTodo {
                 ],
             ) {
                 return;
-            };
+            }
 
             let Some(parsed_vi_fn_call) =
                 parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
@@ -101,29 +101,27 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"describe("foo", function () {})"#,
-        r#"it("foo", function () {})"#,
-        r#"it.concurrent("foo", function () {})"#,
-        r#"test("foo", function () {})"#,
-        r#"test.concurrent("foo", function () {})"#,
-        r#"describe.only("foo", function () {})"#,
-        r#"it.only("foo", function () {})"#,
-        r#"it.each()("foo", function () {})"#,
+        ("describe('foo', function () {})", None),
+        ("it('foo', function () {})", None),
+        ("it.concurrent('foo', function () {})", None),
+        ("test('foo', function () {})", None),
+        ("test.concurrent('foo', function () {})", None),
+        ("describe.only('foo', function () {})", None),
+        ("it.only('foo', function () {})", None),
+        ("it.each()('foo', function () {})", None),
     ];
 
     let fail = vec![
-        r#"describe.todo("foo", function () {})"#,
-        r#"it.todo("foo", function () {})"#,
-        r#"test.todo("foo", function () {})"#,
-        r#"describe.todo.each([])("foo", function () {})"#,
-        r#"it.todo.each([])("foo", function () {})"#,
-        r#"test.todo.each([])("foo", function () {})"#,
-        r#"describe.only.todo("foo", function () {})"#,
-        r#"it.only.todo("foo", function () {})"#,
-        r#"test.only.todo("foo", function () {})"#,
+        ("describe.todo('foo', function () {})", None),
+        ("it.todo('foo', function () {})", None),
+        ("test.todo('foo', function () {})", None),
+        ("describe.todo.each([])('foo', function () {})", None),
+        ("it.todo.each([])('foo', function () {})", None),
+        ("test.todo.each([])('foo', function () {})", None),
+        ("describe.only.todo('foo', function () {})", None),
+        ("it.only.todo('foo', function () {})", None),
+        ("test.only.todo('foo', function () {})", None),
     ];
 
-    Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail).test_and_snapshot();
 }
