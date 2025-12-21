@@ -138,7 +138,8 @@ Oxc uses multiple testing approaches tailored to each crate:
 
 - **Unit/Integration tests**: Standard Rust tests in `tests/` directories
 - **Conformance tests**: Against external suites (Test262, Babel, TypeScript, Prettier)
-- **Snapshot tests**: Track failures and expected outputs using `insta`
+- **Snapshot tests**: Track failures and expected outputs using `cargo insta`
+
 
 ### Quick Test Commands
 
@@ -146,6 +147,8 @@ Oxc uses multiple testing approaches tailored to each crate:
 just test                                   # Run all Rust tests
 just conformance                            # Run all conformance tests (alias: cargo coverage)
 cargo test -p <crate_name>                  # Test specific crate
+cargo insta test                            # Run snapshot tests
+cargo insta review                          # Review/update snapshots after running test
 
 # Conformance for specific tools
 cargo coverage -- parser                    # Parser conformance
@@ -180,6 +183,8 @@ fn test() {
         .test_and_snapshot();
 }
 ```
+
+- **Fixer**: Use `expect_fix(fix)` method after `test_and_snapshot()` for auto-fix tests in rules.
 
 #### oxc_formatter
 
@@ -290,18 +295,18 @@ Tests are TypeScript files in each package's `test/` directory.
 
 ### Where to Add Tests
 
-| Crate                 | Location                                |
-| --------------------- | --------------------------------------- |
-| Parser                | `tasks/coverage/misc/pass/` or `fail/`  |
-| Linter                | Inline in rule files                    |
-| Formatter             | Prettier conformance suite              |
-| Minifier              | `tests/` subdirectories                 |
-| Transformer           | `tests/integrations/` or Babel fixtures |
-| Codegen               | `tests/integration/`                    |
-| Isolated Declarations | `tests/fixtures/*.ts`                   |
-| Semantic              | `tests/` directory                      |
-| NAPI packages         | `test/` directory (Vitest)              |
-| Language Server       | Inline and `/fixtures`                  |
+| Crate                 | Location                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| Parser                | `tasks/coverage/misc/pass/` or `fail/`                      |
+| Linter                | Inline in rule files and `tests/` subdirectory for fixtures |
+| Formatter             | Prettier conformance suite                                  |
+| Minifier              | `tests/` subdirectories                                     |
+| Transformer           | `tests/integrations/` or Babel fixtures                     |
+| Codegen               | `tests/integration/`                                        |
+| Isolated Declarations | `tests/fixtures/*.ts`                                       |
+| Semantic              | `tests/` directory                                          |
+| NAPI packages         | `test/` directory (Vitest)                                  |
+| Language Server       | Inline and `/fixtures`                                      |
 
 ## Notes
 
