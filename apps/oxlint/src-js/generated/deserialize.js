@@ -61,7 +61,19 @@ function deserializeProgram(pos) {
           throw Error("Comments are only accessible while linting the file");
         // Deserialize the comments.
         // Replace this getter with the comments array, so we don't deserialize twice.
-        let comments = deserializeVecComment(pos + 24);
+        let comments = deserializeVecComment(pos + 24),
+          { hashbang } = this;
+        if (hashbang !== null) {
+          let start, end;
+          comments.unshift({
+            __proto__: NodeProto,
+            type: "Shebang",
+            value: hashbang.value,
+            start: (start = hashbang.start),
+            end: (end = hashbang.end),
+            range: [start, end],
+          });
+        }
         Object.defineProperty(this, "comments", { value: comments });
         return comments;
       },
