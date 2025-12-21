@@ -195,7 +195,7 @@ declare_oxc_lint!(
     /// ```
     MaxStatements,
     eslint,
-    pedantic,
+    style,
     config = MaxStatementsConfig,
 );
 
