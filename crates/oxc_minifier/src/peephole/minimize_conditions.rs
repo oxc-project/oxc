@@ -1417,6 +1417,26 @@ mod test {
         test_same("x.y || (a, x.y = 3)");
         test_same("x.y && (a, x.y = 3)");
         test_same("x.y ?? (a, x.y = 3)");
+
+        // https://github.com/oxc-project/oxc/issues/16647
+        test_same("var x = {}; x.y || (x = {}, x.y = 3)");
+        test_same("var x = { y: 1 }; x.y && (x = {}, x.y = 3)");
+        test_same("var x = {}; x.y ?? (x = {}, x.y = 3)");
+        test_same("var x = {}; x.y || (a, x = {}, x.y = 3)");
+        test_same("var x = {}; x.y || (foo(x = {}), x.y = 3)");
+        test_same("var x = { y: {} }; x.y.z || (x.y = {}, x.y.z = 3)");
+        test("x || (a, x = 3)", "x ||= (a, 3)");
+        test("var x = {}; x.y || (foo(), x.y = 3)", "var x = {}; x.y ||= (foo(), 3)");
+        test("var x = {}; x.y || (new Foo(), x.y = 3)", "var x = {}; x.y ||= (new Foo(), 3)");
+        test("var x = {}; x.y || (tag``, x.y = 3)", "var x = {}; x.y ||= (tag``, 3)");
+        // `x` is mutated inside function `f`, so conservatively don't transform
+        // (even though `f` is not called in the expression)
+        test_same("var x = {}; function f() { x = {} } x.y || (foo(), x.y = 3)");
+        test_same("var x = {}; x.y.z || (x.y = {}, x.y.z = 3)");
+        test_same("var x = {}; x.y.z || (x = {}, x.y.z = 3)");
+        test_same("var x = {}; x.y.z.w || (x.y = {}, x.y.z.w = 3)");
+        // `x` is not mutated anywhere, and the preceding expression `x.y.z = {}` doesn't affect `x`
+        test("var x = {}; x.y || (x.y.z = {}, x.y = 3)", "var x = {}; x.y ||= (x.y.z = {}, 3)");
     }
 
     #[test]

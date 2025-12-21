@@ -1831,21 +1831,6 @@ impl<'a> PeepholeOptimizations {
         // Otherwise we should stop trying to substitute past this point
         Some(false)
     }
-
-    fn is_expression_that_reference_may_change(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
-        match expr {
-            Expression::Identifier(id) => {
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
-                } else {
-                    true
-                }
-            }
-            Expression::ThisExpression(_) => false,
-            _ => true,
-        }
-    }
 }
 
 #[cfg(test)]

@@ -104,6 +104,49 @@ impl<'a> PeepholeOptimizations {
         }
         None
     }
+
+    /// Checks if a member expression's base object may be mutated.
+    ///
+    /// This is used to prevent incorrect transformations like:
+    /// `x.y || (x = {}, x.y = 3)` → `x.y ||= (x = {}, 3)`
+    ///
+    /// The `||=` operator evaluates `x.y` (capturing `x`) before the RHS reassigns `x`,
+    /// which would change the semantics.
+    pub fn member_object_may_be_mutated(
+        assignment_target: &AssignmentTarget<'a>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        let object = match assignment_target {
+            AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
+            AssignmentTarget::PrivateFieldExpression(member_expr) => &member_expr.object,
+            AssignmentTarget::StaticMemberExpression(member_expr) => &member_expr.object,
+            _ => return false,
+        };
+
+        Self::is_expression_that_reference_may_change(object, ctx)
+    }
+
+    /// Checks if an expression's reference may change due to mutation.
+    ///
+    /// Returns `true` if the expression references a symbol that may be mutated,
+    /// or if the expression is not a simple identifier/this reference.
+    pub fn is_expression_that_reference_may_change(
+        expr: &Expression<'a>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        match expr {
+            Expression::Identifier(id) => {
+                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                {
+                    ctx.scoping().symbol_is_mutated(symbol_id)
+                } else {
+                    true
+                }
+            }
+            Expression::ThisExpression(_) => false,
+            _ => true,
+        }
+    }
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
