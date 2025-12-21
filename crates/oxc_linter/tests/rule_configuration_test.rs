@@ -54,7 +54,6 @@ fn test_rule_default_matches_from_configuration_null() {
                 "Rule '{plugin_name}/{rule_name}' has different configurations between default() and from_configuration(null).\n\
                  Default: {default_debug}\n\
                  From null: {null_debug}",
-
             ));
         }
     }
