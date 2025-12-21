@@ -77,15 +77,11 @@ impl std::ops::Deref for CapitalizedComments {
 #[serde(rename_all = "camelCase")]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
-    #[schemars(description = "A regular pattern. Comments that match the pattern will be ignored")]
+    /// A regular pattern. Comments that match the pattern will be ignored.
     ignore_pattern: Option<String>,
-    #[schemars(
-        description = "If true, inline comments (comments in the middle of code) will be ignored"
-    )]
+    /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
-    #[schemars(
-        description = "If true, consecutive comments will be ignored after the first comment"
-    )]
+    /// If true, consecutive comments will be ignored after the first comment.
     ignore_consecutive_comments: Option<bool>,
 }
 
@@ -112,9 +108,9 @@ impl CommentConfigJson {
 struct OptionsJson {
     #[serde(flatten)]
     base: CommentConfigJson,
-    #[schemars(description = "Configuration specifically for line comments (//)")]
+    /// Configuration specifically for line comments (//).
     line: Option<CommentConfigJson>,
-    #[schemars(description = "Configuration specifically for block comments (/* */)")]
+    /// Configuration specifically for block comments (/* */).
     block: Option<CommentConfigJson>,
 }
 
@@ -127,11 +123,9 @@ struct OptionsJson {
 #[serde(deny_unknown_fields)]
 #[expect(dead_code)] // Only used for schema generation
 struct CapitalizedCommentsSchema(
-    #[schemars(
-        description = "Controls whether comments should start with an uppercase or lowercase letter. Default: \"always\""
-    )]
+    /// Controls whether comments should start with an uppercase or lowercase letter. Default: "always".
     CapitalizeOption,
-    #[schemars(description = "Optional configuration object with additional settings")]
+    /// Optional configuration object with additional settings.
     Option<OptionsJson>,
 );
 
