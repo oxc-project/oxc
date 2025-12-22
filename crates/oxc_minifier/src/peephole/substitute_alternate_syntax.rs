@@ -762,7 +762,10 @@ impl<'a> PeepholeOptimizations {
 
         // make sure `arguments` points to the arguments object
         // this is checked after the structure checks above because this check is slower than the structure checks
-        if ctx.ancestor_scopes().all(|s| !ctx.scoping().scope_flags(s).is_function()) {
+        if ctx.ancestor_scopes().all(|s| {
+            let scope_flags = ctx.scoping().scope_flags(s);
+            !scope_flags.is_function() || scope_flags.is_arrow()
+        }) {
             return;
         }
 
@@ -2649,6 +2652,9 @@ mod test {
 
         test_same(
             "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+        );
+        test_same(
+            "const _ = () => { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
         );
         test_same(
             "{ let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
