@@ -597,7 +597,7 @@ mod test {
         // Make sure it plays nice with minimizing
         test("for(;false;) { foo(); continue }", "");
 
-        test("for (var { c, x: [d] } = {}; 0;);", "var c, [d] = void 0");
+        test("for (var { c, x: [d] } = {}; 0;);", "var { c, x: [d] } = {};");
         test("for (var se = [1, 2]; false;);", "var se = [1, 2];");
         test("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 

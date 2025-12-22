@@ -1,24 +1,16 @@
+use super::PeepholeOptimizations;
 use crate::{ctx::Ctx, keep_var::KeepVar};
 use oxc_allocator::{Box, TakeIn, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
-    PropName,
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, SPAN};
-use oxc_syntax::reference::ReferenceFlags;
-use oxc_syntax::symbol::SymbolFlags;
+use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
-use std::{
-    cmp::{Ordering, min},
-    iter,
-    ops::ControlFlow,
-};
-
-use super::PeepholeOptimizations;
+use std::{cmp::min, iter, ops::ControlFlow};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -453,146 +445,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Determines whether an object destruction assignment can be simplified based on the provided variable declaration.
-    /// - `let {x, y} = {x: 1, y: 2};` -> true
-    /// - `let {x, y} = {...arr};` -> false
-    fn can_simplify_object_to_object_destruction_assignment(
-        decl: &VariableDeclarator<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> bool {
-        let BindingPatternKind::ObjectPattern(id_kind) = &decl.id.kind else { return false };
-        // do not process if left side of assignment is empty or has rest `{ ...a }`
-        if id_kind.properties.is_empty()
-            || id_kind.rest.is_some()
-            || id_kind.properties.iter().any(|e| e.key.prop_name().is_none())
-        {
-            return false;
-        }
-
-        let Some(Expression::ObjectExpression(init_expr)) = &decl.init else { return false };
-        if init_expr
-            .properties
-            .iter()
-            .any(|e| e.is_spread() || e.may_have_side_effects(ctx) || e.prop_name().is_none())
-        {
-            return false;
-        }
-
-        true
-    }
-
-    fn simplify_object_destruction_assignment(
-        decl: &mut VariableDeclarator<'a>,
-        result: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
-        let BindingPatternKind::ObjectPattern(id_kind) = &mut decl.id.kind else {
-            return false;
-        };
-        let Some(Expression::ObjectExpression(init_expr)) = &mut decl.init else {
-            return false;
-        };
-
-        id_kind.properties.sort_by(|a, b| {
-            let a_short = a.shorthand || b.value.kind.is_binding_identifier();
-            let b_short = b.shorthand || b.value.kind.is_binding_identifier();
-            if a_short == b_short {
-                return Ordering::Equal;
-            }
-            if a_short {
-                return Ordering::Less;
-            }
-            Ordering::Greater
-        });
-
-        for id_prop in id_kind.properties.drain(..) {
-            let id_prop_key = match id_prop.key {
-                PropertyKey::StaticIdentifier(ident) => (ident.name, ident.span),
-                PropertyKey::Identifier(ident) => (ident.name, ident.span),
-                PropertyKey::StringLiteral(lit) => (lit.value, lit.span),
-                // TODO: is this the best way?
-                // PropertyKey::NumericLiteral(lit) => {
-                //     (Atom::from(ctx.ast.str(&lit.to_string())), lit.span)
-                // }
-                _ => return false,
-            };
-
-            let prop_index = init_expr.properties.iter().rposition(|init| {
-                init.prop_name().is_some_and(|name| name.0.eq(id_prop_key.0.as_str()))
-            });
-
-            let init_value = if let Some(index) = prop_index {
-                if let Some(ObjectPropertyKind::ObjectProperty(prop)) =
-                    init_expr.properties.get_mut(index)
-                {
-                    if id_prop.value.kind.is_binding_identifier()
-                        || id_prop.value.kind.is_assignment_pattern()
-                    {
-                        let val = prop.value.take_in(ctx.ast);
-                        prop.value = ctx.create_ident_expr(
-                            id_prop_key.1,
-                            id_prop_key.0,
-                            id_prop
-                                .value
-                                .get_binding_identifier()
-                                .map(BindingIdentifier::symbol_id),
-                            ReferenceFlags::Read,
-                        );
-                        Some(val)
-                    } else {
-                        let unique = ctx.generate_uid_in_current_scope(
-                            &id_prop_key.0,
-                            SymbolFlags::ConstVariable,
-                        );
-                        let ident = unique.create_binding_pattern(ctx);
-                        let symbol_id =
-                            ident.get_binding_identifier().map(BindingIdentifier::symbol_id);
-
-                        result.push(ctx.ast.variable_declarator(
-                            SPAN,
-                            decl.kind,
-                            ident,
-                            Option::from(prop.value.take_in(ctx.ast)),
-                            decl.definite,
-                        ));
-
-                        prop.value = ctx.create_ident_expr(
-                            SPAN,
-                            unique.name,
-                            symbol_id,
-                            ReferenceFlags::Read,
-                        );
-
-                        // replace reference for `{ x, x: c } = ....`
-                        Some(ctx.create_ident_expr(
-                            id_prop.value.span(),
-                            unique.name,
-                            symbol_id,
-                            ReferenceFlags::Read,
-                        ))
-                    }
-                } else {
-                    None
-                }
-            } else if id_prop.value.kind.is_assignment_pattern()
-                || id_prop.value.kind.is_binding_identifier()
-            {
-                None
-            } else {
-                Some(ctx.ast.void_0(SPAN))
-            };
-
-            result.push(ctx.ast.variable_declarator(
-                id_prop.span,
-                decl.kind,
-                id_prop.value,
-                init_value,
-                decl.definite,
-            ));
-        }
-        true
-    }
-
     /// Determines whether an array destruction assignment can be simplified based on the provided variable declaration.
     /// - `let [x, y] = [1, 2];` -> true
     /// - `let [x, y] = [...arr];` -> false
@@ -600,7 +452,7 @@ impl<'a> PeepholeOptimizations {
         decl: &VariableDeclarator<'a>,
         _ctx: &Ctx<'a, '_>,
     ) -> bool {
-        let BindingPatternKind::ArrayPattern(id_kind) = &decl.id.kind else { return false };
+        let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
         if id_kind.elements.is_empty() {
             return false;
@@ -618,7 +470,7 @@ impl<'a> PeepholeOptimizations {
             && id_kind
                 .elements
                 .first()
-                .is_some_and(|e| e.as_ref().is_none_or(|p| p.kind.is_assignment_pattern()))
+                .is_some_and(|e| e.as_ref().is_none_or(BindingPattern::is_assignment_pattern))
         {
             return false;
         }
@@ -636,7 +488,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, VariableDeclarator<'a>>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        let BindingPatternKind::ArrayPattern(id_kind) = &mut decl.id.kind else {
+        let BindingPattern::ArrayPattern(id_kind) = &mut decl.id else {
             return false;
         };
         let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init else {
@@ -658,30 +510,28 @@ impl<'a> PeepholeOptimizations {
 
             // check for holes [,] = ????
             if let Some(id) = id_item {
-                if id.kind.is_assignment_pattern() {
+                if id.is_assignment_pattern() {
                     if let Some(init) = init_item {
                         // this is not ideal as we are producing [a = 1] = [1] here
                         result.push(ctx.ast.variable_declarator(
                             id.span(),
                             decl.kind,
-                            ctx.ast.binding_pattern(
-                                ctx.ast.binding_pattern_kind_array_pattern(
-                                    decl.span,
-                                    ctx.ast.vec1(Some(id)),
-                                    None::<Box<'a, BindingRestElement<'a>>>,
-                                ),
-                                None::<Box<'a, TSTypeAnnotation<'a>>>,
-                                false,
+                            ctx.ast.binding_pattern_array_pattern(
+                                decl.span,
+                                ctx.ast.vec1(Some(id)),
+                                NONE,
                             ),
+                            NONE,
                             Some(ctx.ast.expression_array(init.span(), ctx.ast.vec1(init))),
                             decl.definite,
                         ));
-                    } else if let BindingPatternKind::AssignmentPattern(id_kind) = id.kind {
+                    } else if let BindingPattern::AssignmentPattern(id_kind) = id {
                         let id_kind_unbox = id_kind.unbox();
                         result.push(ctx.ast.variable_declarator(
-                            id_kind_unbox.span,
+                            id_kind_unbox.span(),
                             decl.kind,
                             id_kind_unbox.left,
+                            NONE,
                             Some(id_kind_unbox.right),
                             decl.definite,
                         ));
@@ -691,6 +541,7 @@ impl<'a> PeepholeOptimizations {
                         id.span(),
                         decl.kind,
                         id,
+                        NONE,
                         if let Some(init) = init_item
                             && !init.is_elision()
                         {
@@ -707,19 +558,12 @@ impl<'a> PeepholeOptimizations {
                     result.push(ctx.ast.variable_declarator(
                         init_elem.span(),
                         decl.kind,
-                        ctx.ast.binding_pattern(
-                            ctx.ast.binding_pattern_kind_array_pattern(
-                                decl.span,
-                                ctx.ast.vec(),
-                                None::<Box<'a, BindingRestElement<'a>>>,
-                            ),
-                            None::<Box<'a, TSTypeAnnotation<'a>>>,
-                            false,
-                        ),
-                        Some(Expression::ArrayExpression(ctx.ast.alloc_array_expression(
+                        ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
+                        NONE,
+                        Some(ctx.ast.expression_array(
                             init_elem.span(),
                             ctx.ast.vec_from_iter(Some(init_elem)),
-                        ))),
+                        )),
                         decl.definite,
                     ));
                 }
@@ -733,6 +577,7 @@ impl<'a> PeepholeOptimizations {
                         id.span(),
                         decl.kind,
                         id,
+                        NONE,
                         None,
                         decl.definite,
                     ));
@@ -751,7 +596,7 @@ impl<'a> PeepholeOptimizations {
     fn simplify_destructuring_assignment(
         _kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         let mut changed = false;
         let mut i = declarations.len();
@@ -763,32 +608,24 @@ impl<'a> PeepholeOptimizations {
             };
             let can_simplify_array =
                 Self::can_simplify_array_to_array_destruction_assignment(last, ctx);
-            let can_simplify_object = !can_simplify_array
-                && Self::can_simplify_object_to_object_destruction_assignment(last, ctx);
 
-            if can_simplify_array || can_simplify_object {
+            if can_simplify_array {
                 let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
-                let to_remove = if can_simplify_array {
-                    Self::simplify_array_destruction_assignment(
-                        declarations.get_mut(i).unwrap(),
-                        &mut new_var_decl,
-                        ctx,
-                    )
-                } else {
-                    Self::simplify_object_destruction_assignment(
-                        declarations.get_mut(i).unwrap(),
-                        &mut new_var_decl,
-                        ctx,
-                    )
-                };
+                let to_remove = Self::simplify_array_destruction_assignment(
+                    declarations.get_mut(i).unwrap(),
+                    &mut new_var_decl,
+                    ctx,
+                );
 
                 if !new_var_decl.is_empty() {
+                    let len = new_var_decl.len();
                     if to_remove {
                         declarations.splice(i..=i, new_var_decl.into_iter());
                     } else {
                         declarations.splice(i..i, new_var_decl.into_iter());
                     }
                     changed = true;
+                    i += len;
                 } else if to_remove {
                     declarations.remove(i);
                     changed = true;
@@ -2224,28 +2061,6 @@ mod test {
         test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
         test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
         test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
-    }
-
-    #[test]
-    fn test_simplify_object_destruction_assignment() {
-        test_same("var {} = {}");
-
-        test("var {a} = {a: 1}", "var a = 1");
-
-        test("var a = {a: 1}, b = a;log(a,b)", "var a = {a: 1}, b = a;log(a,b)");
-        test("var {a, a: c} = {a: {f: 1}};log(a,f)", "var a = {f: 1}, c = a;log(a,f)");
-        test("var {a: {f}, a} = {a: {f: 1}};log(a,f)", "var a = {f: 1}, {f} = a;log(a,f)");
-
-        test("var a = {a: 1}, b = a", "var b = {a: 1}");
-        test("var {a, a: c} = {a: {f: 1}};", "var c = {f: 1}");
-        test("var {a: {f}, a} = {a: {f: 1}}", "var f = 1");
-
-        test("var {a, b} = {a: 1}", "var a = 1, b");
-        test("var {a, a: {b}} = {a: {b: 1}}", "var b = 1");
-        // ideally `var c = 1, b = 2`
-        test("var {a:{c},a:{b}}={a:{b:2,c:1}}", "var _a={b:2,c:1},{c}=_a,{b}=_a");
-        // Uncaught TypeError: (intermediate value).a is not iterable -> Uncaught TypeError: _a is not iterable
-        test("var {a:[b],a:{c}}={a:{[0]:b,c}}", "var _a={0:b,c},[b]=_a,{c}=_a");
     }
 
     #[test]
