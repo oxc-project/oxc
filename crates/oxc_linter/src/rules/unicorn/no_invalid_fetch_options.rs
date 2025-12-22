@@ -6,9 +6,8 @@ use oxc_allocator::Box;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, Expression, FormalParameter, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, TSLiteral, TSLiteralType, TSType, TSTypeAnnotation,
-        TemplateLiteral,
+        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
+        TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -190,7 +189,7 @@ fn is_invalid_fetch_options<'a>(
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
-                            pattern: BindingPattern { type_annotation: Some(annotation), .. },
+                            type_annotation: Some(annotation),
                             ..
                         }) => {
                             let TSTypeAnnotation { type_annotation, .. } = &**annotation;

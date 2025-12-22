@@ -284,7 +284,7 @@ impl Rule for FuncStyle {
                             let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
                                 let is_type_annotation =
-                                    self.allow_type_annotation && decl.id.type_annotation.is_some();
+                                    self.allow_type_annotation && decl.type_annotation.is_some();
                                 if is_type_annotation {
                                     continue;
                                 }
@@ -332,7 +332,7 @@ impl Rule for FuncStyle {
                 let parent = semantic.nodes().parent_node(node.id());
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
                     let is_type_annotation =
-                        self.allow_type_annotation && decl.id.type_annotation.is_some();
+                        self.allow_type_annotation && decl.type_annotation.is_some();
                     if is_type_annotation {
                         continue;
                     }

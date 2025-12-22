@@ -158,11 +158,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
     fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
-        if binding.kind.is_destructuring_pattern() {
+        if binding.is_destructuring_pattern() {
             return self.scoping().symbol_span(self.id);
         }
-        let own = binding.kind.span();
-        binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
+        binding.span()
     }
 }
 

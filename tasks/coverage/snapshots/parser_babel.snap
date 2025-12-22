@@ -13256,7 +13256,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/destructure-new-line/input.ts:2:7]
  1 │ declare
  2 │ const { x, y }: { x: number, y: number };
-   ·       ──────────────────────────────────
+   ·       ────────
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -14335,22 +14335,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                 ─
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-annotation-in-destructuring/input.ts:1:7]
  1 │ let [a: number] = b;
-   ·       ────────
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `]` expected
+   ·     ╰── Opened here
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring/input.ts:1:7]
  1 │ let [a: number] = b;
-   ·       ────────
+   ·     ┬ ┬
+   ·     │ ╰── `,` or `]` expected
+   ·     ╰── Opened here
    ╰────
 
-  × Unexpected type annotation
+  × Expected `,` or `]` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring-in-params/input.ts:1:14]
  1 │ function f([a: number]) {}
-   ·              ────────
+   ·            ┬ ┬
+   ·            │ ╰── `,` or `]` expected
+   ·            ╰── Opened here
    ╰────
 
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.

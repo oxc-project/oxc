@@ -41,18 +41,18 @@ impl<'a> PeepholeOptimizations {
         if decl.kind.is_using() {
             return false;
         }
-        match &decl.id.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
+        match &decl.id {
+            BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
                     return ctx.scoping().symbol_is_unused(symbol_id);
                 }
                 false
             }
-            BindingPatternKind::ArrayPattern(ident) => {
+            BindingPattern::ArrayPattern(ident) => {
                 ident.is_empty()
                     && decl.init.as_ref().is_some_and(|expr| Self::is_sync_iterator_expr(expr, ctx))
             }
-            BindingPatternKind::ObjectPattern(ident) => {
+            BindingPattern::ObjectPattern(ident) => {
                 ident.is_empty()
                     && decl.init.as_ref().is_some_and(|expr| {
                         !matches!(
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
                         )
                     })
             }
-            BindingPatternKind::AssignmentPattern(_) => false,
+            BindingPattern::AssignmentPattern(_) => false,
         }
     }
 

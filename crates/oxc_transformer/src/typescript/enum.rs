@@ -92,7 +92,8 @@ impl<'a> TypeScriptEnum<'a> {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
+        let params =
+            ast.formal_parameter(SPAN, ast.vec(), id, NONE, NONE, false, None, false, false);
         let params = ast.vec1(params);
         let params = ast.alloc_formal_parameters(
             SPAN,
@@ -186,10 +187,9 @@ impl<'a> TypeScriptEnum<'a> {
         };
         let decls = {
             let binding_identifier = decl.id.clone();
-            let binding_pattern_kind =
-                BindingPatternKind::BindingIdentifier(ctx.alloc(binding_identifier));
-            let binding = ast.binding_pattern(binding_pattern_kind, NONE, false);
-            let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+            let binding = BindingPattern::BindingIdentifier(ctx.alloc(binding_identifier));
+            let decl =
+                ast.variable_declarator(SPAN, kind, binding, NONE, Some(call_expression), false);
             ast.vec1(decl)
         };
         let variable_declaration = ast.declaration_variable(decl.span, kind, decls, false);

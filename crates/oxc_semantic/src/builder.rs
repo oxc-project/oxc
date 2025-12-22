@@ -2080,6 +2080,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&param.span);
         self.visit_binding_pattern(&param.pattern);
+        if let Some(type_annotation) = &param.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
         self.resolve_references_for_current_scope();
         self.leave_node(kind);
     }
@@ -2162,6 +2165,9 @@ impl<'a> SemanticBuilder<'a> {
                 element.bind(self);
             }
             AstKind::FormalParameter(param) => {
+                param.bind(self);
+            }
+            AstKind::FormalParameterRest(param) => {
                 param.bind(self);
             }
             AstKind::CatchParameter(param) => {

@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
                 "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "param",
-                "node": "BindingRestElement",
+                "node": "FormalParameterRest",
                 "references": []
               }
             ]
@@ -31,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 1,
             "name": "param",
-            "node": "BindingRestElement",
+            "node": "FormalParameterRest",
             "references": []
           }
         ]
@@ -58,7 +58,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "deco",
-            "node_id": 20
+            "node_id": 22
           }
         ]
       },

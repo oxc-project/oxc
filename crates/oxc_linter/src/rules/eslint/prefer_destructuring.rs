@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPatternKind, Expression, MemberExpression},
+    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -184,12 +184,11 @@ impl Rule for PreferDestructuring {
                     if !check_expr(right) {
                         return;
                     }
-                    let name =
-                        if matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                            declarator.id.get_identifier_name().map(|v| v.as_str())
-                        } else {
-                            None
-                        };
+                    let name = if matches!(declarator.id, BindingPattern::BindingIdentifier(_)) {
+                        declarator.id.get_identifier_name().map(|v| v.as_str())
+                    } else {
+                        None
+                    };
                     match right {
                         MemberExpression::ComputedMemberExpression(comp_expr) => {
                             if matches!(comp_expr.expression, Expression::TemplateLiteral(_)) {

@@ -1,7 +1,7 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, FormalParameter, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -130,7 +130,7 @@ impl ParamNames {
     }
 
     fn check_parameter(&self, param: &FormalParameter, param_type: &ParamType, ctx: &LintContext) {
-        let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind else {
+        let BindingPattern::BindingIdentifier(param_ident) = &param.pattern else {
             return;
         };
 

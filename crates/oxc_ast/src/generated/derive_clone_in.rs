@@ -2615,6 +2615,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarator<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             init: CloneIn::clone_in(&self.init, allocator),
             definite: CloneIn::clone_in(&self.definite, allocator),
         }
@@ -2625,6 +2626,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarator<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
             id: CloneIn::clone_in_with_semantic_ids(&self.id, allocator),
+            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
             init: CloneIn::clone_in_with_semantic_ids(&self.init, allocator),
             definite: CloneIn::clone_in_with_semantic_ids(&self.definite, allocator),
         }
@@ -3358,6 +3360,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CatchParameter<'_> {
         CatchParameter {
             span: CloneIn::clone_in(&self.span, allocator),
             pattern: CloneIn::clone_in(&self.pattern, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
         }
     }
 
@@ -3365,6 +3368,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CatchParameter<'_> {
         CatchParameter {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             pattern: CloneIn::clone_in_with_semantic_ids(&self.pattern, allocator),
+            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
         }
     }
 }
@@ -3385,54 +3389,34 @@ impl<'new_alloc> CloneIn<'new_alloc> for BindingPattern<'_> {
     type Cloned = BindingPattern<'new_alloc>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        BindingPattern {
-            kind: CloneIn::clone_in(&self.kind, allocator),
-            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
-            optional: CloneIn::clone_in(&self.optional, allocator),
-        }
-    }
-
-    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        BindingPattern {
-            kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
-            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
-            optional: CloneIn::clone_in_with_semantic_ids(&self.optional, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for BindingPatternKind<'_> {
-    type Cloned = BindingPatternKind<'new_alloc>;
-
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::BindingIdentifier(it) => {
-                BindingPatternKind::BindingIdentifier(CloneIn::clone_in(it, allocator))
+                BindingPattern::BindingIdentifier(CloneIn::clone_in(it, allocator))
             }
             Self::ObjectPattern(it) => {
-                BindingPatternKind::ObjectPattern(CloneIn::clone_in(it, allocator))
+                BindingPattern::ObjectPattern(CloneIn::clone_in(it, allocator))
             }
             Self::ArrayPattern(it) => {
-                BindingPatternKind::ArrayPattern(CloneIn::clone_in(it, allocator))
+                BindingPattern::ArrayPattern(CloneIn::clone_in(it, allocator))
             }
             Self::AssignmentPattern(it) => {
-                BindingPatternKind::AssignmentPattern(CloneIn::clone_in(it, allocator))
+                BindingPattern::AssignmentPattern(CloneIn::clone_in(it, allocator))
             }
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BindingIdentifier(it) => BindingPatternKind::BindingIdentifier(
+            Self::BindingIdentifier(it) => BindingPattern::BindingIdentifier(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
-            Self::ObjectPattern(it) => BindingPatternKind::ObjectPattern(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ArrayPattern(it) => {
-                BindingPatternKind::ArrayPattern(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            Self::ObjectPattern(it) => {
+                BindingPattern::ObjectPattern(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::AssignmentPattern(it) => BindingPatternKind::AssignmentPattern(
+            Self::ArrayPattern(it) => {
+                BindingPattern::ArrayPattern(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            }
+            Self::AssignmentPattern(it) => BindingPattern::AssignmentPattern(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
         }
@@ -3627,6 +3611,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameter<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             pattern: CloneIn::clone_in(&self.pattern, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
+            initializer: CloneIn::clone_in(&self.initializer, allocator),
+            optional: CloneIn::clone_in(&self.optional, allocator),
             accessibility: CloneIn::clone_in(&self.accessibility, allocator),
             readonly: CloneIn::clone_in(&self.readonly, allocator),
             r#override: CloneIn::clone_in(&self.r#override, allocator),
@@ -3638,6 +3625,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameter<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             decorators: CloneIn::clone_in_with_semantic_ids(&self.decorators, allocator),
             pattern: CloneIn::clone_in_with_semantic_ids(&self.pattern, allocator),
+            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
+            initializer: CloneIn::clone_in_with_semantic_ids(&self.initializer, allocator),
+            optional: CloneIn::clone_in_with_semantic_ids(&self.optional, allocator),
             accessibility: CloneIn::clone_in_with_semantic_ids(&self.accessibility, allocator),
             readonly: CloneIn::clone_in_with_semantic_ids(&self.readonly, allocator),
             r#override: CloneIn::clone_in_with_semantic_ids(&self.r#override, allocator),
@@ -3656,6 +3646,26 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameterKind {
     #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for FormalParameterRest<'_> {
+    type Cloned = FormalParameterRest<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        FormalParameterRest {
+            span: CloneIn::clone_in(&self.span, allocator),
+            rest: CloneIn::clone_in(&self.rest, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        FormalParameterRest {
+            span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            rest: CloneIn::clone_in_with_semantic_ids(&self.rest, allocator),
+            type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
+        }
     }
 }
 

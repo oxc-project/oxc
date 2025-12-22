@@ -77,9 +77,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol
     /// - `false` if `pattern` is a destructuring pattern and contains more than one symbol
     /// - `not applicable` if `pattern` is not a destructuring pattern
-    pub(super) fn get_binding_info(&self, pattern: &BindingPatternKind<'a>) -> BindingInfo {
+    pub(super) fn get_binding_info(&self, pattern: &BindingPattern<'a>) -> BindingInfo {
         match pattern {
-            BindingPatternKind::ArrayPattern(arr) => match arr.elements.len() {
+            BindingPattern::ArrayPattern(arr) => match arr.elements.len() {
                 0 => {
                     debug_assert!(arr.rest.is_some());
 
@@ -118,7 +118,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     )
                 }
             },
-            BindingPatternKind::ObjectPattern(obj) => match obj.properties.len() {
+            BindingPattern::ObjectPattern(obj) => match obj.properties.len() {
                 0 => {
                     debug_assert!(obj.rest.is_some());
                     BindingInfo::multi_or_single(obj.rest.as_ref().map(|r| (r.span, true)), true)
@@ -146,11 +146,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     BindingInfo::multi_or_missing(own_span, true)
                 }
             },
-            BindingPatternKind::AssignmentPattern(assignment) => {
-                self.get_binding_info(&assignment.left.kind)
+            BindingPattern::AssignmentPattern(assignment) => {
+                self.get_binding_info(&assignment.left)
             }
             // not in a destructure
-            BindingPatternKind::BindingIdentifier(_) => BindingInfo::NotDestructure,
+            BindingPattern::BindingIdentifier(_) => BindingInfo::NotDestructure,
         }
     }
 }

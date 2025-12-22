@@ -475,12 +475,12 @@ after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
+rebuilt        : SymbolId(0): Span { start: 79, end: 80 }
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 83 }]
+after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 80 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
 after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
@@ -493,12 +493,12 @@ after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 267, end: 268 }
-rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
+rebuilt        : SymbolId(2): Span { start: 289, end: 290 }
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(2): [ReferenceId(2)]
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
+after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
 * remove-class-properties-without-initializer/input.ts

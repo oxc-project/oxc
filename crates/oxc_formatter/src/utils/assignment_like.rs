@@ -173,6 +173,9 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
                     write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())]);
+                    if let Some(type_annotation) = declarator.type_annotation() {
+                        write!(f, type_annotation);
+                    }
                     format_left_trailing_comments(
                         declarator.id.span().end,
                         should_print_as_leading(init),
@@ -180,6 +183,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     );
                 } else {
                     write!(f, declarator.id());
+                    if let Some(type_annotation) = declarator.type_annotation() {
+                        write!(f, type_annotation);
+                    }
                 }
                 false
             }
@@ -215,11 +221,9 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::BindingProperty(property) => {
                 if property.shorthand {
                     // Left-hand side only. See the explanation in the `has_only_left_hand_side` method.
-                    if matches!(
-                        property.value.kind,
-                        BindingPatternKind::BindingIdentifier(_)
-                            | BindingPatternKind::AssignmentPattern(_)
-                    ) {
+                    if property.value.is_binding_identifier()
+                        || property.value.is_assignment_pattern()
+                    {
                         write!(f, property.value());
                     }
                     return false;
@@ -440,17 +444,14 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
+                // Treats binding property has a left-hand side only
+                // when the value is an assignment pattern,
+                // because the `value` includes the `key` part.
+                // e.g., `{ a = 1 }` the `a` is the `key` and `a = 1` is the
+                // `value`, aka AssignmentPattern itself
                 property.shorthand
-                    && matches!(
-                        property.value.kind,
-                        BindingPatternKind::BindingIdentifier(_)
-                        // Treats binding property has a left-hand side only
-                        // when the value is an assignment pattern,
-                        // because the `value` includes the `key` part.
-                        // e.g., `{ a = 1 }` the `a` is the `key` and `a = 1` is the
-                        // `value`, aka AssignmentPattern itself
-                        | BindingPatternKind::AssignmentPattern(_)
-                    )
+                    && (property.value.is_binding_identifier()
+                        || property.value.is_assignment_pattern())
             }
             Self::ObjectProperty(property) => property.shorthand,
         }
@@ -517,7 +518,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return false;
         };
 
-        let type_annotation = declarator.id.type_annotation.as_ref();
+        let type_annotation = declarator.type_annotation.as_ref();
 
         type_annotation.is_some_and(|ann| is_complex_type_annotation(ann))
             || (left_may_break
@@ -588,7 +589,7 @@ impl<'a> AssignmentLike<'a, '_> {
     fn is_complex_destructuring(&self) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => {
-                let BindingPatternKind::ObjectPattern(object) = &variable_decorator.id.kind else {
+                let BindingPattern::ObjectPattern(object) = &variable_decorator.id else {
                     return false;
                 };
 
@@ -596,9 +597,10 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 }
 
-                object.properties.iter().any(|property| {
-                    !property.shorthand || property.value.kind.is_assignment_pattern()
-                })
+                object
+                    .properties
+                    .iter()
+                    .any(|property| !property.shorthand || property.value.is_assignment_pattern())
             }
             AssignmentLike::AssignmentExpression(assignment) => {
                 let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {

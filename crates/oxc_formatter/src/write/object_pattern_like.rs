@@ -68,8 +68,8 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
                 node.properties.iter().any(|property| {
                     matches!(
-                        property.value.kind,
-                        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_)
+                        &property.value,
+                        BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
                     )
                 })
             }
