@@ -89,7 +89,6 @@ impl<'a> UnresolvedReferencesStack<'a> {
         &mut self,
     ) -> (&mut TempUnresolvedReferences<'a>, &mut TempUnresolvedReferences<'a>) {
         // Assert invariants to remove bounds checks in code below.
-        // https://godbolt.org/z/vv5Wo5csv
         // SAFETY: `current_scope_depth` starts at 1, and is only decremented
         // in `decrement_scope_depth` which checks it doesn't go below 1.
         unsafe { assert_unchecked!(self.current_scope_depth > 0) };
@@ -99,9 +98,9 @@ impl<'a> UnresolvedReferencesStack<'a> {
         // and it grows `stack` to ensure `stack.len()` always exceeds `current_scope_depth`.
         unsafe { assert_unchecked!(self.stack.len() > self.current_scope_depth) };
 
-        let mut iter = self.stack.iter_mut();
-        let parent = iter.nth(self.current_scope_depth - 1).unwrap();
-        let current = iter.next().unwrap();
+        let (head, tail) = self.stack.split_at_mut(self.current_scope_depth);
+        let parent = &mut head[self.current_scope_depth - 1];
+        let current = &mut tail[0];
         (current, parent)
     }
 
