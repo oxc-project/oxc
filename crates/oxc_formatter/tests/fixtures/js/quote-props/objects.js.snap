@@ -61,6 +61,29 @@ a = {
   'outer-2': "value"
 };
 
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value"
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  'y-z': "value"
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z
+};
+
 ==================== Output ====================
 -------------------------------------------
 { printWidth: 80, quoteProps: "as-needed" }
@@ -122,6 +145,29 @@ a = {
     "inner-2": "value",
   },
   "outer-2": "value",
+};
+
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
 };
 
 --------------------------------------------
@@ -186,6 +232,29 @@ a = {
   "outer-2": "value",
 };
 
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
+};
+
 ------------------------------------------
 { printWidth: 80, quoteProps: "preserve" }
 ------------------------------------------
@@ -246,6 +315,29 @@ a = {
     "inner-2": "value",
   },
   "outer-2": "value",
+};
+
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
 };
 
 -------------------------------------------
@@ -310,6 +402,29 @@ a = {
   "outer-2": "value",
 };
 
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
+};
+
 --------------------------------------------
 { printWidth: 80, quoteProps: "consistent" }
 --------------------------------------------
@@ -370,6 +485,29 @@ a = {
     "inner-2": "value",
   },
   "outer-2": "value",
+};
+
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
 };
 
 ---------------------------------------------
@@ -434,6 +572,29 @@ a = {
   "outer-2": "value",
 };
 
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value",
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  "y-z": "value",
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
+};
+
 ---------------------------------------------------------------
 { printWidth: 80, quoteProps: "consistent", singleQuote: true }
 ---------------------------------------------------------------
@@ -496,6 +657,29 @@ a = {
   'outer-2': 'value',
 };
 
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: 'value',
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  'y-z': 'value',
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
+};
+
 ----------------------------------------------------------------
 { printWidth: 100, quoteProps: "consistent", singleQuote: true }
 ----------------------------------------------------------------
@@ -556,6 +740,29 @@ a = {
     'inner-2': 'value',
   },
   'outer-2': 'value',
+};
+
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: 'value',
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  'y-z': 'value',
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z,
 };
 
 ===================== End =====================
