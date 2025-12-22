@@ -689,6 +689,15 @@ fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
             let base = get_tag_name(&member.object)?;
             Some(format!("{}.{}", base, member.property.name.as_str()))
         }
+        Expression::ComputedMemberExpression(exp) => {
+            let property = exp.static_property_name()?;
+            let base = get_tag_name(&exp.object)?;
+
+            // NOTE: This string is only a "notion" used for embedded-formatter tag matching.
+            // For computed properties that aren't valid identifiers (e.g. `styled["foo-bar"]`),
+            // this may produce a string that isn't a valid JS expression like `styled.foo-bar`.
+            Some(format!("{}.{}", base, property.as_str()))
+        }
         _ => None,
     }
 }

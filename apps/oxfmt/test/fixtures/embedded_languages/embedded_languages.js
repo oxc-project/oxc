@@ -16,6 +16,8 @@ const styledButton = styled.button`border:1px solid #ccc;padding:8px 16px;border
 
 const styledInput = styled.input`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;`;
 
+const styledHeader = styled["h1"]`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================

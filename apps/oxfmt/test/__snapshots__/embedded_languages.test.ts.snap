@@ -22,6 +22,8 @@ const styledButton = styled.button\`border:1px solid #ccc;padding:8px 16px;borde
 
 const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;\`;
 
+const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -176,6 +178,13 @@ const styledInput = styled.input\`
   padding: 8px;
   border-radius: 2px;
   font-size: 14px;
+\`;
+
+const styledHeader = styled["h1"]\`
+  font-weight: bold;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 16px;
 \`;
 
 // ============================================================================
@@ -368,6 +377,8 @@ const styledButton = styled.button\`border:1px solid #ccc;padding:8px 16px;borde
 
 const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;\`;
 
+const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -494,6 +505,8 @@ const styledDiv = styled.div\`color:blue;font-size:16px;padding:12px;background:
 const styledButton = styled.button\`border:1px solid #ccc;padding:8px 16px;border-radius:4px;cursor:pointer;\`;
 
 const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;\`;
+
+const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
 
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
@@ -628,6 +641,8 @@ const styledButton = styled.button\`border:1px solid #ccc;padding:8px 16px;borde
 
 const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;\`;
 
+const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -754,6 +769,8 @@ const styledDiv = styled.div\`color:blue;font-size:16px;padding:12px;background:
 const styledButton = styled.button\`border:1px solid #ccc;padding:8px 16px;border-radius:4px;cursor:pointer;\`;
 
 const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;\`;
+
+const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
 
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
