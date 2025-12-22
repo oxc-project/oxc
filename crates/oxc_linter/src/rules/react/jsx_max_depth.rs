@@ -257,6 +257,51 @@ fn test() {
 			      "#,
             None,
         ),
+        (
+            "
+			        const x = <div><span /></div>;
+			        <div>{x}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <div><span /></div>;
+			        let y = x;
+			        <div>{y}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <div><span /></div>;
+			        let y = x;
+			        <div>{x}-{y}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <><span /></>;
+			        let y = x;
+			        <>{x}-{y}</>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = (
+			          <tr>
+			            <td>1</td>
+			            <td>2</td>
+			          </tr>
+			        );
+			        <tbody>
+			          {x}
+			        </tbody>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
     ];
 
     let fail = vec![
@@ -288,29 +333,6 @@ fn test() {
         ),
         (
             "
-			        const x = <div><span /></div>;
-			        <div>{x}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <div><span /></div>;
-			        let y = x;
-			        <div>{y}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <div><span /></div>;
-			        let y = x;
-			        <div>{x}-{y}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
 			        <div>
 			        {<div><div><span /></div></div>}
 			        </div>
@@ -332,28 +354,6 @@ fn test() {
 			            <bar />
 			          </>
 			        </>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <><span /></>;
-			        let y = x;
-			        <>{x}-{y}</>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = (
-			          <tr>
-			            <td>1</td>
-			            <td>2</td>
-			          </tr>
-			        );
-			        <tbody>
-			          {x}
-			        </tbody>
 			      ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
