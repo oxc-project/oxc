@@ -178,9 +178,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.19.0"
+version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
+checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
 dependencies = [
  "allocator-api2",
 ]
@@ -1713,9 +1713,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.1.4"
+version = "2.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bd39c45e1d6bd2abfbd4b89cbcaba34bd315cd3cee23aad623fd075acc1ea01"
+checksum = "6b48a7bf4591453d69792e735a8025b2c2c33ab75e02754023284ad17cfbbe04"
 dependencies = [
  "bincode 2.0.1",
  "flate2",

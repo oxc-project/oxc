@@ -860,12 +860,11 @@ impl<'a> ObjectRestSpread<'a, '_> {
             // Example: `let { x, ...rest } = foo();`.
             remove_empty_object_pattern = pat.properties.is_empty();
             // Walk the properties that may contain a nested rest spread.
-            let data = pat
-                .properties
-                .iter_mut()
-                .flat_map(|p| self.recursive_walk_binding_pattern(&mut p.value, state, ctx))
-                .collect::<Vec<_>>();
-            temp_decls.extend(data);
+            temp_decls.extend(
+                pat.properties
+                    .iter_mut()
+                    .flat_map(|p| self.recursive_walk_binding_pattern(&mut p.value, state, ctx)),
+            );
 
             // Transform the object pattern with a rest pattern.
             if let Some(rest) = pat.rest.take() {
