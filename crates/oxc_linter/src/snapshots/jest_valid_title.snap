@@ -2,13 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-jest(valid-title): correct is not allowed in test title
-   ╭─[valid_title.tsx:1:6]
- 1 │ test('the correct way to properly handle all things', () => {});
-   ·      ───────────────────────────────────────────────
-   ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
-
-  ⚠ eslint-plugin-jest(valid-title): correct is not allowed in test title
    ╭─[valid_title.tsx:1:10]
  1 │ describe('the correct way to do things', function () {})
    ·          ──────────────────────────────

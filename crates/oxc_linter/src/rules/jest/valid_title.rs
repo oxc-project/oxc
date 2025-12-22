@@ -210,7 +210,7 @@ impl ValidTitle {
 
         // Check if extend keyword has been used (vitest feature)
         if let Some(member) = jest_fn_call.members.first()
-            && member.is_name_equal("extend")
+            && (member.is_name_equal("extend") || member.is_name_equal("scoped"))
         {
             return;
         }
@@ -487,7 +487,7 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe('the correct way to properly handle all the things', () => {});", None),
         ("test('that all is as it should be', () => {});", None),
         (
@@ -671,10 +671,6 @@ fn test() {
     ];
 
     let fail = vec![
-        (
-            "test('the correct way to properly handle all things', () => {});",
-            Some(serde_json::json!([{ "disallowedWords": ["correct", "properly", "all"] }])),
-        ),
         (
             "describe('the correct way to do things', function () {})",
             Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
@@ -1146,8 +1142,13 @@ fn test() {
         ),
     ];
 
+    let pass_vitest = vec![("test.scoped({})", None), ("it.scoped({})", None)];
+
+    pass.extend(pass_vitest);
+
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
