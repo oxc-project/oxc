@@ -22,22 +22,6 @@ working directory: fixtures/tsgolint_rule_options
  48 | 
     `----
 
-  x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
-    ,-[test.ts:51:22]
- 50 | // When checkLiteralConstAssertions is true, this SHOULD error
- 51 | const literalConst = 'hello' as const;
-    :                      ^^^^^^^^^^^^^^^^
- 52 | 
-    `----
-
-  x typescript-eslint(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
-    ,-[test.ts:56:34]
- 55 | // This should NOT error because allowOptionalChaining is true and we use ?.
- 56 | const optionalAccess = anyValue?.foo;
-    :                                  ^^^
- 57 | // This SHOULD error because it's not using optional chaining
-    `----
-
   x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
     ,-[test.ts:58:31]
  57 | // This SHOULD error because it's not using optional chaining
@@ -46,7 +30,15 @@ working directory: fixtures/tsgolint_rule_options
  59 | 
     `----
 
-Found 0 warnings and 5 errors.
+  x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
+    ,-[test.ts:63:20]
+ 62 | // This SHOULD error because checkUnknown is true
+ 63 | const unknownStr = unknownValue.toString();
+    :                    ^^^^^^^^^^^^
+ 64 | 
+    `----
+
+Found 0 warnings and 4 errors.
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors
