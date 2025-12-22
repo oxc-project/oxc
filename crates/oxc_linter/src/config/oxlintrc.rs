@@ -316,7 +316,7 @@ impl Oxlintrc {
         let schema = self.schema.clone().or(other.schema);
 
         let mut ignore_patterns = other.ignore_patterns;
-        ignore_patterns.extend(self.ignore_patterns.clone());
+        ignore_patterns.extend(self.ignore_patterns.iter().cloned());
 
         Oxlintrc {
             schema,
