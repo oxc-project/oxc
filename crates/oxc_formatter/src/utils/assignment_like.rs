@@ -994,7 +994,13 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
     let is_first_argument_complex = ts_type_argument_list.first().is_some_and(|first_argument| {
         matches!(
             first_argument,
-            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
+            TSType::TSUnionType(_)
+                | TSType::TSIntersectionType(_)
+                | TSType::TSTypeLiteral(_)
+                // TODO: This is not part of Prettier's logic, but it makes sense to consider mapped types as
+                // complex because it is the same as type literals in terms of structure.
+                // NOTE: Once the `will_break` logic is added, this will have to be revisited.
+                | TSType::TSMappedType(_)
         )
     });
 
