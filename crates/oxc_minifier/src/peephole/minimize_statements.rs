@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
     ///
     /// ## Collapse variable declarations
-    /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`f
+    /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
     ///
     /// ## Collapse into for statements:

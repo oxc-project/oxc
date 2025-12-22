@@ -226,7 +226,7 @@ mod test {
 
     #[test]
     fn test_convert_to_dotted_properties_computed_property_with_default_value() {
-        test("const {['o']: o = 0} = {};", "const { o = 0 } = {};");
+        test("const {['o']: o = 0} = {};", "const {o:o = 0} = {};");
     }
 
     #[test]
