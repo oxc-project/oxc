@@ -540,6 +540,7 @@ pub(crate) mod jsx_a11y {
     pub mod anchor_is_valid;
     pub mod aria_activedescendant_has_tabindex;
     pub mod aria_props;
+    pub mod aria_proptypes;
     pub mod aria_role;
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
@@ -963,6 +964,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_is_valid,
     jsx_a11y::aria_activedescendant_has_tabindex,
     jsx_a11y::aria_props,
+    jsx_a11y::aria_proptypes,
     jsx_a11y::aria_role,
     jsx_a11y::aria_unsupported_elements,
     jsx_a11y::autocomplete_valid,
