@@ -56,3 +56,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────
    ╰────
   help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:28]
+ 1 │ defineOptions({ data() {}, name: 'app' })
+   ·                            ───────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:36]
+ 1 │ app.component('name', { data() {}, name: 'app' })
+   ·                                    ───────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "el" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:21]
+ 1 │ new Vue({ data: {}, el: '#app' })
+   ·                     ──────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:29]
+ 1 │ export default { data() {}, props: {}, name: 'a' }
+   ·                             ─────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:40]
+ 1 │ export default { data() {}, props: {}, name: 'a' }
+   ·                                        ─────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "data" property should be above the "beforeRouteEnter" property.
+   ╭─[order_in_components.tsx:1:41]
+ 1 │ export default { beforeRouteEnter() {}, data() {} }
+   ·                                         ─────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
