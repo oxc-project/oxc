@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- 14e5016 transformer/enum: Avoid cloning HashMap in IdentifierReferenceRename (#17210) (camc314)
+
 ## [0.104.0] - 2025-12-19
 
 ### 🐛 Bug Fixes
