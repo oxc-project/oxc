@@ -5,9 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: --list-files fixtures/linter
 working directory: 
 ----------
-<cwd>/fixtures/linter/nan.js
 <cwd>/fixtures/linter/debugger.js
 <cwd>/fixtures/linter/js_as_jsx.js
+<cwd>/fixtures/linter/nan.js
 ----------
 CLI result: None
 ----------
