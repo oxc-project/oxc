@@ -358,7 +358,9 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         if self.options.list_files {
-            for path in &files_to_lint {
+            let mut sorted_files: Vec<_> = files_to_lint.iter().collect();
+            sorted_files.sort();
+            for path in sorted_files {
                 let path_str = Path::new(path).display();
                 print_and_flush_stdout(stdout, &format!("{path_str}\n"));
             }
