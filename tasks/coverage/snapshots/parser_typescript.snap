@@ -1,9 +1,9 @@
-commit: b78f0899
+commit: 2dfdbbab
 
 parser_typescript Summary:
 AST Parsed     : 9839/9840 (99.99%)
 Positive Passed: 9830/9840 (99.90%)
-Negative Passed: 1493/2549 (58.57%)
+Negative Passed: 1494/2550 (58.59%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -9896,6 +9896,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ┬
    ·         ╰── `;` expected
  4 │ 
+   ╰────
+
+  × Expected `,` or `)` but found `!`
+   ╭─[typescript/tests/cases/compiler/reachabilityChecksNoCrash1.ts:1:54]
+ 1 │ export async function arrayFromAsync<T>(asyncIterable!: AsyncIterable<T>): Promise<T[]> {
+   ·                                        ┬             ┬
+   ·                                        │             ╰── `,` or `)` expected
+   ·                                        ╰── Opened here
+ 2 │     const out = [];
    ╰────
 
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
