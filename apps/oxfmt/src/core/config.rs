@@ -53,15 +53,20 @@ pub enum ResolvedOptions {
         format_options: FormatOptions,
         /// For embedded language formatting (e.g., CSS in template literals)
         external_options: Value,
+        insert_final_newline: bool,
     },
     /// For TOML files.
-    OxfmtToml { toml_options: TomlFormatterOptions },
+    OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
     #[cfg(feature = "napi")]
-    ExternalFormatter { external_options: Value },
+    ExternalFormatter { external_options: Value, insert_final_newline: bool },
     /// For `package.json` files: optionally sorted then formatted.
     #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson { external_options: Value, sort_package_json: bool },
+    ExternalFormatterPackageJson {
+        external_options: Value,
+        sort_package_json: bool,
+        insert_final_newline: bool,
+    },
 }
 
 /// Configuration resolver that derives all config values from a single `serde_json::Value`.
@@ -174,7 +179,6 @@ impl ConfigResolver {
 
     /// Resolve format options for a specific file.
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        #[cfg_attr(not(feature = "napi"), expect(unused_variables))]
         let (format_options, oxfmt_options, external_options) = if let Some(editorconfig) =
             &self.editorconfig
             && let Some(props) = get_editorconfig_overrides(editorconfig, strategy.path())
@@ -190,22 +194,28 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
+        let insert_final_newline = oxfmt_options.insert_final_newline;
+
         match strategy {
-            FormatFileStrategy::OxcFormatter { .. } => {
-                ResolvedOptions::OxcFormatter { format_options, external_options }
-            }
-            FormatFileStrategy::OxfmtToml { .. } => {
-                ResolvedOptions::OxfmtToml { toml_options: build_toml_options(&format_options) }
-            }
+            FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
+                format_options,
+                external_options,
+                insert_final_newline,
+            },
+            FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
+                toml_options: build_toml_options(&format_options),
+                insert_final_newline,
+            },
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
-                ResolvedOptions::ExternalFormatter { external_options }
+                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
             }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
                     sort_package_json: oxfmt_options.sort_package_json,
+                    insert_final_newline,
                 }
             }
             #[cfg(not(feature = "napi"))]
@@ -251,6 +261,7 @@ impl ConfigResolver {
 /// - end_of_line
 /// - indent_style
 /// - indent_size
+/// - insert_final_newline
 fn get_editorconfig_overrides(
     editorconfig: &EditorConfig,
     path: &Path,
@@ -274,6 +285,7 @@ fn get_editorconfig_overrides(
                 || resolved.end_of_line != root.end_of_line
                 || resolved.indent_style != root.indent_style
                 || resolved.indent_size != root.indent_size
+                || resolved.insert_final_newline != root.insert_final_newline
         }
         // No `[*]` section means any resolved property is an override
         None => {
@@ -281,6 +293,7 @@ fn get_editorconfig_overrides(
                 || resolved.end_of_line != EditorConfigProperty::Unset
                 || resolved.indent_style != EditorConfigProperty::Unset
                 || resolved.indent_size != EditorConfigProperty::Unset
+                || resolved.insert_final_newline != EditorConfigProperty::Unset
         }
     };
 
@@ -325,6 +338,12 @@ fn apply_editorconfig(oxfmtrc: &mut Oxfmtrc, props: &EditorConfigProperties) {
         && let EditorConfigProperty::Value(size) = props.indent_size
     {
         oxfmtrc.tab_width = Some(size as u8);
+    }
+
+    if oxfmtrc.insert_final_newline.is_none()
+        && let EditorConfigProperty::Value(v) = props.insert_final_newline
+    {
+        oxfmtrc.insert_final_newline = Some(v);
     }
 }
 

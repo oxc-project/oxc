@@ -48,46 +48,70 @@ impl SourceFormatter {
         source_text: &str,
         resolved_options: ResolvedOptions,
     ) -> FormatResult {
-        let result = match (entry, resolved_options) {
+        let (result, insert_final_newline) = match (entry, resolved_options) {
             (
                 FormatFileStrategy::OxcFormatter { path, source_type },
-                ResolvedOptions::OxcFormatter { format_options, external_options },
-            ) => self.format_by_oxc_formatter(
-                source_text,
-                path,
-                *source_type,
-                format_options,
-                external_options,
+                ResolvedOptions::OxcFormatter {
+                    format_options,
+                    external_options,
+                    insert_final_newline,
+                },
+            ) => (
+                self.format_by_oxc_formatter(
+                    source_text,
+                    path,
+                    *source_type,
+                    format_options,
+                    external_options,
+                ),
+                insert_final_newline,
             ),
-            (FormatFileStrategy::OxfmtToml { .. }, ResolvedOptions::OxfmtToml { toml_options }) => {
-                Ok(Self::format_by_toml(source_text, toml_options))
-            }
+            (
+                FormatFileStrategy::OxfmtToml { .. },
+                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
+            ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
-                ResolvedOptions::ExternalFormatter { external_options },
-            ) => {
-                self.format_by_external_formatter(source_text, path, parser_name, external_options)
-            }
+                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
+            ) => (
+                self.format_by_external_formatter(source_text, path, parser_name, external_options),
+                insert_final_newline,
+            ),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name },
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
                     sort_package_json,
+                    insert_final_newline,
                 },
-            ) => self.format_by_external_formatter_package_json(
-                source_text,
-                path,
-                parser_name,
-                external_options,
-                sort_package_json,
+            ) => (
+                self.format_by_external_formatter_package_json(
+                    source_text,
+                    path,
+                    parser_name,
+                    external_options,
+                    sort_package_json,
+                ),
+                insert_final_newline,
             ),
             _ => unreachable!("FormatFileStrategy and ResolvedOptions variant mismatch"),
         };
 
         match result {
-            Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
+            Ok(mut code) => {
+                // NOTE: `insert_final_newline` relies on the fact that:
+                // - each formatter already ensures there is traliling newline
+                // - each formatter does not have an option to disable trailing newline
+                // So we can trim it here without allocating new string.
+                if !insert_final_newline {
+                    let trimmed_len = code.trim_end().len();
+                    code.truncate(trimmed_len);
+                }
+
+                FormatResult::Success { is_changed: source_text != code, code }
+            }
             Err(err) => FormatResult::Error(vec![err]),
         }
     }
