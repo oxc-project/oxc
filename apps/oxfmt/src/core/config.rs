@@ -339,9 +339,10 @@ fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
         } else {
             " ".repeat(format_options.indent_width.value() as usize)
         },
-        trailing_newline: true,
         array_trailing_comma: !format_options.trailing_commas.is_none(),
         crlf: format_options.line_ending.is_carriage_return_line_feed(),
+        // Align with `oxc_formatter` and Prettier default
+        trailing_newline: true,
         ..Default::default()
     }
 }
