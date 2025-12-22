@@ -661,6 +661,7 @@ pub(crate) mod promise {
 }
 
 pub(crate) mod vitest {
+    pub mod consistent_test_filename;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_called_times;
@@ -1314,6 +1315,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    vitest::consistent_test_filename,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::prefer_called_times,
