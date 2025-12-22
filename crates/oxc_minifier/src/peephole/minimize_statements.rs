@@ -454,7 +454,7 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
-        if id_kind.elements.is_empty() {
+        if id_kind.is_empty() {
             return false;
         }
 
@@ -462,8 +462,12 @@ impl<'a> PeepholeOptimizations {
 
         let first = init_expr.elements.first();
 
-        // check if the first init is not spread
-        if first.is_some_and(ArrayExpressionElement::is_spread) {
+        // check if the first init is not spread when rest is present without elements
+        // [] = [...rest] | [a, ...rest] = [...rest]
+        if first.is_some_and(ArrayExpressionElement::is_spread)
+            && id_kind.rest.is_none()
+            && !id_kind.elements.is_empty()
+        {
             return false;
         }
 
@@ -2107,7 +2111,7 @@ mod test {
         test("var [a] = [123, 2222, 2222]", "var a = 123, [] = [2222, 2222]");
         test("const [a] = []", "const a = void 0");
         // spread
-        test("var [...a] = [...b]", "var [...a] = [...b]");
+        test("var [...a] = [...b]", "var a = [...b]");
         test("var [a, a, ...d] = []", "var a, a, d");
         test("var [a, ...d] = []", "var a, d");
         test("var [a, ...d] = [1, ...f]", "var a = 1, d = [...f]");
