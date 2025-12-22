@@ -161,20 +161,18 @@ impl Rule for PreferDestructuring {
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
-                                // Safe autofix for assignments: foo = object['foo']; -> ({ foo } = object);
-                                let prop = string_literal.value.to_string();
-                                let object_span = get_object_span_without_redundant_parentheses(
-                                    &comp_expr.object,
-                                );
                                 ctx.diagnostic_with_fix(
                                     prefer_object_destructuring(assign_expr.span),
-                                    move |fixer| {
-                                        let replacement = format!(
-                                            "({{ {} }} = {})",
-                                            prop,
-                                            fixer.source_range(object_span)
-                                        );
-                                        fixer.replace(assign_expr.span, replacement)
+                                    |fixer| {
+                                        generate_fix(
+                                            &fixer,
+                                            string_literal.span.shrink(1),
+                                            get_object_span_without_redundant_parentheses(
+                                                &comp_expr.object,
+                                            ),
+                                            assign_expr.span,
+                                            true,
+                                        )
                                     },
                                 );
                             }
@@ -187,18 +185,18 @@ impl Rule for PreferDestructuring {
                             .is_some_and(|name| name == static_expr.property.name.as_str())
                         {
                             // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
-                            let prop = static_expr.property.name.as_str().to_string();
-                            let object_span =
-                                get_object_span_without_redundant_parentheses(&static_expr.object);
                             ctx.diagnostic_with_fix(
                                 prefer_object_destructuring(assign_expr.span),
-                                move |fixer| {
-                                    let replacement = format!(
-                                        "({{ {} }} = {})",
-                                        prop,
-                                        fixer.source_range(object_span)
-                                    );
-                                    fixer.replace(assign_expr.span, replacement)
+                                |fixer| {
+                                    generate_fix(
+                                        &fixer,
+                                        static_expr.property.span,
+                                        get_object_span_without_redundant_parentheses(
+                                            &static_expr.object,
+                                        ),
+                                        assign_expr.span,
+                                        true,
+                                    )
                                 },
                             );
                         }
@@ -239,20 +237,18 @@ impl Rule for PreferDestructuring {
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
-                                    // Safe autofix: var foo = object['foo']; -> var {foo} = object;
-                                    let prop = string_literal.value.to_string();
-                                    let object_span = get_object_span_without_redundant_parentheses(
-                                        &comp_expr.object,
-                                    );
                                     ctx.diagnostic_with_fix(
                                         prefer_object_destructuring(init.span()),
-                                        move |fixer| {
-                                            let replacement = format!(
-                                                "{{{}}} = {}",
-                                                prop,
-                                                fixer.source_range(object_span)
-                                            );
-                                            fixer.replace(declarator.span(), replacement)
+                                        |fixer| {
+                                            generate_fix(
+                                                &fixer,
+                                                string_literal.span.shrink(1),
+                                                get_object_span_without_redundant_parentheses(
+                                                    &comp_expr.object,
+                                                ),
+                                                declarator.span(),
+                                                false,
+                                            )
                                         },
                                     );
                                 }
@@ -265,20 +261,18 @@ impl Rule for PreferDestructuring {
                                 ctx.diagnostic(prefer_object_destructuring(right.span()));
                             }
                             if name.is_some_and(|name| name == static_expr.property.name.as_str()) {
-                                // Safe autofix: var foo = object.foo; -> var {foo} = object;
-                                let prop = static_expr.property.name.as_str().to_string();
-                                let object_span = get_object_span_without_redundant_parentheses(
-                                    &static_expr.object,
-                                );
                                 ctx.diagnostic_with_fix(
                                     prefer_object_destructuring(init.span()),
-                                    move |fixer| {
-                                        let replacement = format!(
-                                            "{{{}}} = {}",
-                                            prop,
-                                            fixer.source_range(object_span)
-                                        );
-                                        fixer.replace(declarator.span(), replacement)
+                                    |fixer| {
+                                        generate_fix(
+                                            &fixer,
+                                            static_expr.property.span,
+                                            get_object_span_without_redundant_parentheses(
+                                                &static_expr.object,
+                                            ),
+                                            declarator.span(),
+                                            false,
+                                        )
                                     },
                                 );
                             }
@@ -308,6 +302,11 @@ fn check_expr(expr: &MemberExpression) -> bool {
     true
 }
 
+/// Returns the span of the object expression, stripping redundant parentheses for expressions
+/// where they are unnecessary in the destructuring context.
+///
+/// For example: `(bar[baz]).foo` -> uses span of `bar[baz]` (without parens)
+/// But: `(a, b).foo` -> uses span of `(a, b)` (keeps parens, comma operator needs them)
 fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
     match object.without_parentheses() {
         Expression::CallExpression(_)
@@ -317,6 +316,25 @@ fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
         | Expression::ThisExpression(_) => object.without_parentheses().span(),
         _ => object.span(),
     }
+}
+
+/// Generate the fix for object destructuring.
+/// `is_assignment` determines whether to wrap in parentheses for assignment expressions.
+fn generate_fix(
+    fixer: &crate::fixer::RuleFixer<'_, '_>,
+    prop_span: Span,
+    object_span: Span,
+    replacement_span: Span,
+    is_assignment: bool,
+) -> crate::fixer::RuleFix {
+    let prop = fixer.source_range(prop_span);
+    let object_text = fixer.source_range(object_span);
+    let replacement = if is_assignment {
+        format!("({{ {prop} }} = {object_text})")
+    } else {
+        format!("{{{prop}}} = {object_text}")
+    };
+    fixer.replace(replacement_span, replacement)
 }
 
 #[test]
