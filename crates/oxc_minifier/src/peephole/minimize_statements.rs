@@ -603,19 +603,14 @@ impl<'a> PeepholeOptimizations {
         while i > 0 {
             i -= 1;
 
-            let Some(last) = declarations.get(i) else {
+            let Some(last) = declarations.get_mut(i) else {
                 continue;
             };
-            let can_simplify_array =
-                Self::can_simplify_array_to_array_destruction_assignment(last, ctx);
 
-            if can_simplify_array {
+            if Self::can_simplify_array_to_array_destruction_assignment(last, ctx) {
                 let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
-                let to_remove = Self::simplify_array_destruction_assignment(
-                    declarations.get_mut(i).unwrap(),
-                    &mut new_var_decl,
-                    ctx,
-                );
+                let to_remove =
+                    Self::simplify_array_destruction_assignment(last, &mut new_var_decl, ctx);
 
                 if !new_var_decl.is_empty() {
                     let len = new_var_decl.len();
@@ -625,6 +620,7 @@ impl<'a> PeepholeOptimizations {
                         declarations.splice(i..i, new_var_decl.into_iter());
                     }
                     changed = true;
+                    // check for nested destructuring
                     i += len;
                 } else if to_remove {
                     declarations.remove(i);
