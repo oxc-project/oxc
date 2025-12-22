@@ -4448,7 +4448,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:3:7]
  2 │ const c1;
  3 │ const c2: number;
-   ·       ──────────
+   ·       ──
  4 │ const c3, c4, c5 :string, c6;  // error, missing initialicer
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -4475,7 +4475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:4:15]
  3 │ const c2: number;
  4 │ const c3, c4, c5 :string, c6;  // error, missing initialicer
-   ·               ──────────
+   ·               ──
  5 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -5108,7 +5108,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/compiler/downlevelLetConst4.ts:1:7]
  1 │ const a: number
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -8721,7 +8721,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:86:7]
  85 │ const isNumber: (x: 0 | 1) => number = (x: 0 | 1) => x;
  86 │ const zeroOrBigOne: 0 | 1n;
-    ·       ────────────────────
+    ·       ────────────
  87 │ if (typeof zeroOrBigOne === "bigint") isBigInt(zeroOrBigOne);
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -8730,7 +8730,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:93:7]
  92 │ if (zeroOrBigOne) isOne(zeroOrBigOne);
  93 │ const bigZeroOrOne: 0n | 1;
-    ·       ────────────────────
+    ·       ────────────
  94 │ if (bigZeroOrOne) isOne(bigZeroOrOne);
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -12407,7 +12407,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
      ╭─[typescript/tests/cases/compiler/unusedLocalsInMethod4.ts:103:11]
  102 │ function f9() {  
  103 │     const x: number; // should have only one error
-     ·           ─────────
+     ·           ─
  104 │     function bar() {  
      ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -17097,7 +17097,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration4_es6.ts:1:7]
  1 │ const a: number
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -19559,7 +19559,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts:4:14]
  3 │ if (true)
  4 │ export const cssExports: CssExports;
-   ·              ──────────────────────
+   ·              ──────────
  5 │ export default cssExports;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -20663,7 +20663,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:8:7]
  7 │ 
  8 │ const X: any
-   ·       ──────
+   ·       ─
  9 │ const a: any
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -20672,7 +20672,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:9:7]
   8 │ const X: any
   9 │ const a: any
-    ·       ──────
+    ·       ─
  10 │ 
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24397,7 +24397,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─────────────────────────────────────────────
+   ·                 ─
  3 │     await using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24406,7 +24406,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  3 │     await using y: null;
-   ·                 ───────
+   ·                 ─
  4 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24415,7 +24415,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
  5 │ declare module 'M' {
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─────────────────────────────────────────────
+   ·                 ─
  7 │     await using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24424,7 +24424,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  7 │     await using y: null;
-   ·                 ───────
+   ·                 ─
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24607,7 +24607,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
  1 │ declare namespace N {
  2 │     using x: { [Symbol.dispose](): void };
-   ·           ───────────────────────────────
+   ·           ─
  3 │     using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24616,7 +24616,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:3:11]
  2 │     using x: { [Symbol.dispose](): void };
  3 │     using y: null;
-   ·           ───────
+   ·           ─
  4 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24625,7 +24625,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:6:11]
  5 │ declare module 'M' {
  6 │     using x: { [Symbol.dispose](): void };
-   ·           ───────────────────────────────
+   ·           ─
  7 │     using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24634,7 +24634,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:7:11]
  6 │     using x: { [Symbol.dispose](): void };
  7 │     using y: null;
-   ·           ───────
+   ·           ─
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -25154,7 +25154,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:3:14]
  2 │ 
  3 │ export const box: string
-   ·              ───────────
+   ·              ───
  4 │ subTitle:
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -25163,7 +25163,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:5:14]
  4 │ subTitle:
  5 │ export const title: string
-   ·              ─────────────
+   ·              ─────
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -26381,7 +26381,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts:4:7]
  3 │ let c: "bar";
  4 │ const d: "baz";
-   ·       ────────
+   ·       ─
  5 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here

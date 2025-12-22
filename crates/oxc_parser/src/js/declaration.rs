@@ -154,12 +154,7 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missing_initializer_in_const(
-                    decl.type_annotation.as_ref().map_or_else(
-                        || decl.id.span(),
-                        |type_annotation| decl.id.span().merge(type_annotation.span()),
-                    ),
-                ));
+                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
             }
         }
     }
@@ -197,10 +192,7 @@ impl<'a> ParserImpl<'a> {
             // Excluding `for` loops, an initializer is required in a UsingDeclaration.
             if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
                 self.error(diagnostics::using_declarations_must_be_initialized(
-                    declaration.type_annotation.as_ref().map_or_else(
-                        || declaration.id.span(),
-                        |type_annotation| declaration.id.span().merge(type_annotation.span()),
-                    ),
+                    declaration.id.span(),
                 ));
             }
 

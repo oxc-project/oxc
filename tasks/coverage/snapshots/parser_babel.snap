@@ -13257,14 +13257,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Missing initializer in const declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/no-initializer/input.ts:1:7]
  1 │ const x: number;
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
   × Missing initializer in const declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/reserved-word/input.ts:1:7]
  1 │ const b: const;
-   ·       ────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
