@@ -1,10 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
@@ -108,15 +110,149 @@ impl Rule for JsxMaxDepth {
             _ => return,
         }
 
-        let depth = jsx_ancestor_depth(node, ctx);
-        if depth > self.max {
-            ctx.diagnostic(jsx_max_depth_diagnostic(depth, self.max, node.span()));
+        if !is_leaf_jsx_node(node, ctx) {
+            return;
+        }
+
+        let ancestor_depth = jsx_ancestor_depth(node, ctx);
+
+        let mut visited_symbols = FxHashSet::default();
+        let child_depth = calculate_node_jsx_depth(node, ctx, &mut visited_symbols);
+
+        let total_depth = ancestor_depth + child_depth;
+
+        if total_depth > self.max {
+            ctx.diagnostic(jsx_max_depth_diagnostic(total_depth, self.max, node.span()));
         }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
+}
+
+/// Calculate the depth of JSX referenced by a variable
+fn calculate_variable_jsx_depth(
+    symbol_id: SymbolId,
+    ctx: &LintContext<'_>,
+    visited: &mut FxHashSet<SymbolId>,
+) -> usize {
+    if !visited.insert(symbol_id) {
+        return 0;
+    }
+
+    let scoping = ctx.semantic().scoping();
+
+    let decl_id = scoping.symbol_declaration(symbol_id);
+    let decl_node = ctx.nodes().get_node(decl_id);
+
+    if let AstKind::VariableDeclarator(declarator) = decl_node.kind() {
+        if let Some(init) = &declarator.init {
+            return calculate_expression_jsx_depth(init, ctx, visited);
+        }
+    }
+
+    for reference_id in scoping.get_resolved_reference_ids(symbol_id) {
+        let reference = scoping.get_reference(*reference_id);
+        if !reference.is_write() {
+            continue;
+        }
+
+        let ref_node = ctx.nodes().get_node(reference.node_id());
+        let current = ctx.nodes().parent_node(ref_node.id());
+        let parent = ctx.nodes().parent_node(current.id());
+
+        if let AstKind::AssignmentExpression(assign) = parent.kind() {
+            let depth = calculate_expression_jsx_depth(&assign.right, ctx, visited);
+            if depth > 0 {
+                return depth;
+            }
+        }
+    }
+
+    0
+}
+
+/// Calculate the depth of JSX in an expression
+fn calculate_expression_jsx_depth(
+    expr: &Expression<'_>,
+    ctx: &LintContext<'_>,
+    visited: &mut FxHashSet<SymbolId>,
+) -> usize {
+    match expr {
+        Expression::JSXElement(_) | Expression::JSXFragment(_) => {
+            if let Some(node) = ctx.nodes().iter().find(|node| node.kind().span() == expr.span()) {
+                return calculate_node_jsx_depth(node, ctx, visited);
+            }
+            0
+        }
+        Expression::Identifier(ident) => {
+            if let Some(reference_id) = ident.reference_id.get() {
+                let scoping = ctx.semantic().scoping();
+                let reference = scoping.get_reference(reference_id);
+                if let Some(symbol_id) = reference.symbol_id() {
+                    return calculate_variable_jsx_depth(symbol_id, ctx, visited);
+                }
+            }
+            0
+        }
+        Expression::ParenthesizedExpression(paren) => {
+            calculate_expression_jsx_depth(&paren.expression, ctx, visited)
+        }
+        _ => 0,
+    }
+}
+
+/// Calculate JSX depth for a node, accounting for variable references
+fn calculate_node_jsx_depth(
+    node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+    visited_symbols: &mut FxHashSet<SymbolId>,
+) -> usize {
+    let mut max_child_depth = 0;
+
+    for child_node in ctx.nodes().iter() {
+        let parent = ctx.nodes().parent_node(child_node.id());
+        if parent.id() != node.id() {
+            continue;
+        }
+
+        match child_node.kind() {
+            AstKind::JSXElement(_) | AstKind::JSXFragment(_) => {
+                let child_depth = calculate_node_jsx_depth(child_node, ctx, visited_symbols);
+                max_child_depth = max_child_depth.max(child_depth + 1);
+            }
+            AstKind::JSXExpressionContainer(container) => {
+                if let Some(Expression::Identifier(ident)) = container.expression.as_expression() {
+                    if let Some(reference_id) = ident.reference_id.get() {
+                        let scoping = ctx.semantic().scoping();
+                        let reference = scoping.get_reference(reference_id);
+                        if let Some(symbol_id) = reference.symbol_id() {
+                            let referenced_depth =
+                                calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols);
+                            max_child_depth = max_child_depth.max(referenced_depth + 1);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    max_child_depth
+}
+
+/// Check if a JSX node is a leaf (has no JSX children)
+fn is_leaf_jsx_node(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    for child_node in ctx.nodes().iter() {
+        let parent = ctx.nodes().parent_node(child_node.id());
+        if parent.id() == node.id() {
+            if matches!(child_node.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 fn jsx_ancestor_depth(node: &AstNode<'_>, ctx: &LintContext<'_>) -> usize {
@@ -257,51 +393,6 @@ fn test() {
 			      "#,
             None,
         ),
-        (
-            "
-			        const x = <div><span /></div>;
-			        <div>{x}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <div><span /></div>;
-			        let y = x;
-			        <div>{y}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <div><span /></div>;
-			        let y = x;
-			        <div>{x}-{y}</div>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = <><span /></>;
-			        let y = x;
-			        <>{x}-{y}</>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
-        (
-            "
-			        const x = (
-			          <tr>
-			            <td>1</td>
-			            <td>2</td>
-			          </tr>
-			        );
-			        <tbody>
-			          {x}
-			        </tbody>
-			      ",
-            Some(serde_json::json!([{ "max": 1 }])),
-        ),
     ];
 
     let fail = vec![
@@ -333,6 +424,29 @@ fn test() {
         ),
         (
             "
+			        const x = <div><span /></div>;
+			        <div>{x}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <div><span /></div>;
+			        let y = x;
+			        <div>{y}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <div><span /></div>;
+			        let y = x;
+			        <div>{x}-{y}</div>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
 			        <div>
 			        {<div><div><span /></div></div>}
 			        </div>
@@ -354,6 +468,28 @@ fn test() {
 			            <bar />
 			          </>
 			        </>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = <><span /></>;
+			        let y = x;
+			        <>{x}-{y}</>
+			      ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "
+			        const x = (
+			          <tr>
+			            <td>1</td>
+			            <td>2</td>
+			          </tr>
+			        );
+			        <tbody>
+			          {x}
+			        </tbody>
 			      ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
