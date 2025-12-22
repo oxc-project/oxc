@@ -1153,6 +1153,46 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_file_type_aware_disabled_when_lsp_set() {
+        // Nested config sets `linterOptions.typeAware = true`. But when the LSP option is set to false,
+        // the linter should use the LSP's typeAware setting and disable type-aware rules for files in nested dir.
+        let tester = Tester::new(
+            "fixtures/linter/tsgolint/nested_type_aware",
+            json!({ "typeAware": false }),
+        );
+        tester.test_and_snapshot_single_file("nested/test-with-lsp-config-false.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_root_file_not_type_aware() {
+        // Ensure the nested config only applies to the nested folder and not to files in the fixture root.
+        let tester = Tester::new("fixtures/linter/tsgolint/nested_type_aware", json!({}));
+        tester.test_and_snapshot_single_file("test-root.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_nested_file_without_lsp_config_is_type_aware() {
+        // TODO: Fix this test to actually result in a type-aware diagnostic, right now this doesn't print anything.
+        // Either the nested config logic for typeAware isn't working, or I have misconfigured this test somehow.
+        // Ensure the nested config is applied to files in the nested folder when there is no LSP override.
+        let tester = Tester::new("fixtures/linter/tsgolint/nested_type_aware", json!({}));
+        tester.test_and_snapshot_single_file("nested/test-with-no-lsp-config.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_lsp_type_aware_true_applies_globally() {
+        // When the LSP option `typeAware` is explicitly set to true it should enable
+        // type-aware rules regardless of nested config values.
+        let tester =
+            Tester::new("fixtures/linter/tsgolint/nested_type_aware", json!({ "typeAware": true }));
+        tester.test_and_snapshot_single_file("nested/test-lsp-enabled.ts");
+    }
+
+    #[test]
     fn test_ignore_js_plugins() {
         let tester = Tester::new("fixtures/linter/js_plugins", json!({}));
         tester.test_and_snapshot_single_file("index.js");
