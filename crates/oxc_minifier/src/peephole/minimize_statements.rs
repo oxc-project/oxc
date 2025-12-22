@@ -594,7 +594,30 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
             }
-            id_pattern.rest.is_none()
+            if let Some(rest) = &mut id_pattern.rest {
+                result.push(ctx.ast.variable_declarator(
+                    rest.span(),
+                    decl.kind,
+                    rest.argument.take_in(ctx.ast),
+                    NONE,
+                    decl.kind.is_const().then(|| ctx.ast.void_0(SPAN)),
+                    decl.definite,
+                ));
+            }
+            true
+        } else if id_pattern.elements.is_empty()
+            && let Some(rest) = &mut id_pattern.rest
+        {
+            // `[...rest] = [a, b, c]` => `rest = [a, b, c]`
+            result.push(ctx.ast.variable_declarator(
+                rest.span(),
+                decl.kind,
+                rest.argument.take_in(ctx.ast),
+                NONE,
+                Some(ctx.ast.expression_array(rest.span(), ctx.ast.vec_from_iter(init_iter))),
+                decl.definite,
+            ));
+            true
         } else {
             init_expr.elements = ctx.ast.vec_from_iter(init_iter);
             false
@@ -2085,12 +2108,12 @@ mod test {
         test("const [a] = []", "const a = void 0");
         // spread
         test("var [...a] = [...b]", "var [...a] = [...b]");
-        test("var [a, a, ...d] = []", "var a, a, [...d] = []");
-        test("var [a, ...d] = []", "var a, [...d] = []");
-        test("var [a, ...d] = [1, ...f]", "var a = 1, [...d] = [...f]");
-        test("var [a, ...d] = [1, foo]", "var a = 1, [...d] = [foo] ");
+        test("var [a, a, ...d] = []", "var a, a, d");
+        test("var [a, ...d] = []", "var a, d");
+        test("var [a, ...d] = [1, ...f]", "var a = 1, d = [...f]");
+        test("var [a, ...d] = [1, foo]", "var a = 1, d = [foo] ");
         test("var [a, b, c, ...d] = [1, 2, ...foo]", "var a = 1, b = 2, [c, ...d] = [...foo]");
-        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a = 1, b = 2, [...c] = [3, ...foo]");
+        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a = 1, b = 2, c = [3, ...foo]");
         test("var [a, b] = [...c, ...d]", "var [a, b] = [...c, ...d]");
         test("var [a, b] = [...c, c, d]", "var [a,b] = [...c, c, d]");
         // defaults
@@ -2107,7 +2130,7 @@ mod test {
         test("var [a, , c, d] = [void 0, e, null, f]", "var a = void 0, [] = [e], c = null, d = f");
         test("var [a, , c, d] = [1, 2, 3, 4]", "var a = 1, [] = [2], c = 3, d = 4");
         test("var [ , , a] = [1, 2, 3, 4]", "var [] = [1], [] = [2], a = 3, [] = [4]");
-        test("var [ , , ...t] = [1, 2, 3, 4]", "var [] = [1], [] = [2], [...t] = [3, 4]");
+        test("var [ , , ...t] = [1, 2, 3, 4]", "var [] = [1], [] = [2], t = [3, 4]");
         test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [] = [1], [, ...t] = [...a, 2, , 4]");
         test("var [a, , b] = [, , , ]", "var a, b;");
         test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
