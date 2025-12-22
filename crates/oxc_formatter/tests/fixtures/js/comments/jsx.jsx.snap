@@ -10,6 +10,19 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   transition={{ duration: 0.15, ease: "easeInOut" }} // Smooth transition
   style={{ /* comment */ overflow: "hidden" /* comment */  }}
 ></div>;
+
+// https://github.com/oxc-project/oxc/issues/17226
+someFunction(
+  <Component
+    value1={{
+      foo: "bar",
+    }}
+  />,
+  // {
+  //   option: true,
+  // },
+);
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -23,6 +36,18 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   style={{ /* comment */ overflow: "hidden" /* comment */ }}
 ></div>;
 
+// https://github.com/oxc-project/oxc/issues/17226
+someFunction(
+  <Component
+    value1={{
+      foo: "bar",
+    }}
+  />,
+  // {
+  //   option: true,
+  // },
+);
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -34,5 +59,17 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   transition={{ duration: 0.15, ease: "easeInOut" }} // Smooth transition
   style={{ /* comment */ overflow: "hidden" /* comment */ }}
 ></div>;
+
+// https://github.com/oxc-project/oxc/issues/17226
+someFunction(
+  <Component
+    value1={{
+      foo: "bar",
+    }}
+  />,
+  // {
+  //   option: true,
+  // },
+);
 
 ===================== End =====================
