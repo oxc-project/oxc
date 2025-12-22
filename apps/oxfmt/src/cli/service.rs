@@ -68,7 +68,7 @@ impl FormatService {
 
             tracing::debug!("Format {}", path.strip_prefix(&self.cwd).unwrap().display());
             let (code, is_changed) =
-                match self.formatter.format(&entry, &source_text, &resolved_options) {
+                match self.formatter.format(&entry, &source_text, resolved_options) {
                     FormatResult::Success { code, is_changed } => (code, is_changed),
                     FormatResult::Error(diagnostics) => {
                         let errors = DiagnosticService::wrap_diagnostics(

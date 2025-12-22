@@ -46,7 +46,7 @@ impl SourceFormatter {
         &self,
         entry: &FormatFileStrategy,
         source_text: &str,
-        resolved_options: &ResolvedOptions,
+        resolved_options: ResolvedOptions,
     ) -> FormatResult {
         let result = match (entry, resolved_options) {
             (
@@ -81,7 +81,7 @@ impl SourceFormatter {
                 path,
                 parser_name,
                 external_options,
-                *sort_package_json,
+                sort_package_json,
             ),
             _ => unreachable!("FormatFileStrategy and ResolvedOptions variant mismatch"),
         };
@@ -98,8 +98,8 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         source_type: SourceType,
-        format_options: &FormatOptions,
-        external_options: &Value,
+        format_options: FormatOptions,
+        external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
@@ -112,18 +112,21 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let base_formatter = Formatter::new(&allocator, format_options.clone());
+        #[cfg(feature = "napi")]
+        let is_embed_off = format_options.embedded_language_formatting.is_off();
+
+        let base_formatter = Formatter::new(&allocator, format_options);
 
         #[cfg(feature = "napi")]
         let formatted = {
-            if format_options.embedded_language_formatting.is_off() {
+            if is_embed_off {
                 base_formatter.format(&ret.program)
             } else {
                 let embedded_formatter = self
                     .external_formatter
                     .as_ref()
                     .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options.clone());
+                    .to_embedded_formatter(external_options);
                 base_formatter.format_with_embedded(&ret.program, embedded_formatter)
             }
         };
@@ -153,18 +156,19 @@ impl SourceFormatter {
     }
 
     /// Format TOML file using `toml`.
-    fn format_by_toml(source_text: &str, options: &oxc_toml::formatter::Options) -> String {
-        oxc_toml::formatter::format(source_text, options.clone())
+    fn format_by_toml(source_text: &str, options: oxc_toml::formatter::Options) -> String {
+        oxc_toml::formatter::format(source_text, options)
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
+    #[expect(clippy::needless_pass_by_value)]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
         path: &Path,
         parser_name: &str,
-        external_options: &Value,
+        external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let external_formatter = self
             .external_formatter
@@ -180,7 +184,7 @@ impl SourceFormatter {
         let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
         external_formatter
-            .format_file(external_options, parser_name, file_name, source_text)
+            .format_file(&external_options, parser_name, file_name, source_text)
             .map_err(|err| {
                 OxcDiagnostic::error(format!(
                     "Failed to format file with external formatter: {}\n{err}",
@@ -196,7 +200,7 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         parser_name: &str,
-        external_options: &Value,
+        external_options: Value,
         sort_package_json: bool,
     ) -> Result<String, OxcDiagnostic> {
         let source_text: Cow<'_, str> = if sort_package_json {
