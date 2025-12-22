@@ -315,6 +315,9 @@ impl Oxlintrc {
 
         let schema = self.schema.clone().or(other.schema);
 
+        let mut ignore_patterns = other.ignore_patterns;
+        ignore_patterns.extend(self.ignore_patterns.clone());
+
         Oxlintrc {
             schema,
             plugins,
@@ -326,7 +329,7 @@ impl Oxlintrc {
             globals,
             overrides,
             path: self.path.clone(),
-            ignore_patterns: self.ignore_patterns.clone(),
+            ignore_patterns,
             extends: self.extends.clone(),
         }
     }
@@ -507,5 +510,38 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_oxlintrc_ignore_patterns_merge() {
+        // Test merge - other's ignore_patterns should come first, then self's
+        let config1: Oxlintrc =
+            serde_json::from_str(r#"{"ignorePatterns": ["*.test.js", "dist/**"]}"#).unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"ignorePatterns": ["node_modules/**", "*.min.js"]}"#).unwrap();
+        let merged = config1.merge(config2);
+
+        // Should contain all patterns: other's first, then self's
+        assert_eq!(merged.ignore_patterns.len(), 4);
+        assert_eq!(merged.ignore_patterns[0], "node_modules/**");
+        assert_eq!(merged.ignore_patterns[1], "*.min.js");
+        assert_eq!(merged.ignore_patterns[2], "*.test.js");
+        assert_eq!(merged.ignore_patterns[3], "dist/**");
+
+        // Test merge - when self has no ignore_patterns, use other's
+        let config1: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"ignorePatterns": ["node_modules/**"]}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.ignore_patterns.len(), 1);
+        assert_eq!(merged.ignore_patterns[0], "node_modules/**");
+
+        // Test merge - when other has no ignore_patterns, use self's
+        let config1: Oxlintrc =
+            serde_json::from_str(r#"{"ignorePatterns": ["*.test.js"]}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.ignore_patterns.len(), 1);
+        assert_eq!(merged.ignore_patterns[0], "*.test.js");
     }
 }
