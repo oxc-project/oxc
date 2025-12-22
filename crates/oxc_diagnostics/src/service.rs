@@ -3,6 +3,8 @@ use std::{
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
     sync::{Arc, mpsc},
+    thread,
+    time::Duration,
 };
 
 use cow_utils::CowUtils;
@@ -198,19 +200,13 @@ impl DiagnosticService {
                         let minified_diagnostic = Error::new(diagnostic);
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
-                            writer
-                                .write_all(err_str.as_bytes())
-                                .or_else(Self::check_for_writer_error)
-                                .unwrap();
+                            Self::write_all_retry(writer, err_str.as_bytes()).unwrap();
                         }
                         is_minified = true;
                         continue;
                     }
 
-                    writer
-                        .write_all(err_str.as_bytes())
-                        .or_else(Self::check_for_writer_error)
-                        .unwrap();
+                    Self::write_all_retry(writer, err_str.as_bytes()).unwrap();
                 }
             }
         }
@@ -222,23 +218,56 @@ impl DiagnosticService {
         );
 
         if let Some(finish_output) = self.reporter.finish(&result) {
-            writer
-                .write_all(finish_output.as_bytes())
-                .or_else(Self::check_for_writer_error)
-                .unwrap();
+            Self::write_all_retry(writer, finish_output.as_bytes()).unwrap();
         }
 
-        writer.flush().or_else(Self::check_for_writer_error).unwrap();
+        Self::flush_retry(writer).unwrap();
 
         result
     }
 
-    fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
+    /// Write all bytes to the writer, retrying on `WouldBlock` and `Interrupted`.
+    /// Returns `Ok(true)` on success, `Ok(false)` if pipe is broken (consumer gone),
+    /// or `Err` on other I/O errors.
+    fn write_all_retry(writer: &mut dyn Write, mut buf: &[u8]) -> std::io::Result<bool> {
+        while !buf.is_empty() {
+            match writer.write(buf) {
+                Ok(0) => {
+                    // Writer cannot accept more bytes - treat as broken pipe
+                    return Ok(false);
+                }
+                Ok(n) => {
+                    buf = &buf[n..];
+                }
+                Err(e) if e.kind() == ErrorKind::WouldBlock => {
+                    // Pipe buffer is full - wait and retry
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(e) if e.kind() == ErrorKind::Interrupted => {
+                    // Interrupted by signal - retry immediately
+                }
+                Err(e) if e.kind() == ErrorKind::BrokenPipe => {
+                    // Consumer closed the pipe
+                    return Ok(false);
+                }
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(true)
+    }
+
+    /// Flush the writer, retrying on `WouldBlock` and `Interrupted`.
+    fn flush_retry(writer: &mut dyn Write) -> std::io::Result<bool> {
+        loop {
+            match writer.flush() {
+                Ok(()) => return Ok(true),
+                Err(e) if e.kind() == ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(e) if e.kind() == ErrorKind::Interrupted => {}
+                Err(e) if e.kind() == ErrorKind::BrokenPipe => return Ok(false),
+                Err(e) => return Err(e),
+            }
         }
     }
 }
@@ -336,12 +365,227 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::from_file_path;
+    use std::io::{self, ErrorKind, Write};
     use std::path::PathBuf;
+
+    use crate::service::{DiagnosticService, from_file_path};
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
         format!("{EXPECTED_SCHEMA}{path}")
+    }
+
+    /// A mock writer that simulates WouldBlock errors for testing retry behavior.
+    struct WouldBlockWriter {
+        /// Number of WouldBlock errors to return before succeeding
+        would_block_count: usize,
+        /// Bytes written so far
+        written: Vec<u8>,
+        /// Number of write calls made
+        write_calls: usize,
+        /// Number of flush calls made
+        flush_calls: usize,
+        /// Number of WouldBlock errors to return on flush before succeeding
+        flush_would_block_count: usize,
+    }
+
+    impl WouldBlockWriter {
+        fn new(would_block_count: usize) -> Self {
+            Self {
+                would_block_count,
+                written: Vec::new(),
+                write_calls: 0,
+                flush_calls: 0,
+                flush_would_block_count: 0,
+            }
+        }
+
+        fn with_flush_would_block(mut self, count: usize) -> Self {
+            self.flush_would_block_count = count;
+            self
+        }
+    }
+
+    impl Write for WouldBlockWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.write_calls += 1;
+            if self.would_block_count > 0 {
+                self.would_block_count -= 1;
+                return Err(io::Error::new(ErrorKind::WouldBlock, "would block"));
+            }
+            self.written.extend_from_slice(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.flush_calls += 1;
+            if self.flush_would_block_count > 0 {
+                self.flush_would_block_count -= 1;
+                return Err(io::Error::new(ErrorKind::WouldBlock, "would block"));
+            }
+            Ok(())
+        }
+    }
+
+    /// A mock writer that returns BrokenPipe.
+    struct BrokenPipeWriter;
+
+    impl Write for BrokenPipeWriter {
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(ErrorKind::BrokenPipe, "broken pipe"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Err(io::Error::new(ErrorKind::BrokenPipe, "broken pipe"))
+        }
+    }
+
+    /// A mock writer that returns a custom error.
+    struct ErrorWriter {
+        kind: ErrorKind,
+    }
+
+    impl Write for ErrorWriter {
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(self.kind, "error"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Err(io::Error::new(self.kind, "error"))
+        }
+    }
+
+    /// A mock writer that simulates partial writes.
+    struct PartialWriter {
+        /// Max bytes to write per call
+        max_per_write: usize,
+        /// Bytes written so far
+        written: Vec<u8>,
+    }
+
+    impl PartialWriter {
+        fn new(max_per_write: usize) -> Self {
+            Self { max_per_write, written: Vec::new() }
+        }
+    }
+
+    impl Write for PartialWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            let len = buf.len().min(self.max_per_write);
+            self.written.extend_from_slice(&buf[..len]);
+            Ok(len)
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_write_all_retry_success() {
+        let mut writer = WouldBlockWriter::new(0);
+        let data = b"hello world";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(result.unwrap());
+        assert_eq!(writer.written, data);
+        assert_eq!(writer.write_calls, 1);
+    }
+
+    #[test]
+    fn test_write_all_retry_with_would_block() {
+        let mut writer = WouldBlockWriter::new(3);
+        let data = b"hello world";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(result.unwrap());
+        assert_eq!(writer.written, data);
+        assert_eq!(writer.write_calls, 4); // 3 WouldBlock + 1 success
+    }
+
+    #[test]
+    fn test_write_all_retry_broken_pipe() {
+        let mut writer = BrokenPipeWriter;
+        let data = b"hello world";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(!result.unwrap()); // Returns Ok(false) for broken pipe
+    }
+
+    #[test]
+    fn test_write_all_retry_other_error() {
+        let mut writer = ErrorWriter { kind: ErrorKind::PermissionDenied };
+        let data = b"hello world";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), ErrorKind::PermissionDenied);
+    }
+
+    #[test]
+    fn test_write_all_retry_partial_writes() {
+        let mut writer = PartialWriter::new(3);
+        let data = b"hello world";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(result.unwrap());
+        assert_eq!(writer.written, data);
+    }
+
+    #[test]
+    fn test_write_all_retry_empty_buffer() {
+        let mut writer = WouldBlockWriter::new(0);
+        let data = b"";
+
+        let result = DiagnosticService::write_all_retry(&mut writer, data);
+
+        assert!(result.unwrap());
+        assert!(writer.written.is_empty());
+        assert_eq!(writer.write_calls, 0); // No write calls for empty buffer
+    }
+
+    #[test]
+    fn test_flush_retry_success() {
+        let mut writer = WouldBlockWriter::new(0);
+
+        let result = DiagnosticService::flush_retry(&mut writer);
+
+        assert!(result.unwrap());
+        assert_eq!(writer.flush_calls, 1);
+    }
+
+    #[test]
+    fn test_flush_retry_with_would_block() {
+        let mut writer = WouldBlockWriter::new(0).with_flush_would_block(2);
+
+        let result = DiagnosticService::flush_retry(&mut writer);
+
+        assert!(result.unwrap());
+        assert_eq!(writer.flush_calls, 3); // 2 WouldBlock + 1 success
+    }
+
+    #[test]
+    fn test_flush_retry_broken_pipe() {
+        let mut writer = BrokenPipeWriter;
+
+        let result = DiagnosticService::flush_retry(&mut writer);
+
+        assert!(!result.unwrap()); // Returns Ok(false) for broken pipe
+    }
+
+    #[test]
+    fn test_flush_retry_other_error() {
+        let mut writer = ErrorWriter { kind: ErrorKind::PermissionDenied };
+
+        let result = DiagnosticService::flush_retry(&mut writer);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), ErrorKind::PermissionDenied);
     }
 
     #[test]
