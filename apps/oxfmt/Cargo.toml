@@ -49,7 +49,7 @@ sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+tracing-subscriber = { workspace = true, features = [] }                           # Omit the `regex` feature
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }
@@ -62,10 +62,17 @@ napi-build = { workspace = true }
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
 [target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+] }
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+  "no_opt_arch",
+] }
 
 [features]
 default = ["napi"]

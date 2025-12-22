@@ -5,10 +5,7 @@ authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = [
-  "/examples",
-  "/src",
-]
+include = ["/examples", "/src"]
 keywords.workspace = true
 license.workspace = true
 publish = true
