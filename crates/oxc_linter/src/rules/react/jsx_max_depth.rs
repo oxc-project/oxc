@@ -146,10 +146,10 @@ fn calculate_variable_jsx_depth(
     let decl_id = scoping.symbol_declaration(symbol_id);
     let decl_node = ctx.nodes().get_node(decl_id);
 
-    if let AstKind::VariableDeclarator(declarator) = decl_node.kind() {
-        if let Some(init) = &declarator.init {
-            return calculate_expression_jsx_depth(init, ctx, visited);
-        }
+    if let AstKind::VariableDeclarator(declarator) = decl_node.kind()
+        && let Some(init) = &declarator.init
+    {
+        return calculate_expression_jsx_depth(init, ctx, visited);
     }
 
     for reference_id in scoping.get_resolved_reference_ids(symbol_id) {
@@ -223,15 +223,15 @@ fn calculate_node_jsx_depth(
                 max_child_depth = max_child_depth.max(child_depth + 1);
             }
             AstKind::JSXExpressionContainer(container) => {
-                if let Some(Expression::Identifier(ident)) = container.expression.as_expression() {
-                    if let Some(reference_id) = ident.reference_id.get() {
-                        let scoping = ctx.semantic().scoping();
-                        let reference = scoping.get_reference(reference_id);
-                        if let Some(symbol_id) = reference.symbol_id() {
-                            let referenced_depth =
-                                calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols);
-                            max_child_depth = max_child_depth.max(referenced_depth + 1);
-                        }
+                if let Some(Expression::Identifier(ident)) = container.expression.as_expression()
+                    && let Some(reference_id) = ident.reference_id.get()
+                {
+                    let scoping = ctx.semantic().scoping();
+                    let reference = scoping.get_reference(reference_id);
+                    if let Some(symbol_id) = reference.symbol_id() {
+                        let referenced_depth =
+                            calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols);
+                        max_child_depth = max_child_depth.max(referenced_depth + 1);
                     }
                 }
             }
@@ -246,10 +246,10 @@ fn calculate_node_jsx_depth(
 fn is_leaf_jsx_node(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     for child_node in ctx.nodes().iter() {
         let parent = ctx.nodes().parent_node(child_node.id());
-        if parent.id() == node.id() {
-            if matches!(child_node.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
-                return false;
-            }
+        if parent.id() == node.id()
+            && matches!(child_node.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))
+        {
+            return false;
         }
     }
     true
