@@ -1688,7 +1688,8 @@ impl RuleRunner for crate::rules::jsx_a11y::aria_props::AriaProps {
 }
 
 impl RuleRunner for crate::rules::jsx_a11y::aria_proptypes::AriaProptypes {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXAttribute]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
