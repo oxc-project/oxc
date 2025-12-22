@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression,
+        Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
         MemberExpression, Statement,
     },
 };
@@ -141,13 +141,10 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     let Some((first_parameter, second_parameter)) = ({
-        match (
-            &first_argument.params.items[0].pattern.kind,
-            &first_argument.params.items[1].pattern.kind,
-        ) {
+        match (&first_argument.params.items[0].pattern, &first_argument.params.items[1].pattern) {
             (
-                BindingPatternKind::BindingIdentifier(first_param),
-                BindingPatternKind::BindingIdentifier(second_param),
+                BindingPattern::BindingIdentifier(first_param),
+                BindingPattern::BindingIdentifier(second_param),
             ) => Some((&first_param.name, &second_param.name)),
 
             _ => None,

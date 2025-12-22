@@ -175,7 +175,7 @@ pub async fn format(
 
     // Use `block_in_place()` to avoid nested async runtime access
     match tokio::task::block_in_place(|| {
-        formatter.format(&strategy, &source_text, &resolved_options)
+        formatter.format(&strategy, &source_text, resolved_options)
     }) {
         CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
         CoreFormatResult::Error(diagnostics) => {

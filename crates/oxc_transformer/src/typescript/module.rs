@@ -113,9 +113,7 @@ impl<'a> TypeScriptModule<'a, '_> {
             return None;
         }
 
-        let binding_pattern_kind =
-            BindingPatternKind::BindingIdentifier(ctx.ast.alloc(decl.id.clone()));
-        let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
+        let binding = BindingPattern::BindingIdentifier(ctx.ast.alloc(decl.id.clone()));
         let decl_span = decl.span;
 
         let flags = ctx.scoping_mut().symbol_flags_mut(decl.id.symbol_id());
@@ -154,7 +152,7 @@ impl<'a> TypeScriptModule<'a, '_> {
             }
         };
         let decls =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false));
+            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, NONE, Some(init), false));
 
         Some(ctx.ast.declaration_variable(SPAN, kind, decls, false))
     }

@@ -121,22 +121,22 @@ impl<'a> MayHaveSideEffects<'a> for VariableDeclaration<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for BindingPattern<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        match &self.kind {
-            BindingPatternKind::ArrayPattern(array_pattern) => {
+        match &self {
+            BindingPattern::ArrayPattern(array_pattern) => {
                 ctx.property_read_side_effects() != PropertyReadSideEffects::None
                     || array_pattern.elements.iter().any(|el| el.may_have_side_effects(ctx))
             }
-            BindingPatternKind::ObjectPattern(object_pattern) => {
+            BindingPattern::ObjectPattern(object_pattern) => {
                 ctx.property_read_side_effects() != PropertyReadSideEffects::None
                     || object_pattern.properties.iter().any(|prop| {
                         prop.key.may_have_side_effects(ctx) || prop.value.may_have_side_effects(ctx)
                     })
             }
-            BindingPatternKind::AssignmentPattern(assignment_pattern) => {
+            BindingPattern::AssignmentPattern(assignment_pattern) => {
                 assignment_pattern.left.may_have_side_effects(ctx)
                     || assignment_pattern.right.may_have_side_effects(ctx)
             }
-            BindingPatternKind::BindingIdentifier(_) => false,
+            BindingPattern::BindingIdentifier(_) => false,
         }
     }
 }

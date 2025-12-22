@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, Statement},
+    ast::{BindingPattern, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -61,8 +61,8 @@ impl Rule for NoUselessCatch {
         let Some(catch_clause) = &try_stmt.handler else {
             return;
         };
-        let Some(BindingPatternKind::BindingIdentifier(binding_ident)) =
-            catch_clause.param.as_ref().map(|param| &param.pattern.kind)
+        let Some(BindingPattern::BindingIdentifier(binding_ident)) =
+            catch_clause.param.as_ref().map(|param| &param.pattern)
         else {
             return;
         };

@@ -4,7 +4,11 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
-    formatter::{Format, Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        Format, Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::call_expression::is_test_call_expression,
     write,
@@ -91,7 +95,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        let leading_comments = if let Some(initializer) = self.initializer() {
+            let pattern_end = self.pattern().span().end;
+            let all_comments =
+                f.context().comments().own_line_comments_before(initializer.span().start);
+            let start_index =
+                all_comments.iter().take_while(|c| c.span.start < pattern_end).count();
+            &all_comments[start_index..]
+        } else {
+            &[]
+        };
+
         let content = format_with(|f| {
+            write!(f, FormatLeadingComments::Comments(leading_comments));
+
             if let Some(accessibility) = self.accessibility() {
                 write!(f, [accessibility.as_str(), space()]);
             }
@@ -101,7 +118,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
             if self.readonly() {
                 write!(f, ["readonly", space()]);
             }
-            write!(f, self.pattern());
+            if self.initializer().is_some() {
+                let left = format_with(|f| {
+                    write!(f, self.pattern());
+                    if self.optional() {
+                        write!(f, "?");
+                    }
+                    write!(f, self.type_annotation());
+                });
+                write!(f, group(&left));
+            } else {
+                write!(f, self.pattern());
+                if self.optional() {
+                    write!(f, "?");
+                }
+                write!(f, self.type_annotation());
+            }
+            if let Some(initializer) = self.initializer() {
+                write!(f, [space(), "=", space()]);
+                write!(f, initializer);
+            }
         });
 
         let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
@@ -134,7 +170,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 enum Parameter<'a, 'b> {
     This(&'b AstNode<'a, TSThisParameter<'a>>),
     Formal(&'b AstNode<'a, FormalParameter<'a>>),
-    Rest(&'b AstNode<'a, BindingRestElement<'a>>),
+    Rest(&'b AstNode<'a, FormalParameterRest<'a>>),
 }
 
 impl GetSpan for Parameter<'_, '_> {
@@ -160,7 +196,7 @@ impl<'a> Format<'a> for Parameter<'a, '_> {
 struct FormalParametersIter<'a, 'b> {
     this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
     params: AstNodeIterator<'a, FormalParameter<'a>>,
-    rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
+    rest: Option<&'b AstNode<'a, FormalParameterRest<'a>>>,
 }
 
 impl<'a, 'b> From<&'b ParameterList<'a, 'b>> for FormalParametersIter<'a, 'b> {
@@ -279,9 +315,10 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &Formatter<
         && arrow.return_type.is_none()
         && {
             let param = arrow.params.items.first().unwrap();
-            param.pattern.type_annotation.is_none()
-                && !param.pattern.optional
-                && param.pattern.kind.is_binding_identifier()
+            param.type_annotation.is_none()
+                && !param.optional
+                && param.initializer.is_none()
+                && param.pattern.is_binding_identifier()
         }
         && !f.comments().has_comment_in_span(arrow.params.span)
 }
@@ -330,9 +367,10 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
-    match &only_parameter.pattern.kind {
-        BindingPatternKind::AssignmentPattern(assignment) => {
-            assignment.left.kind.is_destructuring_pattern()
+    match &only_parameter.pattern {
+        BindingPattern::AssignmentPattern(assignment) => {
+            // AssignmentPattern in catch clauses or other contexts
+            assignment.left.is_destructuring_pattern()
                 && match &assignment.right {
                     Expression::ObjectExpression(object) => object.properties.is_empty(),
                     Expression::ArrayExpression(array) => array.elements.is_empty(),
@@ -340,10 +378,22 @@ pub fn should_hug_function_parameters<'a>(
                     _ => false,
                 }
         }
-        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_) => true,
-        BindingPatternKind::BindingIdentifier(_) => {
+        BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {
+            if let Some(init) = only_parameter.initializer() {
+                matches!(
+                    **init,
+                    Expression::ObjectExpression(ref obj) if obj.properties.is_empty()
+                ) || matches!(
+                    **init,
+                    Expression::ArrayExpression(ref arr) if arr.elements.is_empty()
+                ) || matches!(**init, Expression::Identifier(_))
+            } else {
+                true
+            }
+        }
+        BindingPattern::BindingIdentifier(_) => {
             parentheses_not_needed
-                || only_parameter.pattern.type_annotation.as_ref().is_some_and(|ann| {
+                || only_parameter.type_annotation.as_ref().is_some_and(|ann| {
                     matches!(
                         &ann.type_annotation,
                         TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
@@ -375,6 +425,7 @@ pub fn has_only_simple_parameters(
 /// [a, b]          => false
 ///
 fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
-    parameter.pattern.kind.is_binding_identifier()
-        && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
+    parameter.pattern.is_binding_identifier()
+        && parameter.initializer.is_none()
+        && (allow_type_annotations || parameter.type_annotation.is_none())
 }

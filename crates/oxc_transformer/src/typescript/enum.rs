@@ -92,7 +92,8 @@ impl<'a> TypeScriptEnum<'a> {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
+        let params =
+            ast.formal_parameter(SPAN, ast.vec(), id, NONE, NONE, false, None, false, false);
         let params = ast.vec1(params);
         let params = ast.alloc_formal_parameters(
             SPAN,
@@ -186,10 +187,9 @@ impl<'a> TypeScriptEnum<'a> {
         };
         let decls = {
             let binding_identifier = decl.id.clone();
-            let binding_pattern_kind =
-                BindingPatternKind::BindingIdentifier(ctx.alloc(binding_identifier));
-            let binding = ast.binding_pattern(binding_pattern_kind, NONE, false);
-            let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+            let binding = BindingPattern::BindingIdentifier(ctx.alloc(binding_identifier));
+            let decl =
+                ast.variable_declarator(SPAN, kind, binding, NONE, Some(call_expression), false);
             ast.vec1(decl)
         };
         let variable_declaration = ast.declaration_variable(decl.span, kind, decls, false);
@@ -240,7 +240,7 @@ impl<'a> TypeScriptEnum<'a> {
                         IdentifierReferenceRename::new(
                             param_binding.name,
                             enum_scope_id,
-                            previous_enum_members.clone(),
+                            &previous_enum_members,
                             ctx,
                         )
                         .visit_expression(&mut initializer);
@@ -309,7 +309,7 @@ impl<'a> TypeScriptEnum<'a> {
             statements.push(ast.statement_expression(member.span, expr));
         }
 
-        self.enums.insert(param_binding.name, previous_enum_members.clone());
+        self.enums.insert(param_binding.name, previous_enum_members);
 
         let enum_ref = param_binding.create_read_expression(ctx);
         // return Foo;
@@ -559,18 +559,18 @@ impl<'a> TypeScriptEnum<'a> {
 ///   d = A.c,
 /// }
 /// ```
-struct IdentifierReferenceRename<'a, 'ctx> {
+struct IdentifierReferenceRename<'a, 'ctx, 'members> {
     enum_name: Atom<'a>,
-    previous_enum_members: PrevMembers<'a>,
+    previous_enum_members: &'members PrevMembers<'a>,
     scope_stack: NonEmptyStack<ScopeId>,
     ctx: &'ctx TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
+impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
     fn new(
         enum_name: Atom<'a>,
         enum_scope_id: ScopeId,
-        previous_enum_members: PrevMembers<'a>,
+        previous_enum_members: &'members PrevMembers<'a>,
         ctx: &'ctx TraverseCtx<'a>,
     ) -> Self {
         IdentifierReferenceRename {
@@ -582,7 +582,7 @@ impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
     }
 }
 
-impl IdentifierReferenceRename<'_, '_> {
+impl IdentifierReferenceRename<'_, '_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
         // Don't need to rename the identifier if it's not a member of the enum,
         if !self.previous_enum_members.contains_key(&ident.name) {
@@ -626,7 +626,7 @@ impl IdentifierReferenceRename<'_, '_> {
     }
 }
 
-impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
+impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         self.scope_stack.push(scope_id.get().unwrap());
     }

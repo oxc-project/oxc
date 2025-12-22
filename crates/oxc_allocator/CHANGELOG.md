@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- adb41ba allocator: `AllocatorPool` do not consume all memory on Windows (#17094) (overlookmotel)
+- b87600a allocator: Fix potential deadlock in `FixedSizeAllocatorPool` (#17112) (overlookmotel)
+
+### ⚡ Performance
+
+- cee4a6c allocator: Use `Stack` in `AllocatorPool`s (#17136) (overlookmotel)
+
 ## [0.104.0] - 2025-12-19
 
 ### 🚀 Features

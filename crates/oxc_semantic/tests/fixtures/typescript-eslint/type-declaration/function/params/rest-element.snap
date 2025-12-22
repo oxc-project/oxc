@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "a",
-                "node": "BindingRestElement",
+                "node": "FormalParameterRest",
                 "references": []
               }
             ]
@@ -37,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "A",
-                "node_id": 14
+                "node_id": 15
               }
             ]
           }

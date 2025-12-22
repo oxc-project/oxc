@@ -293,7 +293,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[require_param.tsx:8:14]
  7 │                     async setData(
  8 │                       data: { last_modified?: number }
-   ·                       ────────────────────────────────
+   ·                       ────
  9 │                     ) {}
    ╰────
   help: Add `@param` tag with name.

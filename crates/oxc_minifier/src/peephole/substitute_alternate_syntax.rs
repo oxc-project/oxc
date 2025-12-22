@@ -762,7 +762,10 @@ impl<'a> PeepholeOptimizations {
 
         // make sure `arguments` points to the arguments object
         // this is checked after the structure checks above because this check is slower than the structure checks
-        if ctx.ancestor_scopes().all(|s| !ctx.scoping().scope_flags(s).is_function()) {
+        if ctx.ancestor_scopes().all(|s| {
+            let scope_flags = ctx.scoping().scope_flags(s);
+            !scope_flags.is_function() || scope_flags.is_arrow()
+        }) {
             return;
         }
 
@@ -774,7 +777,7 @@ impl<'a> PeepholeOptimizations {
                 .declarations
                 .get(idx)
                 .expect("var_init.declarations.len() check above ensures this");
-            let BindingPatternKind::BindingIdentifier(de_id) = &de.id.kind else { return };
+            let BindingPattern::BindingIdentifier(de_id) = &de.id else { return };
             if de_id.name != e_id_name {
                 return;
             }
@@ -796,7 +799,7 @@ impl<'a> PeepholeOptimizations {
                 .declarations
                 .get(idx + 1)
                 .expect("var_init.declarations.len() check above ensures this");
-            let BindingPatternKind::BindingIdentifier(de_id) = &de_a.id.kind else { return };
+            let BindingPattern::BindingIdentifier(de_id) = &de_a.id else { return };
             if de_id.name != a_id_name {
                 return;
             }
@@ -837,7 +840,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 _ => return,
             }
-            let BindingPatternKind::BindingIdentifier(de_id) = &de_r.id.kind else { return };
+            let BindingPattern::BindingIdentifier(de_id) = &de_r.id else { return };
             if de_id.name != r_id_name {
                 return;
             }
@@ -905,7 +908,7 @@ impl<'a> PeepholeOptimizations {
 
         var_init.declarations = if let Some(r_id_pat) = r_id_pat {
             let new_decl =
-                ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, Some(arr), false);
+                ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false);
             ctx.ast.vec1(new_decl)
         } else {
             ctx.ast.vec()
@@ -947,7 +950,7 @@ impl<'a> PeepholeOptimizations {
             VariableDeclarationKind::Const
                 | VariableDeclarationKind::Using
                 | VariableDeclarationKind::AwaitUsing
-        ) || decl.id.kind.is_destructuring_pattern()
+        ) || decl.id.is_destructuring_pattern()
         {
             return;
         }
@@ -1553,7 +1556,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
         if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding)
             && let Some(param) = &catch.param
-            && let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind
+            && let BindingPattern::BindingIdentifier(ident) = &param.pattern
             && (catch.body.body.is_empty() || ctx.scoping().symbol_is_unused(ident.symbol_id()))
         {
             catch.param = None;
@@ -2649,6 +2652,9 @@ mod test {
 
         test_same(
             "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+        );
+        test_same(
+            "const _ = () => { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
         );
         test_same(
             "{ let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",

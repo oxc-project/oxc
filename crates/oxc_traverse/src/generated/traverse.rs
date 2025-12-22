@@ -1083,21 +1083,6 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
-    fn enter_binding_pattern_kind(
-        &mut self,
-        node: &mut BindingPatternKind<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
-    #[inline]
-    fn exit_binding_pattern_kind(
-        &mut self,
-        node: &mut BindingPatternKind<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
-
-    #[inline]
     fn enter_assignment_pattern(
         &mut self,
         node: &mut AssignmentPattern<'a>,
@@ -1203,6 +1188,21 @@ pub trait Traverse<'a, State> {
     fn exit_formal_parameter(
         &mut self,
         node: &mut FormalParameter<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }

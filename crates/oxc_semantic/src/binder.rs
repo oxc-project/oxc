@@ -105,7 +105,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
         }
 
         // Save `@__NO_SIDE_EFFECTS__` for function initializers.
-        if let BindingPatternKind::BindingIdentifier(id) = &self.id.kind
+        if let BindingPattern::BindingIdentifier(id) = &self.id
             && let Some(symbol_id) = id.symbol_id.get()
             && let Some(init) = &self.init
             && match init {
@@ -234,13 +234,48 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
     }
 }
 
+impl<'a> Binder<'a> for FormalParameterRest<'a> {
+    // Binds the FormalParameter of a function or method.
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
+
+        let includes = SymbolFlags::FunctionScopedVariable;
+
+        let is_not_allowed_duplicate_parameters = matches!(
+                parameters.kind,
+                // ArrowFormalParameters: UniqueFormalParameters
+                FormalParameterKind::ArrowFormalParameters |
+                // UniqueFormalParameters : FormalParameters
+                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
+                FormalParameterKind::UniqueFormalParameters
+            ) ||
+            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
+            builder.strict_mode() ||
+            // FormalParameters : FormalParameterList
+            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
+            !parameters.is_simple_parameter_list();
+
+        let excludes = if is_not_allowed_duplicate_parameters {
+            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
+        } else {
+            SymbolFlags::FunctionScopedVariableExcludes
+        };
+
+        self.rest.argument.bound_names(&mut |ident| {
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            ident.symbol_id.set(Some(symbol_id));
+        });
+    }
+}
+
 impl<'a> Binder<'a> for CatchParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.current_scope_id;
         // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
         // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
         // unless CatchParameter is CatchParameter : BindingIdentifier
-        if let BindingPatternKind::BindingIdentifier(ident) = &self.pattern.kind {
+        if let BindingPattern::BindingIdentifier(ident) = &self.pattern {
             let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
             let symbol_id =
                 builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);

@@ -164,7 +164,7 @@ fn check_reject_in_function(
     }
 
     let Some(rest_param) = &params.rest else { return };
-    let Some(rest_arg) = rest_param.argument.get_binding_identifier() else { return };
+    let Some(rest_arg) = rest_param.rest.argument.get_binding_identifier() else { return };
     let rest_index = (1 - params.items.len()) as f64;
     for reference in ctx.symbol_references(rest_arg.symbol_id()) {
         let node = ctx.nodes().get_node(reference.node_id());

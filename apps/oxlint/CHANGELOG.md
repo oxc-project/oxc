@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.35.0] - 2025-12-22
+
+### 🚀 Features
+
+- d913f87 linter/plugins: Implement code path analysis (CFG) (#17229) (overlookmotel)
+- 33b4e63 linter/plugins: Support more selector classes in visitor (#17219) (overlookmotel)
+- b2b87c6 linter/plugins: Add `getRange` and `getLoc` methods to `SourceCode` (#17179) (overlookmotel)
+- 0f63e75 linter: Implement react/no-unsafe (#16532) (Kenzo Wada)
+- 9e624c9 linter/react: Add `version` to `ReactPluginSettings` (#17169) (camc314)
+- 563b039 linter/plugins: Add `SourceCode#getLines` method (#17177) (overlookmotel)
+- 5b5f2fd linter/no-base-to-string: Add checkUnknown option (#17139) (camc314)
+- d03b855 linter/no-unsafe-member-access: Add allowOptionalChaining option (#17138) (camc314)
+- b86a134 linter/no-unnecessary-type-assertion: Add checkLiteralConstAssertions option (#17137) (camc314)
+
+### 🐛 Bug Fixes
+
+- e08fdf1 linter/plugins: Include hashbang in comments (#17231) (overlookmotel)
+- a3d203b linter/plugins: Make node, token, and comment objects have `Object.prototype` in prototype chain (#17220) (overlookmotel)
+- 6f753a8 linter/plugins: Fix `:function` selector class (#17218) (overlookmotel)
+- 4027039 linter/plugins: Reset `ancestors` if error during AST walk (#17207) (overlookmotel)
+- 376caf1 linter: Improve the error message for when the oxlint config file is invalid. (#17196) (connorshea)
+- c95a0ec linter: `valid-title`: fix diagnostic quoted in strings (#17180) (camchenry)
+
+### ⚡ Performance
+
+- 78df915 linter: Avoid multiple `to_string_lossy` calls in loop (#17212) (overlookmotel)
+- 5aefb84 linter/plugins: Reduce size of walker code (#17176) (overlookmotel)
+
+### 📚 Documentation
+
+- 1714719 linter/plugin: Correct doc comment on `getNodeLoc` function (#17178) (overlookmotel)
+
 ## [1.34.0] - 2025-12-19
 
 ### 🚀 Features

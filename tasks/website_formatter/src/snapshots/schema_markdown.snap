@@ -153,6 +153,14 @@ type: `string[]`
 Ignore files matching these glob patterns. Current working directory is used as the root.
 
 
+## insertFinalNewline
+
+type: `boolean | null`
+
+
+Whether to insert a final newline at the end of the file. (Default: `true`)
+
+
 ## jsxSingleQuote
 
 type: `boolean | null`

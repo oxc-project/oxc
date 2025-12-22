@@ -6,3 +6,15 @@
   transition={{ duration: 0.15, ease: "easeInOut" }} // Smooth transition
   style={{ /* comment */ overflow: "hidden" /* comment */  }}
 ></div>;
+
+// https://github.com/oxc-project/oxc/issues/17226
+someFunction(
+  <Component
+    value1={{
+      foo: "bar",
+    }}
+  />,
+  // {
+  //   option: true,
+  // },
+);

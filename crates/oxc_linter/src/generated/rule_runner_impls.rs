@@ -2595,7 +2595,7 @@ impl RuleRunner
     for crate::rules::typescript::consistent_generic_constructors::ConsistentGenericConstructors
 {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::AssignmentPattern,
+        AstType::FormalParameter,
         AstType::PropertyDefinition,
         AstType::VariableDeclarator,
     ]));
@@ -3399,7 +3399,7 @@ impl RuleRunner
     for crate::rules::unicorn::no_object_as_default_parameter::NoObjectAsDefaultParameter
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::AssignmentPattern]));
+        Some(&AstTypesBitset::from_types(&[AstType::FormalParameter]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

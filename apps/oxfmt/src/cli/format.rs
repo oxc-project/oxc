@@ -120,6 +120,7 @@ impl FormatRunner {
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
+            oxfmtrc_path.as_deref(),
             &ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,

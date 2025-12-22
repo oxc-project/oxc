@@ -225,6 +225,14 @@
         "null"
       ]
     },
+    "insertFinalNewline": {
+      "description": "Whether to insert a final newline at the end of the file. (Default: `true`)",
+      "markdownDescription": "Whether to insert a final newline at the end of the file. (Default: `true`)",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
       "markdownDescription": "Use single quotes instead of double quotes in JSX. (Default: `false`)",

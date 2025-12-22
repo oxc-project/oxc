@@ -2,7 +2,7 @@ use std::fmt;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeValue},
+    ast::{BindingIdentifier, BindingPattern, Expression, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
@@ -130,17 +130,17 @@ pub fn find_initialized_binding<'a, 'b>(
     binding: &'b BindingPattern<'a>,
     symbol_id: SymbolId,
 ) -> Option<(&'b BindingIdentifier<'a>, &'b Expression<'a>)> {
-    match &binding.kind {
-        BindingPatternKind::AssignmentPattern(assignment) => {
-            match &assignment.left.kind {
-                BindingPatternKind::BindingIdentifier(id) => {
+    match &binding {
+        BindingPattern::AssignmentPattern(assignment) => {
+            match &assignment.left {
+                BindingPattern::BindingIdentifier(id) => {
                     // look for `x = {}`, or recurse if lhs is a binding pattern
                     if id.symbol_id() == symbol_id {
                         return Some((id.as_ref(), &assignment.right));
                     }
                     None
                 }
-                BindingPatternKind::ObjectPattern(obj) => {
+                BindingPattern::ObjectPattern(obj) => {
                     for prop in &obj.properties {
                         let maybe_initialized_binding =
                             find_initialized_binding(&prop.value, symbol_id);
@@ -150,7 +150,7 @@ pub fn find_initialized_binding<'a, 'b>(
                     }
                     None
                 }
-                BindingPatternKind::ArrayPattern(arr) => {
+                BindingPattern::ArrayPattern(arr) => {
                     for el in &arr.elements {
                         let Some(el) = el else {
                             continue;
@@ -164,10 +164,10 @@ pub fn find_initialized_binding<'a, 'b>(
                 }
                 // assignment patterns should not have an assignment pattern on
                 // the left.
-                BindingPatternKind::AssignmentPattern(_) => None,
+                BindingPattern::AssignmentPattern(_) => None,
             }
         }
-        BindingPatternKind::ObjectPattern(obj) => {
+        BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {
                 let maybe_initialized_binding = find_initialized_binding(&prop.value, symbol_id);
                 if maybe_initialized_binding.is_some() {
@@ -176,7 +176,7 @@ pub fn find_initialized_binding<'a, 'b>(
             }
             None
         }
-        BindingPatternKind::ArrayPattern(arr) => {
+        BindingPattern::ArrayPattern(arr) => {
             for el in &arr.elements {
                 let Some(el) = el else {
                     continue;
@@ -188,6 +188,6 @@ pub fn find_initialized_binding<'a, 'b>(
             }
             None
         }
-        BindingPatternKind::BindingIdentifier(_) => None,
+        BindingPattern::BindingIdentifier(_) => None,
     }
 }
