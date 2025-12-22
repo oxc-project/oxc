@@ -116,13 +116,7 @@ impl<'a> DetermineValueType<'a> for ArrayExpressionElement<'a> {
         match self {
             ArrayExpressionElement::SpreadElement(_) => ValueType::Undetermined,
             ArrayExpressionElement::Elision(_) => ValueType::Undefined,
-            _ => {
-                if self.is_expression() {
-                    self.to_expression().value_type(ctx)
-                } else {
-                    ValueType::Undetermined
-                }
-            }
+            _ => self.as_expression().map_or(ValueType::Undetermined, |expr| expr.value_type(ctx)),
         }
     }
 }
