@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- d99134d parser: Improve diagnostic message for phase imports (#17092) (camc314)
+
 ## [0.104.0] - 2025-12-19
 
 ### 🚀 Features
