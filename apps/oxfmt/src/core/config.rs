@@ -124,7 +124,9 @@ impl ConfigResolver {
                 let str = utils::read_to_string(path)
                     .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
 
-                Some(EditorConfig::parse(&str).with_cwd(cwd))
+                // Use the directory containing `.editorconfig` as the base, not the CLI's cwd.
+                // This ensures patterns like `[src/*.ts]` are resolved relative to where `.editorconfig` is located.
+                Some(EditorConfig::parse(&str).with_cwd(path.parent().unwrap_or(cwd)))
             }
             None => None,
         };
