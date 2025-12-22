@@ -67,9 +67,7 @@ impl Rule for AriaProptypes {
         };
         let name = get_jsx_attribute_name(&attr.name);
         let name = name.cow_to_ascii_lowercase();
-        let Ok(aria_prop_name) = AriaProperty::try_from(name.as_ref()) else {
-            return;
-        };
+        let Ok(aria_prop_name) = AriaProperty::try_from(name.as_ref()) else { return };
         let aria_prop_type = get_aria_prop_type(aria_prop_name);
         let Some(aria_prop_value_string) = &attr.value else {
             if !allow_none_value(&aria_prop_type) {
@@ -168,14 +166,15 @@ fn is_valid_value_for_aria_prop_type(
             let Some(value) = parse_aria_prop_value_as_string(value, true) else {
                 return false;
             };
-            let tokens: Vec<&str> = value.split_whitespace().collect();
-            // each token must be in valid_tokens
-            for token in &tokens {
+            // Each token must be in valid_tokens
+            let mut count = 0;
+            for token in value.split_whitespace() {
                 if !valid_tokens.iter().any(|valid_token| valid_token == token) {
                     return false;
                 }
+                count += 1;
             }
-            !tokens.is_empty()
+            count > 0
         }
     }
 }
