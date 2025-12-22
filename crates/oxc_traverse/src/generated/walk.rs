@@ -1518,6 +1518,13 @@ unsafe fn walk_variable_declarator<'a, State, Tr: Traverse<'a, State>>(
         (node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_ID) as *mut BindingPattern,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::VariableDeclaratorTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_INIT)
         as *mut Option<Expression>)
     {
@@ -2094,6 +2101,13 @@ unsafe fn walk_catch_parameter<'a, State, Tr: Traverse<'a, State>>(
         (node as *mut u8).add(ancestor::OFFSET_CATCH_PARAMETER_PATTERN) as *mut BindingPattern,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::CatchParameterTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
     ctx.pop_stack(pop_token);
     traverser.exit_catch_parameter(&mut *node, ctx);
 }
@@ -2113,46 +2127,21 @@ unsafe fn walk_binding_pattern<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_binding_pattern(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BindingPatternKind(
-        ancestor::BindingPatternWithoutKind(node, PhantomData),
-    ));
-    walk_binding_pattern_kind(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_BINDING_PATTERN_KIND) as *mut BindingPatternKind,
-        ctx,
-    );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_BINDING_PATTERN_TYPE_ANNOTATION)
-        as *mut Option<Box<TSTypeAnnotation>>)
-    {
-        ctx.retag_stack(AncestorType::BindingPatternTypeAnnotation);
-        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
-    }
-    ctx.pop_stack(pop_token);
-    traverser.exit_binding_pattern(&mut *node, ctx);
-}
-
-unsafe fn walk_binding_pattern_kind<'a, State, Tr: Traverse<'a, State>>(
-    traverser: &mut Tr,
-    node: *mut BindingPatternKind<'a>,
-    ctx: &mut TraverseCtx<'a, State>,
-) {
-    traverser.enter_binding_pattern_kind(&mut *node, ctx);
     match &mut *node {
-        BindingPatternKind::BindingIdentifier(node) => {
+        BindingPattern::BindingIdentifier(node) => {
             walk_binding_identifier(traverser, (&mut **node) as *mut _, ctx)
         }
-        BindingPatternKind::ObjectPattern(node) => {
+        BindingPattern::ObjectPattern(node) => {
             walk_object_pattern(traverser, (&mut **node) as *mut _, ctx)
         }
-        BindingPatternKind::ArrayPattern(node) => {
+        BindingPattern::ArrayPattern(node) => {
             walk_array_pattern(traverser, (&mut **node) as *mut _, ctx)
         }
-        BindingPatternKind::AssignmentPattern(node) => {
+        BindingPattern::AssignmentPattern(node) => {
             walk_assignment_pattern(traverser, (&mut **node) as *mut _, ctx)
         }
     }
-    traverser.exit_binding_pattern_kind(&mut *node, ctx);
+    traverser.exit_binding_pattern(&mut *node, ctx);
 }
 
 unsafe fn walk_assignment_pattern<'a, State, Tr: Traverse<'a, State>>(
@@ -2348,10 +2337,10 @@ unsafe fn walk_formal_parameters<'a, State, Tr: Traverse<'a, State>>(
         walk_formal_parameter(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_REST)
-        as *mut Option<Box<BindingRestElement>>)
+        as *mut Option<Box<FormalParameterRest>>)
     {
         ctx.retag_stack(AncestorType::FormalParametersRest);
-        walk_binding_rest_element(traverser, (&mut **field) as *mut _, ctx);
+        walk_formal_parameter_rest(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_formal_parameters(&mut *node, ctx);
@@ -2377,8 +2366,47 @@ unsafe fn walk_formal_parameter<'a, State, Tr: Traverse<'a, State>>(
         (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_PATTERN) as *mut BindingPattern,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_INITIALIZER)
+        as *mut Option<Box<Expression>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterInitializer);
+        walk_expression(traverser, (&mut **field) as *mut _, ctx);
+    }
     ctx.pop_stack(pop_token);
     traverser.exit_formal_parameter(&mut *node, ctx);
+}
+
+unsafe fn walk_formal_parameter_rest<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut FormalParameterRest<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_formal_parameter_rest(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::FormalParameterRestRest(
+        ancestor::FormalParameterRestWithoutRest(node, PhantomData),
+    ));
+    walk_binding_rest_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_REST)
+            as *mut BindingRestElement,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterRestTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_formal_parameter_rest(&mut *node, ctx);
 }
 
 unsafe fn walk_function_body<'a, State, Tr: Traverse<'a, State>>(

@@ -718,6 +718,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             SPAN,
             VariableDeclarationKind::Var,
             bound_ident.create_binding_pattern(ctx),
+            NONE,
             Some(init),
             false,
         ));
@@ -764,7 +765,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         let mut parameters = ctx.ast.vec_with_capacity(params.items.len());
         for param in &params.items {
-            if param.pattern.kind.is_assignment_pattern() {
+            if param.initializer.is_some() {
                 break;
             }
             let binding = ctx.generate_uid("x", scope_id, SymbolFlags::FunctionScopedVariable);
@@ -821,18 +822,18 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     // <https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-helper-wrap-function/src/index.ts#L164>
     #[inline]
     fn is_function_length_affected(params: &FormalParameters<'_>) -> bool {
-        params.items.first().is_some_and(|param| !param.pattern.kind.is_assignment_pattern())
+        params.items.first().is_some_and(|param| param.initializer.is_none())
     }
 
     /// Check whether the function parameters could throw errors.
     #[inline]
     fn could_throw_errors_parameters(params: &FormalParameters<'a>) -> bool {
-        params.items.iter().any(|param|
-            matches!(
-                &param.pattern.kind,
-                BindingPatternKind::AssignmentPattern(pattern) if Self::could_potentially_throw_error_expression(&pattern.right)
-            )
-        )
+        params.items.iter().any(|param| {
+            param
+                .initializer
+                .as_ref()
+                .is_some_and(|init| Self::could_potentially_throw_error_expression(init))
+        })
     }
 
     /// Check whether the expression could potentially throw an error.

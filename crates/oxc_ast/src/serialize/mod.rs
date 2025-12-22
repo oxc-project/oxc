@@ -138,6 +138,18 @@ impl Program<'_> {
             // Deserialize the comments.
             // Replace this getter with the comments array, so we don't deserialize twice.
             const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
+            // If there's a hashbang, prepend it as a `Shebang` comment
+            const { hashbang } = this;
+            if (hashbang !== null) {
+                let start, end;
+                comments.unshift({
+                    type: 'Shebang',
+                    value: hashbang.value,
+                    start: start = hashbang.start,
+                    end: end = hashbang.end,
+                    ...(RANGE && { range: [start, end] }),
+                });
+            }
             Object.defineProperty(this, 'comments', { value: comments });
             return comments;
         },

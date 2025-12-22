@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- d99134d parser: Improve diagnostic message for phase imports (#17092) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- cb515fa parser: Improve error message for `yield` as identifier usage (#16950) (sapphi-red)
+- dcc856b parser: Add help for `new_dynamic_import` error (#16949) (sapphi-red)
+- c3c79f8 parser: Improve import attribute value error message (#16948) (sapphi-red)
+
+### ⚡ Performance
+
+- 225f229 parser: Use SmallVec for duplicate default export detection (#16801) (camc314)
+
 ## [0.103.0] - 2025-12-15
 
 ### 💥 BREAKING CHANGES

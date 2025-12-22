@@ -4,6 +4,7 @@ mod categories;
 mod config_builder;
 mod config_store;
 mod env;
+mod external_plugins;
 mod globals;
 mod ignore_matcher;
 mod overrides;
@@ -20,7 +21,7 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
-pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
+pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {

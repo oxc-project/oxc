@@ -1,14 +1,33 @@
-use oxc_ast::ast::*;
-
-use crate::{CompressOptionsUnused, ctx::Ctx};
-
 use super::PeepholeOptimizations;
+use crate::{CompressOptionsUnused, ctx::Ctx};
+use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
     fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
             && !Self::keep_top_level_var_in_script_mode(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
+    }
+
+    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => true,
+            Expression::Identifier(ident) => {
+                ident.name == "arguments"
+                    && ctx.is_global_reference(ident)
+                    // arguments can be reassigned in non-strict mode
+                    && ctx.current_scope_flags().is_strict_mode()
+                    // check if any scope in a chain is a non-arrow function
+                    && ctx.ancestor_scopes().any(|scope| {
+                        let scope_flags = ctx.scoping().scope_flags(scope);
+                        scope_flags.is_function() && !scope_flags.is_arrow()
+                    })
+            }
+            _ => false,
+        }
     }
 
     pub fn should_remove_unused_declarator(
@@ -22,16 +41,27 @@ impl<'a> PeepholeOptimizations {
         if decl.kind.is_using() {
             return false;
         }
-        match &decl.id.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
+        match &decl.id {
+            BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
                     return ctx.scoping().symbol_is_unused(symbol_id);
                 }
                 false
             }
-            BindingPatternKind::ArrayPattern(ident) => ident.is_empty(),
-            BindingPatternKind::ObjectPattern(ident) => ident.is_empty(),
-            BindingPatternKind::AssignmentPattern(_) => false,
+            BindingPattern::ArrayPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| Self::is_sync_iterator_expr(expr, ctx))
+            }
+            BindingPattern::ObjectPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| {
+                        !matches!(
+                            expr.value_type(ctx),
+                            ValueType::Null | ValueType::Undefined | ValueType::Undetermined
+                        )
+                    })
+            }
+            BindingPattern::AssignmentPattern(_) => false,
         }
     }
 
@@ -139,7 +169,15 @@ impl<'a> PeepholeOptimizations {
 
         let Statement::ImportDeclaration(import_decl) = stmt else { return };
 
-        if import_decl.phase.is_some() {
+        if let Some(phase) = import_decl.phase {
+            let (ImportPhase::Defer | ImportPhase::Source) = phase;
+            if ctx.scoping().symbol_is_unused(
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+            ) {
+                *stmt = ctx.ast.statement_empty(import_decl.span);
+                ctx.state.changed = true;
+            }
+
             return;
         }
 
@@ -189,13 +227,41 @@ mod test {
         test_options("var x", "", &options);
         test_options("var x = 1", "", &options);
         test_options("var x = foo", "foo", &options);
+
         test_options("var [] = []", "", &options);
         test_options("var [] = [1]", "", &options);
         test_options("var [] = [foo]", "foo", &options);
+        test_options("var [] = 'foo'", "", &options);
+        test_same_options("export var f = () => { var [] = arguments }", &options);
+        test_options(
+            "export function f() { var [] = arguments }",
+            "export function f() { arguments; }",
+            &options,
+        );
+        test_options(
+            "function foo() {return (()=>{ var []=arguments })()};foo()",
+            "function foo() {arguments;} foo();",
+            &options,
+        );
+        test_same_options_source_type(
+            "globalThis.f = function () { var [] = arguments }",
+            SourceType::cjs(),
+            &options,
+        );
+        test_same_options("var [] = arguments", &options);
+        test_same_options("var [] = null", &options);
+        test_same_options("var [] = void 0", &options);
+        test_same_options("var [] = 1", &options);
+        test_same_options("var [] = a", &options);
+
         test_options("var {} = {}", "", &options);
         test_options("var {} = { a: 1 }", "", &options);
         test_options("var {} = { foo }", "foo", &options);
-        test_options("var {} = { foo: { a } }", "a", &options);
+        test_same_options("var {} = null", &options);
+        test_same_options("var {} = a", &options);
+        test_same_options("var {} = null", &options);
+        test_same_options("var {} = void 0", &options);
+
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
         test_same_options("using x = foo", &options);
@@ -344,5 +410,28 @@ mod test {
         test_same_options("import a from 'a'; eval('a');", &options);
         test_same_options("import * as a from 'a'; eval('a');", &options);
         test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
+    }
+
+    #[test]
+    fn remove_unused_import_source_statement() {
+        let options = CompressOptions::smallest();
+
+        test_options("import source a from 'a'", "", &options);
+        test_options("import source a from 'a'; if (false) { console.log(a) }", "", &options);
+        test_same_options("import source a from 'a'; foo(a);", &options);
+    }
+
+    #[test]
+    fn remove_unused_import_defer_statements() {
+        let options = CompressOptions::smallest();
+
+        test_options("import defer * as a from 'a'", "", &options);
+        test_options(
+            "import defer * as a from 'a'; if (false) { console.log(a.foo) }",
+            "",
+            &options,
+        );
+        test_same_options("import defer * as a from 'a'; foo(a);", &options);
+        test_same_options("import defer * as a from 'a'; foo(a.bar);", &options);
     }
 }

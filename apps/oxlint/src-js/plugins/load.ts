@@ -2,6 +2,7 @@ import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
@@ -106,10 +107,15 @@ interface PluginDetails {
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions containing try/catch.
  *
  * @param url - Absolute path of plugin file as a `file://...` URL
- * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin details or error serialized to JSON string
  */
-export async function loadPlugin(url: string, packageName: string | null): Promise<string> {
+export async function loadPlugin(
+  url: string,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): Promise<string> {
   try {
     if (DEBUG) {
       if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
@@ -117,7 +123,7 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
     }
 
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, packageName);
+    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -128,16 +134,21 @@ export async function loadPlugin(url: string, packageName: string | null): Promi
  * Register a plugin.
  *
  * @param plugin - Plugin
- * @param packageName - Optional package name from `package.json` (fallback if `plugin.meta.name` is not defined)
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
-export function registerPlugin(plugin: Plugin, packageName: string | null): PluginDetails {
+export function registerPlugin(
+  plugin: Plugin,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
-  const pluginName = getPluginName(plugin, packageName);
+  pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
 
   const offset = registeredRules.length;
   const { rules } = plugin;
@@ -282,33 +293,81 @@ export function registerPlugin(plugin: Plugin, packageName: string | null): Plug
 
 /**
  * Get plugin name.
+ *
+ * - Plugin is named with an alias in config, return the alias.
  * - If `plugin.meta.name` is defined, return it.
  * - Otherwise, fall back to `packageName`, if defined.
  * - If neither is defined, throw an error.
  *
  * @param plugin - Plugin object
- * @param packageName - Package name from `package.json`
+ * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin name
  * @throws {TypeError} If `plugin.meta.name` is not a string
  * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
  */
-function getPluginName(plugin: Plugin, packageName: string | null): string {
-  const pluginMeta = plugin.meta;
-  if (pluginMeta != null) {
-    const pluginMetaName = pluginMeta.name;
-    if (pluginMetaName != null) {
-      if (typeof pluginMetaName !== "string") {
-        throw new TypeError("`plugin.meta.name` must be a string if defined");
-      }
-      return pluginMetaName;
-    }
+function getPluginName(
+  plugin: Plugin,
+  pluginName: string | null,
+  pluginNameIsAlias: boolean,
+): string {
+  // If plugin is defined with an alias in config, that takes priority
+  if (pluginNameIsAlias) {
+    debugAssertIsNonNull(pluginName);
+    return pluginName;
   }
 
-  if (packageName !== null) return packageName;
+  // If plugin defines its own name, that takes priority over package name.
+  // Normalize plugin name.
+  const pluginMetaName = plugin.meta?.name;
+  if (pluginMetaName != null) {
+    if (typeof pluginMetaName !== "string") {
+      throw new TypeError("`plugin.meta.name` must be a string if defined");
+    }
+    return normalizePluginName(pluginMetaName);
+  }
+
+  // Fallback to package name (which is already normalized on Rust side)
+  if (pluginName !== null) return pluginName;
 
   throw new Error(
-    "Plugin must either define `meta.name`, or be loaded from an NPM package with a `name` field in `package.json`",
+    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
+      "or be given an alias in config",
   );
+}
+
+/**
+ * Normalize plugin name by stripping common ESLint plugin prefixes and suffixes.
+ *
+ * This handles the various naming conventions used in the ESLint ecosystem:
+ * - `eslint-plugin-foo` -> `foo`
+ * - `@scope/eslint-plugin` -> `@scope`
+ * - `@scope/eslint-plugin-foo` -> `@scope/foo`
+ *
+ * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter/src/config/plugins.rs`.
+ * The 2 implementations must be kept in sync.
+ *
+ * @param name - Plugin name defined by plugin
+ * @returns Normalized plugin name
+ */
+function normalizePluginName(name: string): string {
+  const slashIndex = name.indexOf("/");
+
+  // If no slash, it's a non-scoped package. Trim off `eslint-plugin-` prefix.
+  if (slashIndex === -1) {
+    return name.startsWith("eslint-plugin-") ? name.slice("eslint-plugin-".length) : name;
+  }
+
+  const scope = name.slice(0, slashIndex),
+    rest = name.slice(slashIndex + 1);
+
+  // `@scope/eslint-plugin` -> `@scope`
+  if (rest === "eslint-plugin") return scope;
+  // `@scope/eslint-plugin-foo` -> `@scope/foo`
+  if (rest.startsWith("eslint-plugin-")) return `${scope}/${rest.slice("eslint-plugin-".length)}`;
+
+  // No normalization needed
+  return name;
 }
 
 /**

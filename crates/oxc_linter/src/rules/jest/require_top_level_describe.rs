@@ -292,7 +292,7 @@ fn test() {
                     describe('three', () => {});
                 });
             ",
-            Some(serde_json::json!({ "maxNumberOfTopLevelDescribes": 1 })),
+            Some(serde_json::json!([{ "maxNumberOfTopLevelDescribes": 1 }])),
         ),
     ];
 

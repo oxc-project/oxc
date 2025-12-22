@@ -55,14 +55,17 @@ fn test() {
         ("(", Some(""), "unterminated_group"),
         ("[", Some(""), "unterminated_character_class"),
         // Reference errors
-        (r"\1", Some("u"), "invalid_indexed_reference"),
-        (r"\k<a>", Some("u"), "invalid_named_reference"),
+        (r"\1", Some("u"), "invalid_indexed_reference_no_groups"),
+        (r"()\2", Some("u"), "invalid_indexed_reference_with_groups"),
+        (r"\k<a>", Some("u"), "invalid_named_reference_no_groups"),
+        (r"(?<foo>)\k<bar>", Some("u"), "invalid_named_reference_with_groups"),
         // Unicode property errors
         (r"\P{Basic_Emoji}", Some("v"), "invalid_unicode_property_name_negative_strings"),
         (r"\p{Basic_Emoji}", Some("u"), "invalid_unicode_property_of_strings"),
         (r"\p{Foo}", Some("u"), "invalid_unicode_property"),
         // Character class errors
         ("[z-a]", Some(""), "character_class_range_out_of_order"),
+        ("[a--b]", Some(""), "character_class_range_dash_not_subtraction"),
         (r"[\d-z]", Some("u"), "character_class_range_invalid_atom"),
         (r"[a-\d]", Some("u"), "invalid_class_atom"),
         // Unicode sets mode (v flag) errors
@@ -78,8 +81,10 @@ fn test() {
         // Escape errors
         (r"\c0", Some("u"), "invalid_extended_atom_escape"),
         // Modifier errors
-        (r"(?ii:.)", Some(""), "invalid_modifiers"),
+        (r"(?ii:.)", Some(""), "duplicated_modifiers"),
+        (r"(?i-i:.)", Some(""), "invalid_modifiers"),
         (r"(?a:.)", Some(""), "unknown_modifiers"),
+        (r"(?-:.)", Some(""), "empty_modifiers"),
         // Parse errors
         (")", Some("v"), "parse_pattern_incomplete"),
     ];

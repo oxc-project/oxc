@@ -75,7 +75,9 @@ impl Symbol<'_, '_> {
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
             .any(|node| match node.kind() {
-                AstKind::TSModuleDeclaration(namespace) => is_ambient_namespace(namespace),
+                AstKind::TSModuleDeclaration(namespace) => {
+                    is_ambient_namespace_without_explicit_exports(namespace)
+                }
                 // No need to check `declare` field, as `global` is only valid in ambient context
                 AstKind::TSGlobalDeclaration(_) => true,
                 _ => false,
@@ -84,8 +86,31 @@ impl Symbol<'_, '_> {
 }
 
 #[inline]
-fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
-    namespace.declare
+fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration) -> bool {
+    // Must be declared (ambient context)
+    if !namespace.declare {
+        return false;
+    }
+
+    // If the module has explicit exports, unused types should still be checked
+    // For modules with string literal names (like `declare module 'foo'`), if they have
+    // an export statement, then only exported items are available externally
+    if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &namespace.body {
+        let has_export = block.body.iter().any(|stmt| {
+            matches!(
+                stmt,
+                Statement::ExportAllDeclaration(_)
+                    | Statement::ExportDefaultDeclaration(_)
+                    | Statement::ExportNamedDeclaration(_)
+                    | Statement::TSExportAssignment(_)
+            )
+        });
+        if has_export {
+            return false;
+        }
+    }
+
+    true
 }
 
 impl NoUnusedVars {
@@ -95,10 +120,7 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         namespace: &TSModuleDeclaration<'a>,
     ) -> bool {
-        if is_ambient_namespace(namespace) {
-            return true;
-        }
-        symbol.is_in_declared_module()
+        namespace.declare || symbol.is_in_declared_module()
     }
 
     /// Returns `true` if this unused variable declaration should be allowed
@@ -176,7 +198,7 @@ impl NoUnusedVars {
         // positional arguments after the last used argument will be checked.
 
         // unused non-positional arguments are never allowed
-        if param.pattern.kind.is_destructuring_pattern() {
+        if param.pattern.is_destructuring_pattern() {
             return false;
         }
 

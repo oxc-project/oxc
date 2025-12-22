@@ -26,19 +26,19 @@ export default {name:"Test",data(){return {foo:"bar",baz:123}}}
 </template>
 
 <script>
-export default {
-	name: 'Test',
-	data() {
-		return { foo: 'bar', baz: 123 };
-	},
-};
+	export default {
+		name: 'Test',
+		data() {
+			return { foo: 'bar', baz: 123 };
+		},
+	};
 </script>
 
 <style>
-.foo {
-	color: red;
-	background: blue;
-}
+	.foo {
+		color: red;
+		background: blue;
+	}
 </style>
 
 --------------------"

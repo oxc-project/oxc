@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to parse configuration file.
+Failed to parse oxlint configuration file.
 
   x Failed to load JS plugin: ./plugin.ts
   |   Error: Whoops!

@@ -1,26 +1,116 @@
 import esquery from "esquery";
 import visitorKeys from "../generated/keys.ts";
-import { FUNCTION_NODE_TYPE_IDS, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
+import {
+  STATEMENT_NODE_TYPE_IDS,
+  DECLARATION_NODE_TYPE_IDS,
+  PATTERN_NODE_TYPE_IDS,
+  EXPRESSION_NODE_TYPE_IDS,
+  FUNCTION_NODE_TYPE_IDS,
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+} from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
-import { debugAssert } from "../utils/asserts.ts";
+import { debugAssert, typeAssertIs } from "../utils/asserts.ts";
 
 import type { ESQueryOptions, Selector as EsquerySelector } from "esquery";
 import type { Node as EsqueryNode } from "estree";
 import type { Node } from "./types.ts";
 import type { VisitFn } from "./visitor.ts";
+import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
 const { matches: esqueryMatches, parse: esqueryParse } = esquery;
 
 type NodeTypeId = number;
 
+// These arrays should never be mutated.
+// If they are, then `analyzeSelector` has a bug.
+if (DEBUG) {
+  Object.freeze(STATEMENT_NODE_TYPE_IDS);
+  Object.freeze(DECLARATION_NODE_TYPE_IDS);
+  Object.freeze(PATTERN_NODE_TYPE_IDS);
+  Object.freeze(EXPRESSION_NODE_TYPE_IDS);
+  Object.freeze(FUNCTION_NODE_TYPE_IDS);
+}
+
 // Options to call `esquery.matches` with.
 const ESQUERY_OPTIONS: ESQueryOptions = {
   nodeTypeKey: "type",
   visitorKeys,
-  fallback: (node: EsqueryNode) => Object.keys(node).filter(filterKey),
-  matchClass: (_className: unknown, _node: EsqueryNode, _ancestors: EsqueryNode[]) => false, // TODO: Is this right?
+  fallback(node: EsqueryNode) {
+    // Our visitor keys should cover all AST node types
+    throw new Error(`Unknown node type: ${node.type}`);
+  },
+  matchClass: matchesSelectorClass,
 };
-const filterKey = (key: string) => key !== "parent" && key !== "range" && key !== "loc";
+
+// This function is copied from ESLint.
+// Implementation here is functionally identical to ESLint's, except for a couple of perf optimizations noted below.
+//
+// TODO: Does TS-ESLint alter this function in any way to handle TS nodes?
+//
+// IMPORTANT: This function must be kept in sync with `class` case in `analyzeSelector` below,
+// which means that it must be kept in sync with `SelectorClassNodeIds::add`
+// in `tasks/ast_tools/src/generators/estree_visit.rs`, which generates `STATEMENT_NODE_TYPE_IDS` etc.
+//
+// ESLint notes that its implementation is copied from ESQuery, and contains ESQuery's license inline.
+// ESLint's implementation is identical to ESQuery's original, except for formatting differences.
+// ESLint code: https://github.com/eslint/eslint/blob/eafd727a060131f7fc79b2eb5698d8d27683c3a2/lib/languages/js/index.js#L155-L229
+// ESLint license (MIT): https://github.com/eslint/eslint/blob/eafd727a060131f7fc79b2eb5698d8d27683c3a2/LICENSE
+// ESQuery code: https://github.com/estools/esquery/blob/6c4f10370606c5a08adfcb5becc8248fb1edad43/esquery.js#L308-L344
+// ESQuery license: https://github.com/estools/esquery/blob/6c4f10370606c5a08adfcb5becc8248fb1edad43/license.txt
+/**
+ * Check if an AST node matches a selector class.
+ * @param className - Class name parsed from selector
+ * @param node - AST node
+ * @param _ancestors - AST node's ancestors
+ * @returns `true` if node matches class
+ */
+function matchesSelectorClass(
+  className: string,
+  node: EsqueryNode,
+  _ancestors: EsqueryNode[],
+): boolean {
+  // Types don't match exactly.
+  // All AST nodes have `parent` property (which `EsqueryNode` doesn't).
+  typeAssertIs<ESTreeNode>(node);
+
+  const { type } = node;
+
+  switch (className.toLowerCase()) {
+    case "statement":
+      if (type.endsWith("Statement")) return true;
+    // fallthrough: interface Declaration <: Statement { }
+
+    case "declaration":
+      return type.endsWith("Declaration");
+
+    case "pattern":
+      if (type.endsWith("Pattern")) return true;
+    // fallthrough: interface Expression <: Node, Pattern { }
+
+    case "expression":
+      return (
+        type.endsWith("Expression") ||
+        type.endsWith("Literal") ||
+        // ESLint / ESQuery uses `ancestors[0].type` instead of `node.parent.type`.
+        // `node.parent.type` is faster, but functionally equivalent.
+        (type === "Identifier" && node.parent.type !== "MetaProperty") ||
+        type === "MetaProperty"
+      );
+
+    case "function":
+      return (
+        type === "FunctionDeclaration" ||
+        type === "FunctionExpression" ||
+        type === "ArrowFunctionExpression"
+      );
+
+    default:
+      // Should have been caught already when compiling the selector in `analyzeSelector`
+      debugAssert(false, `Unknown selector class not caught in \`analyzeSelector\`: ${className}`);
+      return false;
+  }
+}
 
 // Specificity is a combination of:
 //
@@ -135,14 +225,18 @@ function analyzeSelector(
 ): NodeTypeId[] | null {
   switch (esquerySelector.type) {
     case "identifier": {
-      debugAssert(identifierCount(selector.specificity) < IDENTIFIER_COUNT_MAX);
+      debugAssert(
+        identifierCount(selector.specificity) < IDENTIFIER_COUNT_MAX,
+        "Exceeded maximum identifier count in selector",
+      );
       selector.specificity += IDENTIFIER_COUNT_INCREMENT;
 
       const typeId = NODE_TYPE_IDS_MAP.get(esquerySelector.value);
       // If the type is invalid, just treat this selector as not matching any types.
       // But still increment identifier count.
       // This matches ESLint's behavior.
-      return typeId === undefined ? EMPTY_TYPE_IDS_ARRAY : [typeId];
+      // Ignore when `typeId >= NODE_TYPES_COUNT` - those are names of CFG events.
+      return typeId === undefined || typeId >= NODE_TYPES_COUNT ? EMPTY_TYPE_IDS_ARRAY : [typeId];
     }
 
     case "not":
@@ -208,7 +302,10 @@ function analyzeSelector(
     case "nth-child":
     case "nth-last-child":
       selector.isComplex = true;
-      debugAssert(attributeCount(selector.specificity) < ATTRIBUTE_COUNT_MAX);
+      debugAssert(
+        attributeCount(selector.specificity) < ATTRIBUTE_COUNT_MAX,
+        "Exceeded maximum attribute count in selector",
+      );
       selector.specificity += ATTRIBUTE_COUNT_INCREMENT;
       return null;
 
@@ -221,12 +318,24 @@ function analyzeSelector(
       return analyzeSelector(esquerySelector.right, selector);
 
     case "class":
-      // TODO: Should TS function types be included in `FUNCTION_NODE_TYPE_IDS`?
-      // This TODO comment is from ESLint's implementation. Not sure what it means!
-      // TODO: Abstract into JSLanguage somehow.
-      if (esquerySelector.name === "function") return FUNCTION_NODE_TYPE_IDS;
-      selector.isComplex = true;
-      return null;
+      switch (esquerySelector.name.toLowerCase()) {
+        case "statement":
+          return STATEMENT_NODE_TYPE_IDS;
+        case "declaration":
+          return DECLARATION_NODE_TYPE_IDS;
+        case "pattern":
+          // Complex because `Identifier` nodes don't match this class if their parent is a `MetaProperty`
+          selector.isComplex = true;
+          return PATTERN_NODE_TYPE_IDS;
+        case "expression":
+          // Complex because `Identifier` nodes don't match this class if their parent is a `MetaProperty`
+          selector.isComplex = true;
+          return EXPRESSION_NODE_TYPE_IDS;
+        case "function":
+          return FUNCTION_NODE_TYPE_IDS;
+        default:
+          throw new Error(`Invalid class in selector: \`:${esquerySelector.name}\``);
+      }
 
     case "wildcard":
       return null;

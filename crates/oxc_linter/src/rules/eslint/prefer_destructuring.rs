@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPatternKind, Expression, MemberExpression},
+    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -184,12 +184,11 @@ impl Rule for PreferDestructuring {
                     if !check_expr(right) {
                         return;
                     }
-                    let name =
-                        if matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                            declarator.id.get_identifier_name().map(|v| v.as_str())
-                        } else {
-                            None
-                        };
+                    let name = if matches!(declarator.id, BindingPattern::BindingIdentifier(_)) {
+                        declarator.id.get_identifier_name().map(|v| v.as_str())
+                    } else {
+                        None
+                    };
                     match right {
                         MemberExpression::ComputedMemberExpression(comp_expr) => {
                             if matches!(comp_expr.expression, Expression::TemplateLiteral(_)) {
@@ -283,7 +282,7 @@ fn test() {
         (
             "var foo = object.bar;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": false }, ]),
             ),
         ),
         (
@@ -293,7 +292,7 @@ fn test() {
         (
             "var foo = object['bar'];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": false }, ]),
             ),
         ),
         (
@@ -303,7 +302,7 @@ fn test() {
         (
             "var { bar: foo } = object;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -313,7 +312,7 @@ fn test() {
         (
             "var { [bar]: foo } = object;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -337,7 +336,7 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "array": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -353,49 +352,47 @@ fn test() {
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "object": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "AssignmentExpression": { "object": false } }, { "enforceForRenamedProperties": true } ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "object": false } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "AssignmentExpression": { "object": false } }, { "enforceForRenamedProperties": false } ]),
             ),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "array": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "AssignmentExpression": { "array": false } }, { "enforceForRenamedProperties": true } ]),
             ),
         ),
         (
             "foo = array[0];",
-            Some(
-                serde_json::json!([				{ "AssignmentExpression": { "array": false } },				{ "enforceForRenamedProperties": false },			]),
-            ),
+            Some(serde_json::json!([ { "AssignmentExpression": { "array": false } } ])),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false } } ]),
             ),
         ),
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": false },					"AssignmentExpression": { "array": true },				},				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false }, "AssignmentExpression": { "array": true } } ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "object": true },					"AssignmentExpression": { "object": false },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true }, "AssignmentExpression": { "object": false } } ]),
             ),
         ),
         (
             "var foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "object": false },					"AssignmentExpression": { "object": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": false }, "AssignmentExpression": { "object": true } } ]),
             ),
         ),
         ("class Foo extends Bar { static foo() {var foo = super.foo} }", None),
@@ -411,43 +408,43 @@ fn test() {
         (
             "class C { #x; foo() { const x = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { const y = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { x = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { y = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo(a) { x = a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo(a) { y = a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { x = this.a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
     ];
@@ -465,7 +462,7 @@ fn test() {
         (
             "var foobar = object.bar;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -475,7 +472,7 @@ fn test() {
         (
             "var foo = object[bar];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -492,7 +489,7 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "array": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -502,25 +499,25 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false }, }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false }, }, ]),
             ),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": false },					"AssignmentExpression": { "array": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false }, "AssignmentExpression": { "array": true }, }, ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true, "object": false },					"AssignmentExpression": { "object": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true, "object": false }, "AssignmentExpression": { "object": true }, }, ]),
             ),
         ),
         ("class Foo extends Bar { static foo() {var bar = super.foo.bar} }", None),

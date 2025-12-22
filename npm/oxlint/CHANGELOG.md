@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.35.0] - 2025-12-22
+
+### 🚀 Features
+
+- 9e624c9 linter/react: Add `version` to `ReactPluginSettings` (#17169) (camc314)
+
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- a0f74a0 linter/config: Allow aliasing plugin names to allow names the same as builtin plugins (#15569) (Cameron)
+
+### 🐛 Bug Fixes
+
+- 005ec25 linter: Permit `$schema` `.oxlintrc.json` struct (#17060) (Copilot)
+- d446c43 linter: Prevent extra fields from being present on oxlint config file (#16874) (connorshea)
+
 ## [1.30.0] - 2025-11-24
 
 ### 🚀 Features

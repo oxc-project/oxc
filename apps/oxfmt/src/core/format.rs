@@ -7,8 +7,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use serde_json::Value;
 
-use super::FormatFileStrategy;
+use super::{FormatFileStrategy, ResolvedOptions};
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -17,20 +18,14 @@ pub enum FormatResult {
 
 pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
-    format_options: FormatOptions,
-    #[cfg(feature = "napi")]
-    pub is_sort_package_json: bool,
     #[cfg(feature = "napi")]
     external_formatter: Option<super::ExternalFormatter>,
 }
 
 impl SourceFormatter {
-    pub fn new(num_of_threads: usize, format_options: FormatOptions) -> Self {
+    pub fn new(num_of_threads: usize) -> Self {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
-            format_options,
-            #[cfg(feature = "napi")]
-            is_sort_package_json: false,
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
@@ -41,36 +36,82 @@ impl SourceFormatter {
     pub fn with_external_formatter(
         mut self,
         external_formatter: Option<super::ExternalFormatter>,
-        sort_package_json: bool,
     ) -> Self {
         self.external_formatter = external_formatter;
-        self.is_sort_package_json = sort_package_json;
         self
     }
 
-    /// Format a file based on its source type.
-    pub fn format(&self, entry: &FormatFileStrategy, source_text: &str) -> FormatResult {
-        let result = match entry {
-            FormatFileStrategy::OxcFormatter { path, source_type } => {
-                self.format_by_oxc_formatter(source_text, path, *source_type)
-            }
+    /// Format a file based on its entry type and resolved options.
+    pub fn format(
+        &self,
+        entry: &FormatFileStrategy,
+        source_text: &str,
+        resolved_options: ResolvedOptions,
+    ) -> FormatResult {
+        let (result, insert_final_newline) = match (entry, resolved_options) {
+            (
+                FormatFileStrategy::OxcFormatter { path, source_type },
+                ResolvedOptions::OxcFormatter {
+                    format_options,
+                    external_options,
+                    insert_final_newline,
+                },
+            ) => (
+                self.format_by_oxc_formatter(
+                    source_text,
+                    path,
+                    *source_type,
+                    format_options,
+                    external_options,
+                ),
+                insert_final_newline,
+            ),
+            (
+                FormatFileStrategy::OxfmtToml { .. },
+                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
+            ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
             #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { path, parser_name } => {
-                self.format_by_external_formatter(source_text, path, parser_name)
-            }
+            (
+                FormatFileStrategy::ExternalFormatter { path, parser_name },
+                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
+            ) => (
+                self.format_by_external_formatter(source_text, path, parser_name, external_options),
+                insert_final_newline,
+            ),
             #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name } => {
-                self.format_by_external_formatter_package_json(source_text, path, parser_name)
-            }
-            #[cfg(not(feature = "napi"))]
-            FormatFileStrategy::ExternalFormatter { .. }
-            | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-                unreachable!("If `napi` feature is disabled, this should not be passed here")
-            }
+            (
+                FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name },
+                ResolvedOptions::ExternalFormatterPackageJson {
+                    external_options,
+                    sort_package_json,
+                    insert_final_newline,
+                },
+            ) => (
+                self.format_by_external_formatter_package_json(
+                    source_text,
+                    path,
+                    parser_name,
+                    external_options,
+                    sort_package_json,
+                ),
+                insert_final_newline,
+            ),
+            _ => unreachable!("FormatFileStrategy and ResolvedOptions variant mismatch"),
         };
 
         match result {
-            Ok(code) => FormatResult::Success { is_changed: source_text != code, code },
+            Ok(mut code) => {
+                // NOTE: `insert_final_newline` relies on the fact that:
+                // - each formatter already ensures there is traliling newline
+                // - each formatter does not have an option to disable trailing newline
+                // So we can trim it here without allocating new string.
+                if !insert_final_newline {
+                    let trimmed_len = code.trim_end().len();
+                    code.truncate(trimmed_len);
+                }
+
+                FormatResult::Success { is_changed: source_text != code, code }
+            }
             Err(err) => FormatResult::Error(vec![err]),
         }
     }
@@ -81,6 +122,8 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         source_type: SourceType,
+        format_options: FormatOptions,
+        external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
@@ -93,23 +136,29 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let base_formatter = Formatter::new(&allocator, self.format_options.clone());
+        #[cfg(feature = "napi")]
+        let is_embed_off = format_options.embedded_language_formatting.is_off();
+
+        let base_formatter = Formatter::new(&allocator, format_options);
 
         #[cfg(feature = "napi")]
         let formatted = {
-            if self.format_options.embedded_language_formatting.is_off() {
+            if is_embed_off {
                 base_formatter.format(&ret.program)
             } else {
                 let embedded_formatter = self
                     .external_formatter
                     .as_ref()
                     .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter();
+                    .to_embedded_formatter(external_options);
                 base_formatter.format_with_embedded(&ret.program, embedded_formatter)
             }
         };
         #[cfg(not(feature = "napi"))]
-        let formatted = base_formatter.format(&ret.program);
+        let formatted = {
+            let _ = external_options;
+            base_formatter.format(&ret.program)
+        };
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -130,13 +179,20 @@ impl SourceFormatter {
         Ok(code.into_code())
     }
 
+    /// Format TOML file using `toml`.
+    fn format_by_toml(source_text: &str, options: oxc_toml::formatter::Options) -> String {
+        oxc_toml::formatter::format(source_text, options)
+    }
+
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
+    #[expect(clippy::needless_pass_by_value)]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
         path: &Path,
         parser_name: &str,
+        external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let external_formatter = self
             .external_formatter
@@ -151,12 +207,14 @@ impl SourceFormatter {
         // but since some plugins might depend on `filepath`, we pass the actual file name as well.
         let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
-        external_formatter.format_file(parser_name, file_name, source_text).map_err(|err| {
-            OxcDiagnostic::error(format!(
-                "Failed to format file with external formatter: {}\n{err}",
-                path.display()
-            ))
-        })
+        external_formatter
+            .format_file(&external_options, parser_name, file_name, source_text)
+            .map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to format file with external formatter: {}\n{err}",
+                    path.display()
+                ))
+            })
     }
 
     /// Format `package.json`: optionally sort then format by external formatter.
@@ -166,8 +224,10 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         parser_name: &str,
+        external_options: Value,
+        sort_package_json: bool,
     ) -> Result<String, OxcDiagnostic> {
-        let source_text: Cow<'_, str> = if self.is_sort_package_json {
+        let source_text: Cow<'_, str> = if sort_package_json {
             Cow::Owned(sort_package_json::sort_package_json(source_text).map_err(|err| {
                 OxcDiagnostic::error(format!(
                     "Failed to sort package.json: {}\n{err}",
@@ -178,6 +238,6 @@ impl SourceFormatter {
             Cow::Borrowed(source_text)
         };
 
-        self.format_by_external_formatter(&source_text, path, parser_name)
+        self.format_by_external_formatter(&source_text, path, parser_name, external_options)
     }
 }

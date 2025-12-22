@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind, AstType,
     ast::{
-        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
-        BindingPatternKind, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, StaticMemberExpression, TSTypeAnnotation,
-        TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind, VariableDeclarator,
+        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
+        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
+        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference,
+        VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
@@ -671,7 +671,7 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
     match decl.kind() {
         AstKind::Class(_) | AstKind::Function(_) => true,
         AstKind::VariableDeclarator(decl) => {
-            if decl.id.kind.is_destructuring_pattern() {
+            if decl.id.is_destructuring_pattern() {
                 return false;
             }
 
@@ -1074,7 +1074,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let BindingPatternKind::ArrayPattern(array_pat) = &declaration.id.kind else {
+            let BindingPattern::ArrayPattern(array_pat) = &declaration.id else {
                 return false;
             };
 
@@ -1082,7 +1082,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            let BindingPatternKind::BindingIdentifier(binding_ident) = &second_arg.kind else {
+            let BindingPattern::BindingIdentifier(binding_ident) = &second_arg else {
                 return false;
             };
 
@@ -1218,13 +1218,21 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         // check for object destructuring
         // `const { foo } = props;`
         // allow `props.foo` to be a dependency
-        let Some(VariableDeclarator {
-            id: BindingPattern { kind: BindingPatternKind::ObjectPattern(obj), .. },
-            ..
-        }) = self.decl_stack.last()
+        let Some(VariableDeclarator { id: BindingPattern::ObjectPattern(obj), .. }) =
+            self.decl_stack.last()
         else {
             return None;
         };
+
+        // Only apply destructuring logic when the identifier is directly the RHS of
+        // the destructuring assignment, not when it's nested inside another expression
+        // like a function call.
+        // For example:
+        // - `const { headers } = props` -> props.headers is the dependency
+        // - `const { headers } = fn(booleanValue)` -> booleanValue is the dependency, not booleanValue.headers
+        if self.stack.contains(&AstType::CallExpression) {
+            return None;
+        }
 
         if obj.rest.is_some() {
             return Some(true);
@@ -1236,11 +1244,11 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
                 needs_full_identifier = true;
                 continue;
             }
-            match &prop.value.kind {
-                BindingPatternKind::BindingIdentifier(id) => {
+            match &prop.value {
+                BindingPattern::BindingIdentifier(id) => {
                     cb(id.name.into());
                 }
-                BindingPatternKind::AssignmentPattern(pat) => {
+                BindingPattern::AssignmentPattern(pat) => {
                     if let Some(id) = pat.left.get_binding_identifier() {
                         cb(id.name.into());
                     } else {
@@ -1249,7 +1257,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
                         needs_full_identifier = true;
                     }
                 }
-                BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_) => {
+                BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {
                     // `const { foo: [bar] } = props;`
                     // `const { foo: { bar } } = props;`
                     // foo.bar is sufficient as a dependency
@@ -1467,7 +1475,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     }
 
-                    let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind else {
+                    let BindingPattern::ArrayPattern(array_pat) = &var_decl.id else {
                         return;
                     };
 
@@ -1475,8 +1483,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    let BindingPatternKind::BindingIdentifier(binding_ident) = &second_arg.kind
-                    else {
+                    let BindingPattern::BindingIdentifier(binding_ident) = &second_arg else {
                         return;
                     };
 
@@ -4296,6 +4303,12 @@ fn test() {
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
             "const x = {}; function Comp() { useEffect(() => {}, []) }",
+        ),
+        // Issue #17159: fixer should suggest `booleanValue`, not `booleanValue.headers`
+        // The destructuring pattern `{ headers }` should not affect the dependency name
+        (
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, []); }",
+            "function Comp() { const booleanValue = useMemo(() => true, []); const foo = useMemo(() => { const { headers } = fn(booleanValue); return headers; }, [booleanValue]); }",
         ),
     ];
 

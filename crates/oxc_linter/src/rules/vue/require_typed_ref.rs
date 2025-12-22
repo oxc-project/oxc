@@ -79,12 +79,11 @@ impl Rule for RequireTypedRef {
                         None
                     }
                 })
+                && variable_decl_parent.type_annotation.is_some()
             {
-                let id = &variable_decl_parent.id;
-                if id.type_annotation.is_some() {
-                    return;
-                }
+                return;
             }
+
             ctx.diagnostic(require_typed_ref_diagnostic(call_expr.span, &name));
         }
     }

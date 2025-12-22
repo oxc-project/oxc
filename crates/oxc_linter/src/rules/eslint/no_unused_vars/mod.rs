@@ -308,6 +308,12 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
             }
+            AstKind::FormalParameterRest(_) => {
+                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+            }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
@@ -320,7 +326,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
-            AstKind::TSInterfaceDeclaration(_) => {
+            AstKind::TSInterfaceDeclaration(_) | AstKind::TSTypeAliasDeclaration(_) => {
                 if symbol.is_in_declared_module() {
                     return;
                 }

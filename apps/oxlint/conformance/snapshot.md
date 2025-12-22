@@ -6,10 +6,10 @@
 
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
-| Total rules       |   277 | 100.0% |
-| Fully passing     |   218 |  78.7% |
-| Partially passing |    58 |  20.9% |
-| Fully failing     |     1 |   0.4% |
+| Total rules       |   292 | 100.0% |
+| Fully passing     |   235 |  80.5% |
+| Partially passing |    57 |  19.5% |
+| Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
 
@@ -17,16 +17,17 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 29765 | 100.0% |
-| Passing     | 28673 |  96.3% |
-| Failing     |   985 |   3.3% |
-| Skipped     |   107 |   0.4% |
+| Total tests | 33090 | 100.0% |
+| Passing     | 32199 |  97.3% |
+| Failing     |   784 |   2.4% |
+| Skipped     |   107 |   0.3% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
 - `array-bracket-newline` (209 tests)
 - `array-bracket-spacing` (143 tests) (4 skipped)
+- `array-callback-return` (216 tests)
 - `array-element-newline` (155 tests)
 - `arrow-body-style` (87 tests)
 - `arrow-parens` (109 tests) (21 skipped)
@@ -38,7 +39,10 @@
 - `class-methods-use-this` (156 tests)
 - `comma-spacing` (173 tests)
 - `comma-style` (96 tests)
+- `complexity` (165 tests)
 - `computed-property-spacing` (125 tests)
+- `consistent-return` (44 tests)
+- `constructor-super` (82 tests)
 - `curly` (216 tests)
 - `default-case-last` (37 tests)
 - `default-case` (23 tests)
@@ -54,6 +58,7 @@
 - `function-call-argument-newline` (58 tests)
 - `function-paren-newline` (177 tests) (2 skipped)
 - `generator-star-spacing` (201 tests)
+- `getter-return` (70 tests)
 - `global-require` (22 tests)
 - `grouped-accessor-pairs` (150 tests)
 - `guard-for-in` (12 tests)
@@ -69,6 +74,8 @@
 - `keyword-spacing` (1078 tests) (9 skipped)
 - `line-comment-position` (38 tests)
 - `linebreak-style` (12 tests)
+- `lines-around-comment` (199 tests)
+- `lines-around-directive` (239 tests)
 - `lines-between-class-members` (112 tests)
 - `max-classes-per-file` (17 tests)
 - `max-depth` (25 tests)
@@ -92,12 +99,14 @@
 - `no-buffer-constructor` (13 tests)
 - `no-caller` (6 tests)
 - `no-case-declarations` (19 tests)
+- `no-catch-shadow` (8 tests)
 - `no-class-assign` (18 tests)
 - `no-compare-neg-zero` (39 tests)
 - `no-cond-assign` (45 tests)
 - `no-confusing-arrow` (30 tests)
 - `no-console` (44 tests)
 - `no-const-assign` (33 tests)
+- `no-constructor-return` (20 tests)
 - `no-continue` (6 tests)
 - `no-control-regex` (36 tests)
 - `no-debugger` (2 tests)
@@ -172,15 +181,21 @@
 - `no-sequences` (42 tests)
 - `no-spaced-func` (28 tests)
 - `no-sparse-arrays` (6 tests)
+- `no-sync` (10 tests)
+- `no-tabs` (11 tests)
 - `no-template-curly-in-string` (22 tests)
 - `no-ternary` (4 tests)
+- `no-this-before-super` (63 tests)
 - `no-throw-literal` (41 tests)
+- `no-trailing-spaces` (54 tests)
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
 - `no-underscore-dangle` (116 tests)
 - `no-unexpected-multiline` (56 tests) (4 skipped)
 - `no-unmodified-loop-condition` (37 tests)
 - `no-unneeded-ternary` (47 tests) (2 skipped)
+- `no-unreachable-loop` (1628 tests)
+- `no-unreachable` (67 tests)
 - `no-unsafe-finally` (28 tests)
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
@@ -193,6 +208,7 @@
 - `no-useless-constructor` (49 tests) (1 skipped)
 - `no-useless-escape` (288 tests)
 - `no-useless-rename` (163 tests) (1 skipped)
+- `no-useless-return` (49 tests)
 - `no-var` (52 tests) (1 skipped)
 - `no-void` (12 tests)
 - `no-warning-comments` (61 tests)
@@ -208,6 +224,7 @@
 - `operator-assignment` (119 tests)
 - `operator-linebreak` (104 tests)
 - `padded-blocks` (133 tests)
+- `padding-line-between-statements` (624 tests)
 - `prefer-arrow-callback` (107 tests)
 - `prefer-destructuring` (103 tests)
 - `prefer-numeric-literals` (87 tests)
@@ -252,19 +269,18 @@
 - `func-call-spacing` - 137 / 151 (90.7%)
 - `id-blacklist` - 120 / 131 (91.6%)
 - `id-denylist` - 132 / 143 (92.3%)
-- `lines-around-comment` - 198 / 199 (99.5%)
-- `lines-around-directive` - 231 / 239 (96.7%)
-- `logical-assignment-operators` - 276 / 304 (90.8%)
+- `logical-assignment-operators` - 291 / 304 (95.7%)
 - `no-alert` - 36 / 42 (85.7%)
 - `no-array-constructor` - 145 / 146 (99.3%)
-- `no-catch-shadow` - 1 / 8 (12.5%)
 - `no-constant-binary-expression` - 225 / 260 (86.5%)
 - `no-constant-condition` - 305 / 307 (99.3%)
 - `no-eval` - 76 / 101 (75.2%)
 - `no-extra-parens` - 1068 / 1072 (99.6%)
+- `no-fallthrough` - 86 / 87 (98.9%)
 - `no-global-assign` - 12 / 18 (66.7%)
 - `no-implicit-globals` - 153 / 245 (62.4%)
 - `no-implied-eval` - 83 / 138 (60.1%)
+- `no-invalid-this` - 520 / 562 (92.5%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
 - `no-lone-blocks` - 49 / 50 (98.0%)
 - `no-misleading-character-class` - 185 / 190 (97.4%)
@@ -275,22 +291,20 @@
 - `no-new-wrappers` - 9 / 11 (81.8%)
 - `no-obj-calls` - 73 / 107 (68.2%)
 - `no-object-constructor` - 55 / 56 (98.2%)
+- `no-promise-executor-return` - 66 / 124 (53.2%)
 - `no-redeclare` - 51 / 75 (68.0%)
 - `no-restricted-globals` - 143 / 166 (86.1%)
 - `no-restricted-imports` - 253 / 254 (99.6%)
 - `no-setter-return` - 161 / 164 (98.2%)
 - `no-shadow-restricted-names` - 43 / 44 (97.7%)
 - `no-shadow` - 300 / 308 (97.4%)
-- `no-sync` - 8 / 10 (80.0%)
-- `no-tabs` - 0 / 11 (0.0%)
-- `no-trailing-spaces` - 53 / 54 (98.1%)
 - `no-undef` - 54 / 94 (57.4%)
 - `no-undefined` - 37 / 53 (69.8%)
 - `no-unused-expressions` - 120 / 124 (96.8%)
 - `no-unused-vars` - 340 / 436 (78.0%)
 - `no-use-before-define` - 323 / 347 (93.1%)
+- `no-useless-assignment` - 83 / 85 (97.6%)
 - `no-useless-backreference` - 188 / 190 (98.9%)
-- `padding-line-between-statements` - 364 / 624 (58.3%)
 - `prefer-const` - 136 / 138 (98.6%)
 - `prefer-exponentiation-operator` - 164 / 167 (98.2%)
 - `prefer-named-capture-group` - 54 / 57 (94.7%)
@@ -298,6 +312,7 @@
 - `prefer-object-spread` - 82 / 87 (94.3%)
 - `prefer-regex-literals` - 239 / 251 (95.2%)
 - `radix` - 33 / 54 (61.1%)
+- `require-atomic-updates` - 62 / 63 (98.4%)
 - `require-unicode-regexp` - 76 / 79 (96.2%)
 - `semi` - 307 / 308 (99.7%)
 - `strict` - 106 / 126 (84.1%)
@@ -3030,552 +3045,11 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `lines-around-comment`
-
-Pass: 198 / 199 (99.5%)
-Fail: 1 / 199 (0.5%)
-Skip: 0 / 199 (0.0%)
-
-#### lines-around-comment > invalid
-
-```js
-#!foo
-var a = 1;
-```
-
-```json
-{
-  "output": "#!foo\n\nvar a = 1;",
-  "options": [
-    {
-      "afterHashbangComment": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "after"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `lines-around-directive`
-
-Pass: 231 / 239 (96.7%)
-Fail: 8 / 239 (3.3%)
-Skip: 0 / 239 (0.0%)
-
-#### lines-around-directive > valid
-
-```js
-#!/usr/bin/env node
-'use strict';
-var foo;
-```
-
-```json
-{
-  "options": [
-    "never"
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline before "use strict" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > valid
-
-```js
-#!/usr/bin/env node
-'use strict';
-'use asm';
-var foo;
-```
-
-```json
-{
-  "options": [
-    "never"
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline before "use strict" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > valid
-
-```js
-#!/usr/bin/env node
-'use strict';
-
-var foo;
-```
-
-```json
-{
-  "options": [
-    {
-      "before": "never",
-      "after": "always"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline before "use strict" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > valid
-
-```js
-#!/usr/bin/env node
-'use strict';
-'use asm';
-
-var foo;
-```
-
-```json
-{
-  "options": [
-    {
-      "before": "never",
-      "after": "always"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline before "use strict" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > invalid
-
-```js
-#!/usr/bin/env node
-'use strict';
-var foo;
-```
-
-```json
-{
-  "output": "#!/usr/bin/env node\n\n'use strict';\n\nvar foo;",
-  "options": [
-    "always"
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "before",
-        "value": "use strict"
-      }
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "after",
-        "value": "use strict"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Expected newline after "use strict" directive.',
-    messageId: 'expected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > invalid
-
-```js
-#!/usr/bin/env node
-'use strict';
-'use asm';
-var foo;
-```
-
-```json
-{
-  "output": "#!/usr/bin/env node\n\n'use strict';\n'use asm';\n\nvar foo;",
-  "options": [
-    "always"
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "before",
-        "value": "use strict"
-      }
-    },
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "after",
-        "value": "use asm"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Expected newline after "use asm" directive.',
-    messageId: 'expected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 3,
-    column: 0,
-    endLine: 3,
-    endColumn: 10,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > invalid
-
-```js
-#!/usr/bin/env node
-'use strict';
-
-var foo;
-```
-
-```json
-{
-  "output": "#!/usr/bin/env node\n\n'use strict';\nvar foo;",
-  "options": [
-    {
-      "before": "always",
-      "after": "never"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "before",
-        "value": "use strict"
-      }
-    },
-    {
-      "messageId": "unexpected",
-      "data": {
-        "location": "after",
-        "value": "use strict"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline after "use strict" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 2,
-    column: 0,
-    endLine: 2,
-    endColumn: 13,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### lines-around-directive > invalid
-
-```js
-#!/usr/bin/env node
-'use strict';
-'use asm';
-
-var foo;
-```
-
-```json
-{
-  "output": "#!/usr/bin/env node\n\n'use strict';\n'use asm';\nvar foo;",
-  "options": [
-    {
-      "before": "always",
-      "after": "never"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expected",
-      "data": {
-        "location": "before",
-        "value": "use strict"
-      }
-    },
-    {
-      "messageId": "unexpected",
-      "data": {
-        "location": "after",
-        "value": "use asm"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/lines-around-directive',
-    message: 'Unexpected newline after "use asm" directive.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'Literal',
-    line: 3,
-    column: 0,
-    endLine: 3,
-    endColumn: 10,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `logical-assignment-operators`
 
-Pass: 272 / 304 (89.5%)
-Fail: 28 / 304 (9.2%)
+Pass: 287 / 304 (94.4%)
+Fail: 13 / 304 (4.3%)
 Skip: 4 / 304 (1.3%)
-
-#### logical-assignment-operators > valid
-
-```js
-if (a) { a = b } else {}
-```
-
-```json
-{
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > valid
-
-```js
-if (a) { a = b } else if (a) {}
-```
-
-```json
-{
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > valid
-
-```js
-if (unrelated) {} else if (a) a = b; else {}
-```
-
-```json
-{
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > valid
-
-```js
-if (unrelated) {} else if (a) a = b; else if (unrelated) {}
-```
-
-```json
-{
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
 
 #### logical-assignment-operators > invalid
 
@@ -4063,376 +3537,6 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} else if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) {} else a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (a) {} else if (b) {} else if (a) a = b;
-```
-
-```json
-{
-  "output": "if (a) {} else if (b) {} else a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} else
-if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) {} else\na &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {
-}
-else if (a) {
-a = b;
-}
-```
-
-```json
-{
-  "output": "if (unrelated) {\n}\nelse a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) statement; else if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) statement; else a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) id
-else if (a) (a) = b
-```
-
-```json
-{
-  "output": null,
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} else if (a) a = b; else if (c) c = d
-```
-
-```json
-{
-  "output": "if (unrelated) {} else if (a) a = b; else c &&= d",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) { /* body */ } else if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) { /* body */ } else a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} /* before else */ else if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) {} /* before else */ else a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} else // Line
-if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) {} else // Line\na &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### logical-assignment-operators > invalid
-
-```js
-if (unrelated) {} else /* Block */ if (a) a = b;
-```
-
-```json
-{
-  "output": "if (unrelated) {} else /* Block */ a &&= b;",
-  "options": [
-    "always",
-    {
-      "enforceForIfStatements": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "if",
-      "data": {
-        "operator": "&&="
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.A$1 (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
 ### `no-alert`
 
 Pass: 36 / 42 (85.7%)
@@ -4688,181 +3792,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-### `no-catch-shadow`
-
-Pass: 1 / 8 (12.5%)
-Fail: 7 / 8 (87.5%)
-Skip: 0 / 8 (0.0%)
-
-#### no-catch-shadow > valid
-
-```js
-var foo = 1; try { bar(); } catch(baz) { }
-```
-
-```json
-{}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > valid
-
-```js
-'use strict';
-
-function broken() {
-  try {
-    throw new Error();
-  } catch (e) {
-    //
-  }
-}
-
-module.exports = broken;
-```
-
-```json
-{
-  "languageOptions": {
-    "ecmaVersion": 6
-  }
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > valid
-
-```js
-try {} catch (error) {}
-```
-
-```json
-{}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > invalid
-
-```js
-var foo = 1; try { bar(); } catch(foo) { }
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "mutable",
-      "data": {
-        "name": "foo"
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > invalid
-
-```js
-function foo(){} try { bar(); } catch(foo) { }
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "mutable",
-      "data": {
-        "name": "foo"
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > invalid
-
-```js
-function foo(){ try { bar(); } catch(foo) { } }
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "mutable",
-      "data": {
-        "name": "foo"
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-
-
-#### no-catch-shadow > invalid
-
-```js
-var foo = function(){ try { bar(); } catch(foo) { } };
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "mutable",
-      "data": {
-        "name": "foo"
-      }
-    }
-  ]
-}
-```
-
-TypeError: Cannot convert object to primitive value
-    at Array.<anonymous> (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
-    at A.matches (apps/oxlint/dist/lint.js)
-    at apps/oxlint/dist/lint.js
 
 
 ### `no-constant-binary-expression`
@@ -6796,6 +5725,47 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     column: 0,
     endLine: 1,
     endColumn: 1,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `no-fallthrough`
+
+Pass: 86 / 87 (98.9%)
+Fail: 1 / 87 (1.1%)
+Skip: 0 / 87 (0.0%)
+
+#### no-fallthrough > valid
+
+```js
+switch (foo) { case 0: a(); 
+// eslint-disable-next-line rule-to-test/no-fallthrough
+ case 1: }
+```
+
+```json
+{}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-fallthrough',
+    message: "Expected a 'break' statement before 'case'.",
+    messageId: 'case',
+    severity: 1,
+    nodeType: 'SwitchCase',
+    line: 3,
+    column: 1,
+    endLine: 3,
+    endColumn: 8,
     suggestions: null
   }
 ]
@@ -50042,6 +49012,1587 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
+### `no-invalid-this`
+
+Pass: 520 / 562 (92.5%)
+Fail: 42 / 562 (7.5%)
+Skip: 0 / 562 (0.0%)
+
+#### no-invalid-this > valid
+
+```js
+function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 31,
+    endLine: 1,
+    endColumn: 35,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+"use strict"; function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 45,
+    endLine: 1,
+    endColumn: 49,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+/* implied strict mode */ function foo() { 'use strict'; this.eval(); }
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 3,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-invalid-this',
+    message: "Unexpected 'this'.",
+    messageId: 'unexpectedThis',
+    severity: 1,
+    nodeType: 'ThisExpression',
+    line: 1,
+    column: 57,
+    endLine: 1,
+    endColumn: 61,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+"use strict"; console.log(this); z(x => console.log(x, this)); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ console.log(this); z(x => console.log(x, this)); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true,
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); })(); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function Foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ return function() { console.log(this); z(x => console.log(x, this)); }; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "globalReturn": true,
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var foo = (function() { console.log(this); z(x => console.log(x, this)); }).bar(obj); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo: function() { function foo() { console.log(this); z(x => console.log(x, this)); } foo(); }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo() { function foo() { console.log(this); z(x => console.log(x, this)); } foo(); }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var obj = {foo: function() { return function() { console.log(this); z(x => console.log(x, this)); }; }}; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ obj.foo = function() { return function() { console.log(this); z(x => console.log(x, this)); }; }; /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ obj.foo = (function() { return () => { console.log(this); z(x => console.log(x, this)); }; })(); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var foo = function() { console.log(this); z(x => console.log(x, this)); }.bind(null); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); }).call(undefined); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ (function() { console.log(this); z(x => console.log(x, this)); }).apply(void 0); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ Array.from([], function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.every(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.filter(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.find(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findIndex(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findLast(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.findLastIndex(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.flatMap(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.forEach(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.map(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.some(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ foo.forEach(function() { console.log(this); z(x => console.log(x, this)); }, null); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ /** @returns {void} */ function foo() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ /** @this Obj */ foo(function() { console.log(this); z(x => console.log(x, this)); }); /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var Ctor = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ var func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ Ctor = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ func = function() { console.log(this); z(x => console.log(x, this)); } /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "options": [
+    {
+      "capIsConstructor": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ function foo(func = function() { console.log(this); z(x => console.log(x, this)); }) {} /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > invalid
+
+```js
+/* implied strict mode */ [func = function() { console.log(this); z(x => console.log(x, this)); }] = a /* should error */
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "parserOptions": {
+      "ecmaFeatures": {
+        "impliedStrict": true
+      }
+    }
+  },
+  "errors": [
+    {
+      "messageId": "unexpectedThis"
+    },
+    {
+      "messageId": "unexpectedThis"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-invalid-this > valid
+
+```js
+
+    z(function (x, this: context) {
+      console.log(x, this);
+    });
+        
+```
+
+```json
+{}
+```
+
+Error: Parsing failed
+    at parse (apps/oxlint/dist/index.js)
+    at lint (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+
+
 ### `no-irregular-whitespace`
 
 Pass: 279 / 280 (99.6%)
@@ -57782,6 +58333,1893 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `no-promise-executor-return`
+
+Pass: 66 / 124 (53.2%)
+Fail: 58 / 124 (46.8%)
+Skip: 0 / 124 (0.0%)
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 42,
+      "endColumn": 51,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => resolve(1))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 34,
+      "endColumn": 44,
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise((resolve, reject) => void resolve(1))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {resolve(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return 1 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "message": "Return values from promise executor functions cannot be read.",
+      "column": 36,
+      "endColumn": 44,
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise((resolve, reject) => { return void 1 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => 1)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void 1)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => 1 ? 2 : 3)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1 ? 2 : 3))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {1 ? 2 : 3})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => (1 ? 2 : 3))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1 ? 2 : 3))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {(1 ? 2 : 3)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => (1))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (1))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => () => {})
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void (() => {}))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {() => {}})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => null)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void null)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => null)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => /*hi*/ ~0)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => /*hi*/ void ~0)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => /*hi*/ {~0})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => /*hi*/ ~0)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => /*hi*/ {~0})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { return void 0 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": false
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { if (foo) { return void 0 } return 0 })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { if (foo) { return void 0 } return void 0 })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(resolve => { return (foo = resolve(1)); })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(resolve => { return void (foo = resolve(1)); })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(resolve => r = resolve)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(resolve => void (r = resolve))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(resolve => {r = resolve})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => { return(1) })
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => { return void (1) })"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r =>1)
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r =>void 1)"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r =>{1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(r => ((1)))
+```
+
+```json
+{
+  "options": [
+    {
+      "allowVoid": true
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": [
+        {
+          "messageId": "prependVoid",
+          "output": "new Promise(r => void ((1)))"
+        },
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(r => {((1))})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function foo(resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return undefined; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return null; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return false; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => resolve)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {resolve})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => null)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {null})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { return resolve(foo); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return reject(foo); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => x + y)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 34,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise((resolve, reject) => {x + y})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { return Promise.resolve(42); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { if (foo) { return 1; } })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((resolve, reject) => { try { return 1; } catch(e) {} })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function (resolve, reject) { while (foo){ if (bar) break; else return 1; } })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => { return void 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => (1))
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 20,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(() => {(1)})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => ({}));
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 26,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {({})});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function () { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(() => 1)
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 19,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "new Promise(() => {1})"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() {} new Promise(function () { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 45,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return; } new Promise(() => { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 48,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return 1; } new Promise(() => { return 2; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 50,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo () { return new Promise(function () { return 1; }); }
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 52,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo() { return new Promise(() => { bar(() => { return 1; }); return false; }); }
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 71,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => { if (foo) { return 0; } else bar(() => { return 1; }); })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 38,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+function foo () { return 1; return new Promise(function () { return 2; }); return 3;}
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 62,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => 1; new Promise(() => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 30,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function () { return 1; }); function foo() { return 1; } 
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 27,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => { return 1; });
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 27,
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => 1);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => () => 1);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {() => 1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => async () => 1);
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 2017
+  },
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {async () => 1});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => function () {});
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": []
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => function foo() {});
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {function foo() {}});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+() => new Promise(() => []);
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "column": 25,
+      "suggestions": [
+        {
+          "messageId": "wrapBraces",
+          "output": "() => new Promise(() => {[]});"
+        }
+      ]
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise((Promise) => { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-promise-executor-return > invalid
+
+```js
+new Promise(function Promise(resolve, reject) { return 1; })
+```
+
+```json
+{
+  "errors": [
+    {
+      "messageId": "returnsValue",
+      "suggestions": null
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
+
+0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
 
 
@@ -81358,449 +83796,6 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `no-sync`
-
-Pass: 8 / 10 (80.0%)
-Fail: 2 / 10 (20.0%)
-Skip: 0 / 10 (0.0%)
-
-#### no-sync > invalid
-
-```js
-function someFunction() {fs.fooSync();}
-```
-
-```json
-{
-  "options": [
-    {
-      "allowAtRootLevel": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "noSync",
-      "data": {
-        "propertyName": "fooSync"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-sync > invalid
-
-```js
-var a = function someFunction() {fs.fooSync();}
-```
-
-```json
-{
-  "options": [
-    {
-      "allowAtRootLevel": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "noSync",
-      "data": {
-        "propertyName": "fooSync"
-      }
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-tabs`
-
-Pass: 0 / 11 (0.0%)
-Fail: 11 / 11 (100.0%)
-Skip: 0 / 11 (0.0%)
-
-#### no-tabs > valid
-
-```js
-function test(){
-}
-```
-
-```json
-{}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > valid
-
-```js
-function test(){
-  //   sdfdsf 
-}
-```
-
-```json
-{}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > valid
-
-```js
-	doSomething();
-```
-
-```json
-{
-  "options": [
-    {
-      "allowIndentationTabs": true
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > valid
-
-```js
-	// comment
-```
-
-```json
-{
-  "options": [
-    {
-      "allowIndentationTabs": true
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-function test(){	}
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 17,
-      "endLine": 1,
-      "endColumn": 18
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-/** 	 comment test */
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 5,
-      "endLine": 1,
-      "endColumn": 6
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-function test(){
-  //	sdfdsf 
-}
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 2,
-      "column": 5,
-      "endLine": 2,
-      "endColumn": 6
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-function	test(){
-  //sdfdsf 
-}
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 9,
-      "endLine": 1,
-      "endColumn": 10
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-function test(){
-  //	sdfdsf 
-	}
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 2,
-      "column": 5,
-      "endLine": 2,
-      "endColumn": 6
-    },
-    {
-      "messageId": "unexpectedTab",
-      "line": 3,
-      "column": 1,
-      "endLine": 3,
-      "endColumn": 2
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-	// Comment with leading tab 	 and inline tab
-```
-
-```json
-{
-  "options": [
-    {
-      "allowIndentationTabs": true
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 30,
-      "endLine": 1,
-      "endColumn": 31
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-#### no-tabs > invalid
-
-```js
-		a =			b +	c		;		
-```
-
-```json
-{
-  "errors": [
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 3
-    },
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 6,
-      "endLine": 1,
-      "endColumn": 9
-    },
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 12,
-      "endLine": 1,
-      "endColumn": 13
-    },
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 14,
-      "endLine": 1,
-      "endColumn": 16
-    },
-    {
-      "messageId": "unexpectedTab",
-      "line": 1,
-      "column": 17,
-      "endLine": 1,
-      "endColumn": 19
-    }
-  ]
-}
-```
-
-TypeError: sourceCode.getLines is not a function
-    at Program (apps/oxlint/conformance/submodules/eslint/lib/rules/no-tabs.js:78:16)
-    at walkProgram (apps/oxlint/dist/lint.js)
-    at lintFileImpl (apps/oxlint/dist/lint.js)
-    at lint (apps/oxlint/dist/index.js)
-
-
-### `no-trailing-spaces`
-
-Pass: 53 / 54 (98.1%)
-Fail: 1 / 54 (1.9%)
-Skip: 0 / 54 (0.0%)
-
-#### no-trailing-spaces > valid
-
-```js
-#!/usr/bin/env node 
-```
-
-```json
-{
-  "options": [
-    {
-      "ignoreComments": true
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-trailing-spaces',
-    message: 'Trailing spaces not allowed.',
-    messageId: 'trailingSpace',
-    severity: 1,
-    nodeType: null,
-    line: 1,
-    column: 19,
-    endLine: 1,
-    endColumn: 20,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `no-undef`
 
 Pass: 54 / 94 (57.4%)
@@ -97079,6 +99074,89 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
+### `no-useless-assignment`
+
+Pass: 83 / 85 (97.6%)
+Fail: 2 / 85 (2.4%)
+Skip: 0 / 85 (0.0%)
+
+#### no-useless-assignment > valid
+
+```js
+/* exported foo */
+            let foo = 'used';
+            console.log(foo);
+            foo = 'unused like but exported with directive';
+```
+
+```json
+{
+  "languageOptions": {
+    "sourceType": "script"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-useless-assignment',
+    message: 'This assigned value is not used in subsequent statements.',
+    messageId: 'unnecessaryAssignment',
+    severity: 1,
+    nodeType: 'Identifier',
+    line: 4,
+    column: 12,
+    endLine: 4,
+    endColumn: 15,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+#### no-useless-assignment > valid
+
+```js
+/*eslint test/use-a:1*/
+        let a = 'used';
+        console.log(a);
+        a = 'unused like but marked by markVariableAsUsed()';
+        
+```
+
+```json
+{}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
+  {
+    ruleId: 'rule-to-test/no-useless-assignment',
+    message: 'This assigned value is not used in subsequent statements.',
+    messageId: 'unnecessaryAssignment',
+    severity: 1,
+    nodeType: 'Identifier',
+    line: 4,
+    column: 8,
+    endLine: 4,
+    endColumn: 9,
+    suggestions: null
+  }
+]
+
+1 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
+    at runValidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
 ### `no-useless-backreference`
 
 Pass: 188 / 190 (98.9%)
@@ -97154,10327 +99232,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `padding-line-between-statements`
-
-Pass: 364 / 624 (58.3%)
-Fail: 260 / 624 (41.7%)
-Skip: 0 / 624 (0.0%)
-
-#### padding-line-between-statements > invalid
-
-```js
-foo();
-
-foo();
-```
-
-```json
-{
-  "output": "foo();\nfoo();",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo();
-
-//comment
-foo();
-```
-
-```json
-{
-  "output": "foo();\n//comment\nfoo();",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-    foo();
-    
-    //comment
-    foo();
-```
-
-```json
-{
-  "output": "    foo();\n    //comment\n    foo();",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if (a) {}
-
-for (;;) {}
-```
-
-```json
-{
-  "output": "if (a) {}\nfor (;;) {}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo();
-foo();
-```
-
-```json
-{
-  "output": "foo();\n\nfoo();",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-    function a() {}
-    do {} while (a)
-```
-
-```json
-{
-  "output": "    function a() {}\n\n    do {} while (a)",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo();//trailing-comment
-//comment
-//comment
-foo();
-```
-
-```json
-{
-  "output": "foo();//trailing-comment\n\n//comment\n//comment\nfoo();",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{}
-
-foo()
-```
-
-```json
-{
-  "output": "{}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{}
-foo()
-```
-
-```json
-{
-  "output": "{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){}
-foo()
-```
-
-```json
-{
-  "output": "if(a){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){}else{}
-foo()
-```
-
-```json
-{
-  "output": "if(a){}else{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){}else if(b){}
-foo()
-```
-
-```json
-{
-  "output": "if(a){}else if(b){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){}else if(b){}else{}
-foo()
-```
-
-```json
-{
-  "output": "if(a){}else if(b){}else{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){}
-foo()
-```
-
-```json
-{
-  "output": "switch(a){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){case 0:}
-foo()
-```
-
-```json
-{
-  "output": "switch(a){case 0:}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}finally{}
-foo()
-```
-
-```json
-{
-  "output": "try{}finally{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}finally{}
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}finally{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){}
-foo()
-```
-
-```json
-{
-  "output": "while(a){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-do{}while(a)
-foo()
-```
-
-```json
-{
-  "output": "do{}while(a)\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(;;){}
-foo()
-```
-
-```json
-{
-  "output": "for(;;){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a in b){}
-foo()
-```
-
-```json
-{
-  "output": "for(a in b){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a of b){}
-foo()
-```
-
-```json
-{
-  "output": "for(a of b){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-a=function(){}
-foo()
-```
-
-```json
-{
-  "output": "a=function(){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-a=()=>{}
-foo()
-```
-
-```json
-{
-  "output": "a=()=>{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a(){}
-foo()
-```
-
-```json
-{
-  "output": "function a(){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=function(){}
-foo()
-```
-
-```json
-{
-  "output": "let a=function(){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-module.exports=1
-
-foo()
-```
-
-```json
-{
-  "output": "module.exports=1\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-module.exports=1
-foo()
-```
-
-```json
-{
-  "output": "module.exports=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-module.exports.foo=1
-foo()
-```
-
-```json
-{
-  "output": "module.exports.foo=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-module.exports[foo]=1
-foo()
-```
-
-```json
-{
-  "output": "module.exports[foo]=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-exports.foo=1
-foo()
-```
-
-```json
-{
-  "output": "exports.foo=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-exports[foo]=1
-foo()
-```
-
-```json
-{
-  "output": "exports[foo]=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-export",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const foo=require("foo")
-
-foo()
-```
-
-```json
-{
-  "output": "const foo=require(\"foo\")\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "cjs-import",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const foo=require("foo")
-foo()
-```
-
-```json
-{
-  "output": "const foo=require(\"foo\")\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-import",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const foo=require("foo").Foo
-foo()
-```
-
-```json
-{
-  "output": "const foo=require(\"foo\").Foo\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-import",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const foo=require("foo")[a]
-foo()
-```
-
-```json
-{
-  "output": "const foo=require(\"foo\")[a]\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "cjs-import",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-"use strict"
-
-foo()
-```
-
-```json
-{
-  "output": "\"use strict\"\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "directive",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-"use strict"
-foo()
-```
-
-```json
-{
-  "output": "\"use strict\"\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "directive",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-'use strict'
-foo()
-```
-
-```json
-{
-  "output": "'use strict'\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "directive",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-'use asm'
-foo()
-```
-
-```json
-{
-  "output": "'use asm'\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "directive",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{
-}
-
-foo()
-```
-
-```json
-{
-  "output": "{\n}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{
-}
-foo()
-```
-
-```json
-{
-  "output": "{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){
-}
-foo()
-```
-
-```json
-{
-  "output": "if(a){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){
-}else{
-}
-foo()
-```
-
-```json
-{
-  "output": "if(a){\n}else{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){
-}else if(b){
-}
-foo()
-```
-
-```json
-{
-  "output": "if(a){\n}else if(b){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a){
-}else if(b){
-}else{
-}
-foo()
-```
-
-```json
-{
-  "output": "if(a){\n}else if(b){\n}else{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){
-}
-foo()
-```
-
-```json
-{
-  "output": "switch(a){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{
-}catch(e){
-}
-foo()
-```
-
-```json
-{
-  "output": "try{\n}catch(e){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{
-}finally{
-}
-foo()
-```
-
-```json
-{
-  "output": "try{\n}finally{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{
-}catch(e){
-}finally{
-}
-foo()
-```
-
-```json
-{
-  "output": "try{\n}catch(e){\n}finally{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){
-}
-foo()
-```
-
-```json
-{
-  "output": "while(a){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-do{
-}while(a)
-foo()
-```
-
-```json
-{
-  "output": "do{\n}while(a)\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(;;){
-}
-foo()
-```
-
-```json
-{
-  "output": "for(;;){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a in b){
-}
-foo()
-```
-
-```json
-{
-  "output": "for(a in b){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a of b){
-}
-foo()
-```
-
-```json
-{
-  "output": "for(a of b){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-a=function(){
-}
-foo()
-```
-
-```json
-{
-  "output": "a=function(){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-a=()=>{
-}
-foo()
-```
-
-```json
-{
-  "output": "a=()=>{\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a(){
-}
-foo()
-```
-
-```json
-{
-  "output": "function a(){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=function(){
-}
-foo()
-```
-
-```json
-{
-  "output": "let a=function(){\n}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{}
-
-foo()
-```
-
-```json
-{
-  "output": "{}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-{}
-foo()
-```
-
-```json
-{
-  "output": "{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-;
-
-foo()
-```
-
-```json
-{
-  "output": ";\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "empty",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-;
-foo()
-```
-
-```json
-{
-  "output": ";\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "empty",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo()
-
-foo()
-```
-
-```json
-{
-  "output": "foo()\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "expression",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo()
-foo()
-```
-
-```json
-{
-  "output": "foo()\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "expression",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo()
-
-foo(
-	x,
-	y
-)
-```
-
-```json
-{
-  "output": "foo()\nfoo(\n\tx,\n\ty\n)",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "multiline-expression"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-foo()
-foo(
-	x,
-	y
-)
-```
-
-```json
-{
-  "output": "foo()\n\nfoo(\n\tx,\n\ty\n)",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "multiline-expression"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-() => {
-	someArray.forEach(
-		x => doSomething(x)
-	);
-	return theThing;
-}
-```
-
-```json
-{
-  "output": "() => {\n\tsomeArray.forEach(\n\t\tx => doSomething(x)\n\t);\n\n\treturn theThing;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-expression",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){break
-
-foo()}
-```
-
-```json
-{
-  "output": "while(a){break\nfoo()}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "break",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){case 0:break
-
-foo()}
-```
-
-```json
-{
-  "output": "switch(a){case 0:break\nfoo()}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "break",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){break
-foo()}
-```
-
-```json
-{
-  "output": "while(a){break\n\nfoo()}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "break",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){case 0:break
-foo()}
-```
-
-```json
-{
-  "output": "switch(a){case 0:break\n\nfoo()}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "break",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class A{}
-
-foo()
-```
-
-```json
-{
-  "output": "class A{}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "class",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class A{}
-foo()
-```
-
-```json
-{
-  "output": "class A{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "class",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-
-foo()
-```
-
-```json
-{
-  "output": "const a=1\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-foo()
-```
-
-```json
-{
-  "output": "const a=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){continue
-
-foo()}
-```
-
-```json
-{
-  "output": "while(a){continue\nfoo()}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "continue",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a){continue
-foo()}
-```
-
-```json
-{
-  "output": "while(a){continue\n\nfoo()}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "continue",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-debugger
-
-foo()
-```
-
-```json
-{
-  "output": "debugger\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "debugger",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-debugger
-foo()
-```
-
-```json
-{
-  "output": "debugger\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "debugger",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-do;while(a)
-
-foo()
-```
-
-```json
-{
-  "output": "do;while(a)\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "do",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-do;while(a)
-foo()
-```
-
-```json
-{
-  "output": "do;while(a)\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "do",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-export default 1
-
-foo()
-```
-
-```json
-{
-  "output": "export default 1\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-export let a=1
-
-foo()
-```
-
-```json
-{
-  "output": "export let a=1\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = 0;export {a}
-
-foo()
-```
-
-```json
-{
-  "output": "var a = 0;export {a}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-export default 1
-foo()
-```
-
-```json
-{
-  "output": "export default 1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-export let a=1
-foo()
-```
-
-```json
-{
-  "output": "export let a=1\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = 0;export {a}
-foo()
-```
-
-```json
-{
-  "output": "var a = 0;export {a}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "export",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(;;);
-
-foo()
-```
-
-```json
-{
-  "output": "for(;;);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a in b);
-
-foo()
-```
-
-```json
-{
-  "output": "for(a in b);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a of b);
-
-foo()
-```
-
-```json
-{
-  "output": "for(a of b);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(;;);
-foo()
-```
-
-```json
-{
-  "output": "for(;;);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a in b);
-foo()
-```
-
-```json
-{
-  "output": "for(a in b);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-for(a of b);
-foo()
-```
-
-```json
-{
-  "output": "for(a of b);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "for",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function foo(){}
-
-foo()
-```
-
-```json
-{
-  "output": "function foo(){}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "function",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function foo(){}
-foo()
-```
-
-```json
-{
-  "output": "function foo(){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "function",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-async function foo(){}
-foo()
-```
-
-```json
-{
-  "output": "async function foo(){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "*"
-    },
-    {
-      "blankLine": "always",
-      "prev": "function",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a);
-
-foo()
-```
-
-```json
-{
-  "output": "if(a);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "if",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a);else;
-
-foo()
-```
-
-```json
-{
-  "output": "if(a);else;\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "if",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a);
-foo()
-```
-
-```json
-{
-  "output": "if(a);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "if",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(a);else;
-foo()
-```
-
-```json
-{
-  "output": "if(a);else;\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "if",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})()
-
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})()\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-+(function(){
-})()
-
-var a = 2;
-```
-
-```json
-{
-  "output": "+(function(){\n})()\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})()
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-+(function(){
-})()
-var a = 2;
-```
-
-```json
-{
-  "output": "+(function(){\n})()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})?.()
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})?.()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2020
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-void (function(){
-})?.()
-var a = 2;
-```
-
-```json
-{
-  "output": "void (function(){\n})?.()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "iife",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2020
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import a from 'a'
-
-foo()
-```
-
-```json
-{
-  "output": "import a from 'a'\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import * as a from 'a'
-
-foo()
-```
-
-```json
-{
-  "output": "import * as a from 'a'\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import {a} from 'a'
-
-foo()
-```
-
-```json
-{
-  "output": "import {a} from 'a'\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import a from 'a'
-foo()
-```
-
-```json
-{
-  "output": "import a from 'a'\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import * as a from 'a'
-foo()
-```
-
-```json
-{
-  "output": "import * as a from 'a'\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-import {a} from 'a'
-foo()
-```
-
-```json
-{
-  "output": "import {a} from 'a'\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "import",
-      "next": "*"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a
-
-foo()
-```
-
-```json
-{
-  "output": "let a\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a
-foo()
-```
-
-```json
-{
-  "output": "let a\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function foo(){return
-
-foo()}
-```
-
-```json
-{
-  "output": "function foo(){return\nfoo()}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "return",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function foo(){return
-foo()}
-```
-
-```json
-{
-  "output": "function foo(){return\n\nfoo()}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "return",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){}
-
-foo()
-```
-
-```json
-{
-  "output": "switch(a){}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "switch",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-switch(a){}
-foo()
-```
-
-```json
-{
-  "output": "switch(a){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "switch",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-throw a
-
-foo()
-```
-
-```json
-{
-  "output": "throw a\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "throw",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-throw a
-foo()
-```
-
-```json
-{
-  "output": "throw a\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "throw",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}
-
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}finally{}
-
-foo()
-```
-
-```json
-{
-  "output": "try{}finally{}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}finally{}
-
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}finally{}\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}finally{}
-foo()
-```
-
-```json
-{
-  "output": "try{}finally{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-try{}catch(e){}finally{}
-foo()
-```
-
-```json
-{
-  "output": "try{}catch(e){}finally{}\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "try",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a
-
-foo()
-```
-
-```json
-{
-  "output": "var a\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a
-foo()
-```
-
-```json
-{
-  "output": "var a\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a);
-
-foo()
-```
-
-```json
-{
-  "output": "while(a);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "while",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-while(a);
-foo()
-```
-
-```json
-{
-  "output": "while(a);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "while",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-with(a);
-
-foo()
-```
-
-```json
-{
-  "output": "with(a);\nfoo()",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "with",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-with(a);
-foo()
-```
-
-```json
-{
-  "output": "with(a);\n\nfoo()",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "with",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a={
-b:1,
-c:2
-}
-
-const d=3
-```
-
-```json
-{
-  "output": "const a={\nb:1,\nc:2\n}\nconst d=3",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "multiline-const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a={
-b:1,
-c:2
-}
-const d=3
-```
-
-```json
-{
-  "output": "const a={\nb:1,\nc:2\n}\n\nconst d=3",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-
-const b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "const a=1\nconst b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "multiline-const"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-const b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "const a=1\n\nconst b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "multiline-const"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a={
-b:1,
-c:2
-}
-
-let d=3
-```
-
-```json
-{
-  "output": "let a={\nb:1,\nc:2\n}\nlet d=3",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "multiline-let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a={
-b:1,
-c:2
-}
-let d=3
-```
-
-```json
-{
-  "output": "let a={\nb:1,\nc:2\n}\n\nlet d=3",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-
-let b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "let a=1\nlet b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "multiline-let"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-let b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "let a=1\n\nlet b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "multiline-let"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a={
-b:1,
-c:2
-}
-
-var d=3
-```
-
-```json
-{
-  "output": "var a={\nb:1,\nc:2\n}\nvar d=3",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "multiline-var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a={
-b:1,
-c:2
-}
-var d=3
-```
-
-```json
-{
-  "output": "var a={\nb:1,\nc:2\n}\n\nvar d=3",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-
-var b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "var a=1\nvar b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "multiline-var"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-var b={
-c:2,
-d:3
-}
-```
-
-```json
-{
-  "output": "var a=1\n\nvar b={\nc:2,\nd:3\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "multiline-var"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-
-const b=2
-```
-
-```json
-{
-  "output": "const a=1\nconst b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "singleline-const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-const b=2
-```
-
-```json
-{
-  "output": "const a=1\n\nconst b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "singleline-const",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-
-const b=2
-```
-
-```json
-{
-  "output": "const a=1\nconst b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "singleline-const"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const a=1
-const b=2
-```
-
-```json
-{
-  "output": "const a=1\n\nconst b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "singleline-const"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-
-let b=2
-```
-
-```json
-{
-  "output": "let a=1\nlet b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "singleline-let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-let b=2
-```
-
-```json
-{
-  "output": "let a=1\n\nlet b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "singleline-let",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-
-let b=2
-```
-
-```json
-{
-  "output": "let a=1\nlet b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "singleline-let"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let a=1
-let b=2
-```
-
-```json
-{
-  "output": "let a=1\n\nlet b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "singleline-let"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-
-var b=2
-```
-
-```json
-{
-  "output": "var a=1\nvar b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "singleline-var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-var b=2
-```
-
-```json
-{
-  "output": "var a=1\n\nvar b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "singleline-var",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-
-var b=2
-```
-
-```json
-{
-  "output": "var a=1\nvar b=2",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "singleline-var"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a=1
-var b=2
-```
-
-```json
-{
-  "output": "var a=1\n\nvar b=2",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "singleline-var"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';var name = 'world';console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello';var name = 'world';\n\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello', name = 'world';console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello', name = 'world';\n\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';    
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n    \nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello'; // inline comment
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello'; // inline comment\n\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-var name = 'world';
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\nvar name = 'world';\n\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello', name = 'world';
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello', name = 'world';\n\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello',
-name = 'world';
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello',\nname = 'world';\n\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let greet = 'hello';
-console.log(greet);
-```
-
-```json
-{
-  "output": "let greet = 'hello';\n\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const greet = 'hello';
-console.log(greet);
-```
-
-```json
-{
-  "output": "const greet = 'hello';\n\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function example() {
-var greet = 'hello';
-console.log(greet);
-}
-```
-
-```json
-{
-  "output": "function example() {\nvar greet = 'hello';\n\nconsole.log(greet);\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var f = function() {
-var greet = 'hello';
-console.log(greet);
-};
-```
-
-```json
-{
-  "output": "var f = function() {\nvar greet = 'hello';\n\nconsole.log(greet);\n};",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-() => {
-var greet = 'hello';
-console.log(greet);
-}
-```
-
-```json
-{
-  "output": "() => {\nvar greet = 'hello';\n\nconsole.log(greet);\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-
-
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';    
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';    \nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello'; // inline comment
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello'; // inline comment\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-var name = 'world';
-
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\nvar name = 'world';\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello', name = 'world';
-
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello', name = 'world';\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello',
-name = 'world';
-
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello',\nname = 'world';\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello', // inline comment
-name = 'world'; // inline comment
-
-console.log(greet, name);
-```
-
-```json
-{
-  "output": "var greet = 'hello', // inline comment\nname = 'world'; // inline comment\nconsole.log(greet, name);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-let greet = 'hello';
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "let greet = 'hello';\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-const greet = 'hello';
-
-console.log(greet);
-```
-
-```json
-{
-  "output": "const greet = 'hello';\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-// next-line comment
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\n// next-line comment\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-/* block comment
-block comment */
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\n/* block comment\nblock comment */\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello',
-name = 'world';
-// next-line comment
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello',\nname = 'world';\n\n// next-line comment\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello',
-name = 'world';
-/* block comment
-block comment */
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello',\nname = 'world';\n\n/* block comment\nblock comment */\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-// next-line comment
-// second-line comment
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\n// next-line comment\n// second-line comment\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var greet = 'hello';
-// next-line comment
-/* block comment
-block comment */
-console.log(greet);
-```
-
-```json
-{
-  "output": "var greet = 'hello';\n\n// next-line comment\n/* block comment\nblock comment */\nconsole.log(greet);",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-
-                var a = 1
-                ;(b || c).doSomething()
-            
-```
-
-```json
-{
-  "output": "\n                var a = 1\n\n                ;(b || c).doSomething()\n            ",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-
-                var a = 1
-
-                ;(b || c).doSomething()
-            
-```
-
-```json
-{
-  "output": "\n                var a = 1\n                ;(b || c).doSomething()\n            ",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n return;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\nreturn;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) return b;
-else if (c) return c;
-else {
-e();
-return d;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) return b;\nelse if (c) return c;\nelse {\ne();\n\nreturn d;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) return b;
-else if (c) return c;
-else {
-e(); return d;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) return b;\nelse if (c) return c;\nelse {\ne();\n\n return d;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
- while (b) {
-c();
-return;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\n while (b) {\nc();\n\nreturn;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-do {
-c();
-return;
-} while (b);
-}
-```
-
-```json
-{
-  "output": "function a() {\ndo {\nc();\n\nreturn;\n} while (b);\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-for (var b; b < c; b++) {
-c();
-return;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nfor (var b; b < c; b++) {\nc();\n\nreturn;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-for (b in c) {
-d();
-return;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nfor (b in c) {\nd();\n\nreturn;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-for (b of c) {
-d();
-return;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nfor (b of c) {\nd();\n\nreturn;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) {
-c();
-}
-//comment
-return b;
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) {\nc();\n}\n\n//comment\nreturn b;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-/*comment
-comment*/
-if (b) {
-c();
-return b;
-} else {
-//comment
-
-return d;
-}
-/*multi-line
-comment*/
-return e;
-}
-```
-
-```json
-{
-  "output": "function a() {\n/*comment\ncomment*/\nif (b) {\nc();\n\nreturn b;\n} else {\n//comment\n\nreturn d;\n}\n\n/*multi-line\ncomment*/\nreturn e;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
-
-0 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) { return; } //comment
-return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) { return; } //comment\n\nreturn c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) { return; } /*multi-line
-comment*/
-return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) { return; } /*multi-line\ncomment*/\n\nreturn c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) { return; }
-/*multi-line
-comment*/ return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) { return; }\n\n/*multi-line\ncomment*/ return c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-if (b) { return; } /*multi-line
-comment*/ return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nif (b) { return; } /*multi-line\ncomment*/\n\n return c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a;
-return;
-```
-
-```json
-{
-  "output": "var a;\n\nreturn;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "languageOptions": {
-    "parserOptions": {
-      "ecmaFeatures": {
-        "globalReturn": true
-      }
-    }
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a; return;
-```
-
-```json
-{
-  "output": "var a;\n\n return;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "languageOptions": {
-    "parserOptions": {
-      "ecmaFeatures": {
-        "globalReturn": true
-      }
-    }
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-{
-//comment
-}
-return
-}
-```
-
-```json
-{
-  "output": "function a() {\n{\n//comment\n}\n\nreturn\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-{
-//comment
-} return
-}
-```
-
-```json
-{
-  "output": "function a() {\n{\n//comment\n}\n\n return\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var c;
-while (b) {
- c = d; //comment
-}
-return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar c;\nwhile (b) {\n c = d; //comment\n}\n\nreturn c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-for (var b; b < c; b++) {
-if (d) {
-break; //comment
-}
-return;
-}
-}
-```
-
-```json
-{
-  "output": "function a() {\nfor (var b; b < c; b++) {\nif (d) {\nbreak; //comment\n}\n\nreturn;\n}\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; /*multi-line
-comment*/
-return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b; /*multi-line\ncomment*/\n\nreturn c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-/*multi-line
-comment*/ return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n/*multi-line\ncomment*/ return c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; /*multi-line
-comment*/ return c;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b; /*multi-line\ncomment*/\n\n return c;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-//comment
-return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n//comment\nreturn;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; //comment
-return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b; //comment\n\nreturn;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-/* comment */ return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n/* comment */ return;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-//comment
-/* comment */ return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n//comment\n/* comment */ return;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; /* comment */ return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b; /* comment */\n\n return;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; /* comment */
-return;
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b; /* comment */\n\nreturn;\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b;
-return; //comment
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\nreturn; //comment\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function a() {
-var b; return; //comment
-}
-```
-
-```json
-{
-  "output": "function a() {\nvar b;\n\n return; //comment\n}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "return"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(true){}
-
-var a = 2;
-```
-
-```json
-{
-  "output": "if(true){}\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(true){
-if(true) {}
-
-var a = 2;}
-```
-
-```json
-{
-  "output": "if(true){\nif(true) {}\nvar a = 2;}",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})()
-
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})()\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-+(function(){
-})()
-
-var a = 2;
-```
-
-```json
-{
-  "output": "+(function(){\n})()\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = function() {};
-
-var b = 2;
-```
-
-```json
-{
-  "output": "var a = function() {};\nvar b = 2;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = 2;
-
-module.exports = a;
-```
-
-```json
-{
-  "output": "var a = 2;\nmodule.exports = a;",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": "cjs-export"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a;
-
-return; }
-```
-
-```json
-{
-  "output": "function x() { var a;\nreturn; }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a = true;
-
-if (a) { a = !a; }; }
-```
-
-```json
-{
-  "output": "function x() { var a = true;\nif (a) { a = !a; }; }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a = true;
-
-for (var i = 0; i < 10; i++) { a = !a; }; }
-```
-
-```json
-{
-  "output": "function x() { var a = true;\nfor (var i = 0; i < 10; i++) { a = !a; }; }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var y = true;
-
-switch ("Oranges") { case "Oranges": y = !y;
-
-break;
-
-case "Apples": y = !y;
-
-break; default: y = !y; } }
-```
-
-```json
-{
-  "output": "function x() { var y = true;\nswitch (\"Oranges\") { case \"Oranges\": y = !y;\nbreak;\ncase \"Apples\": y = !y;\nbreak; default: y = !y; } }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 4 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/padding-line-between-statements',
-    message: 'Unexpected blank line before this statement.',
-    messageId: 'unexpectedBlankLine',
-    severity: 1,
-    nodeType: 'SwitchCase',
-    line: 7,
-    column: 0,
-    endLine: 9,
-    endColumn: 6,
-    suggestions: null
-  }
-]
-
-1 !== 4
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() {try { var a;
-
-throw 0; } catch (e) { var b = 0;
-
-throw e; } }
-```
-
-```json
-{
-  "output": "function x() {try { var a;\nthrow 0; } catch (e) { var b = 0;\nthrow e; } }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
-
-0 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x(a) { var b = 0;
-
-if (!a) { return false; };
-
-for (var i = 0; i < b; i++) { if (!a[i]) return false; }
-
-return true; }
-```
-
-```json
-{
-  "output": "function x(a) { var b = 0;\nif (!a) { return false; };\nfor (var i = 0; i < b; i++) { if (!a[i]) return false; }\nreturn true; }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    },
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 3 errors but had 0: []
-
-0 !== 3
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(true){}
-var a = 2;
-```
-
-```json
-{
-  "output": "if(true){}\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = function() {
-};
-var b = 2;
-```
-
-```json
-{
-  "output": "var a = function() {\n};\n\nvar b = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-if(true){
-if(true) {}
-var a = 2;}
-```
-
-```json
-{
-  "output": "if(true){\nif(true) {}\n\nvar a = 2;}",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})()
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = function() {
-};
-var b = 2;
-```
-
-```json
-{
-  "output": "var a = function() {\n};\n\nvar b = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-(function(){
-})()
-var a = 2;
-```
-
-```json
-{
-  "output": "(function(){\n})()\n\nvar a = 2;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "multiline-block-like",
-      "next": "*"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-var a = 2;
-module.exports = a;
-```
-
-```json
-{
-  "output": "var a = 2;\n\nmodule.exports = a;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": "cjs-export"
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a; return; }
-```
-
-```json
-{
-  "output": "function x() { var a;\n\n return; }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a = true; for (var i = 0; i < 10; i++) { a = !a; }; }
-```
-
-```json
-{
-  "output": "function x() { var a = true;\n\n for (var i = 0; i < 10; i++) { a = !a; }; }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var y = true; switch ("Oranges") { case "Oranges": y = !y; break; case "Apples": y = !y; break; default: y = !y; } }
-```
-
-```json
-{
-  "output": "function x() { var y = true;\n\n switch (\"Oranges\") { case \"Oranges\": y = !y;\n\n break;\n\n case \"Apples\": y = !y;\n\n break;\n\n default: y = !y; } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 5 errors but had 2: [
-  {
-    ruleId: 'rule-to-test/padding-line-between-statements',
-    message: 'Expected blank line before this statement.',
-    messageId: 'expectedBlankLine',
-    severity: 1,
-    nodeType: 'SwitchCase',
-    line: 1,
-    column: 81,
-    endLine: 1,
-    endColumn: 110,
-    suggestions: null
-  },
-  {
-    ruleId: 'rule-to-test/padding-line-between-statements',
-    message: 'Expected blank line before this statement.',
-    messageId: 'expectedBlankLine',
-    severity: 1,
-    nodeType: 'SwitchCase',
-    line: 1,
-    column: 111,
-    endLine: 1,
-    endColumn: 127,
-    suggestions: null
-  }
-]
-
-2 !== 5
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() { var a = true; while (!a) { a = !a; }; }
-```
-
-```json
-{
-  "output": "function x() { var a = true;\n\n while (!a) { a = !a; }; }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x() {try { var a; throw 0; } catch (e) { var b = 0; throw e; } }
-```
-
-```json
-{
-  "output": "function x() {try { var a;\n\n throw 0; } catch (e) { var b = 0;\n\n throw e; } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
-
-0 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-function x(a) { var b = 0; if (!a) { return false; }; for (var i = 0; i < b; i++) { if (!a[i]) return false; } return true; }
-```
-
-```json
-{
-  "output": "function x(a) { var b = 0;\n\n if (!a) { return false; };\n\n for (var i = 0; i < b; i++) { if (!a[i]) return false; }\n\n return true; }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "*",
-      "next": [
-        "if",
-        "for",
-        "return",
-        "switch",
-        "case",
-        "break",
-        "throw",
-        "while",
-        "default"
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    },
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 3 errors but had 0: []
-
-0 !== 3
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
- foo();
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n\n foo();\n }\n }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "let",
-      "next": "expression"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
-
- foo();
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n foo();\n }\n }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "let",
-      "next": "expression"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
- foo();
- const y = 1;
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n foo();\n\n const y = 1;\n }\n }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "expression",
-      "next": "const"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
- foo();
-
- const y = 1;
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n foo();\n const y = 1;\n }\n }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "expression",
-      "next": "const"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
- foo();
- const y = 1;
- const z = 1;
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n foo();\n\n const y = 1;\n const z = 1;\n }\n }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "expression",
-      "next": "const"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let x;
- foo();
-
- const y = 1;
- const z = 1;
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let x;\n foo();\n const y = 1;\n const z = 1;\n }\n }",
-  "options": [
-    {
-      "blankLine": "never",
-      "prev": "expression",
-      "next": "const"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "unexpectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C {
- static {
- let a = 0;
- bar();
- }
- }
-```
-
-```json
-{
-  "output": "class C {\n static {\n let a = 0;\n\n bar();\n }\n }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": "*"
-    },
-    {
-      "blankLine": "any",
-      "prev": [
-        "const",
-        "let",
-        "var"
-      ],
-      "next": [
-        "const",
-        "let",
-        "var"
-      ]
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C { static { let x; { let y; let z; } let q; } }
-```
-
-```json
-{
-  "output": "class C { static { let x; { let y;\n\n let z; } let q; } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "let",
-      "next": "let"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C { static { { let x; } let y; let z; } }
-```
-
-```json
-{
-  "output": "class C { static { { let x; } let y;\n\n let z; } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "let",
-      "next": "let"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C { static { foo(); if (bar) {} } }
-```
-
-```json
-{
-  "output": "class C { static { foo();\n\n if (bar) {} } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "expression",
-      "next": "block-like"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C { static { let x; } } let y;
-```
-
-```json
-{
-  "output": "class C { static { let x; } }\n\n let y;",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "class",
-      "next": "let"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### padding-line-between-statements > invalid
-
-```js
-class C { static { 'use strict'; let x; } }
-```
-
-```json
-{
-  "output": "class C { static { 'use strict';\n\n let x; } }",
-  "options": [
-    {
-      "blankLine": "always",
-      "prev": "expression",
-      "next": "let"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 2022
-  },
-  "errors": [
-    {
-      "messageId": "expectedBlankLine"
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
 
 
@@ -109088,6 +100845,67 @@ parseInt("10", 1);
 AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
+    at runInvalidTestCase (apps/oxlint/dist/index.js)
+    at apps/oxlint/dist/index.js
+
+
+### `require-atomic-updates`
+
+Pass: 62 / 63 (98.4%)
+Fail: 1 / 63 (1.6%)
+Skip: 0 / 63 (0.0%)
+
+#### require-atomic-updates > invalid
+
+```js
+
+                async () => {
+                    opts.spec = process.stdin;
+                    try {
+                        const { exit_code } = await run(opts);
+                        process.exitCode = exit_code;
+                    } catch (e) {
+                        process.exitCode = 1;
+                    }
+              };
+            
+```
+
+```json
+{
+  "languageOptions": {
+    "sourceType": "commonjs",
+    "globals": {
+      "process": "readonly"
+    }
+  },
+  "errors": [
+    {
+      "messageId": "nonAtomicObjectUpdate",
+      "data": {
+        "value": "process.exitCode",
+        "object": "process"
+      },
+      "line": 6
+    },
+    {
+      "messageId": "nonAtomicObjectUpdate",
+      "data": {
+        "value": "process.exitCode",
+        "object": "process"
+      },
+      "line": 8
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
+
+0 !== 2
 
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)

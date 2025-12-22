@@ -389,11 +389,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_binding_pattern(&mut self, it: &mut BindingPattern<'a>) {
-        // Custom implementation
-        self.convert_binding_pattern(it);
-    }
-
     fn visit_assignment_pattern(&mut self, it: &mut AssignmentPattern<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_assignment_pattern(self, it);

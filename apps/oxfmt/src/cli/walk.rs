@@ -3,7 +3,7 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::gitignore::GitignoreBuilder;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 use crate::core::FormatFileStrategy;
 
@@ -17,6 +17,7 @@ impl Walk {
         paths: &[PathBuf],
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
+        oxfmtrc_path: Option<&Path>,
         ignore_patterns: &[String],
     ) -> Result<Option<Self>, String> {
         //
@@ -59,31 +60,65 @@ impl Walk {
         //
         // Build ignores
         //
-        let mut builder = GitignoreBuilder::new(cwd);
-        // Handle ignore files
+        // Use multiple matchers, each with correct root for pattern resolution:
+        // - Ignore files: root = parent directory of the ignore file
+        // - `.ignorePatterns`: root = parent directory of `.oxfmtrc.json`
+        // - Exclude paths (`!` prefix): root = cwd
+        let mut matchers: Vec<Gitignore> = vec![];
+
+        // 1. Handle ignore files (`.gitignore`, `.prettierignore`, or `--ignore-path`)
+        // Patterns are relative to the ignore file location
         for ignore_path in &load_ignore_paths(cwd, ignore_paths) {
-            if builder.add(ignore_path).is_some() {
-                return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
+            if !ignore_path.exists() {
+                return Err(format!("{}: File not found", ignore_path.display()));
             }
-        }
-        // Handle `config.ignorePatterns`
-        for pattern in ignore_patterns {
-            if builder.add_line(None, pattern).is_err() {
+            let (gitignore, err) = Gitignore::new(ignore_path);
+            if let Some(err) = err {
                 return Err(format!(
-                    "Failed to add ignore pattern `{pattern}` from `.ignorePatterns`"
+                    "Failed to parse ignore file {}: {err}",
+                    ignore_path.display()
                 ));
             }
+            matchers.push(gitignore);
         }
-        // Handle `!` prefixed paths as ignore patterns too
-        for pattern in &exclude_patterns {
-            // Remove the leading `!` because `GitignoreBuilder` uses `!` as negation
-            let pattern =
-                pattern.strip_prefix('!').expect("There should be a `!` prefix, already checked");
-            if builder.add_line(None, pattern).is_err() {
-                return Err(format!("Failed to add ignore pattern `{pattern}` from `!` prefix"));
+
+        // 2. Handle `oxfmtrc.ignorePatterns`
+        // Patterns are relative to the config file location
+        if !ignore_patterns.is_empty()
+            && let Some(oxfmtrc_path) = oxfmtrc_path
+        {
+            let mut builder = GitignoreBuilder::new(
+                oxfmtrc_path.parent().expect("`oxfmtrc_path` should have a parent directory"),
+            );
+            for pattern in ignore_patterns {
+                if builder.add_line(None, pattern).is_err() {
+                    return Err(format!(
+                        "Failed to add ignore pattern `{pattern}` from `.ignorePatterns`"
+                    ));
+                }
             }
+            let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+            matchers.push(gitignore);
         }
-        let ignores = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+
+        // 3. Handle `!` prefixed paths
+        // These are relative to cwd
+        if !exclude_patterns.is_empty() {
+            let mut builder = GitignoreBuilder::new(cwd);
+            for pattern in &exclude_patterns {
+                // Remove the leading `!` because `GitignoreBuilder` uses `!` as negation
+                let pattern = pattern
+                    .strip_prefix('!')
+                    .expect("There should be a `!` prefix, already checked");
+                if builder.add_line(None, pattern).is_err() {
+                    return Err(format!(
+                        "Failed to add ignore pattern `{pattern}` from `!` prefix"
+                    ));
+                }
+            }
+            let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+            matchers.push(gitignore);
+        }
 
         //
         // Filter paths by ignores
@@ -92,10 +127,7 @@ impl Walk {
         // so we need to filter them here before passing to the walker.
         let target_paths: Vec<_> = target_paths
             .into_iter()
-            .filter(|path| {
-                let matched = ignores.matched(path, path.is_dir());
-                !matched.is_ignore() || matched.is_whitelist()
-            })
+            .filter(|path| !is_ignored(&matchers, path, path.is_dir()))
             .collect();
 
         // If no target paths remain after filtering, return `None`.
@@ -137,8 +169,7 @@ impl Walk {
             }
 
             // Check ignore files, patterns
-            let matched = ignores.matched(entry.path(), is_dir);
-            if matched.is_ignore() && !matched.is_whitelist() {
+            if is_ignored(&matchers, entry.path(), is_dir) {
                 return false;
             }
 
@@ -178,6 +209,20 @@ impl Walk {
 
         receiver
     }
+}
+
+// ---
+
+/// Check if a path should be ignored by any of the matchers.
+/// A path is ignored if any matcher says it's ignored (and not whitelisted in that same matcher).
+fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool) -> bool {
+    for matcher in matchers {
+        let matched = matcher.matched(path, is_dir);
+        if matched.is_ignore() && !matched.is_whitelist() {
+            return true;
+        }
+    }
+    false
 }
 
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
@@ -228,22 +273,22 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 if file_type.is_file() {
                     // Determine this file should be handled or NOT
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
-                    // Tier 2 = `.html`, `.json`, etc: Other files supported by Prettier
-                    // (Tier 3 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
-                    // Tier 4 = everything else: Not handled
-                    let Ok(format_file_source) = FormatFileStrategy::try_from(entry.into_path())
-                    else {
+                    // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
+                    // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
+                    // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Everything else: Ignored
+                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
                         return ignore::WalkState::Continue;
                     };
 
                     #[cfg(not(feature = "napi"))]
-                    if !matches!(format_file_source, FormatFileStrategy::OxcFormatter { .. }) {
+                    if !strategy.can_format_without_external() {
                         return ignore::WalkState::Continue;
                     }
 
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking
-                    if self.sender.send(format_file_source).is_err() {
+                    if self.sender.send(strategy).is_err() {
                         return ignore::WalkState::Quit;
                     }
                 }

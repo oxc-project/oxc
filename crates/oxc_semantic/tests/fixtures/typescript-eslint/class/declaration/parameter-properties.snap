@@ -30,13 +30,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
-                    "node_id": 25
+                    "node_id": 23
                   },
                   {
                     "flags": "ReferenceFlags(Read)",
                     "id": 3,
                     "name": "a",
-                    "node_id": 39
+                    "node_id": 36
                   }
                 ]
               },
@@ -98,7 +98,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
-            "node_id": 29
+            "node_id": 26
           }
         ]
       },
@@ -112,7 +112,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "Outer",
-            "node_id": 36
+            "node_id": 33
           }
         ]
       },

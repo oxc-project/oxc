@@ -87,7 +87,7 @@ export function initBuffer() {
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
 
   // Store in `buffers`, at index 0
-  debugAssert(buffers.length === 0);
+  debugAssert(buffers.length === 0, "`buffers` array should be empty");
   buffers.push(buffer);
 }
 

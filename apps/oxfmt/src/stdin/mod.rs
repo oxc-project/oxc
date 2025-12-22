@@ -6,8 +6,8 @@ use std::{
 
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter, load_config,
-    resolve_config_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
+    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 
 #[derive(Debug)]
@@ -63,29 +63,41 @@ impl StdinRunner {
         }
 
         // Load config
-        let config_path = resolve_config_path(&cwd, config_options.config.as_deref());
-        let (format_options, oxfmt_options, external_config) =
-            match load_config(config_path.as_deref()) {
-                Ok(c) => c,
-                Err(err) => {
-                    utils::print_and_flush(
-                        stderr,
-                        &format!("Failed to load configuration file.\n{err}\n"),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
-            };
+        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
+        let editorconfig_path = resolve_editorconfig_path(&cwd);
+        let mut config_resolver = match ConfigResolver::from_config_paths(
+            &cwd,
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
+            Ok(r) => r,
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        match config_resolver.build_and_validate() {
+            Ok(_) => {}
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
 
-        // TODO: Plugins support
         // Use `block_in_place()` to avoid nested async runtime access
-        if let Err(err) = tokio::task::block_in_place(|| {
-            external_formatter.setup_config(&external_config.to_string(), num_of_threads)
-        }) {
-            utils::print_and_flush(
-                stderr,
-                &format!("Failed to setup external formatter config.\n{err}\n"),
-            );
-            return CliRunResult::InvalidOptionConfig;
+        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
+            // TODO: Plugins support
+            Ok(_) => {}
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to setup external formatter.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
         }
 
         // Determine format strategy from filepath
@@ -94,12 +106,17 @@ impl StdinRunner {
             return CliRunResult::InvalidOptionConfig;
         };
 
+        // Resolve options for the stdin file entry
+        let resolved_options = config_resolver.resolve(&strategy);
+
         // Create formatter and format
-        let source_formatter = SourceFormatter::new(num_of_threads, format_options)
-            .with_external_formatter(Some(external_formatter), oxfmt_options.sort_package_json);
+        let source_formatter =
+            SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&strategy, &source_text)) {
+        match tokio::task::block_in_place(|| {
+            source_formatter.format(&strategy, &source_text, resolved_options)
+        }) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded

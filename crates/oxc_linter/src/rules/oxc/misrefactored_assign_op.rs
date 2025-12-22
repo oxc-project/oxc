@@ -53,7 +53,7 @@ declare_oxc_lint!(
     MisrefactoredAssignOp,
     oxc,
     suspicious,
-    pending
+    suggestion
 );
 
 impl Rule for MisrefactoredAssignOp {
@@ -69,30 +69,34 @@ impl Rule for MisrefactoredAssignOp {
 
             // lhs op= l op r
             if assignment_target_eq_expr(&assignment_expr.left, &binary_expr.left, ctx) {
-                ctx.diagnostic(misrefactored_assign_op_diagnostic(
-                    assignment_expr.span,
-                    &format!(
-                        "{} {} {}",
-                        assignment_expr.left.span().source_text(ctx.source_text()),
-                        assignment_expr.operator.as_str(),
-                        binary_expr.right.span().source_text(ctx.source_text())
-                    ),
-                ));
+                let suggestion = format!(
+                    "{} {} {}",
+                    assignment_expr.left.span().source_text(ctx.source_text()),
+                    assignment_expr.operator.as_str(),
+                    binary_expr.right.span().source_text(ctx.source_text())
+                );
+                let span = assignment_expr.span;
+                ctx.diagnostic_with_suggestion(
+                    misrefactored_assign_op_diagnostic(span, &suggestion),
+                    |fixer| fixer.replace(span, suggestion),
+                );
             }
 
             // lhs op= l commutative_op r
             if is_commutative_operator(binary_expr.operator)
                 && assignment_target_eq_expr(&assignment_expr.left, &binary_expr.right, ctx)
             {
-                ctx.diagnostic(misrefactored_assign_op_diagnostic(
-                    assignment_expr.span,
-                    &format!(
-                        "{} {} {}",
-                        assignment_expr.left.span().source_text(ctx.source_text()),
-                        assignment_expr.operator.as_str(),
-                        binary_expr.left.span().source_text(ctx.source_text())
-                    ),
-                ));
+                let suggestion = format!(
+                    "{} {} {}",
+                    assignment_expr.left.span().source_text(ctx.source_text()),
+                    assignment_expr.operator.as_str(),
+                    binary_expr.left.span().source_text(ctx.source_text())
+                );
+                let span = assignment_expr.span;
+                ctx.diagnostic_with_suggestion(
+                    misrefactored_assign_op_diagnostic(span, &suggestion),
+                    |fixer| fixer.replace(span, suggestion),
+                );
             }
         }
     }
@@ -225,6 +229,21 @@ fn test() {
         //~^ ERROR: variable appears on both sides of an assignment operation
     ];
 
+    let fix = vec![
+        ("a += a + 1;", "a += 1;", None),
+        ("a += 1 + a;", "a += 1;", None),
+        ("a -= a - 1;", "a -= 1;", None),
+        ("a *= a * 99;", "a *= 99;", None),
+        ("a *= 42 * a;", "a *= 42;", None),
+        ("a /= a / 2;", "a /= 2;", None),
+        ("a %= a % 5;", "a %= 5;", None),
+        ("a &= a & 1;", "a &= 1;", None),
+        ("a *= a * a;", "a *= a;", None),
+        ("a *= a * (a as number);", "a *= (a as number);", None),
+        ("a *= (a as string) * (a as number);", "a *= (a as number);", None),
+    ];
+
     Tester::new(MisrefactoredAssignOp::NAME, MisrefactoredAssignOp::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

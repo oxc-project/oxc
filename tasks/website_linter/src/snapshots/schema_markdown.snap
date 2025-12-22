@@ -62,6 +62,14 @@ Example
 ```
 
 
+## $schema
+
+type: `string | null`
+
+
+Schema URI for editor tooling.
+
+
 ## categories
 
 type: `object`
@@ -198,13 +206,57 @@ Globs to ignore during linting. These are resolved from the configuration file p
 
 ## jsPlugins
 
-type: `string[]`
+type: `array | null`
 
 
 JS plugins.
 
 Note: JS plugins are experimental and not subject to semver.
 They are not supported in language server at present.
+
+
+### jsPlugins[n]
+
+type: `object | string`
+
+
+
+
+
+#### jsPlugins[n].name
+
+type: `string`
+
+
+Custom name/alias for the plugin.
+
+Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
+- react (includes react-hooks)
+- unicorn
+- typescript
+- oxc
+- import (includes import-x)
+- jsdoc
+- jest
+- vitest
+- jsx-a11y
+- nextjs
+- react-perf
+- promise
+- node
+- regex
+- vue
+- eslint
+
+If you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.
+
+
+#### jsPlugins[n].specifier
+
+type: `string`
+
+
+Path or package name of the plugin
 
 
 ## overrides
@@ -249,13 +301,57 @@ Enabled or disabled specific global variables.
 
 #### overrides[n].jsPlugins
 
-type: `string[]`
+type: `array | null`
 
 
 JS plugins for this override.
 
 Note: JS plugins are experimental and not subject to semver.
 They are not supported in language server at present.
+
+
+##### overrides[n].jsPlugins[n]
+
+type: `object | string`
+
+
+
+
+
+###### overrides[n].jsPlugins[n].name
+
+type: `string`
+
+
+Custom name/alias for the plugin.
+
+Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
+- react (includes react-hooks)
+- unicorn
+- typescript
+- oxc
+- import (includes import-x)
+- jsdoc
+- jest
+- vitest
+- jsx-a11y
+- nextjs
+- react-perf
+- promise
+- node
+- regex
+- vue
+- eslint
+
+If you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.
+
+
+###### overrides[n].jsPlugins[n].specifier
+
+type: `string`
+
+
+Path or package name of the plugin
 
 
 #### overrides[n].plugins
@@ -643,6 +739,29 @@ type: `string`
 
 
 
+
+
+#### settings.react.version
+
+type: `string | null`
+
+default: `null`
+
+React version to use for version-specific rules.
+
+Accepts semver versions (e.g., "18.2.0", "17.0").
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"version": "18.2.0"
+}
+}
+}
+```
 
 
 ### settings.vitest

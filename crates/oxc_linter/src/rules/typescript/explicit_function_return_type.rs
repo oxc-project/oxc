@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, BindingPatternKind, Expression, FunctionType, PropertyKind,
-        Statement, TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind, Statement,
+        TSType, TSTypeName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -351,7 +351,7 @@ impl ExplicitFunctionReturnType {
         let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
         match parent.kind() {
             AstKind::VariableDeclarator(decl) => {
-                let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
+                let BindingPattern::BindingIdentifier(id) = &decl.id else {
                     return false;
                 };
 
@@ -508,15 +508,15 @@ fn is_setter(node: &AstNode) -> bool {
 
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
-    is_typed_parent(parent, Some(node))
+    is_typed_parent(parent, Some(node), ctx)
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
 }
 
-fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
+fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>, ctx: &LintContext) -> bool {
     is_type_assertion(parent)
         || is_variable_declarator_with_type_annotation(parent)
-        || is_default_function_parameter_with_type_annotation(parent)
+        || is_default_function_parameter_with_type_annotation(parent, ctx)
         || is_property_definition_with_type_annotation(parent)
         || is_function_argument(parent, callee)
         || is_typed_jsx(parent)
@@ -525,7 +525,7 @@ fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
 fn is_variable_declarator_with_type_annotation(node: &AstNode) -> bool {
     let AstKind::VariableDeclarator(var_decl) = node.kind() else { return false };
 
-    var_decl.id.type_annotation.is_some()
+    var_decl.type_annotation.is_some()
 }
 
 fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
@@ -554,10 +554,13 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
 fn is_type_assertion(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::TSAsExpression(_) | AstKind::TSTypeAssertion(_))
 }
-fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
-    let AstKind::AssignmentPattern(assign) = node.kind() else { return false };
-
-    assign.left.type_annotation.is_some()
+fn is_default_function_parameter_with_type_annotation(node: &AstNode, ctx: &LintContext) -> bool {
+    let AstKind::AssignmentPattern(_assign) = node.kind() else { return false };
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::FormalParameter(f) => f.type_annotation.is_some(),
+        AstKind::FormalParameterRest(f) => f.type_annotation.is_some(),
+        _ => false,
+    }
 }
 
 /**
@@ -595,13 +598,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
     if let AstKind::ObjectProperty(prop) = parent.kind()
         && let Expression::ArrowFunctionExpression(func) = &prop.value
+        && !func.body.statements.is_empty()
+        && func.return_type.is_some()
     {
-        if func.body.statements.is_empty() {
-            return false;
-        }
-        if func.return_type.is_some() {
-            return true;
-        }
+        return true;
     }
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -617,7 +617,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                return decl.id.type_annotation.is_some();
+                return decl.type_annotation.is_some();
             }
             AstKind::PropertyDefinition(def) => {
                 return def.type_annotation.is_some();
@@ -699,7 +699,8 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
-    is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)
+    is_typed_parent(obj_expr_parent, None, ctx)
+        || is_property_of_object_with_type(obj_expr_parent, ctx)
 }
 
 #[test]
@@ -1128,9 +1129,7 @@ fn test() {
 
                 const func = (value: number) => ({ type: 'X', value }) as const satisfies R;
                 ",
-            Some(
-                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
-            ),
+            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true } ])),
             None,
             None,
         ),
@@ -1144,9 +1143,7 @@ fn test() {
                     const func = (value: number) =>
                     ({ type: 'X', value }) as const satisfies R satisfies R;
                     ",
-            Some(
-                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
-            ),
+            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true } ])),
             None,
             None,
         ),
@@ -1160,9 +1157,7 @@ fn test() {
                         const func = (value: number) =>
                         ({ type: 'X', value }) as const satisfies R satisfies R satisfies R;
                         ",
-            Some(
-                serde_json::json!([        {          "allowDirectConstAssertionInArrowFunctions": true,        },      ]),
-            ),
+            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true } ])),
             None,
             None,
         ),
@@ -1898,13 +1893,13 @@ fn test() {
 
         	new Accumulator().accumulate(() => 1);
         	",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false }, ])),
             None,
             None,
         ),
         (
             "(() => true)();",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false }, ])),
             None,
             None,
         ),
@@ -1927,7 +1922,7 @@ fn test() {
         	  },
         	});
         	",
-            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
+            Some(serde_json::json!([ { "allowTypedFunctionExpressions": false } ])),
             None,
             None,
         ),
@@ -1937,7 +1932,7 @@ fn test() {
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": false,  "allowHigherOrderFunctions": true,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": false, "allowHigherOrderFunctions": true } ]),
             ),
             None,
             None,
@@ -1948,7 +1943,7 @@ fn test() {
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
         	",
             Some(
-                serde_json::json!([ { "allowTypedFunctionExpressions": false,  "allowHigherOrderFunctions": false,  }, ]),
+                serde_json::json!([ { "allowTypedFunctionExpressions": false, "allowHigherOrderFunctions": false } ]),
             ),
             None,
             None,
@@ -1958,20 +1953,20 @@ fn test() {
         	const func1 = (value: number) => ({ type: 'X', value }) as any;
         	const func2 = (value: number) => ({ type: 'X', value }) as Action;
         	",
-            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true,  }, ])),
+            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true } ])),
             None,
             None,
         ),
         (
             "const func = (value: number) => ({ type: 'X', value }) as const;",
-            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": false,  }, ])),
+            Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": false } ])),
             None,
             None,
         ),
         (
             "const log = (message: string) => void console.log(message);",
             Some(
-                serde_json::json!([ { "allowConciseArrowFunctionExpressionsStartingWithVoid": false },      ]),
+                serde_json::json!([ { "allowConciseArrowFunctionExpressionsStartingWithVoid": false } ]),
             ),
             None,
             None,
@@ -2039,7 +2034,7 @@ fn test() {
         	  },
         	};
         	",
-            Some(serde_json::json!([ { "allowedNames": ["test", "1"],  }, ])),
+            Some(serde_json::json!([ { "allowedNames": ["test", "1"] }, ])),
             None,
             None,
         ),
@@ -2074,7 +2069,7 @@ fn test() {
         	  return 'foo';
         	})();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": false,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": false }, ])),
             None,
             None,
         ),
@@ -2086,7 +2081,7 @@ fn test() {
         	  };
         	})();
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
@@ -2096,13 +2091,13 @@ fn test() {
         	  return 'foo';
         	};
         	",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),
         (
             "let foo = (() => () => {})()();",
-            Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
+            Some(serde_json::json!([ { "allowIIFEs": true }, ])),
             None,
             None,
         ),

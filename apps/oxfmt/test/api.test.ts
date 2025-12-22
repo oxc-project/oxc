@@ -39,4 +39,35 @@ describe("API Tests", () => {
     });
     expect(errors.length).toBe(1);
   });
+
+  test("should `format()` with options work", async () => {
+    const pkgJSON = JSON.stringify({
+      version: "1.0.0",
+      name: "my-package",
+    });
+    const result1 = await format("package.json", pkgJSON);
+    expect(result1.code).toBe(`{\n  "name": "my-package",\n  "version": "1.0.0"\n}\n`);
+    expect(result1.errors).toStrictEqual([]);
+
+    const result2 = await format("package.json", pkgJSON, { experimentalSortPackageJson: false });
+    expect(result2.code).toBe(`{\n  "version": "1.0.0",\n  "name": "my-package"\n}\n`);
+    expect(result2.errors).toStrictEqual([]);
+
+    const vueCode = `
+<template><div>Vue</div></template>
+<style>div{color:red;}</style>
+`.trim();
+    const result3 = await format("Component.vue", vueCode, {
+      vueIndentScriptAndStyle: true,
+    });
+    expect(result3.code).toBe(
+      `
+<template><div>Vue</div></template>
+<style>
+  div{color:red;}
+</style>
+`.trimStart(),
+    );
+    expect(result3.errors).toStrictEqual([]);
+  });
 });

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingPatternKind};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -82,7 +82,7 @@ impl Rule for NoUnassignedVars {
         }) {
             return;
         }
-        let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind else {
+        let BindingPattern::BindingIdentifier(ident) = &declarator.id else {
             return;
         };
         let symbol_id = ident.symbol_id();

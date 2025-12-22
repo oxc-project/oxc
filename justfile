@@ -35,6 +35,7 @@ install-hook:
 # When ready, run the same CI commands
 ready:
   git diff --exit-code --quiet
+  pnpm install
   typos
   just fmt
   just check
@@ -154,6 +155,7 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just fmt
 
 # Legacy aliases for backward compatibility
 new-jest-rule name: (new-rule name "jest")
@@ -254,6 +256,10 @@ website path:
 # Generate linter schema json for `npm/oxlint/configuration_schema.json`
 linter-schema-json:
   cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
+
+# Update VSCode extension README configuration section
+vscode-docs:
+  cargo run -p vscode_docs update
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

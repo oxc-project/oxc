@@ -77,7 +77,7 @@ impl CliRunner {
             }
         };
 
-        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
+        let handler = if cfg!(any(test, feature = "testing")) {
             GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
@@ -92,7 +92,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &err)
                     ),
                 );
@@ -165,7 +165,18 @@ impl CliRunner {
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
-        let paths = walker.paths();
+        let mut paths = walker.paths();
+
+        // NAPI tests build `oxlint` with `testing` feature enabled.
+        // In NAPI tests, sort file paths if oxlint is run with `--threads 1`.
+        // This guarantees files are linted in a deterministic order.
+        //
+        // Note: Sorting paths would not be sufficient to guarantee deterministic linting order unless
+        // `--threads 1` is also used, because otherwise linting happens in parallel on multiple threads,
+        // which also produces non-determinism.
+        if cfg!(feature = "testing") && misc_options.threads == Some(1) {
+            paths.sort_unstable();
+        }
 
         let mut external_plugin_store = ExternalPluginStore::default();
 
@@ -220,7 +231,7 @@ impl CliRunner {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Failed to parse configuration file.\n{}\n",
+                        "Failed to parse oxlint configuration file.\n{}\n",
                         render_report(&handler, &OxcDiagnostic::error(e.to_string()))
                     ),
                 );
@@ -352,21 +363,6 @@ impl CliRunner {
             .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
-
-        // Due to the architecture of the import plugin and JS plugins,
-        // linting a large number of files with both enabled can cause resource exhaustion.
-        // See: https://github.com/oxc-project/oxc/issues/15863
-        if number_of_files > 10_000 && use_cross_module && has_external_linter {
-            print_and_flush_stdout(
-                stdout,
-                &format!(
-                    "Failed to run oxlint.\n{}\n",
-                    render_report(&handler, &OxcDiagnostic::error(format!("Linting {number_of_files} files with both import plugin and JS plugins enabled can cause resource exhaustion.")).with_help("See https://github.com/oxc-project/oxc/issues/15863 for more details."))
-                ),
-            );
-            return CliRunResult::TooManyFilesWithImportAndJsPlugins;
-        }
-
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {
@@ -404,10 +400,16 @@ impl CliRunner {
             }
         };
 
-        // Configure the file system for external linter if needed
+        // Configure the file system for external linter if needed.
+        // When using the copy-to-fixed-allocator approach (cross-module + JS plugins),
+        // we use `OsFileSystem` instead of `RawTransferFileSystem`, because we use standard allocators for parsing.
         let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
-            {
+            if use_cross_module {
+                // Use standard file system - source text will be copied to fixed-size allocator later
+                None
+            } else {
+                // Use raw transfer file system - source text goes directly to fixed-size allocator
                 Some(
                     &crate::js_plugins::RawTransferFileSystem
                         as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
@@ -589,7 +591,7 @@ impl CliRunner {
                     print_and_flush_stdout(
                         stdout,
                         &format!(
-                            "Failed to parse configuration file.\n{}\n",
+                            "Failed to parse oxlint configuration file.\n{}\n",
                             render_report(handler, &OxcDiagnostic::error(e.to_string()))
                         ),
                     );

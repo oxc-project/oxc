@@ -4,6 +4,76 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.35.0] - 2025-12-22
+
+### 🚀 Features
+
+- d913f87 linter/plugins: Implement code path analysis (CFG) (#17229) (overlookmotel)
+- 33b4e63 linter/plugins: Support more selector classes in visitor (#17219) (overlookmotel)
+- b2b87c6 linter/plugins: Add `getRange` and `getLoc` methods to `SourceCode` (#17179) (overlookmotel)
+- 0f63e75 linter: Implement react/no-unsafe (#16532) (Kenzo Wada)
+- 9e624c9 linter/react: Add `version` to `ReactPluginSettings` (#17169) (camc314)
+- 563b039 linter/plugins: Add `SourceCode#getLines` method (#17177) (overlookmotel)
+- 5b5f2fd linter/no-base-to-string: Add checkUnknown option (#17139) (camc314)
+- d03b855 linter/no-unsafe-member-access: Add allowOptionalChaining option (#17138) (camc314)
+- b86a134 linter/no-unnecessary-type-assertion: Add checkLiteralConstAssertions option (#17137) (camc314)
+
+### 🐛 Bug Fixes
+
+- e08fdf1 linter/plugins: Include hashbang in comments (#17231) (overlookmotel)
+- a3d203b linter/plugins: Make node, token, and comment objects have `Object.prototype` in prototype chain (#17220) (overlookmotel)
+- 6f753a8 linter/plugins: Fix `:function` selector class (#17218) (overlookmotel)
+- 4027039 linter/plugins: Reset `ancestors` if error during AST walk (#17207) (overlookmotel)
+- 376caf1 linter: Improve the error message for when the oxlint config file is invalid. (#17196) (connorshea)
+- c95a0ec linter: `valid-title`: fix diagnostic quoted in strings (#17180) (camchenry)
+
+### ⚡ Performance
+
+- 78df915 linter: Avoid multiple `to_string_lossy` calls in loop (#17212) (overlookmotel)
+- 5aefb84 linter/plugins: Reduce size of walker code (#17176) (overlookmotel)
+
+### 📚 Documentation
+
+- 1714719 linter/plugin: Correct doc comment on `getNodeLoc` function (#17178) (overlookmotel)
+
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- a0f74a0 linter/config: Allow aliasing plugin names to allow names the same as builtin plugins (#15569) (Cameron)
+- a43d251 linter/plugins: `RuleTester` support `languageOptions.globals` (#17009) (overlookmotel)
+- 8bc4287 linter/plugins: Validate options against schema (#16974) (overlookmotel)
+- 291b57b ast_tools: Generate TS declaration files for deserializer and walk files (#16912) (camc314)
+- cd3db21 linter: Add ignoredTypeNames option to no-base-to-string rule (#16898) (camc314)
+
+### 🐛 Bug Fixes
+
+- fb9e193 linter: OOM problems with custom plugins (#17082) (overlookmotel)
+- fd03131 linter/plugins: Handle plugin names containing slashes (#17073) (overlookmotel)
+- b2a4fac linter/plugins: Error if plugin name alias is not normalized (#17071) (overlookmotel)
+- e046c4e linter/no-misused-spread: Add rule options support (#17054) (camc314)
+- 5c1a9e0 linter/no-deprecated: Add rule options support (#17053) (camc314)
+- 67f8c5d linter/plugins: Get correct plugin name in all cases (#17033) (overlookmotel)
+- 674dab9 linter/plugins: Fix indentation in error message (#17018) (overlookmotel)
+- 6524f72 linter/plugins: Add `@types/node` dev dependency to `oxlint` package (#17016) (overlookmotel)
+- 7a35513 linter/plugins: Better error for `null` in `globals` in `RuleTester` (#17011) (overlookmotel)
+- 42603ba linter/plugins: Always define `languageOptions.globals` (#17008) (overlookmotel)
+- 477bb57 linter: Fix `vitest/no-restricted-vi-methods` and add tests for it. (#16971) (connorshea)
+- 23ac6b1 linter/plugins: Apply defaults from `meta.schema` to options (#16930) (overlookmotel)
+- 2f946cf linter/plugins: Error if `defaultOptions` is not JSON-serializable (#16959) (overlookmotel)
+- d8b8a57 linter/plugins: Freeze whole of merged options (#16958) (overlookmotel)
+- b845871 linter/plugins: Correctly handle object with `__proto__` keys in options merging (#16928) (overlookmotel)
+
+### ⚡ Performance
+
+- fd8e9c6 linter/plugins: Speed up cloning JSON objects (#16997) (overlookmotel)
+- d77e22d linter/plugins: Use `DEFAULT_OPTIONS` for rules with empty array as default options (#16913) (overlookmotel)
+
+### 📚 Documentation
+
+- ca26a11 linter/plugins: Fix typo in doc comment (#16966) (overlookmotel)
+- 3183bf8 linter/plugins: Fix typo in JSDoc comment (#16900) (overlookmotel)
+
 ## [1.33.0] - 2025-12-15
 
 ### 💥 BREAKING CHANGES

@@ -819,6 +819,11 @@ pub fn cannot_appear_on_a_type_parameter(
 }
 
 #[cold]
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
+}
+
+#[cold]
 pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
     modifier: ModifierKind,
     span: Span,
@@ -1161,4 +1166,22 @@ pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnosti
     OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
         .with_label(span)
         .with_help("Wrap this with quotes")
+}
+
+// TS18058
+#[cold]
+pub fn default_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18058", "Default imports are not allowed in a deferred import.").with_label(span)
+}
+
+// TS18059
+#[cold]
+pub fn named_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18059", "Named imports are not allowed in a deferred import.").with_label(span)
+}
+
+#[cold]
+pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
+        .with_label(span)
 }

@@ -47,6 +47,22 @@ impl<'alloc> BitSet<'alloc> {
     pub fn set_bit(&mut self, bit: usize) {
         self.entries[bit / USIZE_BITS] |= 1 << (bit % USIZE_BITS);
     }
+
+    /// Remove the bit at the given position.
+    pub fn unset_bit(&mut self, bit: usize) {
+        self.entries[bit / USIZE_BITS] &= !(1 << (bit % USIZE_BITS));
+    }
+
+    /// Performs a bitwise OR of two bitsets.
+    ///
+    /// # Note on differing lengths
+    /// If the two sets have different lengths, this method only unions the prefix common to both.
+    /// It iterates up to the length of the shorter set.
+    pub fn union(&mut self, other: &Self) {
+        for (self_word, other_word) in self.entries.iter_mut().zip(other.entries.iter()) {
+            *self_word |= *other_word;
+        }
+    }
 }
 
 impl Display for BitSet<'_> {
@@ -183,7 +199,7 @@ mod tests {
     }
 
     #[test]
-    fn union() {
+    fn clone_in() {
         let allocator = Allocator::default();
         let mut bs = BitSet::new_in(16, &allocator);
         assert_eq!(bs.to_string(), "00000000");
@@ -197,5 +213,43 @@ mod tests {
         let mut bs2 = bs.clone_in(&allocator);
         bs2.set_bit(15);
         assert_eq!(bs2.to_string(), "10000001_10000011");
+    }
+
+    #[test]
+    fn unset_bit() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(16, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(1);
+        bs.set_bit(7);
+        bs.set_bit(8);
+        assert_eq!(bs.to_string(), "00000001_10000011");
+        bs.unset_bit(1);
+        assert_eq!(bs.to_string(), "00000001_10000001");
+        bs.unset_bit(8);
+        assert_eq!(bs.to_string(), "10000001");
+        bs.unset_bit(0);
+        assert_eq!(bs.to_string(), "10000000");
+        bs.unset_bit(7);
+        assert_eq!(bs.to_string(), "00000000");
+    }
+
+    #[test]
+    fn union() {
+        let allocator = Allocator::default();
+        let mut bs1 = BitSet::new_in(16, &allocator);
+        bs1.set_bit(0);
+        bs1.set_bit(3);
+        bs1.set_bit(8);
+        assert_eq!(bs1.to_string(), "00000001_00001001");
+
+        let mut bs2 = BitSet::new_in(16, &allocator);
+        bs2.set_bit(1);
+        bs2.set_bit(3);
+        bs2.set_bit(9);
+        assert_eq!(bs2.to_string(), "00000010_00001010");
+
+        bs1.union(&bs2);
+        assert_eq!(bs1.to_string(), "00000011_00001011");
     }
 }

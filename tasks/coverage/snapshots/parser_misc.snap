@@ -459,12 +459,26 @@ Negative Passed: 122/122 (100.00%)
    ·             ──
    ╰────
 
-  × Expected `from` but found `{`
-   ╭─[misc/fail/oxc-11532.js:1:15]
+  × Only a single default import is allowed in a source phase import.
+   ╭─[misc/fail/oxc-11532.js:1:8]
  1 │ import source { x } from 'x';
-   ·               ┬
-   ·               ╰── `from` expected
- 2 │ import defer { x } from "x";
+   ·        ──────
+ 2 │ import defer { x2 } from "x";
+   ╰────
+
+  × TS(18059): Named imports are not allowed in a deferred import.
+   ╭─[misc/fail/oxc-11532.js:2:8]
+ 1 │ import source { x } from 'x';
+ 2 │ import defer { x2 } from "x";
+   ·        ─────
+ 3 │ import defer x3 from "x";
+   ╰────
+
+  × TS(18058): Default imports are not allowed in a deferred import.
+   ╭─[misc/fail/oxc-11532.js:3:8]
+ 2 │ import defer { x2 } from "x";
+ 3 │ import defer x3 from "x";
+   ·        ─────
    ╰────
 
   × Expected `}` but found `function`

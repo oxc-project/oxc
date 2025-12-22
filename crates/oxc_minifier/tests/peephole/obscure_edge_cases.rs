@@ -533,7 +533,7 @@ fn test_esm_module_patterns() {
     );
 
     // ESM with IIFE patterns
-    test("export default (() => { return 1 + 2; })();", "export default (() => 3)();");
+    test("export default (() => { return 1 + 2; })();", "export default 3;");
     test(
         "export default (async () => { return await fetchData(); })();",
         "export default (async () => await fetchData())();",

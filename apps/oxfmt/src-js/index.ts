@@ -1,6 +1,12 @@
-import { format as napiFormat } from "./bindings.js";
-import { setupConfig, formatEmbeddedCode, formatFile } from "./prettier-proxy.js";
+import { format as napiFormat } from "./bindings";
+import { resolvePlugins, formatEmbeddedCode, formatFile } from "./libs/prettier";
 
+// napi-JS `oxfmt` API entry point
+// See also `format()` function in `./src/main_napi.rs`
+
+/**
+ * Format the given source text according to the specified options.
+ */
 export async function format(fileName: string, sourceText: string, options?: FormatOptions) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
@@ -9,9 +15,9 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    setupConfig,
-    formatEmbeddedCode,
-    formatFile,
+    resolvePlugins,
+    (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
   );
 }
 
@@ -80,11 +86,13 @@ export type FormatOptions = {
   singleAttributePerLine?: boolean;
   /** Control whether formats quoted code embedded in the file. (Default: `"auto"`) */
   embeddedLanguageFormatting?: "auto" | "off";
+  /** Whether to insert a final newline at the end of the file. (Default: `true`) */
+  insertFinalNewline?: boolean;
   /** Experimental: Sort import statements. Disabled by default. */
   experimentalSortImports?: SortImportsOptions;
   /** Experimental: Sort `package.json` keys. (Default: `true`) */
   experimentalSortPackageJson?: boolean;
-};
+} & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
  * Configuration options for sort imports.

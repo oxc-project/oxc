@@ -12,7 +12,36 @@
     "typescript/no-base-to-string": [
       "error",
       {
+        "checkUnknown": true,
         "ignoredTypeNames": ["Error", "RegExp", "URL", "URLSearchParams", "CustomStringifiable"]
+      }
+    ],
+    "typescript/no-deprecated": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedDeprecated" }
+        ]
+      }
+    ],
+    "typescript/no-misused-spread": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "allowedFunc" }
+        ]
+      }
+    ],
+    "typescript/no-unnecessary-type-assertion": [
+      "error",
+      {
+        "checkLiteralConstAssertions": false
+      }
+    ],
+    "typescript/no-unsafe-member-access": [
+      "error",
+      {
+        "allowOptionalChaining": true
       }
     ]
   }

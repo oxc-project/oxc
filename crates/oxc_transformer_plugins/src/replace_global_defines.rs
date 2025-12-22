@@ -689,8 +689,8 @@ fn destructing_dot_define_optimizer<'ast>(
     let Expression::ObjectExpression(obj) = &mut expr else { return expr };
     let parent = ctx.parent();
     let destruct_obj_pat = match parent {
-        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
-            BindingPatternKind::ObjectPattern(pat) => pat,
+        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id() {
+            BindingPattern::ObjectPattern(pat) => pat,
             _ => return expr,
         },
         _ => {

@@ -17,7 +17,7 @@
 use std::cell::RefCell;
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::GatherNodeParts};
@@ -165,8 +165,14 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let declarator =
-            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
+        let declarator = ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ident,
+            NONE,
+            init,
+            false,
+        );
         self.insert_var_declarator(declarator, ctx);
     }
 
@@ -178,8 +184,14 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let declarator =
-            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Let, ident, init, false);
+        let declarator = ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Let,
+            ident,
+            NONE,
+            init,
+            false,
+        );
         self.insert_let_declarator(declarator, ctx);
     }
 

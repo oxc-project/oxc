@@ -7,18 +7,11 @@ import {
   OxfmtWorkspaceConfigInterface,
   OxlintWorkspaceConfigInterface,
   WorkspaceConfig,
-  WorkspaceConfigInterface,
 } from "./WorkspaceConfig";
 
 export class ConfigService implements IDisposable {
   public static readonly namespace = "oxc";
   private readonly _disposables: IDisposable[] = [];
-
-  /**
-   * Indicates whether the `oxc_language_server` is being used as the formatter.
-   * If true, the formatter functionality is handled by the language server itself.
-   */
-  public useOxcLanguageServerForFormatting: boolean = false;
 
   public vsCodeConfig: VSCodeConfig;
 
@@ -44,14 +37,12 @@ export class ConfigService implements IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
-  public get languageServerConfig(): {
+  public get oxlintServerConfig(): {
     workspaceUri: string;
-    options: WorkspaceConfigInterface | OxlintWorkspaceConfigInterface;
+    options: OxlintWorkspaceConfigInterface;
   }[] {
     return [...this.workspaceConfigs.entries()].map(([path, config]) => {
-      const options = this.useOxcLanguageServerForFormatting
-        ? config.toLanguageServerConfig()
-        : config.toOxlintConfig();
+      const options = config.toOxlintConfig();
 
       return {
         workspaceUri: Uri.file(path).toString(),

@@ -3,7 +3,7 @@ commit: b78f0899
 parser_typescript Summary:
 AST Parsed     : 9839/9840 (99.99%)
 Positive Passed: 9830/9840 (99.90%)
-Negative Passed: 1486/2549 (58.30%)
+Negative Passed: 1492/2549 (58.53%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -111,8 +111,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkerIniti
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkingObjectDefinePropertyOnFunctionNonexistentPropertyNoCrash1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkingObjectWithThisInNamePositionNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/circularOptionalityRemoval.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExpressionWithDecorator1.ts
 
@@ -328,8 +326,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyle
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
@@ -411,8 +407,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleRefernceResolutionOrderInImportDeclaration.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement7.ts
 
@@ -729,8 +723,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omitTypeTest
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omittedExpressionForOfLoop.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/operationsAvailableOnPromisedType.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalChainWithInstantiationExpression1.ts
 
@@ -1844,8 +1836,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts
@@ -2031,8 +2021,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/non
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveNarrow.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveStrictNull.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers.ts
 
@@ -3598,6 +3586,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: either remove this super, or extend the class
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/circularOptionalityRemoval.ts:5:14]
+ 4 │ // Report from user
+ 5 │ function fn2(x?: string = someCondition ? 'value1' : x) { }
+   ·              ─
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/class2.ts:1:35]
  1 │ class foo { constructor() { static f = 3; } }
@@ -3759,7 +3754,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:4:13]
  3 │     constructor(i: number, ...arguments) { // error
  4 │         var arguments: any[]; // no error
-   ·             ────────────────
+   ·             ─────────
  5 │     }
    ╰────
 
@@ -3767,7 +3762,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:8:17]
  7 │ class c12 {
  8 │     constructor(arguments: number, ...rest) { // error
-   ·                 ─────────────────
+   ·                 ─────────
  9 │         var arguments = 10; // no error
    ╰────
 
@@ -3783,7 +3778,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:13:17]
  12 │ class c1NoError {
  13 │     constructor(arguments: number) { // no error
-    ·                 ─────────────────
+    ·                 ─────────
  14 │         var arguments = 10; // no error
     ╰────
 
@@ -3815,7 +3810,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:30:24]
  29 │ class c3 {
  30 │     constructor(public arguments: number, ...restParameters) { //arguments is error
-    ·                        ─────────────────
+    ·                        ─────────
  31 │         var arguments = 10; // no error
     ╰────
 
@@ -3831,7 +3826,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:35:24]
  34 │ class c3NoError {
  35 │     constructor(public arguments: number) { // no error
-    ·                        ─────────────────
+    ·                        ─────────
  36 │         var arguments = 10; // no error
     ╰────
 
@@ -3855,7 +3850,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:44:17]
  43 │ declare class c42 {
  44 │     constructor(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────────────
+    ·                 ─────────
  45 │ }
     ╰────
 
@@ -3863,7 +3858,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:47:17]
  46 │ declare class c4NoError {
  47 │     constructor(arguments: number);  // no error
-    ·                 ─────────────────
+    ·                 ─────────
  48 │ }
     ╰────
 
@@ -3895,7 +3890,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:54:13]
  53 │     constructor(i: any, ...arguments) { // error
  54 │         var arguments: any[]; // no error
-    ·             ────────────────
+    ·             ─────────
  55 │     }
     ╰────
 
@@ -3903,7 +3898,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:59:17]
  58 │ class c52 {
  59 │     constructor(arguments: number, ...rest); // no codegen no error
-    ·                 ─────────────────
+    ·                 ─────────
  60 │     constructor(arguments: string, ...rest); // no codegen no error
     ╰────
 
@@ -3911,7 +3906,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:60:17]
  59 │     constructor(arguments: number, ...rest); // no codegen no error
  60 │     constructor(arguments: string, ...rest); // no codegen no error
-    ·                 ─────────────────
+    ·                 ─────────
  61 │     constructor(arguments: any, ...rest) { // error
     ╰────
 
@@ -3919,7 +3914,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:61:17]
  60 │     constructor(arguments: string, ...rest); // no codegen no error
  61 │     constructor(arguments: any, ...rest) { // error
-    ·                 ──────────────
+    ·                 ─────────
  62 │         var arguments: any; // no error
     ╰────
 
@@ -3927,7 +3922,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:62:13]
  61 │     constructor(arguments: any, ...rest) { // error
  62 │         var arguments: any; // no error
-    ·             ──────────────
+    ·             ─────────
  63 │     }
     ╰────
 
@@ -3935,7 +3930,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:67:17]
  66 │ class c5NoError {
  67 │     constructor(arguments: number); // no error
-    ·                 ─────────────────
+    ·                 ─────────
  68 │     constructor(arguments: string); // no error
     ╰────
 
@@ -3943,7 +3938,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:68:17]
  67 │     constructor(arguments: number); // no error
  68 │     constructor(arguments: string); // no error
-    ·                 ─────────────────
+    ·                 ─────────
  69 │     constructor(arguments: any) { // no error
     ╰────
 
@@ -3951,7 +3946,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:69:17]
  68 │     constructor(arguments: string); // no error
  69 │     constructor(arguments: any) { // no error
-    ·                 ──────────────
+    ·                 ─────────
  70 │         var arguments: any; // no error
     ╰────
 
@@ -3959,7 +3954,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:70:13]
  69 │     constructor(arguments: any) { // no error
  70 │         var arguments: any; // no error
-    ·             ──────────────
+    ·             ─────────
  71 │     }
     ╰────
 
@@ -3983,7 +3978,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:79:17]
  78 │ declare class c62 {
  79 │     constructor(arguments: number, ...rest); // no codegen no error
-    ·                 ─────────────────
+    ·                 ─────────
  80 │     constructor(arguments: string, ...rest); // no codegen no error
     ╰────
 
@@ -3991,7 +3986,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:80:17]
  79 │     constructor(arguments: number, ...rest); // no codegen no error
  80 │     constructor(arguments: string, ...rest); // no codegen no error
-    ·                 ─────────────────
+    ·                 ─────────
  81 │ }
     ╰────
 
@@ -3999,7 +3994,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:84:17]
  83 │ declare class c6NoError {
  84 │     constructor(arguments: number); // no error
-    ·                 ─────────────────
+    ·                 ─────────
  85 │     constructor(arguments: string); // no error
     ╰────
 
@@ -4007,7 +4002,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:85:17]
  84 │     constructor(arguments: number); // no error
  85 │     constructor(arguments: string); // no error
-    ·                 ─────────────────
+    ·                 ─────────
  86 │ }
     ╰────
 
@@ -4023,7 +4018,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:3:13]
  2 │     public foo(i: number, ...arguments) { //arguments is error
  3 │         var arguments: any[]; // no error
-   ·             ────────────────
+   ·             ─────────
  4 │     }
    ╰────
 
@@ -4031,7 +4026,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:5:17]
  4 │     }
  5 │     public foo1(arguments: number, ...rest) { //arguments is error
-   ·                 ─────────────────
+   ·                 ─────────
  6 │         var arguments = 10; // no error
    ╰────
 
@@ -4047,7 +4042,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:8:23]
  7 │     }
  8 │     public fooNoError(arguments: number) { // no error
-   ·                       ─────────────────
+   ·                       ─────────
  9 │         var arguments = 10; // no error
    ╰────
 
@@ -4087,7 +4082,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:14:13]
  13 │     public f4(i: any, ...arguments) { // error
  14 │         var arguments: any[]; // no error
-    ·             ────────────────
+    ·             ─────────
  15 │     }
     ╰────
 
@@ -4095,7 +4090,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:16:16]
  15 │     }
  16 │     public f41(arguments: number, ...rest); // no codegen no error
-    ·                ─────────────────
+    ·                ─────────
  17 │     public f41(arguments: string, ...rest); // no codegen no error
     ╰────
 
@@ -4103,7 +4098,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:17:16]
  16 │     public f41(arguments: number, ...rest); // no codegen no error
  17 │     public f41(arguments: string, ...rest); // no codegen no error
-    ·                ─────────────────
+    ·                ─────────
  18 │     public f41(arguments: any, ...rest) { // error
     ╰────
 
@@ -4111,7 +4106,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:18:16]
  17 │     public f41(arguments: string, ...rest); // no codegen no error
  18 │     public f41(arguments: any, ...rest) { // error
-    ·                ──────────────
+    ·                ─────────
  19 │         var arguments: any; // no error
     ╰────
 
@@ -4119,7 +4114,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:19:13]
  18 │     public f41(arguments: any, ...rest) { // error
  19 │         var arguments: any; // no error
-    ·             ──────────────
+    ·             ─────────
  20 │     }
     ╰────
 
@@ -4127,7 +4122,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:21:22]
  20 │     }
  21 │     public f4NoError(arguments: number); // no error
-    ·                      ─────────────────
+    ·                      ─────────
  22 │     public f4NoError(arguments: string); // no error
     ╰────
 
@@ -4135,7 +4130,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:22:22]
  21 │     public f4NoError(arguments: number); // no error
  22 │     public f4NoError(arguments: string); // no error
-    ·                      ─────────────────
+    ·                      ─────────
  23 │     public f4NoError(arguments: any) { // no error
     ╰────
 
@@ -4143,7 +4138,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:23:22]
  22 │     public f4NoError(arguments: string); // no error
  23 │     public f4NoError(arguments: any) { // no error
-    ·                      ──────────────
+    ·                      ─────────
  24 │         var arguments: any; // no error
     ╰────
 
@@ -4151,7 +4146,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:24:13]
  23 │     public f4NoError(arguments: any) { // no error
  24 │         var arguments: any; // no error
-    ·             ──────────────
+    ·             ─────────
  25 │     }
     ╰────
 
@@ -4167,7 +4162,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:30:17]
  29 │     public foo(i: number, ...arguments); // No error - no code gen
  30 │     public foo1(arguments: number, ...rest); // No error - no code gen
-    ·                 ─────────────────
+    ·                 ─────────
  31 │     public fooNoError(arguments: number); // No error - no code gen
     ╰────
 
@@ -4175,7 +4170,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:31:23]
  30 │     public foo1(arguments: number, ...rest); // No error - no code gen
  31 │     public fooNoError(arguments: number); // No error - no code gen
-    ·                       ─────────────────
+    ·                       ─────────
  32 │ 
     ╰────
 
@@ -4199,7 +4194,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:35:16]
  34 │     public f4(i: string, ...arguments); // no codegen no error
  35 │     public f41(arguments: number, ...rest); // no codegen no error
-    ·                ─────────────────
+    ·                ─────────
  36 │     public f41(arguments: string, ...rest); // no codegen no error
     ╰────
 
@@ -4207,7 +4202,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:36:16]
  35 │     public f41(arguments: number, ...rest); // no codegen no error
  36 │     public f41(arguments: string, ...rest); // no codegen no error
-    ·                ─────────────────
+    ·                ─────────
  37 │     public f4NoError(arguments: number); // no error
     ╰────
 
@@ -4215,7 +4210,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:37:22]
  36 │     public f41(arguments: string, ...rest); // no codegen no error
  37 │     public f4NoError(arguments: number); // no error
-    ·                      ─────────────────
+    ·                      ─────────
  38 │     public f4NoError(arguments: string); // no error
     ╰────
 
@@ -4223,7 +4218,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/collisionArgumentsClassMethod.ts:38:22]
  37 │     public f4NoError(arguments: number); // no error
  38 │     public f4NoError(arguments: string); // no error
-    ·                      ─────────────────
+    ·                      ─────────
  39 │ }
     ╰────
 
@@ -4383,8 +4378,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `foo` has already been declared
    ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]
  1 │ var foo: string;
-   ·     ─────┬─────
-   ·          ╰── `foo` has already been declared here
+   ·     ─┬─
+   ·      ╰── `foo` has already been declared here
  2 │ function foo(): number { }
    ·          ─┬─
    ·           ╰── It can not be redeclared here
@@ -4394,8 +4389,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `foo` has already been declared
    ╭─[typescript/tests/cases/compiler/conflictingTypeAnnotatedVar.ts:1:5]
  1 │ var foo: string;
-   ·     ─────┬─────
-   ·          ╰── `foo` has already been declared here
+   ·     ─┬─
+   ·      ╰── `foo` has already been declared here
  2 │ function foo(): number { }
  3 │ function foo(): number { }
    ·          ─┬─
@@ -4453,7 +4448,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:3:7]
  2 │ const c1;
  3 │ const c2: number;
-   ·       ──────────
+   ·       ──
  4 │ const c3, c4, c5 :string, c6;  // error, missing initialicer
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -4480,7 +4475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:4:15]
  3 │ const c2: number;
  4 │ const c3, c4, c5 :string, c6;  // error, missing initialicer
-   ·               ──────────
+   ·               ──
  5 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -5113,7 +5108,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/compiler/downlevelLetConst4.ts:1:7]
  1 │ const a: number
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -5850,6 +5845,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/es6ClassTest.ts:25:44]
+ 24 │     constructor();
+ 25 │     constructor(x?, private y?:string, public z?=0) {
+    ·                                               ─
+ 26 │         super(x);
+    ╰────
+
   × Expected `{` but found `(`
    ╭─[typescript/tests/cases/compiler/es6ClassTest9.ts:1:18]
  1 │ declare class foo();
@@ -6396,6 +6399,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ foo((x?)=>{return x;})
    ╰────
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:60:10]
+ 59 │ false ? (arg?: number) => 46 : null;
+ 60 │ false ? (arg?: number = 0) => 47 : null;
+    ·          ───
+ 61 │ false ? (...arg: number[]) => 48 : null;
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:70:11]
+ 69 │ false ? ((arg?: number) => 56) : null;
+ 70 │ false ? ((arg?: number = 0) => 57) : null;
+    ·           ───
+ 71 │ false ? ((...arg: number[]) => 58) : null;
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:80:17]
+ 79 │ false ? null : (arg?: number) => 66;
+ 80 │ false ? null : (arg?: number = 0) => 67;
+    ·                 ───
+ 81 │ false ? null : (...arg: number[]) => 68;
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:88:22]
  87 │ //multiple levels
@@ -6414,19 +6441,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
-   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:4:5]
+  × Expected `,` or `)` but found `=`
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:4:19]
  3 │ (...arg) => 103;
  4 │ (...arg:number [] = []) => 104;
-   ·     ──────────────────
+   · ┬                 ┬
+   · │                 ╰── `,` or `)` expected
+   · ╰── Opened here
  5 │ 
-   ╰────
-
-  × TS(1016): A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
- 1 │ (arg1?, arg2) => 101;
-   ·         ────
- 2 │ (...arg?) => 102;
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -6442,6 +6464,61 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ (...) => 105;
    ·  ───
    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:1:14]
+ 1 │     false ? (arg?: number = 0) => 47 : null;
+   ·              ───
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:2:15]
+ 1 │     false ? (arg?: number = 0) => 47 : null;
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+   ·               ───
+ 3 │     false ? null : (arg?: number = 0) => 67;
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:3:21]
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+ 3 │     false ? null : (arg?: number = 0) => 67;
+   ·                     ───
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:4:7]
+ 3 │     false ? null : (arg?: number = 0) => 67;
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ·       ───
+ 5 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:4:39]
+ 3 │     false ? null : (arg?: number = 0) => 67;
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ·                                       ───
+ 5 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:17:10]
+ 16 │         (a = 0) => 117, 
+ 17 │         (a?: number = 0) => 118, 
+    ·          ─
+ 18 │         (...a: number[]) => 119, 
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:19:13]
+ 18 │         (...a: number[]) => 119, 
+ 19 │         (a, b? = 0, ...c: number[]) => 120,
+    ·             ─
+ 20 │         (a) => (b) => (c) => 121,
+    ╰────
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/fieldAndGetterWithSameName.ts:2:5]
@@ -6484,7 +6561,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/forIn.ts:2:10]
  1 │ var arr = null;
  2 │ for (var i:number in arr) { // error
-   ·          ────────
+   ·          ─
  3 │     var x1 = arr[i];
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -6493,7 +6570,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/forInStatement4.ts:2:10]
  1 │ var expr: any;
  2 │ for (var a: number in expr) {
-   ·          ─────────
+   ·          ─
  3 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -6513,9 +6590,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `b` has already been declared
    ╭─[typescript/tests/cases/compiler/functionCall15.ts:1:25]
  1 │ function foo(a?:string, b?:number, ...b:number[]){}
-   ·                         ────┬────     ┬
-   ·                             │         ╰── It can not be redeclared here
-   ·                             ╰── `b` has already been declared here
+   ·                         ┬             ┬
+   ·                         │             ╰── It can not be redeclared here
+   ·                         ╰── `b` has already been declared here
    ╰────
 
   × 'with' statements are not allowed
@@ -7999,8 +8076,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `baz` has already been declared
    ╭─[typescript/tests/cases/compiler/mismatchedClassConstructorVariable.ts:1:5]
  1 │ var baz: foo;
-   ·     ────┬───
-   ·         ╰── `baz` has already been declared here
+   ·     ─┬─
+   ·      ╰── `baz` has already been declared here
  2 │ class baz { }
    ·       ─┬─
    ·        ╰── It can not be redeclared here
@@ -8381,8 +8458,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `console` has already been declared
    ╭─[typescript/tests/cases/compiler/module_augmentExistingAmbientVariable.ts:1:13]
  1 │ declare var console: any;
-   ·             ──────┬─────
-   ·                   ╰── `console` has already been declared here
+   ·             ───┬───
+   ·                ╰── `console` has already been declared here
  2 │ 
  3 │ namespace console {
    ·           ───┬───
@@ -8393,8 +8470,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `console` has already been declared
    ╭─[typescript/tests/cases/compiler/module_augmentExistingVariable.ts:1:5]
  1 │ var console: any;
-   ·     ──────┬─────
-   ·           ╰── `console` has already been declared here
+   ·     ───┬───
+   ·        ╰── `console` has already been declared here
  2 │ 
  3 │ namespace console {
    ·           ───┬───
@@ -8567,7 +8644,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:5:5]
  4 │ 
  5 │ var [a2]: [any], {b2}: { b2: any }, c2: any, d2: any;
-   ·     ───────────
+   ·     ────
  6 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -8576,7 +8653,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:5:18]
  4 │ 
  5 │ var [a2]: [any], {b2}: { b2: any }, c2: any, d2: any;
-   ·                  ─────────────────
+   ·                  ────
  6 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -8585,7 +8662,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:7:5]
  6 │ 
  7 │ var {b3}: { b3 }, c3: { b3 }; // error in type instead
-   ·     ────────────
+   ·     ────
  8 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -8644,7 +8721,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:86:7]
  85 │ const isNumber: (x: 0 | 1) => number = (x: 0 | 1) => x;
  86 │ const zeroOrBigOne: 0 | 1n;
-    ·       ────────────────────
+    ·       ────────────
  87 │ if (typeof zeroOrBigOne === "bigint") isBigInt(zeroOrBigOne);
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -8653,7 +8730,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:93:7]
  92 │ if (zeroOrBigOne) isOne(zeroOrBigOne);
  93 │ const bigZeroOrOne: 0n | 1;
-    ·       ────────────────────
+    ·       ────────────
  94 │ if (bigZeroOrOne) isOne(bigZeroOrOne);
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -9023,6 +9100,67 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  118 │ `${0}\055${0}`;
      ·      ────
      ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:1:25]
+ 1 │ function foo(x: number, y?:boolean=false, z?=0) {}
+   ·                         ─
+ 2 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:1:43]
+ 1 │ function foo(x: number, y?:boolean=false, z?=0) {}
+   ·                                           ─
+ 2 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:4:27]
+ 3 │ class CCC {
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+   ·                           ─
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:4:45]
+ 3 │ class CCC {
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+   ·                                             ─
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:5:28]
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ·                            ─
+ 6 │ }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:5:46]
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ·                                              ─
+ 6 │ }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:8:10]
+ 7 │ 
+ 8 │ var a = (x?=0) => { return 1; };
+   ·          ─
+ 9 │ var b = (x, y?:number = 2) => { x; };
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:9:13]
+ 8 │ var a = (x?=0) => { return 1; };
+ 9 │ var b = (x, y?:number = 2) => { x; };
+   ·             ─
+   ╰────
 
   × Identifier `C1M5` has already been declared
     ╭─[typescript/tests/cases/compiler/optionalParamArgsTest.ts:31:12]
@@ -9854,6 +9992,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·    ───
  5 │ ];
    ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Could not parse the entire pattern
    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:7:5]
@@ -9862,6 +10001,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ▲
  8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
    ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Invalid class atom
    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:8:5]
@@ -9870,6 +10010,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  9 │   /\P[\P\w-_]/u,
    ╰────
+  help: This character or escape sequence is not valid inside a character class
 
   × Invalid regular expression: Unterminated unicode property escape
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:9:4]
@@ -9878,6 +10019,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ──
  10 │ ];
     ╰────
+  help: Add the missing closing delimiter
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:23:4]
@@ -9886,6 +10028,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ────
  24 │   /{1,}??/,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:24:4]
@@ -9894,6 +10037,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ─────
  25 │   /{1,2}??/,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:25:4]
@@ -9902,6 +10046,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ──────
  26 │   /{2,1}??/,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:26:4]
@@ -9910,6 +10055,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ─────
  27 │ 
     ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:29:4]
@@ -9918,6 +10064,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  30 │   /{,??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:30:4]
@@ -9926,6 +10073,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  31 │   /{,1??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:31:4]
@@ -9934,6 +10082,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  32 │   /{1??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:32:4]
@@ -9942,6 +10091,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  33 │   /{1,??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:33:4]
@@ -9950,6 +10100,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  34 │   /{1,2??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:34:4]
@@ -9958,6 +10109,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  35 │   /{2,1??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:35:4]
@@ -9966,6 +10118,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  36 │   /{}??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:36:4]
@@ -9974,6 +10127,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  37 │   /{,}??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:37:4]
@@ -9982,6 +10136,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  38 │   /{,1}??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:38:4]
@@ -9990,6 +10145,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ▲
  39 │   /{1}??/u,
     ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:39:4]
@@ -9998,6 +10154,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ────
  40 │   /{1,}??/u,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:40:4]
@@ -10006,6 +10163,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ─────
  41 │   /{1,2}??/u,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:41:4]
@@ -10014,6 +10172,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ──────
  42 │   /{2,1}??/u,
     ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
   × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:42:4]
@@ -10022,6 +10181,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·    ─────
  43 │ ];
     ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
 
   × Invalid regular expression: Character class atom range out of order
    ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:7:8]
@@ -10030,6 +10190,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  8 │     /[𝘈-𝘡][𝘡-𝘈]/u,
    ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class atom range out of order
    ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:8:19]
@@ -10038,6 +10199,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  9 │     /[𝘈-𝘡][𝘡-𝘈]/v,
    ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class set range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:9:15]
@@ -10046,6 +10208,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·     ─
  10 │ 
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:11:13]
@@ -10054,6 +10217,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                ───
  12 │     /[\u{1D608}-\u{1D621}][\u{1D621}-\u{1D608}]/u,
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:12:34]
@@ -10062,6 +10226,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                     ──────────
  13 │     /[\u{1D608}-\u{1D621}][\u{1D621}-\u{1D608}]/v,
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class set range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:13:25]
@@ -10070,6 +10235,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ───────────────────
  14 │ 
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:15:16]
@@ -10078,6 +10244,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                   ───────
  16 │     /[\uD835\uDE08-\uD835\uDE21][\uD835\uDE21-\uD835\uDE08]/u,
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:16:43]
@@ -10086,6 +10253,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                              ─────────────
  17 │     /[\uD835\uDE08-\uD835\uDE21][\uD835\uDE21-\uD835\uDE08]/v,
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Character class set range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:17:31]
@@ -10094,12 +10262,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                                  ─────────────────────────
  18 │ ];
     ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
 
   × Invalid regular expression: Invalid named reference
    ╭─[typescript/tests/cases/compiler/regularExpressionGroupNameSuggestions.ts:1:24]
  1 │ const regex = /(?<foo>)\k<Foo>/;
    ·                        ───────
    ╰────
+  help: Valid group names are: foo
 
   × Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:11]
@@ -10205,6 +10375,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ const regex = /\p{ascii}\p{Sc=Unknown}\p{sc=unknownX}\p{Script_Declensions=Inherited}\p{scx=inherit}/u;
    ·                   ─────
    ╰────
+  help: Check the property name spelling or use a valid Unicode property
 
   × Invalid regular expression: Unknown modifiers
    ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:33]
@@ -10212,6 +10383,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ const 𝘳𝘦𝘨𝘦𝘹 = /(?𝘴𝘪-𝘮:^𝘧𝘰𝘰.)/𝘨𝘮𝘶;
    ·                  ▲
    ╰────
+  help: Valid modifiers are: i, m, s
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:63]
@@ -10793,15 +10965,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/strictModeReservedWord.ts:17:9]
  16 │ 
  17 │     var b: public.bar;
-    ·         ──────┬──────
-    ·               ╰── `b` has already been declared here
+    ·         ┬
+    ·         ╰── `b` has already been declared here
  18 │ 
  19 │     function foo(x: private.x) { }
  20 │     function foo1(x: private.package.x) { }
  21 │     function foo2(x: private.package.protected) { }
  22 │     let b: interface.package.implements.B;
-    ·         ────────────────┬────────────────
-    ·                         ╰── It can not be redeclared here
+    ·         ┬
+    ·         ╰── It can not be redeclared here
  23 │     ublic();
     ╰────
 
@@ -11157,8 +11329,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
      ╭─[typescript/tests/cases/compiler/strictOptionalProperties1.ts:190:15]
  189 │ }
  190 │ declare const e: string | boolean | undefined
-     ·               ───────────────┬───────────────
-     ·                              ╰── `e` has already been declared here
+     ·               ┬
+     ·               ╰── `e` has already been declared here
  191 │ declare const u1: U1
  192 │ declare let u2: U2
  193 │ u1.email = e // error, but only because boolean isn't in email's type
@@ -11175,8 +11347,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  204 │ declare var c: {a: number, b?: string}
  205 │ declare var d: {a: number, b: string | undefined }
  206 │ declare var e: {a: number, b?: string | undefined }
-     ·             ───────────────────┬───────────────────
-     ·                                ╰── It can not be redeclared here
+     ·             ┬
+     ·             ╰── It can not be redeclared here
  207 │ 
      ╰────
 
@@ -11701,8 +11873,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Identifier `Point` has already been declared
    ╭─[typescript/tests/cases/compiler/targetTypeCastTest.ts:1:13]
  1 │ declare var Point: { new(x:number, y:number): {x: number; y: number; }; }
-   ·             ──────────────────────────────┬──────────────────────────────
-   ·                                           ╰── `Point` has already been declared here
+   ·             ──┬──
+   ·               ╰── `Point` has already been declared here
  2 │ 
  3 │ function Point(x, y) {
    ·          ──┬──
@@ -12235,7 +12407,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
      ╭─[typescript/tests/cases/compiler/unusedLocalsInMethod4.ts:103:11]
  102 │ function f9() {  
  103 │     const x: number; // should have only one error
-     ·           ─────────
+     ·           ─
  104 │     function bar() {  
      ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -13280,7 +13452,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
  3 │   static {
  4 │     let await: any; // illegal, cannot declare a new binding for await
-   ·         ──────────
+   ·         ─────
  5 │   }
    ╰────
 
@@ -15606,7 +15778,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:4:16]
  3 │     public implements() { }
  4 │     public foo(arguments: any) { }
-   ·                ──────────────
+   ·                ─────────
  5 │     private bar(eval:any) {
    ╰────
 
@@ -15614,7 +15786,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:5:17]
  4 │     public foo(arguments: any) { }
  5 │     private bar(eval:any) {
-   ·                 ────────
+   ·                 ────
  6 │         arguments = "hello";
    ╰────
 
@@ -16754,12 +16926,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ var x = /\u{110000}/gu;
    ·           ─
    ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions12.ts:1:11]
  1 │ var x = /\u{FFFFFFFF}/gu;
    ·           ─
    ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions14.ts:2:11]
@@ -16767,18 +16941,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ var x = /\u{-DDDD}/gu;
    ·           ─
    ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions17.ts:1:11]
  1 │ var x = /\u{r}\u{n}\u{t}/gu;
    ·           ─
    ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid regular expression: Invalid unicode escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions19.ts:1:11]
  1 │ var x = /\u{}/gu;
    ·           ─
    ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
   × Invalid escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07.ts:3:10]
@@ -16920,7 +17097,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration4_es6.ts:1:7]
  1 │ const a: number
-   ·       ─────────
+   ·       ─
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -19382,7 +19559,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts:4:14]
  3 │ if (true)
  4 │ export const cssExports: CssExports;
-   ·              ──────────────────────
+   ·              ──────────
  5 │ export default cssExports;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -19920,19 +20097,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ────
    ╰────
 
-  × Expected `from` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidDefault.ts:1:14]
+  × TS(18058): Default imports are not allowed in a deferred import.
+   ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidDefault.ts:1:8]
  1 │ import defer foo from "./a";
-   ·              ─┬─
-   ·               ╰── `from` expected
+   ·        ─────
  2 │ 
    ╰────
 
-  × Expected `from` but found `{`
-   ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidNamed.ts:1:14]
+  × TS(18059): Named imports are not allowed in a deferred import.
+   ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidNamed.ts:1:8]
  1 │ import defer { foo } from "./a";
-   ·              ┬
-   ·              ╰── `from` expected
+   ·        ─────
  2 │ 
    ╰────
 
@@ -19943,11 +20118,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ╰── `from` expected
    ╰────
 
-  × Expected `from` but found `type`
-   ╭─[typescript/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:14]
+  × TS(18058): Default imports are not allowed in a deferred import.
+   ╭─[typescript/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:8]
  1 │ import defer type * as ns1 from "./a";
-   ·              ──┬─
-   ·                ╰── `from` expected
+   ·        ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:19]
+ 1 │ import defer type * as ns1 from "./a";
+   ·                   ─
    ╰────
 
   × The only valid meta property for import is import.meta
@@ -19968,7 +20148,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:3:5]
  2 │ 
  3 │ var interface: number;
-   ·     ─────────────────
+   ·     ─────────
  4 │ 
    ╰────
 
@@ -20483,7 +20663,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:8:7]
  7 │ 
  8 │ const X: any
-   ·       ──────
+   ·       ─
  9 │ const a: any
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -20492,7 +20672,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:9:7]
   8 │ const X: any
   9 │ const a: any
-    ·       ──────
+    ·       ─
  10 │ 
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -22546,6 +22726,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts:2:5]
+ 1 │ class C {
+ 2 │   F(A?= 0) { }
+   ·     ─
+ 3 │ }
+   ╰────
+
   × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:2:9]
  1 │ class C {
@@ -22759,6 +22947,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ var x = /fo(o/;
    ·            ──
    ╰────
+  help: Add the missing closing delimiter
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:7]
@@ -23197,7 +23386,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement5.ts:1:10]
  1 │ for (var a: number of X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23219,7 +23408,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement7.ts:1:10]
  1 │ for (var a: number = 1, b: string = "" of X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23227,7 +23416,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement7.ts:1:25]
  1 │ for (var a: number = 1, b: string = "" of X) {
-   ·                         ─────────
+   ·                         ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23249,7 +23438,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement5.ts:1:10]
  1 │ for (var a: number in X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23271,7 +23460,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:10]
  1 │ for (var a: number = 1, b: string = "" in X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23279,7 +23468,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:25]
  1 │ for (var a: number = 1, b: string = "" in X) {
-   ·                         ─────────
+   ·                         ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23745,7 +23934,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts:1:10]
  1 │ for (var a: number of X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23767,7 +23956,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement7.ts:1:10]
  1 │ for (var a: number = 1, b: string = "" of X) {
-   ·          ─────────
+   ·          ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -23775,7 +23964,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement7.ts:1:25]
  1 │ for (var a: number = 1, b: string = "" of X) {
-   ·                         ─────────
+   ·                         ─
  2 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -24208,7 +24397,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─────────────────────────────────────────────
+   ·                 ─
  3 │     await using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24217,7 +24406,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
  2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  3 │     await using y: null;
-   ·                 ───────
+   ·                 ─
  4 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24226,7 +24415,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
  5 │ declare module 'M' {
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─────────────────────────────────────────────
+   ·                 ─
  7 │     await using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24235,7 +24424,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
  6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
  7 │     await using y: null;
-   ·                 ───────
+   ·                 ─
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24418,7 +24607,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
  1 │ declare namespace N {
  2 │     using x: { [Symbol.dispose](): void };
-   ·           ───────────────────────────────
+   ·           ─
  3 │     using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24427,7 +24616,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:3:11]
  2 │     using x: { [Symbol.dispose](): void };
  3 │     using y: null;
-   ·           ───────
+   ·           ─
  4 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24436,7 +24625,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:6:11]
  5 │ declare module 'M' {
  6 │     using x: { [Symbol.dispose](): void };
-   ·           ───────────────────────────────
+   ·           ─
  7 │     using y: null;
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24445,7 +24634,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:7:11]
  6 │     using x: { [Symbol.dispose](): void };
  7 │     using y: null;
-   ·           ───────
+   ·           ─
  8 │ }
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24899,7 +25088,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsInvalid.ts:10:10]
   9 │ 
  10 │ for (var idx : number in {}) { }
-    ·          ────────────
+    ·          ───
  11 │ 
     ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
@@ -24965,7 +25154,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:3:14]
  2 │ 
  3 │ export const box: string
-   ·              ───────────
+   ·              ───
  4 │ subTitle:
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
@@ -24974,7 +25163,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:5:14]
  4 │ subTitle:
  5 │ export const title: string
-   ·              ─────────────
+   ·              ─────
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -25091,8 +25280,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/statements/tryStatements/catchClauseWithTypeAnnotation.ts:29:20]
  28 │     // minor bug: shows that the `catch` argument is skipped when checking scope
  29 │     try { } catch (x) { let x: string; }
-    ·                    ┬        ────┬────
-    ·                    │            ╰── It can not be redeclared here
+    ·                    ┬        ┬
+    ·                    │        ╰── It can not be redeclared here
     ·                    ╰── `x` has already been declared here
  30 │     try { } catch (x) { var x: string; }
     ╰────
@@ -25273,6 +25462,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │ }
     ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:3:14]
+ 2 │ 
+ 3 │ function foo(x?: number = 1) { }
+   ·              ─
+ 4 │ var f = function foo(x?: number = 1) { }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:4:22]
+ 3 │ function foo(x?: number = 1) { }
+ 4 │ var f = function foo(x?: number = 1) { }
+   ·                      ─
+ 5 │ var f2 = (x: number, y? = 1) => { }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:5:22]
+ 4 │ var f = function foo(x?: number = 1) { }
+ 5 │ var f2 = (x: number, y? = 1) => { }
+   ·                      ─
+ 6 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:15:9]
+ 14 │ class C {
+ 15 │     foo(x?: number = 1) { }
+    ·         ─
+ 16 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:23:6]
+ 22 │ interface I {
+ 23 │     (x? = 1);
+    ·      ─
+ 24 │     foo(x: number, y?: number = 1);
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:24:20]
+ 23 │     (x? = 1);
+ 24 │     foo(x: number, y?: number = 1);
+    ·                    ─
+ 25 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:34:6]
+ 33 │ var a: {
+ 34 │     (x?: number = 1);
+    ·      ─
+ 35 │     foo(x? = 1);
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:35:9]
+ 34 │     (x?: number = 1);
+ 35 │     foo(x? = 1);
+    ·         ─
+ 36 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:44:9]
+ 43 │ var b = {
+ 44 │     foo(x?: number = 1) { },
+    ·         ─
+ 45 │     a: function foo(x: number, y?: number = '') { },
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:45:32]
+ 44 │     foo(x?: number = 1) { },
+ 45 │     a: function foo(x: number, y?: number = '') { },
+    ·                                ─
+ 46 │     b: (x?: any = '') => { }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:46:9]
+ 45 │     a: function foo(x: number, y?: number = '') { },
+ 46 │     b: (x?: any = '') => { }
+    ·         ─
+ 47 │ }
+    ╰────
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
@@ -25648,9 +25925,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:7:14]
  6 │ var f3 = (x, x) => { }
  7 │ var f4 = <T>(x: T, x: T) => { }
-   ·              ──┬─  ──┬─
-   ·                │     ╰── It can not be redeclared here
-   ·                ╰── `x` has already been declared here
+   ·              ┬     ┬
+   ·              │     ╰── It can not be redeclared here
+   ·              ╰── `x` has already been declared here
  8 │ 
    ╰────
 
@@ -25658,9 +25935,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:12:11]
  11 │ var f6 = function (x: string, x: number) { }
  12 │ var f7 = (x: string, x: number) => { }
-    ·           ────┬────  ────┬────
-    ·               │          ╰── It can not be redeclared here
-    ·               ╰── `x` has already been declared here
+    ·           ┬          ┬
+    ·           │          ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
  13 │ var f8 = <T>(x: T, y: T) => { }
     ╰────
 
@@ -25678,9 +25955,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:17:10]
  16 │     foo(x, x) { }
  17 │     foo2(x: number, x: string) { }
-    ·          ────┬────  ────┬────
-    ·              │          ╰── It can not be redeclared here
-    ·              ╰── `x` has already been declared here
+    ·          ┬          ┬
+    ·          │          ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
  18 │     foo3<T>(x: T, x: T) { }
     ╰────
 
@@ -25688,9 +25965,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:18:13]
  17 │     foo2(x: number, x: string) { }
  18 │     foo3<T>(x: T, x: T) { }
-    ·             ──┬─  ──┬─
-    ·               │     ╰── It can not be redeclared here
-    ·               ╰── `x` has already been declared here
+    ·             ┬     ┬
+    ·             │     ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
  19 │ }
     ╰────
 
@@ -25708,9 +25985,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:23:6]
  22 │     (x, x);
  23 │     (x: string, x: number);
-    ·      ────┬────  ────┬────
-    ·          │          ╰── It can not be redeclared here
-    ·          ╰── `x` has already been declared here
+    ·      ┬          ┬
+    ·      │          ╰── It can not be redeclared here
+    ·      ╰── `x` has already been declared here
  24 │     foo(x, x);
     ╰────
 
@@ -25728,9 +26005,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:25:9]
  24 │     foo(x, x);
  25 │     foo(x: number, x: string);
-    ·         ────┬────  ────┬────
-    ·             │          ╰── It can not be redeclared here
-    ·             ╰── `x` has already been declared here
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
  26 │     foo3<T>(x: T, x: T);
     ╰────
 
@@ -25738,9 +26015,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:26:13]
  25 │     foo(x: number, x: string);
  26 │     foo3<T>(x: T, x: T);
-    ·             ──┬─  ──┬─
-    ·               │     ╰── It can not be redeclared here
-    ·               ╰── `x` has already been declared here
+    ·             ┬     ┬
+    ·             │     ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
  27 │ }
     ╰────
 
@@ -25758,9 +26035,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:31:10]
  30 │     foo(x, x);
  31 │     foo2(x: number, x: string);
-    ·          ────┬────  ────┬────
-    ·              │          ╰── It can not be redeclared here
-    ·              ╰── `x` has already been declared here
+    ·          ┬          ┬
+    ·          │          ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
  32 │ };
     ╰────
 
@@ -25778,9 +26055,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:37:12]
  36 │     a: function foo(x: number, x: string) { },
  37 │     b: <T>(x: T, x: T) => { }
-    ·            ──┬─  ──┬─
-    ·              │     ╰── It can not be redeclared here
-    ·              ╰── `x` has already been declared here
+    ·            ┬     ┬
+    ·            │     ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
  38 │ }
     ╰────
 
@@ -26104,7 +26381,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts:4:7]
  3 │ let c: "bar";
  4 │ const d: "baz";
-   ·       ────────
+   ·       ─
  5 │ 
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
