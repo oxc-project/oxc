@@ -59,10 +59,12 @@ Math.random<
   string | number | undefined
 >0;
 
-console.log(<
+console.log(
+  <
     // comment
     string | number | undefined
-  >0);
+  >0,
+);
 
 -------------------
 { printWidth: 100 }
@@ -89,9 +91,11 @@ Math.random<
   string | number | undefined
 >0;
 
-console.log(<
+console.log(
+  <
     // comment
     string | number | undefined
-  >0);
+  >0,
+);
 
 ===================== End =====================
