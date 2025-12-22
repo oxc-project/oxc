@@ -253,7 +253,6 @@ mod test {
         test_same_options("var {} = null", &options);
         test_same_options("var {} = a", &options);
         test_same_options("var {} = null", &options);
-        test_same_options("var {} = null", &options);
         test_same_options("var {} = void 0", &options);
 
         test_same_options("var x; foo(x)", &options);
