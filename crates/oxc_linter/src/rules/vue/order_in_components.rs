@@ -198,9 +198,11 @@ impl Rule for OrderInComponents {
                 }
             }
             AstKind::CallExpression(call) => {
-                // Vue.component('name', { ... }) or new Vue({ ... }) or defineOptions({ ... })
                 if is_vue_component_registration(call) || is_define_options_call(call) {
-                    // Get the object argument (second arg for component, first for new Vue/defineOptions)
+                    // Get the object argument:
+                    // - For defineOptions(): first argument
+                    // - For Vue.component('name', {...}) / app.component('name', {...}): second argument
+                    // - For component(...): first argument (fallback for destructured usage)
                     let arg = if is_define_options_call(call) {
                         call.arguments.first()
                     } else if call.arguments.len() >= 2 {
@@ -317,7 +319,7 @@ impl OrderInComponents {
                     ));
                     // Continue checking remaining properties to report all ordering errors
                 }
-                if max_position.is_none() || pos >= max_position.unwrap_or(0) {
+                if max_position.is_none_or(|max| pos >= max) {
                     max_position = Some(pos);
                     max_position_name.clone_from(&prop.name);
                 }
@@ -327,12 +329,7 @@ impl OrderInComponents {
 }
 
 fn get_order_position(name: &str, order: &[Vec<String>]) -> Option<usize> {
-    for (index, group) in order.iter().enumerate() {
-        if group.iter().any(|s| s == name) {
-            return Some(index);
-        }
-    }
-    None
+    order.iter().position(|group| group.iter().any(|s| s == name))
 }
 
 fn get_property_name(key: &PropertyKey) -> Option<String> {
@@ -367,25 +364,15 @@ fn is_vue_component_registration(call: &oxc_ast::ast::CallExpression) -> bool {
     // destructured from `Vue` or `app`. This can introduce false positives for
     // unrelated functions named `component`, but is currently accepted in
     // order to support common destructuring patterns.
-    if let Expression::Identifier(id) = &call.callee {
-        return id.name == "component";
-    }
-
-    false
+    matches!(&call.callee, Expression::Identifier(id) if id.name == "component")
 }
 
 fn is_define_options_call(call: &oxc_ast::ast::CallExpression) -> bool {
-    if let Expression::Identifier(id) = &call.callee {
-        return id.name == "defineOptions";
-    }
-    false
+    matches!(&call.callee, Expression::Identifier(id) if id.name == "defineOptions")
 }
 
 fn is_new_vue(new_expr: &oxc_ast::ast::NewExpression) -> bool {
-    if let Expression::Identifier(id) = &new_expr.callee {
-        return id.name == "Vue";
-    }
-    false
+    matches!(&new_expr.callee, Expression::Identifier(id) if id.name == "Vue")
 }
 
 #[test]
@@ -433,6 +420,22 @@ fn test() {
             "export default { data() {}, beforeCreate() {}, created() {} }",
             Some(serde_json::json!([{ "order": ["data", "LIFECYCLE_HOOKS"] }])),
         ),
+        // ROUTER_GUARDS placeholder in custom order
+        (
+            "export default { data() {}, beforeRouteEnter() {}, beforeRouteLeave() {} }",
+            Some(serde_json::json!([{ "order": ["data", "ROUTER_GUARDS"] }])),
+        ),
+        // defineOptions with correct order
+        ("defineOptions({ name: 'app', inheritAttrs: false })", None),
+        // app.component with correct order
+        ("app.component('name', { name: 'app', data() {} })", None),
+        // defineNuxtComponent with correct order
+        ("export default defineNuxtComponent({ name: 'app', props: {}, data() {} })", None),
+        // Group order: properties in same group can be in any order
+        (
+            "export default { key: 'k', name: 'n', data() {} }",
+            Some(serde_json::json!([{ "order": [["name", "key"], "data"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -455,6 +458,19 @@ fn test() {
         ),
         // props before name
         ("export default { props: {}, name: 'a' }", None),
+        // defineOptions with wrong order
+        ("defineOptions({ data() {}, name: 'app' })", None),
+        // app.component with wrong order
+        ("app.component('name', { data() {}, name: 'app' })", None),
+        // new Vue with wrong order (data before el)
+        ("new Vue({ data: {}, el: '#app' })", None),
+        // Multiple ordering errors in single component (reports all)
+        ("export default { data() {}, props: {}, name: 'a' }", None),
+        // ROUTER_GUARDS with wrong order
+        (
+            "export default { beforeRouteEnter() {}, data() {} }",
+            Some(serde_json::json!([{ "order": ["data", "ROUTER_GUARDS"] }])),
+        ),
     ];
 
     Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail).test_and_snapshot();
