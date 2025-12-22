@@ -1,5 +1,5 @@
-commit: 84082e27
+commit: 9079aeef
 
 transformer_test262 Summary:
-AST Parsed     : 46467/46467 (100.00%)
-Positive Passed: 46467/46467 (100.00%)
+AST Parsed     : 46472/46472 (100.00%)
+Positive Passed: 46472/46472 (100.00%)
