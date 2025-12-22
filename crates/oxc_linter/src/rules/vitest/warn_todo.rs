@@ -13,25 +13,23 @@ use crate::{
 };
 
 fn warn_todo_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("The use of `.todo` is not recommended.")
-        .with_help("Remove the `.todo` modifier before push your changes.")
+        .with_help("Write an actual test and remove the `.todo` modifier before pushing/merging your changes.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct WarnTodo;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule should be used to trigger warnings when .todo is used in describe, it, or test functions.
-    /// It is recommended to use this with GitHub Actions to annotate PR diffs.
+    /// This rule triggers warnings when `.todo` is used in `describe`, `it`, or `test` functions.
+    /// It is recommended to use this with your CI pipeline to annotate PR diffs.
     ///
     /// ### Why is this bad?
     ///
-    /// The test that your push should be completed, any pending code should not be commit.
+    /// The test that you push should be completed, any pending/"TODO" code should not be committed.
     ///
     /// ### Examples
     ///
