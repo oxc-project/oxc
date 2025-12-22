@@ -57,6 +57,14 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-label' is: a string value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-label={!true} />
+   ·      ──────────────────
+   ╰────
+  help: The valid value for 'aria-label' is: a string value.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
   ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-checked="yes" />
@@ -137,6 +145,14 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-level={!"false"} />
+   ·      ─────────────────────
+   ╰────
+  help: The valid value for 'aria-level' is: an integer value.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
   ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax="yes" />
@@ -181,6 +197,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax={"false"} />
    ·      ───────────────────────
+   ╰────
+  help: The valid value for 'aria-valuemax' is: a number value.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-valuemax={!"false"} />
+   ·      ────────────────────────
    ╰────
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes

@@ -1,11 +1,14 @@
 use cow_utils::CowUtils;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     AstNode, context::LintContext, globals::AriaProperty, rule::Rule, utils::get_jsx_attribute_name,
@@ -199,6 +202,12 @@ fn parse_aria_prop_value_as_string(
                     None
                 }
             }
+            JSXExpression::UnaryExpression(unary)
+                if boolean_as_string && unary.operator == UnaryOperator::LogicalNot =>
+            {
+                let value = !unary.argument.to_boolean(&WithoutGlobalReferenceInformation)?;
+                Some(value.to_string().into())
+            }
             _ => None,
         },
         _ => None,
@@ -214,6 +223,11 @@ fn is_target_literal_value(value: &JSXAttributeValue) -> bool {
             | JSXExpression::NumericLiteral(_)
             | JSXExpression::BigIntLiteral(_)
             | JSXExpression::TemplateLiteral(_) => true,
+            JSXExpression::UnaryExpression(unary) => {
+                // Check if unary `!` expression can be statically evaluated (e.g., `!true`, `!"string"`)
+                unary.operator == UnaryOperator::LogicalNot
+                    && unary.argument.to_boolean(&WithoutGlobalReferenceInformation).is_some()
+            }
             _ => false, // null literal always pass this rule
         },
         _ => false,
@@ -488,7 +502,7 @@ fn test() {
         "<div aria-label={true} />",
         "<div aria-label={false} />",
         "<div aria-label={1234} />",
-        // "<div aria-label={!true} />", this pattern needs more fine-tuned analysis
+        "<div aria-label={!true} />",
         r#"<div aria-checked="yes" />"#,
         r#"<div aria-checked="no" />"#,
         "<div aria-checked={1234} />",
@@ -499,14 +513,14 @@ fn test() {
         "<div aria-level={true} />",
         "<div aria-level />",
         r#"<div aria-level={"false"} />"#,
-        // r#"<div aria-level={!"false"} />"#,
+        r#"<div aria-level={!"false"} />"#,
         r#"<div aria-valuemax="yes" />"#,
         r#"<div aria-valuemax="no" />"#,
         "<div aria-valuemax={`abc`} />",
         "<div aria-valuemax={true} />",
         "<div aria-valuemax />",
         r#"<div aria-valuemax={"false"} />"#,
-        // r#"<div aria-valuemax={!"false"} />"#,
+        r#"<div aria-valuemax={!"false"} />"#,
         r#"<div aria-sort="" />"#,
         r#"<div aria-sort="descnding" />"#,
         "<div aria-sort />",
