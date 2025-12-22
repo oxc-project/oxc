@@ -3,7 +3,7 @@ commit: b78f0899
 parser_typescript Summary:
 AST Parsed     : 9839/9840 (99.99%)
 Positive Passed: 9830/9840 (99.90%)
-Negative Passed: 1486/2549 (58.30%)
+Negative Passed: 1492/2549 (58.53%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -111,8 +111,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkerIniti
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkingObjectDefinePropertyOnFunctionNonexistentPropertyNoCrash1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/checkingObjectWithThisInNamePositionNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/circularOptionalityRemoval.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classExpressionWithDecorator1.ts
 
@@ -328,8 +326,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyle
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
@@ -411,8 +407,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleRefernceResolutionOrderInImportDeclaration.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement7.ts
 
@@ -729,8 +723,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omitTypeTest
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omittedExpressionForOfLoop.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/operationsAvailableOnPromisedType.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalChainWithInstantiationExpression1.ts
 
@@ -1844,8 +1836,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts
@@ -2031,8 +2021,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/non
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveNarrow.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveStrictNull.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers.ts
 
@@ -3597,6 +3585,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     · ╰──── class does not have `extends`
     ╰────
   help: either remove this super, or extend the class
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/circularOptionalityRemoval.ts:5:14]
+ 4 │ // Report from user
+ 5 │ function fn2(x?: string = someCondition ? 'value1' : x) { }
+   ·              ─
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/class2.ts:1:35]
@@ -5850,6 +5845,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/es6ClassTest.ts:25:44]
+ 24 │     constructor();
+ 25 │     constructor(x?, private y?:string, public z?=0) {
+    ·                                               ─
+ 26 │         super(x);
+    ╰────
+
   × Expected `{` but found `(`
    ╭─[typescript/tests/cases/compiler/es6ClassTest9.ts:1:18]
  1 │ declare class foo();
@@ -6396,6 +6399,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ foo((x?)=>{return x;})
    ╰────
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:60:10]
+ 59 │ false ? (arg?: number) => 46 : null;
+ 60 │ false ? (arg?: number = 0) => 47 : null;
+    ·          ───
+ 61 │ false ? (...arg: number[]) => 48 : null;
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:70:11]
+ 69 │ false ? ((arg?: number) => 56) : null;
+ 70 │ false ? ((arg?: number = 0) => 57) : null;
+    ·           ───
+ 71 │ false ? ((...arg: number[]) => 58) : null;
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:80:17]
+ 79 │ false ? null : (arg?: number) => 66;
+ 80 │ false ? null : (arg?: number = 0) => 67;
+    ·                 ───
+ 81 │ false ? null : (...arg: number[]) => 68;
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgs.ts:88:22]
  87 │ //multiple levels
@@ -6437,6 +6464,61 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ (...) => 105;
    ·  ───
    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:1:14]
+ 1 │     false ? (arg?: number = 0) => 47 : null;
+   ·              ───
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:2:15]
+ 1 │     false ? (arg?: number = 0) => 47 : null;
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+   ·               ───
+ 3 │     false ? null : (arg?: number = 0) => 67;
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:3:21]
+ 2 │     false ? ((arg?: number = 0) => 57) : null;
+ 3 │     false ? null : (arg?: number = 0) => 67;
+   ·                     ───
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:4:7]
+ 3 │     false ? null : (arg?: number = 0) => 67;
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ·       ───
+ 5 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:4:39]
+ 3 │     false ? null : (arg?: number = 0) => 67;
+ 4 │     ((arg?:number = 1) => 0) + '' + ((arg?:number = 2) => 106);
+   ·                                       ───
+ 5 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:17:10]
+ 16 │         (a = 0) => 117, 
+ 17 │         (a?: number = 0) => 118, 
+    ·          ─
+ 18 │         (...a: number[]) => 119, 
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts:19:13]
+ 18 │         (...a: number[]) => 119, 
+ 19 │         (a, b? = 0, ...c: number[]) => 120,
+    ·             ─
+ 20 │         (a) => (b) => (c) => 121,
+    ╰────
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/fieldAndGetterWithSameName.ts:2:5]
@@ -9018,6 +9100,67 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  118 │ `${0}\055${0}`;
      ·      ────
      ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:1:25]
+ 1 │ function foo(x: number, y?:boolean=false, z?=0) {}
+   ·                         ─
+ 2 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:1:43]
+ 1 │ function foo(x: number, y?:boolean=false, z?=0) {}
+   ·                                           ─
+ 2 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:4:27]
+ 3 │ class CCC {
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+   ·                           ─
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:4:45]
+ 3 │ class CCC {
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+   ·                                             ─
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:5:28]
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ·                            ─
+ 6 │ }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:5:46]
+ 4 │     public foo(x: number, y?:boolean=false, z?=0) {}
+ 5 │     static foo2(x: number, y?:boolean=false, z?=0) {}
+   ·                                              ─
+ 6 │ }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:8:10]
+ 7 │ 
+ 8 │ var a = (x?=0) => { return 1; };
+   ·          ─
+ 9 │ var b = (x, y?:number = 2) => { x; };
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/compiler/optionalArgsWithDefaultValues.ts:9:13]
+ 8 │ var a = (x?=0) => { return 1; };
+ 9 │ var b = (x, y?:number = 2) => { x; };
+   ·             ─
+   ╰────
 
   × Identifier `C1M5` has already been declared
     ╭─[typescript/tests/cases/compiler/optionalParamArgsTest.ts:31:12]
@@ -22583,6 +22726,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts:2:5]
+ 1 │ class C {
+ 2 │   F(A?= 0) { }
+   ·     ─
+ 3 │ }
+   ╰────
+
   × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:2:9]
  1 │ class C {
@@ -25311,6 +25462,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │ }
     ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:3:14]
+ 2 │ 
+ 3 │ function foo(x?: number = 1) { }
+   ·              ─
+ 4 │ var f = function foo(x?: number = 1) { }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:4:22]
+ 3 │ function foo(x?: number = 1) { }
+ 4 │ var f = function foo(x?: number = 1) { }
+   ·                      ─
+ 5 │ var f2 = (x: number, y? = 1) => { }
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:5:22]
+ 4 │ var f = function foo(x?: number = 1) { }
+ 5 │ var f2 = (x: number, y? = 1) => { }
+   ·                      ─
+ 6 │ 
+   ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:15:9]
+ 14 │ class C {
+ 15 │     foo(x?: number = 1) { }
+    ·         ─
+ 16 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:23:6]
+ 22 │ interface I {
+ 23 │     (x? = 1);
+    ·      ─
+ 24 │     foo(x: number, y?: number = 1);
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:24:20]
+ 23 │     (x? = 1);
+ 24 │     foo(x: number, y?: number = 1);
+    ·                    ─
+ 25 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:34:6]
+ 33 │ var a: {
+ 34 │     (x?: number = 1);
+    ·      ─
+ 35 │     foo(x? = 1);
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:35:9]
+ 34 │     (x?: number = 1);
+ 35 │     foo(x? = 1);
+    ·         ─
+ 36 │ }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:44:9]
+ 43 │ var b = {
+ 44 │     foo(x?: number = 1) { },
+    ·         ─
+ 45 │     a: function foo(x: number, y?: number = '') { },
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:45:32]
+ 44 │     foo(x?: number = 1) { },
+ 45 │     a: function foo(x: number, y?: number = '') { },
+    ·                                ─
+ 46 │     b: (x?: any = '') => { }
+    ╰────
+
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:46:9]
+ 45 │     a: function foo(x: number, y?: number = '') { },
+ 46 │     b: (x?: any = '') => { }
+    ·         ─
+ 47 │ }
+    ╰────
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]

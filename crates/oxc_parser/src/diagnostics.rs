@@ -819,6 +819,11 @@ pub fn cannot_appear_on_a_type_parameter(
 }
 
 #[cold]
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
+}
+
+#[cold]
 pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
     modifier: ModifierKind,
     span: Span,

@@ -491,6 +491,7 @@ Identifier `show` has already been declared
 Identifier `size` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
+A parameter cannot have a question mark and an initializer.
 A required parameter cannot follow an optional parameter.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts

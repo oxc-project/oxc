@@ -169,6 +169,11 @@ impl<'a> ParserImpl<'a> {
         let init = if self.eat(Kind::Eq) {
             let init =
                 self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
+            if optional {
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
+            }
             Some(init)
         } else {
             None
