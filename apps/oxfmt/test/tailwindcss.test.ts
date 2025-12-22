@@ -391,6 +391,74 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Tests for can_collapse_whitespace in template literal expressions
+  // These test the whitespace preservation logic based on adjacent quasi whitespace
+
+  test("should collapse leading space when quasi before ends with whitespace", async () => {
+    // Quasi "header " ends with space, so leading space in string can be collapsed
+    const input = "const A = <div className={`header ${isExtendable ? ' active' : ''}`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Leading space should be trimmed (quasi already provides separation)
+    expect(result.code).toContain('`header ${isExtendable ? "active" : ""}`');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve leading space when quasi before has no trailing whitespace", async () => {
+    // Quasi "header" has NO trailing space, so leading space in string must be preserved
+    const input = "const A = <div className={`header${isExtendable ? ' active' : ''}`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Leading space must be preserved (no separation from quasi)
+    expect(result.code).toContain('`header${isExtendable ? " active" : ""}`');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should collapse trailing space when quasi after starts with whitespace", async () => {
+    // Quasi " suffix" starts with space, so trailing space in string can be collapsed
+    const input = "const A = <div className={`${condition ? 'active ' : ''} suffix`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Trailing space should be trimmed (quasi already provides separation)
+    expect(result.code).toContain('${condition ? "active" : ""} suffix');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve trailing space when quasi after has no leading whitespace", async () => {
+    // Quasi "suffix" has NO leading space, so trailing space in string must be preserved
+    const input = "const A = <div className={`${condition ? 'active ' : ''}suffix`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Trailing space must be preserved (no separation to quasi)
+    expect(result.code).toContain('${condition ? "active " : ""}suffix');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve both leading and trailing space when surrounded by non-whitespace quasis", async () => {
+    // String " middle " is between quasis without whitespace on either side
+    const input = "const A = <div className={`prefix${condition ? ' middle ' : ''}suffix`} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Both spaces must be preserved
+    expect(result.code).toContain('${condition ? " middle " : ""}');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   // Tests for nested expressions inside template literals (PR #396 fixes)
   test("should not trim whitespace inside nested ternary string literals", async () => {
     // The leading space in ' header-extendable' should NOT be trimmed
@@ -417,6 +485,55 @@ const A = (
 
     // Spaces in the middle of concat should be preserved (formatter uses double quotes)
     expect(result.code).toContain('a + " p-4 " + b');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // Tests for template literals in binary expressions
+  test("should sort template literal on right side of binary expression", async () => {
+    const input = "const A = <div className={a + ` p-4 flex `} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Template literal should be sorted, spaces preserved at boundaries
+    expect(result.code).toContain("a + ` flex p-4`");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort template literal on left side of binary expression", async () => {
+    const input = "const A = <div className={` p-4 flex ` + b} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Template literal should be sorted, spaces preserved at boundaries
+    expect(result.code).toContain("`flex p-4 ` + b");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort template literal in middle of binary expression", async () => {
+    const input = "const A = <div className={a + ` p-4 flex ` + b} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Template literal should be sorted, spaces preserved at boundaries
+    expect(result.code).toContain("a + ` flex p-4 ` + b");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort template literal with expressions in binary expression", async () => {
+    const input = "const A = <div className={a + ` p-4 ${x} flex ` + b} />;";
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Classes should be sorted, expression preserved
+    expect(result.code).toContain("a + ` p-4 ${x} flex ` + b");
     expect(result.errors).toStrictEqual([]);
   });
 

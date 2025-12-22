@@ -1,4 +1,14 @@
+//! Tailwind CSS class sorting utilities.
+//!
+//! This module provides utilities for sorting Tailwind CSS classes within:
+//! - JSX attributes (`className`, `class`, or custom attributes)
+//! - Function calls (`clsx()`, `cn()`, `tw()`, or custom functions)
+//! - Template literals with expressions
+//!
+//! Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     Buffer, TailwindcssOptions,
@@ -7,54 +17,221 @@ use crate::{
     write,
 };
 
-/// Check if a JSX attribute is a tailwind class attribute (class/className or custom tailwindAttributes)
+// ============================================================================
+// Detection Functions
+// ============================================================================
+
+/// Checks if a JSX attribute is a Tailwind class attribute.
+///
+/// Returns `true` for:
+/// - `class` and `className` (default attributes)
+/// - Custom attributes specified in `tailwindAttributes` option
 pub fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
-    tailwind_options: &TailwindcssOptions,
+    options: &TailwindcssOptions,
 ) -> bool {
     let JSXAttributeName::Identifier(ident) = attr_name else {
         return false;
     };
     let name = ident.name.as_str();
 
-    // Default attributes: `class` and `className`
-    let is_default_attr = name == "class" || name == "className";
-
-    if is_default_attr {
+    // Default: `class` and `className`
+    if name == "class" || name == "className" {
         return true;
     }
 
-    // Custom attributes from `tailwindAttributes` option
-    tailwind_options
-        .tailwind_attributes
-        .as_ref()
-        .is_some_and(|attrs| attrs.iter().any(|a| a == name))
+    // Custom attributes from options
+    options.tailwind_attributes.as_ref().is_some_and(|attrs| attrs.iter().any(|a| a == name))
 }
 
-/// Check if a callee expression is a tailwind function (e.g., `clsx`, `cn`, `tw`)
-pub fn is_tailwind_function_call(
-    callee: &Expression<'_>,
-    tailwind_options: &TailwindcssOptions,
-) -> bool {
-    let Some(functions) = &tailwind_options.tailwind_functions else {
+/// Checks if a callee expression is a Tailwind function.
+///
+/// Returns `true` for functions specified in `tailwindFunctions` option
+/// (e.g., `clsx`, `cn`, `tw`).
+pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
+    let Some(functions) = &options.tailwind_functions else {
         return false;
     };
-
     let Expression::Identifier(ident) = callee else {
         return false;
     };
-
     functions.iter().any(|f| f == ident.name.as_str())
 }
 
-/// Writes a template element with Tailwind CSS class sorting support.
+// ============================================================================
+// Whitespace Collapse Logic
+// ============================================================================
+
+/// Controls whether whitespace can be trimmed at string boundaries.
 ///
-/// Implements ignoreFirst/ignoreLast/collapseWhitespace logic:
-/// - ignoreFirst: class touching previous expression (no leading whitespace) is preserved
-/// - ignoreLast: class touching next expression (no trailing whitespace) is preserved
-/// - collapseWhitespace: multiple spaces normalized to single space
+/// When `start` or `end` is `false`, a single space must be preserved
+/// at that boundary to maintain proper class separation.
 ///
-/// Based on <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566>
+/// Based on [prettier-plugin-tailwindcss's `canCollapseWhitespaceIn`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L607-L648).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CollapseWhitespace {
+    /// `true` = can trim leading whitespace, `false` = preserve one space
+    pub start: bool,
+    /// `true` = can trim trailing whitespace, `false` = preserve one space
+    pub end: bool,
+}
+
+impl CollapseWhitespace {
+    fn new() -> Self {
+        Self { start: true, end: true }
+    }
+}
+
+/// Determines whitespace collapse rules for a string/template literal based on context.
+///
+/// # Rules
+///
+/// 1. **Template expression context** (`${...}`):
+///    - If quasi before doesn't end with whitespace → preserve leading space
+///    - If quasi after doesn't start with whitespace → preserve trailing space
+///
+/// 2. **Binary concat context** (`a + "..." + b`):
+///    - On left side of `+` → preserve trailing space (need separation from `+ right`)
+///    - On right side of `+` → preserve leading space (need separation from `left +`)
+///
+/// # Examples
+///
+/// ```text
+/// // Template expression - quasi "header" has no trailing whitespace
+/// `header${x ? " active" : ""}`
+/// //           ^ preserve leading space
+///
+/// // Binary concat - string in middle needs both spaces preserved
+/// className={a + " p-4 " + b}
+/// //             ^     ^ preserve both
+///
+/// // Binary concat - template on right side only
+/// a + ` flex p-4`     // leading space preserved (from `a +`)
+///     ^
+///
+/// // Binary concat - template on left side only
+/// `flex p-4 ` + b     // trailing space preserved (for `+ b`)
+///          ^
+/// ```
+pub fn can_collapse_whitespace<'a, 'b>(
+    span: Span,
+    ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> CollapseWhitespace
+where
+    'a: 'b,
+{
+    let mut collapse = CollapseWhitespace::new();
+
+    // 1. Check template expression context (O(1) via context stack)
+    if let Some(ctx) = f.context().tailwind_context()
+        && ctx.in_template_expression
+    {
+        if !ctx.quasi_before_has_trailing_ws {
+            collapse.start = false;
+        }
+        if !ctx.quasi_after_has_leading_ws {
+            collapse.end = false;
+        }
+    }
+
+    // 2. Check binary concat context (walk parent chain)
+    for ancestor in ancestors {
+        let AstNodes::BinaryExpression(binary) = ancestor else {
+            break;
+        };
+
+        if binary.operator() != BinaryOperator::Addition {
+            break;
+        }
+
+        let left = binary.left().span();
+        let right = binary.right().span();
+
+        // Left operand needs trailing space for separation from `+ right`
+        if left.contains_inclusive(span) {
+            collapse.end = false;
+        }
+        // Right operand needs leading space for separation from `left +`
+        if right.contains_inclusive(span) {
+            collapse.start = false;
+        }
+    }
+
+    collapse
+}
+
+// ============================================================================
+// Write Functions
+// ============================================================================
+
+/// Writes a string literal with Tailwind class sorting.
+///
+/// Handles whitespace based on context:
+/// - Trims and normalizes whitespace by default
+/// - Preserves boundary spaces when required by concat/template context
+/// - With `preserve_whitespace`, outputs content unchanged
+pub fn write_tailwind_string_literal<'a>(
+    string_literal: &AstNode<'a, StringLiteral<'a>>,
+    preserve_whitespace: bool,
+    f: &mut Formatter<'_, 'a>,
+) {
+    if preserve_whitespace {
+        let content = f.source_text().text_for(&string_literal.span.shrink(1));
+        let index = f.context_mut().add_tailwind_class(content.to_string());
+        f.write_element(FormatElement::TailwindClass(index));
+        return;
+    }
+
+    let content = string_literal.value().as_str();
+    let trimmed = content.trim();
+
+    // Whitespace-only → normalize to single space
+    if trimmed.is_empty() {
+        if !content.is_empty() {
+            write!(f, text(" "));
+        }
+        return;
+    }
+
+    let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(), f);
+    let has_leading_ws = content.starts_with(|c: char| c.is_ascii_whitespace());
+    let has_trailing_ws = content.ends_with(|c: char| c.is_ascii_whitespace());
+
+    // Leading space
+    if has_leading_ws && !collapse.start {
+        write!(f, text(" "));
+    }
+
+    // Sorted content
+    let index = f.context_mut().add_tailwind_class(trimmed.to_string());
+    f.write_element(FormatElement::TailwindClass(index));
+
+    // Trailing space
+    if has_trailing_ws && !collapse.end {
+        write!(f, text(" "));
+    }
+}
+
+/// Writes a template element (quasi) with Tailwind class sorting.
+///
+/// Template elements need special handling because classes can "touch"
+/// adjacent expressions without whitespace separation:
+///
+/// ```text
+/// `${variant}items-center p-4`
+/// //         ^^^^^^^^^^^^ "items-center" touches ${variant}, not sorted
+/// //                      ^^^ "p-4" is separated by space, will be sorted
+/// ```
+///
+/// # Content Structure
+///
+/// Content is split into three parts:
+/// - **prefix**: Class touching previous expression (not sorted)
+/// - **sortable**: Classes separated by whitespace (sorted)
+/// - **suffix**: Class touching next expression (not sorted)
+///
+/// Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566).
 pub fn write_tailwind_template_element<'a>(
     element: &AstNode<'a, TemplateElement<'a>>,
     preserve_whitespace: bool,
@@ -68,116 +245,132 @@ pub fn write_tailwind_template_element<'a>(
         return;
     }
 
-    let (quasi_index, expressions_count) = get_template_position(element).unwrap_or((0, 0));
-    let is_first_quasi = quasi_index == 0;
-    let is_last_quasi = quasi_index >= expressions_count;
+    // Check if this is first/last quasi (affects prefix/suffix handling)
+    let (is_first, is_last) = get_template_boundary(element);
 
-    // Determine which boundary classes to ignore (classes touching expressions)
-    let ignore_first = !is_first_quasi && !content.starts_with(|c: char| c.is_ascii_whitespace());
-    let ignore_last = !is_last_quasi && !content.ends_with(|c: char| c.is_ascii_whitespace());
+    // Check if binary expression context requires preserving boundary whitespace
+    let collapse = can_collapse_whitespace_template(element, is_first, is_last, f);
 
-    // Find whitespace positions for splitting
-    let first_ws = ignore_first.then(|| content.find(|c: char| c.is_ascii_whitespace())).flatten();
-    let last_ws = ignore_last.then(|| content.rfind(|c: char| c.is_ascii_whitespace())).flatten();
+    // Split into prefix/sortable/suffix
+    let (prefix, sortable, suffix) = split_template_content(content, is_first, is_last);
 
-    // Split into: prefix (ignored) | sortable | suffix (ignored)
-    let (prefix, sortable, suffix) = match (first_ws, last_ws) {
-        (Some(f), Some(l)) if f < l => (&content[..f], &content[f..=l], &content[l + 1..]),
-        (Some(f), _) => (&content[..f], &content[f..], ""),
-        (None, Some(l)) => ("", &content[..=l], &content[l + 1..]),
-        (None, None) => ("", content, ""),
-    };
-
-    let has_prefix = !prefix.is_empty();
-    let has_suffix = !suffix.is_empty();
-
-    // Write prefix (class attached to previous expression)
-    if has_prefix {
+    // Write prefix (unsorted class touching previous expression)
+    if !prefix.is_empty() {
         write!(f, text(prefix));
     }
 
-    // Write sortable content with normalized whitespace
+    // Write sortable content
     let trimmed = sortable.trim();
+
     if trimmed.is_empty() {
-        // Whitespace-only: normalize to single space
+        // Whitespace-only → normalize to single space
         if !sortable.is_empty() {
             write!(f, text(" "));
         }
     } else {
-        // Leading space: after expression or after ignored prefix
-        if !is_first_quasi || has_prefix {
+        let has_leading_ws = sortable.starts_with(|c: char| c.is_ascii_whitespace());
+        let has_trailing_ws = sortable.ends_with(|c: char| c.is_ascii_whitespace());
+
+        // Leading space: required if not at start of template, or if binary context requires it
+        let need_leading = !is_first || !prefix.is_empty() || (has_leading_ws && !collapse.start);
+        if need_leading {
             write!(f, text(" "));
         }
 
         let index = f.context_mut().add_tailwind_class(trimmed.to_string());
         f.write_element(FormatElement::TailwindClass(index));
 
-        // Trailing space: before expression or before ignored suffix
-        if !is_last_quasi || has_suffix {
+        // Trailing space: required if not at end of template, or if binary context requires it
+        let need_trailing = !is_last || !suffix.is_empty() || (has_trailing_ws && !collapse.end);
+        if need_trailing {
             write!(f, text(" "));
         }
     }
 
-    // Write suffix (class attached to next expression)
-    if has_suffix {
+    // Write suffix (unsorted class touching next expression)
+    if !suffix.is_empty() {
         write!(f, text(suffix));
     }
 }
 
-pub fn write_tailwind_string_literal<'a>(
-    string_literal: &AstNode<'a, StringLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) {
-    let content = f.source_text().text_for(string_literal);
-    let is_direct_child = matches!(string_literal.parent, AstNodes::JSXAttribute(_));
+/// Determines whitespace collapse rules for a template element based on binary expression context.
+fn can_collapse_whitespace_template<'a>(
+    element: &AstNode<'a, TemplateElement<'a>>,
+    is_first: bool,
+    is_last: bool,
+    f: &Formatter<'_, 'a>,
+) -> CollapseWhitespace {
+    // Only first/last quasis can be affected by binary expression context
+    if !is_first && !is_last {
+        return CollapseWhitespace::new();
+    }
 
-    // For nested string literals (not direct JSXAttribute children), preserve whitespace
-    // because the sorter will trim it otherwise
-    if is_direct_child {
-        // Direct attribute value - sorter handles everything
-        let index = f.context_mut().add_tailwind_class(content.to_string());
-        f.write_element(FormatElement::TailwindClass(index));
+    can_collapse_whitespace(element.span, element.ancestors().skip(1), f)
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Splits template content into (prefix, sortable, suffix).
+///
+/// - **prefix**: First class if it touches previous expression (no leading whitespace)
+/// - **suffix**: Last class if it touches next expression (no trailing whitespace)
+/// - **sortable**: Everything in between
+///
+/// # Examples
+///
+/// ```text
+/// // Input: "items-center p-4 m-2", is_first=false, is_last=true
+/// // "items-center" touches prev expr → prefix
+/// // "p-4 m-2" will be sorted → sortable
+/// // No suffix (is_last=true)
+/// Result: ("items-center", " p-4 m-2", "")
+///
+/// // Input: " flex p-4", is_first=true, is_last=true
+/// // Leading space → no prefix
+/// // Everything is sortable
+/// Result: ("", " flex p-4", "")
+/// ```
+fn split_template_content(content: &str, is_first: bool, is_last: bool) -> (&str, &str, &str) {
+    let has_leading_ws = content.starts_with(|c: char| c.is_ascii_whitespace());
+    let has_trailing_ws = content.ends_with(|c: char| c.is_ascii_whitespace());
+
+    // Determine what to ignore (not sort)
+    let has_prefix = !is_first && !has_leading_ws;
+    let has_suffix = !is_last && !has_trailing_ws;
+
+    // Find split points
+    let prefix_end =
+        if has_prefix { content.find(|c: char| c.is_ascii_whitespace()) } else { None };
+    let suffix_start = if has_suffix {
+        content.rfind(|c: char| c.is_ascii_whitespace()).map(|i| i + 1)
     } else {
-        // Nested string literal - preserve leading/trailing whitespace
-        let leading_ws: String = content.chars().take_while(char::is_ascii_whitespace).collect();
-        let trailing_ws: String =
-            content.chars().rev().take_while(char::is_ascii_whitespace).collect();
-        let trimmed = content.trim();
+        None
+    };
 
-        // Write leading whitespace
-        if !leading_ws.is_empty() {
-            let ws = f.context().allocator().alloc_str(&leading_ws);
-            write!(f, text(ws));
-        }
-
-        // Sort the trimmed content (if any)
-        if !trimmed.is_empty() {
-            let index = f.context_mut().add_tailwind_class(trimmed.to_string());
-            f.write_element(FormatElement::TailwindClass(index));
-        }
-
-        // Write trailing whitespace
-        if !trailing_ws.is_empty() {
-            let ws = f.context().allocator().alloc_str(&trailing_ws);
-            write!(f, text(ws));
-        }
+    match (prefix_end, suffix_start) {
+        // Both prefix and suffix
+        (Some(pe), Some(ss)) if pe < ss => (&content[..pe], &content[pe..ss], &content[ss..]),
+        // Only prefix (suffix_start overlaps or doesn't exist)
+        (Some(pe), _) => (&content[..pe], &content[pe..], ""),
+        // Only suffix
+        (None, Some(ss)) => ("", &content[..ss], &content[ss..]),
+        // Neither
+        (None, None) => ("", content, ""),
     }
 }
 
-/// Returns (quasi_index, expressions_count) for a template element within its parent template literal.
-fn get_template_position(element: &AstNode<'_, TemplateElement<'_>>) -> Option<(usize, usize)> {
+/// Returns (is_first, is_last) for a template element by comparing with first/last quasis.
+fn get_template_boundary(element: &AstNode<'_, TemplateElement<'_>>) -> (bool, bool) {
+    let span = element.span;
     match element.parent {
         AstNodes::TemplateLiteral(tl) => {
-            let expressions_count = tl.expressions.len();
-            // Find our index by comparing spans
-            let quasi_index = tl.quasis.iter().position(|q| q.span == element.span).unwrap_or(0);
-            Some((quasi_index, expressions_count))
+            let is_first = tl.quasis.first().is_some_and(|q| q.span == span);
+            let is_last = tl.quasis.last().is_some_and(|q| q.span == span);
+            (is_first, is_last)
         }
-        AstNodes::TSTemplateLiteralType(tl) => {
-            let expressions_count = tl.types.len();
-            let quasi_index = tl.quasis.iter().position(|q| q.span == element.span).unwrap_or(0);
-            Some((quasi_index, expressions_count))
-        }
-        _ => None,
+
+        _ => (true, true), // Default: treat as standalone (no prefix/suffix needed)
     }
 }

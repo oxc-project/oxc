@@ -11,7 +11,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, VecBuffer,
+        Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -62,8 +62,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
             .is_some_and(|opts| is_tailwind_function_call(&self.tag, opts));
 
         if is_tailwind {
-            f.context_mut()
-                .push_tailwind_context(crate::formatter::TailwindContextEntry { is_jsx: false });
+            f.context_mut().push_tailwind_context(TailwindContextEntry::new(false));
         }
 
         if try_format_embedded_template(self, f) {
@@ -226,8 +225,11 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
             Self::TSTemplateLiteralType(t) => TemplateExpressionIterator::TSType(t.types().iter()),
         };
 
-        for quasi in quasis {
-            write!(f, quasi);
+        // Check if we're in a Tailwind context - if so, we need to push expression context
+        let tailwind_ctx = f.context().tailwind_context().copied();
+
+        for (i, quasi) in quasis.iter().enumerate() {
+            write!(f, *quasi);
 
             let quasi_text = quasi.value.raw.as_str();
 
@@ -237,7 +239,30 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
                     TemplateElementIndention::after_last_new_line(quasi_text, tab_width, indention);
                 let after_new_line = quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
+
+                // If in Tailwind context, push template expression context with quasi whitespace info
+                if let Some(ctx) = tailwind_ctx {
+                    let quasi_before_has_trailing_ws =
+                        quasi_text.ends_with(|c: char| c.is_ascii_whitespace());
+                    let quasi_after_has_leading_ws = quasis.get(i + 1).is_some_and(|q| {
+                        q.value.raw.as_str().starts_with(|c: char| c.is_ascii_whitespace())
+                    });
+
+                    f.context_mut().push_tailwind_context(
+                        TailwindContextEntry::template_expression(
+                            ctx.is_jsx,
+                            quasi_before_has_trailing_ws,
+                            quasi_after_has_leading_ws,
+                        ),
+                    );
+                }
+
                 FormatTemplateExpression::new(&expr, options).fmt(f);
+
+                // Pop the template expression context
+                if tailwind_ctx.is_some() {
+                    f.context_mut().pop_tailwind_context();
+                }
             }
         }
 

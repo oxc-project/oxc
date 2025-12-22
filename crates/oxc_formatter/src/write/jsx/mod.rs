@@ -331,7 +331,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
                 .is_some_and(|opts| is_tailwind_jsx_attribute(&self.name, opts));
 
             if is_tailwind {
-                f.context_mut().push_tailwind_context(TailwindContextEntry { is_jsx: true });
+                f.context_mut().push_tailwind_context(TailwindContextEntry::new(true));
             }
 
             write!(f, ["=", value]);

@@ -16,6 +16,41 @@ use super::{Comments, SourceText};
 pub struct TailwindContextEntry {
     /// Whether the context is inside a JSX attribute (affects quote style).
     pub is_jsx: bool,
+    /// Whether we're inside a template literal expression (between `${` and `}`).
+    /// If true, we need to consider whitespace in adjacent quasis.
+    pub in_template_expression: bool,
+    /// Whether the quasi before this expression ends with whitespace.
+    /// Only relevant when `in_template_expression` is true.
+    pub quasi_before_has_trailing_ws: bool,
+    /// Whether the quasi after this expression starts with whitespace.
+    /// Only relevant when `in_template_expression` is true.
+    pub quasi_after_has_leading_ws: bool,
+}
+
+impl TailwindContextEntry {
+    /// Create a new context entry for JSX attributes or function calls.
+    pub fn new(is_jsx: bool) -> Self {
+        Self {
+            is_jsx,
+            in_template_expression: false,
+            quasi_before_has_trailing_ws: true, // Default: can collapse
+            quasi_after_has_leading_ws: true,   // Default: can collapse
+        }
+    }
+
+    /// Create a new context entry for template literal expressions.
+    pub fn template_expression(
+        is_jsx: bool,
+        quasi_before_has_trailing_ws: bool,
+        quasi_after_has_leading_ws: bool,
+    ) -> Self {
+        Self {
+            is_jsx,
+            in_template_expression: true,
+            quasi_before_has_trailing_ws,
+            quasi_after_has_leading_ws,
+        }
+    }
 }
 
 /// Context object storing data relevant when formatting an object.
