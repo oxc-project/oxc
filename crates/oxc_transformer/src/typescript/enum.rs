@@ -240,7 +240,7 @@ impl<'a> TypeScriptEnum<'a> {
                         IdentifierReferenceRename::new(
                             param_binding.name,
                             enum_scope_id,
-                            previous_enum_members.clone(),
+                            &previous_enum_members,
                             ctx,
                         )
                         .visit_expression(&mut initializer);
@@ -309,7 +309,7 @@ impl<'a> TypeScriptEnum<'a> {
             statements.push(ast.statement_expression(member.span, expr));
         }
 
-        self.enums.insert(param_binding.name, previous_enum_members.clone());
+        self.enums.insert(param_binding.name, previous_enum_members);
 
         let enum_ref = param_binding.create_read_expression(ctx);
         // return Foo;
@@ -559,18 +559,18 @@ impl<'a> TypeScriptEnum<'a> {
 ///   d = A.c,
 /// }
 /// ```
-struct IdentifierReferenceRename<'a, 'ctx> {
+struct IdentifierReferenceRename<'a, 'ctx, 'members> {
     enum_name: Atom<'a>,
-    previous_enum_members: PrevMembers<'a>,
+    previous_enum_members: &'members PrevMembers<'a>,
     scope_stack: NonEmptyStack<ScopeId>,
     ctx: &'ctx TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
+impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
     fn new(
         enum_name: Atom<'a>,
         enum_scope_id: ScopeId,
-        previous_enum_members: PrevMembers<'a>,
+        previous_enum_members: &'members PrevMembers<'a>,
         ctx: &'ctx TraverseCtx<'a>,
     ) -> Self {
         IdentifierReferenceRename {
@@ -582,7 +582,7 @@ impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
     }
 }
 
-impl IdentifierReferenceRename<'_, '_> {
+impl IdentifierReferenceRename<'_, '_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
         // Don't need to rename the identifier if it's not a member of the enum,
         if !self.previous_enum_members.contains_key(&ident.name) {
@@ -626,7 +626,7 @@ impl IdentifierReferenceRename<'_, '_> {
     }
 }
 
-impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
+impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         self.scope_stack.push(scope_id.get().unwrap());
     }
