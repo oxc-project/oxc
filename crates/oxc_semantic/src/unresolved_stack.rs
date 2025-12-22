@@ -105,10 +105,12 @@ impl<'a> UnresolvedReferencesStack<'a> {
     }
 
     #[inline]
-    pub(crate) fn into_root(self) -> TempUnresolvedReferences<'a> {
+    pub(crate) fn into_root(mut self) -> TempUnresolvedReferences<'a> {
         // SAFETY: Stack starts with a non-zero size and never shrinks.
-        // This assertion removes bounds check in `.next()`.
+        // This assertion removes bounds check in `swap_remove`.
         unsafe { assert_unchecked!(!self.stack.is_empty()) };
-        self.stack.into_iter().next().unwrap()
+        // Use `swap_remove(0)` instead of `into_iter().next().unwrap()` to avoid
+        // creating an iterator just to get the first element.
+        self.stack.swap_remove(0)
     }
 }
