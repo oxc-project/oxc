@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// ```
     WarnTodo,
     vitest,
-    correctness
+    correctness,
 );
 
 impl Rule for WarnTodo {
@@ -98,28 +98,53 @@ impl WarnTodo {
 fn test() {
     use crate::tester::Tester;
 
+    /*
+     * Currently the responsible to set what frameworks are active or not is not `with_vitest_plugin` or oxlint config.
+     * The code that set what test framewors are active is ContextHost::sniff_for_frameworks, and the current detection lead to a
+     * a false negative. To detect if the current source code belongs to vitest is based if a `vitest` import exist, if not, assumes
+     * we are on a possible jest test. On top of that, the method `frameworks::is_jestlike_file` most of the times is going to be true, at least in
+     * our current situation. So this lead that the ContextHost can have jest and vitest active **at same time**.
+     *
+     * This detection isn't compatible on how `parse_general_jest_fn_call` handle if a node is valid or not. To make it simple:
+     *
+     * - Jest file: ctx.frameworks().is_jest() is true && ctx.frameworks().is_vitest() is false
+     * - Vitest file: ctx.frameworks().is_jest() is true && ctx.frameworks().is_vitest is true
+     *
+     * And if you are dealing with non compatible modifiers or methods, that only exists in vitest, it will fail as in jest doesn't exist.
+     *
+     * In case of dealing with syntax that only exists in vitest, add an import of `vitest` to force the ContextHost to detect we are dealing with vitest.
+     * This probably will allow reuse allow of the methods that rely on this false negative detection.
+     */
+    macro_rules! vitest_context {
+        ($test: literal) => {
+            concat!("import * as vi from 'vitest'\n\n", $test)
+        };
+    }
+
     let pass = vec![
-        ("describe('foo', function () {})", None),
-        ("it('foo', function () {})", None),
-        ("it.concurrent('foo', function () {})", None),
-        ("test('foo', function () {})", None),
-        ("test.concurrent('foo', function () {})", None),
-        ("describe.only('foo', function () {})", None),
-        ("it.only('foo', function () {})", None),
-        ("it.each()('foo', function () {})", None),
+        (vitest_context!("describe('foo', function () {})"), None),
+        (vitest_context!("it('foo', function () {})"), None),
+        (vitest_context!("it.concurrent('foo', function () {})"), None),
+        (vitest_context!("test('foo', function () {})"), None),
+        (vitest_context!("test.concurrent('foo', function () {})"), None),
+        (vitest_context!("describe.only('foo', function () {})"), None),
+        (vitest_context!("it.only('foo', function () {})"), None),
+        (vitest_context!("it.each()('foo', function () {})"), None),
     ];
 
     let fail = vec![
-        ("describe.todo('foo', function () {})", None),
-        ("it.todo('foo', function () {})", None),
-        ("test.todo('foo', function () {})", None),
-        ("describe.todo.each([])('foo', function () {})", None),
-        ("it.todo.each([])('foo', function () {})", None),
-        ("test.todo.each([])('foo', function () {})", None),
-        ("describe.only.todo('foo', function () {})", None),
-        ("it.only.todo('foo', function () {})", None),
-        ("test.only.todo('foo', function () {})", None),
+        (vitest_context!("describe.todo('foo', function () {})"), None),
+        (vitest_context!("it.todo('foo', function () {})"), None),
+        (vitest_context!("test.todo('foo', function () {})"), None),
+        (vitest_context!("describe.todo.each([])('foo', function () {})"), None),
+        (vitest_context!("it.todo.each([])('foo', function () {})"), None),
+        (vitest_context!("test.todo.each([])('foo', function () {})"), None),
+        (vitest_context!("describe.only.todo('foo', function () {})"), None),
+        (vitest_context!("it.only.todo('foo', function () {})"), None),
+        (vitest_context!("test.only.todo('foo', function () {})"), None),
     ];
 
-    Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
