@@ -18,8 +18,10 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(ident) => {
                 ident.name == "arguments"
                     && ctx.is_global_reference(ident)
+                    // arguments can be reassigned in non-strict mode
+                    && ctx.current_scope_flags().is_strict_mode()
                     // check if any scope in a chain is a non-arrow function
-                    && ctx.scoping().scope_ancestors(ctx.current_scope_id()).any(|scope| {
+                    && ctx.ancestor_scopes().any(|scope| {
                         let scope_flags = ctx.scoping().scope_flags(scope);
                         scope_flags.is_function() && !scope_flags.is_arrow()
                     })
@@ -239,6 +241,11 @@ mod test {
         test_options(
             "function foo() {return (()=>{ var []=arguments })()};foo()",
             "function foo() {arguments;} foo();",
+            &options,
+        );
+        test_same_options_source_type(
+            "globalThis.f = function () { var [] = arguments }",
+            SourceType::cjs(),
             &options,
         );
         test_same_options("var [] = arguments", &options);
