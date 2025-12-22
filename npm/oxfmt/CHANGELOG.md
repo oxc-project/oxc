@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.20.0] - 2025-12-22
+
+### 🚀 Features
+
+- 97a02d1 oxfmt: Add `insertFinalNewline` option (#17251) (leaysgur)
+
 ## [0.18.0] - 2025-12-15
 
 ### 🚀 Features

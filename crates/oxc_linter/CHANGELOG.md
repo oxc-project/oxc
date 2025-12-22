@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.35.0] - 2025-12-22
+
+### 🚀 Features
+
+- 951a2a2 linter: Implement vue/no-deprecated-destroyed-lifecycle (#17119) (Tu Shaokun)
+- 9348f10 linter: Implement eslint/max-statements (#15804) (Pascal Chorus)
+- 0f63e75 linter: Implement react/no-unsafe (#16532) (Kenzo Wada)
+- 9e624c9 linter/react: Add `version` to `ReactPluginSettings` (#17169) (camc314)
+- ffc1674 linter: Add suggestion fix for unicorn/require-module-attributes (#17168) (camc314)
+- 16d9dc2 linter: Implement vitest/prefer-called-times (#17051) (秦宇航)
+- 30fb206 linter: Add `unicorn/require-module-attributes` rule (#17166) (Mikhail Baev)
+- 5b5f2fd linter/no-base-to-string: Add checkUnknown option (#17139) (camc314)
+- d03b855 linter/no-unsafe-member-access: Add allowOptionalChaining option (#17138) (camc314)
+- b86a134 linter/no-unnecessary-type-assertion: Add checkLiteralConstAssertions option (#17137) (camc314)
+- 09e8e31 linter: Implement `unicorn/no-immediate-mutation` rule (#17118) (Tu Shaokun)
+- 3e2ae7b regular_expression: Improve error messages (#16953) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- c95a0ec linter: `valid-title`: fix diagnostic quoted in strings (#17180) (camchenry)
+- c08e6df linter/exhaustive-deps: Fix fixer incorrectly adding property chain from destructuring pattern (#17167) (camc314)
+- 5a7fcd1 linter/no-unused-vars: Correctly detect unused symbols in TypeScript namespaces (#17129) (camc314)
+- 2c45017 linter: Resolve import/extensions false positives and align with ESLint behavior (#14602) (Tyler Earls)
+- aba2795 linter/no-single-promise-in-promise-methods: Preserve array structure in fixer for Promise.all (#17128) (camc314)
+- bfd4a1e linter/no-unused-private-class-members: Handle sequence expression correctly (#17127) (camc314)
+
+### ⚡ Performance
+
+- b8e321c linter/curly: Remove iterating on all nodes (#17223) (camc314)
+- c48c406 linter/curly: Avoid additional parent AST lookup (#17222) (camc314)
+
+### 📚 Documentation
+
+- e14db66 linter: Ensure that the docs render default values for various rules that use enum config options (#17192) (connorshea)
+- 9b10c80 linter: Fix/improve the configuration docs for no-unused-vars (#17188) (connorshea)
+- e7d8c88 linter: Improve the `react/no-unsafe` rule's config docs. (#17194) (connorshea)
+- c7cbe69 linter: Improve the documentation for the import/extensions rule. (#17162) (connorshea)
+
 ## [1.34.0] - 2025-12-19
 
 ### 🚀 Features
