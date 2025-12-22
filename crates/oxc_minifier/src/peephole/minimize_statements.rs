@@ -509,50 +509,43 @@ impl<'a> PeepholeOptimizations {
             let init_val = init_iter.next();
 
             if let Some(id) = id_item {
-                if let BindingPattern::AssignmentPattern(pattern) = id {
+                if let BindingPattern::AssignmentPattern(mut pattern) = id {
                     let init_value_type = init_val.as_ref().map(|elem| elem.value_type(ctx));
-                    // handle cases like [a = b] = [c] where c is not undefined
-                    if let Some(expr_element) = init_val
-                        && !init_value_type.is_some_and(ValueType::is_undefined)
-                    {
-                        // if we do not know the type of the init value, we need to keep the assignment pattern
-                        if init_value_type.is_some_and(ValueType::is_undetermined) {
-                            result.push(ctx.ast.variable_declarator(
-                                pattern.span(),
-                                decl.kind,
-                                ctx.ast.binding_pattern_array_pattern(
-                                    decl.span,
-                                    ctx.ast.vec1(Some(BindingPattern::AssignmentPattern(pattern))),
-                                    NONE,
-                                ),
-                                NONE,
-                                Some(ctx.ast.expression_array(
-                                    expr_element.span(),
-                                    ctx.ast.vec1(expr_element),
-                                )),
-                                decl.definite,
-                            ));
-                        } else {
-                            // if value is determined, we can simplify it `[a = b] = [c]` => `a = c`
-                            let pattern_unbox = pattern.unbox();
-                            result.push(ctx.ast.variable_declarator(
-                                pattern_unbox.span(),
-                                decl.kind,
-                                pattern_unbox.left,
-                                NONE,
-                                Some(expr_element.into_expression()),
-                                decl.definite,
-                            ));
-                        }
-                    } else {
-                        // handle cases like [a = b] = [,] where init is elision or undefined
-                        let pattern_unbox = pattern.unbox();
+
+                    if init_value_type.is_none_or(ValueType::is_undefined) {
+                        // if value is undefined, `[a = b] = [undefined]` => `a = b`
                         result.push(ctx.ast.variable_declarator(
-                            pattern_unbox.span(),
+                            pattern.span(),
                             decl.kind,
-                            pattern_unbox.left,
+                            pattern.left.take_in(ctx.ast),
                             NONE,
-                            Some(pattern_unbox.right),
+                            Some(pattern.right.take_in(ctx.ast)),
+                            decl.definite,
+                        ));
+                    } else if init_value_type.is_some_and(ValueType::is_undetermined) {
+                        // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
+                        result.push(ctx.ast.variable_declarator(
+                            pattern.span(),
+                            decl.kind,
+                            ctx.ast.binding_pattern_array_pattern(
+                                decl.span,
+                                ctx.ast.vec1(Some(BindingPattern::AssignmentPattern(pattern))),
+                                NONE,
+                            ),
+                            NONE,
+                            init_val.map(|elem| {
+                                ctx.ast.expression_array(elem.span(), ctx.ast.vec1(elem))
+                            }),
+                            decl.definite,
+                        ));
+                    } else {
+                        // if value is determined, `[a = b] = [c]` => `a = c`
+                        result.push(ctx.ast.variable_declarator(
+                            pattern.span(),
+                            decl.kind,
+                            pattern.left.take_in(ctx.ast),
+                            NONE,
+                            init_val.map(ArrayExpressionElement::into_expression),
                             decl.definite,
                         ));
                     }
