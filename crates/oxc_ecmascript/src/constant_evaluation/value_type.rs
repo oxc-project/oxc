@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
+use crate::{to_numeric::ToNumeric, to_primitive::ToPrimitive, GlobalContext};
 
 /// JavaScript Language Type
 ///
@@ -107,6 +107,22 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
             Expression::StaticMemberExpression(e) => e.value_type(ctx),
             Expression::NewExpression(e) => e.value_type(ctx),
             _ => ValueType::Undetermined,
+        }
+    }
+}
+
+impl<'a> DetermineValueType<'a> for ArrayExpressionElement<'a> {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
+        match self {
+            ArrayExpressionElement::SpreadElement(_) => ValueType::Undetermined,
+            ArrayExpressionElement::Elision(_) => ValueType::Undefined,
+            _ => {
+                if self.is_expression() {
+                    self.to_expression().value_type(ctx)
+                } else {
+                    ValueType::Undetermined
+                }
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 use super::PeepholeOptimizations;
 use crate::{ctx::Ctx, keep_var::KeepVar};
 use oxc_allocator::{Box, TakeIn, Vec};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{ast::*, NONE};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
@@ -450,7 +450,7 @@ impl<'a> PeepholeOptimizations {
     /// - `let [x, y] = [...arr];` -> false
     fn can_simplify_array_to_array_destruction_assignment(
         decl: &VariableDeclarator<'a>,
-        _ctx: &Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
@@ -473,7 +473,7 @@ impl<'a> PeepholeOptimizations {
                 .elements
                 .first()
                 .is_some_and(|e| e.as_ref().is_none_or(BindingPattern::is_assignment_pattern))
-            && !first.is_some_and(ArrayExpressionElement::is_elision)
+            && first.is_none_or(|expr| expr.value_type(ctx).is_undetermined())
         {
             return false;
         }
@@ -506,59 +506,85 @@ impl<'a> PeepholeOptimizations {
         let mut init_iter = init_expr.elements.drain(..);
 
         for id_item in id_pattern.elements.drain(0..index) {
-            let init_item = init_iter.next();
+            let init_val = init_iter.next();
 
-            // if init item is present and its not `[,]` elision, keep it
-            if let Some(init_elem) = init_item
-                && !init_elem.is_elision()
-            {
-                // TODO: if init_elem is not undefined and known we should skip this eg. `[a = 2] = [3]` -> `a = 3`, this check should also be done in can_simplify_array_to_array_destruction_assignment
-                if id_item.as_ref().is_none_or(BindingPattern::is_assignment_pattern) {
-                    result.push(ctx.ast.variable_declarator(
-                        init_elem.span(),
-                        decl.kind,
-                        ctx.ast.binding_pattern_array_pattern(
-                            decl.span,
-                            if id_item.is_none() { ctx.ast.vec() } else { ctx.ast.vec1(id_item) },
+            if let Some(id) = id_item {
+                if let BindingPattern::AssignmentPattern(pattern) = id {
+                    let init_value_type = init_val.as_ref().map(|elem| elem.value_type(ctx));
+                    // handle cases like [a = b] = [c] where c is not undefined
+                    if let Some(expr_element) = init_val
+                        && !init_value_type.is_some_and(ValueType::is_undefined)
+                    {
+                        // if we do not know the type of the init value, we need to keep the assignment pattern
+                        if init_value_type.is_some_and(ValueType::is_undetermined) {
+                            result.push(ctx.ast.variable_declarator(
+                                pattern.span(),
+                                decl.kind,
+                                ctx.ast.binding_pattern_array_pattern(
+                                    decl.span,
+                                    ctx.ast.vec1(Some(BindingPattern::AssignmentPattern(pattern))),
+                                    NONE,
+                                ),
+                                NONE,
+                                Some(ctx.ast.expression_array(
+                                    expr_element.span(),
+                                    ctx.ast.vec1(expr_element),
+                                )),
+                                decl.definite,
+                            ));
+                        } else {
+                            // if value is determined, we can simplify it `[a = b] = [c]` => `a = c`
+                            let pattern_unbox = pattern.unbox();
+                            result.push(ctx.ast.variable_declarator(
+                                pattern_unbox.span(),
+                                decl.kind,
+                                pattern_unbox.left,
+                                NONE,
+                                Some(expr_element.into_expression()),
+                                decl.definite,
+                            ));
+                        }
+                    } else {
+                        // handle cases like [a = b] = [,] where init is elision or undefined
+                        let pattern_unbox = pattern.unbox();
+                        result.push(ctx.ast.variable_declarator(
+                            pattern_unbox.span(),
+                            decl.kind,
+                            pattern_unbox.left,
                             NONE,
-                        ),
-                        NONE,
-                        Some(ctx.ast.expression_array(init_elem.span(), ctx.ast.vec1(init_elem))),
-                        decl.definite,
-                    ));
+                            Some(pattern_unbox.right),
+                            decl.definite,
+                        ));
+                    }
                 } else {
-                    result.push(ctx.ast.variable_declarator(
-                        init_elem.span(),
-                        decl.kind,
-                        id_item.unwrap(),
-                        NONE,
-                        Some(init_elem.into_expression()),
-                        decl.definite,
-                    ));
-                }
-            }
-            // check for holes [,] = ????
-            else if let Some(id) = id_item {
-                if let BindingPattern::AssignmentPattern(id_pattern) = id {
-                    let id_pattern_unbox = id_pattern.unbox();
-                    result.push(ctx.ast.variable_declarator(
-                        id_pattern_unbox.span(),
-                        decl.kind,
-                        id_pattern_unbox.left,
-                        NONE,
-                        Some(id_pattern_unbox.right),
-                        decl.definite,
-                    ));
-                } else {
+                    // `[a, b] = [c, d]` => `a = c, b = d`
                     result.push(ctx.ast.variable_declarator(
                         id.span(),
                         decl.kind,
                         id,
                         NONE,
-                        decl.kind.is_const().then(|| ctx.ast.void_0(SPAN)),
+                        if let Some(expr_element) = init_val
+                            && !expr_element.is_elision()
+                        {
+                            Some(expr_element.into_expression())
+                        } else {
+                            decl.kind.is_const().then(|| ctx.ast.void_0(SPAN))
+                        },
                         decl.definite,
                     ));
                 }
+            } else if let Some(expr_element) = init_val
+                && !expr_element.is_elision()
+            {
+                // `[,] = [a]` => `void [] = [a]`
+                result.push(ctx.ast.variable_declarator(
+                    expr_element.span(),
+                    decl.kind,
+                    ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
+                    NONE,
+                    Some(ctx.ast.expression_array(expr_element.span(), ctx.ast.vec1(expr_element))),
+                    decl.definite,
+                ));
             }
         }
 
@@ -2055,51 +2081,47 @@ mod test {
     fn test_array_variable_destruction() {
         test_same("var [] = []");
         test("var [a] = [1]", "var a=1");
-        test("var [a, b, c, d] = [1, 2, 3, 4]", "var a=1,b=2,c=3,d=4");
-        test("var [a, b, c, d] = [1, 2, 3]", "var a=1,b=2,c=3,d");
-        test("var [a, b, c = 2, d] = [1]", "var a=1,b,c=2,d");
-        test("var [a, b, c] = [1, 2, 3, 4]", "var a=1,b=2,c=3,[]=[4]");
-        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a=1,b=2,[c=2]=[3],[]=[4]");
-        test("var [a, b, c = 3] = [1, 2]", "var a=1,b=2,c=3");
-        test("var [a, b] = [1, 2, 3]", "var a=1,b=2,[]=[3]");
-        test("var [a] = [123, 2222, 2222]", "var a=123,[]=[2222,2222];");
-        test("const [a] = []", "const a=void 0");
+        test("var [a, b, c, d] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, d = 4");
+        test("var [a, b, c, d] = [1, 2, 3]", "var a = 1, b = 2, c = 3, d");
+        test("var [a, b, c = 2, d] = [1]", "var a = 1, b, c = 2, d");
+        test("var [a, b, c] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, [] = [4]");
+        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, [] = [4]");
+        test("var [a, b, c = 3] = [1, 2]", "var a = 1, b = 2, c = 3");
+        test("var [a, b] = [1, 2, 3]", "var a = 1, b = 2, [] = [3]");
+        test("var [a] = [123, 2222, 2222]", "var a = 123, [] = [2222, 2222]");
+        test("const [a] = []", "const a = void 0");
         // spread
         test("var [...a] = [...b]", "var [...a] = [...b]");
         test("var [a, a, ...d] = []", "var a, a, [...d] = []");
         test("var [a, ...d] = []", "var a, [...d] = []");
-        test("var [a, ...d] = [1, ...f]", "var a=1,[...d]=[...f]");
-        test("var [a, ...d] = [1, foo]", "var a=1,[...d]=[foo]");
-        test("var [a, b, c, ...d] = [1, 2, ...foo]", "var a=1,b=2,[c,...d]=[...foo]");
-        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a=1,b=2,[...c]=[3,...foo]");
+        test("var [a, ...d] = [1, ...f]", "var a = 1, [...d] = [...f]");
+        test("var [a, ...d] = [1, foo]", "var a = 1, [...d] = [foo] ");
+        test("var [a, b, c, ...d] = [1, 2, ...foo]", "var a = 1, b = 2, [c, ...d] = [...foo]");
+        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a = 1, b = 2, [...c] = [3, ...foo]");
         test("var [a, b] = [...c, ...d]", "var [a, b] = [...c, ...d]");
-        test("var [a, b] = [...c, c, d]", "var [a,b] = [...c,c,d]");
+        test("var [a, b] = [...c, c, d]", "var [a,b] = [...c, c, d]");
         // defaults
-        test("var [a = 1] = []", "var a = 1;");
-        test_same("var [a = 1] = [void 0]");
-        test("var [a = 1] = [undefined]", "var [a = 1] = [void 0]");
-        test_same("var [a = 1] = [null]");
+        test("var [a = 1] = []", "var a = 1");
+        test("var [a = 1] = [void 0]", "var a = 1");
+        test("var [a = 1] = [null]", "var a = null");
         test_same("var [a = 1] = [foo]");
-        test_same("var [a = foo] = [2]");
+        test("var [a = foo] = [2]", "var a = 2");
         test("var [a = foo] = [,]", "var a = foo");
         // holes
-        test("var [,,,] = [,,,]", "");
-        test("var [,,] = [1, 2]", "var []=[1],[]=[2]");
+        test("var [, , , ] = [, , , ]", "");
+        test("var [, , ] = [1, 2]", "var [] = [1], [] = [2]");
         test("var [a, , c, d] = [, 3, , 4]", "var a, [] = [3], c, d = 4");
-        test(
-            "var [a, , c, d] = [void 0, e, null, f]",
-            "var a = void 0, [] = [e], c = null, d = f;",
-        );
-        test("var [a, , c, d] = [1, 2, 3, 4]", "var a=1,[]=[2],c=3,d=4");
-        test("var [ , , a] = [1, 2, 3, 4]", "var []=[1],[]=[2],a=3,[]=[4]");
-        test("var [ , , ...t] = [1, 2, 3, 4]", "var []=[1],[]=[2],[...t]=[3,4]");
-        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var []=[1],[,...t]=[...a,2,,4]");
-        test("var [a, , b] = [,,,]", "var a, b;");
-        test("const [a, , b] = [,,,]", "const a = void 0, b = void 0;");
+        test("var [a, , c, d] = [void 0, e, null, f]", "var a = void 0, [] = [e], c = null, d = f");
+        test("var [a, , c, d] = [1, 2, 3, 4]", "var a = 1, [] = [2], c = 3, d = 4");
+        test("var [ , , a] = [1, 2, 3, 4]", "var [] = [1], [] = [2], a = 3, [] = [4]");
+        test("var [ , , ...t] = [1, 2, 3, 4]", "var [] = [1], [] = [2], [...t] = [3, 4]");
+        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [] = [1], [, ...t] = [...a, 2, , 4]");
+        test("var [a, , b] = [, , , ]", "var a, b;");
+        test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
         // nested
-        test("var [a, [b, c]] = [1, [2, 3]]", "var a=1,b=2,c=3");
-        test("var [a, [b, [c, d]]] = [1, ...[2, 3]]", "var a=1,[[b,[c,d]]]=[...[2,3]]");
-        test("var [a, [b, [c,]]] = [1, [...2, 3]]", "var a=1,[b,[c]]=[...2,3]");
-        test("var [a, [b, [c,]]] = [1, [2, [...3]]]", "var a=1,b=2,[c]=[...3];");
+        test("var [a, [b, c]] = [1, [2, 3]]", "var a = 1, b = 2, c = 3");
+        test("var [a, [b, [c, d]]] = [1, ...[2, 3]]", "var a = 1, [[b, [c, d]]] = [...[2, 3]]");
+        test("var [a, [b, [c, ]]] = [1, [...2, 3]]", "var a = 1, [b, [c]] = [...2, 3]");
+        test("var [a, [b, [c, ]]] = [1, [2, [...3]]]", "var a = 1, b = 2, [c] = [...3];");
     }
 }
