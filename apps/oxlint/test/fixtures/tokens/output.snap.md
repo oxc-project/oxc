@@ -246,13 +246,6 @@
  8 | `-> export { obj };
    `----
 
-  x tokens-plugin(tokens): Keyword ("const")
-   ,-[files/generic_arrow.ts:1:1]
- 1 | const obj = {
-   : ^^^^^
- 2 |   fn: <T>(arg: T): T => {
-   `----
-
   x tokens-plugin(tokens): Identifier ("obj")
    ,-[files/generic_arrow.ts:1:7]
  1 | const obj = {
