@@ -1,7 +1,7 @@
 use super::PeepholeOptimizations;
 use crate::{ctx::Ctx, keep_var::KeepVar};
 use oxc_allocator::{Box, TakeIn, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},

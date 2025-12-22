@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{to_numeric::ToNumeric, to_primitive::ToPrimitive, GlobalContext};
+use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
 
 /// JavaScript Language Type
 ///
