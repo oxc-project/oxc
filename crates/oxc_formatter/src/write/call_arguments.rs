@@ -1085,8 +1085,15 @@ fn is_react_hook_with_deps_array(
     }
 
     let mut args = arguments.as_ref().iter();
-    if arguments.len() == 3 {
-        args.next();
+
+    // ```js
+    // useImperativeHandle(ref, () => {
+    //   // do something
+    // }, [dep1, dep2, dep2]);
+    // ```
+    // First argument must be an identifier (the ref)
+    if arguments.len() == 3 && !matches!(args.next(), Some(Argument::Identifier(_))) {
+        return false;
     }
 
     match (args.next(), args.next()) {
@@ -1094,7 +1101,7 @@ fn is_react_hook_with_deps_array(
             Some(Argument::ArrowFunctionExpression(callback)),
             Some(Argument::ArrayExpression(deps)),
         ) => {
-            if !callback.params.is_empty() {
+            if callback.params.has_parameter() {
                 return false;
             }
 
