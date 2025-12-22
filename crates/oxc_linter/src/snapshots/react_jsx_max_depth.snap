@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 3 exceeds the configured maximum of 2
+   ╭─[jsx_max_depth.tsx:6:21]
+ 5 │                   <div>
+ 6 │                     <span />
+   ·                     ────────
+ 7 │                   </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 3 exceeds the configured maximum of 2
+   ╭─[jsx_max_depth.tsx:6:21]
+ 5 │                   <>
+ 6 │                     <div />
+   ·                     ───────
+ 7 │                   </>
+   ╰────
