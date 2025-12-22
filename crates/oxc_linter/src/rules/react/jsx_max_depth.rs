@@ -136,17 +136,17 @@ fn test() {
 
     let pass = vec![
         (
-            r#"
+            r"
             const Component = () => (
               <div>
                 <section />
               </div>
             );
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             const Component = () => (
               <div>
                 <div>
@@ -154,11 +154,11 @@ fn test() {
                 </div>
               </div>
             );
-            "#,
+            ",
             Some(serde_json::json!([{ "max": 3 }])),
         ),
         (
-            r#"
+            r"
             const Component = () => (
               <>
                 <div>
@@ -166,14 +166,14 @@ fn test() {
                 </div>
               </>
             );
-            "#,
+            ",
             None,
         ),
     ];
 
     let fail = vec![
         (
-            r#"
+            r"
             const Component = () => (
               <div>
                 <div>
@@ -183,11 +183,11 @@ fn test() {
                 </div>
               </div>
             );
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             const Component = () => (
               <>
                 <div>
@@ -197,7 +197,7 @@ fn test() {
                 </div>
               </>
             );
-            "#,
+            ",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
     ];
