@@ -1150,47 +1150,20 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Check the environment variable first
     if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
         let path = PathBuf::from(&path_str);
-
-        // Resolve relative paths against cwd for better error messages
-        let resolved_path = if path.is_relative() { cwd.join(&path) } else { path.clone() };
-
-        // Try to canonicalize to get the absolute path for error reporting
-        // Falls back to the resolved path if canonicalization fails
-        let resolved_path_display = resolved_path
-            .canonicalize()
-            .map(|p| p.display().to_string())
-            .unwrap_or_else(|_| resolved_path.display().to_string());
-
         if path.is_dir() {
             let tsgolint_path = path.join("tsgolint");
             if tsgolint_path.exists() {
                 return Ok(tsgolint_path);
             }
             return Err(format!(
-                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' points to a directory but 'tsgolint' binary not found inside.\n\
-Resolved path: {resolved_path_display}\n\
-Hint: Either provide the full path to the tsgolint binary, or ensure 'tsgolint' exists in the directory."
+                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' points to a directory but 'tsgolint' binary not found inside."
             ));
         }
         if path.is_file() {
             return Ok(path);
         }
-
-        // Provide helpful error message based on whether the path is relative or absolute
-        let hint = if path.is_relative() {
-            format!(
-                "Resolved path: {resolved_path_display}\n\
-Working directory: {}\n\
-Hint: Relative paths are resolved from the current working directory. Consider using an absolute path instead.",
-                cwd.display()
-            )
-        } else {
-            format!("Hint: Ensure the path exists and points to the tsgolint binary file.")
-        };
-
         return Err(format!(
-            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' does not exist or is not accessible.\n\
-{hint}"
+            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH='{path_str}' does not exist or is not accessible."
         ));
     }
 
@@ -1528,41 +1501,5 @@ mod test {
 
         // Identical rules should be deduplicated
         assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
-    }
-
-    #[test]
-    fn test_try_find_tsgolint_with_nonexistent_path() {
-        use super::try_find_tsgolint_executable;
-        use std::env;
-
-        let cwd = std::path::Path::new("/some/test/dir");
-
-        // Test with absolute path that doesn't exist
-        unsafe {
-            env::set_var("OXLINT_TSGOLINT_PATH", "/nonexistent/path/tsgolint");
-        }
-        let result = try_find_tsgolint_executable(cwd);
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        assert!(err.contains("OXLINT_TSGOLINT_PATH='/nonexistent/path/tsgolint'"));
-        assert!(err.contains("does not exist or is not accessible"));
-
-        // Test with relative path that doesn't exist
-        unsafe {
-            env::set_var("OXLINT_TSGOLINT_PATH", "./node_modules/.bin/tsgolint");
-        }
-        let result = try_find_tsgolint_executable(cwd);
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        assert!(err.contains("OXLINT_TSGOLINT_PATH='./node_modules/.bin/tsgolint'"));
-        assert!(err.contains("does not exist or is not accessible"));
-        assert!(err.contains("Resolved path:"));
-        assert!(err.contains("Working directory:"));
-        assert!(err.contains("Relative paths are resolved from the current working directory"));
-
-        // Clean up
-        unsafe {
-            env::remove_var("OXLINT_TSGOLINT_PATH");
-        }
     }
 }
