@@ -367,6 +367,7 @@ pub(crate) mod react {
     pub mod jsx_fragments;
     pub mod jsx_handler_names;
     pub mod jsx_key;
+    pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_script_url;
@@ -1072,6 +1073,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_curly_brace_presence,
     react::jsx_handler_names,
     react::jsx_key,
+    react::jsx_max_depth,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_script_url,
