@@ -9,7 +9,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn global_require_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected require().").with_label(span)
+    OxcDiagnostic::warn("Unexpected require().")
+        .with_label(span)
+        .with_help("Move require() to top-level module scope")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -161,16 +163,16 @@ fn test() {
         "require('y').foo();",
         "require('y');",
         "function x(){}
-			
-			
+
+
 			x();
-			
-			
+
+
 			if (x > y) {
 				doSomething()
-			
+
 			}
-			
+
 			var x = require('y').foo;",
         "var logger = require(DEBUG ? 'dev-logger' : 'logger');",
         "var logger = DEBUG ? require('dev-logger') : require('logger');",
