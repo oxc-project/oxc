@@ -78,21 +78,20 @@ jobs:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
         run: |
           if [ "${{ matrix.component }}" = "linter" ]; then
-            cargo build --release -p oxc_benchmark --bench linter \
-              --no-default-features --features ${{ matrix.feature }} --features codspeed
+            cargo codspeed build -m simulation -p oxc_benchmark --bench linter \
+              --no-default-features --features ${{ matrix.feature }},codspeed
           else
-            cargo build --release -p oxc_benchmark \
+            cargo codspeed build -m simulation -p oxc_benchmark \
               --bench lexer --bench parser --bench transformer --bench semantic \
               --bench minifier --bench codegen --bench formatter \
-              --no-default-features --features ${{ matrix.feature }} --features codspeed
+              --no-default-features --features ${{ matrix.feature }},codspeed
           fi
           mkdir -p target/codspeed/instrumentation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/instrumentation/oxc_benchmark
+          mv target/bench/deps/${{ matrix.component }}-* target/codspeed/instrumentation/oxc_benchmark
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
-
       - name: Run benchmark
         uses: CodSpeedHQ/action@346a2d8a8d9d38909abd0bc3d23f773110f076ad # v4.4.1
         timeout-minutes: 30
         with:
-          mode: instrumentation
+          mode: simulation
           run: cargo codspeed run ${{ matrix.component }}
