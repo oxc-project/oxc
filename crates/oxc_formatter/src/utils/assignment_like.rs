@@ -172,20 +172,27 @@ impl<'a> AssignmentLike<'a, '_> {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
-                    write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())]);
-                    if let Some(type_annotation) = declarator.type_annotation() {
-                        write!(f, type_annotation);
-                    }
+                    write!(
+                        f,
+                        [
+                            FormatNodeWithoutTrailingComments(&declarator.id()),
+                            declarator.type_annotation()
+                        ]
+                    );
                     format_left_trailing_comments(
                         declarator.id.span().end,
                         should_print_as_leading(init),
                         f,
                     );
                 } else {
-                    write!(f, declarator.id());
-                    if let Some(type_annotation) = declarator.type_annotation() {
-                        write!(f, type_annotation);
-                    }
+                    write!(
+                        f,
+                        [
+                            declarator.id(),
+                            declarator.definite.then_some("!"),
+                            declarator.type_annotation()
+                        ]
+                    );
                 }
                 false
             }

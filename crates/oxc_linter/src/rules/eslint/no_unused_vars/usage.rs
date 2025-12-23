@@ -434,7 +434,11 @@ impl<'a> Symbol<'_, 'a> {
                     // `for (let x = 0; x++; ) {}` is valid usage, as the loop body running is a side-effect
                     if !self.is_in_for_loop_test_or_update(node.id(), ref_span) {
                         // `a.b++` or `a[b] + 1` are not reassignment of `a`
-                        if !argument.is_member_expression() {
+                        let is_member_expr = argument.is_member_expression()
+                            || argument
+                                .get_expression()
+                                .is_some_and(|e| e.get_inner_expression().is_member_expression());
+                        if !is_member_expr {
                             is_used_by_others = false;
                         }
                     }
