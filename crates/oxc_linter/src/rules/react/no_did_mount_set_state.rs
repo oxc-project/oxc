@@ -69,9 +69,30 @@ declare_oxc_lint!(
     ///   }
     /// });
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// The rule accepts a string value `"disallow-in-func"` or an object with a `disallowInFunc` property:
+    ///
+    /// ```json
+    /// {
+    ///   "react/no-did-mount-set-state": ["error", "disallow-in-func"]
+    /// }
+    /// ```
+    ///
+    /// or
+    ///
+    /// ```json
+    /// {
+    ///   "react/no-did-mount-set-state": ["error", { "disallowInFunc": true }]
+    /// }
+    /// ```
+    ///
+    /// - `disallowInFunc` (default: `false`): When `true`, also disallows `setState` calls in nested functions within `componentDidMount`.
     NoDidMountSetState,
     react,
-    correctness
+    correctness,
+    config = NoDidMountSetStateConfig,
 );
 
 impl Rule for NoDidMountSetState {
