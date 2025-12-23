@@ -136,6 +136,17 @@ declare_oxc_lint!(
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/valid-title.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/valid-title": "error"
+    ///   }
+    /// }
+    /// ```
     ValidTitle,
     jest,
     correctness,
@@ -670,6 +681,7 @@ fn test() {
         ),
     ];
 
+    // TODO handle `vitestImports` config option
     let fail = vec![
         (
             "describe('the correct way to do things', function () {})",
