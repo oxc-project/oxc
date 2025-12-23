@@ -74,7 +74,6 @@ impl std::ops::Deref for ConsistentTestFilename {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -98,7 +97,7 @@ declare_oxc_lint!(
     ///
     ConsistentTestFilename,
     vitest,
-    correctness,
+    style,
     config = ConsistentTestFilenameConfig,
 );
 
@@ -135,13 +134,9 @@ impl Rule for ConsistentTestFilename {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let Some(file_path) = ctx.file_path().to_str() else {
-            return;
-        };
+        let Some(file_path) = ctx.file_path().to_str() else { return };
 
-        let Some(file_name) = ctx.file_path().file_name().and_then(OsStr::to_str) else {
-            return;
-        };
+        let Some(file_name) = ctx.file_path().file_name().and_then(OsStr::to_str) else { return };
 
         if !self.all_test_pattern.is_match(file_path) {
             return;
