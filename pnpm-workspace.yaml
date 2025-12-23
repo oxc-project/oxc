@@ -28,7 +28,6 @@ onlyBuiltDependencies:
   - esbuild@0.25.11
 
 patchedDependencies:
-  "@typescript-eslint/scope-manager": patches/@typescript-eslint__scope-manager.patch
   prettier-plugin-tailwindcss@0.7.2: patches/prettier-plugin-tailwindcss@0.7.2.patch
 
 verifyDepsBeforeRun: install

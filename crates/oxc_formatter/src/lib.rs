@@ -34,13 +34,12 @@ use self::formatter::prelude::tag::Label;
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
-    source_text: &'a str,
     options: FormatOptions,
 }
 
 impl<'a> Formatter<'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
-        Self { allocator, source_text: "", options }
+        Self { allocator, options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
