@@ -119,6 +119,7 @@ interface Config {
 interface LanguageOptions {
   sourceType?: SourceType;
   globals?: Globals;
+  env?: Envs;
   parserOptions?: ParserOptions;
 }
 
@@ -164,6 +165,11 @@ type GlobalValue =
  * Globals object.
  */
 type Globals = Record<string, GlobalValue>;
+
+/**
+ * Environments for the file being linted.
+ */
+export type Envs = Record<string, boolean>;
 
 /**
  * Parser options config.
@@ -1074,25 +1080,24 @@ function getParseOptions(test: TestCase): ParseOptions {
 }
 
 /**
- * Get globals as JSON for test case.
+ * Get globals and envs as JSON for test case.
  *
- * Normalizes values to "readonly", "writable", or "off", same as Rust side does.
- *
+ * Normalizes globals values to "readonly", "writable", or "off", same as Rust side does.
  * `null` is only supported in ESLint compatibility mode.
  *
+ * Removes envs which are false, same as Rust side does.
+ *
  * @param test - Test case
- * @returns Globals as JSON string
+ * @returns Globals and envs as JSON string of form `{ "globals": { ... }, "envs": { ... } }`
  */
 function getGlobalsJson(test: TestCase): string {
-  const globals = test.languageOptions?.globals;
-  if (globals == null) return "{}";
-
-  // Normalize values to `readonly`, `writable`, or `off` - same as Rust side does
-  const cloned = { ...globals },
+  // Get globals.
+  // Normalize values to `readonly`, `writable`, or `off` - same as Rust side does.
+  const globals = { ...test.languageOptions?.globals },
     eslintCompat = !!test.eslintCompat;
 
-  for (const key in cloned) {
-    let value = cloned[key];
+  for (const key in globals) {
+    let value = globals[key];
 
     switch (value) {
       case "readonly":
@@ -1127,10 +1132,31 @@ function getGlobalsJson(test: TestCase): string {
         );
     }
 
-    cloned[key] = value;
+    globals[key] = value;
   }
 
-  return JSON.stringify(cloned);
+  // TODO: Tests for `env` in `RuleTester` tests
+
+  // Get envs.
+  // Remove properties which are `false` - same as Rust side does.
+  const originalEnvs = test.languageOptions?.env;
+  const envs: Envs = {};
+  if (originalEnvs != null) {
+    for (const [key, value] of Object.entries(originalEnvs)) {
+      if (value === false) continue;
+
+      // Use `Object.defineProperty` to handle if `key` is "__proto__"
+      Object.defineProperty(envs, key, {
+        value: true,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+  }
+
+  // Serialize globals + envs to JSON
+  return JSON.stringify({ globals, envs });
 }
 
 /**
@@ -1434,6 +1460,8 @@ function isSerializablePrimitiveOrPlainObject(value: unknown): boolean {
 // Add types to `RuleTester` namespace
 type _Config = Config;
 type _LanguageOptions = LanguageOptions;
+type _Globals = Globals;
+type _Envs = Envs;
 type _ParserOptions = ParserOptions;
 type _SourceType = SourceType;
 type _Language = Language;
@@ -1448,6 +1476,8 @@ type _Error = Error;
 export namespace RuleTester {
   export type Config = _Config;
   export type LanguageOptions = _LanguageOptions;
+  export type Globals = _Globals;
+  export type Envs = _Envs;
   export type ParserOptions = _ParserOptions;
   export type SourceType = _SourceType;
   export type Language = _Language;
