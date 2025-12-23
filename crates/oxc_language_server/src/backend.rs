@@ -247,17 +247,18 @@ impl LanguageServer for Backend {
         }
     }
 
-    /// This method clears all diagnostics and the in-memory file system if dynamic formatting is enabled.
+    /// This method clears all diagnostics and the in-memory file system.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#shutdown>
     async fn shutdown(&self) -> Result<()> {
         let mut clearing_diagnostics = Vec::new();
-        let mut removed_registrations = Vec::new();
 
         for worker in &*self.workspace_workers.read().await {
-            let (uris, unregistrations) = worker.shutdown().await;
+            // shutdown each worker and collect the URIs to clear diagnostics.
+            // unregistering file watchers is not necessary, because the client will do it automatically on shutdown.
+            // some clients (`helix`) do not expect any requests after shutdown is sent.
+            let (uris, _) = worker.shutdown().await;
             clearing_diagnostics.extend(uris);
-            removed_registrations.extend(unregistrations);
         }
 
         // only clear diagnostics when we are using push diagnostics
@@ -265,13 +266,6 @@ impl LanguageServer for Backend {
             && !clearing_diagnostics.is_empty()
         {
             self.clear_diagnostics(clearing_diagnostics).await;
-        }
-
-        if self.capabilities.get().unwrap().dynamic_watchers
-            && !removed_registrations.is_empty()
-            && let Err(err) = self.client.unregister_capability(removed_registrations).await
-        {
-            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
         }
         self.file_system.write().await.clear();
 

@@ -278,20 +278,6 @@ impl TestServer {
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(id));
     }
-
-    async fn shutdown_with_watchers(&mut self, id: i64) {
-        // shutdown request
-        self.send_request(shutdown_request(id)).await;
-
-        // watcher unregistration expected
-        acknowledge_unregistrations(self).await;
-
-        // shutdown response
-        let shutdown_result = self.recv_response().await;
-
-        assert!(shutdown_result.is_ok());
-        assert_eq!(shutdown_result.id(), &Id::Number(id));
-    }
 }
 
 fn initialize_request_workspace_folders(
@@ -716,24 +702,6 @@ mod test_suite {
         // shutdown request
         server.send_request(shutdown_request(2)).await;
 
-        // client/unregisterCapability request
-        let unregister_request = server.recv_notification().await;
-        assert_eq!(unregister_request.method(), "client/unregisterCapability");
-        assert_eq!(unregister_request.id(), Some(&Id::Number(1)));
-        assert_eq!(
-            unregister_request.params(),
-            Some(&json!({
-                "unregisterations": [
-                    {
-                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
-                        "method": "workspace/didChangeWatchedFiles",
-                    }
-                ]
-            }))
-        );
-        // Acknowledge the unregistration
-        server.send_ack(&Id::Number(1)).await;
-
         // shutdown response
         let shutdown_result = server.recv_response().await;
 
@@ -942,7 +910,7 @@ mod test_suite {
 
         // new watcher registration expected
         acknowledge_registrations(&mut server).await;
-        server.shutdown_with_watchers(4).await;
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -1036,7 +1004,7 @@ mod test_suite {
         // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
         // Thus, no further requests or responses should occur
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1058,7 +1026,7 @@ mod test_suite {
         // New watcher registration expected
         acknowledge_registrations(&mut server).await;
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1093,7 +1061,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1117,7 +1085,7 @@ mod test_suite {
         // Acknowledge the refresh request
         acknowledge_diagnostic_refresh(&mut server).await;
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1135,7 +1103,7 @@ mod test_suite {
 
         // When `null` is sent and the client does not support workspace configuration requests,
         // no configuration changes occur, so no diagnostics or registrations are expected.
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1161,7 +1129,7 @@ mod test_suite {
         // New watcher registration expected
         acknowledge_registrations(&mut server).await;
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
@@ -1186,7 +1154,7 @@ mod test_suite {
         // New watcher registration expected
         acknowledge_registrations(&mut server).await;
 
-        server.shutdown_with_watchers(3).await;
+        server.shutdown(3).await;
     }
 
     #[tokio::test]
