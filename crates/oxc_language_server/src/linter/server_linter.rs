@@ -4,6 +4,7 @@ use std::sync::Arc;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -20,6 +21,7 @@ use oxc_linter::{
 
 use crate::{
     ConcurrentHashMap,
+    capabilities::Capabilities,
     linter::{
         LINT_CONFIG_FILE,
         code_actions::{
@@ -143,7 +145,11 @@ impl ServerLinterBuilder {
 }
 
 impl ToolBuilder for ServerLinterBuilder {
-    fn server_capabilities(&self, capabilities: &mut ServerCapabilities) {
+    fn server_capabilities(
+        &self,
+        capabilities: &mut ServerCapabilities,
+        backend_capabilities: &Capabilities,
+    ) {
         let mut code_action_kinds = capabilities
             .code_action_provider
             .as_ref()
@@ -200,6 +206,12 @@ impl ToolBuilder for ServerLinterBuilder {
                     .and_then(|provider| provider.work_done_progress_options.work_done_progress),
             },
         });
+
+        capabilities.diagnostic_provider = if backend_capabilities.use_push_diagnostics() {
+            None
+        } else {
+            Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+        };
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerLinterBuilder::build(root_uri, options))
@@ -647,6 +659,7 @@ mod tests_builder {
 
     use crate::{
         ServerLinterBuilder, ToolBuilder,
+        capabilities::Capabilities,
         linter::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID},
     };
 
@@ -655,7 +668,7 @@ mod tests_builder {
         let builder = ServerLinterBuilder;
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         // Should set code action provider with quickfix and source fix all kinds
         match &capabilities.code_action_provider {
@@ -686,7 +699,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -713,7 +726,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -734,7 +747,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         // Should override with options
         match &capabilities.code_action_provider {
@@ -761,7 +774,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&"existing.command".to_string()));
@@ -784,7 +797,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
