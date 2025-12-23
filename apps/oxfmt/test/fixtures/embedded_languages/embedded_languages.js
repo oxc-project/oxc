@@ -20,6 +20,8 @@ const styledHeader = styled["h1"]`font-weight:bold;font-size:24px;color:#333;mar
 
 const styledFooter = (styled.footer)`background-color:#f8f8f8;padding:20px;text-align:center;`;
 
+const styledWrapper = styled(styledButton)`display:inline-block;margin:10px;position:relative;`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================

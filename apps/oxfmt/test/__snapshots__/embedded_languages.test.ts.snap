@@ -26,6 +26,8 @@ const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;ma
 
 const styledFooter = (styled.footer)\`background-color:#f8f8f8;padding:20px;text-align:center;\`;
 
+const styledWrapper = styled(styledButton)\`display:inline-block;margin:10px;position:relative;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -193,6 +195,12 @@ const styledFooter = styled.footer\`
   background-color: #f8f8f8;
   padding: 20px;
   text-align: center;
+\`;
+
+const styledWrapper = styled(styledButton)\`
+  display: inline-block;
+  margin: 10px;
+  position: relative;
 \`;
 
 // ============================================================================
@@ -389,6 +397,8 @@ const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;ma
 
 const styledFooter = (styled.footer)\`background-color:#f8f8f8;padding:20px;text-align:center;\`;
 
+const styledWrapper = styled(styledButton)\`display:inline-block;margin:10px;position:relative;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -519,6 +529,8 @@ const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radiu
 const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
 
 const styledFooter = styled.footer\`background-color:#f8f8f8;padding:20px;text-align:center;\`;
+
+const styledWrapper = styled(styledButton)\`display:inline-block;margin:10px;position:relative;\`;
 
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
@@ -657,6 +669,8 @@ const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;ma
 
 const styledFooter = (styled.footer)\`background-color:#f8f8f8;padding:20px;text-align:center;\`;
 
+const styledWrapper = styled(styledButton)\`display:inline-block;margin:10px;position:relative;\`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
@@ -787,6 +801,8 @@ const styledInput = styled.input\`border:1px solid #ddd;padding:8px;border-radiu
 const styledHeader = styled["h1"]\`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;\`;
 
 const styledFooter = styled.footer\`background-color:#f8f8f8;padding:20px;text-align:center;\`;
+
+const styledWrapper = styled(styledButton)\`display:inline-block;margin:10px;position:relative;\`;
 
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags

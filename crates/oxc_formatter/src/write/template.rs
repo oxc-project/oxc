@@ -699,6 +699,10 @@ fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
             // this may produce a string that isn't a valid JS expression like `styled.foo-bar`.
             Some(format!("{}.{}", base, property.as_str()))
         }
+        Expression::CallExpression(call) => {
+            // Handle cases like styled(Button)
+            get_tag_name(&call.callee)
+        }
         _ => None,
     }
 }
