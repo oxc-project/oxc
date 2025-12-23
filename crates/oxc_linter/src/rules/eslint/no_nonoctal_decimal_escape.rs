@@ -4,11 +4,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, fixer::{RuleFix, RuleFixer}, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn no_nonoctal_decimal_escape_diagnostic(escape_sequence: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
-        .with_label(span)
+    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,23 +132,24 @@ fn check_string(ctx: &LintContext<'_>, literal_span: Span) {
              */
 
             // "\0\8" -> "\u00008"
-            let combined_span = Span::new(
-                literal_start + prev_match.start() as u32,
-                decimal_escape_span.end,
-            );
-            let replacement_combined = format!("{}{}", char_to_unicode_escape_sequence('\0'), digit);
+            let combined_span =
+                Span::new(literal_start + prev_match.start() as u32, decimal_escape_span.end);
+            let replacement_combined =
+                format!("{}{}", char_to_unicode_escape_sequence('\0'), digit);
             let message = format!(
                 "Replace '{}{decimal_escape_str}' with '{replacement_combined}'. This maintains the current functionality.",
                 prev_match.as_str(),
             );
-            suggestions.push(fixer.replace(combined_span, replacement_combined).with_message(message));
+            suggestions
+                .push(fixer.replace(combined_span, replacement_combined).with_message(message));
 
             // "\8" -> "\u0038"
             let replacement_digit = char_to_unicode_escape_sequence(digit);
             let message = format!(
                 "Replace '{decimal_escape_str}' with '{replacement_digit}'. This maintains the current functionality."
             );
-            suggestions.push(fixer.replace(decimal_escape_span, replacement_digit).with_message(message));
+            suggestions
+                .push(fixer.replace(decimal_escape_span, replacement_digit).with_message(message));
         } else {
             // "\8" -> "8"
             suggestions.push(
@@ -161,7 +166,8 @@ fn check_string(ctx: &LintContext<'_>, literal_span: Span) {
         let message = format!(
             "Replace '{decimal_escape_str}' with '{escaped_replacement}' to include the actual backslash character."
         );
-        suggestions.push(fixer.replace(decimal_escape_span, escaped_replacement).with_message(message));
+        suggestions
+            .push(fixer.replace(decimal_escape_span, escaped_replacement).with_message(message));
 
         ctx.diagnostic_with_suggestions(
             no_nonoctal_decimal_escape_diagnostic(decimal_escape_str, decimal_escape_span),
@@ -293,7 +299,8 @@ fn test() {
         (r#"'\0\1\8'"#, (r#"'\0\18'"#, r#"'\0\1\\8'"#)).into(),
         // Adjacent NULL escape
         (r#"'\0\8'"#, (r#"'\u00008'"#, r#"'\0\u0038'"#, r#"'\0\\8'"#)).into(),
-        (r#"'foo\0\9bar'"#, (r#"'foo\u00009bar'"#, r#"'foo\0\u0039bar'"#, r#"'foo\0\\9bar'"#)).into(),
+        (r#"'foo\0\9bar'"#, (r#"'foo\u00009bar'"#, r#"'foo\0\u0039bar'"#, r#"'foo\0\\9bar'"#))
+            .into(),
         (r#"'\1\0\8'"#, (r#"'\1\u00008'"#, r#"'\1\0\u0038'"#, r#"'\1\0\\8'"#)).into(),
     ];
 
