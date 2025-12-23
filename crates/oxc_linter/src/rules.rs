@@ -377,6 +377,7 @@ pub(crate) mod react {
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod jsx_props_no_spreading;
+    pub mod jsx_uses_vars;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
@@ -1082,6 +1083,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
     react::jsx_props_no_spreading,
+    react::jsx_uses_vars,
     react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
