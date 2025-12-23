@@ -136,10 +136,8 @@ impl SourceFormatter {
             return Err(ret.errors.into_iter().next().unwrap());
         }
 
-        let base_formatter = Formatter::new(&allocator, format_options.clone());
-
         #[cfg(feature = "napi")]
-        let formatted = {
+        let (embedded_formatter, tailwind_callback) = {
             let external_formatter = self
                 .external_formatter
                 .as_ref()
@@ -152,22 +150,25 @@ impl SourceFormatter {
             };
 
             let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
-                Some(external_formatter.to_tailwind_callback(path, external_options.clone()))
+                Some(external_formatter.to_tailwind_callback(path, external_options))
             } else {
                 None
             };
+            (embedded_formatter, tailwind_callback)
+        };
 
-            base_formatter.format_with_all(
-                &ret.program,
-                embedded_formatter,
-                tailwind_callback.as_ref(),
-            )
-        };
         #[cfg(not(feature = "napi"))]
-        let formatted = {
+        let (embedded_formatter, tailwind_callback) = {
             let _ = external_options;
-            base_formatter.format(&ret.program)
+            (None, None)
         };
+
+        let base_formatter = Formatter::new(&allocator, format_options);
+        let formatted = base_formatter.format_with_all(
+            &ret.program,
+            embedded_formatter,
+            tailwind_callback.as_ref(),
+        );
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
