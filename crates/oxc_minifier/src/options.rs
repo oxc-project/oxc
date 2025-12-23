@@ -188,6 +188,14 @@ pub struct TreeShakeOptions {
     ///
     /// Default `true`
     pub unknown_global_side_effects: bool,
+
+    /// Whether invalid import statements have side effects.
+    ///
+    /// Accessing a non-existing import name will throw an error.
+    /// Also import statements that cannot be resolved will throw an error.
+    ///
+    /// Default `true`
+    pub invalid_import_side_effects: bool,
 }
 
 impl Default for TreeShakeOptions {
@@ -197,6 +205,7 @@ impl Default for TreeShakeOptions {
             manual_pure_functions: vec![],
             property_read_side_effects: PropertyReadSideEffects::default(),
             unknown_global_side_effects: true,
+            invalid_import_side_effects: true,
         }
     }
 }
