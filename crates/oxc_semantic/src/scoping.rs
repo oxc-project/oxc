@@ -513,6 +513,23 @@ impl Scoping {
         });
     }
 
+    /// Add multiple references to symbols in bulk.
+    ///
+    /// This is more efficient than calling [`add_resolved_reference`] multiple times
+    /// as it only borrows the cell once.
+    ///
+    /// [`add_resolved_reference`]: Scoping::add_resolved_reference
+    pub fn add_resolved_references(
+        &mut self,
+        resolved: impl IntoIterator<Item = (SymbolId, ReferenceId)>,
+    ) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for (symbol_id, reference_id) in resolved {
+                cell.resolved_references[symbol_id.index()].push(reference_id);
+            }
+        });
+    }
+
     /// Delete a reference.
     pub fn delete_reference(&mut self, reference_id: ReferenceId) {
         let Some(symbol_id) = self.get_reference(reference_id).symbol_id() else { return };

@@ -88,6 +88,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
+    /// References that have been resolved during scope exit. Only used to add
+    /// the references in bulk instead of one at a time.
+    tmp_resolved_references: Vec<(SymbolId, ReferenceId)>,
 
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "linter")]
@@ -143,6 +146,7 @@ impl<'a> SemanticBuilder<'a> {
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferencesStack::new(),
+            tmp_resolved_references: Vec::new(),
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "linter")]
             jsdoc: JSDocBuilder::default(),
@@ -553,7 +557,7 @@ impl<'a> SemanticBuilder<'a> {
                         *flags = ReferenceFlags::Type;
                     }
                     reference.set_symbol_id(symbol_id);
-                    self.scoping.add_resolved_reference(symbol_id, reference_id);
+                    self.tmp_resolved_references.push((symbol_id, reference_id));
 
                     false
                 });
@@ -569,6 +573,8 @@ impl<'a> SemanticBuilder<'a> {
                 parent_refs.insert(name, references);
             }
         }
+
+        self.scoping.add_resolved_references(self.tmp_resolved_references.drain(..));
     }
 
     pub(crate) fn add_redeclare_variable(
