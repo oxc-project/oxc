@@ -20,8 +20,9 @@ crate-type = ["lib", "cdylib"]
 path = "src/lib.rs"
 doctest = false
 
+# Differs from lib, see https://github.com/rust-lang/cargo/issues/6313
 [[bin]]
-name = "oxfmt"
+name = "oxfmt_cli"
 path = "src/main.rs"
 test = false
 doctest = false

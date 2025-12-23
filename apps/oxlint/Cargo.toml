@@ -20,8 +20,9 @@ crate-type = ["cdylib", "lib"]
 path = "src/lib.rs"
 doctest = false
 
+# Differs from lib, see https://github.com/rust-lang/cargo/issues/6313
 [[bin]]
-name = "oxlint"
+name = "oxlint_cli"
 path = "src/main.rs"
 test = false
 doctest = false
