@@ -1835,6 +1835,7 @@ dependencies = [
  "cow-utils",
  "indexmap",
  "itertools",
+ "javascript-globals",
  "lazy-regex",
  "oxc_allocator",
  "oxc_ast",

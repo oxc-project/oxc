@@ -17,8 +17,11 @@ const plugin: Plugin = {
   rules: {
     globals: {
       create(context) {
+        const { languageOptions } = context;
         context.report({
-          message: JSON.stringify(context.languageOptions.globals, null, 2),
+          message:
+            `\nglobals: ${JSON.stringify(languageOptions.globals, null, 2)}\n` +
+            `env: ${JSON.stringify(languageOptions.env, null, 2)}`,
           node: SPAN,
         });
         return {};

@@ -40,11 +40,6 @@ catalogs:
       specifier: 4.0.15
       version: 4.0.15
 
-patchedDependencies:
-  '@typescript-eslint/scope-manager':
-    hash: 08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b
-    path: patches/@typescript-eslint__scope-manager.patch
-
 importers:
 
   .:
@@ -118,7 +113,7 @@ importers:
         version: 24.1.0
       '@typescript-eslint/scope-manager':
         specifier: 8.48.1
-        version: 8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)
+        version: 8.48.1
       ajv:
         specifier: ^6.12.6
         version: 6.12.6
@@ -7668,7 +7663,7 @@ snapshots:
 
   '@types/whatwg-mimetype@3.0.2': {}
 
-  '@typescript-eslint/scope-manager@8.48.1(patch_hash=08ab34b5f27480602bc518186b717a8915aa4d6b2b5df1adc747320ba25b1f8b)':
+  '@typescript-eslint/scope-manager@8.48.1':
     dependencies:
       '@typescript-eslint/types': 8.48.1
       '@typescript-eslint/visitor-keys': 8.48.1

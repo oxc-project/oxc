@@ -34,5 +34,5 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
-oxc_codegen = { workspace = true }
+oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }

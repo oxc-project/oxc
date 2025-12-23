@@ -18,11 +18,23 @@
   },
   "overrides": [
     {
-      "files": ["files/nested/**"],
+      "files": ["files/nested/*.js"],
+      "env": {
+        "browser": true,
+        "node": true
+      }
+    },
+    {
+      "files": ["files/nested/2.js"],
       "globals": {
         "React": "writable",
         "process": "off",
         "customGlobal": "readonly"
+      },
+      "env": {
+        "browser": false,
+        "astro": true,
+        "chai": false
       }
     }
   ]

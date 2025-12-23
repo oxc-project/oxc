@@ -290,6 +290,8 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     #[cfg(feature = "generate-js")]
     &generators::ESTreeVisitGenerator,
     #[cfg(feature = "generate-js")]
+    &generators::OxlintEnvsGenerator,
+    #[cfg(feature = "generate-js")]
     &generators::RawTransferGenerator,
     #[cfg(feature = "generate-js")]
     &generators::RawTransferLazyGenerator,
