@@ -440,8 +440,8 @@ export class RuleTester {
 let modifyTestCase: ((test: TestCase) => void) | null = null;
 
 if (CONFORMANCE) {
-  (RuleTester as any).registerModifyTestCaseHook = (alter: (test: TestCase) => void) => {
-    modifyTestCase = alter;
+  (RuleTester as any).registerModifyTestCaseHook = (modify: (test: TestCase) => void) => {
+    modifyTestCase = modify;
   };
 }
 
