@@ -21,7 +21,7 @@ export async function formatEmbeddedCode(
   tagName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, tagName } satisfies FormatEmbeddedCodeParam, {
+  return pool!.run({ options: {...options}, code, tagName } satisfies FormatEmbeddedCodeParam, {
     name: "formatEmbeddedCode",
   });
 }
@@ -32,7 +32,7 @@ export async function formatFile(
   fileName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, fileName, parserName } satisfies FormatFileParam, {
+  return pool!.run({ options: {...options}, code, fileName, parserName } satisfies FormatFileParam, {
     name: "formatFile",
   });
 }
