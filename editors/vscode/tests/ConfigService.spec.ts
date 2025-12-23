@@ -110,4 +110,49 @@ suite('ConfigService', () => {
       strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxlint`);
     });
   });
+
+  suite('getTsGoLintBinPath', () => {
+    testSingleFolderMode('resolves relative tsgolint path with workspace folder', async () => {
+      const service = new ConfigService();
+      const nonDefinedPath = service.getTsGoLintBinPath();
+
+      strictEqual(nonDefinedPath, undefined);
+
+      await conf.update('path.tsgolint', '/absolute/tsgolint');
+      service.vsCodeConfig.refresh();
+      const absolutePath = service.getTsGoLintBinPath();
+
+      strictEqual(absolutePath, '/absolute/tsgolint');
+
+      await conf.update('path.tsgolint', './relative/tsgolint');
+      service.vsCodeConfig.refresh();
+      const relativePath = service.getTsGoLintBinPath();
+
+      const workspace_path = getWorkspaceFolderPlatformSafe();
+      strictEqual(relativePath, `${workspace_path}/relative/tsgolint`);
+    });
+
+    testSingleFolderMode('returns undefined for unsafe tsgolint path', async () => {
+      const service = new ConfigService();
+      await conf.update('path.tsgolint', '../unsafe/tsgolint');
+      service.vsCodeConfig.refresh();
+      const unsafePath = service.getTsGoLintBinPath();
+
+      strictEqual(unsafePath, undefined);
+    });
+
+    testSingleFolderMode('returns backslashes path on Windows', async () => {
+      if (process.platform !== 'win32') {
+        return;
+      }
+      const service = new ConfigService();
+      await conf.update('path.tsgolint', './relative/tsgolint');
+      service.vsCodeConfig.refresh();
+      const relativePath = service.getTsGoLintBinPath();
+      const workspace_path = getWorkspaceFolderPlatformSafe();
+
+      strictEqual(workspace_path[1], ':', 'The test workspace folder must be an absolute path with a drive letter on Windows');
+      strictEqual(relativePath, `${workspace_path}\\relative\\tsgolint`);
+    });
+  });
 });

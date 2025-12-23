@@ -90,45 +90,62 @@ export class ConfigService implements IDisposable {
     return this.searchBinaryPath(this.vsCodeConfig.binPathOxfmt, "oxfmt");
   }
 
+  public getTsGoLintBinPath(): string | undefined {
+    return this.resolveBinaryPath(this.vsCodeConfig.binPathTsGoLint);
+  }
+
   private async searchBinaryPath(
     settingsBinary: string | undefined,
     defaultPattern: string,
   ): Promise<string | undefined> {
+    if (settingsBinary) {
+      return this.resolveBinaryPath(settingsBinary);
+    }
+
+    // try to find the binary in node_modules/.bin, resolve to the first workspace folder
     const cwd = this.workspaceConfigs.keys().next().value;
     if (!cwd) {
       return undefined;
     }
 
-    if (!settingsBinary) {
-      // try to find the binary in node_modules/.bin, resolve to the first workspace folder
-      const files = await workspace.findFiles(
-        new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
-        null,
-        1,
-      );
+    const files = await workspace.findFiles(
+      new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
+      null,
+      1,
+    );
 
-      return files.length > 0 ? files[0].fsPath : undefined;
-    }
+    return files.length > 0 ? files[0].fsPath : undefined;
+  }
 
-    if (!workspace.isTrusted) {
-      return;
-    }
-
-    // validates the given path is safe to use
-    if (validateSafeBinaryPath(settingsBinary) === false) {
+  private resolveBinaryPath(settingsPath: string | undefined): string | undefined {
+    if (!settingsPath) {
       return undefined;
     }
 
-    if (!path.isAbsolute(settingsBinary)) {
+    const cwd = this.workspaceConfigs.keys().next().value;
+    if (!cwd) {
+      return undefined;
+    }
+
+    if (!workspace.isTrusted) {
+      return undefined;
+    }
+
+    // validates the given path is safe to use
+    if (validateSafeBinaryPath(settingsPath) === false) {
+      return undefined;
+    }
+
+    if (!path.isAbsolute(settingsPath)) {
       // if the path is not absolute, resolve it to the first workspace folder
-      settingsBinary = path.normalize(path.join(cwd, settingsBinary));
+      settingsPath = path.normalize(path.join(cwd, settingsPath));
       // strip the leading slash on Windows
-      if (process.platform === "win32" && settingsBinary.startsWith("\\")) {
-        settingsBinary = settingsBinary.slice(1);
+      if (process.platform === "win32" && settingsPath.startsWith("\\")) {
+        settingsPath = settingsPath.slice(1);
       }
     }
 
-    return settingsBinary;
+    return settingsPath;
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
