@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:2:5]
+ 1 │ if (process.env.NODE_ENV === 'DEVELOPMENT') {
+ 2 │                 require('debug');
+   ·                 ────────────────
+ 3 │             }
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:21]
+ 1 │ var x; if (y) { x = require('debug'); }
+   ·                     ────────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:21]
+ 1 │ var x; if (y) { x = require('debug').baz; }
+   ·                     ────────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:16]
+ 1 │ function x() { require('y') }
+   ·                ────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:7]
+ 1 │ try { require('x'); } catch (e) { console.log(e); }
+   ·       ────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:22]
+ 1 │ var getModule = x => require(x);
+   ·                      ──────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:15]
+ 1 │ var x = (x => require(x))('weird')
+   ·               ──────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:23]
+ 1 │ switch(x) { case '1': require('1'); break; }
+   ·                       ────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:30]
+ 1 │ var obj = { get x() { return require('y'); } };
+   ·                              ────────────
+   ╰────
+  help: Move require() to top-level module scope
+
+  ⚠ eslint-plugin-node(global-require): Unexpected require().
+   ╭─[global_require.tsx:1:22]
+ 1 │ class Foo { static { require('y'); } }
+   ·                      ────────────
+   ╰────
+  help: Move require() to top-level module scope
