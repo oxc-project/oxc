@@ -179,8 +179,8 @@
           "type": "null"
         }
       ],
-      "description": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)",
-      "markdownDescription": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)"
+      "description": "Control whether to format embedded parts in the file. (Default: `\"off\"`)",
+      "markdownDescription": "Control whether to format embedded parts in the file. (Default: `\"off\"`)"
     },
     "endOfLine": {
       "anyOf": [

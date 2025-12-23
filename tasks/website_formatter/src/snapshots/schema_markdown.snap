@@ -44,7 +44,7 @@ Print spaces between brackets in object literals. (Default: `true`)
 type: `string | null`
 
 
-Control whether formats quoted code embedded in the file. (Default: `"auto"`)
+Control whether to format embedded parts in the file. (Default: `"off"`)
 
 
 ## endOfLine

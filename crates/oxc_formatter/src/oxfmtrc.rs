@@ -80,7 +80,7 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether formats quoted code embedded in the file. (Default: `"auto"`)
+    /// Control whether to format embedded parts in the file. (Default: `"off"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 

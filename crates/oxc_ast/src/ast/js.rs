@@ -1583,16 +1583,15 @@ pub enum BindingPattern<'a> {
     /// Also e.g. `x = 1` in:
     /// - `const [x = 1] = arr;`
     /// - `const { a: x = 1 } = obj;`
-    /// - `function f(x = 1) {}`
     ///
     /// Also e.g. `{x} = obj` in:
     /// - `const [{x} = obj] = arr;`
     /// - `const { a: {x} = obj2 } = obj;`
-    /// - `function f({x} = obj) {}`
     ///
     /// Invalid in:
-    /// - `BindingRestElement` e.g. `const [...x = 1] = arr;`.
-    /// - `CatchParameter` e.g. `try {} catch (e = 1) {}`.
+    /// - [`FormalParameter`] - uses [`FormalParameter::initializer`] instead.
+    /// - [`CatchParameter`] - e.g. `try {} catch (e = 1) {}` is a syntax error.
+    /// - [`BindingRestElement`] - e.g. `const [...x = 1] = arr;` is a syntax error.
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
 }
 

@@ -367,6 +367,7 @@ pub(crate) mod react {
     pub mod jsx_fragments;
     pub mod jsx_handler_names;
     pub mod jsx_key;
+    pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_script_url;
@@ -661,6 +662,7 @@ pub(crate) mod promise {
 }
 
 pub(crate) mod vitest {
+    pub mod consistent_test_filename;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_called_times;
@@ -671,6 +673,7 @@ pub(crate) mod vitest {
 }
 
 pub(crate) mod node {
+    pub mod global_require;
     pub mod no_exports_assign;
     pub mod no_new_require;
     pub mod no_process_env;
@@ -1010,6 +1013,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_html_link_for_pages,
+    node::global_require,
     node::no_process_env,
     node::no_exports_assign,
     node::no_new_require,
@@ -1069,6 +1073,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_curly_brace_presence,
     react::jsx_handler_names,
     react::jsx_key,
+    react::jsx_max_depth,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_script_url,
@@ -1314,6 +1319,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    vitest::consistent_test_filename,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::prefer_called_times,
