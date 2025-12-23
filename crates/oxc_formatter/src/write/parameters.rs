@@ -95,48 +95,36 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let leading_comments = if let Some(initializer) = self.initializer() {
-            let pattern_end = self.pattern().span().end;
-            let all_comments =
-                f.context().comments().own_line_comments_before(initializer.span().start);
-            let start_index =
-                all_comments.iter().take_while(|c| c.span.start < pattern_end).count();
-            &all_comments[start_index..]
-        } else {
-            &[]
-        };
-
         let content = format_with(|f| {
-            write!(f, FormatLeadingComments::Comments(leading_comments));
-
-            if let Some(accessibility) = self.accessibility() {
-                write!(f, [accessibility.as_str(), space()]);
-            }
-            if self.r#override() {
-                write!(f, ["override", space()]);
-            }
-            if self.readonly() {
-                write!(f, ["readonly", space()]);
-            }
-            if self.initializer().is_some() {
-                let left = format_with(|f| {
-                    write!(f, self.pattern());
-                    if self.optional() {
-                        write!(f, "?");
-                    }
-                    write!(f, self.type_annotation());
-                });
-                write!(f, group(&left));
-            } else {
+            let left = format_with(|f| {
+                if let Some(accessibility) = self.accessibility() {
+                    write!(f, [accessibility.as_str(), space()]);
+                }
+                if self.r#override {
+                    write!(f, ["override", space()]);
+                }
+                if self.readonly {
+                    write!(f, ["readonly", space()]);
+                }
                 write!(f, self.pattern());
-                if self.optional() {
+                if self.optional {
                     write!(f, "?");
                 }
                 write!(f, self.type_annotation());
-            }
+            })
+            .memoized();
+
             if let Some(initializer) = self.initializer() {
-                write!(f, [space(), "=", space()]);
-                write!(f, initializer);
+                // Format `left` early before writing leading comments, so that comments
+                // inside `left` are not treated as leading comments of `= right`
+                left.inspect(f);
+
+                let leading_comments =
+                    f.context().comments().own_line_comments_before(initializer.span().start);
+                write!(f, [FormatLeadingComments::Comments(leading_comments)]);
+                write!(f, [group(&left), space(), "=", space(), initializer]);
+            } else {
+                write!(f, [left]);
             }
         });
 
@@ -370,35 +358,20 @@ pub fn should_hug_function_parameters<'a>(
     match &only_parameter.pattern {
         BindingPattern::AssignmentPattern(assignment) => {
             // AssignmentPattern in catch clauses or other contexts
-            assignment.left.is_destructuring_pattern()
-                && match &assignment.right {
-                    Expression::ObjectExpression(object) => object.properties.is_empty(),
-                    Expression::ArrayExpression(array) => array.elements.is_empty(),
-                    Expression::Identifier(_) => true,
-                    _ => false,
-                }
+            assignment.left.is_destructuring_pattern() && is_huggable_expression(&assignment.right)
         }
         BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {
-            if let Some(init) = only_parameter.initializer() {
-                matches!(
-                    **init,
-                    Expression::ObjectExpression(ref obj) if obj.properties.is_empty()
-                ) || matches!(
-                    **init,
-                    Expression::ArrayExpression(ref arr) if arr.elements.is_empty()
-                ) || matches!(**init, Expression::Identifier(_))
-            } else {
-                true
-            }
+            only_parameter.initializer.as_deref().is_none_or(is_huggable_expression)
         }
         BindingPattern::BindingIdentifier(_) => {
-            parentheses_not_needed
-                || only_parameter.type_annotation.as_ref().is_some_and(|ann| {
-                    matches!(
-                        &ann.type_annotation,
-                        TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
-                    )
-                })
+            only_parameter.initializer.is_none()
+                && (parentheses_not_needed
+                    || only_parameter.type_annotation.as_ref().is_some_and(|ann| {
+                        matches!(
+                            &ann.type_annotation,
+                            TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
+                        )
+                    }))
         }
     }
 }
@@ -428,4 +401,15 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
     parameter.pattern.is_binding_identifier()
         && parameter.initializer.is_none()
         && (allow_type_annotations || parameter.type_annotation.is_none())
+}
+
+/// Checks if an expression allows parameter hugging.
+/// Returns `true` for empty object `{}`, empty array `[]`, or an identifier.
+fn is_huggable_expression(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::ObjectExpression(object) => object.properties.is_empty(),
+        Expression::ArrayExpression(array) => array.elements.is_empty(),
+        Expression::Identifier(_) => true,
+        _ => false,
+    }
 }
