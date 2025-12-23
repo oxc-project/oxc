@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        is_type_of_jest_fn_call, parse_general_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
+        parse_general_jest_fn_call,
     },
 };
 
@@ -52,13 +52,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for WarnTodo {
-    fn run_once(&self, ctx: &LintContext) {
-        let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
-
-        for possible_jest_node in &possibles_jest_nodes {
-            WarnTodo::run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        WarnTodo::run(jest_node, ctx);
     }
 }
 
