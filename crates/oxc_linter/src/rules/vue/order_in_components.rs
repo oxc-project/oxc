@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKey},
+    ast::{
+        Argument, CallExpression, ExportDefaultDeclarationKind, Expression, NewExpression,
+        ObjectExpression, ObjectPropertyKind, PropertyKey,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -180,11 +183,11 @@ impl Rule for OrderInComponents {
             AstKind::ExportDefaultDeclaration(export) => {
                 // export default { ... } or export default defineComponent({ ... })
                 match &export.declaration {
-                    oxc_ast::ast::ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj),
-                    oxc_ast::ast::ExportDefaultDeclarationKind::CallExpression(call) => {
+                    ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj),
+                    ExportDefaultDeclarationKind::CallExpression(call) => {
                         if is_vue_component_call(call) {
                             call.arguments.first().and_then(|arg| {
-                                if let oxc_ast::ast::Argument::ObjectExpression(obj) = arg {
+                                if let Argument::ObjectExpression(obj) = arg {
                                     Some(obj)
                                 } else {
                                     None
@@ -211,11 +214,7 @@ impl Rule for OrderInComponents {
                         call.arguments.first()
                     };
                     arg.and_then(|a| {
-                        if let oxc_ast::ast::Argument::ObjectExpression(obj) = a {
-                            Some(obj)
-                        } else {
-                            None
-                        }
+                        if let Argument::ObjectExpression(obj) = a { Some(obj) } else { None }
                     })
                 } else {
                     None
@@ -225,11 +224,7 @@ impl Rule for OrderInComponents {
                 // new Vue({ ... })
                 if is_new_vue(new_expr) {
                     new_expr.arguments.first().and_then(|arg| {
-                        if let oxc_ast::ast::Argument::ObjectExpression(obj) = arg {
-                            Some(obj)
-                        } else {
-                            None
-                        }
+                        if let Argument::ObjectExpression(obj) = arg { Some(obj) } else { None }
                     })
                 } else {
                     None
@@ -340,7 +335,7 @@ fn get_property_name(key: &PropertyKey) -> Option<String> {
     }
 }
 
-fn is_vue_component_call(call: &oxc_ast::ast::CallExpression) -> bool {
+fn is_vue_component_call(call: &CallExpression) -> bool {
     match &call.callee {
         Expression::Identifier(id) => {
             matches!(id.name.as_str(), "defineComponent" | "defineNuxtComponent")
@@ -349,7 +344,7 @@ fn is_vue_component_call(call: &oxc_ast::ast::CallExpression) -> bool {
     }
 }
 
-fn is_vue_component_registration(call: &oxc_ast::ast::CallExpression) -> bool {
+fn is_vue_component_registration(call: &CallExpression) -> bool {
     if let Expression::StaticMemberExpression(member) = &call.callee
         && member.property.name == "component"
         && let Expression::Identifier(id) = &member.object
@@ -367,111 +362,1190 @@ fn is_vue_component_registration(call: &oxc_ast::ast::CallExpression) -> bool {
     matches!(&call.callee, Expression::Identifier(id) if id.name == "component")
 }
 
-fn is_define_options_call(call: &oxc_ast::ast::CallExpression) -> bool {
+fn is_define_options_call(call: &CallExpression) -> bool {
     matches!(&call.callee, Expression::Identifier(id) if id.name == "defineOptions")
 }
 
-fn is_new_vue(new_expr: &oxc_ast::ast::NewExpression) -> bool {
+fn is_new_vue(new_expr: &NewExpression) -> bool {
     matches!(&new_expr.callee, Expression::Identifier(id) if id.name == "Vue")
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
 
     let pass = vec![
-        // Correct order: name before data
-        ("export default { name: 'app', data() { return {}; } }", None),
-        // Empty object
-        ("export default {}", None),
-        // Not an object
-        ("export default 'example-text'", None),
-        // Full correct order
-        ("export default { name: 'app', props: {}, data() {}, computed: {}, methods: {} }", None),
-        // Props before data
-        ("export default { props: ['msg'], data() { return {} } }", None),
-        // Lifecycle hooks in correct order
         (
-            "export default { name: 'a', data() {}, beforeCreate() {}, created() {}, mounted() {} }",
+            "
+			        export default {
+			          name: 'app',
+			          props: {
+			            propA: Number,
+			          },
+			          ...a,
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			        }
+			      ",
             None,
-        ),
-        // Unknown properties are allowed anywhere
-        ("export default { name: 'a', unknownProp: true, data() {} }", None),
-        // defineComponent
-        (
-            "import { defineComponent } from 'vue'; export default defineComponent({ name: 'app', props: {}, data() {} })",
             None,
-        ),
-        // Vue.component
-        ("Vue.component('name', { name: 'app', data() {} })", None),
-        // new Vue
-        ("new Vue({ el: '#app', data: {} })", None),
-        // Methods before render (correct)
-        ("export default { methods: {}, render() {} }", None),
-        // Computed before watch (correct)
-        ("export default { computed: {}, watch: {} }", None),
-        // Custom order config
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
         (
-            "export default { data() {}, name: 'app' }",
-            Some(serde_json::json!([{ "order": ["data", "name"] }])),
-        ),
-        // LIFECYCLE_HOOKS placeholder in custom order
+            "
+			        export default {
+			          el,
+			          name,
+			          parent,
+			          functional,
+			          delimiters, comments,
+			          components, directives, filters,
+			          extends: MyComp,
+			          mixins,
+			          provide, inject,
+			          inheritAttrs,
+			          model,
+			          props, propsData,
+			          emits,
+			          slots,
+			          expose,
+			          setup,
+			          data,
+			          computed,
+			          watch,
+			          beforeCreate,
+			          created,
+			          beforeMount,
+			          mounted,
+			          beforeUpdate,
+			          updated,
+			          activated,
+			          deactivated,
+			          beforeUnmount,
+			          unmounted,
+			          beforeDestroy,
+			          destroyed,
+			          renderTracked,
+			          renderTriggered,
+			          errorCaptured,
+			          methods,
+			          template, render,
+			          renderError,
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
         (
-            "export default { data() {}, beforeCreate() {}, created() {} }",
-            Some(serde_json::json!([{ "order": ["data", "LIFECYCLE_HOOKS"] }])),
-        ),
-        // ROUTER_GUARDS placeholder in custom order
+            "
+			        export default {}
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
         (
-            "export default { data() {}, beforeRouteEnter() {}, beforeRouteLeave() {} }",
-            Some(serde_json::json!([{ "order": ["data", "ROUTER_GUARDS"] }])),
-        ),
-        // defineOptions with correct order
-        ("defineOptions({ name: 'app', inheritAttrs: false })", None),
-        // app.component with correct order
-        ("app.component('name', { name: 'app', data() {} })", None),
-        // defineNuxtComponent with correct order
-        ("export default defineNuxtComponent({ name: 'app', props: {}, data() {} })", None),
-        // Group order: properties in same group can be in any order
+            "
+			        export default 'example-text'
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
         (
-            "export default { key: 'k', name: 'n', data() {} }",
-            Some(serde_json::json!([{ "order": [["name", "key"], "data"] }])),
-        ),
+            "
+			        export default {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			        }
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.jsx")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          computed: {
+			            ...mapStates(['foo'])
+			          },
+			        }
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+			        Vue.component('smart-list', {
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          }
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        Vue.component('example')
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        const { component } = Vue;
+			        component('smart-list', {
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          }
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        new Vue({
+			          el: '#app',
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          }
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        new Vue()
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			      <script setup>
+			        defineOptions({
+			          name: 'Foo',
+			          inheritAttrs: true,
+			        })
+			      </script>
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // { "parser": require("vue-eslint-parser") }
     ];
 
     let fail = vec![
-        // data before name (wrong order)
-        ("export default { data() {}, name: 'burger' }", None),
-        // data before props (wrong order)
-        ("export default { name: 'a', data() {}, props: {} }", None),
-        // methods before computed
-        ("export default { methods: {}, computed: {} }", None),
-        // render before methods
-        ("export default { render() {}, methods: {} }", None),
-        // mounted before data
-        ("export default { mounted() {}, data() {} }", None),
-        // watch before computed
-        ("export default { watch: {}, computed: {} }", None),
-        // defineComponent with wrong order
         (
-            "import { defineComponent } from 'vue'; export default defineComponent({ data() {}, name: 'app' })",
+            "
+			        export default {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        }
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+			        import { defineComponent } from 'vue'
+			        export default defineComponent({
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+			        import { defineNuxtComponent } from '#app'
+			        export default defineNuxtComponent({
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          render (h) {
+			            return (
+			              <span>{ this.msg }</span>
+			            )
+			          },
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        }
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.jsx")),
+        ), // {        "ecmaVersion": 6,        "sourceType": "module",        "parserOptions": {          "ecmaFeatures": { "jsx": true }        }      },
+        (
+            "
+			        Vue.component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        app.component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        const { component } = Vue;
+			        component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        new Vue({
+			          name: 'app',
+			          el: '#app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ), // { "ecmaVersion": 6 },
+        (
+            "
+			        export default {
+			          data() {
+			            return {
+			              isActive: false,
+			            };
+			          },
+			          methods: {
+			            toggleMenu() {
+			              this.isActive = !this.isActive;
+			            },
+			            closeMenu() {
+			              this.isActive = false;
+			            }
+			          },
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          name: 'burger',
+			          test: 'ok'
+			        };
+			      ",
+            Some(serde_json::json!([{ "order": ["data", "test", "name"] }])),
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          /** data provider */
+			          data() {
+			          },
+			          /** name of vue component */
+			          name: 'burger'
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          /** data provider */
+			          data() {
+			          }/*test*/,
+			          /** name of vue component */
+			          name: 'burger'
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "export default {data(){},name:'burger'};",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: obj.fn(),
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: new MyClass(),
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: i++,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: i = 0,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: template`${foo}`,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          [obj.fn()]: 'test',
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: {test: obj.fn()},
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: [obj.fn(), 1],
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: obj.fn().prop,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: delete obj.prop,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: fn() + a + b,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: a ? fn() : null,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          test: `test ${fn()} ${a}`,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          computed: {
+			            ...mapStates(['foo'])
+			          },
+			          data() {
+			          },
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          name: 'burger',
+			          test: fn(),
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
+			          testRegExp: /[a-z]*/,
+			          testSpreadElement: [...array],
+			          testOperator: (!!(a - b + c * d / e % f)) || (a && b),
+			          testArrow: (a) => a,
+			          testConditional: a ? b : c,
+			          testYield: function* () {},
+			          testTemplate: `a:${a},b:${b},c:${c}.`,
+			          testNullish: a ?? b,
+			          testOptionalChaining: a?.b?.c,
+			          name: 'burger',
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            r#"
+			        <script lang="ts">
+			          export default {
+			            setup () {},
+			            props: {
+			              foo: { type: Array as PropType<number[]> },
+			            },
+			          };
+			        </script>
+			      "#,
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // {        "parser": require("vue-eslint-parser"),        ...languageOptions,        "parserOptions": {          "parser": { "ts": require.resolve("@typescript-eslint/parser") }        }      },
+        (
+            "
+			      <script setup>
+			        defineOptions({
+			          inheritAttrs: true,
+			          name: 'Foo',
+			        })
+			      </script>
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // { "parser": require("vue-eslint-parser") },
+        (
+            "
+			        export default {
+			          setup,
+			          slots,
+			          expose,
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions,
+        (
+            "
+			        export default {
+			          slots,
+			          setup,
+			          expose,
+			        };
+			      ",
+            None,
+            None,
+            Some(PathBuf::from("example.vue")),
+        ), // languageOptions
+    ];
+
+    let _fix = vec![
+        (
+            "
+			        export default {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        }
+			      ",
+            "
+			        export default {
+			          name: 'app',
+			          props: {
+			            propA: Number,
+			          },
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			        }
+			      ",
             None,
         ),
-        // props before name
-        ("export default { props: {}, name: 'a' }", None),
-        // defineOptions with wrong order
-        ("defineOptions({ data() {}, name: 'app' })", None),
-        // app.component with wrong order
-        ("app.component('name', { data() {}, name: 'app' })", None),
-        // new Vue with wrong order (data before el)
-        ("new Vue({ data: {}, el: '#app' })", None),
-        // Multiple ordering errors in single component (reports all)
-        ("export default { data() {}, props: {}, name: 'a' }", None),
-        // ROUTER_GUARDS with wrong order
         (
-            "export default { beforeRouteEnter() {}, data() {} }",
-            Some(serde_json::json!([{ "order": ["data", "ROUTER_GUARDS"] }])),
+            "
+			        import { defineComponent } from 'vue'
+			        export default defineComponent({
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        })
+			      ",
+            "
+			        import { defineComponent } from 'vue'
+			        export default defineComponent({
+			          name: 'app',
+			          props: {
+			            propA: Number,
+			          },
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        import { defineNuxtComponent } from '#app'
+			        export default defineNuxtComponent({
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        })
+			      ",
+            "
+			        import { defineNuxtComponent } from '#app'
+			        export default defineNuxtComponent({
+			          name: 'app',
+			          props: {
+			            propA: Number,
+			          },
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          render (h) {
+			            return (
+			              <span>{ this.msg }</span>
+			            )
+			          },
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        }
+			      ",
+            "
+			        export default {
+			          name: 'app',
+			          render (h) {
+			            return (
+			              <span>{ this.msg }</span>
+			            )
+			          },
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          props: {
+			            propA: Number,
+			          },
+			        }
+			      ",
+            None,
+        ),
+        (
+            "
+			        Vue.component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            "
+			        Vue.component('smart-list', {
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        app.component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            "
+			        app.component('smart-list', {
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        const { component } = Vue;
+			        component('smart-list', {
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            "
+			        const { component } = Vue;
+			        component('smart-list', {
+			          name: 'app',
+			          components: {},
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        new Vue({
+			          name: 'app',
+			          el: '#app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            "
+			        new Vue({
+			          el: '#app',
+			          name: 'app',
+			          data () {
+			            return {
+			              msg: 'Welcome to Your Vue.js App'
+			            }
+			          },
+			          components: {},
+			          template: '<div></div>'
+			        })
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          data() {
+			            return {
+			              isActive: false,
+			            };
+			          },
+			          methods: {
+			            toggleMenu() {
+			              this.isActive = !this.isActive;
+			            },
+			            closeMenu() {
+			              this.isActive = false;
+			            }
+			          },
+			          name: 'burger',
+			        };
+			      ",
+            "
+			        export default {
+			          name: 'burger',
+			          data() {
+			            return {
+			              isActive: false,
+			            };
+			          },
+			          methods: {
+			            toggleMenu() {
+			              this.isActive = !this.isActive;
+			            },
+			            closeMenu() {
+			              this.isActive = false;
+			            }
+			          },
+			        };
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          name: 'burger',
+			          test: 'ok'
+			        };
+			      ",
+            "
+			        export default {
+			          data() {
+			          },
+			          test: 'ok',
+			          name: 'burger'
+			        };
+			      ",
+            Some(serde_json::json!([{ "order": ["data", "test", "name"] }])),
+        ),
+        (
+            "
+			        export default {
+			          /** data provider */
+			          data() {
+			          },
+			          /** name of vue component */
+			          name: 'burger'
+			        };
+			      ",
+            "
+			        export default {
+			          /** name of vue component */
+			          name: 'burger',
+			          /** data provider */
+			          data() {
+			          }
+			        };
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          /** data provider */
+			          data() {
+			          }/*test*/,
+			          /** name of vue component */
+			          name: 'burger'
+			        };
+			      ",
+            "
+			        export default {
+			          /** name of vue component */
+			          name: 'burger',
+			          /** data provider */
+			          data() {
+			          }/*test*/
+			        };
+			      ",
+            None,
+        ),
+        (
+            "export default {data(){},name:'burger'};",
+            "export default {name:'burger',data(){}};",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          name: 'burger',
+			          test: fn(),
+			        };
+			      ",
+            "
+			        export default {
+			          name: 'burger',
+			          data() {
+			          },
+			          test: fn(),
+			        };
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          data() {
+			          },
+			          testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
+			          testRegExp: /[a-z]*/,
+			          testSpreadElement: [...array],
+			          testOperator: (!!(a - b + c * d / e % f)) || (a && b),
+			          testArrow: (a) => a,
+			          testConditional: a ? b : c,
+			          testYield: function* () {},
+			          testTemplate: `a:${a},b:${b},c:${c}.`,
+			          testNullish: a ?? b,
+			          testOptionalChaining: a?.b?.c,
+			          name: 'burger',
+			        };
+			      ",
+            "
+			        export default {
+			          name: 'burger',
+			          data() {
+			          },
+			          testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
+			          testRegExp: /[a-z]*/,
+			          testSpreadElement: [...array],
+			          testOperator: (!!(a - b + c * d / e % f)) || (a && b),
+			          testArrow: (a) => a,
+			          testConditional: a ? b : c,
+			          testYield: function* () {},
+			          testTemplate: `a:${a},b:${b},c:${c}.`,
+			          testNullish: a ?? b,
+			          testOptionalChaining: a?.b?.c,
+			        };
+			      ",
+            None,
+        ),
+        (
+            r#"
+			        <script lang="ts">
+			          export default {
+			            setup () {},
+			            props: {
+			              foo: { type: Array as PropType<number[]> },
+			            },
+			          };
+			        </script>
+			      "#,
+            r#"
+			        <script lang="ts">
+			          export default {
+			            props: {
+			              foo: { type: Array as PropType<number[]> },
+			            },
+			            setup () {},
+			          };
+			        </script>
+			      "#,
+            None,
+        ),
+        (
+            "
+			      <script setup>
+			        defineOptions({
+			          inheritAttrs: true,
+			          name: 'Foo',
+			        })
+			      </script>
+			      ",
+            "
+			      <script setup>
+			        defineOptions({
+			          name: 'Foo',
+			          inheritAttrs: true,
+			        })
+			      </script>
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          setup,
+			          slots,
+			          expose,
+			        };
+			      ",
+            "
+			        export default {
+			          slots,
+			          setup,
+			          expose,
+			        };
+			      ",
+            None,
+        ),
+        (
+            "
+			        export default {
+			          slots,
+			          setup,
+			          expose,
+			        };
+			      ",
+            "
+			        export default {
+			          slots,
+			          expose,
+			          setup,
+			        };
+			      ",
+            None,
         ),
     ];
 
-    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail)
+        // .expect_fix(fix)
+        .test_and_snapshot();
 }
