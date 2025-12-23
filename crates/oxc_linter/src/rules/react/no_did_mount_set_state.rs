@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
-    rule::Rule,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
     utils::{is_es5_component, is_es6_component},
 };
 
@@ -19,14 +19,16 @@ fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct NoDidMountSetStateConfig {
-    #[serde(default)]
-    disallow_in_func: bool,
+#[serde(rename_all = "kebab-case")]
+pub enum NoDidMountSetStateConfig {
+    #[default]
+    #[serde(skip)]
+    Allowed,
+    DisallowInFunc,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoDidMountSetState(Box<NoDidMountSetStateConfig>);
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoDidMountSetState(NoDidMountSetStateConfig);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -72,7 +74,7 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// The rule accepts a string value `"disallow-in-func"` or an object with a `disallowInFunc` property:
+    /// The rule accepts a string value `"disallow-in-func"`:
     ///
     /// ```json
     /// {
@@ -80,15 +82,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// or
-    ///
-    /// ```json
-    /// {
-    ///   "react/no-did-mount-set-state": ["error", { "disallowInFunc": true }]
-    /// }
-    /// ```
-    ///
-    /// - `disallowInFunc` (default: `false`): When `true`, also disallows `setState` calls in nested functions within `componentDidMount`.
+    /// When set, also disallows `setState` calls in nested functions within `componentDidMount`.
     NoDidMountSetState,
     react,
     correctness,
@@ -97,29 +91,15 @@ declare_oxc_lint!(
 
 impl Rule for NoDidMountSetState {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value
-            .get(0)
-            .and_then(|v| {
-                if v.is_string() {
-                    let s = v.as_str().unwrap();
-                    if s == "disallow-in-func" {
-                        return Some(NoDidMountSetStateConfig { disallow_in_func: true });
-                    }
-                }
-                serde_json::from_value(v.clone()).ok()
-            })
-            .unwrap_or_default();
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<NoDidMountSetState>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Some(member_expr) = call_expr.callee.as_member_expression() else {
-            return;
-        };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || member_expr.static_property_name().is_none_or(|name| name != "setState")
@@ -129,18 +109,25 @@ impl Rule for NoDidMountSetState {
 
         let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
 
-        let component_did_mount_index = ancestors.iter().position(|ancestor| {
-            matches!(
-                ancestor.kind(),
-                AstKind::ObjectProperty(prop) if prop.key.static_name().is_some_and(|key| key == "componentDidMount")
-            ) || matches!(
-                ancestor.kind(),
-                AstKind::MethodDefinition(method) if method.key.static_name().is_some_and(|name| name == "componentDidMount")
-            ) || matches!(
-                ancestor.kind(),
-                AstKind::PropertyDefinition(prop) if prop.key.static_name().is_some_and(|name| name == "componentDidMount")
-            )
-        });
+        let component_did_mount_index =
+            ancestors.iter().position(|ancestor| match ancestor.kind() {
+                AstKind::ObjectProperty(prop)
+                    if prop.key.static_name().is_some_and(|key| key == "componentDidMount") =>
+                {
+                    true
+                }
+                AstKind::MethodDefinition(method)
+                    if method.key.static_name().is_some_and(|name| name == "componentDidMount") =>
+                {
+                    true
+                }
+                AstKind::PropertyDefinition(prop)
+                    if prop.key.static_name().is_some_and(|name| name == "componentDidMount") =>
+                {
+                    true
+                }
+                _ => false,
+            });
 
         let Some(component_did_mount_idx) = component_did_mount_index else {
             return;
@@ -166,15 +153,11 @@ impl Rule for NoDidMountSetState {
 
         let in_nested_function = function_count_before_component_did_mount > 1;
 
-        if in_nested_function && !self.0.disallow_in_func {
+        if in_nested_function && !matches!(self.0, NoDidMountSetStateConfig::DisallowInFunc) {
             return;
         }
 
         ctx.diagnostic(no_did_mount_set_state_diagnostic(call_expr.callee.span()));
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 
