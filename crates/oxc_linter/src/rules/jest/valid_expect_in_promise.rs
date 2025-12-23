@@ -757,6 +757,7 @@ fn test() {
         ("test('something', () => Promise.resolve().then(() => expect(1).toBe(2)));", None, None),
         ("Promise.resolve().then(() => expect(1).toBe(2))", None, None),
         ("const x = Promise.resolve().then(() => expect(1).toBe(2))", None, None),
+        (r#"it.todo("something")"#, None, None),
         (
             "it('is valid', () => {
 			  const promise = loadNumber().then(number => {
@@ -1398,8 +1399,14 @@ fn test() {
             None,
             None,
         ),
-        // NOTE: it.each([])(...) with only one param is NOT a done callback - first param is data row
-        // So this case is now correctly moved to fail array below
+        (
+            "it.each([])('name of done param does not matter', (nameDoesNotMatter) => {
+			  const promise = getPromise();
+			  promise.then(() => expect(someThing).toEqual(true));
+			});",
+            None,
+            None,
+        ),
         (
             "it.each``('name of done param does not matter', ({}, nameDoesNotMatter) => {
 			  const promise = getPromise();
@@ -2120,11 +2127,64 @@ fn test() {
             None,
             None,
         ),
-        // TODO: The following edge cases are not currently detected and may be added in future:
-        // - Variable reassignment before await (somePromise = null; await somePromise;)
-        // - Reassignment to new promise before awaiting original
-        // - Destructuring assignment to existing variables ([promise] = ...)
-        // - Destructuring object assignment ({ somePromise } = {})
+        (
+            "test('promise test', async function () {
+			  let somePromise = getPromise().then((data) => {
+			    expect(data).toEqual('foo');
+			  });
+			  somePromise = null;
+			  await somePromise;
+			});",
+            None,
+            None,
+        ),
+        (
+            "test('promise test', async function () {
+			  let somePromise = getPromise().then((data) => {
+			    expect(data).toEqual('foo');
+			  });
+			  somePromise = getPromise().then((data) => {
+			    expect(data).toEqual('foo');
+			  });
+			  await somePromise;
+			});",
+            None,
+            None,
+        ),
+        (
+            "test('promise test', async function () {
+			  let somePromise = getPromise().then((data) => {
+			    expect(data).toEqual('foo');
+			  });
+			  ({ somePromise } = {})
+			});",
+            None,
+            None,
+        ),
+        (
+            "test('promise test', async function () {
+			  let somePromise = getPromise().then((data) => {
+			    expect(data).toEqual('foo');
+			  });
+			  {
+			    somePromise = getPromise().then((data) => {
+			      expect(data).toEqual('foo');
+			    });
+			    await somePromise;
+			  }
+			});",
+            None,
+            None,
+        ),
+        (
+            "test('that we error on this destructuring', async () => {
+			  [promise] = something().then(value => {
+			    expect(value).toBe('red');
+			  });
+			});",
+            None,
+            None,
+        ),
         (
             "test('that we error on this', () => {
 			  const promise = something().then(value => {
@@ -2169,18 +2229,19 @@ fn test() {
             None,
             None,
         ),
-        // it.each([]) with single param - first param is data row, not done callback
         (
-            "it.each([])('name of done param does not matter', (nameDoesNotMatter) => {
-			  const promise = getPromise();
-			  promise.then(() => expect(someThing).toEqual(true));
+            "promiseThatThis('is valid', async () => {
+			  const promise = loadNumber().then(number => {
+			    expect(typeof number).toBe('number');
+			    return number + 1;
+			  });
+			  expect(anotherPromise).resolves.toBe(1);
 			});",
             None,
-            None,
+            Some(
+                serde_json::json!({ "settings": { "jest": { "globalAliases": { "xit": ["promiseThatThis"] } } } }),
+            ),
         ),
-        // NOTE: The following case requires globalAliases configuration support which is a
-        // more advanced feature. Skipping for now:
-        // - promiseThatThis('is valid', ...) with globalAliases: { xit: ["promiseThatThis"] }
     ];
 
     Tester::new(ValidExpectInPromise::NAME, ValidExpectInPromise::PLUGIN, pass, fail)
