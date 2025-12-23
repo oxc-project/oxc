@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXChild, JSXElement, JSXFragment},
+    ast::{Expression, JSXChild},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -143,33 +143,13 @@ fn calculate_variable_jsx_depth(
         return 0;
     }
 
-    let scoping = ctx.semantic().scoping();
-
-    let decl_id = scoping.symbol_declaration(symbol_id);
+    let decl_id = ctx.semantic().scoping().symbol_declaration(symbol_id);
     let decl_node = ctx.nodes().get_node(decl_id);
 
     if let AstKind::VariableDeclarator(declarator) = decl_node.kind()
         && let Some(init) = &declarator.init
     {
         return calculate_expression_jsx_depth(init, ctx, visited);
-    }
-
-    for reference_id in scoping.get_resolved_reference_ids(symbol_id) {
-        let reference = scoping.get_reference(*reference_id);
-        if !reference.is_write() {
-            continue;
-        }
-
-        let ref_node = ctx.nodes().get_node(reference.node_id());
-        let current = ctx.nodes().parent_node(ref_node.id());
-        let parent = ctx.nodes().parent_node(current.id());
-
-        if let AstKind::AssignmentExpression(assign) = parent.kind() {
-            let depth = calculate_expression_jsx_depth(&assign.right, ctx, visited);
-            if depth > 0 {
-                return depth;
-            }
-        }
     }
 
     0
@@ -181,18 +161,13 @@ fn calculate_expression_jsx_depth(
     visited: &mut FxHashSet<SymbolId>,
 ) -> usize {
     match expr {
-        Expression::JSXElement(elem) => calculate_jsx_element_depth(elem, ctx, visited),
-        Expression::JSXFragment(frag) => calculate_jsx_fragment_depth(frag, ctx, visited),
-        Expression::Identifier(ident) => {
-            if let Some(reference_id) = ident.reference_id.get() {
-                let scoping = ctx.semantic().scoping();
-                let reference = scoping.get_reference(reference_id);
-                if let Some(symbol_id) = reference.symbol_id() {
-                    return calculate_variable_jsx_depth(symbol_id, ctx, visited);
-                }
-            }
-            0
-        }
+        Expression::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
+        Expression::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
+        Expression::Identifier(ident) => ident
+            .reference_id
+            .get()
+            .and_then(|ref_id| ctx.semantic().scoping().get_reference(ref_id).symbol_id())
+            .map_or(0, |symbol_id| calculate_variable_jsx_depth(symbol_id, ctx, visited)),
         Expression::ParenthesizedExpression(paren) => {
             calculate_expression_jsx_depth(&paren.expression, ctx, visited)
         }
@@ -205,15 +180,12 @@ fn calculate_node_jsx_depth(
     ctx: &LintContext<'_>,
     visited_symbols: &mut FxHashSet<SymbolId>,
 ) -> usize {
-    match node.kind() {
-        AstKind::JSXElement(elem) => {
-            calculate_jsx_children_depth(&elem.children, ctx, visited_symbols)
-        }
-        AstKind::JSXFragment(frag) => {
-            calculate_jsx_children_depth(&frag.children, ctx, visited_symbols)
-        }
-        _ => 0,
-    }
+    let children = match node.kind() {
+        AstKind::JSXElement(elem) => &elem.children,
+        AstKind::JSXFragment(frag) => &frag.children,
+        _ => return 0,
+    };
+    calculate_jsx_children_depth(children, ctx, visited_symbols)
 }
 
 fn calculate_jsx_children_depth(
@@ -221,52 +193,42 @@ fn calculate_jsx_children_depth(
     ctx: &LintContext<'_>,
     visited_symbols: &mut FxHashSet<SymbolId>,
 ) -> usize {
-    let mut max_child_depth = 0;
-
-    for child in children {
-        match child {
-            JSXChild::Element(elem) => {
-                let child_depth = calculate_jsx_element_depth(elem, ctx, visited_symbols);
-                max_child_depth = max_child_depth.max(child_depth + 1);
-            }
-            JSXChild::Fragment(frag) => {
-                let child_depth = calculate_jsx_fragment_depth(frag, ctx, visited_symbols);
-                max_child_depth = max_child_depth.max(child_depth + 1);
-            }
-            JSXChild::ExpressionContainer(container) => {
-                if let Some(Expression::Identifier(ident)) = container.expression.as_expression()
-                    && let Some(reference_id) = ident.reference_id.get()
-                {
-                    let scoping = ctx.semantic().scoping();
-                    let reference = scoping.get_reference(reference_id);
-                    if let Some(symbol_id) = reference.symbol_id() {
-                        let referenced_depth =
-                            calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols);
-                        max_child_depth = max_child_depth.max(referenced_depth + 1);
-                    }
-                }
-            }
-            _ => {}
-        }
+    if children.is_empty() {
+        return 0;
     }
 
-    max_child_depth
-}
+    let mut max_depth = 0;
 
-fn calculate_jsx_element_depth(
-    elem: &JSXElement<'_>,
-    ctx: &LintContext<'_>,
-    visited_symbols: &mut FxHashSet<SymbolId>,
-) -> usize {
-    calculate_jsx_children_depth(&elem.children, ctx, visited_symbols)
-}
+    for child in children {
+        let depth = match child {
+            JSXChild::Element(elem) => {
+                calculate_jsx_children_depth(&elem.children, ctx, visited_symbols) + 1
+            }
+            JSXChild::Fragment(frag) => {
+                calculate_jsx_children_depth(&frag.children, ctx, visited_symbols) + 1
+            }
+            JSXChild::ExpressionContainer(container) => {
+                if let Some(Expression::Identifier(ident)) = container.expression.as_expression() {
+                    let depth = ident
+                        .reference_id
+                        .get()
+                        .and_then(|ref_id| {
+                            ctx.semantic().scoping().get_reference(ref_id).symbol_id()
+                        })
+                        .map_or(0, |symbol_id| {
+                            calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols)
+                        });
+                    if depth > 0 { depth + 1 } else { 0 }
+                } else {
+                    0
+                }
+            }
+            _ => 0,
+        };
+        max_depth = max_depth.max(depth);
+    }
 
-fn calculate_jsx_fragment_depth(
-    frag: &JSXFragment<'_>,
-    ctx: &LintContext<'_>,
-    visited_symbols: &mut FxHashSet<SymbolId>,
-) -> usize {
-    calculate_jsx_children_depth(&frag.children, ctx, visited_symbols)
+    max_depth
 }
 
 fn is_leaf_jsx_node(node: &AstNode<'_>, _ctx: &LintContext<'_>) -> bool {
