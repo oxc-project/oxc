@@ -36,6 +36,7 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
+javascript-globals = { workspace = true }
 lazy-regex = { workspace = true }
 oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
