@@ -682,6 +682,7 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
 /// Extract the full tag name from an expression
 /// Handles both simple identifiers (css) and member expressions (styled.div)
 fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
+    let expr = expr.get_inner_expression();
     match expr {
         Expression::Identifier(ident) => Some(ident.name.as_str().to_string()),
         Expression::StaticMemberExpression(member) => {

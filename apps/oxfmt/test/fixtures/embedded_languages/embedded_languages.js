@@ -18,6 +18,8 @@ const styledInput = styled.input`border:1px solid #ddd;padding:8px;border-radius
 
 const styledHeader = styled["h1"]`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;`;
 
+const styledFooter = (styled.footer)`background-color:#f8f8f8;padding:20px;text-align:center;`;
+
 // ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
