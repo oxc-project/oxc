@@ -22,7 +22,7 @@ doctest = false
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true }
 oxc_ast_visit = { workspace = true, optional = true }
-oxc_codegen = { workspace = true, optional = true }
+oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, optional = true }
 oxc_span = { workspace = true, features = ["serialize"], optional = true }
