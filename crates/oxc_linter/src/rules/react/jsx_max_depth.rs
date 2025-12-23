@@ -113,7 +113,7 @@ impl Rule for JsxMaxDepth {
             _ => return,
         }
 
-        if !is_leaf_jsx_node(node, ctx) {
+        if !is_leaf_jsx_node(node) {
             return;
         }
 
@@ -231,7 +231,7 @@ fn calculate_jsx_children_depth(
     max_depth
 }
 
-fn is_leaf_jsx_node(node: &AstNode<'_>, _ctx: &LintContext<'_>) -> bool {
+fn is_leaf_jsx_node(node: &AstNode<'_>) -> bool {
     let children = match node.kind() {
         AstKind::JSXElement(elem) => &elem.children,
         AstKind::JSXFragment(frag) => &frag.children,
