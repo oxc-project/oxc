@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { ConfigurationChangeEvent, RelativePattern, Uri, workspace, WorkspaceFolder } from "vscode";
+import { DiagnosticPullMode } from "vscode-languageclient";
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
 import { VSCodeConfig } from "./VSCodeConfig";
@@ -88,6 +89,24 @@ export class ConfigService implements IDisposable {
 
   public async getOxfmtServerBinPath(): Promise<string | undefined> {
     return this.searchBinaryPath(this.vsCodeConfig.binPathOxfmt, "oxfmt");
+  }
+
+  public shouldRequestDiagnostics(
+    textDocumentUri: Uri,
+    diagnosticPullMode: DiagnosticPullMode,
+  ): boolean {
+    if (!this.vsCodeConfig.enable) {
+      return false;
+    }
+
+    const textDocumentPath = textDocumentUri.path;
+
+    for (const [workspaceUri, workspaceConfig] of this.workspaceConfigs.entries()) {
+      if (textDocumentPath.startsWith(workspaceUri)) {
+        return workspaceConfig.shouldRequestDiagnostics(diagnosticPullMode);
+      }
+    }
+    return false;
   }
 
   private async searchBinaryPath(
