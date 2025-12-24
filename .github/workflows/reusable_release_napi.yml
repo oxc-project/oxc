@@ -103,6 +103,31 @@ jobs:
             target: aarch64-unknown-linux-ohos
             build: pnpm build --target aarch64-unknown-linux-ohos
 
+          - os: ubuntu-latest
+            target: armv7-linux-androideabi
+            build: pnpm build --target armv7-linux-androideabi
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            build: pnpm build --target armv7-unknown-linux-musleabihf -x
+
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            build: pnpm build --target i686-pc-windows-msvc
+
+          - os: ubuntu-latest
+            target: powerpc64le-unknown-linux-gnu
+            build: pnpm build --target powerpc64le-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm build --target riscv64gc-unknown-linux-musl -x
+
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
