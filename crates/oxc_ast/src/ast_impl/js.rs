@@ -864,11 +864,6 @@ impl Argument<'_> {
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
     }
-
-    /// Returns `true` if this argument is a `this` expression
-    pub fn is_this_expression(&self) -> bool {
-        matches!(self, Self::ThisExpression(_))
-    }
 }
 
 impl<'a> AssignmentTarget<'a> {

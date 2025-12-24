@@ -44,7 +44,7 @@ impl<'a> PeepholeOptimizations {
 
         if !call_expr.arguments.is_empty()
             // check if the first argument is `this`
-            && call_expr.arguments.first().is_some_and(Argument::is_this_expression)
+            && call_expr.arguments.first().is_some_and(|args| matches!(args, Argument::ThisExpression(_)))
             && let Expression::StaticMemberExpression(static_expr) = &mut call_expr.callee
             // only supports `call` as a result of bind is a BoundFunctionObject
             && static_expr.property.name == "call"
