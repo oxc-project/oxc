@@ -60,9 +60,12 @@ export type JsLoadPluginCb =
  *
  * This is called when linting a file that matches a custom parser's patterns.
  * The callback should invoke the parser's `parse()` or `parseForESLint()` method.
+ *
+ * Note: This is synchronous. Custom parsers that need async operations should
+ * handle them internally using synchronous blocking.
  */
 export type JsParseFileCb =
-  ((arg0: number, arg1: string, arg2: string, arg3: string) => Promise<string>)
+  ((arg0: number, arg1: string, arg2: string, arg3: string) => string)
 
 /** JS callback to setup configs. */
 export type JsSetupConfigsCb =

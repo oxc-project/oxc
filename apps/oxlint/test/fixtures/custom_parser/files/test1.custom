@@ -1,0 +1,5 @@
+# Test file for custom parser
+var foo
+var bar
+log foo
+log bar

@@ -5,12 +5,32 @@ use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
 
+use std::borrow::Cow;
+
 #[derive(Debug, Clone)]
-pub struct Extensions(pub Vec<&'static str>);
+pub struct Extensions(pub Vec<Cow<'static, str>>);
 
 impl Default for Extensions {
     fn default() -> Self {
-        Self(LINTABLE_EXTENSIONS.to_vec())
+        Self(LINTABLE_EXTENSIONS.iter().map(|&s| Cow::Borrowed(s)).collect())
+    }
+}
+
+impl Extensions {
+    /// Add additional extensions to the list.
+    pub fn with_additional<I, S>(mut self, extensions: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        for ext in extensions {
+            let ext = ext.into();
+            // Don't add duplicates
+            if !self.0.iter().any(|e| e.as_ref() == ext) {
+                self.0.push(Cow::Owned(ext));
+            }
+        }
+        self
     }
 }
 
@@ -116,7 +136,6 @@ impl Walk {
         receiver.into_iter().flatten().collect()
     }
 
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn with_extensions(mut self, extensions: Extensions) -> Self {
         self.extensions = extensions;
         self
@@ -135,13 +154,13 @@ impl Walk {
         }
         let Some(extension) = dir_entry.path().extension() else { return false };
         let extension = extension.to_string_lossy();
-        extensions.0.contains(&extension.as_ref())
+        extensions.0.iter().any(|e| e.as_ref() == extension.as_ref())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString, fs, path::Path};
+    use std::{borrow::Cow, env, ffi::OsString, fs, path::Path};
 
     use ignore::overrides::OverrideBuilder;
 
@@ -161,7 +180,7 @@ mod test {
         let override_builder = OverrideBuilder::new("/").build().unwrap();
 
         let mut paths = Walk::new(&fixtures, &ignore_options, Some(override_builder))
-            .with_extensions(Extensions(["js", "vue"].to_vec()))
+            .with_extensions(Extensions(vec![Cow::Borrowed("js"), Cow::Borrowed("vue")]))
             .paths()
             .into_iter()
             .map(|path| {

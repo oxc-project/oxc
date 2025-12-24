@@ -23,7 +23,7 @@ use oxc_linter::{
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
-    walk::Walk,
+    walk::{Extensions, Walk},
 };
 use oxc_linter::LintIgnoreMatcher;
 
@@ -164,7 +164,25 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
+        // Extract custom parser extensions from config to include in file discovery
+        let custom_parser_extensions: Vec<String> = oxlintrc
+            .external_parsers
+            .as_ref()
+            .map(|parsers| {
+                parsers
+                    .iter()
+                    .flat_map(|p| p.patterns.iter().map(String::as_str))
+                    .collect::<Vec<_>>()
+            })
+            .map(extract_extensions_from_patterns)
+            .unwrap_or_default();
+
         let walker = Walk::new(&paths, &ignore_options, override_builder);
+        let walker = if custom_parser_extensions.is_empty() {
+            walker
+        } else {
+            walker.with_extensions(Extensions::default().with_additional(custom_parser_extensions))
+        };
         let mut paths = walker.paths();
 
         // NAPI tests build `oxlint` with `testing` feature enabled.
@@ -674,6 +692,28 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+/// Extract file extensions from custom parser patterns.
+///
+/// Patterns like `*.marko`, `*.custom`, `**/*.mdx` will extract `marko`, `custom`, `mdx`.
+fn extract_extensions_from_patterns<'a>(
+    patterns: impl IntoIterator<Item = &'a str>,
+) -> Vec<String> {
+    let mut extensions = Vec::new();
+    for pattern in patterns {
+        // Handle patterns like *.ext, **/*.ext, etc.
+        if let Some(ext_part) = pattern.rsplit('/').next()
+            && let Some(ext) = ext_part.strip_prefix("*.")
+            // Filter out any remaining glob characters
+            && !ext.contains('*')
+            && !ext.contains('?')
+            && !ext.contains('[')
+        {
+            extensions.push(ext.to_string());
+        }
+    }
+    extensions
 }
 
 #[cfg(test)]
