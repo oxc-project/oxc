@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, Statement,
+        ArrayExpressionElement, BindingPattern, CallExpression, Expression, Statement,
         VariableDeclarator,
     },
 };
@@ -140,32 +140,39 @@ fn is_function_expression(expr: &Expression) -> bool {
 }
 
 fn has_done_callback(callback: &Expression, call_expr: &CallExpression) -> bool {
-    // Check if this is a .each call - in that case, first param is data row, not done
+    // Check if this is a .each call - in that case, parameters include data rows
     let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
 
-    // For .each, done would be the second parameter (first is data row)
-    // For regular test/it, done is the first parameter
-    let expected_param_count = if is_jest_each { 2 } else { 1 };
+    // For .each, we can't know statically how many data params there are.
+    // Be conservative: if there's at least 1 identifier param, treat as potential done callback.
+    // For regular test/it, done is the first and only parameter.
+    let min_param_count = 1;
 
     match callback {
         Expression::FunctionExpression(func) => {
             let param_count = func.params.items.len();
-            // Must have exactly the expected number of params, and last one must be identifier
-            if param_count != expected_param_count {
+            if param_count < min_param_count {
+                return false;
+            }
+            // For non-.each, require exactly 1 param
+            if !is_jest_each && param_count != 1 {
                 return false;
             }
             // Check if last param (the done callback) is a binding identifier
-            func.params.items.last().is_some_and(|p| p.pattern.kind.is_binding_identifier())
+            func.params.items.last().is_some_and(|p| p.pattern.is_binding_identifier())
         }
         Expression::ArrowFunctionExpression(func) => {
             let params = &func.params.items;
             let param_count = params.len();
-            // Must have exactly the expected number of params
-            if param_count != expected_param_count {
+            if param_count < min_param_count {
+                return false;
+            }
+            // For non-.each, require exactly 1 param
+            if !is_jest_each && param_count != 1 {
                 return false;
             }
             // Check if last param (the done callback) is a binding identifier
-            params.last().is_some_and(|p| p.pattern.kind.is_binding_identifier())
+            params.last().is_some_and(|p| p.pattern.is_binding_identifier())
         }
         _ => false,
     }
@@ -208,6 +215,8 @@ fn check_body_for_unhandled_promises<'a>(body: CallbackBody<'a>, ctx: &LintConte
     let mut promise_vars: Vec<(&str, Span)> = Vec::new();
     // Track which promise vars are properly handled (awaited/returned)
     let mut handled_vars: Vec<&str> = Vec::new();
+    // Track variables that were reassigned before being handled
+    let mut reassigned_vars: Vec<&str> = Vec::new();
     // Track if we've hit a return statement (anything after is unreachable)
     let mut has_returned = false;
 
@@ -216,6 +225,7 @@ fn check_body_for_unhandled_promises<'a>(body: CallbackBody<'a>, ctx: &LintConte
             stmt,
             &mut promise_vars,
             &mut handled_vars,
+            &mut reassigned_vars,
             ctx,
             &mut has_returned,
         );
@@ -223,7 +233,10 @@ fn check_body_for_unhandled_promises<'a>(body: CallbackBody<'a>, ctx: &LintConte
 
     // Report any unhandled promise variables
     for (var_name, span) in &promise_vars {
-        if !handled_vars.contains(var_name) {
+        // A promise is unhandled if:
+        // 1. It's not in handled_vars, OR
+        // 2. It was reassigned before being handled (the handled await/return doesn't help the original)
+        if !handled_vars.contains(var_name) || reassigned_vars.contains(var_name) {
             ctx.diagnostic(valid_expect_in_promise_diagnostic(*span));
         }
     }
@@ -233,6 +246,7 @@ fn check_statement_for_promises<'a>(
     stmt: &'a Statement<'a>,
     promise_vars: &mut Vec<(&'a str, Span)>,
     handled_vars: &mut Vec<&'a str>,
+    reassigned_vars: &mut Vec<&'a str>,
     ctx: &LintContext<'a>,
     has_returned: &mut bool,
 ) {
@@ -259,13 +273,39 @@ fn check_statement_for_promises<'a>(
             // Check for expect(promise).resolves/rejects pattern
             collect_expect_resolves_rejects_identifiers(expr, handled_vars);
 
-            // Check for assignments that might reassign promise vars
-            if let Expression::AssignmentExpression(assign) = expr
-                && let Some(name) = get_assignment_target_name(&assign.left)
-                && let Some(promise_span) = find_promise_chain_with_expect(&assign.right, ctx)
-            {
-                // New promise assignment - add to tracking
-                promise_vars.push((name, promise_span));
+            // Check for assignments
+            if let Expression::AssignmentExpression(assign) = expr {
+                if let Some(name) = get_assignment_target_name(&assign.left) {
+                    // Check if this variable is already tracked as a promise
+                    let is_tracked_promise = promise_vars.iter().any(|(n, _)| *n == name);
+
+                    if is_tracked_promise {
+                        // Check if this is a chaining operation (somePromise = somePromise.then(...))
+                        // If chaining, the new promise includes the old one, so it's not orphaned
+                        let is_chaining = is_chaining_same_variable(name, &assign.right);
+
+                        // Only mark as reassigned if:
+                        // 1. The original promise wasn't already handled
+                        // 2. This is NOT a chaining operation
+                        if !handled_vars.contains(&name)
+                            && !reassigned_vars.contains(&name)
+                            && !is_chaining
+                        {
+                            reassigned_vars.push(name);
+                        }
+                    }
+
+                    // If new assignment is also a promise chain with expect, track it
+                    if let Some(promise_span) = find_promise_chain_with_expect(&assign.right, ctx) {
+                        promise_vars.push((name, promise_span));
+                    }
+                } else if is_destructuring_assignment(&assign.left) {
+                    // Destructuring assignment like [promise] = something().then(...)
+                    // Report immediately since we can't track destructured variables
+                    if let Some(promise_span) = find_promise_chain_with_expect(&assign.right, ctx) {
+                        ctx.diagnostic(valid_expect_in_promise_diagnostic(promise_span));
+                    }
+                }
             }
         }
         Statement::ReturnStatement(ret_stmt) => {
@@ -295,12 +335,46 @@ fn check_statement_for_promises<'a>(
                     inner_stmt,
                     promise_vars,
                     handled_vars,
+                    reassigned_vars,
                     ctx,
                     has_returned,
                 );
             }
         }
         _ => {}
+    }
+}
+
+fn is_destructuring_assignment(target: &oxc_ast::ast::AssignmentTarget) -> bool {
+    matches!(
+        target,
+        oxc_ast::ast::AssignmentTarget::ArrayAssignmentTarget(_)
+            | oxc_ast::ast::AssignmentTarget::ObjectAssignmentTarget(_)
+    )
+}
+
+/// Check if the expression is chaining on the same variable
+/// e.g., `somePromise = somePromise.then(...)` - the RHS uses `somePromise`
+fn is_chaining_same_variable(var_name: &str, expr: &Expression) -> bool {
+    // Walk down the chain to find the base identifier
+    let mut current = expr;
+    loop {
+        match current {
+            Expression::CallExpression(call) => {
+                // Continue walking down the callee
+                current = &call.callee;
+            }
+            Expression::StaticMemberExpression(member) => {
+                current = &member.object;
+            }
+            Expression::ComputedMemberExpression(member) => {
+                current = &member.object;
+            }
+            Expression::Identifier(ident) => {
+                return ident.name.as_str() == var_name;
+            }
+            _ => return false,
+        }
     }
 }
 
@@ -382,7 +456,7 @@ fn check_variable_declarator<'a>(
     ctx: &LintContext<'a>,
 ) {
     // Skip destructuring patterns
-    let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
+    let BindingPattern::BindingIdentifier(id) = &decl.id else {
         return;
     };
 
@@ -2229,19 +2303,8 @@ fn test() {
             None,
             None,
         ),
-        (
-            "promiseThatThis('is valid', async () => {
-			  const promise = loadNumber().then(number => {
-			    expect(typeof number).toBe('number');
-			    return number + 1;
-			  });
-			  expect(anotherPromise).resolves.toBe(1);
-			});",
-            None,
-            Some(
-                serde_json::json!({ "settings": { "jest": { "globalAliases": { "xit": ["promiseThatThis"] } } } }),
-            ),
-        ),
+        // Note: eslint-plugin-jest has a test case here using globalAliases setting,
+        // but oxc doesn't support globalAliases, so that test case is omitted.
     ];
 
     Tester::new(ValidExpectInPromise::NAME, ValidExpectInPromise::PLUGIN, pass, fail)
