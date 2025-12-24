@@ -4,7 +4,6 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -75,7 +74,8 @@ impl Rule for PreferNodeProtocol {
         } else {
             string_lit_value.as_str()
         };
-        if module_name.starts_with("node:") || NODEJS_BUILTINS.binary_search(&module_name).is_err()
+        if module_name.starts_with("node:")
+            || nodejs_built_in_modules::BUILTINS.binary_search(&module_name).is_err()
         {
             return;
         }
