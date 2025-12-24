@@ -2,7 +2,9 @@ import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { getAndClearCachedParseResult } from "./parsers.ts";
 import { diagnostics } from "./report.ts";
+import { setExternalScopeManager } from "./scope.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import {
   ast,
@@ -11,9 +13,50 @@ import {
   setupSourceForFile,
   setupSourceForCustomParser,
 } from "./source_code.ts";
-import type { Program } from "../generated/types.d.ts";
+import type { Node, Program } from "../generated/types.d.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+
+/**
+ * Traverse AST and set parent pointers on all nodes.
+ *
+ * ESLint parsers don't set parent pointers - ESLint does this during traversal
+ * before rules run. We need to do the same for custom parser ASTs.
+ *
+ * @param ast - The root Program node
+ */
+function setParentPointers(ast: Program): void {
+  const visit = (value: unknown, parent: Node | null): void => {
+    if (value == null || typeof value !== "object") return;
+
+    if (Array.isArray(value)) {
+      for (let i = 0, len = value.length; i < len; i++) {
+        visit(value[i], parent);
+      }
+      return;
+    }
+
+    // Only set parent on AST nodes (objects with 'type' property)
+    const node = value as Record<string, unknown>;
+    if ("type" in node) {
+      node.parent = parent;
+      // Visit all properties that could contain child nodes
+      for (const key in node) {
+        if (key !== "parent" && key !== "range" && key !== "loc") {
+          visit(node[key], node as unknown as Node);
+        }
+      }
+    }
+  };
+
+  // Program node's parent is null
+  (ast as unknown as Record<string, unknown>).parent = null;
+  for (const key in ast) {
+    if (key !== "parent" && key !== "range" && key !== "loc") {
+      visit((ast as unknown as Record<string, unknown>)[key], ast);
+    }
+  }
+}
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
 
 import {
@@ -392,9 +435,6 @@ function lintFileWithCustomAstImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // Parse the AST from JSON
-  const parsedAst = JSON.parse(astJson) as Program;
-
   // Parse parser services
   let parserServices: Record<string, unknown> = {};
   if (parserServicesJson && parserServicesJson !== "null") {
@@ -403,6 +443,29 @@ function lintFileWithCustomAstImpl(
 
   // Pass file path to context module
   setupFileContext(filePath);
+
+  // Retrieve the cached parse result from parseFile (if available).
+  // The cache contains the original AST and scopeManager.
+  // We prefer the cached AST over the JSON-deserialized one because:
+  // 1. ScopeManager has methods that can't be serialized to JSON
+  // 2. ScopeManager references the same AST node objects
+  const cachedResult = getAndClearCachedParseResult(filePath);
+  let parsedAst: Program;
+
+  if (cachedResult) {
+    parsedAst = cachedResult.ast as Program;
+    // ESLint parsers don't set parent pointers - ESLint does this during traversal.
+    // We need to do the same so rules can traverse up the AST via node.parent.
+    setParentPointers(parsedAst);
+    if (cachedResult.scopeManager) {
+      setExternalScopeManager(cachedResult.scopeManager);
+    }
+  } else {
+    // Fallback to JSON-deserialized AST
+    parsedAst = JSON.parse(astJson) as Program;
+    // Also set parent pointers for fallback case
+    setParentPointers(parsedAst);
+  }
 
   // Set up source with pre-parsed AST
   const hasBOM = false; // TODO: Detect BOM from source text

@@ -98,6 +98,10 @@ type Identifier =
 // Created lazily only when needed.
 let tsScopeManager: TSESLintScopeManager | null = null;
 
+// External scope manager from custom parser's parseForESLint().
+// When set, this is used instead of creating a new scope manager via analyze().
+let externalScopeManager: TSESLintScopeManager | null = null;
+
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
 const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
@@ -109,9 +113,31 @@ const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
 };
 
 /**
+ * Set an external scope manager from a custom parser.
+ * When set, this will be used instead of creating a new one via analyze().
+ * @param scopeManager - The scopeManager from parseForESLint()
+ */
+export function setExternalScopeManager(scopeManager: unknown): void {
+  // The scope manager from custom parsers should implement the same interface
+  // as @typescript-eslint/scope-manager
+  externalScopeManager = scopeManager as TSESLintScopeManager;
+}
+
+/**
  * Initialize TS-ESLint `ScopeManager` for current file.
  */
 function initTsScopeManager() {
+  // If an external scope manager was provided by a custom parser, use it directly.
+  // Parent pointers are set by setParentPointers() in lint.ts before rules run,
+  // so addGlobals() will work correctly.
+  if (externalScopeManager !== null) {
+    tsScopeManager = externalScopeManager;
+    // Add globals from configuration and resolve references.
+    // This is needed for ReferenceTracker to find global variable references.
+    addGlobals();
+    return;
+  }
+
   if (ast === null) initAst();
   debugAssertIsNonNull(ast);
 
@@ -238,6 +264,7 @@ function createGlobalVariable(name: string, globalScope: TSScope, isWritable: bo
  */
 export function resetScopeManager() {
   tsScopeManager = null;
+  externalScopeManager = null;
 }
 
 /**
