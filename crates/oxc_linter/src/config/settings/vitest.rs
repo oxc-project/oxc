@@ -1,3 +1,4 @@
+use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -12,4 +13,6 @@ pub struct VitestPluginSettings {
     /// to accommodate TypeScript type checking scenarios.
     #[serde(default)]
     pub typecheck: bool,
+    #[serde(rename = "vitestImports", default)]
+    pub vitest_imports: Vec<CompactStr>,
 }

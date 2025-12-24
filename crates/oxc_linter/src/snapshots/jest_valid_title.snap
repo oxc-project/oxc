@@ -574,3 +574,30 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace your title with a string
+
+  ⚠ eslint-plugin-jest(valid-title): correct is not allowed in test title
+   ╭─[valid_title.tsx:2:21]
+ 1 │ import { test } from './test-extend'
+ 2 │                       test('the correct way to properly handle all things', () => {})
+   ·                            ───────────────────────────────────────────────
+ 3 │                       
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-jest(valid-title): correct is not allowed in test title
+   ╭─[valid_title.tsx:2:21]
+ 1 │ import { test } from '@/tests/fixtures'
+ 2 │                       test('the correct way to properly handle all things', () => {})
+   ·                            ───────────────────────────────────────────────
+ 3 │                       
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-jest(valid-title): correct is not allowed in test title
+   ╭─[valid_title.tsx:2:21]
+ 1 │ import { test } from '@/tests/fixtures'
+ 2 │                       test('the correct way to properly handle all things', () => {})
+   ·                            ───────────────────────────────────────────────
+ 3 │                       
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
