@@ -453,12 +453,6 @@ impl<'a> PeepholeOptimizations {
         decl: &VariableDeclarator<'a>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        // if decl.kind.is_var() || decl.kind.is_using() {
-        //     // do not process var declarations in functions as they are function scoped
-        //     // there is currently no way to check for var [a, b] = [b, a] cases
-        //     return false;
-        // }
-
         let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
         if id_kind.is_empty() {
@@ -515,11 +509,11 @@ impl<'a> PeepholeOptimizations {
             min(id_pattern.elements.len(), init_len)
         };
 
-        if decl.kind.is_var() {
+        if decl.kind.is_var() && index > 1 {
             for init_val in &mut init_expr.elements {
                 if init_val.value_type(ctx).is_undetermined() {
                     // create intermediate declarations to avoid issues with hoisting
-                    // `var [a] = [b]` => `var _a = [b], a = _a`
+                    // `var [a] = [b]` => `var _a = b, a = _a`
                     let ident =
                         ctx.generate_uid_in_current_scope("_", SymbolFlags::FunctionScopedVariable);
                     result.push(ctx.ast.variable_declarator(
