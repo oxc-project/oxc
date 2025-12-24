@@ -247,14 +247,11 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
                 if !tailwind_collapses_newlines {
                     let tab_width = u32::from(f.options().indent_width.value());
                     indention = TemplateElementIndention::after_last_new_line(
-                        quasi_text,
-                        tab_width,
-                        indention,
+                        quasi_text, tab_width, indention,
                     );
                 }
                 // When Tailwind collapses newlines, treat as if there's no newline
-                let after_new_line =
-                    !tailwind_collapses_newlines && quasi_text.ends_with('\n');
+                let after_new_line = !tailwind_collapses_newlines && quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
 
                 // If in Tailwind context, push template expression context with quasi whitespace info
