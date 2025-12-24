@@ -70,6 +70,35 @@ const loadedParsers = new Map<number, LoadedParser>();
 let nextParserId = 0;
 
 /**
+ * Cached parse result from parseForESLint().
+ * Contains the AST and scopeManager that can't be serialized to JSON due to
+ * circular references (parent pointers) and methods.
+ */
+interface CachedParseResult {
+  ast: unknown;
+  scopeManager: unknown;
+}
+
+/**
+ * Cache for parse results from parseForESLint().
+ * Keyed by file path, stores the AST and scopeManager until lintFileWithCustomAst retrieves them.
+ * This allows passing these objects between parseFile and lintFile without JSON serialization,
+ * preserving parent pointers and scopeManager methods.
+ */
+const parseResultCache = new Map<string, CachedParseResult>();
+
+/**
+ * Get and remove the cached parse result for a file path.
+ * @param filePath - Absolute path of file
+ * @returns The cached parse result if available, or undefined
+ */
+export function getAndClearCachedParseResult(filePath: string): CachedParseResult | undefined {
+  const result = parseResultCache.get(filePath);
+  parseResultCache.delete(filePath);
+  return result;
+}
+
+/**
  * Result from loading a parser, returned to Rust
  */
 interface LoadParserResult {
@@ -164,9 +193,8 @@ export function parseFile(
     parserOptions.filePath = filePath;
 
     let ast: unknown;
-    // Phase 1: We capture visitorKeys but not scopeManager or services (they may have circular refs)
-    // Phase 3 will add proper scope info handling
     let visitorKeys: Record<string, string[]> | undefined;
+    let scopeManager: unknown;
 
     const { parser, hasParseForEslint } = loadedParser;
 
@@ -174,9 +202,8 @@ export function parseFile(
       // Use parseForESLint to get full information
       const result = parser.parseForESLint(sourceText, parserOptions);
       ast = result.ast;
-      // scopeManager and services are captured but not serialized in Phase 1
-      // (they often contain circular references)
       visitorKeys = result.visitorKeys;
+      scopeManager = result.scopeManager;
     } else if (parser.parse) {
       // Fall back to simple parse
       ast = parser.parse(sourceText, parserOptions);
@@ -185,14 +212,19 @@ export function parseFile(
       throw new Error("Parser has no parse method");
     }
 
-    // Use safeJsonStringify for the AST as some parsers add parent pointers that create
-    // circular references. For Phase 1, we only need the AST - scopeManager and services
-    // are skipped as they often contain circular references.
+    // Cache the AST and scopeManager for retrieval by lintFileWithCustomAst.
+    // This avoids JSON serialization issues:
+    // - AST has parent pointers (circular references) that would be lost
+    // - scopeManager has methods and circular references
+    parseResultCache.set(filePath, { ast, scopeManager });
+
+    // We still serialize the AST to JSON for the Rust side, but the JS side will use
+    // the cached original AST with parent pointers intact.
     const result: ParseFileResult = {
       astJson: safeJsonStringify(ast),
-      scopeManagerJson: null, // Phase 1: not used
+      scopeManagerJson: null, // Not serializable, use cache instead
       visitorKeysJson: visitorKeys ? safeJsonStringify(visitorKeys) : null,
-      servicesJson: null, // Phase 1: not used (may have circular refs)
+      servicesJson: null, // Not serializable (may have circular refs)
     };
 
     return JSON.stringify({ Success: result });
