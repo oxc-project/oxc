@@ -15,7 +15,6 @@ use crate::{
     LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
-        external_parsers::ExternalParserEntry,
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
@@ -194,18 +193,18 @@ impl ConfigStoreBuilder {
             }
         }
 
-        // Collect external parsers from base config
-        // Note: Parsers are not currently supported in overrides, only at the top level
-        let external_parsers: Vec<&ExternalParserEntry> =
-            oxlintrc.external_parsers.as_ref().map_or_else(Vec::new, |p| p.iter().collect());
+        // Collect external parsers from overrides that have a parser configured
+        let parser_overrides: Vec<_> =
+            oxlintrc.overrides.iter().filter(|o| o.has_js_parser()).collect();
 
-        // Load external parsers if any are configured
-        if !external_parsers.is_empty() {
+        // Load external parsers if any are configured in overrides
+        if !parser_overrides.is_empty() {
             let Some(external_linter) = external_linter else {
-                #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let first_parser = external_parsers.first().unwrap();
+                // parser_overrides is not empty and all elements have js_parser (from filter)
+                let first_override = &parser_overrides[0];
+                let parser_specifier = first_override.js_parser.as_deref().unwrap_or_default();
                 return Err(ConfigBuilderError::NoExternalLinterConfigured {
-                    plugin_specifier: first_parser.specifier.clone(),
+                    plugin_specifier: parser_specifier.to_string(),
                 });
             };
 
@@ -214,16 +213,19 @@ impl ConfigStoreBuilder {
                 ..Default::default()
             });
 
-            for entry in &external_parsers {
-                Self::load_external_parser(
-                    &entry.config_dir,
-                    &entry.specifier,
-                    &entry.patterns,
-                    entry.parser_options.as_ref(),
-                    external_linter,
-                    &resolver,
-                    external_parser_store,
-                )?;
+            for override_config in &parser_overrides {
+                // Convert override to parser entry for loading
+                if let Some(entry) = override_config.to_parser_entry() {
+                    Self::load_external_parser(
+                        &entry.config_dir,
+                        &entry.specifier,
+                        &entry.patterns,
+                        entry.parser_options.as_ref(),
+                        external_linter,
+                        &resolver,
+                        external_parser_store,
+                    )?;
+                }
             }
         }
 
@@ -674,12 +676,12 @@ impl ConfigStoreBuilder {
 
         // Convert parser options to JSON string
         let parser_options_json = match parser_options {
-            Some(v) => serde_json::to_string(v).map_err(|e| {
-                ConfigBuilderError::ParserLoadFailed {
+            Some(v) => {
+                serde_json::to_string(v).map_err(|e| ConfigBuilderError::ParserLoadFailed {
                     parser_specifier: parser_specifier.to_string(),
                     error: format!("Failed to serialize parser options: {e}"),
-                }
-            })?,
+                })?
+            }
             None => "null".to_string(),
         };
 

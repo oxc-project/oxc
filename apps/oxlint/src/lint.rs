@@ -164,18 +164,20 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
-        // Extract custom parser extensions from config to include in file discovery
-        let custom_parser_extensions: Vec<String> = oxlintrc
-            .external_parsers
-            .as_ref()
-            .map(|parsers| {
-                parsers
-                    .iter()
-                    .flat_map(|p| p.patterns.iter().map(String::as_str))
-                    .collect::<Vec<_>>()
-            })
-            .map(extract_extensions_from_patterns)
-            .unwrap_or_default();
+        // Extract custom parser extensions from overrides that have a parser configured
+        let custom_parser_extensions: Vec<String> = {
+            let patterns: Vec<&str> = oxlintrc
+                .overrides
+                .iter()
+                .filter(|o| o.js_parser.is_some())
+                .flat_map(|o| o.files.patterns().iter().map(String::as_str))
+                .collect();
+            if patterns.is_empty() {
+                Vec::new()
+            } else {
+                extract_extensions_from_patterns(patterns)
+            }
+        };
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
         let walker = if custom_parser_extensions.is_empty() {

@@ -10,6 +10,24 @@
 import { getErrorMessage } from "../utils/utils.ts";
 
 /**
+ * Stringify an object to JSON, handling circular references by replacing them with null.
+ * Many ESLint parsers return ASTs with parent pointers that create circular references.
+ */
+function safeJsonStringify(obj: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        // Circular reference found, replace with null
+        return null;
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
+/**
  * ESLint parser interface - `parse()` method signature
  */
 interface EslintParseFunction {
@@ -78,7 +96,11 @@ interface ParseFileResult {
  */
 export async function loadParser(url: string, parserOptionsJson: string): Promise<string> {
   try {
-    const parser = (await import(url)) as EslintParser;
+    const imported = await import(url);
+    // Handle both ES modules and CommonJS modules (where exports are under `default`)
+    const parser = (imported.parseForESLint || imported.parse
+      ? imported
+      : imported.default ?? imported) as EslintParser;
 
     // Validate the parser has at least one of the required methods
     const hasParseForEslint = typeof parser.parseForESLint === "function";
@@ -142,9 +164,9 @@ export function parseFile(
     parserOptions.filePath = filePath;
 
     let ast: unknown;
-    let scopeManager: unknown = null;
+    // Phase 1: We capture visitorKeys but not scopeManager or services (they may have circular refs)
+    // Phase 3 will add proper scope info handling
     let visitorKeys: Record<string, string[]> | undefined;
-    let services: Record<string, unknown> | undefined;
 
     const { parser, hasParseForEslint } = loadedParser;
 
@@ -152,9 +174,9 @@ export function parseFile(
       // Use parseForESLint to get full information
       const result = parser.parseForESLint(sourceText, parserOptions);
       ast = result.ast;
-      scopeManager = result.scopeManager;
+      // scopeManager and services are captured but not serialized in Phase 1
+      // (they often contain circular references)
       visitorKeys = result.visitorKeys;
-      services = result.services;
     } else if (parser.parse) {
       // Fall back to simple parse
       ast = parser.parse(sourceText, parserOptions);
@@ -163,11 +185,14 @@ export function parseFile(
       throw new Error("Parser has no parse method");
     }
 
+    // Use safeJsonStringify for the AST as some parsers add parent pointers that create
+    // circular references. For Phase 1, we only need the AST - scopeManager and services
+    // are skipped as they often contain circular references.
     const result: ParseFileResult = {
-      astJson: JSON.stringify(ast),
-      scopeManagerJson: scopeManager ? JSON.stringify(scopeManager) : null,
-      visitorKeysJson: visitorKeys ? JSON.stringify(visitorKeys) : null,
-      servicesJson: services ? JSON.stringify(services) : null,
+      astJson: safeJsonStringify(ast),
+      scopeManagerJson: null, // Phase 1: not used
+      visitorKeysJson: visitorKeys ? safeJsonStringify(visitorKeys) : null,
+      servicesJson: null, // Phase 1: not used (may have circular refs)
     };
 
     return JSON.stringify({ Success: result });

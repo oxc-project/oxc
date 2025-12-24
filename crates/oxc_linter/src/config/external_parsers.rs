@@ -2,10 +2,7 @@ use std::path::PathBuf;
 
 use schemars::{
     JsonSchema, SchemaGenerator,
-    schema::{
-        ArrayValidation, InstanceType, Metadata, ObjectValidation, Schema, SchemaObject,
-        SubschemaValidation,
-    },
+    schema::{ArrayValidation, InstanceType, Metadata, ObjectValidation, Schema, SchemaObject},
 };
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -71,37 +68,6 @@ impl Serialize for ExternalParserEntry {
         }
         .serialize(serializer)
     }
-}
-
-/// Custom JSON schema generator for external parsers that includes uniqueItems constraint
-pub fn external_parsers_schema(generator: &mut SchemaGenerator) -> Schema {
-    let entry_schema = generator.subschema_for::<ExternalParserEntry>();
-
-    let array_schema = SchemaObject {
-        instance_type: Some(InstanceType::Array.into()),
-        array: Some(Box::new(ArrayValidation {
-            items: Some(entry_schema.into()),
-            unique_items: Some(true),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-
-    SchemaObject {
-        subschemas: Some(Box::new(SubschemaValidation {
-            any_of: Some(vec![
-                SchemaObject {
-                    instance_type: Some(InstanceType::Null.into()),
-                    ..Default::default()
-                }
-                .into(),
-                array_schema.into(),
-            ]),
-            ..Default::default()
-        })),
-        ..Default::default()
-    }
-    .into()
 }
 
 impl JsonSchema for ExternalParserEntry {
