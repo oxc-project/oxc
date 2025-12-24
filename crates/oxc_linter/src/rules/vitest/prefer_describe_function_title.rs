@@ -1,13 +1,19 @@
-use oxc_ast::{AstKind, ast::{Argument, StringLiteral}};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, StringLiteral},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call}};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
+};
 
 fn prefer_describe_function_title_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(
         "A function should be used as the describe title instead of an equivalent string",
     )
@@ -18,7 +24,6 @@ fn prefer_describe_function_title_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferDescribeFunctionTitle;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -52,7 +57,7 @@ declare_oxc_lint!(
     PreferDescribeFunctionTitle,
     vitest,
     style,
-    fix,
+    pending,
 );
 
 impl Rule for PreferDescribeFunctionTitle {
@@ -65,8 +70,7 @@ impl Rule for PreferDescribeFunctionTitle {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx)
-        else {
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) else {
             return;
         };
         if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
