@@ -646,7 +646,8 @@ impl ConfigStoreBuilder {
         resolver: &Resolver,
         external_parser_store: &mut ExternalParserStore,
     ) -> Result<(), ConfigBuilderError> {
-        // Print warning on 1st attempt to load a parser
+        // Print warning once when loading the first parser (not on each parser load).
+        // The check `is_empty()` ensures we only warn once per config build, not per parser.
         #[expect(clippy::print_stderr)]
         if external_parser_store.is_empty() {
             eprintln!(
@@ -672,10 +673,15 @@ impl ConfigStoreBuilder {
         let parser_url = Url::from_file_path(&parser_path).unwrap().as_str().to_string();
 
         // Convert parser options to JSON string
-        let parser_options_json = parser_options.map_or_else(
-            || "null".to_string(),
-            |v| serde_json::to_string(v).unwrap_or_else(|_| "null".to_string()),
-        );
+        let parser_options_json = match parser_options {
+            Some(v) => serde_json::to_string(v).map_err(|e| {
+                ConfigBuilderError::ParserLoadFailed {
+                    parser_specifier: parser_specifier.to_string(),
+                    error: format!("Failed to serialize parser options: {e}"),
+                }
+            })?,
+            None => "null".to_string(),
+        };
 
         let load_parser = external_linter.load_parser.as_ref().ok_or_else(|| {
             ConfigBuilderError::ParserLoadFailed {
