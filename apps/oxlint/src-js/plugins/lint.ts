@@ -316,23 +316,42 @@ export function lintFileWithCustomAst(
       globalsJSON,
       parserServicesJson,
     );
-
-    let ret: string | null = null;
-
-    // Avoid JSON serialization in common case that there are no diagnostics to report
-    if (diagnostics.length !== 0) {
-      ret = JSON.stringify({ Success: diagnostics });
-      diagnostics.length = 0;
-    }
-
-    resetFile();
-
-    return ret;
   } catch (err) {
-    resetStateAfterError();
+    // For custom parser files in Phase 1, some rules may fail because they require
+    // scope information that isn't available. Instead of failing entirely, we add
+    // the error as a diagnostic and return any diagnostics collected before the error.
+    // This allows successful rules to report their findings even if one rule fails.
+    //
+    // Common causes: Rules using eslint-utils ReferenceTracker, which requires scope
+    // info from parseForESLint() that isn't passed through in Phase 1.
+    const errorMessage = getErrorMessage(err);
 
-    return JSON.stringify({ Failure: getErrorMessage(err) });
+    // Add error as a diagnostic at position 0 (start of file)
+    // ruleIndex u32::MAX (4294967295) indicates this is a system error, not from a specific rule
+    diagnostics.push({
+      message: `Rule error (may require scope info not available in Phase 1): ${errorMessage}`,
+      start: 0,
+      end: 0,
+      ruleIndex: 4294967295, // u32::MAX sentinel value
+      fixes: null,
+      messageId: null,
+    });
+
+    // Reset traversal state but preserve diagnostics
+    ancestors.length = 0;
   }
+
+  let ret: string | null = null;
+
+  // Avoid JSON serialization in common case that there are no diagnostics to report
+  if (diagnostics.length !== 0) {
+    ret = JSON.stringify({ Success: diagnostics });
+    diagnostics.length = 0;
+  }
+
+  resetFile();
+
+  return ret;
 }
 
 /**
