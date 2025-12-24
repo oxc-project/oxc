@@ -15,9 +15,9 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalParserStore,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, Oxlintrc, table::RuleTable,
 };
 
 use crate::{
@@ -179,6 +179,7 @@ impl CliRunner {
         }
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        let mut external_parser_store = ExternalParserStore::default();
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -195,6 +196,7 @@ impl CliRunner {
                 &paths,
                 external_linter,
                 &mut external_plugin_store,
+                &mut external_parser_store,
                 &mut nested_ignore_patterns,
             ) {
                 Ok(v) => v,
@@ -225,6 +227,7 @@ impl CliRunner {
             oxlintrc,
             external_linter,
             &mut external_plugin_store,
+            &mut external_parser_store,
         ) {
             Ok(builder) => builder,
             Err(e) => {
@@ -310,7 +313,12 @@ impl CliRunner {
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let config_store = ConfigStore::new(
+            lint_config,
+            nested_configs,
+            external_plugin_store,
+            external_parser_store,
+        );
 
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
@@ -534,6 +542,7 @@ impl CliRunner {
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        external_parser_store: &mut ExternalParserStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
@@ -585,6 +594,7 @@ impl CliRunner {
                 oxlintrc,
                 external_linter,
                 external_plugin_store,
+                external_parser_store,
             ) {
                 Ok(builder) => builder,
                 Err(e) => {

@@ -89,6 +89,47 @@ pub type ExternalLinterLintFileCb = Box<
         + Send,
 >;
 
+/// Callback to lint a file with a pre-parsed AST from a custom parser.
+///
+/// This is used when linting files that match custom parser patterns.
+/// The AST is already parsed and provided as JSON, so no oxc parsing is needed.
+///
+/// Arguments:
+/// - File path being linted
+/// - Source text content
+/// - AST as JSON string
+/// - Rule IDs to apply
+/// - Options IDs for the rules
+/// - Settings JSON
+/// - Globals JSON
+/// - Parser services JSON (from parseForESLint)
+///
+/// Returns:
+/// - `Ok(Vec<LintFileResult>)` with any diagnostics
+/// - `Err(String)` on failure with error message
+pub type ExternalLinterLintFileWithCustomAstCb = Box<
+    dyn Fn(
+            // Absolute path of file to lint
+            String,
+            // Source text content
+            String,
+            // AST as JSON string
+            String,
+            // Rule IDs
+            Vec<u32>,
+            // Options IDs
+            Vec<u32>,
+            // Settings JSON
+            String,
+            // Globals JSON
+            String,
+            // Parser services JSON
+            String,
+        ) -> Result<Vec<LintFileResult>, String>
+        + Sync
+        + Send,
+>;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoadPluginResult {
@@ -118,6 +159,7 @@ pub struct LoadParserResult {
 /// if the parser implements `parseForESLint` and provides a scope manager.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[expect(clippy::struct_field_names)]
 pub struct ParseFileResult {
     /// The ESTree-compatible AST as a JSON string.
     /// This will be passed directly to JS rules for linting.
@@ -155,6 +197,7 @@ pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) load_parser: Option<ExternalLinterLoadParserCb>,
     pub(crate) parse_file: Option<ExternalLinterParseFileCb>,
+    pub(crate) lint_file_with_custom_ast: Option<ExternalLinterLintFileWithCustomAstCb>,
     pub(crate) setup_configs: ExternalLinterSetupConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
 }
@@ -165,7 +208,14 @@ impl ExternalLinter {
         setup_configs: ExternalLinterSetupConfigsCb,
         lint_file: ExternalLinterLintFileCb,
     ) -> Self {
-        Self { load_plugin, load_parser: None, parse_file: None, setup_configs, lint_file }
+        Self {
+            load_plugin,
+            load_parser: None,
+            parse_file: None,
+            lint_file_with_custom_ast: None,
+            setup_configs,
+            lint_file,
+        }
     }
 
     /// Set the parser loading callback.
@@ -184,6 +234,19 @@ impl ExternalLinter {
     #[must_use]
     pub fn with_parse_file(mut self, parse_file: ExternalLinterParseFileCb) -> Self {
         self.parse_file = Some(parse_file);
+        self
+    }
+
+    /// Set the callback for linting files with pre-parsed AST from custom parsers.
+    ///
+    /// This callback is called instead of `lint_file` when linting a file that was
+    /// parsed by a custom parser. It receives the AST as JSON instead of a binary buffer.
+    #[must_use]
+    pub fn with_lint_file_with_custom_ast(
+        mut self,
+        lint_file_with_custom_ast: ExternalLinterLintFileWithCustomAstCb,
+    ) -> Self {
+        self.lint_file_with_custom_ast = Some(lint_file_with_custom_ast);
         self
     }
 }

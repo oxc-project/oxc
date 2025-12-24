@@ -11,10 +11,11 @@ use url::Url;
 use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
-    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
-    RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalParserStore, ExternalPluginStore, LintConfig, LintFilter,
+    LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
+        external_parsers::ExternalParserEntry,
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
@@ -102,6 +103,7 @@ impl ConfigStoreBuilder {
         oxlintrc: Oxlintrc,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        external_parser_store: &mut ExternalParserStore,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
@@ -188,6 +190,39 @@ impl ConfigStoreBuilder {
                     external_linter,
                     &resolver,
                     external_plugin_store,
+                )?;
+            }
+        }
+
+        // Collect external parsers from base config
+        // Note: Parsers are not currently supported in overrides, only at the top level
+        let external_parsers: Vec<&ExternalParserEntry> =
+            oxlintrc.external_parsers.as_ref().map_or_else(Vec::new, |p| p.iter().collect());
+
+        // Load external parsers if any are configured
+        if !external_parsers.is_empty() {
+            let Some(external_linter) = external_linter else {
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let first_parser = external_parsers.first().unwrap();
+                return Err(ConfigBuilderError::NoExternalLinterConfigured {
+                    plugin_specifier: first_parser.specifier.clone(),
+                });
+            };
+
+            let resolver = Resolver::new(ResolveOptions {
+                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+                ..Default::default()
+            });
+
+            for entry in &external_parsers {
+                Self::load_external_parser(
+                    &entry.config_dir,
+                    &entry.specifier,
+                    &entry.patterns,
+                    entry.parser_options.as_ref(),
+                    external_linter,
+                    &resolver,
+                    external_parser_store,
                 )?;
             }
         }
@@ -601,6 +636,70 @@ impl ConfigStoreBuilder {
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
+
+    fn load_external_parser(
+        resolve_dir: &Path,
+        parser_specifier: &str,
+        patterns: &[String],
+        parser_options: Option<&serde_json::Value>,
+        external_linter: &ExternalLinter,
+        resolver: &Resolver,
+        external_parser_store: &mut ExternalParserStore,
+    ) -> Result<(), ConfigBuilderError> {
+        // Print warning on 1st attempt to load a parser
+        #[expect(clippy::print_stderr)]
+        if external_parser_store.is_empty() {
+            eprintln!(
+                "WARNING: JS parsers are experimental and not subject to semver.\nBreaking changes are possible while JS parsers support is under development."
+            );
+        }
+
+        // Resolve the specifier relative to the config directory
+        let resolved = resolver.resolve(resolve_dir, parser_specifier).map_err(|e| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error: e.to_string(),
+            }
+        })?;
+        let parser_path = resolved.full_path();
+
+        if external_parser_store.is_parser_registered(&parser_path) {
+            return Ok(());
+        }
+
+        // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
+        // Note: `unwrap()` here is infallible as `parser_path` is an absolute path.
+        let parser_url = Url::from_file_path(&parser_path).unwrap().as_str().to_string();
+
+        // Convert parser options to JSON string
+        let parser_options_json = parser_options.map_or_else(
+            || "null".to_string(),
+            |v| serde_json::to_string(v).unwrap_or_else(|_| "null".to_string()),
+        );
+
+        let load_parser = external_linter.load_parser.as_ref().ok_or_else(|| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error: "Parser loading callback not available".to_string(),
+            }
+        })?;
+
+        let result = load_parser(parser_url, parser_options_json.clone()).map_err(|error| {
+            ConfigBuilderError::ParserLoadFailed {
+                parser_specifier: parser_specifier.to_string(),
+                error,
+            }
+        })?;
+
+        external_parser_store.register_parser(
+            parser_path,
+            patterns.to_vec(),
+            parser_options_json,
+            &result,
+        );
+
+        Ok(())
+    }
 }
 
 fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
@@ -636,6 +735,10 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
+    ParserLoadFailed {
+        parser_specifier: String,
+        error: String,
+    },
     ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
@@ -664,6 +767,10 @@ impl Display for ConfigBuilderError {
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
                 write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
+                Ok(())
+            }
+            ConfigBuilderError::ParserLoadFailed { parser_specifier, error } => {
+                write!(f, "Failed to load JS parser: {parser_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {
@@ -970,8 +1077,15 @@ mod test {
         .unwrap();
         let builder = {
             let mut external_plugin_store = ExternalPluginStore::default();
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap()
+            let mut external_parser_store = ExternalParserStore::default();
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                &mut external_parser_store,
+            )
+            .unwrap()
         };
         for (rule, severity) in &builder.rules {
             let name = rule.name();
@@ -1143,6 +1257,7 @@ mod test {
     fn test_extends_invalid() {
         let invalid_config = {
             let mut external_plugin_store = ExternalPluginStore::default();
+            let mut external_parser_store = ExternalParserStore::default();
             ConfigStoreBuilder::from_oxlintrc(
                 true,
                 Oxlintrc::from_file(&PathBuf::from(
@@ -1151,6 +1266,7 @@ mod test {
                 .unwrap(),
                 None,
                 &mut external_plugin_store,
+                &mut external_parser_store,
             )
         };
         let err = invalid_config.unwrap_err();
@@ -1292,11 +1408,13 @@ mod test {
 
         // Build the config with from_oxlintrc which will handle extends
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::default();
         let builder = ConfigStoreBuilder::from_oxlintrc(
             false, // start_empty = false to get default rules
             current_oxlintrc,
             None,
             &mut external_plugin_store,
+            &mut external_parser_store,
         )
         .unwrap();
 
@@ -1319,11 +1437,13 @@ mod test {
 
     fn config_store_from_path(path: &str) -> Config {
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::default();
         ConfigStoreBuilder::from_oxlintrc(
             true,
             Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
             None,
             &mut external_plugin_store,
+            &mut external_parser_store,
         )
         .unwrap()
         .build(&mut external_plugin_store)
@@ -1332,11 +1452,13 @@ mod test {
 
     fn config_store_from_str(s: &str) -> Config {
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::default();
         ConfigStoreBuilder::from_oxlintrc(
             true,
             serde_json::from_str(s).unwrap(),
             None,
             &mut external_plugin_store,
+            &mut external_parser_store,
         )
         .unwrap()
         .build(&mut external_plugin_store)

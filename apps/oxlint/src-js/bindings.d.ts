@@ -38,9 +38,31 @@ export declare function getBufferOffset(buffer: Uint8Array): number
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
 
+/**
+ * JS callback to lint a file with a pre-parsed AST from a custom parser.
+ *
+ * This is called for files parsed by custom parsers. The AST is already parsed
+ * and provided as a JSON string instead of a binary buffer.
+ */
+export type JsLintFileWithCustomAstCb =
+  ((arg0: string, arg1: string, arg2: string, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7: string) => string | null)
+
+/** JS callback to load a custom parser. */
+export type JsLoadParserCb =
+  ((arg0: string, arg1: string) => Promise<string>)
+
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
+
+/**
+ * JS callback to parse a file using a custom parser.
+ *
+ * This is called when linting a file that matches a custom parser's patterns.
+ * The callback should invoke the parser's `parse()` or `parseForESLint()` method.
+ */
+export type JsParseFileCb =
+  ((arg0: number, arg1: string, arg2: string, arg3: string) => Promise<string>)
 
 /** JS callback to setup configs. */
 export type JsSetupConfigsCb =
@@ -54,10 +76,13 @@ export type JsSetupConfigsCb =
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `setup_configs`: Setup configuration options.
  * 4. `lint_file`: Lint a file.
+ * 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
+ * 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
+ * 7. `lint_file_with_custom_ast`: (Optional) Lint a file with a pre-parsed AST.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb, loadParser?: JsLoadParserCb | undefined | null, parseFile?: JsParseFileCb | undefined | null, lintFileWithCustomAst?: JsLintFileWithCustomAstCb | undefined | null): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.

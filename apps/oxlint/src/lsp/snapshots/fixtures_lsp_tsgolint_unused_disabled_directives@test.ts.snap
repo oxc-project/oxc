@@ -1,16 +1,16 @@
 ---
 source: apps/oxlint/src/lsp/tester.rs
 ---
-########## 
+##########
 Linted file: fixtures/lsp/tsgolint/unused_disabled_directives/test.ts
 ----------
 ########## Diagnostic Reports
 File URI: file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts
 
-code: "typescript-eslint(no-floating-promises)"
+code: ""
 code_description.href: "None"
-message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
-range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
+message: "Unused eslint-disable directive (no problems were reported)."
+range: Range { start: Position { line: 4, character: 2 }, end: Position { line: 4, character: 59 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
 related_information[0].location.range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
@@ -18,10 +18,10 @@ severity: Some(Error)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: ""
 code_description.href: "None"
-message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
-range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
+message: "Unused eslint-disable directive (no problems were reported)."
+range: Range { start: Position { line: 8, character: 2 }, end: Position { line: 8, character: 67 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts"
 related_information[0].location.range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
@@ -30,73 +30,128 @@ source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
-CodeAction: 
-Title: Disable no-floating-promises for this line
+CodeAction:
+Title: remove unused disable directive
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 18,
-            character: 0,
+            line: 4,
+            character: 2,
         },
         end: Position {
-            line: 18,
-            character: 0,
+            line: 4,
+            character: 59,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "",
 }
 
 
-CodeAction: 
-Title: Disable no-floating-promises for this whole file
-Is Preferred: Some(false)
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 0,
-            character: 0,
-        },
-        end: Position {
-            line: 0,
-            character: 0,
-        },
-    },
-    new_text: "// oxlint-disable no-floating-promises\n",
-}
-
-
-CodeAction: 
-Title: Disable no-floating-promises for this line
+CodeAction:
+Title: remove unused disable directive
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 38,
-            character: 0,
+            line: 8,
+            character: 2,
         },
         end: Position {
-            line: 38,
-            character: 0,
+            line: 8,
+            character: 67,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "",
 }
 
 
-CodeAction: 
-Title: Disable no-floating-promises for this whole file
-Is Preferred: Some(false)
+CodeAction:
+Title: remove unused disable directive
+Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
-            character: 0,
+            line: 15,
+            character: 2,
         },
         end: Position {
-            line: 0,
-            character: 0,
+            line: 15,
+            character: 49,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "",
 }
+
+
+CodeAction:
+Title: remove unused disable directive
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 21,
+            character: 2,
+        },
+        end: Position {
+            line: 21,
+            character: 48,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction:
+Title: remove unused disable directive
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 24,
+            character: 2,
+        },
+        end: Position {
+            line: 24,
+            character: 66,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction:
+Title: remove unused disable directive
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 28,
+            character: 12,
+        },
+        end: Position {
+            line: 28,
+            character: 64,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction:
+Title: remove unused disable directive
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 35,
+            character: 2,
+        },
+        end: Position {
+            line: 35,
+            character: 57,
+        },
+    },
+    new_text: "",
+}
+

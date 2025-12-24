@@ -18,7 +18,7 @@ pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
-pub use overrides::OxlintOverrides;
+pub use overrides::{GlobSet, OxlintOverrides};
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};

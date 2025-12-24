@@ -21,6 +21,7 @@ mod config;
 mod context;
 mod disable_directives;
 mod external_linter;
+mod external_parser_store;
 mod external_plugin_store;
 mod fixer;
 mod frameworks;
@@ -60,10 +61,12 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadParserCb,
-        ExternalLinterLoadPluginCb, ExternalLinterParseFileCb, ExternalLinterSetupConfigsCb, JsFix,
-        LintFileResult, LoadParserResult, LoadPluginResult, ParseFileResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLintFileWithCustomAstCb,
+        ExternalLinterLoadParserCb, ExternalLinterLoadPluginCb, ExternalLinterParseFileCb,
+        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadParserResult, LoadPluginResult,
+        ParseFileResult,
     },
+    external_parser_store::{ExternalParserId, ExternalParserStore},
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,
@@ -140,6 +143,178 @@ impl Linter {
     /// Return `true` if `Linter` has an external linter (JS plugins).
     pub fn has_external_linter(&self) -> bool {
         self.external_linter.is_some()
+    }
+
+    /// Check if a file should be parsed by a custom parser.
+    ///
+    /// Returns the parser info (parser_id, parser_options_json, has_parse_for_eslint) if the file
+    /// matches a custom parser pattern, or `None` if it should use the default oxc parser.
+    pub fn find_custom_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
+        self.config.external_parser_store().find_parser_for_path(path)
+    }
+
+    /// Parse a file using a custom parser.
+    ///
+    /// This calls the JS-side parser through the `parse_file` callback.
+    /// Returns `None` if no parse_file callback is registered.
+    ///
+    /// # Errors
+    /// Returns an error if the parser fails to parse the file.
+    pub fn parse_with_custom_parser(
+        &self,
+        parser_id: u32,
+        path: &Path,
+        source_text: &str,
+        parser_options_json: &str,
+    ) -> Option<Result<ParseFileResult, String>> {
+        let external_linter = self.external_linter.as_ref()?;
+        let parse_file = external_linter.parse_file.as_ref()?;
+
+        Some(parse_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        ))
+    }
+
+    /// Check if custom parser support is available.
+    ///
+    /// Returns true if both the parse_file callback is registered and there are
+    /// custom parsers configured in the parser store.
+    pub fn has_custom_parser_support(&self) -> bool {
+        self.external_linter.as_ref().is_some_and(|el| el.parse_file.is_some())
+            && !self.config.external_parser_store().is_empty()
+    }
+
+    /// Lint a file using a custom parser.
+    ///
+    /// This method is used for Phase 1 custom parser support where:
+    /// 1. The file is parsed by a custom JS parser (not oxc)
+    /// 2. Only JS rules are run (no Rust rules since we don't have oxc semantic)
+    ///
+    /// # Arguments
+    /// * `path` - Path to the file being linted
+    /// * `source_text` - The source code content
+    /// * `parser_id` - ID of the custom parser to use
+    /// * `parser_options_json` - Parser options as JSON string
+    ///
+    /// # Returns
+    /// A tuple of (messages, None) - disable directives are not supported for custom parser files
+    ///
+    /// # Errors
+    /// Returns an error if parsing or linting fails
+    pub fn run_with_custom_parser(
+        &self,
+        path: &Path,
+        source_text: &str,
+        parser_id: u32,
+        parser_options_json: &str,
+    ) -> Result<Vec<Message>, String> {
+        let external_linter = self.external_linter.as_ref().ok_or_else(|| {
+            "Cannot lint with custom parser: no external linter configured".to_string()
+        })?;
+
+        let parse_file = external_linter.parse_file.as_ref().ok_or_else(|| {
+            "Cannot lint with custom parser: parse_file callback not configured".to_string()
+        })?;
+
+        let lint_file_with_custom_ast =
+            external_linter.lint_file_with_custom_ast.as_ref().ok_or_else(|| {
+                "Cannot lint with custom parser: lint_file_with_custom_ast callback not configured"
+                    .to_string()
+            })?;
+
+        // Parse the file with the custom parser
+        let parse_result = parse_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        )?;
+
+        // Get external rules for this path
+        let ResolvedLinterState { config, external_rules, .. } = self.config.resolve(path);
+
+        // If no external rules, nothing to lint
+        if external_rules.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Prepare settings JSON
+        let settings_json = config
+            .settings
+            .json
+            .as_ref()
+            .map_or_else(|| "{}".to_string(), |v| serde_json::to_string(v).unwrap_or_default());
+
+        // Prepare globals JSON - use default empty for now since we don't have ContextHost
+        // TODO: Properly construct globals from config
+        let globals_json = "{}".to_string();
+
+        // Get parser services JSON
+        let parser_services_json = parse_result.services_json.unwrap_or_else(|| "null".to_string());
+
+        // Call the JS linter with the custom AST
+        let rule_ids: Vec<u32> = external_rules.iter().map(|(r, _, _)| r.raw()).collect();
+        let options_ids: Vec<u32> = external_rules.iter().map(|(_, o, _)| o.raw()).collect();
+
+        let results = lint_file_with_custom_ast(
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parse_result.ast_json,
+            rule_ids,
+            options_ids,
+            settings_json,
+            globals_json,
+            parser_services_json,
+        )?;
+
+        // Convert results to Messages
+        let messages = results
+            .into_iter()
+            .map(|diagnostic| {
+                let span = Span::new(diagnostic.start, diagnostic.end);
+                let (external_rule_id, _options_id, severity) =
+                    external_rules[diagnostic.rule_index as usize];
+                let (plugin_name, rule_name) =
+                    self.config.resolve_plugin_rule_names(external_rule_id);
+
+                // Convert fixes if present
+                let fix = if let Some(fixes) = diagnostic.fixes {
+                    if fixes.len() == 1 {
+                        let fix = &fixes[0];
+                        PossibleFixes::Single(Fix::new(
+                            fix.text.clone(),
+                            Span::new(fix.range[0], fix.range[1]),
+                        ))
+                    } else if fixes.is_empty() {
+                        PossibleFixes::None
+                    } else {
+                        let fix_list: Vec<Fix> = fixes
+                            .into_iter()
+                            .map(|f| Fix::new(f.text, Span::new(f.range[0], f.range[1])))
+                            .collect();
+                        match CompositeFix::merge_fixes_fallible(fix_list, source_text) {
+                            Ok(fix) => PossibleFixes::Single(fix),
+                            Err(_) => PossibleFixes::None,
+                        }
+                    }
+                } else {
+                    PossibleFixes::None
+                };
+
+                Message::new(
+                    OxcDiagnostic::error(diagnostic.message)
+                        .with_label(span)
+                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                        .with_severity(severity.into()),
+                    fix,
+                )
+            })
+            .collect();
+
+        Ok(messages)
     }
 
     /// # Panics

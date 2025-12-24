@@ -4,7 +4,14 @@ import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
-import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import {
+  ast,
+  initAst,
+  resetSourceAndAst,
+  setupSourceForFile,
+  setupSourceForCustomParser,
+} from "./source_code.ts";
+import type { Program } from "../generated/types.d.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
@@ -270,4 +277,184 @@ export function resetStateAfterError() {
   ancestors.length = 0;
   resetFile();
   resetCfgWalk();
+}
+
+/**
+ * Lint a file using a pre-parsed AST from a custom parser.
+ *
+ * This is used for files parsed by custom JS parsers configured via `jsParsers`.
+ * The AST is already parsed and provided as an ESTree-compatible object.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of the file
+ * @param astJson - Pre-parsed AST as JSON string
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
+ * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
+ * @param parserServicesJson - Parser services from parseForESLint, as JSON string (or "null")
+ * @returns Diagnostics or error serialized to JSON string
+ */
+export function lintFileWithCustomAst(
+  filePath: string,
+  sourceText: string,
+  astJson: string,
+  ruleIds: number[],
+  optionsIds: number[],
+  settingsJSON: string,
+  globalsJSON: string,
+  parserServicesJson: string,
+): string | null {
+  try {
+    lintFileWithCustomAstImpl(
+      filePath,
+      sourceText,
+      astJson,
+      ruleIds,
+      optionsIds,
+      settingsJSON,
+      globalsJSON,
+      parserServicesJson,
+    );
+
+    let ret: string | null = null;
+
+    // Avoid JSON serialization in common case that there are no diagnostics to report
+    if (diagnostics.length !== 0) {
+      ret = JSON.stringify({ Success: diagnostics });
+      diagnostics.length = 0;
+    }
+
+    resetFile();
+
+    return ret;
+  } catch (err) {
+    resetStateAfterError();
+
+    return JSON.stringify({ Failure: getErrorMessage(err) });
+  }
+}
+
+/**
+ * Run rules on a file with a pre-parsed AST.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of the file
+ * @param astJson - Pre-parsed AST as JSON string
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
+ * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
+ * @param parserServicesJson - Parser services from parseForESLint, as JSON string (or "null")
+ * @throws {Error} If any parameters are invalid
+ * @throws {*} If any rule throws
+ */
+function lintFileWithCustomAstImpl(
+  filePath: string,
+  sourceText: string,
+  astJson: string,
+  ruleIds: number[],
+  optionsIds: number[],
+  settingsJSON: string,
+  globalsJSON: string,
+  parserServicesJson: string,
+) {
+  // Debug asserts that input is valid
+  debugAssert(
+    typeof filePath === "string" && filePath.length > 0,
+    "`filePath` should be a non-empty string",
+  );
+  debugAssert(typeof sourceText === "string", "`sourceText` should be a string");
+  debugAssert(typeof astJson === "string", "`astJson` should be a string");
+  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0, "`ruleIds` should be non-empty array");
+  debugAssert(Array.isArray(optionsIds), "`optionsIds` should be an array");
+  debugAssert(
+    ruleIds.length === optionsIds.length,
+    "`ruleIds` and `optionsIds` should be same length",
+  );
+
+  // Parse the AST from JSON
+  const parsedAst = JSON.parse(astJson) as Program;
+
+  // Parse parser services
+  let parserServices: Record<string, unknown> = {};
+  if (parserServicesJson && parserServicesJson !== "null") {
+    parserServices = JSON.parse(parserServicesJson) as Record<string, unknown>;
+  }
+
+  // Pass file path to context module
+  setupFileContext(filePath);
+
+  // Set up source with pre-parsed AST
+  const hasBOM = false; // TODO: Detect BOM from source text
+  setupSourceForCustomParser(sourceText, parsedAst, hasBOM, parserServices);
+
+  // Pass settings and globals JSON to modules that handle them
+  setSettingsForFile(settingsJSON);
+  setGlobalsForFile(globalsJSON);
+
+  // Get visitors for this file from all rules
+  initCompiledVisitor();
+
+  for (let i = 0, len = ruleIds.length; i < len; i++) {
+    const ruleId = ruleIds[i];
+    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
+    const ruleDetails = registeredRules[ruleId];
+
+    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
+    ruleDetails.ruleIndex = i;
+
+    // Set `options` for rule
+    const optionsId = optionsIds[i];
+    debugAssertIsNonNull(allOptions);
+    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+
+    // If the rule has no user-provided options, use the plugin-provided default
+    ruleDetails.options =
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+
+    let { visitor } = ruleDetails;
+    if (visitor === null) {
+      // Rule defined with `create` method
+      debugAssertIsNonNull(ruleDetails.rule.create);
+      visitor = ruleDetails.rule.create(ruleDetails.context);
+    } else {
+      // Rule defined with `createOnce` method
+      const { beforeHook, afterHook } = ruleDetails;
+      if (beforeHook !== null) {
+        const shouldRun = beforeHook();
+        if (shouldRun === false) continue;
+      }
+      if (afterHook !== null) afterHooks.push(afterHook);
+    }
+
+    addVisitorToCompiled(visitor);
+  }
+
+  const visitorState = finalizeCompiledVisitor();
+
+  // Visit AST
+  if (visitorState !== VISITOR_EMPTY) {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
+
+    if (visitorState === VISITOR_CFG) {
+      walkProgramWithCfg(ast, compiledVisitor);
+    } else {
+      walkProgram(ast, compiledVisitor);
+    }
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
+  }
+
+  // Run `after` hooks
+  const afterHooksLen = afterHooks.length;
+  if (afterHooksLen !== 0) {
+    for (let i = 0; i < afterHooksLen; i++) {
+      (0, afterHooks[i])();
+    }
+    afterHooks.length = 0;
+  }
 }

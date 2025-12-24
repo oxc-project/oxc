@@ -5,8 +5,8 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind, LintOptions,
-    Linter, ModuleRecord,
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalParserStore, ExternalPluginStore,
+    FixKind, LintOptions, Linter, ModuleRecord,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -43,7 +43,12 @@ fn bench_linter(criterion: &mut Criterion) {
                     ConfigStoreBuilder::all().build(&mut external_plugin_store).unwrap();
                 let linter = Linter::new(
                     LintOptions::default(),
-                    ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
+                    ConfigStore::new(
+                        lint_config,
+                        FxHashMap::default(),
+                        external_plugin_store,
+                        ExternalParserStore::default(),
+                    ),
                     None,
                 )
                 .with_fix(FixKind::All);

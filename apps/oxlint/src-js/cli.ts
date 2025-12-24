@@ -5,8 +5,11 @@ import { debugAssertIsNonNull } from "./utils/asserts.ts";
 // Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
 // are identical. Ditto `lintFile` and `lintFileWrapper`.
 let loadPlugin: typeof loadPluginWrapper | null = null;
+let loadParser: typeof loadParserWrapper | null = null;
+let parseFile: typeof parseFileWrapper | null = null;
 let setupConfigs: typeof setupConfigsWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
+let lintFileWithCustomAst: typeof lintFileWithCustomAstWrapper | null = null;
 
 /**
  * Load a plugin.
@@ -27,7 +30,7 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, lintFile, setupConfigs } = mod);
+      ({ loadPlugin, loadParser, parseFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias);
     });
   }
@@ -77,11 +80,108 @@ function lintFileWrapper(
   return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 }
 
+/**
+ * Load a custom parser.
+ *
+ * Lazy-loads parser code on first call, so that overhead is skipped if user doesn't use custom parsers.
+ *
+ * @param url - Absolute path of parser file as a `file://...` URL
+ * @param parserOptionsJson - Parser options as JSON string
+ * @returns Parser details or error serialized to JSON string
+ */
+function loadParserWrapper(url: string, parserOptionsJson: string): Promise<string> {
+  if (loadParser === null) {
+    // Use promises here instead of making `loadParserWrapper` an async function,
+    // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadParserWrapper`
+    return import("./plugins/index.ts").then((mod) => {
+      ({ loadPlugin, loadParser, parseFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
+      return loadParser(url, parserOptionsJson);
+    });
+  }
+  debugAssertIsNonNull(loadParser);
+  return loadParser(url, parserOptionsJson);
+}
+
+/**
+ * Lint a file with a pre-parsed AST from a custom parser.
+ *
+ * Delegates to `lintFileWithCustomAst`, which was lazy-loaded by `loadParserWrapper` or `loadPluginWrapper`.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of the file
+ * @param astJson - Pre-parsed AST as JSON string
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
+ * @param settingsJSON - Settings for file, as JSON
+ * @param globalsJSON - Globals for file, as JSON
+ * @param parserServicesJson - Parser services from parseForESLint, as JSON string (or "null")
+ * @returns Diagnostics or error serialized to JSON string
+ */
+function lintFileWithCustomAstWrapper(
+  filePath: string,
+  sourceText: string,
+  astJson: string,
+  ruleIds: number[],
+  optionsIds: number[],
+  settingsJSON: string,
+  globalsJSON: string,
+  parserServicesJson: string,
+): string | null {
+  // `lintFileWithCustomAstWrapper` is never called without `loadParserWrapper` or `loadPluginWrapper` being called first,
+  // so `lintFileWithCustomAst` must be defined here
+  debugAssertIsNonNull(lintFileWithCustomAst);
+  return lintFileWithCustomAst(
+    filePath,
+    sourceText,
+    astJson,
+    ruleIds,
+    optionsIds,
+    settingsJSON,
+    globalsJSON,
+    parserServicesJson,
+  );
+}
+
+/**
+ * Parse a file with a custom parser.
+ *
+ * Delegates to `parseFile`, which was lazy-loaded by `loadParserWrapper` or `loadPluginWrapper`.
+ *
+ * @param parserId - ID of the parser to use
+ * @param filePath - Absolute path of file being parsed
+ * @param sourceText - Source text content
+ * @param parserOptionsJson - Parser options as JSON string
+ * @returns Parse result or error serialized to JSON string
+ */
+function parseFileWrapper(
+  parserId: number,
+  filePath: string,
+  sourceText: string,
+  parserOptionsJson: string,
+): Promise<string> {
+  // `parseFileWrapper` is never called without `loadParserWrapper` being called first,
+  // so `parseFile` must be defined here
+  debugAssertIsNonNull(parseFile);
+  // Wrap in Promise to match the expected NAPI callback signature
+  return Promise.resolve(parseFile(parserId, filePath, sourceText, parserOptionsJson));
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin`, `setupConfigs`, and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, setupConfigsWrapper, lintFileWrapper);
+// Call Rust, passing callbacks and CLI arguments
+// Parser callbacks (loadParserWrapper, parseFileWrapper, lintFileWithCustomAstWrapper)
+// are optional but we provide them to enable custom parser support when configured
+// via jsParsers in oxlintrc.json
+const success = await lint(
+  args,
+  loadPluginWrapper,
+  setupConfigsWrapper,
+  lintFileWrapper,
+  loadParserWrapper,
+  parseFileWrapper,
+  lintFileWithCustomAstWrapper,
+);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
