@@ -452,6 +452,12 @@ impl<'a> PeepholeOptimizations {
         decl: &VariableDeclarator<'a>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
+        if decl.kind.is_var() || decl.kind.is_using() {
+            // do not process var declarations in functions as they are function scoped
+            // there is currently no way to check for var [a, b] = [b, a] cases
+            return false;
+        }
+
         let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
         if id_kind.is_empty() {
@@ -2099,49 +2105,60 @@ mod test {
 
     #[test]
     fn test_array_variable_destruction() {
-        test_same("var [] = []");
-        test("var [a] = [1]", "var a=1");
-        test("var [a, b, c, d] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, d = 4");
-        test("var [a, b, c, d] = [1, 2, 3]", "var a = 1, b = 2, c = 3, d");
-        test("var [a, b, c = 2, d] = [1]", "var a = 1, b, c = 2, d");
-        test("var [a, b, c] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, [] = [4]");
-        test("var [a, b, c = 2] = [1, 2, 3, 4]", "var a = 1, b = 2, c = 3, [] = [4]");
-        test("var [a, b, c = 3] = [1, 2]", "var a = 1, b = 2, c = 3");
-        test("var [a, b] = [1, 2, 3]", "var a = 1, b = 2, [] = [3]");
-        test("var [a] = [123, 2222, 2222]", "var a = 123, [] = [2222, 2222]");
+        test_same("let [] = []");
+        test("let [a] = [1]", "let a=1");
+        test("let [a, b, c, d] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, d = 4");
+        test("let [a, b, c, d] = [1, 2, 3]", "let a = 1, b = 2, c = 3, d");
+        test("let [a, b, c = 2, d] = [1]", "let a = 1, b, c = 2, d");
+        test("let [a, b, c] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, [] = [4]");
+        test("let [a, b, c = 2] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, [] = [4]");
+        test("let [a, b, c = 3] = [1, 2]", "let a = 1, b = 2, c = 3");
+        test("let [a, b] = [1, 2, 3]", "let a = 1, b = 2, [] = [3]");
+        test("let [a] = [123, 2222, 2222]", "let a = 123, [] = [2222, 2222]");
         test("const [a] = []", "const a = void 0");
         // spread
-        test("var [...a] = [...b]", "var a = [...b]");
-        test("var [a, a, ...d] = []", "var a, a, d");
-        test("var [a, ...d] = []", "var a, d");
-        test("var [a, ...d] = [1, ...f]", "var a = 1, d = [...f]");
-        test("var [a, ...d] = [1, foo]", "var a = 1, d = [foo] ");
-        test("var [a, b, c, ...d] = [1, 2, ...foo]", "var a = 1, b = 2, [c, ...d] = [...foo]");
-        test("var [a, b, ...c] = [1, 2, 3, ...foo]", "var a = 1, b = 2, c = [3, ...foo]");
-        test("var [a, b] = [...c, ...d]", "var [a, b] = [...c, ...d]");
-        test("var [a, b] = [...c, c, d]", "var [a,b] = [...c, c, d]");
+        test("let [...a] = [...b]", "let a = [...b]");
+        test("let [a, a, ...d] = []", "let a, a, d");
+        test("let [a, ...d] = []", "let a, d");
+        test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
+        test("let [a, ...d] = [1, foo]", "let a = 1, d = [foo] ");
+        test("let [a, b, c, ...d] = [1, 2, ...foo]", "let a = 1, b = 2, [c, ...d] = [...foo]");
+        test("let [a, b, ...c] = [1, 2, 3, ...foo]", "let a = 1, b = 2, c = [3, ...foo]");
+        test("let [a, b] = [...c, ...d]", "let [a, b] = [...c, ...d]");
+        test("let [a, b] = [...c, c, d]", "let [a,b] = [...c, c, d]");
         // defaults
-        test("var [a = 1] = []", "var a = 1");
-        test("var [a = 1] = [void 0]", "var a = 1");
-        test("var [a = 1] = [null]", "var a = null");
-        test_same("var [a = 1] = [foo]");
-        test("var [a = foo] = [2]", "var a = 2");
-        test("var [a = foo] = [,]", "var a = foo");
+        test("let [a = 1] = []", "let a = 1");
+        test("let [a = 1] = [void 0]", "let a = 1");
+        test("let [a = 1] = [null]", "let a = null");
+        test_same("let [a = 1] = [foo]");
+        test("let [a = foo] = [2]", "let a = 2");
+        test("let [a = foo] = [,]", "let a = foo");
         // holes
-        test("var [, , , ] = [, , , ]", "");
-        test("var [, , ] = [1, 2]", "var [] = [1], [] = [2]");
-        test("var [a, , c, d] = [, 3, , 4]", "var a, [] = [3], c, d = 4");
-        test("var [a, , c, d] = [void 0, e, null, f]", "var a = void 0, [] = [e], c = null, d = f");
-        test("var [a, , c, d] = [1, 2, 3, 4]", "var a = 1, [] = [2], c = 3, d = 4");
-        test("var [ , , a] = [1, 2, 3, 4]", "var [] = [1], [] = [2], a = 3, [] = [4]");
-        test("var [ , , ...t] = [1, 2, 3, 4]", "var [] = [1], [] = [2], t = [3, 4]");
-        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [] = [1], [, ...t] = [...a, 2, , 4]");
-        test("var [a, , b] = [, , , ]", "var a, b;");
+        test("let [, , , ] = [, , , ]", "");
+        test("let [, , ] = [1, 2]", "let [] = [1], [] = [2]");
+        test("let [a, , c, d] = [, 3, , 4]", "let a, [] = [3], c, d = 4");
+        test("let [a, , c, d] = [void 0, e, null, f]", "let a, [] = [e], c = null, d = f");
+        test("let [a, , c, d] = [1, 2, 3, 4]", "let a = 1, [] = [2], c = 3, d = 4");
+        test("let [ , , a] = [1, 2, 3, 4]", "let [] = [1], [] = [2], a = 3, [] = [4]");
+        test("let [ , , ...t] = [1, 2, 3, 4]", "let [] = [1], [] = [2], t = [3, 4]");
+        test("let [ , , ...t] = [1, ...a, 2, , 4]", "let [] = [1], [, ...t] = [...a, 2, , 4]");
+        test("let [a, , b] = [, , , ]", "let a, b;");
         test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
         // nested
-        test("var [a, [b, c]] = [1, [2, 3]]", "var a = 1, b = 2, c = 3");
-        test("var [a, [b, [c, d]]] = [1, ...[2, 3]]", "var a = 1, [[b, [c, d]]] = [...[2, 3]]");
-        test("var [a, [b, [c, ]]] = [1, [...2, 3]]", "var a = 1, [b, [c]] = [...2, 3]");
-        test("var [a, [b, [c, ]]] = [1, [2, [...3]]]", "var a = 1, b = 2, [c] = [...3];");
+        test("let [a, [b, c]] = [1, [2, 3]]", "let a = 1, b = 2, c = 3");
+        test("let [a, [b, [c, d]]] = [1, ...[2, 3]]", "let a = 1, [[b, [c, d]]] = [...[2, 3]]");
+        test("let [a, [b, [c, ]]] = [1, [...2, 3]]", "let a = 1, [b, [c]] = [...2, 3]");
+        test("let [a, [b, [c, ]]] = [1, [2, [...3]]]", "let a = 1, b = 2, [c] = [...3];");
+        // self reference
+        test("let [a] = [a]", "let a = a"); // TDZ
+        // can't access lexical declaration 'b' before initialization
+        test("let [a, b] = [b, a]", "let b = b");
+        test("let [a, ...b] = [b, a]", "let b = [b]");
+        test_same("let [a, ...b] = [...b, a]");
+        // SyntaxError: redeclaration of let a
+        test("let [a, b] = [b, a], [a, b] = [b, a]", "let a = b, b = a, a = b, b = a");
+        test("let [a, b] = [1, 2], [a, b] = [b, a]", "let a = 1, b = 2, a = 2, b = 2");
+        // var should not be optimized
+        test_same("var [a, b] = [b, a]");
     }
 }
