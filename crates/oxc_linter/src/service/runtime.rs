@@ -582,8 +582,30 @@ impl Runtime {
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
     ) {
-        self.modules_by_path.pin().reserve(paths.len());
-        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+        // Separate paths into custom parser files and regular files
+        let (custom_parser_paths, regular_paths): (Vec<_>, Vec<_>) =
+            if self.linter.has_custom_parser_support() {
+                paths.into_iter().partition(|path| {
+                    self.linter.find_custom_parser_for_path(Path::new(path)).is_some()
+                })
+            } else {
+                (Vec::new(), paths)
+            };
+
+        // Process custom parser files in parallel (they don't need module graph resolution)
+        if !custom_parser_paths.is_empty() {
+            custom_parser_paths.par_iter().for_each(|path| {
+                self.process_custom_parser_file(file_system, Path::new(path), tx_error);
+            });
+        }
+
+        // Process regular files through the normal flow
+        if regular_paths.is_empty() {
+            return;
+        }
+
+        self.modules_by_path.pin().reserve(regular_paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = regular_paths.into_iter().collect();
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -706,10 +728,37 @@ impl Runtime {
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
-        self.modules_by_path.pin().reserve(paths.len());
-        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+        // Separate paths into custom parser files and regular files
+        let (custom_parser_paths, regular_paths): (Vec<_>, Vec<_>) =
+            if self.linter.has_custom_parser_support() {
+                paths.into_iter().partition(|path| {
+                    self.linter.find_custom_parser_for_path(Path::new(path)).is_some()
+                })
+            } else {
+                (Vec::new(), paths)
+            };
 
         let messages = Mutex::new(Vec::<Message>::new());
+
+        // Process custom parser files
+        if !custom_parser_paths.is_empty() {
+            custom_parser_paths.par_iter().for_each(|path| {
+                if let Some(file_messages) =
+                    self.process_custom_parser_file_for_source(file_system, Path::new(path))
+                {
+                    messages.lock().unwrap().extend(file_messages);
+                }
+            });
+        }
+
+        // Process regular files through the normal flow
+        if regular_paths.is_empty() {
+            return messages.into_inner().unwrap();
+        }
+
+        self.modules_by_path.pin().reserve(regular_paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = regular_paths.into_iter().collect();
+
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -1059,5 +1108,116 @@ impl Runtime {
                 .collect();
         }
         Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
+    }
+
+    /// Process a file that uses a custom parser, returning messages directly.
+    ///
+    /// This is used by `run_source` (language server) which collects messages
+    /// directly instead of sending them through a channel.
+    fn process_custom_parser_file_for_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        path: &Path,
+    ) -> Option<Vec<Message>> {
+        // Get the custom parser info for this file
+        let (parser_id, parser_options_json, _has_parse_for_eslint) =
+            self.linter.find_custom_parser_for_path(path)?;
+
+        // Read the source text
+        let allocator = Allocator::default();
+        let source_text = file_system.read_to_arena_str(path, &allocator).ok()?;
+
+        // Run linting with the custom parser
+        match self.linter.run_with_custom_parser(path, source_text, parser_id, parser_options_json)
+        {
+            Ok(messages) => Some(messages),
+            Err(err) => Some(vec![Message::new(
+                OxcDiagnostic::error(format!(
+                    "Error linting {} with custom parser: {err}",
+                    path.display()
+                )),
+                PossibleFixes::None,
+            )]),
+        }
+    }
+
+    /// Process a file that uses a custom parser.
+    ///
+    /// This handles Phase 1 custom parser support where:
+    /// 1. The file is parsed by a custom JS parser (not oxc)
+    /// 2. Only JS rules are run (no Rust rules)
+    fn process_custom_parser_file(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        path: &Path,
+        tx_error: &DiagnosticSender,
+    ) {
+        // Get the custom parser info for this file
+        let Some((parser_id, parser_options_json, _has_parse_for_eslint)) =
+            self.linter.find_custom_parser_for_path(path)
+        else {
+            // This shouldn't happen since we already checked, but handle gracefully
+            return;
+        };
+
+        // Read the source text
+        let allocator = Allocator::default();
+        let source_text = match file_system.read_to_arena_str(path, &allocator) {
+            Ok(text) => text,
+            Err(e) => {
+                let error = Error::new(OxcDiagnostic::error(format!(
+                    "Failed to read file {} with error \"{e}\"",
+                    path.display()
+                )));
+                tx_error.send(vec![error]).unwrap();
+                return;
+            }
+        };
+
+        // Run linting with the custom parser
+        match self.linter.run_with_custom_parser(path, source_text, parser_id, parser_options_json)
+        {
+            Ok(messages) => {
+                if !messages.is_empty() {
+                    // Apply fixes if enabled
+                    let messages = if self.linter.options().fix.is_some() {
+                        let fix_result = Fixer::new(
+                            source_text,
+                            messages,
+                            SourceType::from_path(path)
+                                .ok()
+                                .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st }),
+                        )
+                        .fix();
+
+                        if fix_result.fixed {
+                            file_system.write_file(path, &fix_result.fixed_code).unwrap();
+                        }
+
+                        fix_result.messages
+                    } else {
+                        messages
+                    };
+
+                    if !messages.is_empty() {
+                        let errors = messages.into_iter().map(Into::into).collect();
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            &self.cwd,
+                            path,
+                            source_text,
+                            errors,
+                        );
+                        tx_error.send(diagnostics).unwrap();
+                    }
+                }
+            }
+            Err(err) => {
+                let error = Error::new(OxcDiagnostic::error(format!(
+                    "Error linting {} with custom parser: {err}",
+                    path.display()
+                )));
+                tx_error.send(vec![error]).unwrap();
+            }
+        }
     }
 }

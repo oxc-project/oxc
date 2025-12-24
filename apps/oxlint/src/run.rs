@@ -124,6 +124,33 @@ pub type JsParseFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to lint a file with a pre-parsed AST from a custom parser.
+///
+/// This is called for files parsed by custom parsers. The AST is already parsed
+/// and provided as a JSON string instead of a binary buffer.
+#[napi]
+pub type JsLintFileWithCustomAstCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        String,   // Absolute path of file to lint
+        String,   // Source text
+        String,   // AST as JSON string
+        Vec<u32>, // Array of rule IDs
+        Vec<u32>, // Array of options IDs
+        String,   // Settings for the file, as JSON string
+        String,   // Globals for the file, as JSON string
+        String,   // Parser services as JSON string (or "null")
+    )>,
+    // Return value
+    Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
+    // Arguments (repeated)
+    FnArgs<(String, String, String, Vec<u32>, Vec<u32>, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -133,6 +160,7 @@ pub type JsParseFileCb = ThreadsafeFunction<
 /// 4. `lint_file`: Lint a file.
 /// 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
 /// 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
+/// 7. `lint_file_with_custom_ast`: (Optional) Lint a file with a pre-parsed AST.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -145,8 +173,19 @@ pub async fn lint(
     lint_file: JsLintFileCb,
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file, load_parser, parse_file).await.report()
+    lint_impl(
+        args,
+        load_plugin,
+        setup_configs,
+        lint_file,
+        load_parser,
+        parse_file,
+        lint_file_with_custom_ast,
+    )
+    .await
+    .report()
         == ExitCode::SUCCESS
 }
 
@@ -158,6 +197,7 @@ async fn lint_impl(
     lint_file: JsLintFileCb,
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -196,10 +236,18 @@ async fn lint_impl(
         lint_file,
         load_parser,
         parse_file,
+        lint_file_with_custom_ast,
     ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _, _, _) = (load_plugin, setup_configs, lint_file, load_parser, parse_file);
+        let (_, _, _, _, _, _) = (
+            load_plugin,
+            setup_configs,
+            lint_file,
+            load_parser,
+            parse_file,
+            lint_file_with_custom_ast,
+        );
         None
     };
 

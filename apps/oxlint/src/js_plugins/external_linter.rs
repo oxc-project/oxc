@@ -9,14 +9,18 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadParserCb,
-    ExternalLinterLoadPluginCb, ExternalLinterParseFileCb, ExternalLinterSetupConfigsCb,
-    LintFileResult, LoadParserResult, LoadPluginResult, ParseFileResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLintFileWithCustomAstCb,
+    ExternalLinterLoadParserCb, ExternalLinterLoadPluginCb, ExternalLinterParseFileCb,
+    ExternalLinterSetupConfigsCb, LintFileResult, LoadParserResult, LoadPluginResult,
+    ParseFileResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadParserCb, JsLoadPluginCb, JsParseFileCb, JsSetupConfigsCb},
+    run::{
+        JsLintFileCb, JsLintFileWithCustomAstCb, JsLoadParserCb, JsLoadPluginCb, JsParseFileCb,
+        JsSetupConfigsCb,
+    },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -26,6 +30,7 @@ pub fn create_external_linter(
     lint_file: JsLintFileCb,
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_configs = wrap_setup_configs(setup_configs);
@@ -39,6 +44,12 @@ pub fn create_external_linter(
 
     if let Some(parse_file) = parse_file {
         linter = linter.with_parse_file(wrap_parse_file(parse_file));
+    }
+
+    if let Some(lint_file_with_custom_ast) = lint_file_with_custom_ast {
+        linter = linter.with_lint_file_with_custom_ast(wrap_lint_file_with_custom_ast(
+            lint_file_with_custom_ast,
+        ));
     }
 
     linter
@@ -303,6 +314,73 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 }
             } else {
                 Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
+            }
+        },
+    )
+}
+
+/// Wrap `lintFileWithCustomAst` JS callback as a normal Rust function.
+///
+/// This is similar to `wrap_lint_file`, but accepts pre-parsed AST as JSON
+/// instead of a binary buffer. Used for files parsed by custom parsers.
+fn wrap_lint_file_with_custom_ast(
+    cb: JsLintFileWithCustomAstCb,
+) -> ExternalLinterLintFileWithCustomAstCb {
+    Box::new(
+        move |file_path: String,
+              source_text: String,
+              ast_json: String,
+              rule_ids: Vec<u32>,
+              options_ids: Vec<u32>,
+              settings_json: String,
+              globals_json: String,
+              parser_services_json: String| {
+            let (tx, rx) = channel();
+
+            // Send data to JS
+            let status = cb.call_with_return_value(
+                FnArgs::from((
+                    file_path,
+                    source_text,
+                    ast_json,
+                    rule_ids,
+                    options_ids,
+                    settings_json,
+                    globals_json,
+                    parser_services_json,
+                )),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |result, _env| {
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFileWithCustomAst`");
+                    Ok(())
+                },
+            );
+
+            if status == Status::Ok {
+                match rx.recv() {
+                    // `lintFileWithCustomAst` returns `null` if no diagnostics reported
+                    Ok(Ok(None)) => Ok(Vec::new()),
+                    // `lintFileWithCustomAst` returns JSON string if diagnostics reported, or an error occurred
+                    Ok(Ok(Some(json))) => {
+                        match serde_json::from_str(&json) {
+                            // Diagnostics reported
+                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            // Error occurred on JS side
+                            Ok(LintFileReturnValue::Failure(err)) => Err(err),
+                            // Invalid JSON - should be impossible, because we control serialization on JS side
+                            Err(err) => Err(format!(
+                                "Failed to deserialize JSON returned by `lintFileWithCustomAst`: {err}"
+                            )),
+                        }
+                    }
+                    // `lintFileWithCustomAst` threw an error
+                    Ok(Err(err)) => Err(format!("`lintFileWithCustomAst` threw an error: {err}")),
+                    // Sender "hung up"
+                    Err(err) => Err(format!("`lintFileWithCustomAst` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFileWithCustomAst` callback: {status:?}"))
             }
         },
     )
