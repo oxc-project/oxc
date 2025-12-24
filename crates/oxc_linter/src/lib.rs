@@ -279,6 +279,16 @@ impl Linter {
             .into_iter()
             .map(|diagnostic| {
                 let span = Span::new(diagnostic.start, diagnostic.end);
+
+                // Check for sentinel value (u32::MAX) indicating a system error
+                // rather than a specific rule violation
+                if diagnostic.rule_index == u32::MAX {
+                    return Message::new(
+                        OxcDiagnostic::warn(diagnostic.message).with_label(span),
+                        PossibleFixes::None,
+                    );
+                }
+
                 let (external_rule_id, _options_id, severity) =
                     external_rules[diagnostic.rule_index as usize];
                 let (plugin_name, rule_name) =
