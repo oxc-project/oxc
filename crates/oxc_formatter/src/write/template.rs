@@ -228,16 +228,33 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
         // Check if we're in a Tailwind context - if so, we need to push expression context
         let tailwind_ctx = f.context().tailwind_context().copied();
 
+        // When in Tailwind context with preserve_whitespace false, newlines are collapsed
+        let tailwind_collapses_newlines = tailwind_ctx.is_some()
+            && !f
+                .options()
+                .experimental_tailwindcss
+                .as_ref()
+                .and_then(|opts| opts.tailwind_preserve_whitespace)
+                .unwrap_or(false);
+
         for (i, quasi) in quasis.iter().enumerate() {
             write!(f, *quasi);
 
             let quasi_text = quasi.value.raw.as_str();
 
             if let Some(expr) = expression_iterator.next() {
-                let tab_width = u32::from(f.options().indent_width.value());
-                indention =
-                    TemplateElementIndention::after_last_new_line(quasi_text, tab_width, indention);
-                let after_new_line = quasi_text.ends_with('\n');
+                // Only calculate indention if newlines are NOT being collapsed
+                if !tailwind_collapses_newlines {
+                    let tab_width = u32::from(f.options().indent_width.value());
+                    indention = TemplateElementIndention::after_last_new_line(
+                        quasi_text,
+                        tab_width,
+                        indention,
+                    );
+                }
+                // When Tailwind collapses newlines, treat as if there's no newline
+                let after_new_line =
+                    !tailwind_collapses_newlines && quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
 
                 // If in Tailwind context, push template expression context with quasi whitespace info

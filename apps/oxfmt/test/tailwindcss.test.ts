@@ -391,6 +391,60 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  test("should collapse newlines to single space when tailwindPreserveWhitespace is false (default)", async () => {
+    const input = `<div className={\`flex
+items-center
+bg-blue-500
+p-4
+text-white
+\${isActive ? \`font-bold
+shadow-lg\` : "font-normal"}\`} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Newlines should be collapsed to single space, classes sorted
+    expect(result.code).toMatchInlineSnapshot(`
+      "<div
+        className={\`flex items-center bg-blue-500 p-4 text-white \${
+          isActive ? \`font-bold shadow-lg\` : "font-normal"
+        }\`}
+      />;
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve newlines when tailwindPreserveWhitespace is true", async () => {
+    const input = `<div className={\`flex
+items-center
+bg-blue-500
+p-4
+text-white
+\${isActive ? \`font-bold
+shadow-lg\` : "font-normal"}\`} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindPreserveWhitespace: true,
+      },
+    });
+
+    // Newlines should be preserved
+    expect(result.code).toMatchInlineSnapshot(`
+      "<div className={\`flex
+      items-center
+      bg-blue-500
+      p-4
+      text-white
+      \${isActive ? \`font-bold
+      shadow-lg\` : "font-normal"}\`} />;
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+  });
+
   // Tests for can_collapse_whitespace in template literal expressions
   // These test the whitespace preservation logic based on adjacent quasi whitespace
 
