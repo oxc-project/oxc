@@ -46,16 +46,41 @@ pub fn is_tailwind_jsx_attribute(
 
 /// Checks if a callee expression is a Tailwind function.
 ///
-/// Returns `true` for functions specified in `tailwindFunctions` option
-/// (e.g., `clsx`, `cn`, `tw`).
+/// Traverses through `CallExpression` and `MemberExpression` nodes to find the
+/// root identifier, then checks if it matches any function in `tailwindFunctions`.
+///
+/// This matches patterns like:
+/// - `clsx(...)` - direct call
+/// - `clsx.foo(...)` - member expression
+/// - `obj.clsx(...)` - object member
+/// - `foo().clsx(...)` - chained calls
+///
+/// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
 pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
     let Some(functions) = &options.tailwind_functions else {
         return false;
     };
-    let Expression::Identifier(ident) = callee else {
-        return false;
-    };
-    functions.iter().any(|f| f == ident.name.as_str())
+
+    // Traverse property accesses and function calls to find the leading identifier
+    let mut node = callee;
+
+    loop {
+        match node {
+            Expression::CallExpression(call) => {
+                node = &call.callee;
+            }
+            Expression::StaticMemberExpression(member) => {
+                node = &member.object;
+            }
+            Expression::ComputedMemberExpression(member) => {
+                node = &member.object;
+            }
+            Expression::Identifier(ident) => {
+                return functions.iter().any(|f| f == ident.name.as_str());
+            }
+            _ => return false,
+        }
+    }
 }
 
 // ============================================================================

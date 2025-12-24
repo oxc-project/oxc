@@ -127,6 +127,71 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  test("should sort classes in member expression on tailwind function (clsx.foo(...))", async () => {
+    const input = `const A = <div className={clsx.foo("p-4 flex")}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["clsx"],
+      },
+    });
+
+    expect(result.code).toContain('clsx.foo("flex p-4")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes in object member tailwind function (obj.clsx(...))", async () => {
+    const input = `const A = <div className={obj.clsx("p-4 flex")}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["obj"],
+      },
+    });
+
+    expect(result.code).toContain('obj.clsx("flex p-4")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes in chained call (foo().clsx(...))", async () => {
+    const input = `const A = <div className={foo().clsx("p-4 flex")}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["foo"],
+      },
+    });
+
+    expect(result.code).toContain('foo().clsx("flex p-4")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes in deeply nested member expression (a.b.c.clsx(...))", async () => {
+    const input = `const A = <div className={a.b.c.clsx("p-4 flex")}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["a"],
+      },
+    });
+
+    expect(result.code).toContain('a.b.c.clsx("flex p-4")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes in computed member expression (obj[key](...))", async () => {
+    const input = `const A = <div className={obj[key]("p-4 flex")}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["obj"],
+      },
+    });
+
+    expect(result.code).toContain('obj[key]("flex p-4")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   test("should preserve whitespace when tailwindPreserveWhitespace is true", async () => {
     // Input with leading/trailing whitespace in class string
     const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;
