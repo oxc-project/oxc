@@ -248,9 +248,13 @@ impl Linter {
             .as_ref()
             .map_or_else(|| "{}".to_string(), |v| serde_json::to_string(v).unwrap_or_default());
 
-        // Prepare globals JSON - use default empty for now since we don't have ContextHost
-        // TODO: Properly construct globals from config
-        let globals_json = "{}".to_string();
+        // Prepare globals JSON from config
+        let globals_and_envs = GlobalsAndEnvs::from_config(&config);
+        let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
+            // Log error but continue with empty globals
+            debug_assert!(false, "Error serializing globals for custom parser file: {e}");
+            "{}".to_string()
+        });
 
         // Get parser services JSON
         let parser_services_json = parse_result.services_json.unwrap_or_else(|| "null".to_string());

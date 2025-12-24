@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 use oxc_allocator::Allocator;
 
 use crate::{
-    config::{OxlintEnv, OxlintGlobals},
+    config::{LintConfig, OxlintEnv, OxlintGlobals},
     context::ContextHost,
 };
 
@@ -270,6 +270,11 @@ pub struct GlobalsAndEnvs<'c> {
 impl<'c> GlobalsAndEnvs<'c> {
     pub fn new(ctx_host: &'c ContextHost<'_>) -> Self {
         Self { globals: ctx_host.globals(), envs: EnabledEnvs(ctx_host.env()) }
+    }
+
+    /// Create from config directly (for custom parser files that don't have ContextHost)
+    pub fn from_config(config: &'c LintConfig) -> Self {
+        Self { globals: &config.globals, envs: EnabledEnvs(&config.env) }
     }
 }
 

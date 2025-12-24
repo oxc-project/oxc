@@ -80,12 +80,16 @@ impl ExternalParserStore {
     /// Find a parser that matches the given file path.
     ///
     /// Returns the parser's JS-side ID, options JSON, and whether it has parseForESLint.
+    ///
+    /// Note: Parsers are matched in the order they were configured. If multiple parsers
+    /// could match the same file, the first one wins.
     pub fn find_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
-        let path_str = path.to_str()?;
+        // Use lossy conversion for non-UTF-8 paths (rare but possible on some systems)
+        let path_str = path.to_string_lossy();
 
-        // Check each parser's patterns
+        // Check each parser's patterns (first match wins)
         for parser in &self.parsers {
-            if parser.patterns.is_match(path_str) {
+            if parser.patterns.is_match(&path_str) {
                 return Some((
                     parser.parser_id,
                     &parser.parser_options_json,
