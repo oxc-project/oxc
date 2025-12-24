@@ -73,12 +73,11 @@ mod test {
         test("(function () { fn(); }.call(this));", "fn();");
         test("(function () { fn(); }.call(this, 2));", "(()=>{fn();})(2);");
         test("(function () {}.call(this));", "");
-        test("var x = (function () { return true; }.call(this));", "var x = (() => !0)();");
+        test("var x = (function () { return true; }.call(this));", "var x = !0;");
         test(
             "var x = (function () { foo() }).call(this, a, b);",
             "var x = (() => { foo() })(a, b)",
         );
-
         test_same("(function () {}).call(foo)");
         test_same("(function () {}).call(test())");
         test_same("(function () { foo() }).call(test)");
