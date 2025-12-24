@@ -6,392 +6,210 @@ source: crates/oxc_linter/src/tester.rs
  1 │ '\8'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\9'
    ·  ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\9'
-   ·  ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ "\8"
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ "\8"
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:3]
  1 │ 'f\9'
    ·   ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:3]
- 1 │ 'f\9'
-   ·   ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ 'xo\9'
    ·    ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ 'xo\9'
-   ·    ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ 'foo\9'
    ·     ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ 'foo\9'
-   ·     ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ 'foo\8bar'
    ·     ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ 'foo\8bar'
-   ·     ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '👍\8'
    ·    ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
- 1 │ '👍\8'
-   ·    ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\\\8'
    ·    ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\\\\\9'
    ·      ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ 'foo\\\8'
    ·       ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\ \8'
    ·    ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\1\9'
    ·    ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ 'foo\1\9'
    ·       ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\n\n\8\n'
    ·      ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ '\n.\n\8\n'
    ·       ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:8]
  1 │ '\n.\nn\8\n'
    ·        ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ '\👍\8'
    ·     ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ '\\8\9'
    ·     ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8\\9'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8\\9'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8 \\9'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8 \\9'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8\8'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8\8'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\8\8'
    ·    ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\8\8'
-   ·    ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\9\8'
    ·  ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\9\8'
-   ·  ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\9\8'
    ·    ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\9\8'
-   ·    ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ 'foo\8bar\9baz'
    ·     ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ 'foo\8bar\9baz'
-   ·     ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:10]
  1 │ 'foo\8bar\9baz'
    ·          ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:10]
- 1 │ 'foo\8bar\9baz'
-   ·          ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8\1\9'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8\1\9'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\8\1\9'
    ·      ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\9\n9\\9\9'
    ·  ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\9\n9\\9\9'
-   ·  ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:10]
  1 │ '\9\n9\\9\9'
    ·          ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8\\\9'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8\\\9'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\8\\\9'
    ·      ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
+   ╭─[no_nonoctal_decimal_escape.tsx:1:12]
  1 │ var foo = '\8'; bar('\9')
-   ·  ──
+   ·            ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ var foo = '\8'; bar('\9')
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
+   ╭─[no_nonoctal_decimal_escape.tsx:1:22]
  1 │ var foo = '\8'; bar('\9')
-   ·  ──
+   ·                      ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ var foo = '\8'; bar('\9')
-   ·  ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   × Invalid Unicode escape sequence
    ╭─[no_nonoctal_decimal_escape.tsx:1:15]
@@ -411,235 +229,99 @@ source: crates/oxc_linter/src/tester.rs
  1 │ '\\n\8'
    ·     ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ '\\n\9'
    ·     ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ '\\\\n\8'
    ·       ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:11]
  1 │ 'foo\\nbar\9baz'
    ·           ──
    ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\0\8'
-   ·  ────
-   ╰────
-  help: Replace '\0\8' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\0\8'
    ·    ──
    ╰────
-  help: Replace '\8' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\0\8'
-   ·    ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ 'foo\0\9bar'
-   ·     ────
-   ╰────
-  help: Replace '\0\9' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ 'foo\0\9bar'
    ·       ──
    ╰────
-  help: Replace '\9' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:7]
- 1 │ 'foo\0\9bar'
-   ·       ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\1\0\8'
-   ·    ────
-   ╰────
-  help: Replace '\0\8' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\1\0\8'
    ·      ──
    ╰────
-  help: Replace '\8' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
- 1 │ '\1\0\8'
-   ·      ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\0\8\9'
-   ·  ────
-   ╰────
-  help: Replace '\0\8' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
  1 │ '\0\8\9'
    ·    ──
    ╰────
-  help: Replace '\8' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\0\8\9'
-   ·    ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\0\8\9'
    ·      ──
    ╰────
-  help: Replace '\9' with '9'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
- 1 │ '\0\8\9'
-   ·      ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8\0\9'
    ·  ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\8\0\9'
-   ·  ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ '\8\0\9'
-   ·    ────
-   ╰────
-  help: Replace '\0\9' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\8\0\9'
    ·      ──
    ╰────
-  help: Replace '\9' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
- 1 │ '\8\0\9'
-   ·      ──
-   ╰────
-  help: Replace '\9' with '\\9' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:3]
  1 │ '0\8'
    ·   ──
    ╰────
-  help: Replace '\8' with '8'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:3]
- 1 │ '0\8'
-   ·   ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ '\\0\8'
    ·     ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\0 \8'
-   ·  ─────
-   ╰────
-  help: Replace '\0\8' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ '\0 \8'
    ·     ──
    ╰────
-  help: Replace '\8' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ '\0 \8'
-   ·     ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\0\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:2]
- 1 │ '\01\8'
-   ·  ─────
-   ╰────
-  help: Replace '\0\8' with '\u00008'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]
  1 │ '\01\8'
    ·     ──
    ╰────
-  help: Replace '\8' with '\u0038'. This maintains the current functionality.
-
-  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
- 1 │ '\01\8'
-   ·     ──
-   ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '\0\1\8'
    ·      ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ '\0\\n\8'
    ·       ──
    ╰────
-  help: Replace '\8' with '\\8' to include the actual backslash character.

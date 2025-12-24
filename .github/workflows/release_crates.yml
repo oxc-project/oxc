@@ -60,3 +60,9 @@ jobs:
           target_commitish: ${{ github.sha }}
           draft: false
           make_latest: false # latest is reserved for apps
+
+      # Workaround for https://github.com/softprops/action-gh-release/issues/703
+      - name: Mark release as not latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit ${{ steps.run.outputs.TAG }} --latest=false

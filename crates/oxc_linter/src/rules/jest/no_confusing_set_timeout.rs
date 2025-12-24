@@ -1,4 +1,3 @@
-use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -154,11 +153,10 @@ fn handle_jest_set_time_out<'a>(
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
-    let scopes = ctx.scoping();
-    let symbol_table = ctx.scoping();
+    let scoping = ctx.scoping();
 
     for reference_id in reference_id_list {
-        let reference = symbol_table.get_reference(reference_id);
+        let reference = scoping.get_reference(reference_id);
 
         let parent_node = nodes.parent_node(reference.node_id());
 
@@ -178,7 +176,7 @@ fn handle_jest_set_time_out<'a>(
         };
 
         if expr.property.name == "setTimeout" {
-            if !scopes.scope_flags(parent_node.scope_id()).is_top() {
+            if !scoping.scope_flags(parent_node.scope_id()).is_top() {
                 ctx.diagnostic(non_global_set_timeout_diagnostic(expr.span));
             }
 
@@ -196,6 +194,10 @@ fn is_jest_fn_call<'a>(
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    let AstKind::CallExpression(call_expr) = parent_node.kind() else {
+        return false;
+    };
+
     let mut id = parent_node.id();
     loop {
         let parent = ctx.nodes().parent_node(id);
@@ -212,9 +214,7 @@ fn is_jest_fn_call<'a>(
     let Some(possible_jest_node) = id_to_jest_node_map.get(&id) else {
         return false;
     };
-    let AstKind::CallExpression(call_expr) = parent_node.kind() else {
-        return false;
-    };
+
     parse_jest_fn_call(call_expr, possible_jest_node, ctx).is_some()
 }
 
@@ -223,7 +223,7 @@ fn is_jest_call(name: &str) -> bool {
     //
     // import { jest as Jest } from "@jest/globals";
     // Jest.setTimeout
-    name.cow_to_ascii_lowercase().eq_ignore_ascii_case("jest")
+    name.eq_ignore_ascii_case("jest")
 }
 
 #[test]
