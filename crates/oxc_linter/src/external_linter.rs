@@ -43,6 +43,37 @@ pub type ExternalLinterLoadParserCb = Box<
         + Sync,
 >;
 
+/// Callback to parse a file using a custom parser.
+///
+/// This is called when linting a file that matches a custom parser's patterns.
+/// The parser should use the ESLint parser API:
+/// - `parse(code, options)` returning an ESTree-compatible AST, or
+/// - `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`
+///
+/// Arguments:
+/// - Parser ID (from LoadParserResult)
+/// - File path being parsed
+/// - Source text content
+/// - Parser options JSON
+///
+/// Returns:
+/// - `Ok(ParseFileResult)` on success containing AST and optional scope info
+/// - `Err(String)` on failure with error message
+pub type ExternalLinterParseFileCb = Box<
+    dyn Fn(
+            // Parser ID to use
+            u32,
+            // Absolute path of file to parse
+            String,
+            // Source text content
+            String,
+            // Parser options as JSON string
+            String,
+        ) -> Result<ParseFileResult, String>
+        + Send
+        + Sync,
+>;
+
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
 pub type ExternalLinterLintFileCb = Box<
@@ -81,6 +112,28 @@ pub struct LoadParserResult {
     pub has_parse_for_eslint: bool,
 }
 
+/// Result from parsing a file with a custom parser.
+///
+/// Contains the ESTree-compatible AST as JSON, and optionally scope information
+/// if the parser implements `parseForESLint` and provides a scope manager.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParseFileResult {
+    /// The ESTree-compatible AST as a JSON string.
+    /// This will be passed directly to JS rules for linting.
+    pub ast_json: String,
+    /// Optional scope manager information from `parseForESLint`.
+    /// This is used in Phase 3 to support scope-dependent Rust rules.
+    /// Format follows ESLint's ScopeManager structure.
+    pub scope_manager_json: Option<String>,
+    /// Optional visitor keys from `parseForESLint`.
+    /// Used to properly traverse custom AST node types.
+    pub visitor_keys_json: Option<String>,
+    /// Optional parser services from `parseForESLint`.
+    /// Passed to rules that need parser-specific functionality.
+    pub services_json: Option<String>,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileResult {
@@ -101,6 +154,7 @@ pub struct JsFix {
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) load_parser: Option<ExternalLinterLoadParserCb>,
+    pub(crate) parse_file: Option<ExternalLinterParseFileCb>,
     pub(crate) setup_configs: ExternalLinterSetupConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
 }
@@ -111,7 +165,7 @@ impl ExternalLinter {
         setup_configs: ExternalLinterSetupConfigsCb,
         lint_file: ExternalLinterLintFileCb,
     ) -> Self {
-        Self { load_plugin, load_parser: None, setup_configs, lint_file }
+        Self { load_plugin, load_parser: None, parse_file: None, setup_configs, lint_file }
     }
 
     /// Set the parser loading callback.
@@ -120,6 +174,16 @@ impl ExternalLinter {
     #[must_use]
     pub fn with_load_parser(mut self, load_parser: ExternalLinterLoadParserCb) -> Self {
         self.load_parser = Some(load_parser);
+        self
+    }
+
+    /// Set the file parsing callback.
+    ///
+    /// This callback is called when parsing a file that matches a custom parser's patterns.
+    /// It invokes the parser's `parse()` or `parseForESLint()` method and returns the result.
+    #[must_use]
+    pub fn with_parse_file(mut self, parse_file: ExternalLinterParseFileCb) -> Self {
+        self.parse_file = Some(parse_file);
         self
     }
 }
@@ -184,5 +248,24 @@ mod test {
         assert_eq!(result.name, "test-plugin");
         assert_eq!(result.offset, 100);
         assert_eq!(result.rule_names, vec!["rule1", "rule2"]);
+    }
+
+    #[test]
+    fn test_parse_file_result_deserialize() {
+        // Basic result with only AST
+        let json = r#"{"astJson": "{\"type\":\"Program\"}", "scopeManagerJson": null, "visitorKeysJson": null, "servicesJson": null}"#;
+        let result: ParseFileResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.ast_json, "{\"type\":\"Program\"}");
+        assert!(result.scope_manager_json.is_none());
+        assert!(result.visitor_keys_json.is_none());
+        assert!(result.services_json.is_none());
+
+        // Full result from parseForESLint
+        let json = r#"{"astJson": "{\"type\":\"Program\"}", "scopeManagerJson": "{\"scopes\":[]}", "visitorKeysJson": "{\"Program\":[\"body\"]}", "servicesJson": "{\"custom\":true}"}"#;
+        let result: ParseFileResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.ast_json, "{\"type\":\"Program\"}");
+        assert_eq!(result.scope_manager_json.unwrap(), "{\"scopes\":[]}");
+        assert_eq!(result.visitor_keys_json.unwrap(), "{\"Program\":[\"body\"]}");
+        assert_eq!(result.services_json.unwrap(), "{\"custom\":true}");
     }
 }
