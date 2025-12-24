@@ -105,11 +105,11 @@ pub struct TailwindcssOptions {
 
     /// Preserve whitespace around classes.
     /// Defaults to `false`.
-    pub tailwind_preserve_whitespace: Option<bool>,
+    pub tailwind_preserve_whitespace: bool,
 
     /// Preserve duplicate classes.
     /// Defaults to `false`.
-    pub tailwind_preserve_duplicates: Option<bool>,
+    pub tailwind_preserve_duplicates: bool,
 }
 
 impl FormatOptions {

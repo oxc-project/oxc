@@ -281,10 +281,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                     .as_ref()
                     .filter(|opts| is_tailwind_function_call(&self.callee, opts))
                     .map(|opts| {
-                        TailwindContextEntry::new(
-                            false,
-                            opts.tailwind_preserve_whitespace.unwrap_or(false),
-                        )
+                        TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace)
                     });
 
                 // Push Tailwind context before formatting arguments

@@ -61,9 +61,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
             .experimental_tailwindcss
             .as_ref()
             .filter(|opts| is_tailwind_function_call(&self.tag, opts))
-            .map(|opts| {
-                TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace.unwrap_or(false))
-            });
+            .map(|opts| TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace));
 
         if let Some(ctx) = tailwind_ctx_to_push {
             f.context_mut().push_tailwind_context(ctx);

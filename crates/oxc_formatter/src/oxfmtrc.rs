@@ -475,8 +475,8 @@ impl Oxfmtrc {
                 tailwind_stylesheet: config.tailwind_stylesheet,
                 tailwind_functions: config.tailwind_functions,
                 tailwind_attributes: config.tailwind_attributes,
-                tailwind_preserve_whitespace: config.tailwind_preserve_whitespace,
-                tailwind_preserve_duplicates: config.tailwind_preserve_duplicates,
+                tailwind_preserve_whitespace: config.tailwind_preserve_whitespace.unwrap_or(false),
+                tailwind_preserve_duplicates: config.tailwind_preserve_duplicates.unwrap_or(false),
             });
         }
 

@@ -330,12 +330,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
                 .experimental_tailwindcss
                 .as_ref()
                 .filter(|opts| is_tailwind_jsx_attribute(&self.name, opts))
-                .map(|opts| {
-                    TailwindContextEntry::new(
-                        true,
-                        opts.tailwind_preserve_whitespace.unwrap_or(false),
-                    )
-                });
+                .map(|opts| TailwindContextEntry::new(true, opts.tailwind_preserve_whitespace));
 
             if let Some(ctx) = tailwind_ctx_to_push {
                 f.context_mut().push_tailwind_context(ctx);
