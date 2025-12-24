@@ -23,6 +23,26 @@ pub type ExternalLinterLoadPluginCb = Box<
         + Sync,
 >;
 
+/// Callback to load a custom parser from a file URL.
+///
+/// Arguments:
+/// - File URL to load parser from
+/// - Parser options JSON (optional configuration for the parser)
+///
+/// Returns:
+/// - `Ok(LoadParserResult)` on success containing parser info
+/// - `Err(String)` on failure with error message
+pub type ExternalLinterLoadParserCb = Box<
+    dyn Fn(
+            // File URL to load parser from
+            String,
+            // Parser options as JSON string (may be "null" if no options)
+            String,
+        ) -> Result<LoadParserResult, String>
+        + Send
+        + Sync,
+>;
+
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
 pub type ExternalLinterLintFileCb = Box<
@@ -46,6 +66,21 @@ pub struct LoadPluginResult {
     pub rule_names: Vec<String>,
 }
 
+/// Result from loading an external parser.
+///
+/// The parser is loaded via the JS callback and registered for use with files
+/// matching certain patterns.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoadParserResult {
+    /// Unique identifier for this parser instance.
+    /// Used to reference the parser when parsing files.
+    pub parser_id: u32,
+    /// Whether the parser implements `parseForESLint` (true) or just `parse` (false).
+    /// When true, the parser may provide additional data like scope manager.
+    pub has_parse_for_eslint: bool,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileResult {
@@ -65,6 +100,7 @@ pub struct JsFix {
 
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
+    pub(crate) load_parser: Option<ExternalLinterLoadParserCb>,
     pub(crate) setup_configs: ExternalLinterSetupConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
 }
@@ -75,7 +111,16 @@ impl ExternalLinter {
         setup_configs: ExternalLinterSetupConfigsCb,
         lint_file: ExternalLinterLintFileCb,
     ) -> Self {
-        Self { load_plugin, setup_configs, lint_file }
+        Self { load_plugin, load_parser: None, setup_configs, lint_file }
+    }
+
+    /// Set the parser loading callback.
+    ///
+    /// This enables support for custom JS-based parsers configured via `jsParsers`.
+    #[must_use]
+    pub fn with_load_parser(mut self, load_parser: ExternalLinterLoadParserCb) -> Self {
+        self.load_parser = Some(load_parser);
+        self
     }
 }
 
@@ -112,5 +157,32 @@ impl Serialize for EnabledEnvs<'_> {
         }
 
         map.end()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_load_parser_result_deserialize() {
+        let json = r#"{"parserId": 42, "hasParseForEslint": true}"#;
+        let result: LoadParserResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.parser_id, 42);
+        assert!(result.has_parse_for_eslint);
+
+        let json = r#"{"parserId": 0, "hasParseForEslint": false}"#;
+        let result: LoadParserResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.parser_id, 0);
+        assert!(!result.has_parse_for_eslint);
+    }
+
+    #[test]
+    fn test_load_plugin_result_deserialize() {
+        let json = r#"{"name": "test-plugin", "offset": 100, "ruleNames": ["rule1", "rule2"]}"#;
+        let result: LoadPluginResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.name, "test-plugin");
+        assert_eq!(result.offset, 100);
+        assert_eq!(result.rule_names, vec!["rule1", "rule2"]);
     }
 }

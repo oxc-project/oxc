@@ -77,6 +77,26 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load a custom parser.
+#[napi]
+pub type JsLoadParserCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        // File URL to load parser from
+        String,
+        // Parser options as JSON string (may be "null" if no options)
+        String,
+    )>,
+    // Return value
+    Promise<String>, // `LoadParserResult`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -84,6 +104,7 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
+/// 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -94,8 +115,10 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file).await.report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, setup_configs, lint_file, load_parser).await.report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -104,6 +127,7 @@ async fn lint_impl(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -136,11 +160,15 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter =
-        Some(crate::js_plugins::create_external_linter(load_plugin, setup_configs, lint_file));
+    let external_linter = Some(crate::js_plugins::create_external_linter(
+        load_plugin,
+        setup_configs,
+        lint_file,
+        load_parser,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _) = (load_plugin, setup_configs, lint_file);
+        let (_, _, _, _) = (load_plugin, setup_configs, lint_file, load_parser);
         None
     };
 
