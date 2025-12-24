@@ -1,10 +1,10 @@
+use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
@@ -580,9 +580,7 @@ impl Extensions {
         }
 
         // Built-in Node modules are always skipped
-        if NODEJS_BUILTINS.binary_search(&module_name).is_ok()
-            || ctx.globals().is_enabled(module_name)
-        {
+        if is_nodejs_builtin_module(module_name) || ctx.globals().is_enabled(module_name) {
             return;
         }
 
