@@ -198,7 +198,7 @@ impl Rule for NoLargeSnapshots {
                 }
             }
         } else {
-            for possible_jest_node in iter_possible_jest_call_node(ctx.semantic()) {
+            for possible_jest_node in iter_possible_jest_call_node(ctx.semantic(), &[]) {
                 self.run(&possible_jest_node, ctx);
             }
         }
