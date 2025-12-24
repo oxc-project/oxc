@@ -188,7 +188,7 @@ mod collapse_for {
 
         test(
             "var [a, b] = [1, 2]; for (; a < 2; a = b++) foo();",
-            "for (var a = 1, b = 2; a < 2; a = b++) foo();",
+            "for (var [a, b] = [1, 2]; a < 2; a = b++) foo();",
         );
     }
 
