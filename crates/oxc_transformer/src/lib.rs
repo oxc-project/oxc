@@ -731,4 +731,24 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     ) {
         self.decorator.enter_decorator(node, ctx);
     }
+
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_formal_parameter_rest(node, ctx);
+        }
+    }
+
+    fn enter_catch_parameter(
+        &mut self,
+        node: &mut CatchParameter<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_catch_parameter(node, ctx);
+        }
+    }
 }

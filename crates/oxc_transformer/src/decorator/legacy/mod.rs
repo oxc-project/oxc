@@ -733,6 +733,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             SPAN,
             VariableDeclarationKind::Let,
             binding.create_binding_pattern(ctx),
+            NONE,
             Some(initializer),
             false,
         );

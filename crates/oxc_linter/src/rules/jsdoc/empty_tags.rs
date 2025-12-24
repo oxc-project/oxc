@@ -7,7 +7,6 @@ use serde::Deserialize;
 use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::should_ignore_as_private,
 };
 
 fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
@@ -103,7 +102,7 @@ impl Rule for EmptyTags {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let settings = &ctx.settings().jsdoc;
+        // NOTE: `ignorePrivate` setting does not apply to this rule.
 
         let is_empty_tag_kind = |tag_name: &str| {
             if EMPTY_TAGS.contains(&tag_name) {
@@ -115,9 +114,9 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in
-            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-        {
+        // `ignorePrivate` setting does not apply to `empty-tags` rule,
+        // so iterate over all JSDoc comments unfiltered.
+        for jsdoc in ctx.jsdoc().iter_all() {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -358,9 +357,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
-                "ignorePrivate": true,
-              },
+                "settings": {
+                    "jsdoc": {
+                        "ignorePrivate": true,
+                    },
+                }
             })),
         ),
     ];

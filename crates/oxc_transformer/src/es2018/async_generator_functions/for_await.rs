@@ -217,6 +217,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_abrupt_completion.create_binding_pattern(ctx),
+                NONE,
                 Some(ctx.ast.expression_boolean_literal(SPAN, false)),
                 false,
             )),
@@ -229,6 +230,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_had_error_key.create_binding_pattern(ctx),
+                NONE,
                 Some(ctx.ast.expression_boolean_literal(SPAN, false)),
                 false,
             )),
@@ -241,6 +243,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_error_key.create_binding_pattern(ctx),
+                NONE,
                 None,
                 false,
             )),
@@ -264,6 +267,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                             SPAN,
                             VariableDeclarationKind::Var,
                             iterator_key.create_binding_pattern(ctx),
+                            NONE,
                             Some(iterator),
                             false,
                         ),
@@ -271,6 +275,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                             SPAN,
                             VariableDeclarationKind::Var,
                             step_key.create_binding_pattern(ctx),
+                            NONE,
                             None,
                             false,
                         ),
@@ -348,7 +353,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             );
             Some(ctx.ast.catch_clause_with_scope_id(
                 SPAN,
-                Some(ctx.ast.catch_parameter(SPAN, err_ident.create_binding_pattern(ctx))),
+                Some(ctx.ast.catch_parameter(SPAN, err_ident.create_binding_pattern(ctx), NONE)),
                 {
                     ctx.ast.block_statement_with_scope_id(
                         SPAN,

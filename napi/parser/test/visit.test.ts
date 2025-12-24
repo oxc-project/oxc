@@ -13,8 +13,7 @@ describe("visit", () => {
 
   describe("invalid visitor", () => {
     it("undefined visitor object", () => {
-      // @ts-ignore
-      expect(() => new Visitor()).toThrow(new TypeError("Visitor must be an object"));
+      expect(() => new Visitor(undefined!)).toThrow(new TypeError("Visitor must be an object"));
     });
 
     it("null visitor object", () => {

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 52/52 (100.00%)
-Positive Passed: 52/52 (100.00%)
-Negative Passed: 121/121 (100.00%)
+AST Parsed     : 54/54 (100.00%)
+Positive Passed: 54/54 (100.00%)
+Negative Passed: 122/122 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -290,6 +290,75 @@ Negative Passed: 121/121 (100.00%)
    ·                    ─
    ╰────
 
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:4:1]
+ 3 │ 
+ 4 │ let.x;
+   · ───
+ 5 │ 
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:6:1]
+ 5 │ 
+ 6 │ let.x = 1;
+   · ───
+ 7 │ let()[x] = 1;
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/let-member-expression.js:7:1]
+ 6 │ let.x = 1;
+ 7 │ let()[x] = 1;
+   · ───
+ 8 │ 
+   ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:9:1]
+  8 │ 
+  9 │ let?.x;
+    · ───
+ 10 │ let?.y.z;
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:10:1]
+  9 │ let?.x;
+ 10 │ let?.y.z;
+    · ───
+ 11 │ let?.[0];
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:11:1]
+ 10 │ let?.y.z;
+ 11 │ let?.[0];
+    · ───
+ 12 │ let?.method();
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[misc/fail/let-member-expression.js:12:1]
+ 11 │ let?.[0];
+ 12 │ let?.method();
+    · ───
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/minus-yield-100.js:1:27]
+ 1 │ export function* foo() { -yield 100 }
+   ·                           ─────
+   ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/minus-yield-100.js:1:32]
+ 1 │ export function* foo() { -yield 100 }
+   ·                                ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × Expected `:` but found `EOF`
    ╭─[misc/fail/missing-conditional-alternative-type.ts:2:1]
  1 │ type A = 1 extends 2 ? 3
@@ -390,12 +459,26 @@ Negative Passed: 121/121 (100.00%)
    ·             ──
    ╰────
 
-  × Expected `from` but found `{`
-   ╭─[misc/fail/oxc-11532.js:1:15]
+  × Only a single default import is allowed in a source phase import.
+   ╭─[misc/fail/oxc-11532.js:1:8]
  1 │ import source { x } from 'x';
-   ·               ┬
-   ·               ╰── `from` expected
- 2 │ import defer { x } from "x";
+   ·        ──────
+ 2 │ import defer { x2 } from "x";
+   ╰────
+
+  × TS(18059): Named imports are not allowed in a deferred import.
+   ╭─[misc/fail/oxc-11532.js:2:8]
+ 1 │ import source { x } from 'x';
+ 2 │ import defer { x2 } from "x";
+   ·        ─────
+ 3 │ import defer x3 from "x";
+   ╰────
+
+  × TS(18058): Default imports are not allowed in a deferred import.
+   ╭─[misc/fail/oxc-11532.js:3:8]
+ 2 │ import defer { x2 } from "x";
+ 3 │ import defer x3 from "x";
+   ·        ─────
    ╰────
 
   × Expected `}` but found `function`
@@ -3580,21 +3663,6 @@ Negative Passed: 121/121 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
-
-  × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:3:1]
- 2 │ 
- 3 │ let.a = 1;
-   · ───
- 4 │ let()[a] = 1;
-   ╰────
-
-  × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:4:1]
- 3 │ let.a = 1;
- 4 │ let()[a] = 1;
-   · ───
-   ╰────
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

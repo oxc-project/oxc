@@ -4,6 +4,7 @@ use std::sync::Arc;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -18,9 +19,9 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::linter::error_with_position::LinterCodeAction;
 use crate::{
     ConcurrentHashMap,
+    capabilities::Capabilities,
     linter::{
         LINT_CONFIG_FILE,
         code_actions::{
@@ -29,10 +30,11 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
+        error_with_position::LinterCodeAction,
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::{Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
     utils::normalize_path,
 };
 
@@ -143,7 +145,11 @@ impl ServerLinterBuilder {
 }
 
 impl ToolBuilder for ServerLinterBuilder {
-    fn server_capabilities(&self, capabilities: &mut ServerCapabilities) {
+    fn server_capabilities(
+        &self,
+        capabilities: &mut ServerCapabilities,
+        backend_capabilities: &Capabilities,
+    ) {
         let mut code_action_kinds = capabilities
             .code_action_provider
             .as_ref()
@@ -200,6 +206,12 @@ impl ToolBuilder for ServerLinterBuilder {
                     .and_then(|provider| provider.work_done_progress_options.work_done_progress),
             },
         });
+
+        capabilities.diagnostic_provider = if backend_capabilities.use_push_diagnostics() {
+            None
+        } else {
+            Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+        };
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(ServerLinterBuilder::build(root_uri, options))
@@ -350,6 +362,7 @@ impl Tool for ServerLinter {
         let patterns = {
             if old_option.config_path == new_options.config_path
                 && old_option.use_nested_configs() == new_options.use_nested_configs()
+                && old_option.type_aware == new_options.type_aware
             {
                 None
             } else {
@@ -384,6 +397,11 @@ impl Tool for ServerLinter {
 
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
+
+        if options.type_aware {
+            watchers.push("**/tsconfig*.json".to_string());
+        }
+
         watchers
     }
 
@@ -491,34 +509,30 @@ impl Tool for ServerLinter {
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
-        self.run_file(uri, content)
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+        let Some(diagnostics) = self.run_file(uri, content) else {
+            return vec![];
+        };
+        vec![(uri.clone(), diagnostics)]
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnType`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_change(
-        &self,
-        uri: &Uri,
-        content: Option<&str>,
-    ) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnType`, an empty vector is returned
+    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnType {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }
 
     /// Lint a file with the current linter
-    /// - If the file is not lintable or ignored, [`None`] is returned
-    /// - If the linter is not set to `OnSave`, [`None`] is returned
-    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    /// - If the file is not lintable or ignored, an empty vector is returned
+    /// - If the linter is not set to `OnSave`, an empty vector is returned
+    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnSave {
-            return None;
+            return vec![];
         }
         self.run_diagnostic(uri, content)
     }
@@ -645,6 +659,7 @@ mod tests_builder {
 
     use crate::{
         ServerLinterBuilder, ToolBuilder,
+        capabilities::Capabilities,
         linter::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID},
     };
 
@@ -653,7 +668,7 @@ mod tests_builder {
         let builder = ServerLinterBuilder;
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         // Should set code action provider with quickfix and source fix all kinds
         match &capabilities.code_action_provider {
@@ -684,7 +699,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -711,7 +726,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -732,7 +747,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         // Should override with options
         match &capabilities.code_action_provider {
@@ -759,7 +774,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&"existing.command".to_string()));
@@ -782,7 +797,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities);
+        builder.server_capabilities(&mut capabilities, &Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
@@ -844,6 +859,21 @@ mod test_watchers {
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
         }
+
+        #[test]
+        fn test_linter_with_type_aware() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/default",
+                json!({
+                    "typeAware": true
+                }),
+            )
+            .get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "**/tsconfig*.json".to_string());
+        }
     }
 
     mod handle_configuration_change {
@@ -882,6 +912,19 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_lint_type_aware_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/linter/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        "typeAware": true
+                    }));
+            assert!(watch_patterns.is_some());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/tsconfig*.json".to_string());
         }
     }
 }

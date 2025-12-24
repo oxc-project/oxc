@@ -20,11 +20,19 @@ use crate::{
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String, Option<String>)>, // Absolute path of plugin file, optional package name
+    FnArgs<(
+        // File URL to load plugin from
+        String,
+        // Plugin name (either alias or package name).
+        // If is package name, it is pre-normalized.
+        Option<String>,
+        // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+        bool,
+    )>,
     // Return value
     Promise<String>, // `PluginLoadResult`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, Option<String>)>,
+    FnArgs<(String, Option<String>, bool)>,
     // Error status
     Status,
     // CalleeHandled
@@ -60,7 +68,7 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
     // Arguments
     String, // Options array, as JSON string
     // Return value
-    (), // `void`
+    Option<String>, // `None` for success, or `Some` containing error message
     // Arguments (repeated)
     String,
     // Error status

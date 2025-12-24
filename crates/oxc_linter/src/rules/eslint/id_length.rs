@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPatternKind, BindingProperty, IdentifierName, PrivateIdentifier,
+    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, PrivateIdentifier,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,6 +12,7 @@ use schemars::JsonSchema;
 use crate::{AstNode, context::LintContext, rule::Rule};
 use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
+use serde::Serialize;
 use serde_json::Value;
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
@@ -25,7 +26,7 @@ fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnosti
 const DEFAULT_MAX_LENGTH: u64 = u64::MAX;
 const DEFAULT_MIN_LENGTH: u64 = 2;
 
-#[derive(Debug, Default, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum PropertyKind {
     #[default]
@@ -55,7 +56,6 @@ impl Deref for IdLength {
 pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
-    #[schemars(with = "Vec<String>")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
@@ -424,8 +424,8 @@ impl IdLength {
         };
 
         matches!(
-            &binding_property.value.kind,
-            BindingPatternKind::BindingIdentifier(_) | BindingPatternKind::ObjectPattern(_)
+            &binding_property.value,
+            BindingPattern::BindingIdentifier(_) | BindingPattern::ObjectPattern(_)
         )
     }
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPatternKind, Expression, MemberExpression},
+    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -86,7 +86,7 @@ declare_oxc_lint!(
     PreferDestructuring,
     eslint,
     style,
-    pending,
+    fix,
     config = PreferDestructuring,
 );
 
@@ -161,7 +161,20 @@ impl Rule for PreferDestructuring {
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
-                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
+                                ctx.diagnostic_with_fix(
+                                    prefer_object_destructuring(assign_expr.span),
+                                    |fixer| {
+                                        generate_fix(
+                                            &fixer,
+                                            string_literal.span.shrink(1),
+                                            get_object_span_without_redundant_parentheses(
+                                                &comp_expr.object,
+                                            ),
+                                            assign_expr.span,
+                                            true,
+                                        )
+                                    },
+                                );
                             }
                         }
                     }
@@ -171,7 +184,21 @@ impl Rule for PreferDestructuring {
                         if get_target_name(&assign_expr.left)
                             .is_some_and(|name| name == static_expr.property.name.as_str())
                         {
-                            ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
+                            // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
+                            ctx.diagnostic_with_fix(
+                                prefer_object_destructuring(assign_expr.span),
+                                |fixer| {
+                                    generate_fix(
+                                        &fixer,
+                                        static_expr.property.span,
+                                        get_object_span_without_redundant_parentheses(
+                                            &static_expr.object,
+                                        ),
+                                        assign_expr.span,
+                                        true,
+                                    )
+                                },
+                            );
                         }
                     }
                     _ => {}
@@ -184,12 +211,11 @@ impl Rule for PreferDestructuring {
                     if !check_expr(right) {
                         return;
                     }
-                    let name =
-                        if matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                            declarator.id.get_identifier_name().map(|v| v.as_str())
-                        } else {
-                            None
-                        };
+                    let name = if matches!(declarator.id, BindingPattern::BindingIdentifier(_)) {
+                        declarator.id.get_identifier_name().map(|v| v.as_str())
+                    } else {
+                        None
+                    };
                     match right {
                         MemberExpression::ComputedMemberExpression(comp_expr) => {
                             if matches!(comp_expr.expression, Expression::TemplateLiteral(_)) {
@@ -210,7 +236,20 @@ impl Rule for PreferDestructuring {
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
-                                    ctx.diagnostic(prefer_object_destructuring(init.span()));
+                                    ctx.diagnostic_with_fix(
+                                        prefer_object_destructuring(init.span()),
+                                        |fixer| {
+                                            generate_fix(
+                                                &fixer,
+                                                string_literal.span.shrink(1),
+                                                get_object_span_without_redundant_parentheses(
+                                                    &comp_expr.object,
+                                                ),
+                                                declarator.span(),
+                                                false,
+                                            )
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -221,7 +260,20 @@ impl Rule for PreferDestructuring {
                                 ctx.diagnostic(prefer_object_destructuring(right.span()));
                             }
                             if name.is_some_and(|name| name == static_expr.property.name.as_str()) {
-                                ctx.diagnostic(prefer_object_destructuring(init.span()));
+                                ctx.diagnostic_with_fix(
+                                    prefer_object_destructuring(init.span()),
+                                    |fixer| {
+                                        generate_fix(
+                                            &fixer,
+                                            static_expr.property.span,
+                                            get_object_span_without_redundant_parentheses(
+                                                &static_expr.object,
+                                            ),
+                                            declarator.span(),
+                                            false,
+                                        )
+                                    },
+                                );
                             }
                         }
                         _ => {}
@@ -247,6 +299,41 @@ fn check_expr(expr: &MemberExpression) -> bool {
         return false;
     }
     true
+}
+
+/// Returns the span of the object expression, stripping redundant parentheses for expressions
+/// where they are unnecessary in the destructuring context.
+///
+/// For example: `(bar[baz]).foo` -> uses span of `bar[baz]` (without parens)
+/// But: `(a, b).foo` -> uses span of `(a, b)` (keeps parens, comma operator needs them)
+fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
+    match object.without_parentheses() {
+        Expression::CallExpression(_)
+        | Expression::Identifier(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::ThisExpression(_) => object.without_parentheses().span(),
+        _ => object.span(),
+    }
+}
+
+/// Generate the fix for object destructuring.
+/// `is_assignment` determines whether to wrap in parentheses for assignment expressions.
+fn generate_fix(
+    fixer: &crate::fixer::RuleFixer<'_, '_>,
+    prop_span: Span,
+    object_span: Span,
+    replacement_span: Span,
+    is_assignment: bool,
+) -> crate::fixer::RuleFix {
+    let prop = fixer.source_range(prop_span);
+    let object_text = fixer.source_range(object_span);
+    let replacement = if is_assignment {
+        format!("({{ {prop} }} = {object_text})")
+    } else {
+        format!("{{{prop}}} = {object_text}")
+    };
+    fixer.replace(replacement_span, replacement)
 }
 
 #[test]
@@ -283,7 +370,7 @@ fn test() {
         (
             "var foo = object.bar;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": false }, ]),
             ),
         ),
         (
@@ -293,7 +380,7 @@ fn test() {
         (
             "var foo = object['bar'];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": false }, ]),
             ),
         ),
         (
@@ -303,7 +390,7 @@ fn test() {
         (
             "var { bar: foo } = object;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -313,7 +400,7 @@ fn test() {
         (
             "var { [bar]: foo } = object;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -337,7 +424,7 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "array": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -353,49 +440,47 @@ fn test() {
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "object": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "AssignmentExpression": { "object": false } }, { "enforceForRenamedProperties": true } ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "object": false } },				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "AssignmentExpression": { "object": false } }, { "enforceForRenamedProperties": false } ]),
             ),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{ "AssignmentExpression": { "array": false } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "AssignmentExpression": { "array": false } }, { "enforceForRenamedProperties": true } ]),
             ),
         ),
         (
             "foo = array[0];",
-            Some(
-                serde_json::json!([				{ "AssignmentExpression": { "array": false } },				{ "enforceForRenamedProperties": false },			]),
-            ),
+            Some(serde_json::json!([ { "AssignmentExpression": { "array": false } } ])),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false } } ]),
             ),
         ),
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": false },					"AssignmentExpression": { "array": true },				},				{ "enforceForRenamedProperties": false },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false }, "AssignmentExpression": { "array": true } } ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "object": true },					"AssignmentExpression": { "object": false },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true }, "AssignmentExpression": { "object": false } } ]),
             ),
         ),
         (
             "var foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "object": false },					"AssignmentExpression": { "object": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": false }, "AssignmentExpression": { "object": true } } ]),
             ),
         ),
         ("class Foo extends Bar { static foo() {var foo = super.foo} }", None),
@@ -411,43 +496,43 @@ fn test() {
         (
             "class C { #x; foo() { const x = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { const y = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { x = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { y = this.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo(a) { x = a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo(a) { y = a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "class C { #x; foo() { x = this.a.#x; } }",
             Some(
-                serde_json::json!([				{ "array": true, "object": true },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
     ];
@@ -465,7 +550,7 @@ fn test() {
         (
             "var foobar = object.bar;",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -475,7 +560,7 @@ fn test() {
         (
             "var foo = object[bar];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "object": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "object": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -492,7 +577,7 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{ "VariableDeclarator": { "array": true } },				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true } }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
@@ -502,25 +587,25 @@ fn test() {
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},				{ "enforceForRenamedProperties": true },			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false }, }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
         (
             "var foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true },					"AssignmentExpression": { "array": false },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true }, "AssignmentExpression": { "array": false }, }, ]),
             ),
         ),
         (
             "foo = array[0];",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": false },					"AssignmentExpression": { "array": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": false }, "AssignmentExpression": { "array": true }, }, ]),
             ),
         ),
         (
             "foo = object.foo;",
             Some(
-                serde_json::json!([				{					"VariableDeclarator": { "array": true, "object": false },					"AssignmentExpression": { "object": true },				},			]),
+                serde_json::json!([ { "VariableDeclarator": { "array": true, "object": false }, "AssignmentExpression": { "object": true }, }, ]),
             ),
         ),
         ("class Foo extends Bar { static foo() {var bar = super.foo.bar} }", None),
@@ -574,44 +659,47 @@ fn test() {
         ("var foo = object.foo, /* comment */ a;", None),
     ];
 
-    // pending
-    // let fix = vec![
-    //     ("var foo = object.foo;", "var {foo} = object;", None),
-    //     ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
-    //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
-    //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
-    //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
-    //     ("var foo = (f()).foo;", "var {foo} = f();", None),
-    //     ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
-    //     (
-    //         "class Foo extends Bar { static foo() {var bar = super.foo.bar} }",
-    //         "class Foo extends Bar { static foo() {var {bar} = super.foo} }",
-    //         None,
-    //     ),
-    //     ("var /* comment */ foo = object.foo;", "var /* comment */ {foo} = object;", None),
-    //     ("var a, /* comment */foo = object.foo;", "var a, /* comment */{foo} = object;", None),
-    //     ("var foo = bar(/* comment */).foo;", "var {foo} = bar(/* comment */);", None),
-    //     ("var foo = bar/* comment */.baz.foo;", "var {foo} = bar/* comment */.baz;", None),
-    //     (
-    //         "var foo = bar[// comment
-    // 		baz].foo;",
-    //         "var {foo} = bar[// comment
-    // 		baz];",
-    //         None,
-    //     ),
-    //     ("var foo = object.foo/* comment */;", "var {foo} = object/* comment */;", None),
-    //     ("var foo = object.foo// comment", "var {foo} = object// comment", None),
-    //     ("var foo = object.foo/* comment */, a;", "var {foo} = object/* comment */, a;", None),
-    //     (
-    //         "var foo = object.foo// comment
-    // 		, a;",
-    //         "var {foo} = object// comment
-    // 		, a;",
-    //         None,
-    //     ),
-    //     ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
-    // ];
+    let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
+        ("var foo = object.foo;", "var {foo} = object;", None),
+        ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
+        //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
+        //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
+        //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
+        ("var foo = (f()).foo;", "var {foo} = f();", None),
+        ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
+        (
+            "class Foo extends Bar { static foo() {var bar = super.foo.bar} }",
+            "class Foo extends Bar { static foo() {var {bar} = super.foo} }",
+            None,
+        ),
+        ("var /* comment */ foo = object.foo;", "var /* comment */ {foo} = object;", None),
+        ("var a, /* comment */foo = object.foo;", "var a, /* comment */{foo} = object;", None),
+        ("var foo = bar(/* comment */).foo;", "var {foo} = bar(/* comment */);", None),
+        ("var foo = bar/* comment */.baz.foo;", "var {foo} = bar/* comment */.baz;", None),
+        (
+            "var foo = bar[// comment
+        		baz].foo;",
+            "var {foo} = bar[// comment
+        		baz];",
+            None,
+        ),
+        ("var foo = (bar[baz]).foo;", "var {foo} = bar[baz];", None),
+        ("var foo = object.foo/* comment */;", "var {foo} = object/* comment */;", None),
+        ("var foo = object.foo// comment", "var {foo} = object// comment", None),
+        ("var foo = object.foo/* comment */, a;", "var {foo} = object/* comment */, a;", None),
+        (
+            "var foo = object.foo// comment
+        		, a;",
+            "var {foo} = object// comment
+        		, a;",
+            None,
+        ),
+        ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),
+        ("var foo = object['foo'];", "var {foo} = object;", None),
+        ("foo = object.foo;", "({ foo } = object);", None),
+    ];
 
     Tester::new(PreferDestructuring::NAME, PreferDestructuring::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

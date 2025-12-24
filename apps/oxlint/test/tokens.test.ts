@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   getTokens,
   getTokensBefore,
@@ -18,35 +18,65 @@ import {
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
 } from "../src-js/plugins/tokens.ts";
-import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
+import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { buffers } from "../src-js/plugins/lint.ts";
+import {
+  initSourceText,
+  resetSourceAndAst,
+  setupSourceForFile,
+} from "../src-js/plugins/source_code.ts";
+import { parse as parseRaw } from "../src-js/package/parse.ts";
+import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
+
 import type { Node } from "../src-js/plugins/types.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
 const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/";
 
-// Mock `source_code.ts` to inject source text from `sourceText` defined here
-let sourceText: string;
+/**
+ * Setup for a test case, using `sourceText` as source text.
+ *
+ * This function:
+ * - Parses source text with Oxc parser - which writes AST and source text into buffer.
+ * - Initializes global state, as if was linting the provided file.
+ * - Initializes source text.
+ * - Does *not* deserialize the AST - tokens methods should do that automatically where they require AST.
+ *
+ * It's not necessary to call this function before each test case, because `beforeEach` hook calls it already.
+ * Only use this function if test needs to set source text to a different value from default `SOURCE_TEXT`.
+ *
+ * @param sourceText - Source text to use for test
+ */
+function setup(sourceText: string) {
+  // Reset global state
+  resetFileContext();
+  resetSourceAndAst();
 
-vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
-  const original: any = await importOriginal();
-  return {
-    ...original,
-    get sourceText() {
-      return sourceText;
-    },
-  };
-});
+  // Set file path
+  const path = "dummy.js";
+  setupFileContext(path);
+
+  // Parse source text into buffer
+  parseRaw(path, sourceText);
+
+  // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
+  const buffer = buffers[0];
+  debugAssertIsNonNull(buffer);
+  setupSourceForFile(buffer, /* hasBOM */ false, /* parserServices */ {});
+
+  // Initialize source text (deserialize from buffer)
+  initSourceText();
+}
 
 // Reset global state and set source text to `SOURCE_TEXT` before each test.
-// Individual tests can set `sourceText` to a different value if required before calling token methods.
+// Individual tests can call `setup` to set a different source text if required, before calling token methods.
 beforeEach(() => {
-  resetSourceAndAst();
-  sourceText = SOURCE_TEXT;
+  setup(SOURCE_TEXT);
 });
 
 // TODO: We are lying about `Program`'s range here.
-// The range provided by `@typescript-eslint/typescript-estree` does not match the assertions for that of `espree`.
+// The range provided by TypeScript does not match the assertions for that of `espree`.
 // The deviation is being corrected in upcoming releases of ESLint and TS-ESLint.
 // https://eslint.org/blog/2025/10/whats-coming-in-eslint-10.0.0/#updates-to-program-ast-node-range-coverage
 // https://github.com/typescript-eslint/typescript-eslint/issues/11026#issuecomment-3421887632
@@ -310,21 +340,21 @@ describe("when calling getTokenBefore", () => {
   });
 
   it("should retrieve the previous node if the comment at the end of source code is specified.", () => {
-    sourceText = "a + b /*comment*/";
+    setup("a + b /*comment*/");
     // TODO: this verbatim range should be replaced with `ast.comments[0]`
     const token = getTokenBefore({ range: [6, 17] } as Node);
     expect(token!.value).toBe("b");
   });
 
   it("should retrieve the previous comment if the first token is specified.", () => {
-    sourceText = "/*comment*/ a + b";
+    setup("/*comment*/ a + b");
     // TODO: this verbatim range should be replaced with `ast.tokens[0]`
     const token = getTokenBefore({ range: [12, 13] } as Node, { includeComments: true });
     expect(token!.value).toBe("comment");
   });
 
   it("should retrieve null if the first comment is specified.", () => {
-    sourceText = "/*comment*/ a + b";
+    setup("/*comment*/ a + b");
     // TODO: this verbatim range should be replaced with `ast.comments[0]`
     const token = getTokenBefore({ range: [0, 11] } as Node, { includeComments: true });
     expect(token).toBeNull();
@@ -395,14 +425,14 @@ describe("when calling getTokenAfter", () => {
   });
 
   it("should retrieve the next node if the comment at the first of source code is specified.", () => {
-    sourceText = "/*comment*/ a + b";
+    setup("/*comment*/ a + b");
     // TODO: replace this verbatim range with `ast.comments[0]`
     const token = getTokenAfter({ range: [0, 12] } as Node)!;
     expect(token.value).toBe("a");
   });
 
   it("should retrieve the next comment if the last token is specified.", () => {
-    sourceText = "a + b /*comment*/";
+    setup("a + b /*comment*/");
     // TODO: replace this verbatim range with `ast.tokens[2]`
     const token = getTokenAfter({ range: [4, 5] } as Node, {
       includeComments: true,
@@ -411,7 +441,7 @@ describe("when calling getTokenAfter", () => {
   });
 
   it("should retrieve null if the last comment is specified.", () => {
-    sourceText = "a + b /*comment*/";
+    setup("a + b /*comment*/");
     // TODO: replace this verbatim range with `ast.comments[0]`
     const token = getTokenAfter({ range: [6, 17] } as Node, {
       includeComments: true,
@@ -656,7 +686,7 @@ describe("when calling getFirstToken", () => {
   });
 
   it("should retrieve the first comment if the comment is at the last of nodes", () => {
-    sourceText = "a + b\n/*comment*/ c + d";
+    setup("a + b\n/*comment*/ c + d");
     /*
      * A node must not start with a token: it can start with a comment or be empty.
      * This test case is needed for completeness.
@@ -671,7 +701,7 @@ describe("when calling getFirstToken", () => {
   });
 
   it("should retrieve the first token (without includeComments option) if the comment is at the last of nodes", () => {
-    sourceText = "a + b\n/*comment*/ c + d";
+    setup("a + b\n/*comment*/ c + d");
     /*
      * A node must not start with a token: it can start with a comment or be empty.
      * This test case is needed for completeness.
@@ -685,13 +715,13 @@ describe("when calling getFirstToken", () => {
   });
 
   it("should retrieve the first token if the root node contains a trailing comment", () => {
-    sourceText = "foo // comment";
+    setup("foo // comment");
     // TODO: this verbatim range should be replaced with `ast`
     expect(getFirstToken({ range: [0, 14] } as Node)!.value).toBe("foo");
   });
 
   it("should return null if the source contains only comments", () => {
-    sourceText = "// comment";
+    setup("// comment");
     // TODO: this verbatim range should be replaced with `ast`
     expect(
       getFirstToken({ range: [0, 11] } as Node, {
@@ -703,7 +733,7 @@ describe("when calling getFirstToken", () => {
   });
 
   it("should return null if the source is empty", () => {
-    sourceText = "";
+    setup("");
     // TODO: this verbatim range should be replaced with `ast`
     expect(getFirstToken({ range: [0, 0] } as Node)).toBeNull();
   });
@@ -854,13 +884,9 @@ describe("when calling getLastToken", () => {
   });
 
   it("should retrieve the last comment if the comment is at the last of nodes", () => {
-    resetSourceAndAst();
-    sourceText = "a + b /*comment*/\nc + d";
-
-    /*
-     * A node must not end with a token: it can end with a comment or be empty.
-     * This test case is needed for completeness.
-     */
+    setup("a + b /*comment*/\nc + d");
+    // A node must not end with a token: it can end with a comment or be empty.
+    // This test case is needed for completeness.
     expect(
       getLastToken(
         // TODO: this verbatim range should be replaced with `ast.tokens[0].range[0], ast.comments[0].range[1]`
@@ -868,39 +894,28 @@ describe("when calling getLastToken", () => {
         { includeComments: true },
       )!.value,
     ).toBe("comment");
-    resetSourceAndAst();
   });
 
   it("should retrieve the last token (without includeComments option) if the comment is at the last of nodes", () => {
-    resetSourceAndAst();
-    sourceText = "a + b /*comment*/\nc + d";
-
-    /*
-     * A node must not end with a token: it can end with a comment or be empty.
-     * This test case is needed for completeness.
-     */
+    setup("a + b /*comment*/\nc + d");
+    // A node must not end with a token: it can end with a comment or be empty.
+    // This test case is needed for completeness.
     expect(
       getLastToken(
         // TODO: this verbatim range should be replaced with `ast.tokens[0].range[0], ast.comments[0].range[1]`
         { range: [0, 17] } as Node,
       )!.value,
     ).toBe("b");
-    resetSourceAndAst();
   });
 
   it("should retrieve the last token if the root node contains a trailing comment", () => {
-    resetSourceAndAst();
-    sourceText = "foo // comment";
-
+    setup("foo // comment");
     // TODO: this verbatim range should be replaced with `ast`
     expect(getLastToken({ range: [0, 3] } as Node)!.value).toBe("foo");
-    resetSourceAndAst();
   });
 
   it("should return null if the source contains only comments", () => {
-    resetSourceAndAst();
-    sourceText = "// comment";
-
+    setup("// comment");
     expect(
       // TODO: this verbatim range should be replaced with `ast`
       getLastToken({ range: [0, 10] } as Node, {
@@ -909,16 +924,12 @@ describe("when calling getLastToken", () => {
         },
       }),
     ).toBeNull();
-    resetSourceAndAst();
   });
 
   it("should return null if the source is empty", () => {
-    resetSourceAndAst();
-    sourceText = "";
-
+    setup("");
     // TODO: this verbatim range should be replaced with `ast`
     expect(getLastToken({ range: [0, 0] } as Node)).toBeNull();
-    resetSourceAndAst();
   });
 });
 
@@ -1283,7 +1294,7 @@ describe("when calling getTokenOrCommentAfter", () => {
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1604-L1672
 describe("when calling getFirstToken & getTokenAfter", () => {
   it("should retrieve all tokens and comments in the node", () => {
-    sourceText = "(function(a, /*b,*/ c){})";
+    setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
     let token = getFirstToken({ range: [0, 25] } as Node);
@@ -1311,7 +1322,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
   });
 
   it("should retrieve all tokens and comments in the node (no spaces)", () => {
-    sourceText = "(function(a,/*b,*/c){})";
+    setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
     let token = getFirstToken({ range: [0, 23] } as Node);
@@ -1342,7 +1353,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L1674-L1742
 describe("when calling getLastToken & getTokenBefore", () => {
   it("should retrieve all tokens and comments in the node", () => {
-    sourceText = "(function(a, /*b,*/ c){})";
+    setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
     let token = getLastToken({ range: [0, 25] } as Node);
@@ -1370,7 +1381,7 @@ describe("when calling getLastToken & getTokenBefore", () => {
   });
 
   it("should retrieve all tokens and comments in the node (no spaces)", () => {
-    sourceText = "(function(a,/*b,*/c){})";
+    setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
     let token = getLastToken({ range: [0, 23] } as Node);

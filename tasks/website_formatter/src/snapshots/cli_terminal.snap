@@ -5,8 +5,11 @@ expression: snapshot
 Usage: [-c=PATH] [PATH]...
 
 Mode Options:
-        --init               Initialize `.oxfmtrc.jsonc` with default values
+        --init               Initialize `.oxfmtrc.json` with default values
+        --migrate=SOURCE     Migrate configuration to `.oxfmtrc.json` from specified source
+                             Available sources: prettier
         --lsp                Start language server protocol (LSP) server
+        --stdin-filepath=PATH  Specify the file name to use to infer which parser to use
 
 Output Options:
         --write              Format and write files in place (default)

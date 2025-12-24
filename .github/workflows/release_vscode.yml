@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
       - name: Build JS
         working-directory: editors/vscode
@@ -71,43 +71,13 @@ jobs:
           pnpm run preinstall
           pnpm run compile
 
-      - name: Install cross
-        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06 # v2.62.63
-        with:
-          tool: cross
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-      # Please do not set a cache for release builds; they are evicted before they can be re-used, yet they consume significant cache storage before eviction.
-
-      - name: Add Rust Target
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Build with cross
-        run: cross build -p oxc_language_server --release --target=${{ matrix.target }}
-
-      - name: Copy binary
-        if: runner.os == 'Windows'
-        run: |
-          mkdir -p editors/vscode/target/release
-          # .vscodeignore uses `!target/release/oxc_language_server.exe` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_language_server.exe editors/vscode/target/release/oxc_language_server.exe
-
-      - name: Copy binary
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p editors/vscode/target/release/
-          # .vscodeignore uses `!target/release/oxc_language_server` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_language_server editors/vscode/target/release/oxc_language_server
-
       - name: Package Extension
         working-directory: editors/vscode
         run: |
-          ls ./target/release
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           if-no-files-found: error
           name: packages-${{ matrix.code-target }}
@@ -124,12 +94,12 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Download extension artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           merge-multiple: true
           path: editors/vscode
 
-      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
       - name: Publish to Microsoft Marketplace
         working-directory: editors/vscode
@@ -149,12 +119,12 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Download extension artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           merge-multiple: true
           path: editors/vscode
 
-      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
       - name: Publish to Open VSX Registry
         working-directory: editors/vscode

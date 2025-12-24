@@ -1,28 +1,51 @@
-import { describe, it, vi, expect, beforeEach } from "vitest";
+import assert from "node:assert";
+import { describe, it, expect, beforeEach } from "vitest";
+import { parse as parseRaw } from "../src-js/package/parse.ts";
+import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { buffers } from "../src-js/plugins/lint.ts";
+import {
+  ast,
+  initAst,
+  resetSourceAndAst,
+  setupSourceForFile,
+} from "../src-js/plugins/source_code.ts";
 import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.ts";
-import { resetSourceAndAst } from "../src-js/plugins/source_code.ts";
-import { parse } from "@typescript-eslint/typescript-estree";
+import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
-import type { Node } from "../src-js/plugins/types.ts";
+import type { ParseOptions } from "../src-js/package/parse.ts";
+import type { Program } from "../src-js/generated/types.d.ts";
 
-let sourceText: string | null = null;
+/**
+ * Parse source text into AST using Oxc parser.
+ * Set up global state, as if was linting the provided file.
+ * @param path - File path
+ * @param sourceText - Source text
+ * @param options - Parse options
+ * @returns AST
+ */
+function parse(path: string, sourceText: string, options?: ParseOptions): Program {
+  // Set file path
+  setupFileContext(path);
 
-vi.mock("../src-js/plugins/source_code.ts", async (importOriginal) => {
-  const original: Record<string, unknown> = await importOriginal();
-  return {
-    ...original,
-    get sourceText(): string {
-      if (sourceText === null) {
-        throw new Error("Must set `sourceText` before calling token methods");
-      }
-      return sourceText;
-    },
-  };
-});
+  // Parse source, writing source text and AST into buffer
+  parseRaw(path, sourceText, options);
+
+  // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
+  const buffer = buffers[0];
+  debugAssertIsNonNull(buffer);
+  setupSourceForFile(buffer, /* hasBOM */ false, /* parserServices */ {});
+
+  // Deserialize AST from buffer
+  initAst();
+  debugAssertIsNonNull(ast);
+
+  // Return AST
+  return ast;
+}
 
 beforeEach(() => {
+  resetFileContext();
   resetSourceAndAst();
-  sourceText = null;
 });
 
 describe("isSpaceBetween()", () => {
@@ -56,10 +79,17 @@ describe("isSpaceBetween()", () => {
       ["let foo = 1;let foo2 = 2; let foo3 = 3;", true],
     ] satisfies [string, boolean][]) {
       it(`should return ${expected} for ${code}`, () => {
-        sourceText = code;
-        const ast = parse(sourceText, { range: true, sourceType: "module" }),
-          body = ast.body as unknown as Node[];
-        expect(isSpaceBetween(body[0]!, body.at(-1)!)).toBe(expected);
+        const ast = parse("dummy.js", code);
+
+        const firstStmt = ast.body[0];
+        const lastStmt = ast.body.at(-1);
+        assert(firstStmt != null);
+        assert(lastStmt != null);
+        assert(firstStmt !== lastStmt);
+
+        expect(isSpaceBetween(firstStmt, lastStmt)).toBe(expected);
+        // Reversed order
+        expect(isSpaceBetween(lastStmt, firstStmt)).toBe(expected);
       });
     }
   });
@@ -68,78 +98,73 @@ describe("isSpaceBetween()", () => {
 describe("isSpaceBetweenTokens()", () => {
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2166-L2206
   it("JSXText tokens that contain only whitespaces should be handled as space", () => {
-    sourceText = "let jsx = <div>\n   {content}\n</div>";
-    const ast = parse(sourceText, {
-      range: true,
-      sourceType: "module",
-      jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    const ast = parse("dummy.jsx", "let jsx = <div>\n   {content}\n</div>");
+
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
     const interpolation = jsx.children[1];
+    assert(interpolation != null);
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, interpolation)).toBe(true);
-
-    expect(isSpaceBetweenTokens(interpolation, jsx.closingElement)).toBe(true);
-
+    expect(isSpaceBetweenTokens(openingElement, interpolation)).toBe(true);
+    expect(isSpaceBetweenTokens(interpolation, closingElement)).toBe(true);
     // Reversed order
-    expect(isSpaceBetweenTokens(interpolation, jsx.openingElement)).toBe(true);
-
-    expect(isSpaceBetweenTokens(jsx.closingElement, interpolation)).toBe(true);
+    expect(isSpaceBetweenTokens(interpolation, openingElement)).toBe(true);
+    expect(isSpaceBetweenTokens(closingElement, interpolation)).toBe(true);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2208-L2233
   it("JSXText tokens that contain both letters and whitespaces should be handled as space", () => {
-    sourceText = "let jsx = <div>\n   Hello\n</div>";
-    const ast = parse(sourceText, {
-      range: true,
-      sourceType: "module",
-      jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    const ast = parse("dummy.jsx", "let jsx = <div>\n   Hello\n</div>");
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(true);
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
 
+    expect(isSpaceBetweenTokens(openingElement, closingElement)).toBe(true);
     // Reversed order
-    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(true);
+    expect(isSpaceBetweenTokens(closingElement, openingElement)).toBe(true);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2235-L2261
   it("JSXText tokens that contain only letters should NOT be handled as space", () => {
-    sourceText = "let jsx = <div>Hello</div>";
-    const ast = parse(sourceText, {
-      range: true,
-      sourceType: "module",
-      jsx: true,
-    });
-    // @ts-expect-error
-    const jsx = ast.body[0].declarations[0].init;
+    const ast = parse("dummy.jsx", "let jsx = <div>Hello</div>");
 
-    expect(isSpaceBetweenTokens(jsx.openingElement, jsx.closingElement)).toBe(false);
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "VariableDeclaration");
+    const jsx = stmt.declarations[0].init!;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const { openingElement, closingElement } = jsx;
+    assert(closingElement !== null);
 
+    expect(isSpaceBetweenTokens(openingElement, closingElement)).toBe(false);
     // Reversed order
-    expect(isSpaceBetweenTokens(jsx.closingElement, jsx.openingElement)).toBe(false);
+    expect(isSpaceBetweenTokens(closingElement, openingElement)).toBe(false);
   });
 
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2263-L2300
-  it("should return false either of the arguments' location is inside the other one", () => {
-    sourceText = "let foo = bar;";
-    const ast = parse(sourceText, {
-        range: true,
-        tokens: true,
-        sourceType: "module",
-        jsx: true,
-      }),
-      body = ast.body as unknown as Node[],
-      { tokens } = ast;
+  it("should return false if either of the arguments' location is inside the other one", () => {
+    const ast = parse("dummy.js", "let foo = bar;");
 
-    expect(isSpaceBetweenTokens(tokens[0], body[0])).toBe(false);
+    const stmt = ast.body[0];
+    assert(stmt != null);
 
-    expect(isSpaceBetweenTokens(tokens.at(-1)!, body[0])).toBe(false);
+    const firstToken = ast.tokens[0];
+    const lastToken = ast.tokens.at(-1);
+    assert(firstToken != null);
+    assert(lastToken != null);
+    assert(firstToken !== lastToken);
 
-    expect(isSpaceBetweenTokens(body[0], tokens[0])).toBe(false);
-
-    expect(isSpaceBetweenTokens(body[0], tokens.at(-1)!)).toBe(false);
+    expect(isSpaceBetweenTokens(firstToken, stmt)).toBe(false);
+    expect(isSpaceBetweenTokens(lastToken, stmt)).toBe(false);
+    // Reversed order
+    expect(isSpaceBetweenTokens(stmt, firstToken)).toBe(false);
+    expect(isSpaceBetweenTokens(stmt, lastToken)).toBe(false);
   });
 });

@@ -26,8 +26,8 @@ declare_oxc_lint!(
     ///
     /// Disallow calling some global objects as functions.
     ///
-    /// It is safe to disable this rule when using TypeScript, because
-    /// TypeScript's compiler enforces this check.
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///
@@ -101,7 +101,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
     let decl = nodes.get_node(symbols.symbol_declaration(binding_id));
     match decl.kind() {
         AstKind::VariableDeclarator(parent_decl) => {
-            if !parent_decl.id.kind.is_binding_identifier() {
+            if !parent_decl.id.is_binding_identifier() {
                 return Some(ident.name.as_str());
             }
             match &parent_decl.init {

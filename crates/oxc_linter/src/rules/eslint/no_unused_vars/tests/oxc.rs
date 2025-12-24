@@ -996,6 +996,22 @@ fn test_arguments() {
         ("items.reduce((acc, item) => (acc[item.action]--, acc), {})", None),
         ("items.reduce((acc, item) => (++acc[item.action], acc), {})", None),
         ("items.reduce((acc, item) => (--acc[item.action], acc), {})", None),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); array2[index]!++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); ++array2[index]!; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index]!)++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index] as number)++; return array2; }",
+            None,
+        ),
         // AssignmentExpression cases
         ("items.reduce((acc, item) => (acc[item.action] = 1, acc), {})", None),
         ("items.reduce((acc, item) => (acc.x[item.action] = 1, acc), {})", None),
@@ -1139,19 +1155,24 @@ fn test_namespaces() {
         ",
         "
         interface Foo {}
-        namespace Foo {
-            export const a = {};
-        }
+        namespace Foo { export const a = {}; }
         const foo: Foo = Foo.a
         console.log(foo)
         ",
+        "
+        export declare namespace Foo {
+            type foo = 123;
+        }
+        ",
+        "export declare namespace Foo { interface Bar { baz: string; } }",
+        "
+        declare namespace Foo { type foo = 123; }
+        export { Foo }
+        ",
+        "declare module 'tsdown' { function bar(): void; }",
     ];
 
-    let fail = vec![
-        "namespace N {}",
-        // FIXME
-        // "export namespace N { function foo() }",
-    ];
+    let fail = vec!["namespace N {}", "export namespace N { function foo() }"];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()

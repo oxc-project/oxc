@@ -31,16 +31,15 @@ import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
-import { EMPTY_GLOBALS, Globals, globals, initGlobals } from "./globals.ts";
+import { envs, globals, initGlobals } from "./globals.ts";
 
+import type { Globals, Envs } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
 import type { Diagnostic } from "./report.ts";
 import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
 import type { ModuleKind, Program } from "../generated/types.d.ts";
-
-const { freeze, assign: ObjectAssign, create: ObjectCreate } = Object;
 
 // Cached current working directory
 let cwd: string | null = null;
@@ -73,13 +72,13 @@ export const ECMA_VERSION = 2026;
 const ECMA_VERSION_NUMBER = 17;
 
 // Supported ECMAScript versions. This matches ESLint's default.
-const SUPPORTED_ECMA_VERSIONS = freeze([3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+const SUPPORTED_ECMA_VERSIONS = Object.freeze([3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
 
 // Singleton object for parser's `Syntax` property. Generated lazily.
 let Syntax: Record<string, string> | null = null;
 
 // Singleton object for parser.
-const PARSER = freeze({
+const PARSER = Object.freeze({
   /**
    * Parser name.
    */
@@ -113,11 +112,11 @@ const PARSER = freeze({
   get Syntax(): Readonly<Record<string, string>> {
     // Construct lazily, as it's probably rarely used
     if (Syntax === null) {
-      Syntax = ObjectCreate(null);
+      Syntax = Object.create(null);
       for (const key in visitorKeys) {
         Syntax![key] = key;
       }
-      freeze(Syntax);
+      Object.freeze(Syntax);
     }
     return Syntax!;
   },
@@ -135,7 +134,7 @@ const PARSER = freeze({
 
 // Singleton object for parser options.
 // TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
-const PARSER_OPTIONS = freeze({
+const PARSER_OPTIONS = Object.freeze({
   /**
    * Source type of the file being linted.
    */
@@ -184,12 +183,23 @@ const LANGUAGE_OPTIONS = {
   /**
    * Globals defined for the file being linted.
    */
-  get globals(): Readonly<Globals> | null {
+  get globals(): Readonly<Globals> {
+    // ESLint does not define `globals` property on `LanguageOptions` if no globals are defined.
+    // We have no way to distinguish between "no globals defined" and "globals defined as empty object",
+    // so we behave slightly differently from ESLint here, but it should make no practical difference.
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
+    return globals;
+  },
 
-    // ESLint has `globals` as `null`, not empty object, if no globals are defined
-    return globals === EMPTY_GLOBALS ? null : globals;
+  /**
+   * Environments defined for the file being linted.
+   */
+  get env(): Readonly<Envs> {
+    // This is a property which ESLint does not have - it uses `ecmaVersion` instead for preset environments
+    if (envs === null) initGlobals();
+    debugAssertIsNonNull(envs);
+    return envs;
   },
 };
 
@@ -211,7 +221,7 @@ if (CONFORMANCE) {
   });
 }
 
-freeze(LANGUAGE_OPTIONS);
+Object.freeze(LANGUAGE_OPTIONS);
 
 /**
  * Language options used when parsing a file.
@@ -245,7 +255,7 @@ export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 // TODO: When we write a rule tester, throw an error in the tester if the rule uses deprecated methods/getters.
 // We'll need to offer an option to opt out of these errors, for rules which delegate to another rule whose code
 // the author doesn't control.
-const FILE_CONTEXT = freeze({
+const FILE_CONTEXT = Object.freeze({
   /**
    * Absolute path of the file being linted.
    */
@@ -360,7 +370,7 @@ const FILE_CONTEXT = freeze({
    */
   extend(this: FileContext, extension: Record<string | number | symbol, unknown>): FileContext {
     // Note: We can allow calling `extend` in `createOnce`, as it involves no file-specific state
-    return freeze(ObjectAssign(ObjectCreate(this), extension));
+    return Object.freeze(Object.assign(Object.create(this), extension));
   },
 
   /**
@@ -409,11 +419,10 @@ export interface Context extends FileContext {
 
 /**
  * Create `Context` object for a rule.
- * @param fullRuleName - Full rule name, including plugin name e.g. `my-plugin/my-rule`
  * @param ruleDetails - `RuleDetails` object
  * @returns `Context` object
  */
-export function createContext(fullRuleName: string, ruleDetails: RuleDetails): Readonly<Context> {
+export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
   // Create `Context` object for rule.
   //
   // All properties are enumerable, to support a pattern which some ESLint plugins use:
@@ -436,7 +445,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
   // IMPORTANT: Methods/getters must not use `this`, to support wrapped context objects
   // or e.g. `const { report } = context; report(diagnostic);`.
   // https://github.com/oxc-project/oxc/issues/15325
-  return freeze({
+  return Object.freeze({
     // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
     __proto__: FILE_CONTEXT,
     // Rule ID, in form `<plugin>/<rule>`
@@ -444,7 +453,7 @@ export function createContext(fullRuleName: string, ruleDetails: RuleDetails): R
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
       // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
       if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
-      return fullRuleName;
+      return ruleDetails.fullName;
     },
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {

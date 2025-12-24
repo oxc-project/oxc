@@ -51,6 +51,6 @@ exit code: 1
 
 --- STDERR ---------
 Failed to parse target paths or ignore settings.
-Failed to add ignore file: <cwd>/nonexistent.ignore
+<cwd>/nonexistent.ignore: File not found
 --------------------"
 `;

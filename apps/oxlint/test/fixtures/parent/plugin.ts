@@ -14,7 +14,7 @@ const plugin: Plugin = {
               `parent: ${node.parent?.type}\n` +
               `ancestors: [ ${context.sourceCode
                 .getAncestors(node)
-                // @ts-expect-error - Shouldn't be an error. We need to fix our types.
+                // @ts-expect-error - TODO: Shouldn't be an error. We need to fix our types.
                 .map((node) => node.type)
                 .join(", ")} ]`,
             node,

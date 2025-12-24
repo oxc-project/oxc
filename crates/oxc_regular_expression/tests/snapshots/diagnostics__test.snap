@@ -1,0 +1,336 @@
+---
+source: crates/oxc_regular_expression/tests/diagnostics.rs
+expression: snapshot
+---
+# unknown_flag
+
+  × Invalid regular expression: Unknown flag: `z` found
+   ╭─[/a/z:1:4]
+ 1 │ /a/z
+   ·    ─
+   ╰────
+  help: Valid flags are: d, g, i, m, s, u, v, y
+
+# duplicated_flags
+
+  × Invalid regular expression: Duplicated flag: `g` found
+   ╭─[/a/gg:1:5]
+ 1 │ /a/gg
+   ·     ─
+   ╰────
+  help: Remove the duplicate flag
+
+# invalid_unicode_flags
+
+  × Invalid regular expression: Invalid unicode flags combination `u` and `v`
+   ╭─[/a/uv:1:5]
+ 1 │ /a/uv
+   ·     ─
+   ╰────
+  help: The `v` flag is a superset of `u`. Use only either of them
+
+# duplicated_capturing_group_names
+
+  × Invalid regular expression: Duplicated capturing group names
+   ╭─[/(?<n>.)(?<n>.)/:1:5]
+ 1 │ /(?<n>.)(?<n>.)/
+   ·     ─      ─
+   ╰────
+  help: Duplicate names must be in different alternatives
+
+# empty_group_specifier
+
+  × Invalid regular expression: Unterminated capturing group name
+   ╭─[/(?<>a)/:1:4]
+ 1 │ /(?<>a)/
+   ·    ─
+   ╰────
+  help: Add the missing closing delimiter
+
+# lone_quantifier
+
+  × Invalid regular expression: Lone quantifier found, expected with `Atom`
+   ╭─[/+/u:1:2]
+ 1 │ /+/u
+   ·  ─
+   ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
+
+# invalid_braced_quantifier
+
+  × Invalid regular expression: Invalid braced quantifier
+   ╭─[/a|+/:1:4]
+ 1 │ /a|+/
+   ·    ─
+   ╰────
+  help: Quantifiers must follow an expression. To match literally, escape it with `\`
+
+# invalid_braced_quantifier_unicode
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/a{/u:1:3]
+ 1 │ /a{/u
+   ·   ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
+
+# too_large_number_in_braced_quantifier
+
+  × Invalid regular expression: Number is too large in decimal digits
+   ╭─[/x{99999999999999999999999999999999999999999999999999}/:1:4]
+ 1 │ /x{99999999999999999999999999999999999999999999999999}/
+   ·    ───────────────────
+   ╰────
+  help: The number exceeds the maximum allowed value
+
+# braced_quantifier_out_of_order
+
+  × Invalid regular expression: Numbers out of order in braced quantifier
+   ╭─[/a{2,1}/:1:3]
+ 1 │ /a{2,1}/
+   ·   ─────
+   ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
+
+# unterminated_group
+
+  × Invalid regular expression: Unterminated capturing group
+   ╭─[/(/:1:2]
+ 1 │ /(/
+   ·  ─
+   ╰────
+  help: Add the missing closing delimiter
+
+# unterminated_character_class
+
+  × Invalid regular expression: Unterminated character class
+   ╭─[/[/:1:2]
+ 1 │ /[/
+   ·  ─
+   ╰────
+  help: Add the missing closing delimiter
+
+# invalid_indexed_reference_no_groups
+
+  × Invalid regular expression: Invalid indexed reference
+   ╭─[/\1/u:1:2]
+ 1 │ /\1/u
+   ·  ──
+   ╰────
+  help: There are no capturing groups defined in this pattern
+
+# invalid_indexed_reference_with_groups
+
+  × Invalid regular expression: Invalid indexed reference
+   ╭─[/()\2/u:1:4]
+ 1 │ /()\2/u
+   ·    ──
+   ╰────
+  help: This pattern only has 1 capturing group
+
+# invalid_named_reference_no_groups
+
+  × Invalid regular expression: Invalid named reference
+   ╭─[/\k<a>/u:1:2]
+ 1 │ /\k<a>/u
+   ·  ─────
+   ╰────
+  help: There are no named capturing groups defined in this pattern
+
+# invalid_named_reference_with_groups
+
+  × Invalid regular expression: Invalid named reference
+   ╭─[/(?<foo>)\k<bar>/u:1:10]
+ 1 │ /(?<foo>)\k<bar>/u
+   ·          ───────
+   ╰────
+  help: Valid group names are: foo
+
+# invalid_unicode_property_name_negative_strings
+
+  × Invalid regular expression: Property name `Basic_Emoji` is not allowed here
+   ╭─[/\P{Basic_Emoji}/v:1:2]
+ 1 │ /\P{Basic_Emoji}/v
+   ·  ───────────────
+   ╰────
+  help: Negated character classes cannot contain properties that match string related unicode properties
+
+# invalid_unicode_property_of_strings
+
+  × Invalid regular expression: Invalid unicode property `Basic_Emoji`
+   ╭─[/\p{Basic_Emoji}/u:1:5]
+ 1 │ /\p{Basic_Emoji}/u
+   ·     ───────────
+   ╰────
+  help: Enable `UnicodeSetsMode` to use this property
+
+# invalid_unicode_property
+
+  × Invalid regular expression: Invalid unicode property name and/or value
+   ╭─[/\p{Foo}/u:1:5]
+ 1 │ /\p{Foo}/u
+   ·     ───
+   ╰────
+  help: Check the property name spelling or use a valid Unicode property
+
+# character_class_range_out_of_order
+
+  × Invalid regular expression: Character class atom range out of order
+   ╭─[/[z-a]/:1:4]
+ 1 │ /[z-a]/
+   ·    ──
+   ╰────
+  help: In a character range `[a-z]`, the first character must have a smaller code point than the second
+
+# character_class_range_dash_not_subtraction
+
+  × Invalid regular expression: Character class range out of order
+   ╭─[/[a--b]/:1:4]
+ 1 │ /[a--b]/
+   ·    ──
+   ╰────
+  help: If you meant to use set subtraction `--`, enable the `v` flag
+
+# character_class_range_invalid_atom
+
+  × Invalid regular expression: Character class range with invalid atom
+   ╭─[/[\d-z]/u:1:3]
+ 1 │ /[\d-z]/u
+   ·   ────
+   ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
+
+# invalid_class_atom
+
+  × Invalid regular expression: Character class range with invalid atom
+   ╭─[/[a-\d]/u:1:3]
+ 1 │ /[a-\d]/u
+   ·   ────
+   ╰────
+  help: Character class ranges must use single characters, not character classes or escape sequences like `\d`
+
+# empty_class_set_expression
+
+  × Invalid regular expression: Expected nonempty class set expression
+   ╭─[/[&&]/v:1:3]
+ 1 │ /[&&]/v
+   ·   ▲
+   ╰────
+  help: Add characters or properties to the class set expression
+
+# class_intersection_unexpected_ampersand
+
+  × Invalid regular expression: Unexpected `&` inside of class intersection
+   ╭─[/[a&&&b]/v:1:6]
+ 1 │ /[a&&&b]/v
+   ·      ─
+   ╰────
+  help: A third `&` is not allowed after `&&`. Did you mean `[a&&[b]]`?
+
+# class_set_expression_invalid_character
+
+  × Invalid regular expression: Unexpected character inside of class intersection
+   ╭─[/[a&&]/v:1:6]
+ 1 │ /[a&&]/v
+   ·      ▲
+   ╰────
+  help: Escape this character with `\` or remove it
+
+# class_set_expression_invalid_character
+
+  × Invalid regular expression: Unexpected character inside of class intersection
+   ╭─[/[a&&b(]/v:1:7]
+ 1 │ /[a&&b(]/v
+   ·       ▲
+   ╰────
+  help: Escape this character with `\` or remove it
+
+# character_class_contents_invalid_operands
+
+  × Invalid regular expression: Invalid class operands inside of character class contents
+   ╭─[/[[^\q{ng}]]/v:1:3]
+ 1 │ /[[^\q{ng}]]/v
+   ·   ─────────
+   ╰────
+  help: Negated character classes cannot contain string related unicode properties
+
+# too_large_number_digits
+
+  × Invalid regular expression: Number is too large in hex digits
+   ╭─[/\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}/u:1:5]
+ 1 │ /\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}/u
+   ·     ────────
+   ╰────
+  help: Use a valid code point value (0x0 to 0x10FFFF)
+
+# invalid_unicode_escape_sequence
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[/\ua/u:1:3]
+ 1 │ /\ua/u
+   ·   ─
+   ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
+
+# invalid_surrogate_pair
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[/\u{110000}/u:1:3]
+ 1 │ /\u{110000}/u
+   ·   ─
+   ╰────
+  help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
+
+# invalid_extended_atom_escape
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/\c0/u:1:3]
+ 1 │ /\c0/u
+   ·   ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
+
+# duplicated_modifiers
+
+  × Invalid regular expression: Duplicated modifier
+   ╭─[/(?ii:.)/:1:4]
+ 1 │ /(?ii:.)/
+   ·    ──
+   ╰────
+  help: Each modifier can only appear once
+
+# invalid_modifiers
+
+  × Invalid regular expression: Invalid modifiers
+   ╭─[/(?i-i:.)/:1:4]
+ 1 │ /(?i-i:.)/
+   ·    ───
+   ╰────
+  help: A modifier cannot be both enabled and disabled
+
+# unknown_modifiers
+
+  × Invalid regular expression: Unknown modifiers
+   ╭─[/(?a:.)/:1:4]
+ 1 │ /(?a:.)/
+   ·    ▲
+   ╰────
+  help: Valid modifiers are: i, m, s
+
+# empty_modifiers
+
+  × Invalid regular expression: Empty modifiers
+   ╭─[/(?-:.)/:1:4]
+ 1 │ /(?-:.)/
+   ·    ─
+   ╰────
+  help: Use `(?:...)` for non-capturing groups or add modifiers
+
+# parse_pattern_incomplete
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[/)/v:1:2]
+ 1 │ /)/v
+   ·  ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences

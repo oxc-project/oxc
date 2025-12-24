@@ -28,10 +28,17 @@ export interface Fixture {
     eslint: boolean;
     // Run Oxlint with fixes. Default: `false`.
     fix: boolean;
+    // Run Oxlint single-threaded. Default: `false`.
+    singleThread: boolean;
   };
 }
 
-const DEFAULT_OPTIONS: Fixture["options"] = { oxlint: true, eslint: false, fix: false };
+const DEFAULT_OPTIONS: Fixture["options"] = {
+  oxlint: true,
+  eslint: false,
+  fix: false,
+  singleThread: false,
+};
 
 /**
  * Get all fixtures in `test/fixtures`, and their options.
@@ -64,10 +71,11 @@ export function getFixtures(): Fixture[] {
     if (
       typeof options.oxlint !== "boolean" ||
       typeof options.eslint !== "boolean" ||
-      typeof options.fix !== "boolean"
+      typeof options.fix !== "boolean" ||
+      typeof options.singleThread !== "boolean"
     ) {
       throw new TypeError(
-        "`oxlint`, `eslint`, and `fix` properties in `options.json` must be booleans",
+        "`oxlint`, `eslint`, `fix`, and `singleThread` properties in `options.json` must be booleans",
       );
     }
 
@@ -162,7 +170,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 const PATH_REGEXP = new RegExp(
-  // @ts-expect-error `RegExp.escape` is new in NodeJS v24
+  // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
   `(?<=^|[\\s\\('"\`])${RegExp.escape(REPO_ROOT_PATH)}(${RegExp.escape(pathSep)}[^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   "g",
 );
@@ -204,9 +212,11 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
   // Shorten paths in output with `<root>`, `<fixtures>`, or `<fixture>`.
   lines = lines.flatMap((line) => {
     // Handle stack trace lines.
+    // e.g. ` at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
+    // e.g. ` at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
     // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
-    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    const match = line.match(/^(\s*\|?\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       let [, preamble, at] = match;
       if (!at.startsWith(FIXTURES_URL)) return [];

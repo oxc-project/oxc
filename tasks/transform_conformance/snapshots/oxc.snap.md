@@ -1,6 +1,6 @@
-commit: 3591b24e
+commit: cbdc42fe
 
-Passed: 203/334
+Passed: 201/333
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (6/30)
+# babel-plugin-transform-typescript (6/31)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -475,12 +475,12 @@ after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
+rebuilt        : SymbolId(0): Span { start: 79, end: 80 }
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 83 }]
+after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 80 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
 after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
@@ -493,18 +493,29 @@ after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 267, end: 268 }
-rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
+rebuilt        : SymbolId(2): Span { start: 289, end: 290 }
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(2): [ReferenceId(2)]
 Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
+after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
 * remove-class-properties-without-initializer/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
+
+* remove-unused-import-equals/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
+rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved reference IDs mismatch for "foo":
+after transform: [ReferenceId(0), ReferenceId(3), ReferenceId(6)]
+rebuilt        : [ReferenceId(0)]
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
@@ -573,7 +584,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (47/50)
+# babel-plugin-transform-react-jsx (45/48)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

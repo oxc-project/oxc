@@ -1,29 +1,15 @@
 {
   "name": "oxc-transform",
-  "version": "0.102.0",
-  "type": "module",
-  "main": "index.js",
-  "browser": "browser.js",
-  "scripts": {
-    "build-dev": "napi build --esm --platform",
-    "build-test": "pnpm run build-dev",
-    "build": "pnpm run build-dev --features allocator --release",
-    "postbuild": "publint",
-    "postbuild-dev": "node scripts/patch.js",
-    "test": "tsc && vitest run --dir ./test"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
+  "version": "0.105.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "oxc",
     "transform"
   ],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
@@ -33,18 +19,32 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "files": [
+    "browser.js",
     "index.d.ts",
     "index.js",
-    "browser.js",
     "webcontainer-fallback.cjs"
   ],
+  "type": "module",
+  "main": "index.js",
+  "browser": "browser.js",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev",
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
+    "postbuild-dev": "node scripts/patch.js",
+    "build-wasm": "pnpm run build-wasm-dev --release",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "test": "vitest run --dir ./test"
   },
   "devDependencies": {
+    "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
-    "typescript": "catalog:",
+    "publint": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {
@@ -57,8 +57,13 @@
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
       "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
       "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
       "s390x-unknown-linux-gnu",
       "wasm32-wasip1-threads",
       "x86_64-apple-darwin",
@@ -72,5 +77,8 @@
         "fs": false
       }
     }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

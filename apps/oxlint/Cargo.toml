@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.32.0"
+version = "1.35.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -49,17 +49,24 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tempfile = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
-tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tracing-subscriber = { workspace = true, features = [] }                           # Omit the `regex` feature
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
 [target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+] }
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+  "no_opt_arch",
+] }
 
 [build-dependencies]
 napi-build = { workspace = true }
@@ -72,4 +79,7 @@ lazy-regex = { workspace = true }
 default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
-force_test_reporter = ["oxc_linter/force_test_reporter"]
+# For use in NAPI tests.
+# - Enables test reporter.
+# - Sorts file paths before linting if oxlint is run with `--threads 1`.
+testing = ["oxc_linter/force_test_reporter"]

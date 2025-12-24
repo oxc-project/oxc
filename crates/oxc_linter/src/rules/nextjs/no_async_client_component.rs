@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -142,8 +142,7 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
 
-                let BindingPatternKind::BindingIdentifier(binding_ident) = &var_declarator.id.kind
-                else {
+                let BindingPattern::BindingIdentifier(binding_ident) = &var_declarator.id else {
                     continue;
                 };
                 // `binding_ident.name` MUST be > 0 chars

@@ -1,11 +1,27 @@
 use std::fmt::Debug;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
 
-pub type ExternalLinterLoadPluginCb =
-    Box<dyn Fn(String, Option<String>) -> Result<LoadPluginResult, String> + Send + Sync>;
+use crate::{
+    config::{OxlintEnv, OxlintGlobals},
+    context::ContextHost,
+};
+
+pub type ExternalLinterLoadPluginCb = Box<
+    dyn Fn(
+            // File URL to load plugin from
+            String,
+            // Plugin name (either alias or package name).
+            // If is package name, it is pre-normalized.
+            Option<String>,
+            // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+            bool,
+        ) -> Result<LoadPluginResult, String>
+        + Send
+        + Sync,
+>;
 
 pub type ExternalLinterSetupConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
 
@@ -66,5 +82,35 @@ impl ExternalLinter {
 impl Debug for ExternalLinter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ExternalLinter").finish()
+    }
+}
+
+/// Struct for serializing globals and envs to send to JS plugins.
+///
+/// Serializes as `{ "globals": { "React": "readonly" }, "envs": { "browser": true } }`.
+/// `envs` only includes the environments that are enabled, so all properties are `true`.
+#[derive(Serialize)]
+pub struct GlobalsAndEnvs<'c> {
+    globals: &'c OxlintGlobals,
+    envs: EnabledEnvs<'c>,
+}
+
+impl<'c> GlobalsAndEnvs<'c> {
+    pub fn new(ctx_host: &'c ContextHost<'_>) -> Self {
+        Self { globals: ctx_host.globals(), envs: EnabledEnvs(ctx_host.env()) }
+    }
+}
+
+struct EnabledEnvs<'c>(&'c OxlintEnv);
+
+impl Serialize for EnabledEnvs<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+
+        for env_name in self.0.iter() {
+            map.serialize_entry(env_name, &true)?;
+        }
+
+        map.end()
     }
 }

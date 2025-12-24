@@ -1,4 +1,6 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::VecDeque;
+
+use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_cfg::{
@@ -16,26 +18,26 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn missing_super_all(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected to call 'super()'.")
-        .with_help("Add a 'super()' call to the constructor")
+    OxcDiagnostic::warn("Expected to call `super()`.")
+        .with_help("Add a `super()` call to the constructor")
         .with_label(span)
 }
 
 fn missing_super_some(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Lacked a call of 'super()' in some code paths.")
-        .with_help("Ensure 'super()' is called in all code paths")
+    OxcDiagnostic::warn("Lacked a call of `super()` in some code paths.")
+        .with_help("Ensure `super()` is called in all code paths")
         .with_label(span)
 }
 
 fn duplicate_super(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected duplicate 'super()'.")
-        .with_help("Remove the duplicate 'super()' call")
+    OxcDiagnostic::warn("Unexpected duplicate `super()`.")
+        .with_help("Remove the duplicate `super()` call")
         .with_label(span)
 }
 
 fn bad_super(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected 'super()' because 'super' is not a constructor.")
-        .with_help("Remove the 'super()' call or check the class declaration")
+    OxcDiagnostic::warn("Unexpected `super()` because `super` is not a constructor.")
+        .with_help("Remove the `super()` call or check the class declaration")
         .with_label(span)
 }
 
@@ -47,6 +49,9 @@ declare_oxc_lint!(
     ///
     /// Requires `super()` calls in constructors of derived classes and disallows `super()` calls
     /// in constructors of non-derived classes.
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///
@@ -129,6 +134,65 @@ enum PathResult {
     CalledMultiple,
     /// Path exited early (return/throw) without calling super()
     ExitedWithoutSuper,
+}
+
+/// Abstract state representing super() call status in dataflow analysis.
+///
+/// This enum forms a lattice used for iterative dataflow analysis:
+/// - `Unreached`: Block has not been reached by any execution path
+/// - `Never`: All paths have 0 super() calls
+/// - `Once`: All paths have exactly 1 super() call
+/// - `Multiple`: At least one path has 2+ super() calls (may include valid paths)
+/// - `Mixed`: Some paths have 0 calls, some have 1 (represents {0, 1})
+///
+/// Note: This lattice doesn't distinguish `{1, 2+}` from `{2+}`. When `Mixed + 1`
+/// produces `{1, 2}`, we map to `Multiple` which may over-report duplicates but
+/// won't miss them. A more precise lattice would need additional states.
+///
+/// The `merge` operation computes the least upper bound (join) of two states,
+/// and `add_super_calls` is the transfer function for executing super() calls.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SuperCallState {
+    Unreached,
+    Never,
+    Once,
+    Multiple,
+    Mixed,
+}
+
+impl SuperCallState {
+    fn merge(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Unreached, s) | (s, Self::Unreached) => s,
+            (Self::Never, Self::Never) => Self::Never,
+            (Self::Once, Self::Once) => Self::Once,
+            (Self::Multiple, _) | (_, Self::Multiple) => Self::Multiple,
+            (Self::Mixed, _)
+            | (_, Self::Mixed)
+            | (Self::Never, Self::Once)
+            | (Self::Once, Self::Never) => Self::Mixed,
+        }
+    }
+
+    /// Transfer function: compute state after executing `count` super() calls.
+    ///
+    /// Note: When `Mixed` (representing paths with {0, 1} calls) gains a call,
+    /// it becomes `Multiple` (representing {1, 2+}). This is a deliberate
+    /// conservative choice: we report potential duplicates rather than track
+    /// the full set of possible counts. The alternative of staying `Mixed`
+    /// would incorrectly represent {1, 2+} as {0, 1}, missing valid paths.
+    fn add_super_calls(self, count: usize) -> Self {
+        match (self, count) {
+            (Self::Unreached, _) => Self::Unreached,
+            (Self::Never, 0) => Self::Never,
+            (Self::Never, 1) | (Self::Once, 0) => Self::Once,
+            (Self::Mixed, 0) => Self::Mixed,
+            // Mixed + 1 = {0,1} + 1 = {1,2} -> Multiple (has path with 2+ calls)
+            // Once + 1 = {1} + 1 = {2} -> Multiple
+            // Any state + 2+ calls -> Multiple
+            _ => Self::Multiple,
+        }
+    }
 }
 
 impl Rule for ConstructorSuper {
@@ -223,8 +287,8 @@ impl Rule for ConstructorSuper {
                     if !has_super_on_any_path && all_paths_exit {
                         // super() was never called and all paths exit early (like "return; super();")
                         ctx.diagnostic(missing_super_all(constructor.span));
-                    } else if some_missing && !has_duplicate {
-                        // super() was called on some paths but missing on others (not a duplicate issue)
+                    } else if some_missing {
+                        // super() was called on some paths but missing on others
                         ctx.diagnostic(missing_super_some(constructor.span));
                     }
 
@@ -248,13 +312,8 @@ impl ConstructorSuper {
         match super_class {
             None => SuperClassType::None,
             Some(Expression::NullLiteral(_)) => SuperClassType::Null,
-            Some(expr) => {
-                if Self::is_invalid_super_class(expr) {
-                    SuperClassType::Invalid
-                } else {
-                    SuperClassType::Valid
-                }
-            }
+            Some(expr) if Self::is_invalid_super_class(expr) => SuperClassType::Invalid,
+            Some(_) => SuperClassType::Valid,
         }
     }
 
@@ -318,62 +377,67 @@ impl ConstructorSuper {
                                 record_super(call.span);
                             }
                         }
-                        AstKind::ExpressionStatement(expr_stmt) => {
-                            match &expr_stmt.expression {
-                                Expression::CallExpression(call) => {
-                                    if matches!(&call.callee, Expression::Super(_)) {
-                                        record_super(call.span);
-                                    }
+                        AstKind::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
+                            Expression::CallExpression(call) => {
+                                if matches!(&call.callee, Expression::Super(_)) {
+                                    record_super(call.span);
                                 }
-                                // Ternary: both branches in same block but only one executes
-                                Expression::ConditionalExpression(cond) => {
-                                    let check_super = |expr: &Expression| -> Option<Span> {
-                                        if let Expression::CallExpression(call) = expr
-                                            && matches!(&call.callee, Expression::Super(_))
-                                        {
-                                            Some(call.span)
-                                        } else {
-                                            None
-                                        }
-                                    };
-
-                                    if let Some(span) = check_super(&cond.consequent)
-                                        .or_else(|| check_super(&cond.alternate))
+                            }
+                            // Ternary: both branches in same block but only one executes
+                            Expression::ConditionalExpression(cond) => {
+                                let check_super = |expr: &Expression| -> Option<Span> {
+                                    if let Expression::CallExpression(call) = expr
+                                        && matches!(&call.callee, Expression::Super(_))
                                     {
+                                        Some(call.span)
+                                    } else {
+                                        None
+                                    }
+                                };
+
+                                if let Some(span) = check_super(&cond.consequent)
+                                    .or_else(|| check_super(&cond.alternate))
+                                {
+                                    record_super(span);
+                                }
+                            }
+                            // Special case: `super() || super()` - report both as duplicate.
+                            //
+                            // Technically, `super()` returns the constructed instance (truthy),
+                            // so the RHS of `||` won't execute at runtime. However:
+                            // 1. ESLint reports this as duplicate for compatibility
+                            // 2. This code pattern is almost certainly a mistake
+                            // 3. The CFG doesn't catch this because it sees only LHS as reachable
+                            //
+                            // We intentionally match ESLint's behavior here.
+                            Expression::LogicalExpression(logical)
+                                if matches!(logical.operator, LogicalOperator::Or) =>
+                            {
+                                let check_super = |expr: &Expression| -> Option<Span> {
+                                    if let Expression::CallExpression(call) = expr
+                                        && matches!(&call.callee, Expression::Super(_))
+                                    {
+                                        Some(call.span)
+                                    } else {
+                                        None
+                                    }
+                                };
+
+                                let left_span = check_super(&logical.left);
+                                let right_span = check_super(&logical.right);
+
+                                // Report both super() calls as duplicates if both exist
+                                if left_span.is_some() && right_span.is_some() {
+                                    if let Some(span) = left_span {
+                                        record_super(span);
+                                    }
+                                    if let Some(span) = right_span {
                                         record_super(span);
                                     }
                                 }
-                                // Special case: super() || super() where both execute
-                                // (super() returns undefined which is falsy, so right side always runs)
-                                Expression::LogicalExpression(logical)
-                                    if matches!(logical.operator, LogicalOperator::Or) =>
-                                {
-                                    let check_super = |expr: &Expression| -> Option<Span> {
-                                        if let Expression::CallExpression(call) = expr
-                                            && matches!(&call.callee, Expression::Super(_))
-                                        {
-                                            Some(call.span)
-                                        } else {
-                                            None
-                                        }
-                                    };
-
-                                    let left_span = check_super(&logical.left);
-                                    let right_span = check_super(&logical.right);
-
-                                    // If both sides have super() in ||, both will execute (duplicate)
-                                    if left_span.is_some() && right_span.is_some() {
-                                        if let Some(span) = left_span {
-                                            record_super(span);
-                                        }
-                                        if let Some(span) = right_span {
-                                            record_super(span);
-                                        }
-                                    }
-                                }
-                                _ => {}
                             }
-                        }
+                            _ => {}
+                        },
                         _ => {}
                     }
                 }
@@ -385,186 +449,224 @@ impl ConstructorSuper {
         (super_call_counts, super_call_spans)
     }
 
-    /// Analyze CFG paths to determine super() call patterns
+    /// Analyzes control flow paths to determine super() call patterns using iterative dataflow analysis.
+    ///
+    /// Uses a worklist algorithm to propagate abstract states through the CFG. States represent
+    /// whether super() has been called: Never, Once, Multiple, Mixed, or Unreached. The algorithm
+    /// handles loops conservatively by not following backedges and marking any loop containing super()
+    /// as potentially violating the "exactly once" requirement.
+    ///
+    /// Returns path results indicating super() call patterns for different execution paths.
     fn analyze_super_paths(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         super_call_counts: &FxHashMap<BlockNodeId, usize>,
     ) -> Vec<PathResult> {
-        let mut path_results = Vec::new();
-        let mut visited_in_path = FxHashSet::default();
+        let mut block_states: FxHashMap<BlockNodeId, SuperCallState> = FxHashMap::default();
+        let mut loop_with_super = false;
+        let mut worklist: VecDeque<BlockNodeId> = VecDeque::new();
+        let mut exit_results: Vec<(SuperCallState, bool)> = Vec::new();
 
-        Self::dfs_analyze_paths(
-            cfg,
-            constructor_block,
-            super_call_counts,
-            &mut visited_in_path,
-            0,
-            &mut path_results,
-        );
+        block_states.insert(constructor_block, SuperCallState::Never);
+        worklist.push_back(constructor_block);
 
-        path_results
-    }
+        while let Some(block_id) = worklist.pop_front() {
+            let current_state =
+                block_states.get(&block_id).copied().unwrap_or(SuperCallState::Unreached);
 
-    /// DFS through CFG to track super() calls per path
-    fn dfs_analyze_paths(
-        cfg: &ControlFlowGraph,
-        block_id: BlockNodeId,
-        super_call_counts: &FxHashMap<BlockNodeId, usize>,
-        visited_in_path: &mut FxHashSet<BlockNodeId>,
-        super_count: usize,
-        path_results: &mut Vec<PathResult>,
-    ) {
-        // Avoid cycles
-        if visited_in_path.contains(&block_id) {
-            return;
-        }
+            if current_state == SuperCallState::Unreached {
+                continue;
+            }
 
-        visited_in_path.insert(block_id);
+            let block = cfg.basic_block(block_id);
 
-        let block = cfg.basic_block(block_id);
+            if block.is_unreachable() {
+                continue;
+            }
 
-        if block.is_unreachable() {
-            visited_in_path.remove(&block_id);
-            return;
-        }
+            let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
+            let state_after_block = current_state.add_super_calls(block_super_count);
 
-        let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
-        let new_count = super_count + block_super_count;
-
-        let has_exit = block.instructions().iter().any(|inst| {
-            matches!(
-                inst.kind,
-                oxc_cfg::InstructionKind::Return(_)
-                    | oxc_cfg::InstructionKind::Throw
-                    | oxc_cfg::InstructionKind::ImplicitReturn
-            )
-        });
-
-        if has_exit {
-            // Acceptable exits: throw or return with value (not implicit undefined)
-            let is_acceptable_exit = block.instructions().iter().any(|inst| {
+            let has_exit = block.instructions().iter().any(|inst| {
                 matches!(
                     inst.kind,
-                    oxc_cfg::InstructionKind::Throw
-                        | oxc_cfg::InstructionKind::Return(
-                            oxc_cfg::ReturnInstructionKind::NotImplicitUndefined
-                        )
+                    oxc_cfg::InstructionKind::Return(_)
+                        | oxc_cfg::InstructionKind::Throw
+                        | oxc_cfg::InstructionKind::ImplicitReturn
                 )
             });
 
-            let result = match new_count {
-                0 if is_acceptable_exit => PathResult::ExitedWithoutSuper,
-                0 => PathResult::NoSuper,
-                1 => PathResult::CalledOnce,
-                _ => PathResult::CalledMultiple,
-            };
-            path_results.push(result);
-            visited_in_path.remove(&block_id);
-            return;
-        }
+            if has_exit {
+                let is_acceptable_exit = block.instructions().iter().any(|inst| {
+                    matches!(
+                        inst.kind,
+                        oxc_cfg::InstructionKind::Throw
+                            | oxc_cfg::InstructionKind::Return(
+                                oxc_cfg::ReturnInstructionKind::NotImplicitUndefined
+                            )
+                    )
+                });
+                exit_results.push((state_after_block, is_acceptable_exit));
+                // Exit blocks are terminal - don't propagate to successors
+                continue;
+            }
 
-        let mut has_outgoing_edges = false;
-        for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
-            has_outgoing_edges = true;
-            match edge.weight() {
-                // Backedge: super() in loops violates "exactly once" (0 or multiple times)
-                EdgeType::Backedge => {
-                    let target = edge.target();
-                    let current_block_has_super = super_call_counts.contains_key(&block_id);
-                    let target_has_super = super_call_counts.contains_key(&target);
-                    let loop_contains_super = current_block_has_super || target_has_super;
+            for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
+                let target = edge.target();
 
-                    if loop_contains_super {
-                        path_results.push(PathResult::NoSuper);
+                match edge.weight() {
+                    EdgeType::Backedge => {
+                        // Check if super() was called within the loop body.
+                        // We need to detect super() calls in ANY block within the loop,
+                        // including intermediate blocks (e.g., inside nested if statements).
+                        //
+                        // We check:
+                        // 1. If the backedge source or loop header directly contains super()
+                        // 2. If the dataflow state indicates super() was called within the
+                        //    loop body by comparing the state at the loop header entry with
+                        //    the state at the backedge. If the state "increased" (e.g., from
+                        //    Never to Once/Mixed/Multiple), then super() was called in the loop.
+                        let current_block_has_super = super_call_counts.contains_key(&block_id);
+                        let target_has_super = super_call_counts.contains_key(&target);
+
+                        // Compare loop header state with backedge state to detect super() in loop body.
+                        // If the loop header already has state Once/Multiple (from before the loop),
+                        // then state_after_block being Once doesn't mean super() is IN the loop.
+                        // But if state_after_block is Mixed or Multiple when header was Once,
+                        // or if state_after_block is Once/Mixed/Multiple when header was Never,
+                        // then super() must be in the loop body.
+                        let loop_header_state =
+                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
+
+                        // Detect super() in loop body by checking if state increased from
+                        // loop header to backedge:
+                        // - Header Never -> any super state means super() called in loop
+                        // - Header Once -> Multiple/Mixed means additional super() in loop
+                        // - Header Mixed -> Multiple means super() called on more paths
+                        let super_in_loop_body = matches!(
+                            (loop_header_state, state_after_block),
+                            (
+                                SuperCallState::Never,
+                                SuperCallState::Once
+                                    | SuperCallState::Multiple
+                                    | SuperCallState::Mixed
+                            ) | (
+                                SuperCallState::Once,
+                                SuperCallState::Multiple | SuperCallState::Mixed
+                            ) | (SuperCallState::Mixed, SuperCallState::Multiple)
+                        );
+
+                        if current_block_has_super || target_has_super || super_in_loop_body {
+                            loop_with_super = true;
+                        }
                     }
-                }
-                // Explicit error edges (try/catch) represent real execution paths
-                EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit) => {
-                    // Use super_count from before this block (exception skips rest of try)
-                    Self::dfs_analyze_paths(
-                        cfg,
-                        edge.target(),
-                        super_call_counts,
-                        visited_in_path,
-                        super_count,
-                        path_results,
-                    );
-                }
-                // Don't follow these edges
-                EdgeType::NewFunction
-                | EdgeType::Unreachable
-                | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
-                // Follow normal edges with accumulated count
-                EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
-                    Self::dfs_analyze_paths(
-                        cfg,
-                        edge.target(),
-                        super_call_counts,
-                        visited_in_path,
-                        new_count,
-                        path_results,
-                    );
+
+                    EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit) => {
+                        // For explicit error edges (try/catch), use pre-transfer state because
+                        // exceptions can occur before any statements in the block execute.
+                        // This is conservative in the "report more errors" direction, which is
+                        // correct for a linter: if super() is only in a try block, we report
+                        // that some paths may not call it (if an exception occurs first).
+                        let old_state =
+                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
+                        let new_state = old_state.merge(current_state);
+                        if new_state != old_state {
+                            block_states.insert(target, new_state);
+                            worklist.push_back(target);
+                        }
+                    }
+
+                    EdgeType::NewFunction
+                    | EdgeType::Unreachable
+                    | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
+
+                    EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
+                        let old_state =
+                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
+                        let new_state = old_state.merge(state_after_block);
+                        if new_state != old_state {
+                            block_states.insert(target, new_state);
+                            worklist.push_back(target);
+                        }
+                    }
                 }
             }
         }
 
-        // Dead-end block (shouldn't happen in valid CFG, but handle it)
-        if !has_outgoing_edges {
-            let result = match new_count {
-                0 => PathResult::NoSuper,
-                1 => PathResult::CalledOnce,
-                _ => PathResult::CalledMultiple,
-            };
-            path_results.push(result);
+        let mut path_results = Vec::new();
+
+        if loop_with_super {
+            // A loop containing super() can execute 0 times (NoSuper) or multiple times (CalledMultiple).
+            // Report both to trigger appropriate diagnostics.
+            path_results.push(PathResult::NoSuper);
+            path_results.push(PathResult::CalledMultiple);
         }
 
-        visited_in_path.remove(&block_id);
+        for (state, is_acceptable_exit) in exit_results {
+            match state {
+                SuperCallState::Unreached => {}
+                SuperCallState::Never => {
+                    if is_acceptable_exit {
+                        path_results.push(PathResult::ExitedWithoutSuper);
+                    } else {
+                        path_results.push(PathResult::NoSuper);
+                    }
+                }
+                SuperCallState::Once => {
+                    path_results.push(PathResult::CalledOnce);
+                }
+                SuperCallState::Multiple => {
+                    path_results.push(PathResult::CalledMultiple);
+                }
+                SuperCallState::Mixed => {
+                    path_results.push(PathResult::CalledOnce);
+                    path_results.push(PathResult::NoSuper);
+                }
+            }
+        }
+
+        path_results
     }
 
-    /// Check if an expression is definitely an invalid superclass
+    /// Checks if an expression is definitely an invalid superclass.
+    ///
+    /// Returns true for expressions that are guaranteed to be invalid as a superclass,
+    /// such as literals (numbers, strings, booleans), binary expressions, and certain
+    /// assignment operations. Returns false for expressions that might be valid (e.g.,
+    /// identifiers, function calls, or short-circuit expressions that could evaluate
+    /// to a valid class).
     fn is_invalid_super_class(expr: &Expression) -> bool {
         match expr {
             Expression::ParenthesizedExpression(paren) => {
                 Self::is_invalid_super_class(&paren.expression)
             }
 
-            Expression::AssignmentExpression(assign) => {
-                match assign.operator {
-                    // = and &&= invalid if right side is invalid
-                    AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
-                        Self::is_invalid_super_class(&assign.right)
-                    }
-
-                    // Arithmetic/bitwise assignments are invalid
-                    AssignmentOperator::Addition
-                    | AssignmentOperator::Subtraction
-                    | AssignmentOperator::Multiplication
-                    | AssignmentOperator::Division
-                    | AssignmentOperator::Remainder
-                    | AssignmentOperator::ShiftLeft
-                    | AssignmentOperator::ShiftRight
-                    | AssignmentOperator::ShiftRightZeroFill
-                    | AssignmentOperator::BitwiseOR
-                    | AssignmentOperator::BitwiseXOR
-                    | AssignmentOperator::BitwiseAnd
-                    | AssignmentOperator::Exponential => true,
-
-                    // ||= and ??= valid (short-circuit to left)
-                    AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
+            Expression::AssignmentExpression(assign) => match assign.operator {
+                AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
+                    Self::is_invalid_super_class(&assign.right)
                 }
-            }
 
-            Expression::LogicalExpression(logical) => {
-                match logical.operator {
-                    // extends (A && B): invalid if B is invalid
-                    LogicalOperator::And => Self::is_invalid_super_class(&logical.right),
-                    // extends (B || 5) or (B ?? 5): valid if left could be valid
-                    LogicalOperator::Or | LogicalOperator::Coalesce => false,
-                }
-            }
+                AssignmentOperator::Addition
+                | AssignmentOperator::Subtraction
+                | AssignmentOperator::Multiplication
+                | AssignmentOperator::Division
+                | AssignmentOperator::Remainder
+                | AssignmentOperator::ShiftLeft
+                | AssignmentOperator::ShiftRight
+                | AssignmentOperator::ShiftRightZeroFill
+                | AssignmentOperator::BitwiseOR
+                | AssignmentOperator::BitwiseXOR
+                | AssignmentOperator::BitwiseAnd
+                | AssignmentOperator::Exponential => true,
 
-            // Conditional: valid if either branch could be valid
+                AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
+            },
+
+            Expression::LogicalExpression(logical) => match logical.operator {
+                LogicalOperator::And => Self::is_invalid_super_class(&logical.right),
+                LogicalOperator::Or | LogicalOperator::Coalesce => false,
+            },
+
             Expression::ConditionalExpression(cond) => {
                 Self::is_invalid_super_class(&cond.consequent)
                     && Self::is_invalid_super_class(&cond.alternate)
@@ -758,6 +860,10 @@ fn test() {
                             }
                         }
                     ",
+        // super() before potential throw - should pass since super() is called before any exception
+        "class A extends B { constructor() { super(); try { throw new Error(); } catch (e) {} } }",
+        // super() in finally always executes
+        "class A extends B { constructor() { try { mayThrow(); } catch (e) {} finally { super(); } } }",
     ];
 
     let fail = vec![
@@ -842,6 +948,30 @@ fn test() {
                             }
 
                         }",
+        // Loop with super() in intermediate block (not in backedge source or loop header)
+        "class A extends B {
+            constructor() {
+                while (condition) {
+                    if (x) { super(); }
+                }
+            }
+        }",
+        // For loop with super() in nested if
+        "class A extends B {
+            constructor() {
+                for (let i = 0; i < 10; i++) {
+                    if (i === 5) { super(); }
+                }
+            }
+        }",
+        // Do-while with super() in nested block
+        "class A extends B {
+            constructor() {
+                do {
+                    if (x) { super(); }
+                } while (condition);
+            }
+        }",
     ];
 
     Tester::new(ConstructorSuper::NAME, ConstructorSuper::PLUGIN, pass, fail).test_and_snapshot();

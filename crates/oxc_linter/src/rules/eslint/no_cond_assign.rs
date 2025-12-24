@@ -20,10 +20,8 @@ fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoCondAssign {
-    config: NoCondAssignConfig,
-}
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoCondAssign(NoCondAssignConfig);
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -75,11 +73,9 @@ declare_oxc_lint!(
 
 impl Rule for NoCondAssign {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = serde_json::from_value::<DefaultRuleConfig<NoCondAssignConfig>>(value)
+        serde_json::from_value::<DefaultRuleConfig<NoCondAssign>>(value)
             .unwrap_or_default()
-            .into_inner();
-
-        Self { config }
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -95,7 +91,7 @@ impl Rule for NoCondAssign {
             AstKind::ConditionalExpression(expr) => {
                 self.check_expression(ctx, expr.test.get_inner_expression());
             }
-            AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
+            AstKind::AssignmentExpression(expr) if self.0 == NoCondAssignConfig::Always => {
                 let mut spans = vec![];
                 for ancestor in ctx.nodes().ancestors(node.id()) {
                     match ancestor.kind() {
@@ -150,7 +146,7 @@ impl NoCondAssign {
 
     fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
-        if self.config == NoCondAssignConfig::Always {
+        if self.0 == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
         if let Expression::AssignmentExpression(expr) = expr {

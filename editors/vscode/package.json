@@ -1,42 +1,67 @@
 {
   "name": "oxc-vscode",
-  "description": "oxc vs code extension",
-  "license": "MIT",
-  "version": "1.32.0",
-  "icon": "icon.png",
-  "publisher": "oxc",
   "displayName": "Oxc",
+  "version": "1.35.0",
+  "description": "Oxlint and Oxfmt editor integration",
+  "categories": [
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "formatter",
+    "linter",
+    "oxc",
+    "oxfmt",
+    "oxlint"
+  ],
   "bugs": {
     "url": "https://github.com/oxc-project/oxc/issues"
   },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "editors/vscode"
   },
-  "categories": [
-    "Linters"
-  ],
-  "keywords": [
-    "linter",
-    "oxc"
-  ],
-  "engines": {
-    "vscode": "^1.93.0"
-  },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
   },
-  "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:javascriptreact",
-    "onLanguage:typescript",
-    "onLanguage:typescriptreact",
-    "onLanguage:vue",
-    "onLanguage:svelte",
-    "onLanguage:astro"
-  ],
+  "publisher": "oxc",
   "main": "./out/main.js",
+  "scripts": {
+    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
+    "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
+    "build:dev": "pnpm run server:build:debug && pnpm run compile && pnpm run package",
+    "compile": "rolldown -c rolldown.config.ts",
+    "watch": "pnpm run compile --watch",
+    "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
+    "install-extension": "code --install-extension oxc_language_server.vsix --force",
+    "oxlint:build:debug": "pnpm -C ../../apps/oxlint build-napi-test && pnpm -C ../../apps/oxlint build-js",
+    "oxlint:build:release": "pnpm -C ../../apps/oxlint build-napi && pnpm -C ../../apps/oxlint build-js",
+    "oxfmt:build:debug": "pnpm -C ../../apps/oxfmt build-napi-test && pnpm -C ../../apps/oxfmt build-js",
+    "oxfmt:build:release": "pnpm -C ../../apps/oxfmt build-napi && pnpm -C ../../apps/oxfmt build-js",
+    "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
+    "test": "cross-env TEST=true pnpm run compile && vscode-test",
+    "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
+    "test:oxlint-multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp-multi-root vscode-test",
+    "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "catalog:",
+    "@types/vscode": "1.93.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.0.0",
+    "cross-env": "catalog:",
+    "ovsx": "^0.10.0",
+    "rolldown": "catalog:",
+    "tinyglobby": "^0.2.15"
+  },
   "contributes": {
     "commands": [
       {
@@ -104,7 +129,7 @@
             "messages",
             "verbose"
           ],
-          "enumDescriptions": [
+          "markdownEnumDescriptions": [
             "No traces",
             "Error only",
             "Full log"
@@ -138,10 +163,10 @@
             "warn",
             "deny"
           ],
-          "enumDescriptions": [
-            "Allow",
-            "Warn",
-            "Deny"
+          "markdownEnumDescriptions": [
+            "Allow all `oxlint-disable` and `eslint-disable` directives, even if they do nothing.",
+            "Warn about `oxlint-disable` and `eslint-disable` directives that do nothing.",
+            "Error on `oxlint-disable` and `eslint-disable` directives that do nothing."
           ],
           "default": "allow",
           "markdownDescription": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
@@ -169,7 +194,7 @@
             "none",
             "all"
           ],
-          "enumDescriptions": [
+          "markdownEnumDescriptions": [
             "Only safe fixes will be applied",
             "Safe fixes or suggestions will be applied",
             "Safe and dangerous fixes will be applied",
@@ -184,14 +209,17 @@
           "type": "object",
           "scope": "resource",
           "default": {},
-          "markdownDeprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead.",
-          "markdownDescription": "Specific Oxlint flags to pass to the language server."
+          "markdownDescription": "Specific Oxlint flags to pass to the language server.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead."
         },
         "oxc.fmt.experimental": {
           "type": "boolean",
           "scope": "resource",
-          "default": false,
-          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+          "default": true,
+          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
+          "deprecated": true,
+          "markdownDeprecationMessage": "The formatter is now stable, this setting has no effect."
         },
         "oxc.fmt.configPath": {
           "type": [
@@ -218,6 +246,11 @@
           "type": "string",
           "scope": "window",
           "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+        },
+        "oxc.path.tsgolint": {
+          "type": "string",
+          "scope": "window",
+          "markdownDescription": "Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one."
         },
         "oxc.path.node": {
           "type": "string",
@@ -250,6 +283,19 @@
       }
     ]
   },
+  "activationEvents": [
+    "onLanguage:astro",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:svelte",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:vue"
+  ],
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
@@ -260,43 +306,6 @@
         "oxc.path.oxfmt"
       ]
     }
-  },
-  "scripts": {
-    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
-    "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
-    "build:dev": "pnpm run server:build:debug && pnpm run compile && pnpm run package",
-    "compile": "rolldown -c rolldown.config.ts",
-    "watch": "pnpm run compile --watch",
-    "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
-    "install-extension": "code --install-extension oxc_language_server.vsix --force",
-    "oxlint:build:debug": "pnpm -C ../../apps/oxlint build-napi-test && pnpm -C ../../apps/oxlint build-js",
-    "oxlint:build:release": "pnpm -C ../../apps/oxlint build-napi && pnpm -C ../../apps/oxlint build-js",
-    "oxfmt:build:debug": "pnpm -C ../../apps/oxfmt build-napi-test && pnpm -C ../../apps/oxfmt build-js",
-    "oxfmt:build:release": "pnpm -C ../../apps/oxfmt build-napi && pnpm -C ../../apps/oxfmt build-js",
-    "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
-    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "test": "cross-env TEST=true pnpm run compile && vscode-test",
-    "test:single-folder": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=single-folder vscode-test",
-    "test:multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=multi-root vscode-test",
-    "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
-    "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test",
-    "type-check": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.9",
-    "@types/node": "catalog:",
-    "@types/vscode": "1.93.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "^3.0.0",
-    "cross-env": "catalog:",
-    "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.54",
-    "tinyglobby": "^0.2.15",
-    "typescript": "catalog:"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1"
   },
   "vsce": {
     "dependencies": false

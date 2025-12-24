@@ -16,19 +16,14 @@ doctest = false
 bpaf = { workspace = true, features = ["docgen"] }
 itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
-oxlint = { path = "../../apps/oxlint", default-features = false }
+oxlint = { workspace = true }
 pico-args = { workspace = true }
 project-root = { workspace = true }
 schemars = { workspace = true }
-website_common = { path = "../website_common" }
+website_common = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-markdown = { workspace = true }
-oxc_allocator = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_span = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]

@@ -81,6 +81,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         } else {
             program.source_type = program.source_type.with_javascript(true);
             self.namespace.enter_program(program, ctx);
+            self.module.enter_program(program, ctx);
         }
     }
 
@@ -104,10 +105,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_variable_declarator(decl, ctx);
-    }
-
-    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.annotations.enter_binding_pattern(pat, ctx);
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -326,5 +323,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
             rewrite_extensions.enter_export_named_declaration(node, ctx);
         }
+    }
+
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        self.annotations.enter_formal_parameter_rest(node, ctx);
+    }
+
+    fn enter_catch_parameter(&mut self, node: &mut CatchParameter<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_catch_parameter(node, ctx);
     }
 }

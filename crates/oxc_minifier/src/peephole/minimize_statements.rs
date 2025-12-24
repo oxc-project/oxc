@@ -538,7 +538,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         for decl in var_decl.declarations.iter_mut().rev() {
-            let BindingPatternKind::BindingIdentifier(kind) = &decl.id.kind else {
+            let BindingPattern::BindingIdentifier(kind) = &decl.id else {
                 break;
             };
             if kind.name == id.name {
@@ -1009,8 +1009,8 @@ impl<'a> PeepholeOptimizations {
                             }
                         };
                         if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
-                            && let BindingPatternKind::BindingIdentifier(decl_id) =
-                                &prev_var_decl_item.id.kind
+                            && let BindingPattern::BindingIdentifier(decl_id) =
+                                &prev_var_decl_item.id
                             && id.name == decl_id.name
                         {
                             let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
@@ -1059,7 +1059,7 @@ impl<'a> PeepholeOptimizations {
                 }
             };
             if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
-                && let BindingPatternKind::BindingIdentifier(decl_id) = &prev_var_decl_item.id.kind
+                && let BindingPattern::BindingIdentifier(decl_id) = &prev_var_decl_item.id
                 && id.name == decl_id.name
             {
                 let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
@@ -1209,7 +1209,7 @@ impl<'a> PeepholeOptimizations {
             let Some(prev_decl_init) = &mut prev_decl.init else {
                 return true;
             };
-            let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
+            let BindingPattern::BindingIdentifier(prev_decl_id) = &prev_decl.id else {
                 return true;
             };
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
@@ -1830,21 +1830,6 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
-    }
-
-    fn is_expression_that_reference_may_change(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
-        match expr {
-            Expression::Identifier(id) => {
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
-                } else {
-                    true
-                }
-            }
-            Expression::ThisExpression(_) => false,
-            _ => true,
-        }
     }
 }
 

@@ -1,9 +1,8 @@
 import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from "vscode";
+import { DiagnosticPullMode } from "vscode-languageclient";
 import { ConfigService } from "./ConfigService";
 
 export const oxlintConfigFileName = ".oxlintrc.json";
-
-export type Trigger = "onSave" | "onType";
 
 type UnusedDisableDirectives = "allow" | "warn" | "deny";
 
@@ -19,7 +18,7 @@ export enum FixKind {
 /**
  * See `"contributes.configuration"` in `package.json`
  */
-export interface WorkspaceConfigInterface {
+interface WorkspaceConfigInterface {
   /**
    * oxlint config path
    *
@@ -42,7 +41,7 @@ export interface WorkspaceConfigInterface {
    *
    * @default 'onType'
    */
-  run: Trigger;
+  run: DiagnosticPullMode;
 
   /**
    * Define how directive comments like `// oxlint-disable-line` should be reported,
@@ -86,39 +85,24 @@ export interface WorkspaceConfigInterface {
   flags: Record<string, string>;
 
   /**
-   * Enable formatting experiment
-   * `oxc.fmt.experimental`
-   *
-   * @default false
-   */
-  ["fmt.experimental"]: boolean;
-
-  /**
    * Path to an oxfmt configuration file
    * `oxc.fmt.configPath`
    */
   ["fmt.configPath"]?: string | null;
 }
 
-export type OxlintWorkspaceConfigInterface = Omit<
-  WorkspaceConfigInterface,
-  "fmt.experimental" | "fmt.configPath"
->;
+export type OxlintWorkspaceConfigInterface = Omit<WorkspaceConfigInterface, "fmt.configPath">;
 
-export type OxfmtWorkspaceConfigInterface = Pick<
-  WorkspaceConfigInterface,
-  "fmt.experimental" | "fmt.configPath"
->;
+export type OxfmtWorkspaceConfigInterface = Pick<WorkspaceConfigInterface, "fmt.configPath">;
 
 export class WorkspaceConfig {
   private _configPath: string | null = null;
   private _tsConfigPath: string | null = null;
-  private _runTrigger: Trigger = "onType";
+  private _runTrigger: DiagnosticPullMode = DiagnosticPullMode.onType;
   private _unusedDisableDirectives: UnusedDisableDirectives = "allow";
   private _typeAware: boolean = false;
   private _disableNestedConfig: boolean = false;
   private _fixKind: FixKind = FixKind.SafeFix;
-  private _formattingExperimental: boolean = false;
   private _formattingConfigPath: string | null = null;
 
   constructor(private readonly workspace: WorkspaceFolder) {
@@ -149,7 +133,8 @@ export class WorkspaceConfig {
       disableNestedConfig = true;
     }
 
-    this._runTrigger = this.configuration.get<Trigger>("lint.run") || "onType";
+    this._runTrigger =
+      this.configuration.get<DiagnosticPullMode>("lint.run") || DiagnosticPullMode.onType;
     this._configPath = this.configuration.get<string | null>("configPath") ?? null;
     this._tsConfigPath = this.configuration.get<string | null>("tsConfigPath") ?? null;
     this._unusedDisableDirectives =
@@ -157,7 +142,6 @@ export class WorkspaceConfig {
     this._typeAware = this.configuration.get<boolean>("typeAware") ?? false;
     this._disableNestedConfig = disableNestedConfig ?? false;
     this._fixKind = fixKind ?? FixKind.SafeFix;
-    this._formattingExperimental = this.configuration.get<boolean>("fmt.experimental") ?? false;
     this._formattingConfigPath = this.configuration.get<string | null>("fmt.configPath") ?? null;
   }
 
@@ -190,9 +174,6 @@ export class WorkspaceConfig {
     if (event.affectsConfiguration(`${ConfigService.namespace}.fixKind`, this.workspace)) {
       return true;
     }
-    if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.experimental`, this.workspace)) {
-      return true;
-    }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.configPath`, this.workspace)) {
       return true;
     }
@@ -207,11 +188,11 @@ export class WorkspaceConfig {
     return this.configPath !== null && this.configPath !== oxlintConfigFileName;
   }
 
-  get runTrigger(): Trigger {
+  get runTrigger(): DiagnosticPullMode {
     return this._runTrigger;
   }
 
-  updateRunTrigger(value: Trigger): PromiseLike<void> {
+  updateRunTrigger(value: DiagnosticPullMode): PromiseLike<void> {
     this._runTrigger = value;
     return this.configuration.update("lint.run", value, ConfigurationTarget.WorkspaceFolder);
   }
@@ -278,19 +259,6 @@ export class WorkspaceConfig {
     return this.configuration.update("fixKind", value, ConfigurationTarget.WorkspaceFolder);
   }
 
-  get formattingExperimental(): boolean {
-    return this._formattingExperimental;
-  }
-
-  updateFormattingExperimental(value: boolean): PromiseLike<void> {
-    this._formattingExperimental = value;
-    return this.configuration.update(
-      "fmt.experimental",
-      value,
-      ConfigurationTarget.WorkspaceFolder,
-    );
-  }
-
   get formattingConfigPath(): string | null {
     return this._formattingConfigPath;
   }
@@ -300,22 +268,20 @@ export class WorkspaceConfig {
     return this.configuration.update("fmt.configPath", value, ConfigurationTarget.WorkspaceFolder);
   }
 
-  public toLanguageServerConfig(): WorkspaceConfigInterface {
-    return {
-      ...this.toOxlintConfig(),
-      ...this.toOxfmtConfig(),
-    };
+  public shouldRequestDiagnostics(diagnosticPullMode: DiagnosticPullMode): boolean {
+    return diagnosticPullMode === this.runTrigger;
   }
 
   public toOxlintConfig(): OxlintWorkspaceConfigInterface {
     return {
-      run: this.runTrigger,
       configPath: this.configPath ?? null,
       tsConfigPath: this.tsConfigPath ?? null,
       unusedDisableDirectives: this.unusedDisableDirectives,
       typeAware: this.typeAware,
       disableNestedConfig: this.disableNestedConfig,
       fixKind: this.fixKind,
+      // keep for backward compatibility
+      run: this.runTrigger,
       // deprecated, kept for backward compatibility
       flags: {
         disable_nested_config: this.disableNestedConfig ? "true" : "false",
@@ -326,7 +292,8 @@ export class WorkspaceConfig {
 
   public toOxfmtConfig(): OxfmtWorkspaceConfigInterface {
     return {
-      ["fmt.experimental"]: this.formattingExperimental,
+      // @ts-expect-error -- deprecated setting, kept for backward compatibility
+      ["fmt.experimental"]: true,
       ["fmt.configPath"]: this.formattingConfigPath ?? null,
     };
   }

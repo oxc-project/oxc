@@ -37,15 +37,15 @@ impl Generator for RawTransferLazyGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/constructors.js"),
                 code: constructors,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/walk.js"),
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/type_ids.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/lazy/type_ids.js"),
                 code: node_type_ids_map,
             },
         ]
@@ -157,8 +157,8 @@ fn generate(
     let constructors = &state.constructors;
     #[rustfmt::skip]
     let constructors = format!("
-        import {{ constructorError, TOKEN }} from '../../src-js/raw-transfer/lazy-common.js';
-        import {{ NodeArray }} from '../../src-js/raw-transfer/node-array.js';
+        import {{ constructorError, TOKEN }} from '../../raw-transfer/lazy-common.js';
+        import {{ NodeArray }} from '../../raw-transfer/node-array.js';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -905,11 +905,23 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         "u8" => "return ast.buffer[pos];",
         // "u16" => "return uint16[pos >> 1];",
         "u32" => "return ast.buffer.uint32[pos >> 2];",
+        // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
             const { uint32 } = ast.buffer,
                 pos32 = pos >> 2;
-            return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
+            return uint32[pos32]
+                + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
+        ",
+        // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
+        #[rustfmt::skip]
+        "u128" => "
+            const { uint32 } = ast.buffer,
+                pos32 = pos >> 2;
+            return uint32[pos32]
+                + uint32[pos32 + 1] * /* 2^32 */ 4294967296
+                + uint32[pos32 + 2] * /* 2^64 */ 18446744073709551616
+                + uint32[pos32 + 3] * /* 2^96 */ 79228162514264337593543950336;
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,

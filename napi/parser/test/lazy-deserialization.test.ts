@@ -1,5 +1,6 @@
 // Tests for lazy deserialization.
 
+// oxlint-disable-next-line typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
 import { describe, expect, it } from "vitest";

@@ -474,7 +474,7 @@ describe("parse", () => {
             const ret = parseSync("test.js", 'import.defer("x");');
             expect(ret.errors.length).toBe(0);
             expect(ret.program.body.length).toBe(1);
-            // @ts-ignore
+            // @ts-expect-error - ignore
             expect(ret.program.body[0].expression).toEqual({
               type: "ImportExpression",
               start: 0,
@@ -491,7 +491,7 @@ describe("parse", () => {
             const ret = parseSync("test.ts", 'import.defer("x");');
             expect(ret.errors.length).toBe(0);
             expect(ret.program.body.length).toBe(1);
-            // @ts-ignore
+            // @ts-expect-error - ignore
             expect(ret.program.body[0].expression).toEqual({
               type: "ImportExpression",
               start: 0,
@@ -508,7 +508,7 @@ describe("parse", () => {
             const ret = parseSync("test.js", 'import.source("x");');
             expect(ret.errors.length).toBe(0);
             expect(ret.program.body.length).toBe(1);
-            // @ts-ignore
+            // @ts-expect-error - ignore
             expect(ret.program.body[0].expression).toEqual({
               type: "ImportExpression",
               start: 0,
@@ -525,7 +525,7 @@ describe("parse", () => {
             const ret = parseSync("test.ts", 'import.source("x");');
             expect(ret.errors.length).toBe(0);
             expect(ret.program.body.length).toBe(1);
-            // @ts-ignore
+            // @ts-expect-error - ignore
             expect(ret.program.body[0].expression).toEqual({
               type: "ImportExpression",
               start: 0,
@@ -704,22 +704,16 @@ describe("parse", () => {
     it("should include range when true", () => {
       const ret = parseSync("test.js", "(x)", { range: true });
       expect(ret.program.body[0].start).toBe(0);
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].range).toEqual([0, 3]);
     });
 
     it("should not include range when false", () => {
       const ret = parseSync("test.js", "(x)", { range: false });
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].range).toBeUndefined();
     });
 
     it("should not include range by default", () => {
       const ret = parseSync("test.js", "(x)");
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].range).toBeUndefined();
     });
   });

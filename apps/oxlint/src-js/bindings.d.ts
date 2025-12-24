@@ -40,11 +40,11 @@ export type JsLintFileCb =
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
-  ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
+  ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
 
 /** JS callback to setup configs. */
 export type JsSetupConfigsCb =
-  ((arg: string) => void)
+  ((arg: string) => string | null)
 
 /**
  * NAPI entry point.

@@ -487,15 +487,17 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
         &mut self,
         close: Kind,
         opening_span: Span,
         parse_element: E,
+        parse_rest: R,
         rest_last_diagnostic: D,
     ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
     where
         E: Fn(&mut Self) -> A,
+        R: Fn(&mut Self) -> BindingRestElement<'a>,
         D: Fn(Span) -> OxcDiagnostic,
     {
         let mut list = self.ast.vec();
@@ -543,7 +545,7 @@ impl<'a> ParserImpl<'a> {
             // Re-capture kind to get the current token (may have changed after else branch)
             let kind = self.cur_kind();
             if kind == Kind::Dot3 {
-                rest.replace(self.parse_rest_element());
+                rest.replace(parse_rest(self));
             } else {
                 list.push(parse_element(self));
             }

@@ -32,6 +32,14 @@ pub struct TreeShakeOptions {
     ///
     /// @default true
     pub unknown_global_side_effects: Option<bool>,
+
+    /// Whether invalid import statements have side effects.
+    ///
+    /// Accessing a non-existing import name will throw an error.
+    /// Also import statements that cannot be resolved will throw an error.
+    ///
+    /// @default true
+    pub invalid_import_side_effects: Option<bool>,
 }
 
 impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
@@ -59,6 +67,9 @@ impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
             unknown_global_side_effects: o
                 .unknown_global_side_effects
                 .unwrap_or(default.unknown_global_side_effects),
+            invalid_import_side_effects: o
+                .invalid_import_side_effects
+                .unwrap_or(default.invalid_import_side_effects),
         })
     }
 }

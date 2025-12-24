@@ -68,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_this_alias.tsx:4:21]
  3 │               const inConstructor = this;
  4 │               const asThis: this = this;
-   ·                     ────────────
+   ·                     ──────
  5 │ 
    ╰────
   help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
@@ -117,3 +117,17 @@ source: crates/oxc_linter/src/tester.rs
  17 │             }
     ╰────
   help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.

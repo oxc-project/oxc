@@ -101,7 +101,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 },
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
+                    if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
                         break ident.name;
                     }
                     return;

@@ -16,7 +16,7 @@ use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
-    output::{Output, javascript::VariantGenerator},
+    output::{Output, javascript::generate_variants},
     schema::Schema,
     utils::{FxIndexMap, string, write_it},
 };
@@ -33,10 +33,6 @@ impl Display for NodeId {
     }
 }
 
-/// Names of ESTree function types.
-const FUNCTION_TYPE_NAMES: &[&str] =
-    &["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"];
-
 pub struct ESTreeVisitGenerator;
 
 define_generator!(ESTreeVisitGenerator);
@@ -46,6 +42,8 @@ impl Generator for ESTreeVisitGenerator {
         let Codes {
             walk_parser,
             walk_oxlint,
+            walk_dts_parser,
+            walk_dts_oxlint,
             visitor_keys,
             type_ids_map_parser,
             type_ids_map_oxlint,
@@ -55,24 +53,32 @@ impl Generator for ESTreeVisitGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.js"),
                 code: walk_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/walk.d.ts"),
+                code: walk_dts_parser,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/keys.js"),
                 code: visitor_keys.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/type_ids.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/type_ids.js"),
                 code: type_ids_map_parser,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/visit/visitor.d.ts"),
                 code: visitor_type_parser,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
                 code: walk_oxlint,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.d.ts"),
+                code: walk_dts_oxlint,
             },
             Output::Javascript {
                 // This file is also valid as TS
@@ -96,6 +102,8 @@ impl Generator for ESTreeVisitGenerator {
 struct Codes {
     walk_parser: String,
     walk_oxlint: String,
+    walk_dts_parser: String,
+    walk_dts_oxlint: String,
     visitor_keys: String,
     type_ids_map_parser: String,
     type_ids_map_oxlint: String,
@@ -115,7 +123,6 @@ struct NodeKeys {
 /// * Visitor keys.
 /// * `Map` from node type name to node type ID.
 /// * Visitor type definition.
-#[expect(clippy::items_after_statements)]
 fn generate(codegen: &Codegen) -> Codes {
     // Run `napi/parser/scripts/visitor-keys.js` to get visitor keys from TS-ESLint
     let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.js");
@@ -192,6 +199,21 @@ fn generate(codegen: &Codegen) -> Codes {
 
         /* IF ANCESTORS */
         export const ancestors = [];
+
+        /**
+         * Check that `ancestors` array is kept in sync with traversal.
+         * This function is only included in debug build. Minifier will remove it in release build.
+         */
+        function debugCheckAncestorsOnExit(lenBefore, node) {
+            if (!DEBUG) return;
+            if (ancestors.length !== lenBefore) {
+                throw new Error(
+                    '`ancestors` is out of sync with traversal. '
+                    + `Its length has changed from ${lenBefore} to ${ancestors.length} `
+                    + `while visiting children of \\`${node.type}\\`.`
+                );
+            }
+        }
         /* END_IF */
 
         const { isArray } = Array;
@@ -211,7 +233,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let mut type_ids_map = string!("
-        // Mapping from node type name to node type ID
+        /** Mapping from node type name to node type ID */
         export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
     ");
@@ -228,7 +250,9 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut visitor_type = string!("");
 
     let mut leaf_nodes_count = None;
-    let mut function_node_ids = vec![];
+
+    let mut selector_classes = SelectorClasses::new();
+
     for (node_id, node) in nodes.iter_enumerated() {
         let is_leaf = node.keys.is_empty();
         if leaf_nodes_count.is_none() && !is_leaf {
@@ -248,13 +272,13 @@ fn generate(codegen: &Codegen) -> Codes {
         } else {
             let mut walk_fn_body = format!("
                 const enterExit = visitors[{node_id}];
-                let exit = null;
+                let exit = null, enter;
                 if (enterExit !== null) {{
-                    let enter;
                     ({{ enter, exit }} = enterExit);
                     if (enter !== null) enter(node);
                 }}
                 if (ANCESTORS) ancestors.unshift(node);
+                const ancestorsLen = ANCESTORS && DEBUG ? ancestors.length : 0;
             ");
 
             for key in &node.keys {
@@ -262,7 +286,10 @@ fn generate(codegen: &Codegen) -> Codes {
             }
 
             walk_fn_body.push_str("
-                if (ANCESTORS) ancestors.shift();
+                if (ANCESTORS) {
+                    debugCheckAncestorsOnExit(ancestorsLen, node);
+                    ancestors.shift();
+                }
                 if (exit !== null) exit(node);
             ");
 
@@ -296,9 +323,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
 
-        if FUNCTION_TYPE_NAMES.contains(&node_name) {
-            function_node_ids.push(node_id);
-        }
+        selector_classes.add(node_name, node_id);
 
         // Convert ESTree type name to Oxc type names where they diverge
         let type_names: Option<&[&str]> = match node_name {
@@ -365,15 +390,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     // Create 2 walker variants for parser and oxlint, by setting `ANCESTORS` const,
     // and running through minifier to shake out irrelevant code
-    struct WalkVariantGenerator;
-    impl VariantGenerator<1> for WalkVariantGenerator {
-        const FLAG_NAMES: [&str; 1] = ["ANCESTORS"];
-    }
-
-    let mut walk_variants = WalkVariantGenerator.generate(&walk).into_iter();
-    assert!(walk_variants.len() == 2);
-    let walk_parser = walk_variants.next().unwrap();
-    let walk_oxlint = walk_variants.next().unwrap();
+    let [walk_parser, walk_oxlint] = generate_variants!(&walk, ["ANCESTORS"]);
 
     let leaf_nodes_count = leaf_nodes_count.unwrap();
 
@@ -410,18 +427,76 @@ fn generate(codegen: &Codegen) -> Codes {
     ");
 
     let nodes_count = nodes.len();
-    #[rustfmt::skip]
-    write_it!(type_ids_map, "]);
 
+    let (
+        statement_node_ids,
+        declaration_node_ids,
+        pattern_node_ids,
+        expression_node_ids,
+        function_node_ids,
+    ) = selector_classes.into_vecs();
+
+    // Add CFG event names to type ID map
+    let cfg_event_names = [
+        "onCodePathStart",
+        "onCodePathEnd",
+        "onCodePathSegmentStart",
+        "onCodePathSegmentEnd",
+        "onUnreachableCodePathSegmentStart",
+        "onUnreachableCodePathSegmentEnd",
+        "onCodePathSegmentLoop",
+    ];
+
+    type_ids_map.push_str("/* IF LINTER */ // CFG selectors\n");
+    let mut event_id = nodes_count;
+    for event_name in cfg_event_names {
+        write_it!(type_ids_map, "[\"{event_name}\", {event_id}],\n");
+        event_id += 1;
+    }
+    type_ids_map.push_str("/* END_IF */\n");
+
+    #[rustfmt::skip]
+    write_it!(type_ids_map, "
+        ]);
+
+        /** Count of all node types (both leaf and non-leaf nodes) */
         export const NODE_TYPES_COUNT = {nodes_count};
-        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};");
 
-    function_node_ids.sort_unstable();
-    #[rustfmt::skip]
-    let type_ids_map_oxlint = format!("
-        {type_ids_map}
+        /** Count of leaf node types */
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
+
+        /* IF LINTER */
+
+        /** Total count of node types and CFG events */
+        export const TYPE_IDS_COUNT = {event_id};
+
+        /** Type IDs which match `:statement` selector class */
+        export const STATEMENT_NODE_TYPE_IDS = {statement_node_ids:?};
+
+        /** Type IDs which match `:declaration` selector class */
+        export const DECLARATION_NODE_TYPE_IDS = {declaration_node_ids:?};
+
+        /**
+         * Type IDs which may match `:pattern` selector class.
+         * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+         */
+        export const PATTERN_NODE_TYPE_IDS = {pattern_node_ids:?};
+
+        /**
+         * Type IDs which may match `:expression` selector class.
+         * Only *may* match because `Identifier` nodes only match this class if their parent is not a `MetaProperty`.
+         */
+        export const EXPRESSION_NODE_TYPE_IDS = {expression_node_ids:?};
+
+        /** Type IDs which match `:function` selector class */
         export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
+
+        /* END_IF */
     ");
+
+    // Create 2 type ID map variants for parser and oxlint, by setting `LINTER` const,
+    // and running through minifier to shake out irrelevant code
+    let [type_ids_map_parser, type_ids_map_oxlint] = generate_variants!(&type_ids_map, ["LINTER"]);
 
     // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places.
     // Oxlint version also allows any arbitrary properties (selectors).
@@ -443,13 +518,121 @@ fn generate(codegen: &Codegen) -> Codes {
         }}
     ");
 
+    // Type definitions for walk.js.
+    // The visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_parser = "
+        import type * as ESTree from '@oxc-project/types';
+
+        type VisitFn = ((node: ESTree.Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;
+    ".to_string();
+
+    // For oxlint, the visitors parameter is a compiled visitor array, not a VisitorObject.
+    // The compiled visitor is an array indexed by node type ID, where each entry is either:
+    // - `null` (no visitor for this node type)
+    // - A function (leaf node visitor)
+    // - `{ enter, exit }` object (non-leaf node visitor)
+    #[rustfmt::skip]
+    let walk_dts_oxlint = "
+        import type { Node, Program } from './types.d.ts';
+
+        type VisitFn = ((node: Node) => void) | null;
+        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
+        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+
+        export declare function walkProgram(program: Program, visitors: CompiledVisitors): void;
+        export declare const ancestors: Node[];
+    ".to_string();
+
     Codes {
         walk_parser,
         walk_oxlint,
+        walk_dts_parser,
+        walk_dts_oxlint,
         visitor_keys,
-        type_ids_map_parser: type_ids_map,
+        type_ids_map_parser,
         type_ids_map_oxlint,
         visitor_type_parser,
         visitor_type_oxlint,
+    }
+}
+
+/// Node IDs which are matched by selector classes.
+/// e.g. `FunctionDeclaration` is matched by `:function` selector class.
+struct SelectorClasses {
+    statement: Vec<NodeId>,
+    declaration: Vec<NodeId>,
+    pattern: Vec<NodeId>,
+    expression: Vec<NodeId>,
+    function: Vec<NodeId>,
+}
+
+impl SelectorClasses {
+    fn new() -> Self {
+        Self {
+            statement: vec![],
+            declaration: vec![],
+            pattern: vec![],
+            expression: vec![],
+            function: vec![],
+        }
+    }
+
+    /// If AST node name matches 1 or more selector classes, add its node type ID to lists for those classes.
+    ///
+    /// The method replicates the logic in `matchesSelectorClass` in `apps/oxlint/src-js/plugins/selector.ts`.
+    /// Must be kept in sync.
+    fn add(&mut self, node_name: &str, node_id: NodeId) {
+        // Function types are also declarations / expressions / patterns
+        if matches!(
+            node_name,
+            "FunctionDeclaration" | "FunctionExpression" | "ArrowFunctionExpression"
+        ) {
+            self.function.push(node_id);
+        }
+
+        match node_name {
+            _ if node_name.ends_with("Statement") => self.statement.push(node_id),
+            _ if node_name.ends_with("Declaration") => {
+                self.declaration.push(node_id);
+                // Declarations are also statements
+                self.statement.push(node_id);
+            }
+            _ if node_name.ends_with("Pattern") => self.pattern.push(node_id),
+            _ if node_name.ends_with("Expression")
+                || node_name.ends_with("Literal")
+                || node_name == "Identifier"
+                || node_name == "MetaProperty" =>
+            {
+                // `Identifier` nodes are only members of these classes if their `parent` is not a `MetaProperty`.
+                // That is handled in `analyzeSelector` in `apps/oxlint/src-js/plugins/selector.ts`.
+                self.expression.push(node_id);
+                // Expressions are also patterns
+                self.pattern.push(node_id);
+            }
+            _ => {}
+        }
+    }
+
+    fn sort(&mut self) {
+        self.statement.sort_unstable();
+        self.declaration.sort_unstable();
+        self.pattern.sort_unstable();
+        self.expression.sort_unstable();
+        self.function.sort_unstable();
+    }
+
+    #[expect(clippy::type_complexity)]
+    fn into_vecs(mut self) -> (Vec<NodeId>, Vec<NodeId>, Vec<NodeId>, Vec<NodeId>, Vec<NodeId>) {
+        self.sort();
+        (self.statement, self.declaration, self.pattern, self.expression, self.function)
     }
 }

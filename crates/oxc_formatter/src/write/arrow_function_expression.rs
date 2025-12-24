@@ -677,7 +677,7 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
 
 fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
     params.rest.is_some()
-        || params.items.iter().any(|param| param.pattern.kind.is_destructuring_pattern())
+        || params.items.iter().any(|param| param.pattern.is_destructuring_pattern())
 }
 
 /// Writes the arrow function type parameters, parameters, and return type annotation.
@@ -697,11 +697,7 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                &format_with(|f| {
-                    if let Some(return_type) = &arrow.return_type() {
-                        group(&FormatNodeWithoutTrailingComments(return_type)).fmt(f);
-                    }
-                })
+                arrow.return_type().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

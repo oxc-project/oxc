@@ -9,7 +9,9 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{SourceFormatter, load_config, resolve_config_path, utils};
+use crate::core::{
+    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+};
 
 #[derive(Debug)]
 pub struct FormatRunner {
@@ -56,58 +58,70 @@ impl FormatRunner {
         let cwd = self.cwd;
         let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
             self.options;
+        // If `napi` feature is disabled, there is no other mode.
+        #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
             unreachable!("`FormatRunner` should only be called with Mode::Cli");
         };
         let num_of_threads = rayon::current_num_threads();
 
-        // Find config file
+        // Find and load config file
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let config_path = resolve_config_path(&cwd, config_options.config.as_deref());
-        // Load and parse config file
-        // - `format_options`: Parsed formatting options used by `oxc_formatter`
-        // - `external_config`: JSON value used by `external_formatter`, populated with `format_options`
-        let (format_options, oxfmt_options, external_config) =
-            match load_config(config_path.as_deref()) {
-                Ok(c) => c,
-                Err(err) => {
-                    utils::print_and_flush(
-                        stderr,
-                        &format!("Failed to load configuration file.\n{err}\n"),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
-            };
+        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
+        let editorconfig_path = resolve_editorconfig_path(&cwd);
+        let mut config_resolver = match ConfigResolver::from_config_paths(
+            &cwd,
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
+            Ok(r) => r,
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        let ignore_patterns = match config_resolver.build_and_validate() {
+            Ok(patterns) => patterns,
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
-        // TODO: Plugins support
-        // - Parse returned `languages`
-        // - Allow its `extensions` and `filenames` in `walk.rs`
-        // - Pass `parser` to `SourceFormatter`
+        // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        if let Err(err) = self
-            .external_formatter
-            .as_ref()
-            .expect("External formatter must be set when `napi` feature is enabled")
-            .setup_config(&external_config.to_string(), num_of_threads)
-        {
-            utils::print_and_flush(
-                stderr,
-                &format!("Failed to setup external formatter config.\n{err}\n"),
-            );
-            return CliRunResult::InvalidOptionConfig;
+        match tokio::task::block_in_place(|| {
+            self.external_formatter
+                .as_ref()
+                .expect("External formatter must be set when `napi` feature is enabled")
+                .init(num_of_threads)
+        }) {
+            // TODO: Plugins support
+            // - Parse returned `languages`
+            // - Allow its `extensions` and `filenames` in `walk.rs`
+            // - Pass `parser` to `SourceFormatter`
+            Ok(_) => {}
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to setup external formatter.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
         }
-
-        #[cfg(not(feature = "napi"))]
-        let _ = (external_config, oxfmt_options.sort_package_json);
 
         let walker = match Walk::build(
             &cwd,
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
-            &oxfmt_options.ignore_patterns,
+            oxfmtrc_path.as_deref(),
+            &ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,
             // All target paths are ignored
@@ -142,16 +156,16 @@ impl FormatRunner {
         }
 
         // Create `SourceFormatter` instance
-        let source_formatter = SourceFormatter::new(num_of_threads, format_options);
+        let source_formatter = SourceFormatter::new(num_of_threads);
         #[cfg(feature = "napi")]
-        let source_formatter = source_formatter
-            .with_external_formatter(self.external_formatter, oxfmt_options.sort_package_json);
+        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
         let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service = FormatService::new(cwd, format_mode_clone, source_formatter);
+            let format_service =
+                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 

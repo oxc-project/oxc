@@ -108,7 +108,9 @@ fn test() {
 
     let fix = vec![
         (r"<div scope />", r"<div  />", None),
-        (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
+        // TODO: This test is invalid and just results in default config options because you cannot pass a settings value to the fixer.
+        // (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
+        (r"<h1 scope='bar' />;", r"<h1  />;", None),
     ];
 
     Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

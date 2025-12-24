@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Declaration},
+    ast::{BindingPattern, Declaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,7 +81,7 @@ impl Rule for NoTypos {
             match decl {
                 Declaration::VariableDeclaration(decl) => {
                     for decl in &decl.declarations {
-                        if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
+                        if let BindingPattern::BindingIdentifier(id) = &decl.id {
                             check_function_name(&id.name, id.span, ctx);
                         }
                     }

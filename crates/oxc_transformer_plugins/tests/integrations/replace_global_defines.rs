@@ -81,6 +81,14 @@ fn dot() {
 }
 
 #[test]
+fn dot_with_partial_overlap() {
+    let config = config(&[("import.meta.foo.bar", "1")]);
+    test("console.log(import.meta.bar)", "console.log(import.meta.bar)", &config);
+    test("console.log(import.meta.foo)", "console.log(import.meta.foo)", &config);
+    test("console.log(import.meta.foo.bar)", "console.log(1)", &config);
+}
+
+#[test]
 fn dot_with_overlap() {
     let config =
         config(&[("import.meta.env.FOO", "import.meta.env.BAR"), ("import.meta.env", "__foo__")]);

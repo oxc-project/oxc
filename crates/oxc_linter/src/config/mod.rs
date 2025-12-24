@@ -4,6 +4,7 @@ mod categories;
 mod config_builder;
 mod config_store;
 mod env;
+mod external_plugins;
 mod globals;
 mod ignore_matcher;
 mod overrides;
@@ -20,7 +21,7 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
-pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
+pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
@@ -105,6 +106,35 @@ mod test {
         );
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+    }
+
+    #[test]
+    fn test_deserialize_globals() {
+        let config = Oxlintrc::deserialize(&serde_json::json!({
+            "globals": {
+                "foo": "readable",
+                "bar": "writeable",
+                "baz": "off",
+                "qux": true,
+                "quux": false,
+                "corge": "readonly",
+                "grault": "writable"
+            }
+        }));
+        assert!(config.is_ok());
+
+        let Oxlintrc { globals, .. } = config.unwrap();
+        assert!(globals.is_enabled("foo"));
+        assert!(globals.is_enabled("bar"));
+        // Ensure they map to the correct variants
+        assert_eq!(globals.get("foo"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("bar"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("baz"), Some(&super::GlobalValue::Off));
+        assert_eq!(globals.get("qux"), Some(&super::GlobalValue::Writable));
+        assert_eq!(globals.get("quux"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("corge"), Some(&super::GlobalValue::Readonly));
+        assert_eq!(globals.get("grault"), Some(&super::GlobalValue::Writable));
     }
 
     #[test]

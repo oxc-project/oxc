@@ -92,6 +92,9 @@ impl ConformanceTest for SymbolDeclarationTest {
             },
             AstKind::BindingRestElement(rest) => check_binding_pattern(symbol_id, &rest.argument),
             AstKind::FormalParameter(param) => check_binding_pattern(symbol_id, &param.pattern),
+            AstKind::FormalParameterRest(param) => {
+                check_binding_pattern(symbol_id, &param.rest.argument)
+            }
             AstKind::ImportSpecifier(import) => check_binding(symbol_id, &import.local),
             AstKind::ImportNamespaceSpecifier(import) => check_binding(symbol_id, &import.local),
             AstKind::ImportDefaultSpecifier(import) => check_binding(symbol_id, &import.local),
@@ -120,11 +123,11 @@ impl ConformanceTest for SymbolDeclarationTest {
 }
 
 fn check_binding_pattern(expected_id: SymbolId, binding: &BindingPattern) -> TestResult {
-    if binding.kind.is_destructuring_pattern() {
+    if binding.is_destructuring_pattern() {
         return TestResult::Pass;
     }
 
-    let Some(id) = binding.kind.get_binding_identifier() else {
+    let Some(id) = binding.get_binding_identifier() else {
         return malformed_binding_pattern(expected_id, binding);
     };
 

@@ -428,7 +428,9 @@ pub fn for_await(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Cannot use new with dynamic import").with_label(span)
+    OxcDiagnostic::error("Cannot use new with dynamic import")
+        .with_label(span)
+        .with_help("Wrap this with parenthesis")
 }
 
 #[cold]
@@ -479,9 +481,17 @@ pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
-        .with_label(span1)
+pub fn identifier_generator(x0: &str, span1: Span, looks_like_expression: bool) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
+            .with_label(span1);
+    if looks_like_expression {
+        diagnostic.with_help(format!(
+            "Wrap this in parentheses if you want to use a `{x0}` expression here"
+        ))
+    } else {
+        diagnostic
+    }
 }
 
 #[cold]
@@ -806,6 +816,11 @@ pub fn cannot_appear_on_a_type_parameter(
     ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
         .with_label(modifier.span)
         .with_allowed_modifier_help(allowed)
+}
+
+#[cold]
+pub fn a_parameter_cannot_have_question_mark_and_initializer(span: Span) -> OxcDiagnostic {
+    ts_error("1015", "A parameter cannot have a question mark and an initializer.").with_label(span)
 }
 
 #[cold]
@@ -1143,5 +1158,30 @@ pub fn identifier_expected_jsx_no_hyphen(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn jsx_attribute_value_empty_expression(span: Span) -> OxcDiagnostic {
     ts_error("17000", "JSX attributes must only be assigned a non-empty 'expression'.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn import_attribute_value_must_be_string_literal(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
+        .with_label(span)
+        .with_help("Wrap this with quotes")
+}
+
+// TS18058
+#[cold]
+pub fn default_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18058", "Default imports are not allowed in a deferred import.").with_label(span)
+}
+
+// TS18059
+#[cold]
+pub fn named_import_not_allowed_in_defer(span: Span) -> OxcDiagnostic {
+    ts_error("18059", "Named imports are not allowed in a deferred import.").with_label(span)
+}
+
+#[cold]
+pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
         .with_label(span)
 }

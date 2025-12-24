@@ -5,7 +5,7 @@ use std::{
 
 use log::{debug, warn};
 use oxc_data_structures::rope::Rope;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::Uri;
 
 use oxc_allocator::Allocator;
@@ -34,14 +34,14 @@ pub struct IsolatedLintHandler {
     unused_directives_severity: Option<AllowWarnDeny>,
 }
 
+#[derive(Default)]
 pub struct IsolatedLintHandlerFileSystem {
-    path_to_lint: PathBuf,
-    source_text: Arc<str>,
+    map: FxHashMap<PathBuf, Arc<str>>,
 }
 
 impl IsolatedLintHandlerFileSystem {
-    pub fn new(path_to_lint: PathBuf, source_text: Arc<str>) -> Self {
-        Self { path_to_lint, source_text }
+    pub fn add_file(&mut self, path: PathBuf, content: Arc<str>) {
+        self.map.insert(path, content);
     }
 }
 
@@ -51,11 +51,10 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error> {
-        if path == self.path_to_lint {
-            return Ok(&self.source_text);
+        match self.map.get(path) {
+            Some(s) => Ok(&**s),
+            None => read_to_arena_str(path, allocator),
         }
-
-        read_to_arena_str(path, allocator)
     }
 
     fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
@@ -121,11 +120,12 @@ impl IsolatedLintHandler {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
-        let fs = IsolatedLintHandlerFileSystem::new(path.to_path_buf(), Arc::from(source_text));
+        let mut fs = IsolatedLintHandlerFileSystem::default();
+        fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
         let mut messages: Vec<DiagnosticReport> = self
             .runner
-            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), &fs)
+            .run_source(&[Arc::from(path.as_os_str())], &fs)
             .into_iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();

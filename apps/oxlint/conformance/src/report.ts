@@ -29,11 +29,17 @@ export function generateReport(results: RuleResult[]): string {
   // Categorize rules
   const loadErrorRules: RuleResult[] = [],
     noTestRules: RuleResult[] = [],
-    passingRules: RuleResult[] = [],
-    failingRules: { ruleName: string; testCount: number; failingTests: TestResult[] }[] = [];
+    passingRules: { ruleName: string; testCount: number; skippedCount: number }[] = [],
+    failingRules: {
+      ruleName: string;
+      testCount: number;
+      skippedCount: number;
+      failingTests: TestResult[];
+    }[] = [];
   let fullyFailingRuleCount = 0,
     totalTestCount = 0,
-    failingTestCount = 0;
+    failingTestCount = 0,
+    skippedTestCount = 0;
 
   for (const result of results) {
     if (result.isLoadError) {
@@ -41,7 +47,7 @@ export function generateReport(results: RuleResult[]): string {
       continue;
     }
 
-    const { tests } = result,
+    const { ruleName, tests } = result,
       testCount = tests.length;
     if (testCount === 0) {
       noTestRules.push(result);
@@ -50,9 +56,21 @@ export function generateReport(results: RuleResult[]): string {
 
     totalTestCount += testCount;
 
-    const failingTests = tests.filter((test) => !test.isPassed);
+    const failingTests = [];
+    let ruleSkippedCount = 0;
+    for (const test of tests) {
+      if (test.isPassed) continue;
+      if (test.isSkipped) {
+        ruleSkippedCount++;
+      } else {
+        failingTests.push(test);
+      }
+    }
+
+    skippedTestCount += ruleSkippedCount;
+
     if (failingTests.length === 0) {
-      passingRules.push(result);
+      passingRules.push({ ruleName, testCount, skippedCount: ruleSkippedCount });
       continue;
     }
 
@@ -63,141 +81,155 @@ export function generateReport(results: RuleResult[]): string {
     }
 
     failingRules.push({
-      ruleName: result.ruleName,
+      ruleName,
       testCount,
+      skippedCount: ruleSkippedCount,
       failingTests,
     });
   }
 
-  // Header
-  const lines: string[] = [];
-  lines.push("# ESLint Rule Tester Conformance Results");
-  lines.push("");
+  let report = "";
+
+  function line(str: string): void {
+    report += str;
+    report += "\n";
+  }
+
+  function lineBreak(): void {
+    report += "\n";
+  }
+
+  function block(str: string): void {
+    report += str
+      .trimStart()
+      .split("\n")
+      .map((line) => line.trimStart())
+      .join("\n");
+  }
 
   // Summary statistics
   const totalRuleCount = results.length,
     loadErrorRuleCount = loadErrorRules.length,
     fullyPassingRuleCount = passingRules.length,
     partiallyPassingRuleCount = failingRules.length - fullyFailingRuleCount,
-    passingTestCount = totalTestCount - failingTestCount,
+    passingTestCount = totalTestCount - failingTestCount - skippedTestCount,
     noTestsRuleCount = noTestRules.length;
 
-  lines.push("## Summary");
-  lines.push("");
-  lines.push("### Rules");
-  lines.push("");
-  lines.push(`| Status            | Count |`);
-  lines.push(`| ----------------- | ----- |`);
-  lines.push(`| Total rules       | ${String(totalRuleCount).padStart(5)} |`);
-  lines.push(`| Fully passing     | ${String(fullyPassingRuleCount).padStart(5)} |`);
-  lines.push(`| Partially passing | ${String(partiallyPassingRuleCount).padStart(5)} |`);
-  lines.push(`| Fully failing     | ${String(fullyFailingRuleCount).padStart(5)} |`);
-  lines.push(`| Load errors       | ${String(loadErrorRuleCount).padStart(5)} |`);
-  lines.push(`| No tests run      | ${String(noTestsRuleCount).padStart(5)} |`);
-  lines.push("");
+  function countAndPercent(count: number, total: number): string {
+    return `${String(count).padStart(5)} | ${formatPercent(count, total).padStart(6)}`;
+  }
 
-  lines.push("### Tests");
-  lines.push("");
-  lines.push(`| Status      | Count |`);
-  lines.push(`| ----------- | ----- |`);
-  lines.push(`| Total tests | ${String(totalTestCount).padStart(5)} |`);
-  lines.push(`| Passing     | ${String(passingTestCount).padStart(5)} |`);
-  lines.push(`| Failing     | ${String(failingTestCount).padStart(5)} |`);
-  lines.push("");
+  block(`
+    # ESLint Rule Tester Conformance Results
+
+    ## Summary
+
+    ### Rules
+
+    | Status            | Count | %      |
+    | ----------------- | ----- | ------ |
+    | Total rules       | ${countAndPercent(totalRuleCount, totalRuleCount)} |
+    | Fully passing     | ${countAndPercent(fullyPassingRuleCount, totalRuleCount)} |
+    | Partially passing | ${countAndPercent(partiallyPassingRuleCount, totalRuleCount)} |
+    | Fully failing     | ${countAndPercent(fullyFailingRuleCount, totalRuleCount)} |
+    | Load errors       | ${countAndPercent(loadErrorRuleCount, totalRuleCount)} |
+    | No tests run      | ${countAndPercent(noTestsRuleCount, totalRuleCount)} |
+
+    ### Tests
+
+    | Status      | Count | %      |
+    | ----------- | ----- | ------ |
+    | Total tests | ${countAndPercent(totalTestCount, totalTestCount)} |
+    | Passing     | ${countAndPercent(passingTestCount, totalTestCount)} |
+    | Failing     | ${countAndPercent(failingTestCount, totalTestCount)} |
+    | Skipped     | ${countAndPercent(skippedTestCount, totalTestCount)} |
+
+  `);
 
   // Fully passing rules
-  lines.push("## Fully Passing Rules");
-  lines.push("");
+  line("## Fully Passing Rules\n");
   if (passingRules.length === 0) {
-    lines.push("No rules fully passing");
+    line("No rules fully passing");
   } else {
     for (const rule of passingRules) {
-      lines.push(`- \`${rule.ruleName}\` (${rule.tests.length} tests)`);
+      let out = `- \`${rule.ruleName}\` (${rule.testCount} tests)`;
+      if (rule.skippedCount > 0) out += ` (${rule.skippedCount} skipped)`;
+      line(out);
     }
   }
-  lines.push("");
+  lineBreak();
 
   // Rules with failures
-  lines.push("## Rules with Failures");
-  lines.push("");
+  report += "## Rules with Failures\n\n";
   if (failingRules.length === 0) {
-    lines.push("No rules with failures");
+    line("No rules with failures\n");
   } else {
     // Summary
     for (const rule of failingRules) {
       const { testCount } = rule,
         passedCount = testCount - rule.failingTests.length;
-      lines.push(`- \`${rule.ruleName}\` - ${formatProportion(passedCount, testCount)}`);
+      line(`- \`${rule.ruleName}\` - ${formatProportion(passedCount, testCount)}`);
     }
-    lines.push("");
+    lineBreak();
 
     // Details
-    lines.push("## Rules with Failures Detail");
-    lines.push("");
+    line("## Rules with Failures Detail\n");
 
     for (const rule of failingRules) {
-      const { testCount, failingTests } = rule,
+      const { testCount, failingTests, skippedCount } = rule,
         failedCount = failingTests.length,
-        passedCount = testCount - failedCount;
+        passedCount = testCount - failedCount - skippedCount;
 
-      lines.push(`### \`${rule.ruleName}\``);
-      lines.push("");
-      lines.push(`Pass: ${formatProportion(passedCount, testCount)}`);
-      lines.push(`Fail: ${formatProportion(failedCount, testCount)}`);
-      lines.push("");
+      block(`
+        ### \`${rule.ruleName}\`
+
+        Pass: ${formatProportion(passedCount, testCount)}
+        Fail: ${formatProportion(failedCount, testCount)}
+        Skip: ${formatProportion(skippedCount, testCount)}
+
+      `);
 
       // List failed tests
       for (const test of failingTests) {
-        lines.push(`#### ${test.groupName}`);
-        lines.push("");
-
-        lines.push("```js");
-        lines.push(test.code);
-        lines.push("```");
-        lines.push("");
+        line(`#### ${test.groupName}\n`);
+        line("```js");
+        line(test.code);
+        line("```\n");
 
         const testCaseStr = formatTestCase(test.testCase, test.code);
         if (testCaseStr !== null) {
-          lines.push("```json");
-          lines.push(testCaseStr);
-          lines.push("```");
-          lines.push("");
+          line("```json");
+          line(testCaseStr);
+          line("```\n");
         }
 
-        lines.push(formatError(test.error));
-        lines.push("");
+        line(formatError(test.error));
+        lineBreak();
       }
     }
   }
 
   // Load errors
   if (loadErrorRules.length > 0) {
-    lines.push("## Load Errors");
-    lines.push("");
-
+    line("## Load Errors\n");
     for (const rule of loadErrorRules) {
-      lines.push(`### \`${rule.ruleName}\``);
-      lines.push("");
-      lines.push(formatError(rule.loadError));
-      lines.push("");
+      line(`### \`${rule.ruleName}\`\n`);
+      line(formatError(rule.loadError));
+      lineBreak();
     }
-
-    lines.push("");
+    lineBreak();
   }
 
   // Rules with no tests
   if (noTestRules.length > 0) {
-    lines.push("## Rules with no tests run");
-    lines.push("");
-
+    line("## Rules with no tests run\n");
     for (const rule of noTestRules) {
-      lines.push(`- \`${rule.ruleName}\``);
+      line(`- \`${rule.ruleName}\``);
     }
-
-    lines.push("");
+    lineBreak();
   }
 
-  return lines.join("\n");
+  return report.slice(0, -1);
 }
 
 // Regex to match ANSI escape sequences (colors, formatting, etc.)
@@ -320,6 +352,15 @@ function formatTestCase(testCase: TestCase | null, code: string): string | null 
  * @returns Formatted proportion
  */
 function formatProportion(count: number, total: number): string {
-  const percent = ((count / total) * 100).toFixed(1);
-  return `${count} / ${total} (${percent}%)`;
+  return `${count} / ${total} (${formatPercent(count, total)})`;
+}
+
+/**
+ * Produce a string representing `count / total` as a percentage.
+ * @param count - Count
+ * @param total - Total count
+ * @returns Formatted percent
+ */
+function formatPercent(count: number, total: number): string {
+  return `${((count / total) * 100).toFixed(1)}%`;
 }

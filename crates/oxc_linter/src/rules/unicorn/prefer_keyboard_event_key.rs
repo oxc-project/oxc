@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
-        Argument, BindingPatternKind, BindingProperty, CallExpression, Expression, Function,
+        Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
         MemberExpression, PropertyKey,
     },
 };
@@ -124,7 +124,7 @@ impl PreferKeyboardEventKey {
         let key_name = key_ident.name.as_str();
 
         // Get the value name (the identifier being introduced)
-        let BindingPatternKind::BindingIdentifier(value_ident) = &prop.value.kind else {
+        let BindingPattern::BindingIdentifier(value_ident) = &prop.value else {
             return;
         };
         let value_name = value_ident.name.as_str();
@@ -156,8 +156,8 @@ impl PreferKeyboardEventKey {
             // Also check if the property is directly in the function parameter destructuring
             if Self::is_in_event_parameter_destructuring(node, ctx) {
                 // Get the span for the value (the identifier being introduced)
-                let value_span = match &prop.value.kind {
-                    BindingPatternKind::BindingIdentifier(ident) => ident.span,
+                let value_span = match &prop.value {
+                    BindingPattern::BindingIdentifier(ident) => ident.span,
                     _ => return,
                 };
                 ctx.diagnostic(prefer_keyboard_event_key_diagnostic(value_span, deprecated_name));
@@ -176,7 +176,7 @@ impl PreferKeyboardEventKey {
             return;
         }
 
-        let BindingPatternKind::BindingIdentifier(ident) = &prop.value.kind else {
+        let BindingPattern::BindingIdentifier(ident) = &prop.value else {
             return;
         };
 
@@ -250,9 +250,9 @@ impl PreferKeyboardEventKey {
 
         let first_param = params.items.first()?;
 
-        match &first_param.pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => Some(ident.symbol_id()),
-            BindingPatternKind::ObjectPattern(_) => {
+        match &first_param.pattern {
+            BindingPattern::BindingIdentifier(ident) => Some(ident.symbol_id()),
+            BindingPattern::ObjectPattern(_) => {
                 // If the event itself is destructured, we handle this separately
                 None
             }

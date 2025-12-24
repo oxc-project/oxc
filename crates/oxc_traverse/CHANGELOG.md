@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.104.0] - 2025-12-19
+
+### 📚 Documentation
+
+- a9c419f traverse: Update safety comments (#16944) (overlookmotel)
+
 ## [0.100.0] - 2025-12-01
 
 ### 💥 BREAKING CHANGES

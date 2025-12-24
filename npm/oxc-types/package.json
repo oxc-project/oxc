@@ -1,16 +1,15 @@
 {
   "name": "@oxc-project/types",
-  "version": "0.102.0",
+  "version": "0.105.0",
   "description": "Types for Oxc AST nodes",
-  "type": "module",
   "keywords": [
     "AST",
     "Parser"
   ],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
@@ -19,8 +18,9 @@
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "types": "types.d.ts",
   "files": [
     "types.d.ts"
-  ]
+  ],
+  "type": "module",
+  "types": "types.d.ts"
 }

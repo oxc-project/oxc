@@ -545,7 +545,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                             // `import.meta.env` should not match `import.meta.env.*`
                             return has_matched_part && !is_full_match;
                         }
-                        return true;
+                        return i == 0;
                     }
                     Expression::Identifier(_) => {
                         return false;
@@ -689,8 +689,8 @@ fn destructing_dot_define_optimizer<'ast>(
     let Expression::ObjectExpression(obj) = &mut expr else { return expr };
     let parent = ctx.parent();
     let destruct_obj_pat = match parent {
-        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
-            BindingPatternKind::ObjectPattern(pat) => pat,
+        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id() {
+            BindingPattern::ObjectPattern(pat) => pat,
             _ => return expr,
         },
         _ => {

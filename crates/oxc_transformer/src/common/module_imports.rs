@@ -242,7 +242,7 @@ impl<'a> ModuleImportsStore<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
-            let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
+            let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, NONE, Some(init), false);
             ctx.ast.vec1(decl)
         };
         Statement::from(ctx.ast.declaration_variable(SPAN, var_kind, decl, false))

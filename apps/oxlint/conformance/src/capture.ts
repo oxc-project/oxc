@@ -21,6 +21,7 @@ export interface TestResult {
   groupName: string;
   code: string;
   isPassed: boolean;
+  isSkipped: boolean;
   error: Error | null;
   testCase: TestCase | null;
 }
@@ -72,6 +73,7 @@ export function it(code: string, fn: () => void): void {
     groupName: describeStack.join(" > "),
     code,
     isPassed: false,
+    isSkipped: false,
     error: null,
     testCase: null,
   };
@@ -80,6 +82,10 @@ export function it(code: string, fn: () => void): void {
     fn();
     testResult.isPassed = true;
   } catch (err) {
+    if (err instanceof Error && err.message === "Custom parsers are not supported") {
+      testResult.isSkipped = true;
+    }
+
     testResult.error = err as Error;
     testResult.testCase = err?.__testCase ?? null;
   }

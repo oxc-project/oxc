@@ -7,7 +7,8 @@
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script"}
-  | globals: null
+  | globals: {}
+  | env: {"builtin":true}
    ,-[files/index.cjs:1:1]
  1 | let x;
    : ^
@@ -794,7 +795,8 @@
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module"}
-  | globals: null
+  | globals: {}
+  | env: {"builtin":true}
    ,-[files/index.js:1:1]
  1 | let x;
    : ^
@@ -804,7 +806,8 @@
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module"}
-  | globals: null
+  | globals: {}
+  | env: {"builtin":true}
    ,-[files/index.mjs:1:1]
  1 | let x;
    : ^

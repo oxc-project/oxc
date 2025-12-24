@@ -1,35 +1,35 @@
 {
   "name": "oxlint",
-  "version": "1.32.0",
-  "type": "module",
+  "version": "1.35.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
   "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
-  "main": "dist/index.js",
-  "bin": {
-    "oxlint": "bin/oxlint",
-    "oxc_language_server": "bin/oxc_language_server"
-  },
-  "types": "dist/index.d.ts",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+  "bin": {
+    "oxc_language_server": "bin/oxc_language_server",
+    "oxlint": "bin/oxlint"
   },
   "files": [
-    "bin/oxlint",
-    "bin/oxc_language_server",
     "configuration_schema.json",
     "dist",
-    "README.md"
-  ]
+    "README.md",
+    "bin/oxc_language_server",
+    "bin/oxlint"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
 }

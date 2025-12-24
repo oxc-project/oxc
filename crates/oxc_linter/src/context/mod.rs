@@ -434,6 +434,47 @@ impl<'a> LintContext<'a> {
         }
     }
 
+    /// Report a lint rule violation and provide multiple suggestions for fixing it.
+    ///
+    /// The second argument is an iterator of [`RuleFix`] values representing
+    /// the available suggestions.
+    ///
+    /// Use this when a rule violation can be fixed in multiple ways and the user
+    /// should choose which fix to apply.
+    pub fn diagnostic_with_suggestions<I>(&self, diagnostic: OxcDiagnostic, suggestions: I)
+    where
+        I: IntoIterator<Item = RuleFix>,
+    {
+        let fixes_result: Vec<Fix> = suggestions
+            .into_iter()
+            .filter_map(|rule_fix| {
+                #[cfg(debug_assertions)]
+                debug_assert!(
+                    self.current_rule_fix_capabilities.supports_fix(rule_fix.kind()),
+                    "Rule `{}` does not support this fix kind. Did you forget to update fix capabilities in declare_oxc_lint?.\n\tSupported fix kinds: {:?}\n\tAttempted fix kind: {:?}",
+                    self.current_rule_name,
+                    FixKind::from(self.current_rule_fix_capabilities),
+                    rule_fix.kind()
+                );
+
+                if self.parent.fix.can_apply(rule_fix.kind()) && !rule_fix.is_empty() {
+                    Some(rule_fix.into_fix(self.source_text()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        if fixes_result.is_empty() {
+            self.diagnostic(diagnostic);
+        } else {
+            self.add_diagnostic(
+                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
+                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
+            );
+        }
+    }
+
     fn create_fix<C, F>(
         &self,
         fix_kind: FixKind,
@@ -521,7 +562,6 @@ fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
         "vitest" => "eslint-plugin-vitest",
         "node" => "eslint-plugin-node",
         "vue" => "eslint-plugin-vue",
-        "regexp" => "eslint-plugin-regexp",
         _ => plugin_name,
     }
 }

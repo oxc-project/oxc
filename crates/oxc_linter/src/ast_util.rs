@@ -589,7 +589,6 @@ fn could_be_error_impl(
                 | AstKind::TSGlobalDeclaration(_)
                 | AstKind::TSEnumDeclaration(_) => false,
                 AstKind::FormalParameter(param) => !param
-                    .pattern
                     .type_annotation
                     .as_ref()
                     .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
@@ -1133,4 +1132,9 @@ fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext)
     }
 
     None
+}
+
+#[test]
+fn test_this_use_alphabetization() {
+    assert!(METHOD_WHICH_HAS_THIS_ARG.is_sorted());
 }

@@ -227,7 +227,11 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::SwitchCase(_)
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
-        | AstKind::DoWhileStatement(_) => true,
+        | AstKind::DoWhileStatement(_)
+        | AstKind::SequenceExpression(_) => true,
+        AstKind::FormalParameter(p) => {
+            p.initializer.as_ref().is_some_and(|init| init.span().contains_inclusive(child.span()))
+        }
         AstKind::AssignmentExpression(assign_expr) => {
             // The right-hand side of an assignment is always in a value context (being read for assignment)
             assign_expr.right.span().contains_inclusive(child.span())
@@ -495,6 +499,7 @@ fn test() {
         // Issue #15548: Private member used in update expression on RHS of assignment
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
         r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
+        r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
     ];
 
     let fail = vec![

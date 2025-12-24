@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- adb41ba allocator: `AllocatorPool` do not consume all memory on Windows (#17094) (overlookmotel)
+- b87600a allocator: Fix potential deadlock in `FixedSizeAllocatorPool` (#17112) (overlookmotel)
+
+### ⚡ Performance
+
+- cee4a6c allocator: Use `Stack` in `AllocatorPool`s (#17136) (overlookmotel)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- d209c21 allocator: Add cap to FixedSizeAllocatorPool and block when exhausted (#17023) (Cameron)
+- fb2af91 allocator: Add bitset utils (#17042) (zhaoting zhou)
+
+### 🐛 Bug Fixes
+
+- fb9e193 linter: OOM problems with custom plugins (#17082) (overlookmotel)
+
+### ⚡ Performance
+
+- b657bb6 allocator: Reduce time `Mutex` lock is held in `FixedSizeAllocatorPool::get` (#17079) (overlookmotel)
+
 ## [0.99.0] - 2025-11-24
 
 ### 🚀 Features

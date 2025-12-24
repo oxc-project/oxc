@@ -10,6 +10,7 @@ on:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
       - "editors/vscode/**"
+      - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "apps/oxlint/src/lsp.rs"
       - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
+      - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
 
 concurrency:
@@ -32,20 +34,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-node@141eb77546de6702f92d320926403fe3f9f6a6f2 # v1.0.5
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
-      - uses: oxc-project/setup-rust@ecabb7322a2ba5aeedb3612d2a40b86a85cee235 # v1.0.11
+      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: vscode
 
-      - name: Type-Check VSCode
-        working-directory: editors/vscode
-        run: pnpm run type-check
-
-      - name: Build Language Server
-        working-directory: editors/vscode
-        run: pnpm run server:build:debug
+      - name: Check VSCode README is up-to-date
+        run: |
+          cargo run -p vscode_docs update
+          pnpm fmt
+          git diff --exit-code
 
       - name: Build oxlint (with napi)
         working-directory: editors/vscode

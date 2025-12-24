@@ -12,4 +12,27 @@ describe("config_ignore_patterns", () => {
     const snapshot = await runAndSnapshot(cwd, testCases);
     expect(snapshot).toMatchSnapshot();
   });
+
+  // Structure:
+  //   config_ignore_patterns_nested_cwd/
+  //     .oxfmtrc.json   # ignorePatterns: ["sub/generated/**"]
+  //     sub/            # <- cwd (nested directory)
+  //       generated/
+  //         ignored.js  # Should be ignored
+  //       src/
+  //         test.js     # Should be formatted
+  //
+  // When running from `sub/` directory with target `.`:
+  // - .oxfmtrc.json is found in parent directory
+  // - ignorePatterns should resolve relative to .oxfmtrc.json location
+  // - Pattern "sub/generated/**" should match "sub/generated/ignored.js"
+  //   relative to .oxfmtrc.json location, NOT "sub/sub/generated/**" from cwd
+  //
+  // Expected: generated/ignored.js should be ignored, src/test.js should be listed
+  it("nested cwd - ignorePatterns resolved relative to .oxfmtrc.json location", async () => {
+    // Run from nested `sub/` directory - check mode doesn't need temp copy
+    const nestedCwd = join(fixturesDir, "config_ignore_patterns_nested_cwd", "sub");
+    const snapshot = await runAndSnapshot(nestedCwd, [["--check", "."]]);
+    expect(snapshot).toMatchSnapshot();
+  });
 });

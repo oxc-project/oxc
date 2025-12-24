@@ -2,9 +2,10 @@
 source: crates/oxc_language_server/src/linter/tester.rs
 ---
 ########## 
-file: fixtures/linter/issue_9958/issue.ts
+Linted file: fixtures/linter/issue_9958/issue.ts
 ----------
 ########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/issue_9958/issue.ts
 
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
@@ -41,6 +42,7 @@ related_information[0].location.range: Range { start: Position { line: 11, chara
 severity: Some(Hint)
 source: Some("oxc")
 tags: None
+
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-extra-boolean-cast for this line
