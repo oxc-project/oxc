@@ -14,6 +14,7 @@ use crate::{LintPlugins, utils::read_to_string};
 use super::{
     categories::OxlintCategories,
     env::OxlintEnv,
+    external_parsers::{ExternalParserEntry, external_parsers_schema},
     external_plugins::{ExternalPluginEntry, external_plugins_schema},
     globals::OxlintGlobals,
     overrides::OxlintOverrides,
@@ -88,6 +89,17 @@ pub struct Oxlintrc {
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+    /// JS parsers for custom file types.
+    ///
+    /// Custom parsers must implement the standard ESLint parser interface:
+    /// - `parse(code, options)` returning an ESTree-compatible AST, or
+    /// - `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`
+    ///
+    /// Note: JS parsers are experimental and not subject to semver.
+    /// They are not supported in language server at present.
+    #[serde(rename = "jsParsers", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "external_parsers_schema")]
+    pub external_parsers: Option<Vec<ExternalParserEntry>>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -180,6 +192,12 @@ impl Oxlintrc {
                     entry
                 })
                 .collect();
+        }
+
+        if let Some(external_parsers) = &mut config.external_parsers {
+            for entry in external_parsers.iter_mut() {
+                entry.config_dir = config_dir.to_path_buf();
+            }
         }
 
         for override_config in config.overrides.iter_mut() {
@@ -316,12 +334,24 @@ impl Oxlintrc {
             (None, None) => None,
         };
 
+        let external_parsers = match (&self.external_parsers, &other.external_parsers) {
+            (Some(self_parsers), Some(other_parsers)) => {
+                let mut merged = self_parsers.clone();
+                merged.extend(other_parsers.iter().cloned());
+                Some(merged)
+            }
+            (Some(self_parsers), None) => Some(self_parsers.clone()),
+            (None, Some(other_parsers)) => Some(other_parsers.clone()),
+            (None, None) => None,
+        };
+
         let schema = self.schema.clone().or(other.schema);
 
         Oxlintrc {
             schema,
             plugins,
             external_plugins,
+            external_parsers,
             categories,
             rules: OxlintRules::new(rules),
             settings,
@@ -344,7 +374,10 @@ mod test {
     use rustc_hash::FxHashSet;
     use serde_json::json;
 
-    use crate::config::{external_plugins::ExternalPluginEntry, plugins::LintPlugins};
+    use crate::config::{
+        external_parsers::ExternalParserEntry, external_plugins::ExternalPluginEntry,
+        plugins::LintPlugins,
+    };
 
     use super::*;
 
@@ -510,5 +543,100 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_oxlintrc_js_parsers() {
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{"jsParsers": [
+                { "parser": "@marko/compiler", "patterns": ["*.marko"] },
+                { "parser": "./custom-parser.js", "patterns": ["*.custom", "*.ext"], "parserOptions": { "ecmaVersion": 2020 } }
+            ]}"#,
+        )
+        .unwrap();
+        let parsers = config.external_parsers.as_ref().unwrap();
+        assert_eq!(parsers.len(), 2);
+        assert_eq!(parsers[0].specifier, "@marko/compiler");
+        assert_eq!(parsers[0].patterns, vec!["*.marko"]);
+        assert!(parsers[0].parser_options.is_none());
+        assert_eq!(parsers[1].specifier, "./custom-parser.js");
+        assert_eq!(parsers[1].patterns, vec!["*.custom", "*.ext"]);
+        assert!(parsers[1].parser_options.is_some());
+
+        // None
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        assert!(config.external_parsers.is_none());
+
+        // Empty array
+        let config: Oxlintrc = serde_json::from_str(r#"{"jsParsers": []}"#).unwrap();
+        assert_eq!(config.external_parsers.as_ref().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_oxlintrc_js_parsers_rejects_invalid() {
+        // Extra fields should be rejected
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"jsParsers": [{ "parser": "x", "patterns": ["*.x"], "extra": "z" }]}"#
+            )
+            .is_err()
+        );
+
+        // Missing required fields should be rejected
+        assert!(serde_json::from_str::<Oxlintrc>(r#"{"jsParsers": [{ "parser": "x" }]}"#).is_err());
+
+        assert!(
+            serde_json::from_str::<Oxlintrc>(r#"{"jsParsers": [{ "patterns": ["*.x"] }]}"#)
+                .is_err()
+        );
+
+        // Empty patterns array should be rejected
+        assert!(
+            serde_json::from_str::<Oxlintrc>(
+                r#"{"jsParsers": [{ "parser": "x", "patterns": [] }]}"#
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_js_parsers_roundtrip() {
+        let mut config = Oxlintrc::default();
+        let parsers = vec![
+            ExternalParserEntry {
+                config_dir: PathBuf::default(),
+                specifier: "@marko/compiler".to_string(),
+                patterns: vec!["*.marko".to_string()],
+                parser_options: None,
+            },
+            ExternalParserEntry {
+                config_dir: PathBuf::default(),
+                specifier: "./custom-parser.js".to_string(),
+                patterns: vec!["*.custom".to_string()],
+                parser_options: Some(serde_json::json!({ "ecmaVersion": 2020 })),
+            },
+        ];
+        config.external_parsers = Some(parsers);
+
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: Oxlintrc = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(
+            config.external_parsers.as_ref().unwrap().len(),
+            deserialized.external_parsers.as_ref().unwrap().len()
+        );
+    }
+
+    #[test]
+    fn test_oxlintrc_js_parsers_merge() {
+        let config1: Oxlintrc = serde_json::from_str(
+            r#"{"jsParsers": [{ "parser": "./parser1.js", "patterns": ["*.ext1"] }]}"#,
+        )
+        .unwrap();
+        let config2: Oxlintrc = serde_json::from_str(
+            r#"{"jsParsers": [{ "parser": "./parser2.js", "patterns": ["*.ext2"] }]}"#,
+        )
+        .unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.external_parsers.unwrap().len(), 2);
     }
 }

@@ -59,6 +59,22 @@
       },
       "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
     },
+    "jsParsers": {
+      "description": "JS parsers for custom file types.\n\nCustom parsers must implement the standard ESLint parser interface:\n- `parse(code, options)` returning an ESTree-compatible AST, or\n- `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`\n\nNote: JS parsers are experimental and not subject to semver.\nThey are not supported in language server at present.",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExternalParserEntry"
+          },
+          "uniqueItems": true
+        }
+      ],
+      "markdownDescription": "JS parsers for custom file types.\n\nCustom parsers must implement the standard ESLint parser interface:\n- `parse(code, options)` returning an ESTree-compatible AST, or\n- `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`\n\nNote: JS parsers are experimental and not subject to semver.\nThey are not supported in language server at present."
+    },
     "jsPlugins": {
       "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present.",
       "anyOf": [
@@ -229,6 +245,37 @@
         "$ref": "#/definitions/DummyRule"
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+    },
+    "ExternalParserEntry": {
+      "description": "External parser configuration for custom file types.\n\nNote: JS parsers are experimental and not subject to semver.",
+      "type": "object",
+      "required": [
+        "parser",
+        "patterns"
+      ],
+      "properties": {
+        "parser": {
+          "description": "Path or package name of the parser.\n\nThe parser must implement the standard ESLint parser interface:\n- `parse(code, options)` returning an ESTree-compatible AST, or\n- `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`",
+          "type": "string",
+          "markdownDescription": "Path or package name of the parser.\n\nThe parser must implement the standard ESLint parser interface:\n- `parse(code, options)` returning an ESTree-compatible AST, or\n- `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`"
+        },
+        "parserOptions": {
+          "description": "Options to pass to the parser's parse/parseForESLint function",
+          "type": "object",
+          "markdownDescription": "Options to pass to the parser's parse/parseForESLint function"
+        },
+        "patterns": {
+          "description": "Glob patterns for files that should use this parser (e.g., [\"*.marko\", \"*.mdx\"])",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "markdownDescription": "Glob patterns for files that should use this parser (e.g., [\"*.marko\", \"*.mdx\"])"
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "External parser configuration for custom file types.\n\nNote: JS parsers are experimental and not subject to semver."
     },
     "ExternalPluginEntry": {
       "anyOf": [
