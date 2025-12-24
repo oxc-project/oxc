@@ -9,13 +9,14 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, LoadPluginResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadParserCb,
+    ExternalLinterLoadPluginCb, ExternalLinterSetupConfigsCb, LintFileResult, LoadParserResult,
+    LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsSetupConfigsCb},
+    run::{JsLintFileCb, JsLoadParserCb, JsLoadPluginCb, JsSetupConfigsCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -23,18 +24,32 @@ pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_configs = wrap_setup_configs(setup_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
 
-    ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
+    let mut linter = ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file);
+
+    if let Some(load_parser) = load_parser {
+        linter = linter.with_load_parser(wrap_load_parser(load_parser));
+    }
+
+    linter
 }
 
 /// Result returned by `loadPlugin` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LoadPluginReturnValue {
     Success(LoadPluginResult),
+    Failure(String),
+}
+
+/// Result returned by `loadParser` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadParserReturnValue {
+    Success(LoadParserResult),
     Failure(String),
 }
 
@@ -70,6 +85,42 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             },
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
             Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        }
+    })
+}
+
+/// Wrap `loadParser` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
+    Box::new(move |parser_url, parser_options_json| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                cb.call_async(FnArgs::from((parser_url, parser_options_json)))
+                    .await?
+                    .into_future()
+                    .await
+            })
+        });
+
+        match res {
+            // `loadParser` returns JSON string if parser loaded successfully, or an error occurred
+            Ok(json) => match serde_json::from_str(&json) {
+                // Parser loaded successfully
+                Ok(LoadParserReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadParserReturnValue::Failure(err)) => Err(err),
+                // Invalid JSON - should be impossible, because we control serialization on JS side
+                Err(err) => {
+                    Err(format!("Failed to deserialize JSON returned by `loadParser`: {err}"))
+                }
+            },
+            // `loadParser` threw an error - should be impossible because `loadParser` is wrapped in try-catch
+            Err(err) => Err(format!("`loadParser` threw an error: {err}")),
         }
     })
 }
