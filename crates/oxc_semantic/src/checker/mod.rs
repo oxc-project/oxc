@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, ast::*, match_module_declaration};
 
 use crate::builder::SemanticBuilder;
 
@@ -30,10 +30,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::StringLiteral(lit) => js::check_string_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
-        m if m.is_module_declaration() => {
-            if let Some(mod_decl_kind) = m.as_module_declaration_kind() {
-                js::check_module_declaration(&mod_decl_kind, ctx);
-            }
+        match_module_declaration!(AstKind) => {
+            let mod_decl_kind = kind.as_module_declaration_kind().unwrap();
+            js::check_module_declaration(&mod_decl_kind, ctx);
         }
         AstKind::MetaProperty(prop) => js::check_meta_property(prop, ctx),
 
@@ -89,9 +88,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
 
         AstKind::FormalParameters(params) => {
             ts::check_formal_parameters(params, ctx);
-        }
-        AstKind::ArrayPattern(pat) => {
-            ts::check_array_pattern(pat, ctx);
         }
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),

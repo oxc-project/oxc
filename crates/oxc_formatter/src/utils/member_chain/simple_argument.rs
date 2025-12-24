@@ -74,9 +74,6 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                 Expression::TemplateLiteral(template) => {
                     is_simple_template_literal(template, depth + 1)
                 }
-                Expression::TaggedTemplateExpression(template) => {
-                    is_simple_template_literal(&template.quasi, depth + 1)
-                }
                 Expression::ObjectExpression(object) => Self::is_simple_object(object, depth),
                 Expression::ArrayExpression(array) => Self::is_simple_array(array, depth),
                 Expression::UnaryExpression(unary_expression) => {

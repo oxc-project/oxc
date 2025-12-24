@@ -29,7 +29,8 @@ const plugin: Plugin = {
             `sourceType: ${languageOptions.sourceType}\n` +
             `ecmaVersion: ${languageOptions.ecmaVersion}\n` +
             `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n` +
-            `globals: ${JSON.stringify(languageOptions.globals)}`,
+            `globals: ${JSON.stringify(languageOptions.globals)}\n` +
+            `env: ${JSON.stringify(languageOptions.env)}`,
           node: SPAN,
         });
 

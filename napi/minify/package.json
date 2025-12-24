@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.104.0",
+  "version": "0.105.0",
   "description": "Oxc Minifier Node API",
   "keywords": [
     "minify",
@@ -57,8 +57,13 @@
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
       "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
       "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
       "s390x-unknown-linux-gnu",
       "wasm32-wasip1-threads",
       "x86_64-apple-darwin",

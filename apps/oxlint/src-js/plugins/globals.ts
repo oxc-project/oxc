@@ -12,15 +12,19 @@ import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
  */
 export type Globals = Record<string, "readonly" | "writable" | "off">;
 
-// Empty globals object.
-// When globals are empty, we use this singleton object to avoid allocating a new object each time.
-const EMPTY_GLOBALS: Globals = Object.freeze({});
+/**
+ * Environments for the file being linted.
+ *
+ * Only includes environments that are enabled, so all properties are `true`.
+ */
+export type Envs = Record<string, true>;
 
-// Globals for current file.
+// Globals and envs for current file.
 // `globalsJSON` is set before linting a file by `setGlobalsForFile`.
-// `globals` is deserialized from `globalsJSON` lazily upon first access.
+// `globals` and `envs` are deserialized from `globalsJSON` lazily upon first access.
 let globalsJSON: string | null = null;
 export let globals: Readonly<Globals> | null = null;
+export let envs: Readonly<Envs> | null = null;
 
 /**
  * Updates the globals for the file.
@@ -42,22 +46,19 @@ export function setGlobalsForFile(globalsJSONInput: string): undefined {
 export function initGlobals(): void {
   debugAssertIsNonNull(globalsJSON);
 
-  if (globalsJSON === "{}") {
-    // Re-use a single object for empty globals as an optimization
-    globals = EMPTY_GLOBALS;
-  } else {
-    globals = JSON.parse(globalsJSON);
+  ({ globals, envs } = JSON.parse(globalsJSON));
 
-    // Freeze the globals object, to prevent any mutation of `globals` by plugins.
-    // No need to deep freeze since all keys are just strings.
-    Object.freeze(globals);
-  }
-
-  debugAssertIsNonNull(globals);
   debugAssert(
-    typeof globals === "object" && !Array.isArray(globals),
+    typeof globals === "object" && globals !== null && !Array.isArray(globals),
     "`globals` should be an object",
   );
+  debugAssert(
+    typeof envs === "object" && envs !== null && !Array.isArray(envs),
+    "`envs` should be an object",
+  );
+
+  Object.freeze(globals);
+  Object.freeze(envs);
 }
 
 /**
@@ -65,5 +66,6 @@ export function initGlobals(): void {
  */
 export function resetGlobals(): undefined {
   globals = null;
+  envs = null;
   globalsJSON = null;
 }

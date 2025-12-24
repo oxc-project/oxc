@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "1.34.0"
+version = "1.35.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -44,7 +44,7 @@ tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
 insta = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "io-util", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros"] }
 
 [features]
 default = ["linter", "formatter"]

@@ -208,7 +208,7 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn normalize_directive(&self, string_information: StringInformation) -> Cow<'a, str> {
-        // In diretcives, unnecessary escapes should be preserved.
+        // In directives, unnecessary escapes should be preserved.
         // See https://github.com/prettier/prettier/issues/1555
         // Thus we don't normalize the string.
         //
@@ -217,10 +217,27 @@ impl<'a> LiteralStringNormalizer<'a> {
         //
         // Note that we could change the quotes if the preferred quote is escaped.
         // However, Prettier doesn't go that far.
-        if string_information.raw_content_has_quotes {
-            Cow::Borrowed(self.token.string)
-        } else {
-            self.swap_quotes(self.raw_content(), string_information)
+        let normalized = normalize_newlines(self.raw_content(), ['\r']);
+        match normalized {
+            Cow::Borrowed(string) => {
+                if string_information.raw_content_has_quotes {
+                    Cow::Borrowed(self.token.string)
+                } else {
+                    self.swap_quotes(string, string_information)
+                }
+            }
+            Cow::Owned(string) => {
+                let mut s = String::with_capacity(string.len() + 2);
+                let quote = if string_information.raw_content_has_quotes {
+                    string_information.current_quote.as_char()
+                } else {
+                    string_information.preferred_quote.as_char()
+                };
+                s.push(quote);
+                s.push_str(&string);
+                s.push(quote);
+                Cow::Owned(s)
+            }
         }
     }
 

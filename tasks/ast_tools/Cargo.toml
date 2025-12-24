@@ -22,7 +22,7 @@ doctest = false
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true }
 oxc_ast_visit = { workspace = true, optional = true }
-oxc_codegen = { workspace = true, optional = true }
+oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, optional = true }
 oxc_span = { workspace = true, features = ["serialize"], optional = true }
@@ -36,6 +36,7 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
+javascript-globals = { workspace = true }
 lazy-regex = { workspace = true }
 oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
@@ -47,7 +48,15 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }
+syn = { workspace = true, features = [
+  "clone-impls",
+  "derive",
+  "extra-traits",
+  "full",
+  "parsing",
+  "printing",
+  "proc-macro",
+] }
 toml = { workspace = true }
 
 [features]

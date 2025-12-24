@@ -46,7 +46,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclarator<'a>,
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
-        if decl.id.kind.is_destructuring_pattern() {
+        if decl.id.is_destructuring_pattern() {
             decl.id.bound_names(&mut |id| {
                 if !check_binding || self.scope.has_value_reference(&id.name) {
                     self.error(binding_element_export(id.span));
@@ -64,7 +64,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let mut binding_type = None;
         let mut init = None;
-        if decl.id.type_annotation.is_none() {
+        if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
                 if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
@@ -88,18 +88,25 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
         }
-        let id = binding_type.map_or_else(
-            || decl.id.clone_in(self.ast.allocator),
-            |ts_type| {
-                self.ast.binding_pattern(
-                    decl.id.kind.clone_in(self.ast.allocator),
-                    Some(self.ast.ts_type_annotation(SPAN, ts_type)),
-                    decl.id.optional,
-                )
-            },
-        );
+        let id = decl.id.clone_in(self.ast.allocator);
 
-        Some(self.ast.variable_declarator(decl.span, decl.kind, id, init, decl.definite))
+        if binding_type.is_none()
+            && let Some(ts_type) = &decl.type_annotation
+        {
+            binding_type = Some(ts_type.type_annotation.clone_in(self.ast.allocator));
+        }
+
+        let type_annotation =
+            binding_type.map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+
+        Some(self.ast.variable_declarator(
+            decl.span,
+            decl.kind,
+            id,
+            type_annotation,
+            init,
+            decl.definite,
+        ))
     }
 
     fn transform_ts_module_block(

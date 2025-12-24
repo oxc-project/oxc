@@ -80,9 +80,13 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether formats quoted code embedded in the file. (Default: `"auto"`)
+    /// Control whether to format embedded parts in the file. (Default: `"off"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
+
+    /// Whether to insert a final newline at the end of the file. (Default: `true`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insert_final_newline: Option<bool>,
 
     /// Experimental: Sort import statements. Disabled by default.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -239,11 +243,12 @@ pub enum SortOrderConfig {
 pub struct OxfmtOptions {
     pub ignore_patterns: Vec<String>,
     pub sort_package_json: bool,
+    pub insert_final_newline: bool,
 }
 
 impl Default for OxfmtOptions {
     fn default() -> Self {
-        Self { ignore_patterns: vec![], sort_package_json: true }
+        Self { ignore_patterns: vec![], sort_package_json: true, insert_final_newline: true }
     }
 }
 
@@ -426,6 +431,9 @@ impl Oxfmtrc {
         if let Some(sort_package_json) = self.experimental_sort_package_json {
             oxfmt_options.sort_package_json = sort_package_json;
         }
+        if let Some(insert_final_newline) = self.insert_final_newline {
+            oxfmt_options.insert_final_newline = insert_final_newline;
+        }
 
         Ok((format_options, oxfmt_options))
     }
@@ -556,6 +564,7 @@ impl Oxfmtrc {
 
         // Below are our own extensions, just remove them
         obj.remove("ignorePatterns");
+        obj.remove("insertFinalNewline");
         obj.remove("experimentalSortImports");
         obj.remove("experimentalSortPackageJson");
 

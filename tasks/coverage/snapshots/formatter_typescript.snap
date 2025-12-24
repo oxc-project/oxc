@@ -1,19 +1,123 @@
-commit: b78f0899
+commit: 2dfdbbab
 
 formatter_typescript Summary:
 AST Parsed     : 9840/9840 (100.00%)
-Positive Passed: 9833/9840 (99.93%)
+Positive Passed: 9781/9840 (99.40%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentsAfterSpread.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentsFunction.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/controlFlowAliasedDiscriminants.ts
+An implementation cannot be declared in ambient contexts.
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithDefault2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/dynamicNames.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
 Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryNull.tsx
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes2.ts
+Expected `{` but found `Identifier`
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/parenthesizedExpressionInternalComments.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
+An implementation cannot be declared in ambient contexts.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
+An implementation cannot be declared in ambient contexts.
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringReassignsRightHandSide.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTempalteString4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTempalteString4ES6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString1ES6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString2ES6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTemplateString3ES6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.14.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.17.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.6.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOpEmitParens.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandAnyType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandBooleanType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandNumberType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandStringType.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorsMultipleOperators.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
 Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/generatorAssignability.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxExternalModuleEmit2.tsx
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentReactEmit.tsx
+Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitWhitespace2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUncheckedIndexedAccessDestructuring.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/propertyNamesOfReservedWords.ts
+'static' modifier cannot appear on a type member.'static' modifier cannot appear on a type member.

@@ -2,14 +2,18 @@
  * `SourceCode` methods related to scopes.
  */
 
-import {
-  analyze,
-  type AnalyzeOptions,
-  type ScopeManager as TSESLintScopeManager,
-} from "@typescript-eslint/scope-manager";
+import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manager";
 import { ast, initAst } from "./source_code.ts";
-import { typeAssertIs, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { globals, envs, initGlobals } from "./globals.ts";
+import { ENVS } from "../generated/envs.ts";
+import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
+import type {
+  AnalyzeOptions,
+  ScopeManager as TSESLintScopeManager,
+  Scope as TSScope,
+} from "@typescript-eslint/scope-manager";
+import type { Writable } from "type-fest";
 import type * as ESTree from "../generated/types.d.ts";
 import type { SetNullable } from "../utils/types.ts";
 
@@ -100,7 +104,7 @@ const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
   globalReturn: false,
   jsxFragmentName: null,
   jsxPragma: "React",
-  lib: ["esnext"],
+  lib: [],
   sourceType: null,
 };
 
@@ -113,10 +117,120 @@ function initTsScopeManager() {
 
   analyzeOptions.sourceType = ast.sourceType;
   typeAssertIs<AnalyzeOptions>(analyzeOptions);
-  // The effectiveness of this assertion depends on our alignment with ESTree.
-  // It could eventually be removed as we align the remaining corner cases and the typegen.
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
+
+  // Add globals from configuration and resolve references
+  addGlobals();
+}
+
+/**
+ * Add global variables from configuration and resolve references to them.
+ *
+ * With `lib: []`, no lib globals are created during analysis, so all global references
+ * end up in `globalScope.through`. This function creates Variables for each configured
+ * global and resolves references from `through`.
+ *
+ * This replicates ESLint's `scopeManager.addGlobals()` behavior.
+ */
+function addGlobals(): void {
+  debugAssertIsNonNull(tsScopeManager);
+  const globalScope = tsScopeManager.scopes[0];
+
+  // Ensure globals are initialized
+  if (globals === null) initGlobals();
+  debugAssertIsNonNull(globals);
+  debugAssertIsNonNull(envs);
+
+  // Create variables for enabled `envs`.
+  // All properties of `envs` are `true`, so no need to check the values.
+  // `envs` from JSON, so we can use simple `for..in` loop.
+  for (const envName in envs) {
+    // Get vars defined for this env.
+    // Rust side code ignores invalid env names, and passes them through to JS,
+    // so we can't assume they're valid here. But debug assert they're valid for tests.
+    const preset = ENVS.get(envName);
+    debugAssertIsNonNull(preset, `Unknown env: ${envName}`);
+    if (preset === undefined) continue;
+
+    const { readonly, writable } = preset;
+
+    for (let i = 0, len = readonly.length; i < len; i++) {
+      const varName = readonly[i];
+      // Skip vars that are defined in `globals`. They might be `"off"`.
+      if (!Object.hasOwn(globals, varName)) createGlobalVariable(varName, globalScope, false);
+    }
+
+    for (let i = 0, len = writable.length; i < len; i++) {
+      const varName = writable[i];
+      // Skip vars that are defined in `globals`. They might be `"off"`.
+      if (!Object.hasOwn(globals, varName)) createGlobalVariable(varName, globalScope, true);
+    }
+  }
+
+  // Create variables for enabled `globals`.
+  // `globals` from JSON, so we can use simple `for..in` loop.
+  for (const name in globals) {
+    const value = globals[name];
+    if (value !== "off") createGlobalVariable(name, globalScope, value === "writable");
+  }
+
+  // Resolve references from `through`
+  (globalScope as Writable<typeof globalScope>).through = globalScope.through.filter((ref) => {
+    const { name } = ref.identifier;
+    const variable = globalScope.set.get(name);
+    if (!variable) return true; // Keep in `through` (truly undefined)
+
+    // Resolve the reference, remove from `through`
+    ref.resolved = variable;
+    variable.references.push(ref);
+    return false;
+  });
+
+  // Clean up implicit globals.
+  // "implicit" contains information about implicit global variables (those created
+  // implicitly by assigning values to undeclared variables in non-strict code).
+  // Since we augment the global scope, we need to remove the ones that match declared globals.
+  // This matches eslint-scope's `__addVariables` behavior.
+  // @ts-expect-error - `implicit` is private but accessible at runtime
+  const { implicit } = globalScope;
+  implicit.variables = implicit.variables.filter((variable: Variable) => {
+    const { name } = variable;
+    if (globalScope.set.has(name)) {
+      implicit.set.delete(name);
+      return false;
+    }
+    return true;
+  });
+  // typescript-eslint uses `leftToBeResolved`, eslint-scope uses `left`
+  implicit.leftToBeResolved = implicit.leftToBeResolved.filter(
+    (ref: Reference) => !globalScope.set.has(ref.identifier.name),
+  );
+}
+
+/**
+ * Create a global variable with the given name and add it to the global scope.
+ * @param name - Var name
+ * @param globalScope - Global scope object
+ * @param isWritable - `true` if the variable is writable, `false` otherwise
+ */
+function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
+  // Skip vars that already exist in the scope.
+  // These could be from code declarations or previous envs.
+  // This is important because typescript-eslint's scope manager doesn't resolve references
+  // in the global scope for `sourceType: "script"`, so we mustn't overwrite local `var`
+  // declarations with globals of the same name.
+  if (globalScope.set.has(name)) return;
+
+  // All globals are type + value
+  const variable = new TSVariable(name, globalScope);
+  debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
+  debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
+  // @ts-expect-error - not present in types
+  variable.writeable = isWritable;
+
+  globalScope.set.set(name, variable);
+  globalScope.variables.push(variable);
 }
 
 /**

@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- cdb6345 minifier: Remove unused import source/defer statements (#17085) (camc314)
+
+### 🐛 Bug Fixes
+
+- ab43454 minifier: Preserve sideeffects of destructuring `arguments` in non-strict mode (#17249) (sapphi-red)
+- 5595642 minifier: Avoid `arguments` copy loop transformation in arrow functions (#17248) (sapphi-red)
+- f0ad6b7 minifier: Preserve sideeffectful destructing delcaration for array and object destruction (#17074) (Armano)
+- 76b1dc7 minifier: Avoid incorrect logical assignment transformation when base object may be mutated (#16802) (camc314)
+
 ## [0.104.0] - 2025-12-19
 
 ### 🚀 Features

@@ -9,6 +9,10 @@ pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
+    /// Whether the client supports pull diagnostics.
+    pull_diagnostics: bool,
+    /// Whether the client supports the `workspace/diagnostic/refresh` request.
+    refresh_diagnostics: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -19,13 +23,39 @@ impl From<ClientCapabilities> for Capabilities {
             .workspace
             .as_ref()
             .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
-        let dynamic_watchers = value.workspace.is_some_and(|workspace| {
+        let dynamic_watchers = value.workspace.as_ref().is_some_and(|workspace| {
             workspace.did_change_watched_files.is_some_and(|watched_files| {
                 watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
             })
         });
 
-        Self { workspace_apply_edit, workspace_configuration, dynamic_watchers }
+        let pull_diagnostics = value
+            .text_document
+            .as_ref()
+            .is_some_and(|text_document| text_document.diagnostic.is_some());
+
+        let refresh_diagnostics = value.workspace.as_ref().is_some_and(|workspace| {
+            workspace.diagnostics.as_ref().is_some_and(|diagnostics| {
+                diagnostics.refresh_support.is_some_and(|refresh| refresh)
+            })
+        });
+
+        Self {
+            workspace_apply_edit,
+            workspace_configuration,
+            dynamic_watchers,
+            pull_diagnostics,
+            refresh_diagnostics,
+        }
+    }
+}
+
+impl Capabilities {
+    /// The server supports pull and push diagnostics.
+    /// Only use push diagnostics if the client does not support pull diagnostics,
+    /// or we cannot ask the client to refresh diagnostics.
+    pub fn use_push_diagnostics(&self) -> bool {
+        !self.pull_diagnostics || !self.refresh_diagnostics
     }
 }
 
@@ -57,6 +87,37 @@ mod test {
     };
 
     use super::Capabilities;
+
+    #[test]
+    fn test_use_push_diagnostics() {
+        let capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        assert!(!capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+    }
 
     #[test]
     fn test_workspace_edit_nvim() {

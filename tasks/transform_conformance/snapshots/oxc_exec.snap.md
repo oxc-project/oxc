@@ -1,6 +1,6 @@
-commit: 84d21e4e
+commit: cbdc42fe
 
-node: v24.10.0
+node: v24.12.0
 
 Passed: 10 of 12 (83.33%)
 

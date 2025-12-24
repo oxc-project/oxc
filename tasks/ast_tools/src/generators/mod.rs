@@ -12,6 +12,8 @@ mod estree_visit;
 mod formatter;
 mod get_id;
 #[cfg(feature = "generate-js")]
+mod oxlint_envs;
+#[cfg(feature = "generate-js")]
 mod raw_transfer;
 #[cfg(feature = "generate-js")]
 mod raw_transfer_lazy;
@@ -28,6 +30,8 @@ pub use ast_kind::AstKindGenerator;
 pub use estree_visit::ESTreeVisitGenerator;
 pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
 pub use get_id::GetIdGenerator;
+#[cfg(feature = "generate-js")]
+pub use oxlint_envs::OxlintEnvsGenerator;
 #[cfg(feature = "generate-js")]
 pub use raw_transfer::RawTransferGenerator;
 #[cfg(feature = "generate-js")]

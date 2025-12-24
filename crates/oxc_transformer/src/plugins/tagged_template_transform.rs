@@ -41,7 +41,7 @@
 use std::iter;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -220,6 +220,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
+            NONE,
             None,
             false,
         );

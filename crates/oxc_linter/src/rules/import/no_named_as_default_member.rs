@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, IdentifierReference},
+    ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -145,7 +145,7 @@ impl Rule for NoNamedAsDefaultMember {
                     let Some(Expression::Identifier(ident)) = &decl.init else {
                         continue;
                     };
-                    let BindingPatternKind::ObjectPattern(object_pattern) = &decl.id.kind else {
+                    let BindingPattern::ObjectPattern(object_pattern) = &decl.id else {
                         continue;
                     };
 

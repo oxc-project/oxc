@@ -56,3 +56,26 @@ a = {
   },
   'outer-2': "value"
 };
+
+// Shorthand properties
+a = { x };
+a = { x, y };
+a = { x, y, z };
+
+// Shorthand mixed with regular properties
+a = {
+  x,
+  y: "value"
+};
+
+// Shorthand with quoted properties - quotes should not affect shorthand
+a = {
+  x,
+  'y-z': "value"
+};
+
+// Nested shorthand
+a = {
+  outer: { x, y },
+  z
+};

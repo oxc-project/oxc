@@ -933,15 +933,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DebuggerStatement> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, self.kind());
-        if self.optional() {
-            write!(f, "?");
-        } else if let AstNodes::VariableDeclarator(declarator) = self.parent {
+        Format::fmt(self, f);
+        if let AstNodes::VariableDeclarator(declarator) = self.parent {
             write!(f, declarator.definite.then_some("!"));
         }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation);
-        }
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameterRest<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.rest()]);
+        write!(f, self.type_annotation());
     }
 }
 
@@ -1477,12 +1479,6 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
                 }
             }
             Semicolons::AsNeeded => {
-                let TSSignature::TSPropertySignature(property) = self.signature.as_ref() else {
-                    return;
-                };
-
-                let has_no_type_annotation = property.type_annotation.is_none();
-
                 // Needs semicolon anyway when:
                 // 1. It's a non-computed property signature with type annotation followed by
                 //    a call signature that has type parameters
@@ -1490,14 +1486,16 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
                 // 2. It's a non-computed property signature without type annotation followed by
                 //    a call signature or method signature
                 //    e.g for: `a; () => void` or `a; method(): void`
-                let needs_semicolon = !property.computed
+                let needs_semicolon = matches!(
+                    self.signature.as_ref(), TSSignature::TSPropertySignature(property) if !property.computed
                     && self.next_signature.is_some_and(|signature| match signature.as_ref() {
                         TSSignature::TSCallSignatureDeclaration(call) => {
-                            has_no_type_annotation || call.type_parameters.is_some()
+                            property.type_annotation.is_none() || call.type_parameters.is_some()
                         }
-                        TSSignature::TSMethodSignature(_) => has_no_type_annotation,
+                        TSSignature::TSMethodSignature(_) => property.type_annotation.is_none(),
                         _ => false,
-                    });
+                    })
+                );
 
                 if needs_semicolon {
                     write!(f, [";"]);

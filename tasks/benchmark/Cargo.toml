@@ -62,13 +62,16 @@ bench = false
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
-oxc_codegen = { workspace = true, optional = true }
+oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
-oxc_parser = { workspace = true, features = ["benchmarking", "regular_expression"], optional = true }
+oxc_parser = { workspace = true, features = [
+  "benchmarking",
+  "regular_expression",
+], optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common = { workspace = true, optional = true }

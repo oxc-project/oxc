@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- 36e08ef data_structures: Implement conversion traits for stack types (#17141) (overlookmotel)
+- 0e177f4 data_structures: Implement `Send` and `Sync` for stack types (#17135) (overlookmotel)
+
 ## [0.99.0] - 2025-11-24
 
 ### 📚 Documentation

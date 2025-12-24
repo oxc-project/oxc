@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.20.0] - 2025-12-22
+
+### 🚀 Features
+
+- 97a02d1 oxfmt: Add `insertFinalNewline` option (#17251) (leaysgur)
+- a3f3c58 oxfmt: Support TOML(v1.0 only) files (#17113) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 7b810f4 oxfmt: Use correct root dir with ignore and overrides for nested cwd (#17244) (leaysgur)
+- cdb80d4 oxfmt: Resolve `.editorconfig` root dir from `cwd` (#17093) (leaysgur)
+
 ## [0.19.0] - 2025-12-19
 
 ### 🚀 Features

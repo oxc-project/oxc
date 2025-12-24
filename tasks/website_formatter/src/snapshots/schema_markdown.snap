@@ -44,7 +44,7 @@ Print spaces between brackets in object literals. (Default: `true`)
 type: `string | null`
 
 
-Control whether formats quoted code embedded in the file. (Default: `"auto"`)
+Control whether to format embedded parts in the file. (Default: `"off"`)
 
 
 ## endOfLine
@@ -151,6 +151,14 @@ type: `string[]`
 
 
 Ignore files matching these glob patterns. Current working directory is used as the root.
+
+
+## insertFinalNewline
+
+type: `boolean | null`
+
+
+Whether to insert a final newline at the end of the file. (Default: `true`)
 
 
 ## jsxSingleQuote

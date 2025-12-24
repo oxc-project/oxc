@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPatternKind, Expression},
+    ast::{AssignmentTarget, BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,8 +70,7 @@ impl Rule for NoThisAssignment {
                     return;
                 }
 
-                let BindingPatternKind::BindingIdentifier(binding_ident) = &variable_decl.id.kind
-                else {
+                let BindingPattern::BindingIdentifier(binding_ident) = &variable_decl.id else {
                     return;
                 };
 

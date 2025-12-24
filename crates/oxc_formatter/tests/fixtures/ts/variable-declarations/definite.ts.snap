@@ -2,21 +2,20 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-useImperativeHandle(ref, () => ({ getIsPending: () => isPending }), [
-  isPending,
-]);
+let A!: never;
+var B!: string;
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-useImperativeHandle(ref, () => ({ getIsPending: () => isPending }), [
-  isPending,
-]);
+let A!: never;
+var B!: string;
 
 -------------------
 { printWidth: 100 }
 -------------------
-useImperativeHandle(ref, () => ({ getIsPending: () => isPending }), [isPending]);
+let A!: never;
+var B!: string;
 
 ===================== End =====================

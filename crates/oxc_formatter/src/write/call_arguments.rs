@@ -139,7 +139,30 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 ]
             );
         } else {
-            format_all_args_broken_out(self, false, f);
+            let interned = f.intern(&format_args!(
+                "(",
+                soft_block_indent(&format_with(move |f| {
+                    let separator = format_with(|f| write!(f, [",", soft_line_break_or_space()]));
+                    f.join_with(&separator).entries(self.iter());
+                    write!(
+                        f,
+                        [(!matches!(self.parent, AstNodes::ImportExpression(_)))
+                            .then_some(FormatTrailingCommas::All)]
+                    );
+                })),
+                ")",
+            ));
+
+            if let Some(element) = interned {
+                let should_expand = element.will_break();
+                write!(
+                    f,
+                    group(&format_once(|f| {
+                        f.write_element(element);
+                    }))
+                    .should_expand(should_expand)
+                );
+            }
         }
     }
 }
@@ -1085,8 +1108,15 @@ fn is_react_hook_with_deps_array(
     }
 
     let mut args = arguments.as_ref().iter();
-    if arguments.len() == 3 {
-        args.next();
+
+    // ```js
+    // useImperativeHandle(ref, () => {
+    //   // do something
+    // }, [dep1, dep2, dep2]);
+    // ```
+    // First argument must be an identifier (the ref)
+    if arguments.len() == 3 && !matches!(args.next(), Some(Argument::Identifier(_))) {
+        return false;
     }
 
     match (args.next(), args.next()) {
@@ -1094,7 +1124,7 @@ fn is_react_hook_with_deps_array(
             Some(Argument::ArrowFunctionExpression(callback)),
             Some(Argument::ArrayExpression(deps)),
         ) => {
-            if !callback.params.is_empty() {
+            if callback.params.has_parameter() {
                 return false;
             }
 

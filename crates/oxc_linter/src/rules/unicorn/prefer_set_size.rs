@@ -115,7 +115,7 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
         return false;
     }
 
-    if !var_decl.id.kind.is_binding_identifier() {
+    if !var_decl.id.is_binding_identifier() {
         return false;
     }
 

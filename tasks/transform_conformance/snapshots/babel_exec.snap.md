@@ -1,8 +1,8 @@
-commit: 84d21e4e
+commit: cbdc42fe
 
-node: v24.10.0
+node: v24.12.0
 
-Passed: 324 of 414 (78.26%)
+Passed: 324 of 412 (78.64%)
 
 Failures:
 
@@ -451,14 +451,6 @@ AssertionError: expected true to be false // Object.is equality
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
 AssertionError: expected 2 to be 5 // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:25
-
-./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js
-ReferenceError: transformAsync is not defined
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js:4:16
-
-./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-with-source-exec.test.js
-ReferenceError: transformAsync is not defined
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-with-source-exec.test.js:4:16
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown

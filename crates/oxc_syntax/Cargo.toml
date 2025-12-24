@@ -1,6 +1,6 @@
 [package]
 name = "oxc_syntax"
-version = "0.104.0"
+version = "0.105.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -39,8 +39,4 @@ serde = { workspace = true, features = ["derive"], optional = true }
 [features]
 default = []
 to_js_string = ["dep:dragonbox_ecma"]
-serialize = [
-  "bitflags/serde",
-  "dep:serde",
-  "oxc_estree/serialize",
-]
+serialize = ["bitflags/serde", "dep:serde", "oxc_estree/serialize"]

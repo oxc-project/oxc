@@ -1,17 +1,15 @@
-commit: 84d21e4e
+commit: cbdc42fe
 
-Passed: 701/1176
+Passed: 697/1170
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
-* babel-plugin-transform-react-jsx-self
-* babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (30/82)
+# babel-preset-env (31/83)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -2824,25 +2822,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (8/11)
-* cross-platform/disallow-__self-as-jsx-attribute/input.js
-
-  ! Duplicate __self prop found.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
- 1 | var x = <div __self={self}></div>;
-   :              ^^^^^^
-   `----
-
-
-* cross-platform/disallow-__source-as-jsx-attribute/input.js
-
-  ! Duplicate __source prop found.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__source-as-jsx-attribute/input.js:1:14]
- 1 | var x = <div __source={source}></div>;
-   :              ^^^^^^^^
-   `----
-
-
+# babel-plugin-transform-react-jsx-development (7/8)
 * cross-platform/within-ts-module-block/input.ts
 x Output mismatch
 

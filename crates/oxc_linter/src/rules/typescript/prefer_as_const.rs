@@ -63,7 +63,7 @@ impl Rule for PreferAsConst {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
-                let Some(type_annotation) = &variable_declarator.id.type_annotation else {
+                let Some(type_annotation) = &variable_declarator.type_annotation else {
                     return;
                 };
                 let Some(initial_value_expression) = &variable_declarator.init else {

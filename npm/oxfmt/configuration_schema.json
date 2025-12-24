@@ -179,8 +179,8 @@
           "type": "null"
         }
       ],
-      "description": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)",
-      "markdownDescription": "Control whether formats quoted code embedded in the file. (Default: `\"auto\"`)"
+      "description": "Control whether to format embedded parts in the file. (Default: `\"off\"`)",
+      "markdownDescription": "Control whether to format embedded parts in the file. (Default: `\"off\"`)"
     },
     "endOfLine": {
       "anyOf": [
@@ -222,6 +222,14 @@
       "markdownDescription": "Ignore files matching these glob patterns. Current working directory is used as the root.",
       "type": [
         "array",
+        "null"
+      ]
+    },
+    "insertFinalNewline": {
+      "description": "Whether to insert a final newline at the end of the file. (Default: `true`)",
+      "markdownDescription": "Whether to insert a final newline at the end of the file. (Default: `true`)",
+      "type": [
+        "boolean",
         "null"
       ]
     },

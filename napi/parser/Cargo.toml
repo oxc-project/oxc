@@ -1,6 +1,6 @@
 [package]
 name = "oxc_parser_napi"
-version = "0.104.0"
+version = "0.105.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -36,10 +36,17 @@ napi-derive = { workspace = true }
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
 [target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+] }
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
-mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+  "no_opt_arch",
+] }
 
 [build-dependencies]
 napi-build = { workspace = true }

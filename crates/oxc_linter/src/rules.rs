@@ -368,6 +368,7 @@ pub(crate) mod react {
     pub mod jsx_fragments;
     pub mod jsx_handler_names;
     pub mod jsx_key;
+    pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_script_url;
@@ -381,6 +382,7 @@ pub(crate) mod react {
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_danger_with_children;
+    pub mod no_did_mount_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
@@ -541,6 +543,7 @@ pub(crate) mod jsx_a11y {
     pub mod anchor_is_valid;
     pub mod aria_activedescendant_has_tabindex;
     pub mod aria_props;
+    pub mod aria_proptypes;
     pub mod aria_role;
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
@@ -661,6 +664,7 @@ pub(crate) mod promise {
 }
 
 pub(crate) mod vitest {
+    pub mod consistent_test_filename;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_called_times;
@@ -671,6 +675,7 @@ pub(crate) mod vitest {
 }
 
 pub(crate) mod node {
+    pub mod global_require;
     pub mod no_exports_assign;
     pub mod no_new_require;
     pub mod no_process_env;
@@ -965,6 +970,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_is_valid,
     jsx_a11y::aria_activedescendant_has_tabindex,
     jsx_a11y::aria_props,
+    jsx_a11y::aria_proptypes,
     jsx_a11y::aria_role,
     jsx_a11y::aria_unsupported_elements,
     jsx_a11y::autocomplete_valid,
@@ -1010,6 +1016,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_html_link_for_pages,
+    node::global_require,
     node::no_process_env,
     node::no_exports_assign,
     node::no_new_require,
@@ -1069,6 +1076,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_curly_brace_presence,
     react::jsx_handler_names,
     react::jsx_key,
+    react::jsx_max_depth,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_script_url,
@@ -1077,6 +1085,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
     react::jsx_props_no_spreading,
+    react::no_did_mount_set_state,
     react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
@@ -1314,6 +1323,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    vitest::consistent_test_filename,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::prefer_called_times,

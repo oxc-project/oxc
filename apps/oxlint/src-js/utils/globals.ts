@@ -20,6 +20,7 @@ export const {
   assign: ObjectAssign,
   getPrototypeOf: ObjectGetPrototypeOf,
   setPrototypeOf: ObjectSetPrototypeOf,
+  entries: ObjectEntries,
 } = Object;
 
 export const { prototype: ArrayPrototype, isArray: ArrayIsArray, from: ArrayFrom } = Array;

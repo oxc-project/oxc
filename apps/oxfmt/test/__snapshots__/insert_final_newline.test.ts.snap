@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`insertFinalNewline > editorconfig setting removes final newline 1`] = `
+"--- FILE -----------
+test.ts
+--- BEFORE ---------
+const foo = 1
+
+--- AFTER ----------
+const foo = 1;
+--------------------
+
+--- FILE -----------
+test.css
+--- BEFORE ---------
+.foo { color: red }
+
+--- AFTER ----------
+.foo {
+  color: red;
+}
+--------------------
+
+--- FILE -----------
+test.toml
+--- BEFORE ---------
+[foo]
+bar = 1
+
+--- AFTER ----------
+[foo]
+bar = 1
+--------------------"
+`;
+
+exports[`insertFinalNewline > oxfmtrc setting removes final newline 1`] = `
+"--- FILE -----------
+test.ts
+--- BEFORE ---------
+const foo = 1
+
+--- AFTER ----------
+const foo = 1;
+--------------------
+
+--- FILE -----------
+test.css
+--- BEFORE ---------
+.foo { color: red }
+
+--- AFTER ----------
+.foo {
+  color: red;
+}
+--------------------
+
+--- FILE -----------
+test.toml
+--- BEFORE ---------
+[foo]
+bar = 1
+
+--- AFTER ----------
+[foo]
+bar = 1
+--------------------"
+`;

@@ -86,6 +86,8 @@ export type FormatOptions = {
   singleAttributePerLine?: boolean;
   /** Control whether formats quoted code embedded in the file. (Default: `"auto"`) */
   embeddedLanguageFormatting?: "auto" | "off";
+  /** Whether to insert a final newline at the end of the file. (Default: `true`) */
+  insertFinalNewline?: boolean;
   /** Experimental: Sort import statements. Disabled by default. */
   experimentalSortImports?: SortImportsOptions;
   /** Experimental: Sort `package.json` keys. (Default: `true`) */

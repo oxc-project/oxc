@@ -115,7 +115,7 @@ impl StdinRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| {
-            source_formatter.format(&strategy, &source_text, &resolved_options)
+            source_formatter.format(&strategy, &source_text, resolved_options)
         }) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);

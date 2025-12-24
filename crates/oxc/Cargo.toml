@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.104.0"
+version = "0.105.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -60,7 +60,7 @@ full = [
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer", "oxc_transformer_plugins"]
 minifier = ["oxc_mangler", "oxc_minifier"]
-codegen = ["oxc_codegen"]
+codegen = ["oxc_codegen", "oxc_codegen/sourcemap"]
 mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg", "oxc_semantic/cfg"]
 isolated_declarations = ["oxc_isolated_declarations"]

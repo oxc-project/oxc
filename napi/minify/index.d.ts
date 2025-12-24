@@ -182,6 +182,15 @@ export interface TreeShakeOptions {
    * @default true
    */
   unknownGlobalSideEffects?: boolean
+  /**
+   * Whether invalid import statements have side effects.
+   *
+   * Accessing a non-existing import name will throw an error.
+   * Also import statements that cannot be resolved will throw an error.
+   *
+   * @default true
+   */
+  invalidImportSideEffects?: boolean
 }
 export interface Comment {
   type: 'Line' | 'Block'

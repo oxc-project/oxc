@@ -996,6 +996,22 @@ fn test_arguments() {
         ("items.reduce((acc, item) => (acc[item.action]--, acc), {})", None),
         ("items.reduce((acc, item) => (++acc[item.action], acc), {})", None),
         ("items.reduce((acc, item) => (--acc[item.action], acc), {})", None),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); array2[index]!++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); ++array2[index]!; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index]!)++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index] as number)++; return array2; }",
+            None,
+        ),
         // AssignmentExpression cases
         ("items.reduce((acc, item) => (acc[item.action] = 1, acc), {})", None),
         ("items.reduce((acc, item) => (acc.x[item.action] = 1, acc), {})", None),

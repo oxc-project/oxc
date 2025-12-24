@@ -447,11 +447,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_binding_pattern_kind(&mut self, it: &BindingPatternKind<'a>) {
-        walk_binding_pattern_kind(self, it);
-    }
-
-    #[inline]
     fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'a>) {
         walk_assignment_pattern(self, it);
     }
@@ -489,6 +484,11 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
         walk_formal_parameter(self, it);
+    }
+
+    #[inline]
+    fn visit_formal_parameter_rest(&mut self, it: &FormalParameterRest<'a>) {
+        walk_formal_parameter_rest(self, it);
     }
 
     #[inline]
@@ -2096,6 +2096,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_binding_pattern(&it.id);
+        if let Some(type_annotation) = &it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
         if let Some(init) = &it.init {
             visitor.visit_expression(init);
         }
@@ -2344,6 +2347,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_binding_pattern(&it.pattern);
+        if let Some(type_annotation) = &it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
         visitor.leave_node(kind);
     }
 
@@ -2358,23 +2364,11 @@ pub mod walk {
     #[inline]
     pub fn walk_binding_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingPattern<'a>) {
         // No `AstKind` for this type
-        visitor.visit_binding_pattern_kind(&it.kind);
-        if let Some(type_annotation) = &it.type_annotation {
-            visitor.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline]
-    pub fn walk_binding_pattern_kind<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &BindingPatternKind<'a>,
-    ) {
-        // No `AstKind` for this type
         match it {
-            BindingPatternKind::BindingIdentifier(it) => visitor.visit_binding_identifier(it),
-            BindingPatternKind::ObjectPattern(it) => visitor.visit_object_pattern(it),
-            BindingPatternKind::ArrayPattern(it) => visitor.visit_array_pattern(it),
-            BindingPatternKind::AssignmentPattern(it) => visitor.visit_assignment_pattern(it),
+            BindingPattern::BindingIdentifier(it) => visitor.visit_binding_identifier(it),
+            BindingPattern::ObjectPattern(it) => visitor.visit_object_pattern(it),
+            BindingPattern::ArrayPattern(it) => visitor.visit_array_pattern(it),
+            BindingPattern::AssignmentPattern(it) => visitor.visit_assignment_pattern(it),
         }
     }
 
@@ -2477,7 +2471,7 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_formal_parameter_list(&it.items);
         if let Some(rest) = &it.rest {
-            visitor.visit_binding_rest_element(rest);
+            visitor.visit_formal_parameter_rest(rest);
         }
         visitor.leave_node(kind);
     }
@@ -2489,6 +2483,27 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_binding_pattern(&it.pattern);
+        if let Some(type_annotation) = &it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(initializer) = &it.initializer {
+            visitor.visit_expression(initializer);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_formal_parameter_rest<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &FormalParameterRest<'a>,
+    ) {
+        let kind = AstKind::FormalParameterRest(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_binding_rest_element(&it.rest);
+        if let Some(type_annotation) = &it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
         visitor.leave_node(kind);
     }
 

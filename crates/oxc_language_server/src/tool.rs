@@ -6,9 +6,16 @@ use tower_lsp_server::{
     },
 };
 
+use crate::capabilities::Capabilities;
+
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
-    fn server_capabilities(&self, _capabilities: &mut ServerCapabilities) {}
+    fn server_capabilities(
+        &self,
+        _capabilities: &mut ServerCapabilities,
+        _backend_capabilities: &Capabilities,
+    ) {
+    }
 
     /// Build a boxed instance of the tool for the given root URI and options.
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;

@@ -172,14 +172,27 @@ impl<'a> AssignmentLike<'a, '_> {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
-                    write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())]);
+                    write!(
+                        f,
+                        [
+                            FormatNodeWithoutTrailingComments(&declarator.id()),
+                            declarator.type_annotation()
+                        ]
+                    );
                     format_left_trailing_comments(
                         declarator.id.span().end,
                         should_print_as_leading(init),
                         f,
                     );
                 } else {
-                    write!(f, declarator.id());
+                    write!(
+                        f,
+                        [
+                            declarator.id(),
+                            declarator.definite.then_some("!"),
+                            declarator.type_annotation()
+                        ]
+                    );
                 }
                 false
             }
@@ -199,13 +212,12 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    if property.shorthand {
-                        false
-                    } else {
-                        f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
-                    }
+                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
                 } else if property.shorthand {
-                    write!(f, property.key());
+                    let PropertyKey::StaticIdentifier(ident) = &property.key else {
+                        unreachable!("Expected static identifier for shorthand property");
+                    };
+                    write!(f, text(ident.name.as_str()));
                     false
                 } else {
                     let width = write_member_name(property.key(), f);
@@ -216,11 +228,9 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::BindingProperty(property) => {
                 if property.shorthand {
                     // Left-hand side only. See the explanation in the `has_only_left_hand_side` method.
-                    if matches!(
-                        property.value.kind,
-                        BindingPatternKind::BindingIdentifier(_)
-                            | BindingPatternKind::AssignmentPattern(_)
-                    ) {
+                    if property.value.is_binding_identifier()
+                        || property.value.is_assignment_pattern()
+                    {
                         write!(f, property.value());
                     }
                     return false;
@@ -232,11 +242,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    if property.shorthand {
-                        false
-                    } else {
-                        f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
-                    }
+                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(property.key(), f);
 
@@ -445,17 +451,14 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
+                // Treats binding property has a left-hand side only
+                // when the value is an assignment pattern,
+                // because the `value` includes the `key` part.
+                // e.g., `{ a = 1 }` the `a` is the `key` and `a = 1` is the
+                // `value`, aka AssignmentPattern itself
                 property.shorthand
-                    && matches!(
-                        property.value.kind,
-                        BindingPatternKind::BindingIdentifier(_)
-                        // Treats binding property has a left-hand side only
-                        // when the value is an assignment pattern,
-                        // because the `value` includes the `key` part.
-                        // e.g., `{ a = 1 }` the `a` is the `key` and `a = 1` is the
-                        // `value`, aka AssignmentPattern itself
-                        | BindingPatternKind::AssignmentPattern(_)
-                    )
+                    && (property.value.is_binding_identifier()
+                        || property.value.is_assignment_pattern())
             }
             Self::ObjectProperty(property) => property.shorthand,
         }
@@ -522,7 +525,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return false;
         };
 
-        let type_annotation = declarator.id.type_annotation.as_ref();
+        let type_annotation = declarator.type_annotation.as_ref();
 
         type_annotation.is_some_and(|ann| is_complex_type_annotation(ann))
             || (left_may_break
@@ -593,7 +596,7 @@ impl<'a> AssignmentLike<'a, '_> {
     fn is_complex_destructuring(&self) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => {
-                let BindingPatternKind::ObjectPattern(object) = &variable_decorator.id.kind else {
+                let BindingPattern::ObjectPattern(object) = &variable_decorator.id else {
                     return false;
                 };
 
@@ -601,9 +604,10 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 }
 
-                object.properties.iter().any(|property| {
-                    !property.shorthand || property.value.kind.is_assignment_pattern()
-                })
+                object
+                    .properties
+                    .iter()
+                    .any(|property| !property.shorthand || property.value.is_assignment_pattern())
             }
             AssignmentLike::AssignmentExpression(assignment) => {
                 let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {
@@ -999,7 +1003,13 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
     let is_first_argument_complex = ts_type_argument_list.first().is_some_and(|first_argument| {
         matches!(
             first_argument,
-            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
+            TSType::TSUnionType(_)
+                | TSType::TSIntersectionType(_)
+                | TSType::TSTypeLiteral(_)
+                // TODO: This is not part of Prettier's logic, but it makes sense to consider mapped types as
+                // complex because it is the same as type literals in terms of structure.
+                // NOTE: Once the `will_break` logic is added, this will have to be revisited.
+                | TSType::TSMappedType(_)
         )
     });
 

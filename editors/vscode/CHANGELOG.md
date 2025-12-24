@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.35.0] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- fc6e715 vscode: Lsp server path in quotes (only windows) (#17126) (Sysix)
+
+### 📚 Documentation
+
+- c14afd3 editor: Improve description for 'no-unused-disable-directives'  settings options (#17236) (connorshea)
+
 ## [1.34.0] - 2025-12-19
 
 ### 🚀 Features

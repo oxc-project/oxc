@@ -226,7 +226,8 @@ impl WorkspaceWorker {
     pub async fn did_change_watched_files(
         &self,
         file_event: &FileEvent,
-        file_system: &LSPFileSystem,
+        needs_diagnostic_refresh: &mut bool,
+        file_system: Option<&LSPFileSystem>,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(Uri, Vec<Diagnostic>)>>,
@@ -241,7 +242,7 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(file_system, |tool| {
+        self.handle_tool_changes(file_system, needs_diagnostic_refresh, |tool| {
             tool.handle_watched_file_change(&file_event.uri, &self.root_uri, options.clone())
         })
         .await
@@ -254,7 +255,8 @@ impl WorkspaceWorker {
     pub async fn did_change_configuration(
         &self,
         changed_options_json: serde_json::Value,
-        file_system: &LSPFileSystem,
+        needs_diagnostic_refresh: &mut bool,
+        file_system: Option<&LSPFileSystem>,
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(Uri, Vec<Diagnostic>)>>,
@@ -277,7 +279,7 @@ impl WorkspaceWorker {
         );
 
         let result = self
-            .handle_tool_changes(file_system, |tool| {
+            .handle_tool_changes(file_system, needs_diagnostic_refresh, |tool| {
                 tool.handle_configuration_change(
                     &self.root_uri,
                     &old_options,
@@ -298,7 +300,8 @@ impl WorkspaceWorker {
     /// diagnostics updates, watcher registrations/unregistrations, and tool replacement
     async fn handle_tool_changes<F>(
         &self,
-        file_system: &LSPFileSystem,
+        file_system: Option<&LSPFileSystem>,
+        needs_diagnostic_refresh: &mut bool,
         change_handler: F,
     ) -> (Option<Vec<(Uri, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
     where
@@ -323,7 +326,11 @@ impl WorkspaceWorker {
             }
             if let Some(replaced_tool) = change.tool {
                 *tool = replaced_tool;
+                *needs_diagnostic_refresh = true;
 
+                let Some(file_system) = file_system else {
+                    continue;
+                };
                 for uri in file_system.keys() {
                     let mut reports = tool.run_diagnostic(&uri, file_system.get(&uri).as_deref());
                     if !reports.is_empty() {
@@ -484,6 +491,7 @@ mod tests {
             Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
+        let mut needs_diagnostic_refresh = false;
 
         let (diagnostics, registrations, unregistrations) = worker
             .did_change_watched_files(
@@ -491,7 +499,8 @@ mod tests {
                     uri: Uri::from_str("file:///root/unknown.file").unwrap(),
                     typ: FileChangeType::CHANGED,
                 },
-                &fs,
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
             )
             .await;
 
@@ -499,6 +508,7 @@ mod tests {
         assert!(diagnostics.is_none());
         assert_eq!(registrations.len(), 0); // No new registrations expected
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
         let (diagnostics, registrations, unregistrations) = worker
             .did_change_watched_files(
@@ -506,7 +516,8 @@ mod tests {
                     uri: Uri::from_str("file:///root/watcher.config").unwrap(),
                     typ: FileChangeType::CHANGED,
                 },
-                &fs,
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
             )
             .await;
 
@@ -516,23 +527,43 @@ mod tests {
         assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
         assert_eq!(registrations.len(), 1); // One new registration expected
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
         let (diagnostics, registrations, unregistrations) = worker
             .did_change_watched_files(
                 &FileEvent {
-                    uri: Uri::from_str("file:///root/diagnostics.config").unwrap(),
+                    uri: Uri::from_str("file:///root/tool.config").unwrap(),
                     typ: FileChangeType::CHANGED,
                 },
-                &fs,
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
             )
             .await;
-        // Since FakeToolBuilder knows about "diagnostics.config", diagnostics are expected
+
+        // Because we passed a file system that knows about "diagnostics.config", diagnostics are expected
         assert!(diagnostics.is_some());
         assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
         assert_eq!(registrations.len(), 0); // No new registrations expected
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
 
-        // TODO: add test for tool replacement
+        needs_diagnostic_refresh = false;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_watched_files(
+                &FileEvent {
+                    uri: Uri::from_str("file:///root/tool.config").unwrap(),
+                    typ: FileChangeType::CHANGED,
+                },
+                &mut needs_diagnostic_refresh,
+                None,
+            )
+            .await;
+
+        // No file system passed, so no diagnostics expected
+        assert!(diagnostics.is_none());
+        assert_eq!(registrations.len(), 0); // No new registrations expected
+        assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
     }
 
     #[tokio::test]
@@ -547,17 +578,29 @@ mod tests {
             Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
         );
+        let mut needs_diagnostic_refresh = false;
 
-        let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!({"some_option": false}), &fs).await;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!({"some_option": false}),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
         // Since FakeToolBuilder does not change anything based on configuration, no diagnostics or registrations are expected
         assert!(diagnostics.is_none());
         assert_eq!(registrations.len(), 0); // No new registrations expected
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-        let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!(2), &fs).await;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!(2),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
         // Since FakeToolBuilder changes watcher patterns based on configuration, registrations are expected
         assert!(diagnostics.is_none());
@@ -565,17 +608,22 @@ mod tests {
         assert_eq!(unregistrations[0].id, "watcher-FakeTool-file:///root/");
         assert_eq!(registrations.len(), 1); // One new registration expected
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
+        assert!(!needs_diagnostic_refresh); // No need to refresh diagnostics
 
-        let (diagnostics, registrations, unregistrations) =
-            worker.did_change_configuration(serde_json::json!(3), &fs).await;
+        let (diagnostics, registrations, unregistrations) = worker
+            .did_change_configuration(
+                serde_json::json!(3),
+                &mut needs_diagnostic_refresh,
+                Some(&fs),
+            )
+            .await;
 
         // Since FakeToolBuilder changes diagnostics based on configuration, diagnostics are expected
         assert!(diagnostics.is_some());
         assert_eq!(diagnostics.unwrap().len(), 1); // One diagnostic report expected
         assert_eq!(registrations.len(), 0); // No new registrations expected
         assert_eq!(unregistrations.len(), 0); // No unregistrations expected
-
-        // TODO: add test for tool replacement
+        assert!(needs_diagnostic_refresh); // Need to refresh diagnostics
     }
 
     #[tokio::test]

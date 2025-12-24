@@ -1,8 +1,8 @@
 use oxc_ast::ast::{
-    ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingPatternKind,
-    BindingRestElement, Class, Declaration, ExportNamedDeclaration, FormalParameter,
-    FormalParameters, Function, ImportDeclaration, ImportDeclarationSpecifier, ModuleDeclaration,
-    ObjectPattern, VariableDeclaration,
+    ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingRestElement, Class,
+    Declaration, ExportNamedDeclaration, FormalParameter, FormalParameters, Function,
+    ImportDeclaration, ImportDeclarationSpecifier, ModuleDeclaration, ObjectPattern,
+    VariableDeclaration,
 };
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
@@ -16,11 +16,11 @@ pub trait BoundNames<'a> {
 
 impl<'a> BoundNames<'a> for BindingPattern<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
-        match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.bound_names(f),
-            BindingPatternKind::ArrayPattern(array) => array.bound_names(f),
-            BindingPatternKind::ObjectPattern(object) => object.bound_names(f),
-            BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(f),
+        match &self {
+            BindingPattern::BindingIdentifier(ident) => ident.bound_names(f),
+            BindingPattern::ArrayPattern(array) => array.bound_names(f),
+            BindingPattern::ObjectPattern(object) => object.bound_names(f),
+            BindingPattern::AssignmentPattern(assignment) => assignment.bound_names(f),
         }
     }
 }
@@ -71,7 +71,7 @@ impl<'a> BoundNames<'a> for FormalParameters<'a> {
             item.bound_names(f);
         }
         if let Some(rest) = &self.rest {
-            rest.bound_names(f);
+            rest.rest.argument.bound_names(f);
         }
     }
 }

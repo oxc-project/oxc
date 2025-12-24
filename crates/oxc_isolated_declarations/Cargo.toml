@@ -1,14 +1,11 @@
 [package]
 name = "oxc_isolated_declarations"
-version = "0.104.0"
+version = "0.105.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = [
-  "/examples",
-  "/src",
-]
+include = ["/examples", "/src"]
 keywords.workspace = true
 license.workspace = true
 publish = true
@@ -37,5 +34,5 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
-oxc_codegen = { workspace = true }
+oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }

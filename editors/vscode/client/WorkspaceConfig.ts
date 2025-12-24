@@ -1,9 +1,8 @@
 import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from "vscode";
+import { DiagnosticPullMode } from "vscode-languageclient";
 import { ConfigService } from "./ConfigService";
 
 export const oxlintConfigFileName = ".oxlintrc.json";
-
-export type Trigger = "onSave" | "onType";
 
 type UnusedDisableDirectives = "allow" | "warn" | "deny";
 
@@ -42,7 +41,7 @@ interface WorkspaceConfigInterface {
    *
    * @default 'onType'
    */
-  run: Trigger;
+  run: DiagnosticPullMode;
 
   /**
    * Define how directive comments like `// oxlint-disable-line` should be reported,
@@ -99,7 +98,7 @@ export type OxfmtWorkspaceConfigInterface = Pick<WorkspaceConfigInterface, "fmt.
 export class WorkspaceConfig {
   private _configPath: string | null = null;
   private _tsConfigPath: string | null = null;
-  private _runTrigger: Trigger = "onType";
+  private _runTrigger: DiagnosticPullMode = DiagnosticPullMode.onType;
   private _unusedDisableDirectives: UnusedDisableDirectives = "allow";
   private _typeAware: boolean = false;
   private _disableNestedConfig: boolean = false;
@@ -134,7 +133,8 @@ export class WorkspaceConfig {
       disableNestedConfig = true;
     }
 
-    this._runTrigger = this.configuration.get<Trigger>("lint.run") || "onType";
+    this._runTrigger =
+      this.configuration.get<DiagnosticPullMode>("lint.run") || DiagnosticPullMode.onType;
     this._configPath = this.configuration.get<string | null>("configPath") ?? null;
     this._tsConfigPath = this.configuration.get<string | null>("tsConfigPath") ?? null;
     this._unusedDisableDirectives =
@@ -188,11 +188,11 @@ export class WorkspaceConfig {
     return this.configPath !== null && this.configPath !== oxlintConfigFileName;
   }
 
-  get runTrigger(): Trigger {
+  get runTrigger(): DiagnosticPullMode {
     return this._runTrigger;
   }
 
-  updateRunTrigger(value: Trigger): PromiseLike<void> {
+  updateRunTrigger(value: DiagnosticPullMode): PromiseLike<void> {
     this._runTrigger = value;
     return this.configuration.update("lint.run", value, ConfigurationTarget.WorkspaceFolder);
   }
@@ -268,15 +268,20 @@ export class WorkspaceConfig {
     return this.configuration.update("fmt.configPath", value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  public shouldRequestDiagnostics(diagnosticPullMode: DiagnosticPullMode): boolean {
+    return diagnosticPullMode === this.runTrigger;
+  }
+
   public toOxlintConfig(): OxlintWorkspaceConfigInterface {
     return {
-      run: this.runTrigger,
       configPath: this.configPath ?? null,
       tsConfigPath: this.tsConfigPath ?? null,
       unusedDisableDirectives: this.unusedDisableDirectives,
       typeAware: this.typeAware,
       disableNestedConfig: this.disableNestedConfig,
       fixKind: this.fixKind,
+      // keep for backward compatibility
+      run: this.runTrigger,
       // deprecated, kept for backward compatibility
       flags: {
         disable_nested_config: this.disableNestedConfig ? "true" : "false",

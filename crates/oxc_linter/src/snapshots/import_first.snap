@@ -81,3 +81,19 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
    ╰────
   help: Move import statement to the top of the file
+
+  ⚠ eslint-plugin-import(first): Relative imports before absolute imports are prohibited
+   ╭─[index.ts:2:33]
+ 1 │ import { x } from '../foo';
+ 2 │               import { y } from 'bar';
+   ·                                 ─────
+   ╰────
+  help: Move absolute import above relative import
+
+  ⚠ eslint-plugin-import(first): Relative imports before absolute imports are prohibited
+   ╭─[index.ts:2:33]
+ 1 │ import { x } from '/foo';
+ 2 │               import { y } from 'bar';
+   ·                                 ─────
+   ╰────
+  help: Move absolute import above relative import

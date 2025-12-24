@@ -1,0 +1,65 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:13]
+ 3 │           componentDidMount: function() {
+ 4 │             this.setState({
+   ·             ─────────────
+ 5 │               name: this.props.name.toUpperCase()
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:13]
+ 3 │           componentDidMount: function componentDidMount() {
+ 4 │             this.setState({
+   ·             ─────────────
+ 5 │               name: this.props.name.toUpperCase()
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:13]
+ 3 │           componentDidMount() {
+ 4 │             this.setState({
+   ·             ─────────────
+ 5 │               name: this.props.name.toUpperCase()
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:13]
+ 3 │           componentDidMount = () => {
+ 4 │             this.setState({
+   ·             ─────────────
+ 5 │               name: this.props.name.toUpperCase()
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:13]
+ 3 │           componentDidMount: function() {
+ 4 │             this.setState({ data: 1 });
+   ·             ─────────────
+ 5 │             someClass.onSomeEvent(function(data) {
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:5:15]
+ 4 │             if (true) {
+ 5 │               this.setState({ data: 123 });
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.
+
+  ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
+   ╭─[no_did_mount_set_state.tsx:4:30]
+ 3 │           componentDidMount() {
+ 4 │             const x = true ? this.setState({ data: 123 }) : null;
+   ·                              ─────────────
+ 5 │           }
+   ╰────
+  help: Updating state after a component mount triggers a second render() call and can lead to property/layout thrashing.

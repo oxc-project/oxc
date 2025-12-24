@@ -69,7 +69,7 @@ impl NoUnusedVars {
             // we need to keep the other declarations
             let has_neighbors = declarations.len() > 1;
             debug_assert!(!declarations.is_empty());
-            let binding_info = symbol.get_binding_info(&decl.id.kind);
+            let binding_info = symbol.get_binding_info(&decl.id);
 
             match binding_info {
                 BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {

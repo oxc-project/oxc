@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { join } from "node:path";
-import { runWriteModeAndSnapshot } from "./utils";
+import { runAndSnapshot, runWriteModeAndSnapshot } from "./utils";
 
 const fixturesDir = join(__dirname, "fixtures", "editorconfig");
 
@@ -85,6 +85,25 @@ describe("editorconfig", () => {
   it("empty .editorconfig", async () => {
     const cwd = join(fixturesDir, "empty");
     const snapshot = await runWriteModeAndSnapshot(cwd, ["test.js"]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  // Structure:
+  //   nested_cwd/
+  //     .editorconfig   # [*] indent_size=2, [sub/*.ts] indent_size=8
+  //     sub/            # <- cwd (nested directory)
+  //       test.ts       # Pre-formatted with 8-space indentation
+  //
+  // When running from `sub/` directory:
+  // - .editorconfig is found in parent directory
+  // - [sub/*.ts] pattern should match `sub/test.ts` relative to .editorconfig location
+  // - NOT relative to cwd (sub/) - which would be `sub/sub/*.ts`
+  //
+  // Expected: --check should pass (exit 0) because file is already formatted with indent_size=8
+  // If pattern resolution was wrong, it would use indent_size=2 and fail
+  it("nested cwd - patterns resolved relative to .editorconfig location", async () => {
+    const nestedCwd = join(fixturesDir, "nested_cwd", "sub");
+    const snapshot = await runAndSnapshot(nestedCwd, [["--check", "."]]);
     expect(snapshot).toMatchSnapshot();
   });
 });

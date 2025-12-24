@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- eeeb53a semantic: Remove `leave_kind` (#17145) (camc314)
+- 009256e semantic: Inline `leave_kind` for `TSPropertySignature` (#17144) (camc314)
+- 2943e4d semantic: Inline `leave_kind` for `TSTypeQuery` (#17143) (camc314)
+- 2e65ac0 semantic: Inline `leave_kind` for `CatchParameter` (#17142) (camc314)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🚀 Features

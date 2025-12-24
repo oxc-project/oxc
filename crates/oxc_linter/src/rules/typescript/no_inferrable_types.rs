@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ChainElement, Expression, FormalParameter, TSLiteral, TSType,
-        TSTypeAnnotation, TSTypeName, UnaryOperator,
+        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
+        UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -76,7 +76,7 @@ impl Rule for NoInferrableTypes {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {
                 if let (Some(init), Some(type_annotation)) =
-                    (&variable_decl.init, &variable_decl.id.type_annotation)
+                    (&variable_decl.init, &variable_decl.type_annotation)
                     && is_inferrable_type(type_annotation, init)
                 {
                     let delete_span =
@@ -156,16 +156,12 @@ impl NoInferrableTypes {
         }
 
         for param in params {
-            if let BindingPatternKind::AssignmentPattern(param_assignment_pat) = &param.pattern.kind
-                && let Some(type_annotation) = &param_assignment_pat.left.type_annotation
-                && is_inferrable_type(type_annotation, &param_assignment_pat.right)
+            if let Some(init) = &param.initializer
+                && let Some(type_annotation) = &param.type_annotation
+                && is_inferrable_type(type_annotation, init)
             {
-                let delete_span = get_delete_span(
-                    ctx,
-                    type_annotation.span(),
-                    false,
-                    param_assignment_pat.left.optional,
-                );
+                let delete_span =
+                    get_delete_span(ctx, type_annotation.span(), false, param.optional);
                 ctx.diagnostic_with_suggestion(
                     no_inferrable_types_diagnostic(type_annotation.span()),
                     |fixer| fixer.delete_range(delete_span),
@@ -562,11 +558,6 @@ fn test() {
         ("const a: symbol = Symbol?.('a');", "const a = Symbol?.('a');", None),
         ("const a: undefined = undefined;", "const a = undefined;", None),
         ("const a: undefined = void someValue;", "const a = void someValue;", None),
-        (
-            "const fn = (a?: number = 5) => {};",
-            "const fn = (a = 5) => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false }])),
-        ),
         (
             "
 			class A {

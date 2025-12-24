@@ -28,12 +28,14 @@ mod context;
 mod r#gen;
 mod operator;
 mod options;
+#[cfg(feature = "sourcemap")]
 mod sourcemap_builder;
 mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
 use operator::Operator;
+#[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
 use str::{Quote, cold_branch, is_script_close_tag};
 
@@ -53,6 +55,7 @@ pub struct CodegenReturn {
     /// The source map from the input source code to the generated source code.
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
+    #[cfg(feature = "sourcemap")]
     pub map: Option<oxc_sourcemap::SourceMap>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
@@ -121,6 +124,7 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
 }
 
@@ -172,6 +176,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
     }
@@ -224,14 +229,21 @@ impl<'a> Codegen<'a> {
         self.indent = self.options.initial_indent;
         self.code.reserve(program.source_text.len());
         self.build_comments(&program.comments);
+        #[cfg(feature = "sourcemap")]
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
         program.print(&mut self, Context::default());
         let legal_comments = self.handle_eof_linked_or_external_comments(program);
         let code = self.code.into_string();
+        #[cfg(feature = "sourcemap")]
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { code, map, legal_comments }
+        CodegenReturn {
+            code,
+            #[cfg(feature = "sourcemap")]
+            map,
+            legal_comments,
+        }
     }
 
     /// Turn what's been built so far into a string. Like [`build`],
@@ -877,6 +889,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[cfg(feature = "sourcemap")]
     fn add_source_mapping(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
@@ -885,6 +898,11 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    fn add_source_mapping(&mut self, _span: Span) {}
+
+    #[cfg(feature = "sourcemap")]
     fn add_source_mapping_end(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
@@ -903,6 +921,11 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    fn add_source_mapping_end(&mut self, _span: Span) {}
+
+    #[cfg(feature = "sourcemap")]
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
@@ -910,4 +933,8 @@ impl<'a> Codegen<'a> {
             sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
     }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
 }

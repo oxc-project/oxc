@@ -148,6 +148,12 @@ export default class LinterTool implements ToolInterface {
       initializationOptions: configService.oxlintServerConfig,
       outputChannel,
       traceOutputChannel: outputChannel,
+      diagnosticPullOptions: {
+        onChange: true,
+        onSave: true,
+        onTabs: false,
+        filter: (document, mode) => !configService.shouldRequestDiagnostics(document.uri, mode),
+      },
       middleware: {
         handleDiagnostics: (uri, diagnostics, next) => {
           for (const diag of diagnostics) {
