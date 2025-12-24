@@ -520,10 +520,8 @@ impl<'a> PeepholeOptimizations {
                 if init_val.value_type(ctx).is_undetermined() {
                     // create intermediate declarations to avoid issues with hoisting
                     // `var [a] = [b]` => `var _a = [b], a = _a`
-                    let ident = ctx.generate_uid_in_current_scope(
-                        "_",
-                        SymbolFlags::FunctionScopedVariable,
-                    );
+                    let ident =
+                        ctx.generate_uid_in_current_scope("_", SymbolFlags::FunctionScopedVariable);
                     result.push(ctx.ast.variable_declarator(
                         init_val.span(),
                         VariableDeclarationKind::Let,
@@ -544,7 +542,9 @@ impl<'a> PeepholeOptimizations {
 
         for id_item in id_pattern.elements.drain(0..index) {
             let init_val = match init_iter.next() {
-                None | Some(ArrayExpressionElement::Elision(_)) => ArrayExpressionElement::from(ctx.ast.void_0(SPAN)),
+                None | Some(ArrayExpressionElement::Elision(_)) => {
+                    ArrayExpressionElement::from(ctx.ast.void_0(SPAN))
+                }
                 Some(init_val) => init_val,
             };
 
@@ -608,12 +608,7 @@ impl<'a> PeepholeOptimizations {
                             decl.kind,
                             ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
                             NONE,
-                            Some(
-                                ctx.ast.expression_array(
-                                    init_val.span(),
-                                    ctx.ast.vec1(init_val),
-                                ),
-                            ),
+                            Some(ctx.ast.expression_array(init_val.span(), ctx.ast.vec1(init_val))),
                             decl.definite,
                         ));
                     }
