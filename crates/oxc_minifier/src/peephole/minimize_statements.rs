@@ -506,28 +506,55 @@ impl<'a> PeepholeOptimizations {
 
         // limit iteration of id (left) to last spread of init (right)
         // [a, b, c] = [b, ...spread]
+        let init_len = init_expr.elements.len();
         let index = if let Some(spread_index) =
             init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
         {
-            min(id_pattern.elements.len(), spread_index)
+            min(min(id_pattern.elements.len(), spread_index), init_len)
         } else {
-            id_pattern.elements.len()
+            min(id_pattern.elements.len(), init_len)
         };
+
+        if decl.kind.is_var() {
+            for init_val in &mut init_expr.elements {
+                if init_val.value_type(ctx).is_undetermined() {
+                    // create intermediate declarations to avoid issues with hoisting
+                    // `var [a] = [b]` => `var _a = [b], a = _a`
+                    let ident = ctx.generate_uid_in_current_scope(
+                        "_",
+                        SymbolFlags::FunctionScopedVariable,
+                    );
+                    result.push(ctx.ast.variable_declarator(
+                        init_val.span(),
+                        VariableDeclarationKind::Let,
+                        ident.create_binding_pattern(ctx),
+                        NONE,
+                        Some(match init_val {
+                            ArrayExpressionElement::Elision(_) => ctx.ast.void_0(SPAN),
+                            _ => init_val.take_in(ctx.ast).into_expression(),
+                        }),
+                        decl.definite,
+                    ));
+                    *init_val = ArrayExpressionElement::from(ident.create_read_expression(ctx));
+                }
+            }
+        }
 
         let mut init_iter = init_expr.elements.drain(..);
 
-        let mut new_result: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
-
         for id_item in id_pattern.elements.drain(0..index) {
-            let init_val = init_iter.next();
+            let init_val = match init_iter.next() {
+                None | Some(ArrayExpressionElement::Elision(_)) => ArrayExpressionElement::from(ctx.ast.void_0(SPAN)),
+                Some(init_val) => init_val,
+            };
 
-            if let Some(id) = id_item {
-                if let BindingPattern::AssignmentPattern(mut pattern) = id {
-                    let init_value_type = init_val.as_ref().map(|elem| elem.value_type(ctx));
-
-                    if init_value_type.is_none_or(ValueType::is_undefined) {
+            match id_item {
+                // `[a = b] = [??]`
+                Some(BindingPattern::AssignmentPattern(mut pattern)) => {
+                    let init_value_type = init_val.value_type(ctx);
+                    if init_value_type.is_undefined() {
                         // if value is undefined, `[a = b] = [undefined]` => `a = b`
-                        new_result.push(ctx.ast.variable_declarator(
+                        result.push(ctx.ast.variable_declarator(
                             pattern.span(),
                             decl.kind,
                             pattern.left.take_in(ctx.ast),
@@ -535,9 +562,9 @@ impl<'a> PeepholeOptimizations {
                             Some(pattern.right.take_in(ctx.ast)),
                             decl.definite,
                         ));
-                    } else if init_value_type.is_some_and(ValueType::is_undetermined) {
+                    } else if init_value_type.is_undetermined() {
                         // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
-                        new_result.push(ctx.ast.variable_declarator(
+                        result.push(ctx.ast.variable_declarator(
                             pattern.span(),
                             decl.kind,
                             ctx.ast.binding_pattern_array_pattern(
@@ -546,79 +573,53 @@ impl<'a> PeepholeOptimizations {
                                 NONE,
                             ),
                             NONE,
-                            init_val.map(|elem| {
-                                ctx.ast.expression_array(elem.span(), ctx.ast.vec1(elem))
-                            }),
+                            Some(ctx.ast.expression_array(init_val.span(), ctx.ast.vec1(init_val))),
                             decl.definite,
                         ));
                     } else {
                         // if value is determined, `[a = b] = [c]` => `a = c`
-                        new_result.push(ctx.ast.variable_declarator(
+                        result.push(ctx.ast.variable_declarator(
                             pattern.span(),
                             decl.kind,
                             pattern.left.take_in(ctx.ast),
                             NONE,
-                            init_val.map(ArrayExpressionElement::into_expression),
+                            Some(init_val.into_expression()),
                             decl.definite,
                         ));
                     }
-                } else {
-                    // `[a, b] = [c, d]` => `a = c, b = d`
-                    let new_expr = if let Some(expr_element) = init_val {
-                        match expr_element.value_type(ctx) {
-                            ValueType::Undefined => None,
-                            ValueType::Undetermined => {
-                                if decl.kind.is_var() {
-                                    // create intermediate declarations to avoid issues with hoisting
-                                    // `var [a] = [b]` => `var _a = [b], a = _a`
-                                    let ident = ctx.generate_uid_in_current_scope(
-                                        id.get_identifier_name().unwrap().as_str(),
-                                        SymbolFlags::FunctionScopedVariable,
-                                    );
-                                    result.push(ctx.ast.variable_declarator(
-                                        id.span(),
-                                        decl.kind, // VariableDeclarationKind::Let,
-                                        ident.create_binding_pattern(ctx),
-                                        NONE,
-                                        Some(expr_element.into_expression()),
-                                        decl.definite,
-                                    ));
-                                    Some(ident.create_read_expression(ctx))
-                                } else {
-                                    Some(expr_element.into_expression())
-                                }
-                            }
-                            _ => Some(expr_element.into_expression()),
-                        }
-                    } else {
-                        None
-                    };
-                    new_result.push(ctx.ast.variable_declarator(
+                }
+                // `[a, b] = [c, d]` => `a = c, b = d`
+                Some(id) => {
+                    result.push(ctx.ast.variable_declarator(
                         id.span(),
                         decl.kind,
                         id,
                         NONE,
-                        new_expr.or_else(|| Some(ctx.ast.void_0(SPAN))),
+                        Some(init_val.into_expression()),
                         decl.definite,
                     ));
                 }
-            } else if let Some(expr_element) = init_val
-                && !expr_element.is_elision()
-            {
-                // `[,] = [a]` => `void [] = [a]`
-                new_result.push(ctx.ast.variable_declarator(
-                    expr_element.span(),
-                    decl.kind,
-                    ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
-                    NONE,
-                    Some(ctx.ast.expression_array(expr_element.span(), ctx.ast.vec1(expr_element))),
-                    decl.definite,
-                ));
+                // `[,] = [??]` => `void [] = [??]`
+                None => {
+                    // `[,] = [,]` => `void [] = [,]`
+                    if !init_val.value_type(ctx).is_undefined() {
+                        result.push(ctx.ast.variable_declarator(
+                            init_val.span(),
+                            decl.kind,
+                            ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
+                            NONE,
+                            Some(
+                                ctx.ast.expression_array(
+                                    init_val.span(),
+                                    ctx.ast.vec1(init_val),
+                                ),
+                            ),
+                            decl.definite,
+                        ));
+                    }
+                }
             }
         }
-
-        // append new results
-        result.extend(new_result);
 
         if init_iter.len() == 0 {
             if !id_pattern.elements.is_empty() {
@@ -628,7 +629,7 @@ impl<'a> PeepholeOptimizations {
                         decl.kind,
                         id,
                         NONE,
-                        None,
+                        Some(ctx.ast.void_0(SPAN)),
                         decl.definite,
                     ));
                 }
@@ -639,7 +640,7 @@ impl<'a> PeepholeOptimizations {
                     decl.kind,
                     rest.argument.take_in(ctx.ast),
                     NONE,
-                    decl.kind.is_const().then(|| ctx.ast.void_0(SPAN)),
+                    Some(ctx.ast.void_0(SPAN)),
                     decl.definite,
                 ));
             }
@@ -2149,6 +2150,7 @@ mod test {
         test("let [...a] = [...b]", "let a = [...b]");
         test("let [a, a, ...d] = []", "let a, a, d");
         test("let [a, ...d] = []", "let a, d");
+        test("const [a, ...d] = []", "const a = void 0, d = void 0;");
         test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
         test("let [a, ...d] = [1, foo]", "let a = 1, d = [foo] ");
         test("let [a, b, c, ...d] = [1, 2, ...foo]", "let a = 1, b = 2, [c, ...d] = [...foo]");
@@ -2191,11 +2193,12 @@ mod test {
         // vars
         test("var [a] = [a]", "var a = a");
         test("var [a, b] = [1, 2]", "var a = 1, b = 2");
-        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _a = 2, _b = a, a = _a, b = _b");
-        test("var [a, b] = [b, a]", "var _a = b, _b = a, a = _a, b = _b");
+        test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
+        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = 2, b = _2");
+        test("var [a, b] = [b, a]", "var _ = b, _2 = a, a = _, b = _2;");
         test(
             "var [a, b] = [b, a], [a, b] = [b, a]",
-            "var _a2 = b, _b2 = a, a = _a2, b = _b2, _a = b, _b = a, a = _a, b = _b",
+            "var _3 = b, _4 = a, a = _3, b = _4, _ = b, _2 = a, a = _, b = _2",
         );
     }
 }
