@@ -5,7 +5,11 @@ use oxc::{
     parser::{Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_formatter::{FormatOptions, Formatter, get_parse_options};
+use oxc_formatter::{
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
+    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    Semicolons, TrailingCommas, get_parse_options,
+};
 
 use crate::{
     babel::BabelCase,
@@ -15,10 +19,43 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
+/// Different formatter options to test idempotency against
+fn get_formatter_options_list() -> [FormatOptions; 3] {
+    [
+        FormatOptions::default(),
+        // Opposite of default options
+        FormatOptions {
+            indent_style: IndentStyle::Tab,
+            indent_width: IndentWidth::try_from(4).unwrap(),
+            line_ending: LineEnding::Crlf,
+            line_width: LineWidth::try_from(80).unwrap(),
+            quote_style: QuoteStyle::Single,
+            jsx_quote_style: QuoteStyle::Single,
+            quote_properties: QuoteProperties::Consistent,
+            trailing_commas: TrailingCommas::Es5,
+            semicolons: Semicolons::AsNeeded,
+            arrow_parentheses: ArrowParentheses::AsNeeded,
+            bracket_spacing: BracketSpacing::from(false),
+            bracket_same_line: BracketSameLine::from(false),
+            attribute_position: AttributePosition::Multiline,
+            expand: Expand::Always,
+            ..Default::default()
+        },
+        // Different from above two options
+        FormatOptions {
+            indent_width: IndentWidth::try_from(8).unwrap(),
+            line_width: LineWidth::try_from(120).unwrap(),
+            line_ending: LineEnding::Lf,
+            quote_properties: QuoteProperties::Preserve,
+            trailing_commas: TrailingCommas::None,
+            expand: Expand::Never,
+            ..Default::default()
+        },
+    ]
+}
+
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let options = FormatOptions::default();
-
     let allocator = Allocator::default();
     let ParserReturn { program, errors, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
@@ -28,27 +65,32 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
         return TestResult::Passed;
     }
 
-    let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
+    // Run the formatter with different options and compare the results.
+    // Return `TestResult::Passed` if all results are the same.
+    for options in get_formatter_options_list() {
+        let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
-    let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } = Parser::new(&allocator, &source_text1, source_type)
-        .with_options(get_parse_options())
-        .parse();
+        let allocator = Allocator::default();
+        let ParserReturn { program, errors, .. } =
+            Parser::new(&allocator, &source_text1, source_type)
+                .with_options(get_parse_options())
+                .parse();
 
-    if !errors.is_empty() {
-        return TestResult::ParseError(
-            errors.iter().map(std::string::ToString::to_string).collect(),
-            false,
-        );
+        if !errors.is_empty() {
+            return TestResult::ParseError(
+                errors.iter().map(std::string::ToString::to_string).collect(),
+                false,
+            );
+        }
+
+        let source_text2 = Formatter::new(&allocator, options).build(&program);
+
+        if source_text1 != source_text2 {
+            return TestResult::Mismatch("Mismatch", source_text1, source_text2);
+        }
     }
 
-    let source_text2 = Formatter::new(&allocator, options).build(&program);
-
-    if source_text1 == source_text2 {
-        TestResult::Passed
-    } else {
-        TestResult::Mismatch("Mismatch", source_text1, source_text2)
-    }
+    TestResult::Passed
 }
 
 pub struct FormatterTest262Case {
