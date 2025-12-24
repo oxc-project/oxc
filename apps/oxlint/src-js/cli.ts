@@ -158,12 +158,11 @@ function parseFileWrapper(
   filePath: string,
   sourceText: string,
   parserOptionsJson: string,
-): Promise<string> {
+): string {
   // `parseFileWrapper` is never called without `loadParserWrapper` being called first,
   // so `parseFile` must be defined here
   debugAssertIsNonNull(parseFile);
-  // Wrap in Promise to match the expected NAPI callback signature
-  return Promise.resolve(parseFile(parserId, filePath, sourceText, parserOptionsJson));
+  return parseFile(parserId, filePath, sourceText, parserOptionsJson);
 }
 
 // Get command line arguments, skipping first 2 (node binary and script path)

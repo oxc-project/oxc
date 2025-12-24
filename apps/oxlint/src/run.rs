@@ -101,6 +101,9 @@ pub type JsLoadParserCb = ThreadsafeFunction<
 ///
 /// This is called when linting a file that matches a custom parser's patterns.
 /// The callback should invoke the parser's `parse()` or `parseForESLint()` method.
+///
+/// Note: This is synchronous. Custom parsers that need async operations should
+/// handle them internally using synchronous blocking.
 #[napi]
 pub type JsParseFileCb = ThreadsafeFunction<
     // Arguments
@@ -115,7 +118,7 @@ pub type JsParseFileCb = ThreadsafeFunction<
         String,
     )>,
     // Return value
-    Promise<String>, // `ParseFileResult`, serialized to JSON
+    String, // `ParseFileResult`, serialized to JSON (always returns a value)
     // Arguments (repeated)
     FnArgs<(u32, String, String, String)>,
     // Error status

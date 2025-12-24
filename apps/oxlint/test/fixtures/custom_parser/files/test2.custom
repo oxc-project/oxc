@@ -1,0 +1,3 @@
+# Another test file
+var x
+log x

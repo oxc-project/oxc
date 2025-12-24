@@ -150,41 +150,48 @@ fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
 
 /// Wrap `parseFile` JS callback as a normal Rust function.
 ///
-/// The JS-side function is async. The returned Rust function blocks the current thread
-/// until the `Promise` returned by the JS function resolves.
-///
-/// The returned function will panic if called outside of a Tokio runtime.
+/// The JS-side function is synchronous. Use an `mpsc::channel` to wait for the result
+/// from JS side, and block current thread until `parseFile` completes execution.
 fn wrap_parse_file(cb: JsParseFileCb) -> ExternalLinterParseFileCb {
     Box::new(move |parser_id, file_path, source_text, parser_options_json| {
-        let cb = &cb;
-        let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((
-                    parser_id,
-                    file_path,
-                    source_text,
-                    parser_options_json,
-                )))
-                .await?
-                .into_future()
-                .await
-            })
-        });
+        let (tx, rx) = channel();
 
-        match res {
-            // `parseFile` returns JSON string if parsing succeeded, or an error occurred
-            Ok(json) => match serde_json::from_str(&json) {
-                // Parsing succeeded
-                Ok(ParseFileReturnValue::Success(result)) => Ok(result),
-                // Error occurred on JS side (e.g., parse error)
-                Ok(ParseFileReturnValue::Failure(err)) => Err(err),
-                // Invalid JSON - should be impossible, because we control serialization on JS side
-                Err(err) => {
-                    Err(format!("Failed to deserialize JSON returned by `parseFile`: {err}"))
-                }
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            FnArgs::from((parser_id, file_path, source_text, parser_options_json)),
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                // Therefore, `rx` cannot be dropped before this call.
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `parseFile`");
+                Ok(())
             },
-            // `parseFile` threw an error - should be impossible because `parseFile` is wrapped in try-catch
-            Err(err) => Err(format!("`parseFile` threw an error: {err}")),
+        );
+
+        if status == Status::Ok {
+            match rx.recv() {
+                // `parseFile` returns JSON string
+                Ok(Ok(json)) => match serde_json::from_str(&json) {
+                    // Parsing succeeded
+                    Ok(ParseFileReturnValue::Success(result)) => Ok(result),
+                    // Error occurred on JS side (e.g., parse error)
+                    Ok(ParseFileReturnValue::Failure(err)) => Err(err),
+                    // Invalid JSON - should be impossible, because we control serialization on JS side
+                    Err(err) => {
+                        Err(format!("Failed to deserialize JSON returned by `parseFile`: {err}"))
+                    }
+                },
+                // `parseFile` threw an error - should be impossible because `parseFile` is wrapped in try-catch
+                Ok(Err(err)) => Err(format!("`parseFile` threw an error: {err}")),
+                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                // `tx.send()` always happens before `tx` is dropped.
+                Err(err) => Err(format!("`parseFile` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `parseFile` callback: {status:?}"))
         }
     })
 }
