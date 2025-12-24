@@ -97,6 +97,33 @@ pub type JsLoadParserCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to parse a file using a custom parser.
+///
+/// This is called when linting a file that matches a custom parser's patterns.
+/// The callback should invoke the parser's `parse()` or `parseForESLint()` method.
+#[napi]
+pub type JsParseFileCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        // Parser ID to use (from LoadParserResult)
+        u32,
+        // Absolute path of file to parse
+        String,
+        // Source text content
+        String,
+        // Parser options as JSON string
+        String,
+    )>,
+    // Return value
+    Promise<String>, // `ParseFileResult`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(u32, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -105,6 +132,7 @@ pub type JsLoadParserCb = ThreadsafeFunction<
 /// 3. `setup_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
 /// 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
+/// 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -116,8 +144,9 @@ pub async fn lint(
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
     load_parser: Option<JsLoadParserCb>,
+    parse_file: Option<JsParseFileCb>,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file, load_parser).await.report()
+    lint_impl(args, load_plugin, setup_configs, lint_file, load_parser, parse_file).await.report()
         == ExitCode::SUCCESS
 }
 
@@ -128,6 +157,7 @@ async fn lint_impl(
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
     load_parser: Option<JsLoadParserCb>,
+    parse_file: Option<JsParseFileCb>,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -165,10 +195,11 @@ async fn lint_impl(
         setup_configs,
         lint_file,
         load_parser,
+        parse_file,
     ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _, _) = (load_plugin, setup_configs, lint_file, load_parser);
+        let (_, _, _, _, _) = (load_plugin, setup_configs, lint_file, load_parser, parse_file);
         None
     };
 
