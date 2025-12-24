@@ -500,13 +500,12 @@ impl<'a> PeepholeOptimizations {
 
         // limit iteration of id (left) to last spread of init (right)
         // [a, b, c] = [b, ...spread]
-        let init_len = init_expr.elements.len();
         let index = if let Some(spread_index) =
             init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
         {
-            min(min(id_pattern.elements.len(), spread_index), init_len)
+            min(id_pattern.elements.len(), spread_index)
         } else {
-            min(id_pattern.elements.len(), init_len)
+            id_pattern.elements.len()
         };
 
         if decl.kind.is_var() && index > 1 {
@@ -629,7 +628,7 @@ impl<'a> PeepholeOptimizations {
                     decl.kind,
                     rest.argument.take_in(ctx.ast),
                     NONE,
-                    Some(ctx.ast.void_0(SPAN)),
+                    Some(ctx.ast.expression_array(rest.span(), ctx.ast.vec())),
                     decl.definite,
                 ));
             }
@@ -2134,12 +2133,10 @@ mod test {
         test("let [a, b, c = 3] = [1, 2]", "let a = 1, b = 2, c = 3");
         test("let [a, b] = [1, 2, 3]", "let a = 1, b = 2, [] = [3]");
         test("let [a] = [123, 2222, 2222]", "let a = 123, [] = [2222, 2222]");
-        test("const [a] = []", "const a = void 0");
         // spread
         test("let [...a] = [...b]", "let a = [...b]");
-        test("let [a, a, ...d] = []", "let a, a, d");
-        test("let [a, ...d] = []", "let a, d");
-        test("const [a, ...d] = []", "const a = void 0, d = void 0;");
+        test("let [a, a, ...d] = []", "let a, a, d = []");
+        test("let [a, ...d] = []", "let a, d = []");
         test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
         test("let [a, ...d] = [1, foo]", "let a = 1, d = [foo] ");
         test("let [a, b, c, ...d] = [1, 2, ...foo]", "let a = 1, b = 2, [c, ...d] = [...foo]");
@@ -2179,8 +2176,14 @@ mod test {
         // SyntaxError: redeclaration of let a
         test("let [a, b] = [1, 2], [a, b] = [b, a]", "let a = 1, b = 2, a = 2, b = 2");
         test("let [a, b] = [b, a], [a, b] = [b, a]", "let a = b, b = a, a = b, b = a");
+        // const
+        test("const [[x, y, z] = [4, 5, 6]] = []", "const x = 4, y = 5, z = 6;");
+        test("const [a, ...d] = []", "const a = void 0, d = [];");
+        test("const [a] = []", "const a = void 0");
         // vars
         test("var [a] = [a]", "var a = a");
+        test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
+        test("var [c, ...d] = [6]", "var c = 6, d = []");
         test("var [a, b] = [1, 2]", "var a = 1, b = 2");
         test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
         test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = 2, b = _2");
