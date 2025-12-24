@@ -180,8 +180,8 @@ impl SourceFormatter {
     }
 
     /// Format TOML file using `toml`.
-    fn format_by_toml(source_text: &str, options: oxc_toml::formatter::Options) -> String {
-        oxc_toml::formatter::format(source_text, options)
+    fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
+        oxc_toml::format(source_text, options)
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

@@ -45,12 +45,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arc-swap"
-version = "1.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
-
-[[package]]
 name = "arraydeque"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -83,12 +77,6 @@ dependencies = [
  "outref",
  "vsimd",
 ]
-
-[[package]]
-name = "beef"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 
 [[package]]
 name = "bincode"
@@ -393,12 +381,6 @@ checksum = "77745e017f5edba1a9c1d854f6f3a52dac8a12dd5af5d2f54aecf61e43d80d30"
 dependencies = [
  "libm",
 ]
-
-[[package]]
-name = "countme"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 
 [[package]]
 name = "cow-utils"
@@ -1419,40 +1401,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
-name = "logos"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a790d11254054e5dc83902dba85d253ff06ceb0cfafb12be8773435cb9dfb4f4"
-dependencies = [
- "logos-derive",
-]
-
-[[package]]
-name = "logos-codegen"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f60337c43a38313b58871f8d5d76872b8e17aa9d51fad494b5e76092c0ce05f5"
-dependencies = [
- "beef",
- "fnv",
- "proc-macro2",
- "quote",
- "regex-automata",
- "regex-syntax",
- "rustc_version",
- "syn",
-]
-
-[[package]]
-name = "logos-derive"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d151b2ae667f69e10b8738f5cac0c746faa22b2e15ea7e83b55476afec3767dc"
-dependencies = [
- "logos-codegen",
-]
-
-[[package]]
 name = "ls-types"
 version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1511,7 +1459,7 @@ dependencies = [
  "napi-build",
  "napi-sys",
  "nohash-hasher",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "tokio",
@@ -1720,7 +1668,7 @@ dependencies = [
  "bincode 2.0.1",
  "flate2",
  "nom",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "thiserror",
@@ -1769,21 +1717,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-toml"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a0c30de15256c25716ecf850c55fd993e0ab42514b708e9cf8bd07d426cc0f2"
-dependencies = [
- "arc-swap",
- "globset",
- "itertools",
- "logos",
- "rowan",
- "rustc-hash 2.1.1",
- "serde",
- "thiserror",
- "time",
- "tracing",
-]
+checksum = "42c447978900c2436dac665912cd298d3f9f6d4cac2551080328729ea52f840f"
 
 [[package]]
 name = "oxc_allocator"
@@ -1795,7 +1731,7 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_data_structures",
  "oxc_estree",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
@@ -1853,7 +1789,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rayon",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "syn",
@@ -1890,7 +1826,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
@@ -1904,7 +1840,7 @@ dependencies = [
  "oxc_index",
  "oxc_syntax",
  "petgraph",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1926,7 +1862,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1936,7 +1872,7 @@ dependencies = [
  "cow-utils",
  "oxc-browserslist",
  "oxc_syntax",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
 ]
 
@@ -1973,7 +1909,7 @@ dependencies = [
  "phf",
  "pico-args",
  "rayon",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "saphyr",
  "serde",
  "serde_json",
@@ -2038,7 +1974,7 @@ dependencies = [
  "phf",
  "pico-args",
  "project-root",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "unicode-width",
@@ -2069,7 +2005,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2089,7 +2025,7 @@ dependencies = [
  "oxc_linter",
  "oxc_parser",
  "papaya",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "tokio",
@@ -2139,7 +2075,7 @@ dependencies = [
  "project-root",
  "rayon",
  "rust-lapper",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "self_cell",
  "serde",
  "serde_json",
@@ -2154,7 +2090,7 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "project-root",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "syn",
 ]
 
@@ -2182,7 +2118,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2209,7 +2145,7 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2247,7 +2183,7 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer_plugins",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "similar-asserts",
 ]
 
@@ -2284,7 +2220,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "seq-macro",
 ]
 
@@ -2300,7 +2236,7 @@ dependencies = [
  "oxc_ast_macros",
  "oxc_estree",
  "oxc_napi",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2316,7 +2252,7 @@ dependencies = [
  "oxc_linter",
  "oxc_napi",
  "oxc_transformer_plugins",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
@@ -2334,7 +2270,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "similar",
  "walkdir",
 ]
@@ -2350,7 +2286,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_span",
  "phf",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "unicode-id-start",
 ]
 
@@ -2367,7 +2303,7 @@ dependencies = [
  "once_cell",
  "papaya",
  "parking_lot",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "rustix",
  "self_cell",
  "serde",
@@ -2410,7 +2346,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "self_cell",
  "serde_json",
 ]
@@ -2426,7 +2362,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
@@ -2486,7 +2422,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2528,7 +2464,7 @@ dependencies = [
  "oxc",
  "oxc_napi",
  "oxc_sourcemap",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2556,7 +2492,7 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "sha1",
@@ -2585,7 +2521,7 @@ dependencies = [
  "oxc_transformer",
  "oxc_traverse",
  "pico-args",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "similar",
 ]
 
@@ -2602,7 +2538,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash 2.1.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2661,7 +2597,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "rayon",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
  "serde_json",
  "simdutf8",
@@ -3010,18 +2946,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rowan"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "417a3a9f582e349834051b8a10c8d71ca88da4211e4093528e36b9845f6b5f21"
-dependencies = [
- "countme",
- "hashbrown 0.14.5",
- "rustc-hash 1.1.0",
- "text-size",
-]
-
-[[package]]
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
@@ -3035,7 +2959,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
- "rustc-hash 2.1.1",
+ "rustc-hash",
  "serde",
 ]
 
@@ -3050,24 +2974,9 @@ dependencies = [
 
 [[package]]
 name = "rustc-hash"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
-
-[[package]]
-name = "rustc-hash"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
-
-[[package]]
-name = "rustc_version"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
-dependencies = [
- "semver",
-]
 
 [[package]]
 name = "rustix"
@@ -3465,12 +3374,6 @@ dependencies = [
  "rustix",
  "windows-sys 0.61.2",
 ]
-
-[[package]]
-name = "text-size"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
 
 [[package]]
 name = "textwrap"
