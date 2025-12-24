@@ -324,19 +324,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
 
         if let Some(value) = &self.value() {
             // Check if this is a Tailwind attribute and push context
-            let is_tailwind = f
+            // Extract context entry before mutating f
+            let tailwind_ctx_to_push = f
                 .options()
                 .experimental_tailwindcss
                 .as_ref()
-                .is_some_and(|opts| is_tailwind_jsx_attribute(&self.name, opts));
+                .filter(|opts| is_tailwind_jsx_attribute(&self.name, opts))
+                .map(|opts| {
+                    TailwindContextEntry::new(
+                        true,
+                        opts.tailwind_preserve_whitespace.unwrap_or(false),
+                    )
+                });
 
-            if is_tailwind {
-                f.context_mut().push_tailwind_context(TailwindContextEntry::new(true));
+            if let Some(ctx) = tailwind_ctx_to_push {
+                f.context_mut().push_tailwind_context(ctx);
             }
 
             write!(f, ["=", value]);
 
-            if is_tailwind {
+            if tailwind_ctx_to_push.is_some() {
                 f.context_mut().pop_tailwind_context();
             }
         }

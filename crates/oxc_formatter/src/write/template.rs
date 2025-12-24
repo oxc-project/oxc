@@ -55,14 +55,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         write!(f, [line_suffix_boundary()]);
 
         // Check if this is a Tailwind function call (e.g., tw`flex p-4`)
-        let is_tailwind = f
+        // Extract context entry before mutating f
+        let tailwind_ctx_to_push = f
             .options()
             .experimental_tailwindcss
             .as_ref()
-            .is_some_and(|opts| is_tailwind_function_call(&self.tag, opts));
+            .filter(|opts| is_tailwind_function_call(&self.tag, opts))
+            .map(|opts| {
+                TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace.unwrap_or(false))
+            });
 
-        if is_tailwind {
-            f.context_mut().push_tailwind_context(TailwindContextEntry::new(false));
+        if let Some(ctx) = tailwind_ctx_to_push {
+            f.context_mut().push_tailwind_context(ctx);
         }
 
         if try_format_embedded_template(self, f) {
@@ -75,7 +79,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
             write!(f, template);
         }
 
-        if is_tailwind {
+        if tailwind_ctx_to_push.is_some() {
             f.context_mut().pop_tailwind_context();
         }
     }
@@ -87,19 +91,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
 
         // Check if we're in a Tailwind context via the stack
         // (handles JSXAttribute, CallExpression, TaggedTemplateExpression, and nested contexts)
-        let in_tailwind_context = f.context().tailwind_context().is_some();
+        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
+            // No whitespace means only one class, so no need to sort
+            source.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+        });
 
-        let tailwind_options =
-            f.options().experimental_tailwindcss.as_ref().filter(|_tailwind_options| {
-                // No whitespace means only one class, so no need to sort
-                let has_whitespace = source.as_bytes().iter().any(|&b| b.is_ascii_whitespace());
-                has_whitespace && in_tailwind_context
-            });
-
-        if let Some(tailwind_options) = tailwind_options {
-            let preserve_whitespace =
-                tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
-            write_tailwind_template_element(self, preserve_whitespace, f);
+        if let Some(ctx) = tailwind_ctx {
+            write_tailwind_template_element(self, ctx.preserve_whitespace, f);
         } else {
             write!(f, text(self.value.raw.as_str()));
         }
@@ -229,13 +227,7 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
         let tailwind_ctx = f.context().tailwind_context().copied();
 
         // When in Tailwind context with preserve_whitespace false, newlines are collapsed
-        let tailwind_collapses_newlines = tailwind_ctx.is_some()
-            && !f
-                .options()
-                .experimental_tailwindcss
-                .as_ref()
-                .and_then(|opts| opts.tailwind_preserve_whitespace)
-                .unwrap_or(false);
+        let tailwind_collapses_newlines = tailwind_ctx.is_some_and(|ctx| !ctx.preserve_whitespace);
 
         for (i, quasi) in quasis.iter().enumerate() {
             write!(f, *quasi);
@@ -264,7 +256,7 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
 
                     f.context_mut().push_tailwind_context(
                         TailwindContextEntry::template_expression(
-                            ctx.is_jsx,
+                            ctx,
                             quasi_before_has_trailing_ws,
                             quasi_after_has_leading_ws,
                         ),

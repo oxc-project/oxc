@@ -274,21 +274,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 write!(f, [optional.then_some("?."), type_arguments]);
 
                 // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
-                let is_tailwind = f
+                // Extract context entry before mutating f
+                let tailwind_ctx_to_push = f
                     .options()
                     .experimental_tailwindcss
                     .as_ref()
-                    .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
+                    .filter(|opts| is_tailwind_function_call(&self.callee, opts))
+                    .map(|opts| {
+                        TailwindContextEntry::new(
+                            false,
+                            opts.tailwind_preserve_whitespace.unwrap_or(false),
+                        )
+                    });
 
                 // Push Tailwind context before formatting arguments
-                if is_tailwind {
-                    f.context_mut().push_tailwind_context(TailwindContextEntry::new(false));
+                if let Some(ctx) = tailwind_ctx_to_push {
+                    f.context_mut().push_tailwind_context(ctx);
                 }
 
                 write!(f, arguments);
 
                 // Pop Tailwind context after formatting
-                if is_tailwind {
+                if tailwind_ctx_to_push.is_some() {
                     f.context_mut().pop_tailwind_context();
                 }
             });
@@ -1047,15 +1054,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        let tailwind_ctx = f.context().tailwind_context().copied();
-
-        let tailwind_options = f.options().experimental_tailwindcss.as_ref().filter(|_| {
+        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
             // No whitespace means only one class, so no need to sort
             let content = f.source_text().text_for(self);
             content.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
         });
 
-        if let (Some(ctx), Some(tailwind_options)) = (tailwind_ctx, tailwind_options) {
+        if let Some(ctx) = tailwind_ctx {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             let quote = if ctx.is_jsx {
                 f.options().jsx_quote_style.as_char()
@@ -1064,9 +1069,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
             };
             let quote_str = if quote == '"' { "\"" } else { "'" };
 
-            let preserve_spaces = tailwind_options.tailwind_preserve_whitespace.unwrap_or(false);
             write!(f, quote_str);
-            write_tailwind_string_literal(self, preserve_spaces, f);
+            write_tailwind_string_literal(self, ctx.preserve_whitespace, f);
             write!(f, quote_str);
         } else {
             // Not in Tailwind context - use normal string literal formatting
