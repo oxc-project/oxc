@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 
-use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -101,62 +100,116 @@ impl Rule for NoDuplicates {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let groups = module_record
-            .requested_modules
-            .iter()
-            .map(|(source, requested_modules)| {
-                let resolved_absolute_path = module_record.get_loaded_module(source).map_or_else(
-                    || source.to_string(),
-                    |module| module.resolved_absolute_path.to_string_lossy().to_string(),
-                );
-                (resolved_absolute_path, requested_modules)
-            })
-            .chunk_by(|r| r.0.clone());
+        let mut value_import_entries: FxHashMap<CompactStr, Vec<&RequestedModule>> =
+            FxHashMap::default();
+        let mut type_import_entries: FxHashMap<CompactStr, Vec<&RequestedModule>> =
+            FxHashMap::default();
+        let mut namespace_import_entries: FxHashMap<CompactStr, Vec<&RequestedModule>> =
+            FxHashMap::default();
+        let mut default_import_entries: FxHashMap<CompactStr, Vec<&RequestedModule>> =
+            FxHashMap::default();
 
-        for (_path, group) in &groups {
-            let requested_modules = group
-                .into_iter()
-                .flat_map(|(_path, requested_modules)| requested_modules)
-                .filter(|requested_module| requested_module.is_import);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
-            // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
-                FxHashMap::default();
+        for (source, requested_modules) in &module_record.requested_modules {
+            let resolved_absolute_path: CompactStr =
+                module_record.get_loaded_module(source).map_or_else(
+                    || source.clone(),
+                    |module| CompactStr::from(module.resolved_absolute_path.to_string_lossy()),
+                );
+
             for requested_module in requested_modules {
+                if !requested_module.is_import {
+                    continue;
+                }
                 let imports = module_record
                     .import_entries
                     .iter()
                     .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
-                    import_entries_maps.entry(0).or_default().push(requested_module);
+                    value_import_entries
+                        .entry(resolved_absolute_path.clone())
+                        .or_default()
+                        .push(requested_module);
                     continue;
                 }
-                let mut flags = [true; 4];
-                for imports in imports {
-                    let key = if imports.is_type {
-                        match imports.import_name {
-                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
-                            ImportImportName::NamespaceObject => 2,
-                            ImportImportName::Default(_) => 3,
+                // Track which categories we've already added this requested_module to
+                // to avoid counting multiple named imports from the same statement as duplicates.
+                // [0] = value, [1] = type, [2] = namespace, [3] = default
+                let mut added = [false; 4];
+                for import in &imports {
+                    if import.is_type {
+                        match &import.import_name {
+                            ImportImportName::Name(_) => {
+                                if self.prefer_inline {
+                                    if !added[0] {
+                                        added[0] = true;
+                                        value_import_entries
+                                            .entry(resolved_absolute_path.clone())
+                                            .or_default()
+                                            .push(requested_module);
+                                    }
+                                } else if !added[1] {
+                                    added[1] = true;
+                                    type_import_entries
+                                        .entry(resolved_absolute_path.clone())
+                                        .or_default()
+                                        .push(requested_module);
+                                }
+                            }
+                            ImportImportName::NamespaceObject => {
+                                if !added[2] {
+                                    added[2] = true;
+                                    namespace_import_entries
+                                        .entry(resolved_absolute_path.clone())
+                                        .or_default()
+                                        .push(requested_module);
+                                }
+                            }
+                            ImportImportName::Default(_) => {
+                                if !added[3] {
+                                    added[3] = true;
+                                    default_import_entries
+                                        .entry(resolved_absolute_path.clone())
+                                        .or_default()
+                                        .push(requested_module);
+                                }
+                            }
                         }
                     } else {
-                        match imports.import_name {
-                            ImportImportName::NamespaceObject => 2,
-                            _ => 0,
+                        match &import.import_name {
+                            ImportImportName::NamespaceObject => {
+                                if !added[2] {
+                                    added[2] = true;
+                                    namespace_import_entries
+                                        .entry(resolved_absolute_path.clone())
+                                        .or_default()
+                                        .push(requested_module);
+                                }
+                            }
+                            _ => {
+                                if !added[0] {
+                                    added[0] = true;
+                                    value_import_entries
+                                        .entry(resolved_absolute_path.clone())
+                                        .or_default()
+                                        .push(requested_module);
+                                }
+                            }
                         }
-                    };
-
-                    if flags[key as usize] {
-                        flags[key as usize] = false;
-                        import_entries_maps.entry(key).or_default().push(requested_module);
                     }
                 }
             }
 
-            for i in 0..4 {
-                check_duplicates(ctx, import_entries_maps.get(&i));
-            }
+            check_duplicates(ctx, value_import_entries.get(&resolved_absolute_path));
+            check_duplicates(ctx, type_import_entries.get(&resolved_absolute_path));
+            check_duplicates(ctx, namespace_import_entries.get(&resolved_absolute_path));
+            check_duplicates(ctx, default_import_entries.get(&resolved_absolute_path));
+
+            // Clear entries to save memory
+            value_import_entries.remove(&resolved_absolute_path);
+            type_import_entries.remove(&resolved_absolute_path);
+            namespace_import_entries.remove(&resolved_absolute_path);
+            default_import_entries.remove(&resolved_absolute_path);
         }
     }
 }
