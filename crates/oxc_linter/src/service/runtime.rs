@@ -1200,10 +1200,10 @@ impl Runtime {
                         // the extension (e.g., .marko, .mdx). Use a default JavaScript with JSX
                         // source type for unrecognized extensions, which is a reasonable default
                         // for most custom parser use cases.
-                        let source_type = SourceType::from_path(path).ok().map_or_else(
-                            SourceType::jsx,
-                            |st| if st.is_javascript() { st.with_jsx(true) } else { st },
-                        );
+                        let source_type =
+                            SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
+                                if st.is_javascript() { st.with_jsx(true) } else { st }
+                            });
 
                         let fix_result = Fixer::new(source_text, messages, Some(source_type)).fix();
 

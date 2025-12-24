@@ -150,7 +150,7 @@ impl Linter {
     /// Returns the parser info (parser_id, parser_options_json, has_parse_for_eslint) if the file
     /// matches a custom parser pattern, or `None` if it should use the default oxc parser.
     pub fn find_custom_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
-        self.config.external_parser_store().find_parser_for_path(path)
+        self.config.find_custom_parser_for_path(path)
     }
 
     /// Parse a file using a custom parser.

@@ -83,9 +83,24 @@ impl ExternalParserStore {
     ///
     /// Note: Parsers are matched in the order they were configured. If multiple parsers
     /// could match the same file, the first one wins.
-    pub fn find_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
+    ///
+    /// # Arguments
+    /// * `path` - The absolute path to the file being linted
+    /// * `config_path` - Optional path to the config file; if provided, `path` will be made
+    ///   relative to the config file's parent directory for pattern matching
+    pub fn find_parser_for_path(
+        &self,
+        path: &Path,
+        config_path: Option<&Path>,
+    ) -> Option<(u32, &str, bool)> {
+        // Make the path relative to the config file's parent directory if config_path is provided
+        // This matches how override patterns work in apply_overrides
+        let relative_path = config_path
+            .and_then(|cp| cp.parent())
+            .map_or(path, |parent| path.strip_prefix(parent).unwrap_or(path));
+
         // Use lossy conversion for non-UTF-8 paths (rare but possible on some systems)
-        let path_str = path.to_string_lossy();
+        let path_str = relative_path.to_string_lossy();
 
         // Check each parser's patterns (first match wins)
         for parser in &self.parsers {
@@ -178,8 +193,8 @@ mod test {
             &LoadParserResult { parser_id: 42, has_parse_for_eslint: true },
         );
 
-        // Should match .marko files
-        let result = store.find_parser_for_path(Path::new("/project/component.marko"));
+        // Should match .marko files (no config path, uses absolute path matching)
+        let result = store.find_parser_for_path(Path::new("/project/component.marko"), None);
         assert!(result.is_some());
         let (parser_id, options, has_parse_for_eslint) = result.unwrap();
         assert_eq!(parser_id, 42);
@@ -187,7 +202,34 @@ mod test {
         assert!(has_parse_for_eslint);
 
         // Should not match other files
-        let result = store.find_parser_for_path(Path::new("/project/file.js"));
+        let result = store.find_parser_for_path(Path::new("/project/file.js"), None);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_find_parser_for_path_with_relative_patterns() {
+        let mut store = ExternalParserStore::new();
+
+        store.register_parser(
+            PathBuf::from("/project/.oxlintrc.json"),
+            vec!["src/**/*.custom".to_string()],
+            "null".to_string(),
+            &LoadParserResult { parser_id: 1, has_parse_for_eslint: true },
+        );
+
+        let config_path = Path::new("/project/.oxlintrc.json");
+
+        // Should match when path is made relative to config
+        let result = store.find_parser_for_path(
+            Path::new("/project/src/components/test.custom"),
+            Some(config_path),
+        );
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0, 1);
+
+        // Should not match files outside the pattern
+        let result =
+            store.find_parser_for_path(Path::new("/project/other/test.custom"), Some(config_path));
         assert!(result.is_none());
     }
 
@@ -210,11 +252,11 @@ mod test {
         );
 
         // Check .marko matches first parser
-        let result = store.find_parser_for_path(Path::new("test.marko"));
+        let result = store.find_parser_for_path(Path::new("test.marko"), None);
         assert_eq!(result.unwrap().0, 1);
 
         // Check .mdx matches second parser
-        let result = store.find_parser_for_path(Path::new("test.mdx"));
+        let result = store.find_parser_for_path(Path::new("test.mdx"), None);
         assert_eq!(result.unwrap().0, 2);
     }
 }

@@ -367,6 +367,14 @@ impl ConfigStore {
     pub fn external_parser_store(&self) -> &ExternalParserStore {
         &self.external_parser_store
     }
+
+    /// Find a custom parser for the given file path.
+    ///
+    /// This is a convenience method that calls `external_parser_store().find_parser_for_path()`
+    /// with the appropriate config path for path relativization.
+    pub fn find_custom_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
+        self.external_parser_store.find_parser_for_path(path, self.base.base.config.path.as_deref())
+    }
 }
 
 #[cfg(test)]

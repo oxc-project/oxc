@@ -1,14 +1,14 @@
 {
-  "jsParsers": [
-    {
-      "parser": "./parser.ts",
-      "patterns": ["*.custom"]
-    }
-  ],
-  "jsPlugins": ["./plugin.ts"],
   "categories": { "correctness": "off" },
-  "rules": {
-    "custom-parser-plugin/no-foo-var": "error",
-    "custom-parser-plugin/count-identifiers": "error"
-  }
+  "overrides": [
+    {
+      "files": ["*.custom"],
+      "jsParser": "./parser.ts",
+      "jsPlugins": ["./plugin.ts"],
+      "rules": {
+        "custom-parser-plugin/no-foo-var": "error",
+        "custom-parser-plugin/count-identifiers": "error"
+      }
+    }
+  ]
 }
