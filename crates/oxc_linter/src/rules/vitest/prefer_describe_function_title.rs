@@ -84,7 +84,6 @@ impl Rule for PreferDescribeFunctionTitle {
             return;
         };
 
-        let node = jest_node.node;
         match arg {
             Argument::StringLiteral(string) => {
                 self.check_string_literal(string, node, ctx);
