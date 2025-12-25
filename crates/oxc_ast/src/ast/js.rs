@@ -225,7 +225,17 @@ pub use match_expression;
 /// digits, `$`, or `_`.
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    GetSpan,
+    GetSpanMut,
+    ContentEq,
+    ESTree,
+    UnstableAddress,
+    FromESTree
+)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
@@ -244,7 +254,17 @@ pub struct IdentifierName<'a> {
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    GetSpan,
+    GetSpanMut,
+    ContentEq,
+    ESTree,
+    UnstableAddress,
+    FromESTree
+)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),

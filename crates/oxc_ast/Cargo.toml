@@ -30,6 +30,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
+serde_json = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -39,3 +40,4 @@ serialize = [
   "oxc_syntax/serialize",
   "oxc_estree/serialize",
 ]
+deserialize = ["dep:serde_json"]

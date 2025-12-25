@@ -276,6 +276,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveGetSpanMut,
     &derives::DeriveContentEq,
     &derives::DeriveESTree,
+    &derives::DeriveFromESTree,
 ];
 
 /// Code generators
