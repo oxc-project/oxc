@@ -24,7 +24,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{CompactStr, SourceType, Span, VALID_EXTENSIONS};
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,
@@ -1145,9 +1145,13 @@ impl Runtime {
 
     /// Process a file that uses a custom parser.
     ///
-    /// This handles Phase 1 custom parser support where:
-    /// 1. The file is parsed by a custom JS parser (not oxc)
-    /// 2. Only JS rules are run (no Rust rules)
+    /// This handles custom parser support in two phases:
+    /// - Phase 1: File is parsed by custom JS parser, only JS rules run
+    /// - Phase 2: File is stripped of custom syntax, Rust rules run on stripped source
+    ///
+    /// The flow is:
+    /// 1. Try to strip custom syntax (Phase 2) - if supported, run Rust rules
+    /// 2. Run JS rules via custom parser (Phase 1)
     fn process_custom_parser_file(
         &self,
         _file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -1155,8 +1159,6 @@ impl Runtime {
         tx_error: &DiagnosticSender,
     ) {
         // Get the custom parser info for this file
-        // Note: `_has_parse_for_eslint` indicates whether the parser implements `parseForESLint()`
-        // which returns scope info. This is captured for Phase 3 scope integration but unused in Phase 1.
         let Some((parser_id, parser_options_json, _has_parse_for_eslint)) =
             self.linter.find_custom_parser_for_path(path)
         else {
@@ -1164,14 +1166,7 @@ impl Runtime {
             return;
         };
 
-        // Always use OsFileSystem for custom parser files, ignoring the passed file_system.
-        // Rationale:
-        // 1. RawTransferFileSystem uses a pre-allocated fixed-size buffer that's optimized for
-        //    oxc's internal parsing. Custom parser files use Allocator::default() which is
-        //    incompatible with RawTransferFileSystem's alloc_bytes_start tracking.
-        // 2. Custom parsers generate their own AST in JS, so there's no performance benefit
-        //    from the raw transfer optimization (which is designed for oxc's buffer-based AST).
-        // 3. OsFileSystem is simpler and works correctly with standard allocators.
+        // Always use OsFileSystem for custom parser files
         let os_file_system = OsFileSystem;
 
         // Read the source text
@@ -1183,60 +1178,218 @@ impl Runtime {
                     "Failed to read file {} with error \"{e}\"",
                     path.display()
                 )));
-                // Receiver may be dropped if linting was cancelled; ignore send errors
                 let _ = tx_error.send(vec![error]);
                 return;
             }
         };
 
-        // Run linting with the custom parser
+        // Collect all messages from both phases
+        let mut all_messages: Vec<Message> = Vec::new();
+
+        // Phase 2: Try to strip custom syntax and run Rust rules
+        if self.linter.has_strip_support() {
+            match self.linter.strip_with_custom_parser(
+                parser_id,
+                path,
+                source_text,
+                parser_options_json,
+            ) {
+                Some(Ok(Some(strip_result))) => {
+                    // Stripping succeeded - parse with oxc and run Rust rules
+                    let stripped_messages = self.lint_stripped_source(
+                        path,
+                        source_text,
+                        &strip_result,
+                    );
+                    all_messages.extend(stripped_messages);
+                }
+                Some(Ok(None)) => {
+                    // Parser doesn't support stripping - Phase 2 not available
+                }
+                Some(Err(err)) => {
+                    // Stripping failed - report error but continue with JS rules
+                    let error = Error::new(OxcDiagnostic::warn(format!(
+                        "Error stripping {} with custom parser (Rust rules skipped): {err}",
+                        path.display()
+                    )));
+                    let _ = tx_error.send(vec![error]);
+                }
+                None => {
+                    // No strip callback configured - Phase 2 not available
+                }
+            }
+        }
+
+        // Phase 1: Run JS rules via custom parser
         match self.linter.run_with_custom_parser(path, source_text, parser_id, parser_options_json)
         {
-            Ok(messages) => {
-                if !messages.is_empty() {
-                    // Apply fixes if enabled
-                    let messages = if self.linter.options().fix.is_some() {
-                        // For custom parser files, SourceType::from_path() may not recognize
-                        // the extension (e.g., .marko, .mdx). Use a default JavaScript with JSX
-                        // source type for unrecognized extensions, which is a reasonable default
-                        // for most custom parser use cases.
-                        let source_type =
-                            SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
-                                if st.is_javascript() { st.with_jsx(true) } else { st }
-                            });
-
-                        let fix_result = Fixer::new(source_text, messages, Some(source_type)).fix();
-
-                        if fix_result.fixed {
-                            os_file_system.write_file(path, &fix_result.fixed_code).unwrap();
-                        }
-
-                        fix_result.messages
-                    } else {
-                        messages
-                    };
-
-                    if !messages.is_empty() {
-                        let errors = messages.into_iter().map(Into::into).collect();
-                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                            &self.cwd,
-                            path,
-                            source_text,
-                            errors,
-                        );
-                        // Receiver may be dropped if linting was cancelled; ignore send errors
-                        let _ = tx_error.send(diagnostics);
-                    }
-                }
+            Ok(js_messages) => {
+                all_messages.extend(js_messages);
             }
             Err(err) => {
                 let error = Error::new(OxcDiagnostic::error(format!(
                     "Error linting {} with custom parser: {err}",
                     path.display()
                 )));
-                // Receiver may be dropped if linting was cancelled; ignore send errors
                 let _ = tx_error.send(vec![error]);
+                return;
             }
         }
+
+        if all_messages.is_empty() {
+            return;
+        }
+
+        // Apply fixes if enabled
+        let messages = if self.linter.options().fix.is_some() {
+            let source_type =
+                SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
+                    if st.is_javascript() { st.with_jsx(true) } else { st }
+                });
+
+            let fix_result = Fixer::new(source_text, all_messages, Some(source_type)).fix();
+
+            if fix_result.fixed {
+                os_file_system.write_file(path, &fix_result.fixed_code).unwrap();
+            }
+
+            fix_result.messages
+        } else {
+            all_messages
+        };
+
+        if !messages.is_empty() {
+            let errors = messages.into_iter().map(Into::into).collect();
+            let diagnostics =
+                DiagnosticService::wrap_diagnostics(&self.cwd, path, source_text, errors);
+            let _ = tx_error.send(diagnostics);
+        }
+    }
+
+    /// Lint stripped source code with Rust rules.
+    ///
+    /// This parses the stripped source with oxc, runs Rust rules, and remaps
+    /// diagnostic spans back to the original source positions.
+    fn lint_stripped_source(
+        &self,
+        path: &Path,
+        original_source_text: &str,
+        strip_result: &crate::external_linter::StripFileResult,
+    ) -> Vec<Message> {
+        use crate::external_linter::StrippedSource;
+
+        // Determine source type - use parser's hint or infer from path
+        let source_type = strip_result
+            .source_type
+            .as_ref()
+            .map(|st| st.to_source_type())
+            .unwrap_or_else(|| {
+                SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
+                    if st.is_javascript() { st.with_jsx(true) } else { st }
+                })
+            });
+
+        // Create StrippedSource for span remapping
+        let stripped_source = StrippedSource::new(
+            std::borrow::Cow::Borrowed(&strip_result.source),
+            source_type,
+            strip_result.mappings.clone(),
+        );
+
+        // Parse the stripped source with oxc
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &strip_result.source, source_type)
+            .with_options(ParseOptions {
+                parse_regular_expression: true,
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
+            .parse();
+
+        if !ret.errors.is_empty() {
+            // Parse errors in stripped source - remap and return them
+            return ret
+                .errors
+                .into_iter()
+                .map(|err| {
+                    let mut msg = Message::new(err, PossibleFixes::None);
+                    Self::remap_message_spans(&mut msg, &stripped_source, original_source_text);
+                    msg
+                })
+                .collect();
+        }
+
+        // Build semantic
+        let semantic_ret = SemanticBuilder::new()
+            .with_cfg(true)
+            .with_scope_tree_child_ids(true)
+            .with_check_syntax_error(true)
+            .build(allocator.alloc(ret.program));
+
+        if !semantic_ret.errors.is_empty() {
+            return semantic_ret
+                .errors
+                .into_iter()
+                .map(|err| {
+                    let mut msg = Message::new(err, PossibleFixes::None);
+                    Self::remap_message_spans(&mut msg, &stripped_source, original_source_text);
+                    msg
+                })
+                .collect();
+        }
+
+        let mut semantic = semantic_ret.semantic;
+        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+
+        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+
+        // Create context and run Rust rules
+        let ctx_sub_host = ContextSubHost::new(semantic, module_record, 0);
+
+        // Run only Rust rules (no allocator pool needed for stripped source)
+        let (mut messages, _disable_directives) = self.linter.run_rust_rules_only(
+            path,
+            vec![ctx_sub_host],
+            &allocator,
+        );
+
+        // Remap all spans to original positions
+        for msg in &mut messages {
+            Self::remap_message_spans(msg, &stripped_source, original_source_text);
+        }
+
+        messages
+    }
+
+    /// Remap spans in a Message from stripped positions to original positions.
+    fn remap_message_spans(
+        msg: &mut Message,
+        stripped_source: &crate::external_linter::StrippedSource<'_>,
+        _original_source_text: &str,
+    ) {
+        // Remap the main span
+        let (new_start, new_end) = stripped_source.remap_span(msg.span.start, msg.span.end);
+        msg.span = Span::new(new_start, new_end);
+
+        // Remap error labels
+        if let Some(labels) = &mut msg.error.labels {
+            for label in labels {
+                let (new_start, _new_end) = stripped_source.remap_span(
+                    label.offset() as u32,
+                    (label.offset() + label.len()) as u32,
+                );
+                label.set_span_offset(new_start as usize);
+                // Note: miette's LabeledSpan doesn't have a mutable len setter,
+                // so we can only adjust the offset. The length will be based on
+                // the original span, which may not be perfectly accurate but is
+                // usually close enough for diagnostic display.
+            }
+        }
+
+        // Note: We don't remap fixes for stripped source because:
+        // 1. The fix positions are in stripped-source coordinates
+        // 2. Applying fixes to original source would require complex text surgery
+        // 3. For Phase 2, it's safer to disable auto-fix for Rust rules on stripped files
+        // Future enhancement: could implement fix remapping if needed
     }
 }

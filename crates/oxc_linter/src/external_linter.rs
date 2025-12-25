@@ -1,8 +1,9 @@
-use std::fmt::Debug;
+use std::{borrow::Cow, fmt::Debug};
 
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
+use oxc_span::SourceType;
 
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals},
@@ -130,6 +131,37 @@ pub type ExternalLinterLintFileWithCustomAstCb = Box<
         + Send,
 >;
 
+/// Callback to strip custom syntax from a file, producing valid JavaScript.
+///
+/// This is used in Phase 2 to enable Rust rules on files with custom syntax.
+/// The custom parser strips out non-JS syntax (e.g., Marko template tags)
+/// and provides span mappings so diagnostics can be remapped to original positions.
+///
+/// Arguments:
+/// - Parser ID (from LoadParserResult)
+/// - File path being stripped
+/// - Source text content
+/// - Parser options JSON
+///
+/// Returns:
+/// - `Ok(Some(StripFileResult))` with stripped source and mappings
+/// - `Ok(None)` if the parser doesn't support stripping (fall back to JS-only rules)
+/// - `Err(String)` on failure with error message
+pub type ExternalLinterStripFileCb = Box<
+    dyn Fn(
+            // Parser ID to use
+            u32,
+            // Absolute path of file to strip
+            String,
+            // Source text content
+            String,
+            // Parser options as JSON string
+            String,
+        ) -> Result<Option<StripFileResult>, String>
+        + Send
+        + Sync,
+>;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoadPluginResult {
@@ -193,10 +225,218 @@ pub struct JsFix {
     pub text: String,
 }
 
+/// Result from stripping custom syntax from a file.
+///
+/// Contains valid JavaScript source (with custom syntax stripped)
+/// and span mappings for remapping diagnostics to original positions.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StripFileResult {
+    /// The stripped source code (valid JavaScript).
+    pub source: String,
+    /// The source type for parsing (e.g., module vs script, TypeScript vs JavaScript).
+    /// If not provided, will be inferred from the file extension.
+    pub source_type: Option<StripSourceType>,
+    /// Span mappings from stripped positions to original positions.
+    /// Used to remap diagnostic spans back to the original source.
+    pub mappings: Vec<SpanMapping>,
+}
+
+/// Source type information from the custom parser.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StripSourceType {
+    /// Whether this is a module (true) or script (false).
+    #[serde(default)]
+    pub module: bool,
+    /// Whether to parse as TypeScript.
+    #[serde(default)]
+    pub typescript: bool,
+    /// Whether to enable JSX parsing.
+    #[serde(default)]
+    pub jsx: bool,
+}
+
+impl StripSourceType {
+    /// Convert to oxc's SourceType.
+    #[must_use]
+    pub fn to_source_type(&self) -> SourceType {
+        let mut source_type = if self.module {
+            SourceType::mjs()
+        } else {
+            SourceType::cjs()
+        };
+
+        if self.typescript {
+            source_type = source_type.with_typescript(true);
+        }
+        if self.jsx {
+            source_type = source_type.with_jsx(true);
+        }
+
+        source_type
+    }
+}
+
+/// A mapping from a span in the stripped source to a span in the original source.
+///
+/// When the custom parser strips custom syntax (like template tags), it provides
+/// these mappings so that diagnostics reported against the stripped source can
+/// be remapped to the correct positions in the original file.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpanMapping {
+    /// Start position in the stripped source.
+    pub stripped_start: u32,
+    /// End position in the stripped source.
+    pub stripped_end: u32,
+    /// Start position in the original source.
+    pub original_start: u32,
+    /// End position in the original source.
+    pub original_end: u32,
+}
+
+impl SpanMapping {
+    /// Create a new span mapping.
+    #[must_use]
+    pub fn new(
+        stripped_start: u32,
+        stripped_end: u32,
+        original_start: u32,
+        original_end: u32,
+    ) -> Self {
+        Self { stripped_start, stripped_end, original_start, original_end }
+    }
+}
+
+/// Stripped source ready for linting with Rust rules.
+///
+/// This is the processed result of calling the strip callback, containing
+/// the valid JavaScript source and the mappings needed to remap diagnostics.
+#[derive(Debug)]
+pub struct StrippedSource<'a> {
+    /// Valid JavaScript source after stripping custom syntax.
+    pub source_text: Cow<'a, str>,
+    /// Source type for parsing.
+    pub source_type: SourceType,
+    /// Span mappings for remapping diagnostics to original positions.
+    pub span_mappings: Vec<SpanMapping>,
+}
+
+impl<'a> StrippedSource<'a> {
+    /// Create a new stripped source.
+    #[must_use]
+    pub fn new(
+        source_text: Cow<'a, str>,
+        source_type: SourceType,
+        span_mappings: Vec<SpanMapping>,
+    ) -> Self {
+        Self { source_text, source_type, span_mappings }
+    }
+
+    /// Remap a span from the stripped source to the original source.
+    ///
+    /// Uses binary search to find the mapping that contains the stripped span,
+    /// then applies the offset to get the original position.
+    #[must_use]
+    pub fn remap_span(&self, stripped_start: u32, stripped_end: u32) -> (u32, u32) {
+        // If no mappings, return as-is (identity mapping)
+        if self.span_mappings.is_empty() {
+            return (stripped_start, stripped_end);
+        }
+
+        // Binary search to find the first mapping where stripped_start >= mapping.stripped_start
+        let start_mapping = self
+            .span_mappings
+            .binary_search_by(|m| {
+                if stripped_start < m.stripped_start {
+                    std::cmp::Ordering::Greater
+                } else if stripped_start > m.stripped_end {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            })
+            .ok()
+            .map(|idx| &self.span_mappings[idx]);
+
+        let end_mapping = self
+            .span_mappings
+            .binary_search_by(|m| {
+                if stripped_end < m.stripped_start {
+                    std::cmp::Ordering::Greater
+                } else if stripped_end > m.stripped_end {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            })
+            .ok()
+            .map(|idx| &self.span_mappings[idx]);
+
+        // Calculate remapped positions
+        let original_start = if let Some(m) = start_mapping {
+            let offset = stripped_start.saturating_sub(m.stripped_start);
+            m.original_start.saturating_add(offset)
+        } else {
+            // Fallback: find the closest preceding mapping and extrapolate
+            let preceding = self
+                .span_mappings
+                .iter()
+                .filter(|m| m.stripped_end <= stripped_start)
+                .last();
+
+            if let Some(m) = preceding {
+                let offset = stripped_start.saturating_sub(m.stripped_end);
+                m.original_end.saturating_add(offset)
+            } else {
+                // No preceding mapping, use first mapping's start as reference
+                let first = &self.span_mappings[0];
+                if stripped_start < first.stripped_start {
+                    // Before first mapping
+                    stripped_start
+                } else {
+                    first.original_start
+                        .saturating_add(stripped_start.saturating_sub(first.stripped_start))
+                }
+            }
+        };
+
+        let original_end = if let Some(m) = end_mapping {
+            let offset = stripped_end.saturating_sub(m.stripped_start);
+            m.original_start.saturating_add(offset)
+        } else {
+            // Fallback: find the closest preceding mapping and extrapolate
+            let preceding = self
+                .span_mappings
+                .iter()
+                .filter(|m| m.stripped_end <= stripped_end)
+                .last();
+
+            if let Some(m) = preceding {
+                let offset = stripped_end.saturating_sub(m.stripped_end);
+                m.original_end.saturating_add(offset)
+            } else {
+                let first = &self.span_mappings[0];
+                if stripped_end < first.stripped_start {
+                    stripped_end
+                } else {
+                    first
+                        .original_start
+                        .saturating_add(stripped_end.saturating_sub(first.stripped_start))
+                }
+            }
+        };
+
+        (original_start, original_end)
+    }
+}
+
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) load_parser: Option<ExternalLinterLoadParserCb>,
     pub(crate) parse_file: Option<ExternalLinterParseFileCb>,
+    pub(crate) strip_file: Option<ExternalLinterStripFileCb>,
     pub(crate) lint_file_with_custom_ast: Option<ExternalLinterLintFileWithCustomAstCb>,
     pub(crate) setup_configs: ExternalLinterSetupConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
@@ -212,6 +452,7 @@ impl ExternalLinter {
             load_plugin,
             load_parser: None,
             parse_file: None,
+            strip_file: None,
             lint_file_with_custom_ast: None,
             setup_configs,
             lint_file,
@@ -234,6 +475,17 @@ impl ExternalLinter {
     #[must_use]
     pub fn with_parse_file(mut self, parse_file: ExternalLinterParseFileCb) -> Self {
         self.parse_file = Some(parse_file);
+        self
+    }
+
+    /// Set the callback for stripping custom syntax from files.
+    ///
+    /// This callback is called in Phase 2 when a file matches a custom parser's patterns.
+    /// The parser strips non-JS syntax and provides span mappings so diagnostics can be
+    /// remapped to original positions after linting with Rust rules.
+    #[must_use]
+    pub fn with_strip_file(mut self, strip_file: ExternalLinterStripFileCb) -> Self {
+        self.strip_file = Some(strip_file);
         self
     }
 
@@ -335,5 +587,105 @@ mod test {
         assert_eq!(result.scope_manager_json.unwrap(), "{\"scopes\":[]}");
         assert_eq!(result.visitor_keys_json.unwrap(), "{\"Program\":[\"body\"]}");
         assert_eq!(result.services_json.unwrap(), "{\"custom\":true}");
+    }
+
+    #[test]
+    fn test_strip_file_result_deserialize() {
+        // Basic result with empty mappings
+        let json = r#"{"source": "const x = 1;", "mappings": []}"#;
+        let result: StripFileResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.source, "const x = 1;");
+        assert!(result.source_type.is_none());
+        assert!(result.mappings.is_empty());
+
+        // Result with source type and mappings
+        let json = r#"{
+            "source": "const x = 1;",
+            "sourceType": {"module": true, "typescript": false, "jsx": true},
+            "mappings": [
+                {"strippedStart": 0, "strippedEnd": 12, "originalStart": 10, "originalEnd": 22}
+            ]
+        }"#;
+        let result: StripFileResult = serde_json::from_str(json).unwrap();
+        assert_eq!(result.source, "const x = 1;");
+        let source_type = result.source_type.unwrap();
+        assert!(source_type.module);
+        assert!(!source_type.typescript);
+        assert!(source_type.jsx);
+        assert_eq!(result.mappings.len(), 1);
+        assert_eq!(result.mappings[0].stripped_start, 0);
+        assert_eq!(result.mappings[0].stripped_end, 12);
+        assert_eq!(result.mappings[0].original_start, 10);
+        assert_eq!(result.mappings[0].original_end, 22);
+    }
+
+    #[test]
+    fn test_span_mapping_serialize_deserialize() {
+        let mapping = SpanMapping::new(0, 10, 5, 15);
+        let json = serde_json::to_string(&mapping).unwrap();
+        let deserialized: SpanMapping = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.stripped_start, 0);
+        assert_eq!(deserialized.stripped_end, 10);
+        assert_eq!(deserialized.original_start, 5);
+        assert_eq!(deserialized.original_end, 15);
+    }
+
+    #[test]
+    fn test_strip_source_type_to_source_type() {
+        // Default (all false)
+        let st = StripSourceType { module: false, typescript: false, jsx: false };
+        let source_type = st.to_source_type();
+        assert!(!source_type.is_module());
+        assert!(!source_type.is_typescript());
+        assert!(!source_type.is_jsx());
+
+        // Module with TypeScript and JSX
+        let st = StripSourceType { module: true, typescript: true, jsx: true };
+        let source_type = st.to_source_type();
+        assert!(source_type.is_module());
+        assert!(source_type.is_typescript());
+        assert!(source_type.is_jsx());
+    }
+
+    #[test]
+    fn test_stripped_source_remap_span_empty_mappings() {
+        let source = StrippedSource::new(Cow::Borrowed("const x = 1;"), SourceType::mjs(), vec![]);
+
+        // With no mappings, spans are returned as-is
+        assert_eq!(source.remap_span(0, 10), (0, 10));
+        assert_eq!(source.remap_span(5, 15), (5, 15));
+    }
+
+    #[test]
+    fn test_stripped_source_remap_span_single_mapping() {
+        // Source had 10 chars of custom syntax prepended
+        // Original: "<custom/>const x = 1;" (positions 0-21)
+        // Stripped: "const x = 1;" (positions 0-11)
+        // Mapping: stripped 0-11 -> original 10-21
+        let mappings = vec![SpanMapping::new(0, 11, 10, 21)];
+        let source = StrippedSource::new(Cow::Borrowed("const x = 1;"), SourceType::mjs(), mappings);
+
+        // Position 0 in stripped -> position 10 in original
+        assert_eq!(source.remap_span(0, 5), (10, 15));
+
+        // Position 6 in stripped -> position 16 in original
+        assert_eq!(source.remap_span(6, 11), (16, 21));
+    }
+
+    #[test]
+    fn test_stripped_source_remap_span_multiple_mappings() {
+        // Original: "<tag>code1</tag><tag>code2</tag>"
+        //           0    5    10   15   20   25   30
+        // Stripped: "code1code2"
+        //           0    5    9
+        // Mappings: 0-4 -> 5-9, 5-9 -> 21-25
+        let mappings = vec![SpanMapping::new(0, 4, 5, 9), SpanMapping::new(5, 9, 21, 25)];
+        let source = StrippedSource::new(Cow::Borrowed("code1code2"), SourceType::mjs(), mappings);
+
+        // Position in first section
+        assert_eq!(source.remap_span(0, 4), (5, 9));
+
+        // Position in second section
+        assert_eq!(source.remap_span(5, 9), (21, 25));
     }
 }

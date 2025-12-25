@@ -7,6 +7,7 @@ import { debugAssertIsNonNull } from "./utils/asserts.ts";
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let loadParser: typeof loadParserWrapper | null = null;
 let parseFile: typeof parseFileWrapper | null = null;
+let stripFile: typeof stripFileWrapper | null = null;
 let setupConfigs: typeof setupConfigsWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 let lintFileWithCustomAst: typeof lintFileWithCustomAstWrapper | null = null;
@@ -30,7 +31,7 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, loadParser, parseFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
+      ({ loadPlugin, loadParser, parseFile, stripFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias);
     });
   }
@@ -94,7 +95,7 @@ function loadParserWrapper(url: string, parserOptionsJson: string): Promise<stri
     // Use promises here instead of making `loadParserWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadParserWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, loadParser, parseFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
+      ({ loadPlugin, loadParser, parseFile, stripFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
       return loadParser(url, parserOptionsJson);
     });
   }
@@ -165,11 +166,34 @@ function parseFileWrapper(
   return parseFile(parserId, filePath, sourceText, parserOptionsJson);
 }
 
+/**
+ * Strip custom syntax from a file using a custom parser.
+ *
+ * Delegates to `stripFile`, which was lazy-loaded by `loadParserWrapper` or `loadPluginWrapper`.
+ *
+ * @param parserId - ID of the parser to use
+ * @param filePath - Absolute path of file being stripped
+ * @param sourceText - Source text content
+ * @param parserOptionsJson - Parser options as JSON string
+ * @returns Strip result as JSON string, or null if not supported
+ */
+function stripFileWrapper(
+  parserId: number,
+  filePath: string,
+  sourceText: string,
+  parserOptionsJson: string,
+): string | null {
+  // `stripFileWrapper` is never called without `loadParserWrapper` being called first,
+  // so `stripFile` must be defined here
+  debugAssertIsNonNull(stripFile);
+  return stripFile(parserId, filePath, sourceText, parserOptionsJson);
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
 // Call Rust, passing callbacks and CLI arguments
-// Parser callbacks (loadParserWrapper, parseFileWrapper, lintFileWithCustomAstWrapper)
+// Parser callbacks (loadParserWrapper, parseFileWrapper, lintFileWithCustomAstWrapper, stripFileWrapper)
 // are optional but we provide them to enable custom parser support when configured
 // via jsParsers in oxlintrc.json
 const success = await lint(
@@ -180,6 +204,7 @@ const success = await lint(
   loadParserWrapper,
   parseFileWrapper,
   lintFileWithCustomAstWrapper,
+  stripFileWrapper,
 );
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.

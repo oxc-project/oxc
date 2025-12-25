@@ -11,15 +11,15 @@ use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLintFileWithCustomAstCb,
     ExternalLinterLoadParserCb, ExternalLinterLoadPluginCb, ExternalLinterParseFileCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, LoadParserResult, LoadPluginResult,
-    ParseFileResult,
+    ExternalLinterSetupConfigsCb, ExternalLinterStripFileCb, LintFileResult, LoadParserResult,
+    LoadPluginResult, ParseFileResult, StripFileResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
     run::{
         JsLintFileCb, JsLintFileWithCustomAstCb, JsLoadParserCb, JsLoadPluginCb, JsParseFileCb,
-        JsSetupConfigsCb,
+        JsSetupConfigsCb, JsStripFileCb,
     },
 };
 
@@ -31,6 +31,7 @@ pub fn create_external_linter(
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
     lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_configs = wrap_setup_configs(setup_configs);
@@ -50,6 +51,10 @@ pub fn create_external_linter(
         linter = linter.with_lint_file_with_custom_ast(wrap_lint_file_with_custom_ast(
             lint_file_with_custom_ast,
         ));
+    }
+
+    if let Some(strip_file) = strip_file {
+        linter = linter.with_strip_file(wrap_strip_file(strip_file));
     }
 
     linter
@@ -73,6 +78,17 @@ pub enum LoadParserReturnValue {
 #[derive(Clone, Debug, Deserialize)]
 pub enum ParseFileReturnValue {
     Success(ParseFileResult),
+    Failure(String),
+}
+
+/// Result returned by `stripFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum StripFileReturnValue {
+    /// Stripping succeeded - contains the stripped source and mappings.
+    Success(StripFileResult),
+    /// The parser doesn't support stripping (Phase 2).
+    NotSupported,
+    /// Stripping failed with an error.
     Failure(String),
 }
 
@@ -393,6 +409,53 @@ fn wrap_lint_file_with_custom_ast(
     )
 }
 
+/// Wrap `stripFile` JS callback as a normal Rust function.
+///
+/// This is called in Phase 2 to strip custom syntax from files before linting
+/// with Rust rules. Returns `None` if the parser doesn't support stripping.
+fn wrap_strip_file(cb: JsStripFileCb) -> ExternalLinterStripFileCb {
+    Box::new(move |parser_id, file_path, source_text, parser_options_json| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            FnArgs::from((parser_id, file_path, source_text, parser_options_json)),
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `stripFile`");
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            match rx.recv() {
+                // `stripFile` returns `null` if the parser doesn't support stripping
+                Ok(Ok(None)) => Ok(None),
+                // `stripFile` returns JSON string with stripped source or error
+                Ok(Ok(Some(json))) => match serde_json::from_str(&json) {
+                    // Stripping succeeded
+                    Ok(StripFileReturnValue::Success(result)) => Ok(Some(result)),
+                    // Parser doesn't support stripping
+                    Ok(StripFileReturnValue::NotSupported) => Ok(None),
+                    // Error occurred on JS side
+                    Ok(StripFileReturnValue::Failure(err)) => Err(err),
+                    // Invalid JSON - should be impossible, because we control serialization on JS side
+                    Err(err) => {
+                        Err(format!("Failed to deserialize JSON returned by `stripFile`: {err}"))
+                    }
+                },
+                // `stripFile` threw an error
+                Ok(Err(err)) => Err(format!("`stripFile` threw an error: {err}")),
+                // Sender "hung up"
+                Err(err) => Err(format!("`stripFile` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `stripFile` callback: {status:?}"))
+        }
+    })
+}
+
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
 /// create a `Uint8Array` referencing the `Allocator`'s memory.
 ///
@@ -469,4 +532,51 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_success() {
+        let json = r#"{"Success": {"source": "const x = 1;", "mappings": []}}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        match result {
+            StripFileReturnValue::Success(r) => {
+                assert_eq!(r.source, "const x = 1;");
+                assert!(r.mappings.is_empty());
+            }
+            _ => panic!("Expected Success variant"),
+        }
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_not_supported() {
+        // Rust serde unit variants can be deserialized from `{"Variant": null}`
+        let json = r#"{"NotSupported": null}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        assert!(matches!(result, StripFileReturnValue::NotSupported));
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_failure() {
+        let json = r#"{"Failure": "Parser error: invalid syntax"}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        match result {
+            StripFileReturnValue::Failure(err) => {
+                assert_eq!(err, "Parser error: invalid syntax");
+            }
+            _ => panic!("Expected Failure variant"),
+        }
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_not_supported_wrong_format() {
+        // This is the wrong format - using `true` instead of `null` for unit variant
+        // This test documents what NOT to do, and ensures we catch it
+        let json = r#"{"NotSupported": true}"#;
+        let result: Result<StripFileReturnValue, _> = serde_json::from_str(json);
+        assert!(result.is_err(), "Unit variants must use null, not true");
+    }
 }
