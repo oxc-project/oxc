@@ -53,7 +53,7 @@ pub struct Backend {
     // The client can use this information for display or logging purposes.
     server_info: ServerInfo,
     // The available tool builders to create tools like linters and formatters.
-    tool_builders: Arc<Vec<Box<dyn ToolBuilder>>>,
+    tool_builders: Arc<[Box<dyn ToolBuilder>]>,
     // Each Workspace has it own worker with Linter (and in the future the formatter).
     // We must respect each program inside with its own root folder
     // and can not use shared programmes across multiple workspaces.
@@ -121,12 +121,12 @@ impl LanguageServer for Backend {
             workspace_folders
                 .into_iter()
                 .map(|workspace_folder| {
-                    WorkspaceWorker::new(workspace_folder.uri, self.tool_builders.clone())
+                    WorkspaceWorker::new(workspace_folder.uri, Arc::clone(&self.tool_builders))
                 })
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
-            vec![WorkspaceWorker::new(root_uri, self.tool_builders.clone())]
+            vec![WorkspaceWorker::new(root_uri, Arc::clone(&self.tool_builders))]
         // client is in single file mode, create no workers
         } else {
             vec![]
@@ -491,7 +491,7 @@ impl LanguageServer for Backend {
                 .await;
 
             for (index, folder) in params.event.added.into_iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri, self.tool_builders.clone());
+                let worker = WorkspaceWorker::new(folder.uri, Arc::clone(&self.tool_builders));
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(options.clone()).await;
@@ -502,7 +502,7 @@ impl LanguageServer for Backend {
         // client does not support the request
         } else {
             for folder in params.event.added {
-                let worker = WorkspaceWorker::new(folder.uri, self.tool_builders.clone());
+                let worker = WorkspaceWorker::new(folder.uri, Arc::clone(&self.tool_builders));
                 // use default options
                 worker.start_worker(serde_json::Value::Null).await;
                 added_registrations.extend(worker.init_watchers().await);
@@ -737,7 +737,7 @@ impl Backend {
         Self {
             client,
             server_info,
-            tool_builders: Arc::new(tools),
+            tool_builders: Arc::from(tools),
             workspace_workers: Arc::new(RwLock::new(vec![])),
             capabilities: OnceCell::new(),
             file_system: Arc::new(RwLock::new(LSPFileSystem::default())),

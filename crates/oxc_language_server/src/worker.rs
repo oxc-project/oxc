@@ -26,7 +26,7 @@ use crate::{
 pub struct WorkspaceWorker {
     root_uri: Uri,
     tools: RwLock<Vec<Box<dyn Tool>>>,
-    builders: Arc<Vec<Box<dyn ToolBuilder>>>,
+    builders: Arc<[Box<dyn ToolBuilder>]>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
     pub(crate) options: Mutex<Option<serde_json::Value>>,
@@ -36,7 +36,7 @@ impl WorkspaceWorker {
     /// Create a new workspace worker.
     /// This will not start any programs, use [`start_worker`](Self::start_worker) for that.
     /// Depending on the client, we need to request the workspace configuration in `initialized.
-    pub fn new(root_uri: Uri, builders: Arc<Vec<Box<dyn ToolBuilder>>>) -> Self {
+    pub fn new(root_uri: Uri, builders: Arc<[Box<dyn ToolBuilder>]>) -> Self {
         Self { root_uri, tools: RwLock::new(vec![]), builders, options: Mutex::new(None) }
     }
 
@@ -421,14 +421,13 @@ mod tests {
         worker::WorkspaceWorker,
     };
 
-    fn create_builders() -> Arc<Vec<Box<dyn ToolBuilder>>> {
-        Arc::new(vec![Box::new(FakeToolBuilder) as Box<dyn ToolBuilder>])
+    fn create_builders() -> Arc<[Box<dyn ToolBuilder>]> {
+        Arc::new([Box::new(FakeToolBuilder) as Box<dyn ToolBuilder>])
     }
 
     #[test]
     fn test_get_root_uri() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new(vec![]));
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]));
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
@@ -436,7 +435,7 @@ mod tests {
     #[test]
     fn test_is_responsible() {
         let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap(), Arc::new(vec![]));
+            WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap(), Arc::new([]));
 
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
@@ -452,8 +451,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_needs_init_options() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new(vec![]));
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]));
         assert!(worker.needs_init_options().await);
         worker.start_worker(serde_json::Value::Null).await;
         assert!(!worker.needs_init_options().await);
