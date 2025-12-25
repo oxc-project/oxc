@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, StringLiteral},
+    ast::{Argument, Expression, StaticMemberExpression, StringLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -67,6 +67,7 @@ impl Rule for PreferDescribeFunctionTitle {
         ctx: &'c LintContext<'a>,
     ) {
         let node = jest_node.node;
+
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -83,24 +84,57 @@ impl Rule for PreferDescribeFunctionTitle {
             return;
         };
 
-        if let Argument::StringLiteral(string_literal) = arg {
-            validate_title(&string_literal, jest_node.node, ctx);
+        let node = jest_node.node;
+        match arg {
+            Argument::StringLiteral(string) => {
+                self.check_string_literal(&string, node, ctx)
+            }
+            Argument::StaticMemberExpression(member_expr) => {
+                self.check_static_member_expression(&**member_expr, node, ctx);
+            }
+            _ => (),
         }
     }
 }
 
-fn validate_title(string_literal: &StringLiteral, node: &AstNode, ctx: &LintContext) {
-    let scope = ctx.scoping();
-    if let Some(symbol_id) = scope.find_binding(node.scope_id(), string_literal.value.as_str()) {
-        let flags = ctx.scoping().symbol_flags(symbol_id);
-        if !flags.is_import() {
+impl PreferDescribeFunctionTitle {
+    fn check_string_literal(&self, string_literal: &StringLiteral, node: &AstNode, ctx: &LintContext) {
+        if !self.is_function_import_in_scope(string_literal.value.as_str(), node, ctx) {
             return;
         }
 
         let replacement = string_literal.value.to_string();
-        ctx.diagnostic_with_fix(prefer_describe_function_title_diagnostic(string_literal.span), |fixer| {
-            fixer.replace(string_literal.span, replacement)
-        });
+        ctx.diagnostic_with_fix(
+            prefer_describe_function_title_diagnostic(string_literal.span),
+            |fixer| fixer.replace(string_literal.span, replacement),
+        );
+    }
+
+    fn check_static_member_expression(&self, member_expr: &StaticMemberExpression, node: &AstNode, ctx: &LintContext) {
+        if member_expr.property.name != "name" {
+            return;
+        }
+        let Expression::Identifier(ident) = &member_expr.object else {
+            return;
+        };
+        if !self.is_function_import_in_scope(ident.name.as_str(), node, ctx) {
+            return;
+        }
+
+        let replacement = ident.name.to_string();
+        ctx.diagnostic_with_fix(
+            prefer_describe_function_title_diagnostic(member_expr.span),
+            |fixer| fixer.replace(member_expr.span, replacement),
+        );
+    }
+
+    fn is_function_import_in_scope(&self, name: &str, node: &AstNode, ctx: &LintContext) -> bool {
+        let scope = ctx.scoping();
+        if let Some(symbol_id) = scope.find_binding(node.scope_id(), name) {
+            let flags = ctx.scoping().symbol_flags(symbol_id);
+            return flags.is_import()
+        }
+        return false;
     }
 }
 
