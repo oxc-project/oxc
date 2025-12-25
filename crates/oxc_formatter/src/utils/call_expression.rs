@@ -187,11 +187,12 @@ pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
     let Some(mut names) = callee_name_iterator(expr) else { return false };
 
     match names.next() {
-        Some("it" | "describe" | "Deno") => match names.next() {
+        Some("it" | "describe") => match names.next() {
             None => true,
-            Some("only" | "skip" | "test") => names.next().is_none(),
+            Some("only" | "skip") => names.next().is_none(),
             _ => false,
         },
+        Some("Deno") => matches!(names.next(), Some("test")) && names.next().is_none(),
         Some("test") => match names.next() {
             None => true,
             Some("only" | "skip" | "step" | "fixme") => names.next().is_none(),
