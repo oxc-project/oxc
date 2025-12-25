@@ -262,6 +262,24 @@ fn test() {
             Some(serde_json::json!({ "settings": {  "vitest": {  "typecheck": true,  },  } })),
             Some(PathBuf::from("myFunction.test.ts")),
         ),
+        (
+            r#"
+                    import type { myFunction } from "./myFunction"
+                    describe("myFunction", () => {})
+                "#,
+            None,
+            None,
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+                    import { type myFunction } from "./myFunction"
+                    describe("myFunction", () => {})
+                "#,
+            None,
+            None,
+            Some(PathBuf::from("myFunction.test.ts")),
+        )
     ];
 
     let fail = vec![
