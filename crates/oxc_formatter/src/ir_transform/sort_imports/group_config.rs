@@ -45,36 +45,33 @@ impl GroupName {
     /// - "external" -> modifiers: (empty), selector: External
     /// - "type-external" -> modifiers: Type, selector: External
     /// - "value-builtin" -> modifiers: Value, selector: Builtin
-    /// - "internal-type" -> modifiers: (empty), selector: InternalType
     /// - "side-effect-import" -> modifiers: SideEffect, selector: Import
     /// - "side-effect-type-external" -> modifiers: SideEffect, Type, selector: External
+    /// - "named-side-effect-type-builtin" -> modifiers: SideEffect, Type, Named, selector: External
     pub fn parse(s: &str) -> Option<Self> {
         // Try to parse as a selector without modifiers first
         if let Some(selector) = ImportSelector::parse(s) {
             return Some(Self { modifiers: vec![], selector });
         }
 
-        // Split by '-' and try parsing as modifier(s) + selector
-        let parts: Vec<&str> = s.split('-').collect();
-        if parts.len() < 2 {
-            return None;
-        }
-
         // Last part should be the selector
-        let selector = ImportSelector::parse(parts[parts.len() - 1])?;
+        let selector =
+            *ImportSelector::ALL_SELECTORS.iter().find(|selector| s.ends_with(selector.name()))?;
 
-        // Everything before should be modifier(s)
-        let modifier_parts = &parts[..parts.len() - 1];
-        let mut modifiers = vec![];
-
-        // Try to parse the entire modifier string first (handles "side-effect")
-        let modifier_str = modifier_parts.join("-");
-        if let Some(modifier) = ImportModifier::parse(&modifier_str) {
-            modifiers.push(modifier);
-        } else {
-            // Otherwise, parse each part individually
-            for &part in modifier_parts {
-                modifiers.push(ImportModifier::parse(part)?);
+        // The remaining part represents a sequence of modifiers joined by "-".
+        // Since modifiers themselves may contain "-",
+        // splitting by "-" would be ambiguous.
+        // Instead, we iterate over modifiers in a predefined order and check
+        // whether they appear in the remaining string.
+        // This guarantees the extracted modifiers are already ordered
+        // and no additional sorting is required.
+        //
+        // The trade-off is that this approach may tolerate invalid input,
+        // as unmatched or malformed segments are not strictly rejected.
+        let mut modifiers = Vec::with_capacity(ImportModifier::ALL_MODIFIERS.len());
+        for m in ImportModifier::ALL_MODIFIERS.iter() {
+            if s.contains(m.name()) {
+                modifiers.push(*m);
             }
         }
 
@@ -131,6 +128,38 @@ impl ImportSelector {
             _ => None,
         }
     }
+
+    pub const ALL_SELECTORS: &[ImportSelector] = &[
+        ImportSelector::Type,
+        ImportSelector::SideEffectStyle,
+        ImportSelector::SideEffect,
+        ImportSelector::Style,
+        ImportSelector::Index,
+        ImportSelector::Sibling,
+        ImportSelector::Parent,
+        ImportSelector::Subpath,
+        ImportSelector::Internal,
+        ImportSelector::Builtin,
+        ImportSelector::External,
+        ImportSelector::Import,
+    ];
+
+    pub fn name(&self) -> &str {
+        match self {
+            ImportSelector::Type => "type",
+            ImportSelector::SideEffectStyle => "side-effect-style",
+            ImportSelector::SideEffect => "side-effect",
+            ImportSelector::Style => "style",
+            ImportSelector::Index => "index",
+            ImportSelector::Sibling => "sibling",
+            ImportSelector::Parent => "parent",
+            ImportSelector::Subpath => "subpath",
+            ImportSelector::Internal => "internal",
+            ImportSelector::Builtin => "builtin",
+            ImportSelector::External => "external",
+            ImportSelector::Import => "import",
+        }
+    }
 }
 
 /// Modifier types for import categorization.
@@ -165,6 +194,28 @@ impl ImportModifier {
             "wildcard" => Some(Self::Wildcard),
             "named" => Some(Self::Named),
             _ => None,
+        }
+    }
+
+    pub const ALL_MODIFIERS: &[ImportModifier] = &[
+        ImportModifier::SideEffect,
+        ImportModifier::Type,
+        ImportModifier::Value,
+        ImportModifier::Require,
+        ImportModifier::Default,
+        ImportModifier::Wildcard,
+        ImportModifier::Named,
+    ];
+
+    pub fn name(&self) -> &str {
+        match self {
+            ImportModifier::SideEffect => "side-effect",
+            ImportModifier::Type => "type",
+            ImportModifier::Value => "value",
+            ImportModifier::Require => "require",
+            ImportModifier::Default => "default",
+            ImportModifier::Wildcard => "wildcard",
+            ImportModifier::Named => "named",
         }
     }
 }
