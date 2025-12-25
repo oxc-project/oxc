@@ -113,10 +113,11 @@ impl ImportGroupMatcher {
         for possible_name in &possible_names {
             for (group_idx, group) in groups.iter().enumerate() {
                 for group_name in group {
+                    // TODO: Unknown is not a selector anymore
                     // Check if this is the "unknown" group
-                    if group_name.is_plain_selector(ImportSelector::Unknown) {
-                        unknown_index = Some(group_idx);
-                    }
+                    // if group_name.is_plain_selector(ImportSelector::Unknown) {
+                    //     unknown_index = Some(group_idx);
+                    // }
 
                     // Check if this possible name matches this group
                     if possible_name == group_name {
@@ -212,15 +213,6 @@ impl ImportGroupMatcher {
         // For type imports, add path-type selectors (e.g., "parent-type", "external-type")
         // These come before the generic "type" selector
         if self.is_type_import {
-            match self.path_kind {
-                ImportPathKind::Index => selectors.push(ImportSelector::IndexType),
-                ImportPathKind::Sibling => selectors.push(ImportSelector::SiblingType),
-                ImportPathKind::Parent => selectors.push(ImportSelector::ParentType),
-                ImportPathKind::Internal => selectors.push(ImportSelector::InternalType),
-                ImportPathKind::Builtin => selectors.push(ImportSelector::BuiltinType),
-                ImportPathKind::External => selectors.push(ImportSelector::ExternalType),
-                ImportPathKind::Unknown => {}
-            }
             // Type selector
             selectors.push(ImportSelector::Type);
         }
