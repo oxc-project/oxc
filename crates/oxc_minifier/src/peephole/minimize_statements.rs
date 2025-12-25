@@ -508,7 +508,8 @@ impl<'a> PeepholeOptimizations {
             id_pattern.elements.len()
         };
 
-        if decl.kind.is_var() {
+        // create tmp variables only for vars when there is more than one init and its not `[...a] = [a, b]`
+        if decl.kind.is_var() && init_expr.elements.len() > 1 && index > 0 {
             for init_expr in &mut init_expr.elements {
                 if !init_expr.is_literal_value(false, ctx) {
                     // create intermediate declarations to avoid issues with hoisting
@@ -522,14 +523,21 @@ impl<'a> PeepholeOptimizations {
                         NONE,
                         Some(match init_expr {
                             ArrayExpressionElement::Elision(_) => ctx.ast.void_0(SPAN),
-                            ArrayExpressionElement::SpreadElement(_) => {
-                                unreachable!("spread element does not exist until `index`")
+                            ArrayExpressionElement::SpreadElement(expr) => {
+                                expr.argument.take_in(ctx.ast)
                             }
                             _ => init_expr.take_in(ctx.ast).into_expression(),
                         }),
                         decl.definite,
                     ));
-                    *init_expr = ArrayExpressionElement::from(ident.create_read_expression(ctx));
+                    *init_expr = if init_expr.is_spread() {
+                        ctx.ast.array_expression_element_spread_element(
+                            init_expr.span(),
+                            ident.create_read_expression(ctx),
+                        )
+                    } else {
+                        ArrayExpressionElement::from(ident.create_read_expression(ctx))
+                    };
                 }
             }
         }
@@ -2191,8 +2199,12 @@ mod test {
         test("const [a] = []", "const a = void 0");
         // vars
         test("var [a] = [a]", "var a = a");
+        test("let [...a] = [b, c]", "let a = [b, c]");
+        test("var [a, b] = [1, ...[2, 3]]", "var _ = [2, 3], a = 1, [b] = [..._]");
+        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [, ...t] = [...a, 2, , 4]");
         test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
         test("var [c, ...d] = [6]", "var c = 6, d = []");
+        test("var [c, d] = [6]", "var c = 6, d = void 0");
         test("var [a, b] = [1, 2]", "var a = 1, b = 2");
         test("var [a, b] = [!d, !a]", "var _ = !d, _2 = !a, a = _, b = _2");
         test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
