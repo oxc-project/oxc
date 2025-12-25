@@ -84,6 +84,7 @@ impl Rule for PreferDescribeFunctionTitle {
             return;
         };
 
+        let node = jest_node.node;
         match arg {
             Argument::StringLiteral(string) => {
                 self.check_string_literal(string, node, ctx);
@@ -141,7 +142,7 @@ impl PreferDescribeFunctionTitle {
         let scope = ctx.scoping();
         scope.find_binding(node.scope_id(), name).is_some_and(|symbol_id| {
             let flags = scope.symbol_flags(symbol_id);
-            return flags.is_import() && !flags.is_type_import();
+            flags.is_import() && !flags.is_type_import()
         })
     }
 }
