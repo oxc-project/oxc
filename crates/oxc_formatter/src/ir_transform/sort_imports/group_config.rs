@@ -5,9 +5,9 @@ pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<Gr
     for group in string_groups {
         let mut parsed_group = Vec::with_capacity(group.len());
         for name in group {
-            parsed_group.push(
-                GroupName::parse(name).unwrap_or_else(|| GroupName::new(ImportSelector::Unknown)),
-            );
+            if let Some(group_name) = GroupName::parse(name) {
+                parsed_group.push(group_name);
+            }
         }
         groups.push(parsed_group);
     }
@@ -94,18 +94,6 @@ pub enum ImportSelector {
     SideEffect,
     /// Style file imports (CSS, SCSS, etc.)
     Style,
-    /// Type import from index file
-    IndexType,
-    /// Type import from sibling module
-    SiblingType,
-    /// Type import from parent module
-    ParentType,
-    /// Type import from internal module
-    InternalType,
-    /// Type import from built-in module
-    BuiltinType,
-    /// Type import from external module
-    ExternalType,
     /// Index file imports (`./`, `../`)
     Index,
     /// Sibling module imports (`./foo`)
@@ -122,8 +110,6 @@ pub enum ImportSelector {
     External,
     /// Catch-all selector
     Import,
-    /// Unknown/fallback group
-    Unknown,
 }
 
 impl ImportSelector {
@@ -134,12 +120,6 @@ impl ImportSelector {
             "side-effect-style" => Some(Self::SideEffectStyle),
             "side-effect" => Some(Self::SideEffect),
             "style" => Some(Self::Style),
-            "index-type" => Some(Self::IndexType),
-            "sibling-type" => Some(Self::SiblingType),
-            "parent-type" => Some(Self::ParentType),
-            "internal-type" => Some(Self::InternalType),
-            "builtin-type" => Some(Self::BuiltinType),
-            "external-type" => Some(Self::ExternalType),
             "index" => Some(Self::Index),
             "sibling" => Some(Self::Sibling),
             "parent" => Some(Self::Parent),
@@ -148,7 +128,6 @@ impl ImportSelector {
             "builtin" => Some(Self::Builtin),
             "external" => Some(Self::External),
             "import" => Some(Self::Import),
-            "unknown" => Some(Self::Unknown),
             _ => None,
         }
     }
@@ -164,6 +143,8 @@ pub enum ImportModifier {
     Type,
     /// Value imports (non-type)
     Value,
+    /// Require imports
+    Require,
     /// Default specifier present
     Default,
     /// Namespace/wildcard specifier present (`* as`)
@@ -179,6 +160,7 @@ impl ImportModifier {
             "side-effect" => Some(Self::SideEffect),
             "type" => Some(Self::Type),
             "value" => Some(Self::Value),
+            "require" => Some(Self::Require),
             "default" => Some(Self::Default),
             "wildcard" => Some(Self::Wildcard),
             "named" => Some(Self::Named),
