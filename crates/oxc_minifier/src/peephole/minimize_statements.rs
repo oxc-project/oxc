@@ -517,7 +517,7 @@ impl<'a> PeepholeOptimizations {
                         ctx.generate_uid_in_current_scope("_", SymbolFlags::FunctionScopedVariable);
                     result.push(ctx.ast.variable_declarator(
                         init_expr.span(),
-                        VariableDeclarationKind::Let,
+                        decl.kind,
                         ident.create_binding_pattern(ctx),
                         NONE,
                         Some(match init_expr {
@@ -2161,13 +2161,13 @@ mod test {
         test("let [a = foo] = [,]", "let a = foo");
         // holes
         test("let [, , , ] = [, , , ]", "");
-        test("let [, , ] = [1, 2]", "let [] = [1], [] = [2]");
-        test("let [a, , c, d] = [, 3, , 4]", "let a, [] = [3], c, d = 4");
+        test("let [, , ] = [1, 2]", "");
+        test("let [a, , c, d] = [, 3, , 4]", "let a, c, d = 4");
         test("let [a, , c, d] = [void 0, e, null, f]", "let a, [] = [e], c = null, d = f");
-        test("let [a, , c, d] = [1, 2, 3, 4]", "let a = 1, [] = [2], c = 3, d = 4");
-        test("let [ , , a] = [1, 2, 3, 4]", "let [] = [1], [] = [2], a = 3, [] = [4]");
-        test("let [ , , ...t] = [1, 2, 3, 4]", "let [] = [1], [] = [2], t = [3, 4]");
-        test("let [ , , ...t] = [1, ...a, 2, , 4]", "let [] = [1], [, ...t] = [...a, 2, , 4]");
+        test("let [a, , c, d] = [1, 2, 3, 4]", "let a = 1, c = 3, d = 4");
+        test("let [ , , a] = [1, 2, 3, 4]", "let a = 3, [] = [4]");
+        test("let [ , , ...t] = [1, 2, 3, 4]", "let t = [3, 4]");
+        test("let [ , , ...t] = [1, ...a, 2, , 4]", "let [, ...t] = [...a, 2, , 4]");
         test("let [a, , b] = [, , , ]", "let a, b;");
         test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
         // nested
@@ -2196,7 +2196,7 @@ mod test {
         test("var [a, b] = [1, 2]", "var a = 1, b = 2");
         test("var [a, b] = [!d, !a]", "var _ = !d, _2 = !a, a = _, b = _2");
         test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
-        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = 2, b = _2");
+        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = _, b = _2");
         test("var [a, b] = [b, a]", "var _ = b, _2 = a, a = _, b = _2;");
         test(
             "var [a, b] = [b, a], [a, b] = [b, a]",
