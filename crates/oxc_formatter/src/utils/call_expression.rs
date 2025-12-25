@@ -161,9 +161,12 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> Option<impl Iterato
 /// - `test`
 /// - `test.only`
 /// - `test.skip`
+/// - `test.fixme`
 /// - `test.step`
 /// - `test.describe`
 /// - `test.describe.only`
+/// - `test.describe.skip`
+/// - `test.describe.fixme`
 /// - `test.describe.parallel`
 /// - `test.describe.parallel.only`
 /// - `test.describe.serial`
@@ -191,10 +194,10 @@ pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
         },
         Some("test") => match names.next() {
             None => true,
-            Some("only" | "skip" | "step") => names.next().is_none(),
+            Some("only" | "skip" | "step" | "fixme") => names.next().is_none(),
             Some("describe") => match names.next() {
                 None => true,
-                Some("only") => names.next().is_none(),
+                Some("only" | "skip" | "fixme") => names.next().is_none(),
                 Some("parallel" | "serial") => match names.next() {
                     None => true,
                     Some("only") => names.next().is_none(),
