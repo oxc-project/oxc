@@ -31,6 +31,7 @@ pub trait Tool: Send + Sync {
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
@@ -45,6 +46,7 @@ pub trait Tool: Send + Sync {
     /// The Tool should decide whether it needs to restart or take any action based on the URI.
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
