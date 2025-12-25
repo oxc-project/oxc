@@ -84,7 +84,6 @@ impl Rule for PreferDescribeFunctionTitle {
             return;
         };
 
-        let node = jest_node.node;
         match arg {
             Argument::StringLiteral(string) => {
                 self.check_string_literal(string, node, ctx);
@@ -104,7 +103,7 @@ impl PreferDescribeFunctionTitle {
         node: &AstNode,
         ctx: &LintContext,
     ) {
-        if !self.is_function_import_in_scope(string_literal.value.as_str(), node, ctx) {
+        if !Self::is_function_import_in_scope(string_literal.value.as_str(), node, ctx) {
             return;
         }
 
@@ -127,7 +126,7 @@ impl PreferDescribeFunctionTitle {
         let Expression::Identifier(ident) = &member_expr.object else {
             return;
         };
-        if !self.is_function_import_in_scope(ident.name.as_str(), node, ctx) {
+        if !Self::is_function_import_in_scope(ident.name.as_str(), node, ctx) {
             return;
         }
 
@@ -138,13 +137,12 @@ impl PreferDescribeFunctionTitle {
         );
     }
 
-    fn is_function_import_in_scope(&self, name: &str, node: &AstNode, ctx: &LintContext) -> bool {
+    fn is_function_import_in_scope(name: &str, node: &AstNode, ctx: &LintContext) -> bool {
         let scope = ctx.scoping();
-        if let Some(symbol_id) = scope.find_binding(node.scope_id(), name) {
-            let flags = ctx.scoping().symbol_flags(symbol_id);
+        scope.find_binding(node.scope_id(), name).is_some_and(|symbol_id| {
+            let flags = scope.symbol_flags(symbol_id);
             return flags.is_import() && !flags.is_type_import();
-        }
-        false
+        })
     }
 }
 
