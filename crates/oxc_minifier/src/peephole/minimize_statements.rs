@@ -461,6 +461,12 @@ impl<'a> PeepholeOptimizations {
 
         let Some(Expression::ArrayExpression(init_expr)) = &decl.init else { return false };
 
+        let init_len = init_expr.elements.len();
+        // [???] = [] or [...rest] = [??]
+        if init_len == 0 || (id_kind.rest.is_some() && id_kind.elements.is_empty()) {
+            return true;
+        }
+
         let first_init = init_expr.elements.first();
 
         // check if the first init is not spread when rest is present without elements
@@ -472,13 +478,13 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        // check for `[a = b] = [c]`, this could be potentially optimized if we check if `c` is undefined
-        if init_expr.elements.len() == 1
+        // check for `[a = b] = [c]`
+        if init_len == 1
+            && first_init.is_some_and(|expr| !expr.is_literal_value(false, ctx))
             && id_kind
                 .elements
                 .first()
                 .is_some_and(|e| e.as_ref().is_none_or(BindingPattern::is_assignment_pattern))
-            && first_init.is_some_and(|expr| !expr.is_literal_value(false, ctx))
         {
             return false;
         }
@@ -508,8 +514,11 @@ impl<'a> PeepholeOptimizations {
             id_pattern.elements.len()
         };
 
-        // create tmp variables only for vars when there is more than one init and its not `[...a] = [a, b]`
-        if decl.kind.is_var() && init_expr.elements.len() > 1 && index > 0 {
+        // create tmp variables only for vars when:
+        // - there is more than one init
+        // - it's not `[...a] = [a, b]`
+        // - there is more than one value
+        if decl.kind.is_var() && index > 0 && init_expr.elements.len() > 1 {
             for init_expr in &mut init_expr.elements {
                 if !init_expr.is_literal_value(false, ctx) {
                     // create intermediate declarations to avoid issues with hoisting
@@ -2176,7 +2185,7 @@ mod test {
         test("let [ , , a] = [1, 2, 3, 4]", "let a = 3, [] = [4]");
         test("let [ , , ...t] = [1, 2, 3, 4]", "let t = [3, 4]");
         test("let [ , , ...t] = [1, ...a, 2, , 4]", "let [, ...t] = [...a, 2, , 4]");
-        test("let [a, , b] = [, , , ]", "let a, b;");
+        test("let [a, , b] = [, , , ]", "let a, b");
         test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
         // nested
         test("let [a, [b, c]] = [1, [2, 3]]", "let a = 1, b = 2, c = 3");
@@ -2199,8 +2208,9 @@ mod test {
         test("const [a] = []", "const a = void 0");
         // vars
         test("var [a] = [a]", "var a = a");
-        test("let [...a] = [b, c]", "let a = [b, c]");
+        test("var [...a] = [b, c]", "var a = [b, c]");
         test("var [a, b] = [1, ...[2, 3]]", "var _ = [2, 3], a = 1, [b] = [..._]");
+        test("var [a, b] = [c, ...[d, e]]", "var _ = c, _2 = [d, e], a = _, [b] = [..._2]");
         test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [, ...t] = [...a, 2, , 4]");
         test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
         test("var [c, ...d] = [6]", "var c = 6, d = []");
