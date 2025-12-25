@@ -246,6 +246,15 @@ impl Comment {
             && self.is_leading()
     }
 
+    /// Returns `true` if this comment has legal content (regardless of position).
+    ///
+    /// Unlike `is_legal()`, this does not require the comment to be in a leading position.
+    /// Use this to check if a trailing comment contains legal content.
+    #[inline]
+    pub fn has_legal_content(self) -> bool {
+        matches!(self.content, CommentContent::Legal | CommentContent::JsdocLegal)
+    }
+
     /// Is `/* @__PURE__*/`.
     #[inline]
     pub fn is_pure(self) -> bool {

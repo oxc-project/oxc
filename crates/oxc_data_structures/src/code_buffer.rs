@@ -255,6 +255,18 @@ impl CodeBuffer {
         self.peek_nth_char_back(0)
     }
 
+    /// Remove and return the last byte from the buffer.
+    ///
+    /// Returns `None` if the buffer is empty.
+    ///
+    /// # Safety
+    /// The caller must ensure that after this call, the buffer still represents
+    /// a valid UTF-8 string. This is guaranteed if popping an ASCII byte.
+    #[inline]
+    pub fn pop(&mut self) -> Option<u8> {
+        self.buf.pop()
+    }
+
     /// Push a single ASCII byte into the buffer.
     ///
     /// # Panics
