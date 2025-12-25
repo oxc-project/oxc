@@ -92,6 +92,27 @@ impl ReactPluginSettings {
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.form_components.is_empty() && self.link_components.is_empty()
+    }
+
+    /// Merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint v9 behavior).
+    pub(crate) fn merge(self, other: Self) -> Self {
+        if self.is_empty() {
+            return other;
+        }
+        self
+    }
+
+    /// Merge self into base (for overrides). Self takes priority.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        if !self.is_empty() {
+            base.form_components.clone_from(&self.form_components);
+            base.link_components.clone_from(&self.link_components);
+        }
+    }
 }
 
 // Deserialize helper types
