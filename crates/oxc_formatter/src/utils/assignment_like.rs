@@ -381,7 +381,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
@@ -543,7 +543,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: Option<&AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
@@ -639,7 +639,7 @@ impl<'a> AssignmentLike<'a, '_> {
 fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     is_left_short: bool,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     if right.is_jsx() {
         return false;
@@ -851,7 +851,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
     expression: &AstNode<'a, Expression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -934,10 +934,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             return false;
         }
 
-        let is_breakable_type_arguments = match &call_expression.type_arguments {
-            Some(type_arguments) => is_complex_type_arguments(type_arguments),
-            None => false,
-        };
+        let is_breakable_type_arguments = call_expression
+            .type_arguments()
+            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
 
         if is_breakable_type_arguments {
             return false;
@@ -989,12 +988,15 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
     }
 }
 
-/// This function checks if `TSTypeArguments` is complex
-/// We need it to decide if `CallExpression` with the type arguments is breakable or not
-/// If the type arguments is complex the function call is breakable
+/// This function checks if `TSTypeArguments` is complex.
+/// We need it to decide if `CallExpression` with the type arguments is breakable or not.
+/// If the type arguments is complex the function call is breakable.
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432>
-fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> bool {
-    let ts_type_argument_list = &type_arguments.params;
+fn is_complex_type_arguments<'a>(
+    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let ts_type_argument_list = type_arguments.params();
 
     if ts_type_argument_list.len() > 1 {
         return true;
@@ -1002,14 +1004,8 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
 
     let is_first_argument_complex = ts_type_argument_list.first().is_some_and(|first_argument| {
         matches!(
-            first_argument,
-            TSType::TSUnionType(_)
-                | TSType::TSIntersectionType(_)
-                | TSType::TSTypeLiteral(_)
-                // TODO: This is not part of Prettier's logic, but it makes sense to consider mapped types as
-                // complex because it is the same as type literals in terms of structure.
-                // NOTE: Once the `will_break` logic is added, this will have to be revisited.
-                | TSType::TSMappedType(_)
+            first_argument.as_ref(),
+            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
         )
     });
 
@@ -1017,10 +1013,7 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
         return true;
     }
 
-    // TODO: add here will_break logic
-    // https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L454
-
-    false
+    type_arguments.memoized().inspect(f).will_break()
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>
