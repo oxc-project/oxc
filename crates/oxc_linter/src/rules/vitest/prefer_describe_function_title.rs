@@ -76,7 +76,7 @@ impl Rule for PreferDescribeFunctionTitle {
         };
         if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
             return;
-        };
+        }
         if call_expr.arguments.len() < 2 {
             return;
         }
@@ -87,10 +87,10 @@ impl Rule for PreferDescribeFunctionTitle {
         let node = jest_node.node;
         match arg {
             Argument::StringLiteral(string) => {
-                self.check_string_literal(&string, node, ctx)
+                self.check_string_literal(string, node, ctx);
             }
             Argument::StaticMemberExpression(member_expr) => {
-                self.check_static_member_expression(&**member_expr, node, ctx);
+                self.check_static_member_expression(member_expr, node, ctx);
             }
             _ => (),
         }
@@ -98,7 +98,12 @@ impl Rule for PreferDescribeFunctionTitle {
 }
 
 impl PreferDescribeFunctionTitle {
-    fn check_string_literal(&self, string_literal: &StringLiteral, node: &AstNode, ctx: &LintContext) {
+    fn check_string_literal(
+        &self,
+        string_literal: &StringLiteral,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
         if !self.is_function_import_in_scope(string_literal.value.as_str(), node, ctx) {
             return;
         }
@@ -110,7 +115,12 @@ impl PreferDescribeFunctionTitle {
         );
     }
 
-    fn check_static_member_expression(&self, member_expr: &StaticMemberExpression, node: &AstNode, ctx: &LintContext) {
+    fn check_static_member_expression(
+        &self,
+        member_expr: &StaticMemberExpression,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
         if member_expr.property.name != "name" {
             return;
         }
@@ -132,9 +142,9 @@ impl PreferDescribeFunctionTitle {
         let scope = ctx.scoping();
         if let Some(symbol_id) = scope.find_binding(node.scope_id(), name) {
             let flags = ctx.scoping().symbol_flags(symbol_id);
-            return flags.is_import()
+            return flags.is_import() && !flags.is_type_import();
         }
-        return false;
+        false
     }
 }
 
