@@ -1,6 +1,8 @@
 use std::fmt;
 use std::str::FromStr;
 
+use crate::oxfmtrc::CustomGroupDefinition;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
     /// Partition imports by newlines.
@@ -30,6 +32,8 @@ pub struct SortImportsOptions {
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
     pub groups: Vec<Vec<String>>,
+    /// Define your own groups and use regex for matching very specific imports
+    pub custom_groups: Vec<CustomGroupDefinition>,
 }
 
 impl Default for SortImportsOptions {
@@ -43,6 +47,7 @@ impl Default for SortImportsOptions {
             newlines_between: true,
             internal_pattern: default_internal_patterns(),
             groups: default_groups(),
+            custom_groups: vec![],
         }
     }
 }
