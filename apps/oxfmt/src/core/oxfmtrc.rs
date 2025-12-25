@@ -390,6 +390,9 @@ pub struct SortImportsConfig {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<Vec<SortGroupItemConfig>>,
+    /// Define your own groups and use regex for matching very specific imports
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_groups: Option<Vec<CustomGroupDefinition>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -690,6 +693,9 @@ impl Oxfmtrc {
                 if let Some(v) = config.groups {
                     sort_imports.groups =
                         v.into_iter().map(SortGroupItemConfig::into_vec).collect();
+                }
+                if let Some(v) = config.custom_groups {
+                    sort_imports.custom_groups = v;
                 }
 
                 // `partition_by_newline: true` and `newlines_between: true` cannot be used together
