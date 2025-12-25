@@ -64,14 +64,13 @@ impl Walk {
         // - Ignore files: root = parent directory of the ignore file
         // - `.ignorePatterns`: root = parent directory of `.oxfmtrc.json`
         // - Exclude paths (`!` prefix): root = cwd
+        //
+        // NOTE: Git ignore files are handled by `WalkBuilder` itself
         let mut matchers: Vec<Gitignore> = vec![];
 
-        // 1. Handle ignore files (`.gitignore`, `.prettierignore`, or `--ignore-path`)
+        // 1. Handle formatter ignore files (`.prettierignore`, or `--ignore-path`)
         // Patterns are relative to the ignore file location
-        for ignore_path in &load_ignore_paths(cwd, ignore_paths) {
-            if !ignore_path.exists() {
-                return Err(format!("{}: File not found", ignore_path.display()));
-            }
+        for ignore_path in &load_ignore_paths(cwd, ignore_paths)? {
             let (gitignore, err) = Gitignore::new(ignore_path);
             if let Some(err) = err {
                 return Err(format!(
@@ -121,10 +120,12 @@ impl Walk {
         }
 
         //
-        // Filter paths by ignores
+        // Filter paths by formatter ignores
         //
         // NOTE: Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
         // so we need to filter them here before passing to the walker.
+        // This is needed for cases like `husky`, may specify ignored paths as staged files.
+        // NOTE: Git ignored paths are not filtered here.
         let target_paths: Vec<_> = target_paths
             .into_iter()
             .filter(|path| !is_ignored(&matchers, path, path.is_dir()))
@@ -186,12 +187,20 @@ impl Walk {
             .follow_links(false)
             // Include hidden files and directories except those we explicitly skip above
             .hidden(false)
-            // Do not respect `.gitignore` automatically, we handle it manually
+            // Do not respect `.ignore` file
             .ignore(false)
+            // Do not search upward
+            // NOTE: Prettier only searches current working directory
             .parents(false)
+            // Also do not respect globals
             .git_global(false)
-            .git_ignore(false)
+            // But respect downward nested `.gitignore` files
+            // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
+            .git_ignore(true)
+            // Also do not respect `.git/info/exclude`
             .git_exclude(false)
+            // Git is not required
+            .require_git(false)
             .build_parallel();
         Ok(Some(Self { inner }))
     }
@@ -225,23 +234,28 @@ fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool) -> bool {
     false
 }
 
-fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
-    // If specified, just resolves absolute paths
+fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
+    // If specified, resolve absolute paths and check existence
     if !ignore_paths.is_empty() {
-        return ignore_paths
-            .iter()
-            .map(|path| if path.is_absolute() { path.clone() } else { cwd.join(path) })
-            .collect();
+        let mut result = Vec::with_capacity(ignore_paths.len());
+        for path in ignore_paths {
+            let path = if path.is_absolute() { path.clone() } else { cwd.join(path) };
+            if !path.exists() {
+                return Err(format!("{}: File not found", path.display()));
+            }
+            result.push(path);
+        }
+        return Ok(result);
     }
 
     // Else, search for default ignore files in cwd
-    [".gitignore", ".prettierignore"]
-        .into_iter()
+    // These are optional, do not error if not found
+    Ok(std::iter::once(".prettierignore")
         .filter_map(|file_name| {
             let path = cwd.join(file_name);
             path.exists().then_some(path)
         })
-        .collect()
+        .collect())
 }
 
 // ---
