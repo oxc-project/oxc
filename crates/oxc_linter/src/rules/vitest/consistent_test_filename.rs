@@ -77,21 +77,21 @@ impl std::ops::Deref for ConsistentTestFilename {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers an error when a file is considered a test file, but their name
-    /// don't match an expected filename format.
+    /// This rule triggers an error when a file is considered a test file, but its name
+    /// does not match an expected filename format.
     ///
     /// ### Why is this bad?
     ///
-    /// Files that are tests but has an unexpected filename make hard to distintc between
+    /// Files that are tests but with an unexpected filename make it hard to distinguish between
     /// source code files and test files.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** file path for this rule configure as {"allTestPattern": "__tests__",  "pattern": r".*\.spec\.ts$"}:
+    /// An example of an **incorrect** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
     /// __tests__/2.ts
     ///
-    /// Examples of **correct** file path for this rule configure as {"allTestPattern": "__tests__",  "pattern": r".*\.spec\.ts$"}:
+    /// An example of a **correct** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
     /// __tests__/2.spec.ts
     ///
