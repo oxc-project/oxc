@@ -72,6 +72,15 @@ export type JsSetupConfigsCb =
   ((arg: string) => string | null)
 
 /**
+ * JS callback to strip custom syntax from a file.
+ *
+ * This is called in Phase 2 to strip non-JS syntax from files matched by custom parsers.
+ * The stripped source can then be parsed by oxc and linted with Rust rules.
+ */
+export type JsStripFileCb =
+  ((arg0: number, arg1: string, arg2: string, arg3: string) => string | null)
+
+/**
  * NAPI entry point.
  *
  * JS side passes in:
@@ -82,10 +91,11 @@ export type JsSetupConfigsCb =
  * 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
  * 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
  * 7. `lint_file_with_custom_ast`: (Optional) Lint a file with a pre-parsed AST.
+ * 8. `strip_file`: (Optional) Strip custom syntax from a file for Rust rule linting.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb, loadParser?: JsLoadParserCb | undefined | null, parseFile?: JsParseFileCb | undefined | null, lintFileWithCustomAst?: JsLintFileWithCustomAstCb | undefined | null): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb, loadParser?: JsLoadParserCb | undefined | null, parseFile?: JsParseFileCb | undefined | null, lintFileWithCustomAst?: JsLintFileWithCustomAstCb | undefined | null, stripFile?: JsStripFileCb | undefined | null): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.

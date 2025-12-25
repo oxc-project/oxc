@@ -250,3 +250,103 @@ export function parseForESLint(
     },
   };
 }
+
+/**
+ * SpanMapping for Phase 2 stripping support.
+ */
+interface SpanMapping {
+  strippedStart: number;
+  strippedEnd: number;
+  originalStart: number;
+  originalEnd: number;
+}
+
+/**
+ * Result from stripping custom syntax.
+ */
+interface StripResult {
+  source: string;
+  sourceType?: {
+    module?: boolean;
+    typescript?: boolean;
+    jsx?: boolean;
+  };
+  mappings: SpanMapping[];
+}
+
+/**
+ * Strip custom DSL syntax, converting to valid JavaScript.
+ *
+ * This enables Phase 2 support where Rust rules can run on the stripped source.
+ * The DSL is converted to JavaScript:
+ * - `var <name>` -> `var <name>;`
+ * - `log <expr>` -> `console.log(<expr>);`
+ * - `# comment` -> `// comment`
+ *
+ * Span mappings are provided so diagnostics can be remapped to original positions.
+ */
+export function stripCustomSyntax(
+  code: string,
+  _options?: ParserOptions,
+): StripResult | undefined {
+  const lines = code.split("\n");
+  const outputLines: string[] = [];
+  const mappings: SpanMapping[] = [];
+
+  let originalOffset = 0;
+  let strippedOffset = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lineStart = originalOffset;
+    const lineEnd = originalOffset + line.length;
+
+    const trimmed = line.trim();
+    let outputLine: string;
+
+    if (trimmed === "" || trimmed.startsWith("#")) {
+      // Empty lines and comments - convert to JS comment
+      if (trimmed.startsWith("#")) {
+        outputLine = "//" + line.slice(line.indexOf("#") + 1);
+      } else {
+        outputLine = line;
+      }
+    } else if (trimmed.startsWith("var ")) {
+      // Variable declaration: `var <name>` -> `var <name>;`
+      const name = trimmed.slice(4).trim();
+      outputLine = `var ${name};`;
+    } else if (trimmed.startsWith("log ")) {
+      // Log statement: `log <expr>` -> `console.log(<expr>);`
+      const expr = trimmed.slice(4).trim();
+      outputLine = `console.log(${expr});`;
+    } else {
+      // Unknown syntax - pass through as-is
+      outputLine = line;
+    }
+
+    // Create mapping from stripped position to original position
+    const strippedLineStart = strippedOffset;
+    const strippedLineEnd = strippedOffset + outputLine.length;
+
+    mappings.push({
+      strippedStart: strippedLineStart,
+      strippedEnd: strippedLineEnd,
+      originalStart: lineStart,
+      originalEnd: lineEnd,
+    });
+
+    outputLines.push(outputLine);
+    originalOffset = lineEnd + 1; // +1 for newline
+    strippedOffset = strippedLineEnd + 1;
+  }
+
+  return {
+    source: outputLines.join("\n"),
+    sourceType: {
+      module: false,
+      typescript: false,
+      jsx: false,
+    },
+    mappings,
+  };
+}

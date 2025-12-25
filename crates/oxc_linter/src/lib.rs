@@ -63,8 +63,9 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLintFileWithCustomAstCb,
         ExternalLinterLoadParserCb, ExternalLinterLoadPluginCb, ExternalLinterParseFileCb,
-        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadParserResult, LoadPluginResult,
-        ParseFileResult,
+        ExternalLinterSetupConfigsCb, ExternalLinterStripFileCb, JsFix, LintFileResult,
+        LoadParserResult, LoadPluginResult, ParseFileResult, SpanMapping, StripFileResult,
+        StrippedSource,
     },
     external_parser_store::{ExternalParserId, ExternalParserStore},
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
@@ -185,6 +186,136 @@ impl Linter {
     pub fn has_custom_parser_support(&self) -> bool {
         self.external_linter.as_ref().is_some_and(|el| el.parse_file.is_some())
             && !self.config.external_parser_store().is_empty()
+    }
+
+    /// Strip custom syntax from a file using a custom parser.
+    ///
+    /// This calls the JS-side parser through the `strip_file` callback.
+    /// Returns `None` if no strip_file callback is registered.
+    ///
+    /// # Errors
+    /// Returns an error if the parser fails to strip the file.
+    pub fn strip_with_custom_parser(
+        &self,
+        parser_id: u32,
+        path: &Path,
+        source_text: &str,
+        parser_options_json: &str,
+    ) -> Option<Result<Option<StripFileResult>, String>> {
+        let external_linter = self.external_linter.as_ref()?;
+        let strip_file = external_linter.strip_file.as_ref()?;
+
+        Some(strip_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        ))
+    }
+
+    /// Check if stripping support is available for custom parsers.
+    ///
+    /// Returns true if the strip_file callback is registered.
+    pub fn has_strip_support(&self) -> bool {
+        self.external_linter.as_ref().is_some_and(|el| el.strip_file.is_some())
+    }
+
+    /// Run only Rust rules on the given context, without external (JS) rules.
+    ///
+    /// This is used in Phase 2 of custom parser support where we parse the stripped
+    /// source with oxc and run Rust rules. JS rules are handled separately via Phase 1.
+    ///
+    /// Returns a tuple of (messages, Option<DisableDirectives>).
+    pub fn run_rust_rules_only<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        _allocator: &'a Allocator,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        let ResolvedLinterState { rules, config, .. } = self.config.resolve(path);
+
+        let ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+
+        let is_partial_loader_file = ctx_host
+            .file_extension()
+            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
+
+        // Filter and prepare rules
+        let semantic = ctx_host.semantic();
+        let rules: Vec<_> = rules
+            .iter()
+            .filter(|(rule, _)| {
+                if rule.is_tsgolint_rule() {
+                    return false;
+                }
+
+                // Skip if file doesn't contain relevant AST node types
+                if rule.run_info() == RuleRunFunctionsImplemented::Run
+                    && let Some(ast_types) = rule.types_info()
+                    && !semantic.nodes().contains_any(ast_types)
+                {
+                    return false;
+                }
+
+                rule.should_run(&ctx_host)
+            })
+            .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+            .collect();
+
+        let should_run_on_jest_node =
+            ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+
+        // Execute rules - using the simpler branch for typical file sizes
+        for (rule, ctx) in &rules {
+            let run_info = rule.run_info();
+
+            if run_info.is_run_once_implemented() {
+                rule.run_once(ctx);
+            }
+
+            if run_info.is_run_implemented() {
+                if let Some(ast_types) = rule.types_info() {
+                    for node in semantic.nodes() {
+                        if ast_types.has(node.kind().ty()) {
+                            rule.run(node, ctx);
+                        }
+                    }
+                } else {
+                    for node in semantic.nodes() {
+                        rule.run(node, ctx);
+                    }
+                }
+            }
+
+            if should_run_on_jest_node && run_info.is_run_on_jest_node_implemented() {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    rule.run_on_jest_node(&jest_node, ctx);
+                }
+            }
+        }
+
+        // Drop `rules` to release its `Rc` clones of `ctx_host`
+        drop(rules);
+
+        // Note: We intentionally skip external_rules here - those are handled by Phase 1
+
+        if let Some(severity) = self.options.report_unused_directive
+            && severity.is_warn_deny()
+            && is_partial_loader_file
+        {
+            ctx_host.report_unused_directives(severity.into());
+        }
+
+        let diagnostics = ctx_host.take_diagnostics();
+        // For stripped source (custom parser Phase 2), we don't need disable directives.
+        // Since rules keep Rc references, we can't unwrap, but that's fine - just return None.
+        let disable_directives = if is_partial_loader_file {
+            None
+        } else {
+            Rc::try_unwrap(ctx_host).ok().and_then(|host| host.into_disable_directives())
+        };
+
+        (diagnostics, disable_directives)
     }
 
     /// Lint a file using a custom parser.

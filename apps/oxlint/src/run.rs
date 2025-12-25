@@ -154,6 +154,29 @@ pub type JsLintFileWithCustomAstCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to strip custom syntax from a file.
+///
+/// This is called in Phase 2 to strip non-JS syntax from files matched by custom parsers.
+/// The stripped source can then be parsed by oxc and linted with Rust rules.
+#[napi]
+pub type JsStripFileCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        u32,    // Parser ID to use (from LoadParserResult)
+        String, // Absolute path of file to strip
+        String, // Source text content
+        String, // Parser options as JSON string
+    )>,
+    // Return value
+    Option<String>, // `StripFileResult` as JSON, or `None` if parser doesn't support stripping
+    // Arguments (repeated)
+    FnArgs<(u32, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -164,6 +187,7 @@ pub type JsLintFileWithCustomAstCb = ThreadsafeFunction<
 /// 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
 /// 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
 /// 7. `lint_file_with_custom_ast`: (Optional) Lint a file with a pre-parsed AST.
+/// 8. `strip_file`: (Optional) Strip custom syntax from a file for Rust rule linting.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -177,6 +201,7 @@ pub async fn lint(
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
     lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> bool {
     lint_impl(
         args,
@@ -186,6 +211,7 @@ pub async fn lint(
         load_parser,
         parse_file,
         lint_file_with_custom_ast,
+        strip_file,
     )
     .await
     .report()
@@ -201,6 +227,7 @@ async fn lint_impl(
     load_parser: Option<JsLoadParserCb>,
     parse_file: Option<JsParseFileCb>,
     lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -240,16 +267,18 @@ async fn lint_impl(
         load_parser,
         parse_file,
         lint_file_with_custom_ast,
+        strip_file,
     ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _, _, _, _) = (
+        let (_, _, _, _, _, _, _) = (
             load_plugin,
             setup_configs,
             lint_file,
             load_parser,
             parse_file,
             lint_file_with_custom_ast,
+            strip_file,
         );
         None
     };

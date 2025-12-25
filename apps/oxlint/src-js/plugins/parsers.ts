@@ -232,3 +232,122 @@ export function parseFile(
     return JSON.stringify({ Failure: getErrorMessage(err) });
   }
 }
+
+/**
+ * Parser interface for stripping custom syntax.
+ *
+ * If a parser implements this interface, it can be used for Phase 2 custom parser
+ * support, where custom syntax is stripped and Rust rules can run on the result.
+ */
+interface EslintParserWithStrip extends EslintParser {
+  /**
+   * Strip custom syntax from the source, returning valid JavaScript.
+   *
+   * @param code - Source text content
+   * @param options - Parser options
+   * @returns Object containing stripped source and span mappings, or undefined if not supported
+   */
+  stripCustomSyntax?: (
+    code: string,
+    options?: Record<string, unknown>,
+  ) =>
+    | {
+        /** The stripped source code (valid JavaScript) */
+        source: string;
+        /** Source type hints (optional) */
+        sourceType?: {
+          module?: boolean;
+          typescript?: boolean;
+          jsx?: boolean;
+        };
+        /** Span mappings from stripped positions to original positions */
+        mappings: Array<{
+          strippedStart: number;
+          strippedEnd: number;
+          originalStart: number;
+          originalEnd: number;
+        }>;
+      }
+    | undefined;
+}
+
+/**
+ * Result from stripping a file, returned to Rust
+ */
+interface StripFileResult {
+  source: string;
+  sourceType?: {
+    module?: boolean;
+    typescript?: boolean;
+    jsx?: boolean;
+  };
+  mappings: Array<{
+    strippedStart: number;
+    strippedEnd: number;
+    originalStart: number;
+    originalEnd: number;
+  }>;
+}
+
+/**
+ * Strip custom syntax from a file using a custom parser.
+ *
+ * This is used in Phase 2 to enable Rust rules on files with custom syntax.
+ * The parser strips non-JS syntax and provides span mappings for diagnostic remapping.
+ *
+ * @param parserId - ID of the parser to use
+ * @param filePath - Absolute path of file being stripped
+ * @param sourceText - Source text content
+ * @param parserOptionsJson - Parser options as JSON string
+ * @returns Strip result as JSON string, or null if not supported
+ */
+export function stripFile(
+  parserId: number,
+  filePath: string,
+  sourceText: string,
+  parserOptionsJson: string,
+): string | null {
+  try {
+    const loadedParser = loadedParsers.get(parserId);
+    if (!loadedParser) {
+      throw new Error(`Parser with ID ${parserId} not found`);
+    }
+
+    const parser = loadedParser.parser as EslintParserWithStrip;
+
+    // Check if the parser supports stripping
+    if (typeof parser.stripCustomSyntax !== "function") {
+      // Parser doesn't support stripping - return NotSupported
+      // Note: Rust serde expects unit variants as null, not true
+      return JSON.stringify({ NotSupported: null });
+    }
+
+    // Parse options from JSON
+    let parserOptions: Record<string, unknown> = {};
+    if (parserOptionsJson && parserOptionsJson !== "null") {
+      parserOptions = JSON.parse(parserOptionsJson) as Record<string, unknown>;
+    }
+
+    // Add common options
+    parserOptions.filePath = filePath;
+
+    // Call the strip function
+    const stripResult = parser.stripCustomSyntax(sourceText, parserOptions);
+
+    if (!stripResult) {
+      // Parser declined to strip this file
+      // Note: Rust serde expects unit variants as null, not true
+      return JSON.stringify({ NotSupported: null });
+    }
+
+    const result: StripFileResult = {
+      source: stripResult.source,
+      sourceType: stripResult.sourceType,
+      mappings: stripResult.mappings,
+    };
+
+    return JSON.stringify({ Success: result });
+  } catch (err) {
+    return JSON.stringify({ Failure: getErrorMessage(err) });
+  }
+}
