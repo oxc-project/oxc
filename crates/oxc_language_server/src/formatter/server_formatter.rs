@@ -199,10 +199,7 @@ impl Tool for ServerFormatter {
 
         let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
-        ToolRestartChanges {
-            tool: Some(new_formatter),
-            watch_patterns: Some(watch_patterns),
-        }
+        ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {

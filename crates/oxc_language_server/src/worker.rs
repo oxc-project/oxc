@@ -411,8 +411,8 @@ fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String
 mod tests {
     use std::str::FromStr;
 
-    use tower_lsp_server::ls_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
     use std::sync::Arc;
+    use tower_lsp_server::ls_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
 
     use crate::{
         ToolBuilder,
@@ -427,20 +427,16 @@ mod tests {
 
     #[test]
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            Arc::new(vec![]),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new(vec![]));
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
 
     #[test]
     fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/root").unwrap(),
-            Arc::new(vec![]),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///path/to/root").unwrap(), Arc::new(vec![]));
 
         assert!(
             worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
@@ -456,10 +452,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_needs_init_options() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            Arc::new(vec![]),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new(vec![]));
         assert!(worker.needs_init_options().await);
         worker.start_worker(serde_json::Value::Null).await;
         assert!(!worker.needs_init_options().await);
@@ -468,33 +462,25 @@ mod tests {
     #[tokio::test]
     async fn test_init_watchers() {
         // with one watcher
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         worker.start_worker(serde_json::Value::Null).await;
         let registrations = worker.init_watchers().await;
         assert_eq!(registrations.len(), 1);
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
 
         // with no watchers
-        let worker_no_watchers = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
-        worker_no_watchers
-            .start_worker(serde_json::json!({"some_option": true}))
-            .await;
+        let worker_no_watchers =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
+        worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
         let registrations_no_watchers = worker_no_watchers.init_watchers().await;
         assert_eq!(registrations_no_watchers.len(), 0);
     }
 
     #[tokio::test]
     async fn test_execute_command() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         worker.start_worker(serde_json::Value::Null).await;
 
         // Test command not found
@@ -515,10 +501,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_watched_files_change_notification() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         worker.start_worker(serde_json::Value::Null).await;
 
         let fs = LSPFileSystem::default();
@@ -603,13 +587,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_did_change_configuration() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
-        worker
-            .start_worker(serde_json::json!({"some_option": true}))
-            .await;
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
+        worker.start_worker(serde_json::json!({"some_option": true})).await;
 
         let fs = LSPFileSystem::default();
         fs.set(
@@ -666,10 +646,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_code_action_collection() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         worker.start_worker(serde_json::Value::Null).await;
 
         let actions = worker
@@ -700,10 +678,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
         worker.start_worker(serde_json::Value::Null).await;
@@ -736,10 +712,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic_on_change() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
         worker.start_worker(serde_json::Value::Null).await;
@@ -774,10 +748,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic_on_save() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            create_builders(),
-        );
+        let worker =
+            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders());
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
         worker.start_worker(serde_json::Value::Null).await;
 
