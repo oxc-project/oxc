@@ -150,9 +150,12 @@ fn assert_generated_derives(attrs: &[Attribute]) -> TokenStream {
             };
 
             // These are wrapped in a scope to avoid the need for unique identifiers
+            // Use full path for both the bound and the impl, so the trait doesn't need to be
+            // in scope at the use site. This makes `#[generate_derive(FromESTree)]` work in
+            // oxc_ast without requiring an import.
             assertions.extend(quote! {{
                 trait AssertionTrait: #trait_path #generics {}
-                impl<T: #trait_ident #generics> AssertionTrait for T {}
+                impl<T: #trait_path #generics> AssertionTrait for T {}
             }});
         }
     }
