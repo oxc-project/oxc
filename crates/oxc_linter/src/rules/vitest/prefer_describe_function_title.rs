@@ -57,7 +57,7 @@ declare_oxc_lint!(
     PreferDescribeFunctionTitle,
     vitest,
     style,
-    pending,
+    fix,
 );
 
 impl Rule for PreferDescribeFunctionTitle {
@@ -76,7 +76,9 @@ impl Rule for PreferDescribeFunctionTitle {
         if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
             return;
         };
-
+        if call_expr.arguments.len() < 2 {
+            return;
+        }
         let Some(arg) = call_expr.arguments.first() else {
             return;
         };
@@ -89,11 +91,16 @@ impl Rule for PreferDescribeFunctionTitle {
 
 fn validate_title(string_literal: &StringLiteral, node: &AstNode, ctx: &LintContext) {
     let scope = ctx.scoping();
-    if scope.get_binding(scope.root_scope_id(), string_literal.value.as_str()).is_none() {
-        return;
-    }
-    if scope.find_binding(node.scope_id(), string_literal.value.as_str()).is_some() {
-        ctx.diagnostic(prefer_describe_function_title_diagnostic(string_literal.span));
+    if let Some(symbol_id) = scope.find_binding(node.scope_id(), string_literal.value.as_str()) {
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+        if !flags.is_import() {
+            return;
+        }
+
+        let replacement = string_literal.value.to_string();
+        ctx.diagnostic_with_fix(prefer_describe_function_title_diagnostic(string_literal.span), |fixer| {
+            fixer.replace(string_literal.span, replacement)
+        });
     }
 }
 
