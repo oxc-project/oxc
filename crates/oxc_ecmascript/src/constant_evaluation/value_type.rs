@@ -111,16 +111,6 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
     }
 }
 
-impl<'a> DetermineValueType<'a> for ArrayExpressionElement<'a> {
-    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        match self {
-            ArrayExpressionElement::SpreadElement(_) => ValueType::Undetermined,
-            ArrayExpressionElement::Elision(_) => ValueType::Undefined,
-            _ => self.as_expression().map_or(ValueType::Undetermined, |expr| expr.value_type(ctx)),
-        }
-    }
-}
-
 impl<'a> DetermineValueType<'a> for BinaryExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self.operator {
