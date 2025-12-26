@@ -82,16 +82,16 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Files that are tests but with an unexpected filename make hard to distinguish between
+    /// Files that are tests but with an unexpected filename make it hard to distinguish between
     /// source code files and test files.
     ///
     /// ### Examples
     ///
-    /// An example of an **incorrect** file path for this rule configured as {"allTestPattern": "__tests__",  "pattern": r".*\.spec\.ts$"}:
+    /// An example of an **incorrect** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
     /// __tests__/2.ts
     ///
-    /// An example of a **correct** file path for this rule configured as {"allTestPattern": "__tests__",  "pattern": r".*\.spec\.ts$"}:
+    /// An example of a **correct** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
     /// __tests__/2.spec.ts
     ///
