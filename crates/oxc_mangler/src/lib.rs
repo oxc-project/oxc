@@ -574,12 +574,7 @@ impl<'t> Mangler<'t> {
             .elements
             .iter()
             .map(|class_elements| {
-                class_elements
-                    .iter()
-                    .filter_map(|element| {
-                        if element.is_private { Some(element.name.to_string()) } else { None }
-                    })
-                    .count()
+                class_elements.iter().filter(|element| element.is_private).count()
             })
             .collect();
         let parent_private_member_count: IndexVec<ClassId, usize> = classes
