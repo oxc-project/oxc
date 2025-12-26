@@ -37,6 +37,63 @@ pub struct MangleOptions {
 
 type Slot = u32;
 
+/// Symbols that should keep their original names (not be mangled).
+/// Used for `keepNames` option to preserve function/class names.
+struct KeepNameSymbols<'a, 'alloc> {
+    /// The string names of symbols to keep (for checking against generated names)
+    names: FxHashSet<&'a str>,
+    /// BitSet for O(1) lookup by SymbolId index
+    symbol_ids: BitSet<'alloc>,
+    /// Reference to scoping for debug assertions
+    #[cfg(debug_assertions)]
+    scoping: &'a Scoping,
+}
+
+impl<'a, 'alloc> KeepNameSymbols<'a, 'alloc> {
+    fn new(
+        keep_names: MangleOptionsKeepNames,
+        scoping: &'a Scoping,
+        nodes: &AstNodes,
+        allocator: &'alloc Allocator,
+    ) -> Self {
+        let ids = collect_name_symbols(keep_names, scoping, nodes);
+        let mut symbol_ids = BitSet::new_in(scoping.symbols_len(), allocator);
+        let mut names = FxHashSet::with_capacity_and_hasher(ids.len(), rustc_hash::FxBuildHasher);
+        for id in ids {
+            symbol_ids.set_bit(id.index());
+            names.insert(scoping.symbol_name(id));
+        }
+        Self {
+            names,
+            symbol_ids,
+            #[cfg(debug_assertions)]
+            scoping,
+        }
+    }
+
+    /// Check if a symbol should keep its name by SymbolId
+    #[inline]
+    fn contains_id(&self, symbol_id: SymbolId) -> bool {
+        let result = self.symbol_ids.has_bit(symbol_id.index());
+        // Verify that if a symbol is in the BitSet, its name is also in the names set
+        #[cfg(debug_assertions)]
+        if result {
+            let name = self.scoping.symbol_name(symbol_id);
+            debug_assert!(
+                self.names.contains(name),
+                "KeepNameSymbols invariant violated: symbol_id {symbol_id:?} is in BitSet but name '{name}' is not in names set"
+            );
+        }
+        result
+    }
+
+    /// Check if a name is in the keep list
+    #[inline]
+    fn contains_name(&self, name: &str) -> bool {
+        self.names.contains(name)
+    }
+}
+
 /// Enum to handle both owned and borrowed allocators. This is not `Cow` because that type
 /// requires `ToOwned`/`Clone`, which is not implemented for `Allocator`. Although this does
 /// incur some pointer indirection on each reference to the allocator, it allows the API to be
@@ -309,10 +366,10 @@ impl<'t> Mangler<'t> {
         } else {
             Default::default()
         };
-        let (keep_name_names, keep_name_symbols) =
-            Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
-
         let temp_allocator = self.temp_allocator.as_ref();
+
+        let keep_names =
+            KeepNameSymbols::new(self.options.keep_names, scoping, ast_nodes, temp_allocator);
 
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
@@ -336,9 +393,8 @@ impl<'t> Mangler<'t> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
-            );
+            tmp_bindings
+                .extend(bindings.values().copied().filter(|id| !keep_names.contains_id(*id)));
             if tmp_bindings.is_empty() {
                 continue;
             }
@@ -440,7 +496,7 @@ impl<'t> Mangler<'t> {
         let frequencies = self.tally_slot_frequencies(
             scoping,
             &exported_symbols,
-            &keep_name_symbols,
+            &keep_names,
             total_number_of_slots,
             &slots,
         );
@@ -462,8 +518,8 @@ impl<'t> Mangler<'t> {
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
                         && (!self.options.top_level || exported_names.contains(n)))
-                        // TODO: only skip the names that are kept in the current scope
-                        && !keep_name_names.contains(n)
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_names.contains_name(n)
                 {
                     break name;
                 }
@@ -526,7 +582,7 @@ impl<'t> Mangler<'t> {
         &'a self,
         scoping: &Scoping,
         exported_symbols: &FxHashSet<SymbolId>,
-        keep_name_symbols: &FxHashSet<SymbolId>,
+        keep_names: &KeepNameSymbols<'_, '_>,
         total_number_of_slots: usize,
         slots: &[Slot],
     ) -> Vec<'a, SlotFrequency<'a>> {
@@ -547,7 +603,7 @@ impl<'t> Mangler<'t> {
             if is_special_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
-            if keep_name_symbols.contains(&symbol_id) {
+            if keep_names.contains_id(symbol_id) {
                 continue;
             }
             let index = slot as usize;
@@ -582,15 +638,6 @@ impl<'t> Mangler<'t> {
             })
             .map(|id| (id.name, id.symbol_id()))
             .collect()
-    }
-
-    fn collect_keep_name_symbols<'a>(
-        keep_names: MangleOptionsKeepNames,
-        scoping: &'a Scoping,
-        nodes: &AstNodes,
-    ) -> (FxHashSet<&'a str>, FxHashSet<SymbolId>) {
-        let ids = collect_name_symbols(keep_names, scoping, nodes);
-        (ids.iter().map(|id| scoping.symbol_name(*id)).collect(), ids)
     }
 
     /// Collects and generates mangled names for private members using semantic information
