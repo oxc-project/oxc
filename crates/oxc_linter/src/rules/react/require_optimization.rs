@@ -23,7 +23,8 @@ fn require_optimization_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
 pub struct RequireOptimizationConfig {
-    /// Sets the allowed names of decorators. If the variable is present in the chain of decorators, it validates
+    /// Sets the allowed names of decorators. If the variable is present in the chain of decorators, the component is
+    /// considered optimized and satisfies this rule.
     ///
     /// Examples of correct code for this rule:
     /// ```jsx
