@@ -417,6 +417,18 @@ impl<'t> Mangler<'t> {
                         {
                             break;
                         }
+                        if slot_liveness_bitset.has_bit(ancestor_index) {
+                            debug_assert!(
+                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                                    let idx = a.index();
+                                    slot_liveness_bitset.has_bit(idx)
+                                        || idx == scope_id_index
+                                        || ancestor_set.has_bit(idx)
+                                }),
+                                "Invariant violated: ancestor chain should be fully marked live"
+                            );
+                            break;
+                        }
                         slot_liveness_bitset.set_bit(ancestor_index);
                     }
                 }
