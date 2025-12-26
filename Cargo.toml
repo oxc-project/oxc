@@ -160,9 +160,9 @@ unicode-id-start = "1"                            # Unicode identifier validatio
 #
 javascript-globals = "1.3.4"                                      # JavaScript global definitions
 json-strip-comments = "3.1.0"                                     # Strip JSON comments
-oxc-browserslist = "2.1.4"                                        # Browser compatibility queries
+oxc-browserslist = "2.1.5"                                        # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
-oxc_resolver = "11.15.0"                                          # Module resolution
+oxc_resolver = "11.16.2"                                          # Module resolution
 oxc_sourcemap = "6.0.1"                                           # Source map generation
 
 #
@@ -176,7 +176,7 @@ bpaf = "0.9.20"            # CLI parser
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
 bumpalo = "=3.19.1" # Bump allocator
 compact_str = "0.9.0" # Compact string type
-console = "0.16.1" # Terminal utilities
+console = "0.16.2" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
 convert_case = "0.10.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
@@ -191,11 +191,11 @@ futures = "0.3.31" # Async utilities
 handlebars = "6.3.2" # Template engine
 hashbrown = { version = "0.16.1", default-features = false } # Fast hash map
 humansize = "2.1.3" # Human-readable sizes
-icu_segmenter = "2.1.1" # Unicode segmentation
+icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
 itertools = "0.14.0" # Iterator utilities
-itoa = "1.0.15" # Integer to string
+itoa = "1.0.16" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.4.2" # Lazy regex compilation
 log = "0.4.29" # Logging facade
@@ -205,7 +205,7 @@ miette = { package = "oxc-miette", version = "2.6.0", features = [
   "fancy-no-syscall",
 ] } # Error reporting
 mimalloc-safe = "0.1.55" # Fast allocator
-nodejs-built-in-modules = "0.0.1" # Node.js built-in modules
+nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
 num-traits = "0.2.19" # Numeric traits
@@ -229,11 +229,11 @@ simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 valid
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
 smallvec = { version = "1.15.1", features = ["union", "serde"] } # Stack-allocated vectors
-tempfile = "3.23.0" # Temporary files
+tempfile = "3.24.0" # Temporary files
 tokio = { version = "1.48.0", default-features = false } # Async runtime
-toml = { version = "0.9.8" }
+toml = { version = "0.9.10" }
 tower-lsp-server = "0.23.0" # LSP server framework
-tracing = "0.1.43"
+tracing = "0.1.44"
 tracing-subscriber = "0.3.22" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
 url = { version = "2.5.7" } # URL parsing
@@ -242,7 +242,7 @@ editorconfig-parser = "0.0.3"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
 sort-package-json = "0.0.6"
-oxc-toml = "0.14.1"
+oxc-toml = "0.14.2"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
 
