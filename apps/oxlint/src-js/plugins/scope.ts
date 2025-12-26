@@ -422,3 +422,221 @@ export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean 
   throw new Error("`context.markVariableAsUsed` not implemented yet");
 }
 /* oxlint-enable no-unused-vars */
+
+// ============================================================================
+// ScopeManager Serialization for Rust-side consumption
+// ============================================================================
+
+/**
+ * Serialized scope data for Rust consumption.
+ * This is a flattened representation that can be JSON serialized.
+ */
+export interface SerializedScopeManager {
+  scopes: SerializedScope[];
+  variables: SerializedVariable[];
+  references: SerializedReference[];
+}
+
+/**
+ * Serialized scope information.
+ */
+export interface SerializedScope {
+  /** Unique identifier for this scope (index in scopes array) */
+  id: number;
+  /** Scope type matching ESLint scope types */
+  type: ScopeType;
+  /** Parent scope ID, or null for global scope */
+  parentId: number | null;
+  /** Whether this scope is in strict mode */
+  isStrict: boolean;
+  /** IDs of variables declared in this scope */
+  variableIds: number[];
+  /** Span of the block node that created this scope */
+  blockSpan: { start: number; end: number } | null;
+}
+
+/**
+ * Serialized variable information.
+ */
+export interface SerializedVariable {
+  /** Unique identifier for this variable (index in variables array) */
+  id: number;
+  /** Variable name */
+  name: string;
+  /** ID of the scope this variable is declared in */
+  scopeId: number;
+  /** Definition type */
+  definitionType: DefinitionType | null;
+  /** Span of the variable declaration */
+  span: { start: number; end: number } | null;
+  /** IDs of references to this variable */
+  referenceIds: number[];
+}
+
+/**
+ * Serialized reference information.
+ */
+export interface SerializedReference {
+  /** Unique identifier for this reference (index in references array) */
+  id: number;
+  /** Name being referenced */
+  name: string;
+  /** ID of the variable this reference resolves to, or null if unresolved */
+  variableId: number | null;
+  /** Span of the reference identifier */
+  span: { start: number; end: number };
+  /** Whether this is a read reference */
+  isRead: boolean;
+  /** Whether this is a write reference */
+  isWrite: boolean;
+}
+
+/**
+ * Serialize the current scope manager to JSON for Rust consumption.
+ *
+ * This extracts all scope, variable, and reference information from the
+ * TypeScript-ESLint scope manager and converts it to a flat structure
+ * that can be deserialized on the Rust side.
+ *
+ * @returns Serialized scope manager, or null if no scope manager is available
+ */
+export function serializeScopeManager(): SerializedScopeManager | null {
+  if (tsScopeManager === null) {
+    // No scope manager available
+    return null;
+  }
+
+  const scopeToId = new Map<TSScope, number>();
+  const variableToId = new Map<TSVariable, number>();
+  const serializedScopes: SerializedScope[] = [];
+  const serializedVariables: SerializedVariable[] = [];
+  const serializedReferences: SerializedReference[] = [];
+
+  // First pass: assign IDs to all scopes and variables
+  const allScopes = tsScopeManager.scopes;
+  for (let i = 0; i < allScopes.length; i++) {
+    const scope = allScopes[i];
+    scopeToId.set(scope, i);
+  }
+
+  // Second pass: assign IDs to all variables
+  let variableId = 0;
+  for (const scope of allScopes) {
+    for (const variable of scope.variables) {
+      variableToId.set(variable, variableId++);
+    }
+  }
+
+  // Third pass: serialize scopes
+  for (let i = 0; i < allScopes.length; i++) {
+    const scope = allScopes[i];
+    const parentId = scope.upper ? scopeToId.get(scope.upper) ?? null : null;
+    const variableIds = scope.variables.map((v) => variableToId.get(v)!);
+
+    // Get block span if available
+    let blockSpan: { start: number; end: number } | null = null;
+    const { block } = scope;
+    if (block && typeof block.start === "number" && typeof block.end === "number") {
+      blockSpan = { start: block.start, end: block.end };
+    }
+
+    serializedScopes.push({
+      id: i,
+      type: scope.type as ScopeType,
+      parentId,
+      isStrict: scope.isStrict,
+      variableIds,
+      blockSpan,
+    });
+  }
+
+  // Fourth pass: serialize variables and collect references
+  let referenceId = 0;
+  for (const scope of allScopes) {
+    for (const variable of scope.variables) {
+      const varId = variableToId.get(variable)!;
+      const scopeId = scopeToId.get(variable.scope)!;
+
+      // Get definition type and span
+      let definitionType: DefinitionType | null = null;
+      let span: { start: number; end: number } | null = null;
+      const { defs } = variable;
+      if (defs.length > 0) {
+        const def = defs[0];
+        definitionType = def.type as DefinitionType;
+        const { name } = def;
+        if (name && typeof name.start === "number" && typeof name.end === "number") {
+          span = { start: name.start, end: name.end };
+        }
+      }
+
+      // Collect reference IDs for this variable
+      const referenceIds: number[] = [];
+      for (const ref of variable.references) {
+        const refSpan = getIdentifierSpan(ref.identifier);
+        if (refSpan) {
+          serializedReferences.push({
+            id: referenceId,
+            name: ref.identifier.name,
+            variableId: varId,
+            span: refSpan,
+            isRead: ref.isRead(),
+            isWrite: ref.isWrite(),
+          });
+          referenceIds.push(referenceId);
+          referenceId++;
+        }
+      }
+
+      serializedVariables.push({
+        id: varId,
+        name: variable.name,
+        scopeId,
+        definitionType,
+        span,
+        referenceIds,
+      });
+    }
+  }
+
+  // Fifth pass: serialize unresolved references (from global scope's `through`)
+  const globalScope = allScopes[0];
+  if (globalScope) {
+    for (const ref of globalScope.through) {
+      const refSpan = getIdentifierSpan(ref.identifier);
+      if (refSpan) {
+        serializedReferences.push({
+          id: referenceId,
+          name: ref.identifier.name,
+          variableId: null, // Unresolved
+          span: refSpan,
+          isRead: ref.isRead(),
+          isWrite: ref.isWrite(),
+        });
+        referenceId++;
+      }
+    }
+  }
+
+  return {
+    scopes: serializedScopes,
+    variables: serializedVariables,
+    references: serializedReferences,
+  };
+}
+
+/**
+ * Get the span of an identifier node.
+ */
+function getIdentifierSpan(
+  identifier: Identifier,
+): { start: number; end: number } | null {
+  if (
+    identifier &&
+    typeof identifier.start === "number" &&
+    typeof identifier.end === "number"
+  ) {
+    return { start: identifier.start, end: identifier.end };
+  }
+  return null;
+}

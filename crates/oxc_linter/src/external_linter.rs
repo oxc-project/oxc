@@ -544,6 +544,154 @@ impl Serialize for EnabledEnvs<'_> {
     }
 }
 
+// ============================================================================
+// Serialized ScopeManager types for Phase 3 (ESTree deserialization)
+// ============================================================================
+
+/// Serialized scope manager from custom parser's parseForESLint().
+///
+/// This is a flattened representation of ESLint's ScopeManager that can be
+/// deserialized from JSON and used to inject scope information into oxc's Semantic.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerializedScopeManager {
+    /// All scopes in the program.
+    pub scopes: Vec<SerializedScope>,
+    /// All variables declared in the program.
+    pub variables: Vec<SerializedVariable>,
+    /// All references in the program.
+    pub references: Vec<SerializedReference>,
+}
+
+/// Serialized scope information.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerializedScope {
+    /// Unique identifier for this scope (index in scopes array).
+    pub id: u32,
+    /// Scope type matching ESLint scope types.
+    #[serde(rename = "type")]
+    pub scope_type: String,
+    /// Parent scope ID, or null for global scope.
+    pub parent_id: Option<u32>,
+    /// Whether this scope is in strict mode.
+    pub is_strict: bool,
+    /// IDs of variables declared in this scope.
+    pub variable_ids: Vec<u32>,
+    /// Span of the block node that created this scope.
+    pub block_span: Option<SerializedSpan>,
+}
+
+/// Serialized variable information.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerializedVariable {
+    /// Unique identifier for this variable (index in variables array).
+    pub id: u32,
+    /// Variable name.
+    pub name: String,
+    /// ID of the scope this variable is declared in.
+    pub scope_id: u32,
+    /// Definition type (e.g., "Variable", "Parameter", "ImportBinding").
+    pub definition_type: Option<String>,
+    /// Span of the variable declaration.
+    pub span: Option<SerializedSpan>,
+    /// IDs of references to this variable.
+    pub reference_ids: Vec<u32>,
+}
+
+/// Serialized reference information.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerializedReference {
+    /// Unique identifier for this reference (index in references array).
+    pub id: u32,
+    /// Name being referenced.
+    pub name: String,
+    /// ID of the variable this reference resolves to, or null if unresolved.
+    pub variable_id: Option<u32>,
+    /// Span of the reference identifier.
+    pub span: SerializedSpan,
+    /// Whether this is a read reference.
+    pub is_read: bool,
+    /// Whether this is a write reference.
+    pub is_write: bool,
+}
+
+/// Serialized span (start/end positions).
+#[derive(Clone, Copy, Debug, Deserialize)]
+pub struct SerializedSpan {
+    /// Start byte offset.
+    pub start: u32,
+    /// End byte offset.
+    pub end: u32,
+}
+
+impl SerializedSpan {
+    /// Convert to oxc Span.
+    #[must_use]
+    pub fn to_span(self) -> oxc_span::Span {
+        oxc_span::Span::new(self.start, self.end)
+    }
+}
+
+impl SerializedScope {
+    /// Convert ESLint scope type string to oxc ScopeFlags.
+    #[must_use]
+    pub fn to_scope_flags(&self) -> oxc_syntax::scope::ScopeFlags {
+        use oxc_syntax::scope::ScopeFlags;
+
+        let mut flags = ScopeFlags::empty();
+
+        // Add strict mode flag if enabled
+        if self.is_strict {
+            flags |= ScopeFlags::StrictMode;
+        }
+
+        // Map ESLint scope types to oxc ScopeFlags
+        match self.scope_type.as_str() {
+            "global" => flags |= ScopeFlags::Top,
+            "module" => flags |= ScopeFlags::Top | ScopeFlags::StrictMode,
+            "function" => flags |= ScopeFlags::Function,
+            "function-expression-name" => {
+                // Function expression name scope is a special case
+                // In oxc, this would be part of the function scope
+                flags |= ScopeFlags::Function;
+            }
+            "class-static-block" => flags |= ScopeFlags::ClassStaticBlock,
+            "catch" => flags |= ScopeFlags::CatchClause,
+            "with" => flags |= ScopeFlags::With,
+            "block" | "class" | "for" | "switch" | "class-field-initializer" => {
+                // These are block scopes with no special flags
+            }
+            _ => {
+                // Unknown scope type - treat as block scope
+            }
+        }
+
+        flags
+    }
+}
+
+impl SerializedReference {
+    /// Convert to oxc ReferenceFlags.
+    #[must_use]
+    pub fn to_reference_flags(&self) -> oxc_syntax::reference::ReferenceFlags {
+        use oxc_syntax::reference::ReferenceFlags;
+
+        let mut flags = ReferenceFlags::None;
+
+        if self.is_read {
+            flags |= ReferenceFlags::Read;
+        }
+        if self.is_write {
+            flags |= ReferenceFlags::Write;
+        }
+
+        flags
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -687,5 +835,217 @@ mod test {
 
         // Position in second section
         assert_eq!(source.remap_span(5, 9), (21, 25));
+    }
+
+    #[test]
+    fn test_serialized_scope_manager_deserialize() {
+        let json = r#"{
+            "scopes": [
+                {
+                    "id": 0,
+                    "type": "global",
+                    "parentId": null,
+                    "isStrict": false,
+                    "variableIds": [0],
+                    "blockSpan": {"start": 0, "end": 100}
+                },
+                {
+                    "id": 1,
+                    "type": "function",
+                    "parentId": 0,
+                    "isStrict": true,
+                    "variableIds": [1, 2],
+                    "blockSpan": {"start": 10, "end": 50}
+                }
+            ],
+            "variables": [
+                {
+                    "id": 0,
+                    "name": "x",
+                    "scopeId": 0,
+                    "definitionType": "Variable",
+                    "span": {"start": 4, "end": 5},
+                    "referenceIds": [0]
+                },
+                {
+                    "id": 1,
+                    "name": "y",
+                    "scopeId": 1,
+                    "definitionType": "Parameter",
+                    "span": {"start": 20, "end": 21},
+                    "referenceIds": []
+                },
+                {
+                    "id": 2,
+                    "name": "z",
+                    "scopeId": 1,
+                    "definitionType": null,
+                    "span": null,
+                    "referenceIds": [1]
+                }
+            ],
+            "references": [
+                {
+                    "id": 0,
+                    "name": "x",
+                    "variableId": 0,
+                    "span": {"start": 30, "end": 31},
+                    "isRead": true,
+                    "isWrite": false
+                },
+                {
+                    "id": 1,
+                    "name": "z",
+                    "variableId": 2,
+                    "span": {"start": 35, "end": 36},
+                    "isRead": false,
+                    "isWrite": true
+                },
+                {
+                    "id": 2,
+                    "name": "unknown",
+                    "variableId": null,
+                    "span": {"start": 40, "end": 47},
+                    "isRead": true,
+                    "isWrite": false
+                }
+            ]
+        }"#;
+
+        let scope_manager: SerializedScopeManager = serde_json::from_str(json).unwrap();
+
+        // Check scopes
+        assert_eq!(scope_manager.scopes.len(), 2);
+        assert_eq!(scope_manager.scopes[0].scope_type, "global");
+        assert!(scope_manager.scopes[0].parent_id.is_none());
+        assert!(!scope_manager.scopes[0].is_strict);
+        assert_eq!(scope_manager.scopes[1].scope_type, "function");
+        assert_eq!(scope_manager.scopes[1].parent_id, Some(0));
+        assert!(scope_manager.scopes[1].is_strict);
+
+        // Check variables
+        assert_eq!(scope_manager.variables.len(), 3);
+        assert_eq!(scope_manager.variables[0].name, "x");
+        assert_eq!(scope_manager.variables[0].definition_type, Some("Variable".to_string()));
+        assert_eq!(scope_manager.variables[1].name, "y");
+        assert_eq!(scope_manager.variables[1].definition_type, Some("Parameter".to_string()));
+        assert!(scope_manager.variables[2].definition_type.is_none());
+
+        // Check references
+        assert_eq!(scope_manager.references.len(), 3);
+        assert_eq!(scope_manager.references[0].variable_id, Some(0));
+        assert!(scope_manager.references[0].is_read);
+        assert!(!scope_manager.references[0].is_write);
+        assert!(scope_manager.references[1].is_write);
+        assert!(scope_manager.references[2].variable_id.is_none()); // unresolved
+    }
+
+    #[test]
+    fn test_serialized_scope_to_scope_flags() {
+        use oxc_syntax::scope::ScopeFlags;
+
+        // Global scope
+        let scope = SerializedScope {
+            id: 0,
+            scope_type: "global".to_string(),
+            parent_id: None,
+            is_strict: false,
+            variable_ids: vec![],
+            block_span: None,
+        };
+        assert!(scope.to_scope_flags().contains(ScopeFlags::Top));
+        assert!(!scope.to_scope_flags().contains(ScopeFlags::StrictMode));
+
+        // Module scope (always strict)
+        let scope = SerializedScope {
+            id: 0,
+            scope_type: "module".to_string(),
+            parent_id: None,
+            is_strict: true,
+            variable_ids: vec![],
+            block_span: None,
+        };
+        let flags = scope.to_scope_flags();
+        assert!(flags.contains(ScopeFlags::Top));
+        assert!(flags.contains(ScopeFlags::StrictMode));
+
+        // Function scope with strict mode
+        let scope = SerializedScope {
+            id: 1,
+            scope_type: "function".to_string(),
+            parent_id: Some(0),
+            is_strict: true,
+            variable_ids: vec![],
+            block_span: None,
+        };
+        let flags = scope.to_scope_flags();
+        assert!(flags.contains(ScopeFlags::Function));
+        assert!(flags.contains(ScopeFlags::StrictMode));
+
+        // Block scope (no special flags)
+        let scope = SerializedScope {
+            id: 2,
+            scope_type: "block".to_string(),
+            parent_id: Some(1),
+            is_strict: true,
+            variable_ids: vec![],
+            block_span: None,
+        };
+        let flags = scope.to_scope_flags();
+        assert!(!flags.contains(ScopeFlags::Function));
+        assert!(!flags.contains(ScopeFlags::Top));
+        assert!(flags.contains(ScopeFlags::StrictMode));
+    }
+
+    #[test]
+    fn test_serialized_reference_to_reference_flags() {
+        use oxc_syntax::reference::ReferenceFlags;
+
+        // Read only
+        let ref1 = SerializedReference {
+            id: 0,
+            name: "x".to_string(),
+            variable_id: Some(0),
+            span: SerializedSpan { start: 0, end: 1 },
+            is_read: true,
+            is_write: false,
+        };
+        let flags = ref1.to_reference_flags();
+        assert!(flags.contains(ReferenceFlags::Read));
+        assert!(!flags.contains(ReferenceFlags::Write));
+
+        // Write only
+        let ref2 = SerializedReference {
+            id: 1,
+            name: "x".to_string(),
+            variable_id: Some(0),
+            span: SerializedSpan { start: 5, end: 6 },
+            is_read: false,
+            is_write: true,
+        };
+        let flags = ref2.to_reference_flags();
+        assert!(!flags.contains(ReferenceFlags::Read));
+        assert!(flags.contains(ReferenceFlags::Write));
+
+        // Read-write
+        let ref3 = SerializedReference {
+            id: 2,
+            name: "x".to_string(),
+            variable_id: Some(0),
+            span: SerializedSpan { start: 10, end: 11 },
+            is_read: true,
+            is_write: true,
+        };
+        let flags = ref3.to_reference_flags();
+        assert!(flags.contains(ReferenceFlags::Read));
+        assert!(flags.contains(ReferenceFlags::Write));
+    }
+
+    #[test]
+    fn test_serialized_span_to_span() {
+        let span = SerializedSpan { start: 10, end: 25 };
+        let oxc_span = span.to_span();
+        assert_eq!(oxc_span.start, 10);
+        assert_eq!(oxc_span.end, 25);
     }
 }
