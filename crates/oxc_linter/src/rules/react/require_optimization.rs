@@ -37,7 +37,7 @@ pub struct RequireOptimizationConfig {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct RequireOptimization(RequireOptimizationConfig);
+pub struct RequireOptimization(Box<RequireOptimizationConfig>);
 
 impl std::ops::Deref for RequireOptimization {
     type Target = RequireOptimizationConfig;
