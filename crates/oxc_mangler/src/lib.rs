@@ -436,6 +436,19 @@ impl<'t> Mangler<'t> {
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
+        let mut excluded_names: FxHashSet<&str> = FxHashSet::with_capacity_and_hasher(
+            root_unresolved_references.len() + keep_name_names.len() + root_bindings.len(),
+            rustc_hash::FxBuildHasher,
+        );
+        excluded_names.extend(root_unresolved_references.keys());
+        excluded_names.extend(keep_name_names.iter().copied());
+        if self.options.top_level {
+            excluded_names
+                .extend(root_bindings.keys().filter(|&name| exported_names.contains::<str>(name)));
+        } else {
+            excluded_names.extend(root_bindings.keys());
+        }
+
         let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
 
         let mut count = 0;
@@ -447,11 +460,7 @@ impl<'t> Mangler<'t> {
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
-                        && (!self.options.top_level || exported_names.contains(n)))
-                        // TODO: only skip the names that are kept in the current scope
-                        && !keep_name_names.contains(n)
+                    && !excluded_names.contains(n)
                 {
                     break name;
                 }
