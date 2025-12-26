@@ -396,6 +396,7 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
+    pub mod require_optimization;
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
@@ -1102,6 +1103,7 @@ oxc_macros::declare_all_lint_rules! {
     react::only_export_components,
     react::prefer_es6_class,
     react::react_in_jsx_scope,
+    react::require_optimization,
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,

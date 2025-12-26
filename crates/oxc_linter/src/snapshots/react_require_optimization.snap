@@ -1,0 +1,77 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                     import React from "react";
+ 3 │                     class YourComponent extends React.Component {}
+   ·                     ──────────────────────────────────────────────
+ 4 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                         import React from "react";
+ 3 │ ╭─▶                     class YourComponent extends React.Component {
+ 4 │ │                         handleClick() {}
+ 5 │ │                         render() {
+ 6 │ │                           return <div onClick={this.handleClick}>123</div>
+ 7 │ │                         }
+ 8 │ ╰─▶                     }
+ 9 │                       
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                         import React from "react";
+ 3 │ ╭─▶                     class YourComponent extends React.Component {
+ 4 │ │                         handleClick = () => {}
+ 5 │ │                         render() {
+ 6 │ │                           return <div onClick={this.handleClick}>123</div>
+ 7 │ │                         }
+ 8 │ ╰─▶                     }
+ 9 │                       
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                     import React, {Component} from "react";
+ 3 │                     class YourComponent extends Component {}
+   ·                     ────────────────────────────────────────
+ 4 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                     import React from "react";
+ 3 │                     createReactClass({})
+   ·                     ────────────────────
+ 4 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:3:12]
+ 2 │                         import React from "react";
+ 3 │ ╭─▶                     createReactClass({
+ 4 │ │                         mixins: [RandomMixin]
+ 5 │ ╰─▶                     })
+ 6 │                       
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:2:12]
+ 1 │     
+ 2 │ ╭─▶                     @reactMixin.decorate(SomeOtherMixin)
+ 3 │ ╰─▶                     class DecoratedComponent extends Component {}
+ 4 │                       
+   ╰────
+
+  ⚠ eslint-plugin-react(require-optimization): Component is not optimized. Please add a shouldComponentUpdate method.
+   ╭─[require_optimization.tsx:2:12]
+ 1 │     
+ 2 │ ╭─▶                     @bar
+ 3 │ │                       @pure
+ 4 │ │                       @foo
+ 5 │ ╰─▶                     class DecoratedComponent extends Component {}
+ 6 │                       
+   ╰────
