@@ -63,6 +63,11 @@ impl<'alloc> BitSet<'alloc> {
             *self_word |= *other_word;
         }
     }
+
+    /// Clear all bits in the bitset, setting them to 0.
+    pub fn clear(&mut self) {
+        self.entries.fill(0);
+    }
 }
 
 impl Display for BitSet<'_> {
@@ -251,5 +256,30 @@ mod tests {
 
         bs1.union(&bs2);
         assert_eq!(bs1.to_string(), "00000011_00001011");
+    }
+
+    #[test]
+    fn clear() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(128, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(7);
+        bs.set_bit(64);
+        bs.set_bit(127);
+        assert!(bs.has_bit(0));
+        assert!(bs.has_bit(7));
+        assert!(bs.has_bit(64));
+        assert!(bs.has_bit(127));
+
+        bs.clear();
+        assert_eq!(bs.to_string(), "00000000");
+        assert!(!bs.has_bit(0));
+        assert!(!bs.has_bit(7));
+        assert!(!bs.has_bit(64));
+        assert!(!bs.has_bit(127));
+
+        // Can set bits again after clear
+        bs.set_bit(42);
+        assert!(bs.has_bit(42));
     }
 }
