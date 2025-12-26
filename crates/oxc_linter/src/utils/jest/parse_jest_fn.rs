@@ -274,7 +274,7 @@ fn parse_jest_jest_fn_call<'a>(
 ) -> Option<ParsedJestFnCall<'a>> {
     let lowercase_name = name.cow_to_ascii_lowercase();
 
-    if !(lowercase_name == "jest" || lowercase_name == "vi") {
+    if !(lowercase_name == "jest" || lowercase_name == "vi" || lowercase_name == "vitest") {
         return None;
     }
 
