@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::is_es5_component,
 };
@@ -21,7 +21,7 @@ fn require_optimization_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[schemars(rename_all = "camelCase", default)]
 pub struct RequireOptimizationConfig {
     /// Sets the allowed names of decorators. If the variable is present in the chain of decorators, the component is
     /// considered optimized and satisfies this rule.
@@ -50,7 +50,7 @@ impl std::ops::Deref for RequireOptimization {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce React components to have a shouldComponentUpdate method
+    /// Enforce React class components to have a shouldComponentUpdate method
     ///
     /// ### Why is this bad?
     ///
@@ -147,6 +147,10 @@ impl Rule for RequireOptimization {
             }
             _ => (),
         }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
