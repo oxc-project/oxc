@@ -323,8 +323,13 @@ impl WorkspaceWorker {
         let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
         let mut tools = self.tools.write().await;
-        for (index, tool) in tools.iter_mut().enumerate() {
-            let builder: &dyn ToolBuilder = self.builders[index].as_ref();
+        debug_assert_eq!(
+            tools.len(),
+            self.builders.len(),
+            "tools and builders must have the same length"
+        );
+        for (tool, builder) in tools.iter_mut().zip(self.builders.iter()) {
+            let builder: &dyn ToolBuilder = builder.as_ref();
             let change = change_handler(tool, builder);
 
             if let Some(patterns) = change.watch_patterns {
