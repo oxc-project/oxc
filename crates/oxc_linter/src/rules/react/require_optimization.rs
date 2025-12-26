@@ -175,9 +175,9 @@ fn has_allowed_decorator(class: &Class, allowed: &[CompactStr]) -> bool {
         Expression::Identifier(ident) => is_allowed_name(ident.name.as_str(), allowed),
         Expression::CallExpression(call_expr) => {
             // @reactMixin.decorate(PureRenderMixin) pattern
-            if let Expression::StaticMemberExpression(member) = &call_expr.callee {
-                if let Expression::Identifier(obj) = member.object.get_inner_expression() {
-                    if obj.name == "reactMixin" && member.property.name == "decorate" {
+            if let Expression::StaticMemberExpression(member) = &call_expr.callee
+                && let Expression::Identifier(obj) = member.object.get_inner_expression()
+                    && obj.name == "reactMixin" && member.property.name == "decorate" {
                         return call_expr
                             .arguments
                             .first()
@@ -185,8 +185,6 @@ fn has_allowed_decorator(class: &Class, allowed: &[CompactStr]) -> bool {
                             .and_then(Expression::get_identifier_reference)
                             .is_some_and(|ident| is_allowed_name(ident.name.as_str(), allowed));
                     }
-                }
-            }
 
             let callee_ok = match call_expr.callee.get_inner_expression() {
                 Expression::Identifier(ident) => is_allowed_name(ident.name.as_str(), allowed),
