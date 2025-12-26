@@ -13,8 +13,8 @@ use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::Diagn
 pub struct FakeToolBuilder;
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool)
+    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Option<Box<dyn Tool>> {
+        Some(Box::new(FakeTool))
     }
 }
 
@@ -59,7 +59,7 @@ impl Tool for FakeTool {
     ) -> ToolRestartChanges {
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
             return ToolRestartChanges {
-                tool: Some(FakeToolBuilder.build_boxed(root_uri, new_options_json)),
+                tool: FakeToolBuilder.build_boxed(root_uri, new_options_json),
                 watch_patterns: None,
             };
         }
@@ -90,7 +90,7 @@ impl Tool for FakeTool {
     ) -> ToolRestartChanges {
         if changed_uri.as_str().ends_with("tool.config") {
             return ToolRestartChanges {
-                tool: Some(FakeToolBuilder.build_boxed(root_uri, options)),
+                tool: FakeToolBuilder.build_boxed(root_uri, options),
                 watch_patterns: None,
             };
         }

@@ -18,7 +18,8 @@ pub trait ToolBuilder: Send + Sync {
     }
 
     /// Build a boxed instance of the tool for the given root URI and options.
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
+    /// Returns `None` if the tool cannot be built for the given root URI and options.
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Option<Box<dyn Tool>>;
 }
 
 pub type DiagnosticResult = Vec<(Uri, Vec<Diagnostic>)>;

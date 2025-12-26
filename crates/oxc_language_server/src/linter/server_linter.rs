@@ -41,9 +41,12 @@ use crate::{
 pub struct ServerLinterBuilder;
 
 impl ServerLinterBuilder {
+    /// Build a new `ServerLinter` for the given root URI and options.
+    ///
     /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
+    ///
+    /// Panics if an empty `ConfigStoreBuilder` fails to build, which should never happen.
+    pub fn build(root_uri: &Uri, options: serde_json::Value) -> Option<ServerLinter> {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -53,7 +56,7 @@ impl ServerLinterBuilder {
                 LSPLintOptions::default()
             }
         };
-        let root_path = root_uri.to_file_path().unwrap();
+        let root_path = root_uri.to_file_path()?;
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
             Self::create_nested_configs(&root_path, &options, &mut nested_ignore_patterns);
@@ -133,14 +136,14 @@ impl ServerLinterBuilder {
             },
         );
 
-        ServerLinter::new(
+        Some(ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
             isolated_linter,
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
-        )
+        ))
     }
 }
 
@@ -213,8 +216,8 @@ impl ToolBuilder for ServerLinterBuilder {
             Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
         };
     }
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerLinterBuilder::build(root_uri, options))
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Option<Box<dyn Tool>> {
+        ServerLinterBuilder::build(root_uri, options).map(|l| Box::new(l) as Box<dyn Tool>)
     }
 }
 
@@ -324,8 +327,6 @@ impl Tool for ServerLinter {
         ToolShutdownChanges { uris_to_clear_diagnostics: Some(self.get_cached_uris()) }
     }
 
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
         &self,
         root_uri: &Uri,
@@ -357,7 +358,11 @@ impl Tool for ServerLinter {
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
-        let new_linter = ServerLinterBuilder::build(root_uri, new_options_json.clone());
+        let Some(new_linter) = ServerLinterBuilder::build(root_uri, new_options_json.clone())
+        else {
+            warn!("Failed to build linter: root URI cannot be converted to file path");
+            return ToolRestartChanges { tool: None, watch_patterns: None };
+        };
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -412,7 +417,10 @@ impl Tool for ServerLinter {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
-        let new_linter = ServerLinterBuilder::build(root_uri, options);
+        let Some(new_linter) = ServerLinterBuilder::build(root_uri, options) else {
+            warn!("Failed to build linter: root URI cannot be converted to file path");
+            return ToolRestartChanges { tool: None, watch_patterns: None };
+        };
 
         ToolRestartChanges {
             tool: Some(Box::new(new_linter)),

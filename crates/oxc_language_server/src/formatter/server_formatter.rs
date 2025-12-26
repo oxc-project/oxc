@@ -21,9 +21,7 @@ use crate::{
 pub struct ServerFormatterBuilder;
 
 impl ServerFormatterBuilder {
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
+    pub fn build(root_uri: &Uri, options: serde_json::Value) -> Option<ServerFormatter> {
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(err) => {
@@ -34,7 +32,7 @@ impl ServerFormatterBuilder {
             }
         };
 
-        let root_path = root_uri.to_file_path().unwrap();
+        let root_path = root_uri.to_file_path()?;
         let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
         let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
 
@@ -49,7 +47,7 @@ impl ServerFormatterBuilder {
                 }
             };
 
-        ServerFormatter::new(format_options, gitignore_glob)
+        Some(ServerFormatter::new(format_options, gitignore_glob))
     }
 }
 
@@ -62,8 +60,8 @@ impl ToolBuilder for ServerFormatterBuilder {
         capabilities.document_formatting_provider =
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerFormatterBuilder::build(root_uri, options))
+    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Option<Box<dyn Tool>> {
+        ServerFormatterBuilder::build(root_uri, options).map(|f| Box::new(f) as Box<dyn Tool>)
     }
 }
 
@@ -162,8 +160,6 @@ impl Tool for ServerFormatter {
     fn name(&self) -> &'static str {
         "formatter"
     }
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
         &self,
         root_uri: &Uri,
@@ -196,7 +192,11 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
+        let Some(new_formatter) = ServerFormatterBuilder::build(root_uri, new_options_json.clone())
+        else {
+            warn!("Failed to build formatter: root URI cannot be converted to file path");
+            return ToolRestartChanges { tool: None, watch_patterns: None };
+        };
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
@@ -230,7 +230,10 @@ impl Tool for ServerFormatter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, options);
+        let Some(new_formatter) = ServerFormatterBuilder::build(root_uri, options) else {
+            warn!("Failed to build formatter: root URI cannot be converted to file path");
+            return ToolRestartChanges { tool: None, watch_patterns: None };
+        };
 
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
