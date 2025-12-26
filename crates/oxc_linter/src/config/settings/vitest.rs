@@ -13,6 +13,8 @@ pub struct VitestPluginSettings {
     /// to accommodate TypeScript type checking scenarios.
     #[serde(default)]
     pub typecheck: bool,
+    /// When user provided an array of custom fixtures, those functions
+    /// will be linted as well.
     #[serde(rename = "vitestImports", default)]
     pub vitest_imports: Vec<CompactStr>,
 }
