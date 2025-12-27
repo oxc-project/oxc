@@ -1,0 +1,10 @@
+---
+source: crates/oxc_language_server/src/linter/tester.rs
+---
+########## 
+Linted file: fixtures/linter/tsgolint/nested_type_aware/nested/test-with-no-lsp-config.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/tsgolint/nested_type_aware/nested/test-with-no-lsp-config.ts
+
+########### Code Actions/Commands

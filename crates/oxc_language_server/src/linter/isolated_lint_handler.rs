@@ -62,6 +62,8 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
     }
 }
 
+// Note: options should have already been merged with the oxlintrc `linterOptions`
+// values before this was initialized, no need to handle that here.
 impl IsolatedLintHandler {
     pub fn new(
         lint_options: LintOptions,

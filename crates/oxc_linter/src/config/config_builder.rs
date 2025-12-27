@@ -209,6 +209,7 @@ impl ConfigStoreBuilder {
             env: oxlintrc.env,
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
+            linter_options: oxlintrc.linter_options,
         };
 
         let mut builder = Self {
