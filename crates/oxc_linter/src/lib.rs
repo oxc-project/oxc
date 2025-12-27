@@ -366,12 +366,26 @@ impl Linter {
             parser_options_json.to_string(),
         )?;
 
+        // Collect all messages (Rust + JS rules)
+        let mut all_messages: Vec<Message> = Vec::new();
+
+        // Phase 3: Run Rust rules using deserialized ESTree AST
+        // This gives us full scope fidelity from the custom parser
+        let (rust_messages, _result) = external_linter::lint_with_external_ast(
+            self,
+            path,
+            source_text,
+            &parse_result.ast_json,
+            parse_result.scope_manager_json.as_deref(),
+        );
+        all_messages.extend(rust_messages);
+
         // Get external rules for this path
         let ResolvedLinterState { config, external_rules, .. } = self.config.resolve(path);
 
-        // If no external rules, nothing to lint
+        // If no external rules, return just Rust rule results
         if external_rules.is_empty() {
-            return Ok(Vec::new());
+            return Ok(all_messages);
         }
 
         // Prepare settings JSON
@@ -396,10 +410,10 @@ impl Linter {
         let rule_ids: Vec<u32> = external_rules.iter().map(|(r, _, _)| r.raw()).collect();
         let options_ids: Vec<u32> = external_rules.iter().map(|(_, o, _)| o.raw()).collect();
 
-        let results = lint_file_with_custom_ast(
+        let js_results = lint_file_with_custom_ast(
             path.to_string_lossy().to_string(),
             source_text.to_string(),
-            parse_result.ast_json,
+            parse_result.ast_json.clone(),
             rule_ids,
             options_ids,
             settings_json,
@@ -407,8 +421,8 @@ impl Linter {
             parser_services_json,
         )?;
 
-        // Convert results to Messages
-        let messages = results
+        // Convert JS rule results to Messages
+        let js_messages = js_results
             .into_iter()
             .map(|diagnostic| {
                 let span = Span::new(diagnostic.start, diagnostic.end);
@@ -458,10 +472,12 @@ impl Linter {
                         .with_severity(severity.into()),
                     fix,
                 )
-            })
-            .collect();
+            });
 
-        Ok(messages)
+        // Combine Rust and JS rule messages
+        all_messages.extend(js_messages);
+
+        Ok(all_messages)
     }
 
     /// # Panics
