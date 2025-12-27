@@ -118,12 +118,18 @@ impl LanguageServer for Backend {
 
         // client sent workspace folders
         let workers = if let Some(workspace_folders) = params.workspace_folders {
+            let uris: Vec<Uri> =
+                workspace_folders.iter().map(|folder| folder.uri.clone()).collect();
+            Self::assert_workspaces_are_valid_paths(&uris)?;
+
             workspace_folders
                 .into_iter()
                 .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri))
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
+            Self::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
+
             vec![WorkspaceWorker::new(root_uri)]
         // client is in single file mode, create no workers
         } else {
@@ -788,5 +794,21 @@ impl Backend {
             self.client.publish_diagnostics(uri, diagnostics, version)
         }))
         .await;
+    }
+
+    /// Assert that all workspace URIs are valid file paths.
+    /// If any URI is not a valid file path, return an error.
+    ///
+    /// The server requires file paths to work with the local file system, so we need to ensure that all workspace URIs can be converted to valid file paths.
+    fn assert_workspaces_are_valid_paths(workspaces: &[Uri]) -> Result<()> {
+        for uri in workspaces {
+            if uri.to_file_path().is_none() {
+                return Err(Error::invalid_params(format!(
+                    "workspace URI is not a valid file path: {}",
+                    uri.as_str()
+                )));
+            }
+        }
+        Ok(())
     }
 }
