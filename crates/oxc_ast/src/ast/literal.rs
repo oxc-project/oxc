@@ -65,7 +65,7 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
@@ -89,7 +89,7 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
     /// Node location in source code
@@ -119,7 +119,7 @@ pub struct StringLiteral<'a> {
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -142,7 +142,7 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),
@@ -166,7 +166,7 @@ pub struct RegExpLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree, FromESTree)]
 #[estree(no_type, ts_alias = "{ pattern: string; flags: string; }")]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
@@ -180,7 +180,7 @@ pub struct RegExp<'a> {
 /// This pattern may or may not be parsed.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree, FromESTree)]
 #[estree(no_type, flatten)]
 pub struct RegExpPattern<'a> {
     /// The regexp's pattern as a string.
@@ -245,7 +245,7 @@ bitflags! {
 
 /// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
 #[ast(foreign = RegExpFlags)]
-#[generate_derive(ESTree)]
+#[generate_derive(ESTree, FromESTree)]
 #[estree(no_type, via = RegExpFlagsConverter)]
 #[expect(dead_code)]
 struct RegExpFlagsAlias(#[estree(skip)] u8);
