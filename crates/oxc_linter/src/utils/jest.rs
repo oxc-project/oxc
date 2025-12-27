@@ -54,7 +54,7 @@ impl JestFnKind {
         match name {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
-            "vi" => Self::General(JestGeneralFnKind::Vitest),
+            "vi" | "vitest" => Self::General(JestGeneralFnKind::Vitest),
             "bench" => Self::General(JestGeneralFnKind::Bench),
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
