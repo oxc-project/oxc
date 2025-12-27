@@ -1527,12 +1527,6 @@ dependencies = [
 
 [[package]]
 name = "nodejs-built-in-modules"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef70c89437ecec6d0052d1e39efee1830f37fe7d466d9aa44f08b04297f31d49"
-
-[[package]]
-name = "nodejs-built-in-modules"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5eb86a92577833b75522336f210c49d9ebd7dd55a44d80a92e68c668a75f27c"
@@ -2064,7 +2058,7 @@ dependencies = [
  "lazy-regex",
  "markdown",
  "memchr",
- "nodejs-built-in-modules 0.0.1",
+ "nodejs-built-in-modules",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
@@ -2313,7 +2307,7 @@ dependencies = [
  "fast-glob",
  "indexmap",
  "json-strip-comments",
- "nodejs-built-in-modules 1.0.0",
+ "nodejs-built-in-modules",
  "once_cell",
  "papaya",
  "parking_lot",

@@ -205,7 +205,7 @@ miette = { package = "oxc-miette", version = "2.6.0", features = [
   "fancy-no-syscall",
 ] } # Error reporting
 mimalloc-safe = "0.1.55" # Fast allocator
-nodejs-built-in-modules = "0.0.1" # Node.js built-in modules
+nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
 num-traits = "0.2.19" # Numeric traits
