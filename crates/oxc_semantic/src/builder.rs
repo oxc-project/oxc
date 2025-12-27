@@ -2163,6 +2163,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_class_body(&mut self, body: &ClassBody<'a>) {
+        let kind = AstKind::ClassBody(self.alloc(body));
+        self.enter_node(kind);
+        self.class_table_builder.declare_class_body(body, self.current_node_id, &self.nodes);
+        self.visit_span(&body.span);
+        self.visit_class_elements(&body.body);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2184,13 +2193,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ClassBody(body) => {
-                self.class_table_builder.declare_class_body(
-                    body,
-                    self.current_node_id,
-                    &self.nodes,
-                );
-            }
             AstKind::PrivateIdentifier(ident) => {
                 self.class_table_builder.add_private_identifier_reference(
                     ident,
