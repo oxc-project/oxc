@@ -1,19 +1,17 @@
-use std::{iter, ops::ControlFlow};
-
+use super::PeepholeOptimizations;
+use crate::{ctx::Ctx, keep_var::KeepVar};
 use oxc_allocator::{Box, TakeIn, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, SPAN};
+use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::Ancestor;
-
-use crate::{ctx::Ctx, keep_var::KeepVar};
-
-use super::PeepholeOptimizations;
+use std::{cmp::min, iter, ops::ControlFlow};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -399,11 +397,16 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
         }
+
         if Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
             &mut var_decl.declarations,
             ctx,
         ) {
+            ctx.state.changed = true;
+        }
+
+        if Self::simplify_destructuring_assignment(var_decl.kind, &mut var_decl.declarations, ctx) {
             ctx.state.changed = true;
         }
 
@@ -441,6 +444,279 @@ impl<'a> PeepholeOptimizations {
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
+    }
+
+    /// Determines whether an array destruction assignment can be simplified based on the provided variable declaration.
+    /// - `let [x, y] = [1, 2];` -> true
+    /// - `let [x, y] = [...arr];` -> false
+    fn can_simplify_array_to_array_destruction_assignment(
+        decl: &VariableDeclarator<'a>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
+        // if left side of assignment is empty do not process it
+        if id_kind.is_empty() {
+            return false;
+        }
+
+        let Some(Expression::ArrayExpression(init_expr)) = &decl.init else { return false };
+
+        let init_len = init_expr.elements.len();
+        // [???] = [] or [...rest] = [??]
+        if init_len == 0 || (id_kind.rest.is_some() && id_kind.elements.is_empty()) {
+            return true;
+        }
+
+        let first_init = init_expr.elements.first();
+
+        // check if the first init is not spread when rest is present without elements
+        // [] = [...rest] | [a, ...rest] = [...rest]
+        if first_init.is_some_and(ArrayExpressionElement::is_spread)
+            && id_kind.rest.is_none()
+            && !id_kind.elements.is_empty()
+        {
+            return false;
+        }
+
+        // check for `[a = b] = [c]`
+        if init_len == 1
+            && first_init.is_some_and(|expr| !expr.is_literal_value(false, ctx))
+            && id_kind
+                .elements
+                .first()
+                .is_some_and(|e| e.as_ref().is_none_or(BindingPattern::is_assignment_pattern))
+        {
+            return false;
+        }
+
+        true
+    }
+
+    fn simplify_array_destruction_assignment(
+        decl: &mut VariableDeclarator<'a>,
+        result: &mut Vec<'a, VariableDeclarator<'a>>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
+        let BindingPattern::ArrayPattern(id_pattern) = &mut decl.id else {
+            return false;
+        };
+        let Some(Expression::ArrayExpression(init_expr)) = &mut decl.init else {
+            return false;
+        };
+
+        // limit iteration of id (left) to last spread of init (right)
+        // [a, b, c] = [b, ...spread]
+        let index = if let Some(spread_index) =
+            init_expr.elements.iter().position(ArrayExpressionElement::is_spread)
+        {
+            min(id_pattern.elements.len(), spread_index)
+        } else {
+            id_pattern.elements.len()
+        };
+
+        // create tmp variables only for vars when:
+        // - there is more than one init
+        // - it's not `[...a] = [a, b]`
+        // - there is more than one value
+        if decl.kind.is_var() && index > 0 && init_expr.elements.len() > 1 {
+            for init_expr in &mut init_expr.elements {
+                if !init_expr.is_literal_value(false, ctx) {
+                    // create intermediate declarations to avoid issues with hoisting
+                    // `var [a] = [b]` => `var _a = b, a = _a`
+                    let ident =
+                        ctx.generate_uid_in_current_scope("_", SymbolFlags::FunctionScopedVariable);
+                    result.push(ctx.ast.variable_declarator(
+                        init_expr.span(),
+                        decl.kind,
+                        ident.create_binding_pattern(ctx),
+                        NONE,
+                        Some(match init_expr {
+                            ArrayExpressionElement::Elision(_) => ctx.ast.void_0(SPAN),
+                            ArrayExpressionElement::SpreadElement(expr) => {
+                                expr.argument.take_in(ctx.ast)
+                            }
+                            _ => init_expr.take_in(ctx.ast).into_expression(),
+                        }),
+                        decl.definite,
+                    ));
+                    *init_expr = if init_expr.is_spread() {
+                        ctx.ast.array_expression_element_spread_element(
+                            init_expr.span(),
+                            ident.create_read_expression(ctx),
+                        )
+                    } else {
+                        ArrayExpressionElement::from(ident.create_read_expression(ctx))
+                    };
+                }
+            }
+        }
+
+        let mut init_iter = init_expr.elements.drain(..);
+
+        for id_item in id_pattern.elements.drain(0..index) {
+            let init_item = match init_iter.next() {
+                None | Some(ArrayExpressionElement::Elision(_)) => ctx.ast.void_0(SPAN),
+                Some(ArrayExpressionElement::SpreadElement(_)) => {
+                    unreachable!("spread element does not exist until `index`")
+                }
+                Some(init_item) => init_item.into_expression(),
+            };
+
+            match id_item {
+                // `[a = b] = [??]`
+                Some(BindingPattern::AssignmentPattern(mut pattern)) => {
+                    if init_item.is_literal_value(false, ctx) {
+                        // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
+                        result.push(ctx.ast.variable_declarator(
+                            pattern.span(),
+                            decl.kind,
+                            pattern.left.take_in(ctx.ast),
+                            NONE,
+                            Some(if init_item.is_void() || init_item.is_undefined() {
+                                // `[a = b] = [undefined]` => `a = b`
+                                pattern.right.take_in(ctx.ast)
+                            } else {
+                                // `[a = b] = [c]` => `a = c`
+                                init_item
+                            }),
+                            decl.definite,
+                        ));
+                    } else {
+                        // `[a = b] = [c]` where c is undetermined => `[a = b] = [c]`
+                        result.push(ctx.ast.variable_declarator(
+                            pattern.span(),
+                            decl.kind,
+                            ctx.ast.binding_pattern_array_pattern(
+                                decl.span,
+                                ctx.ast.vec1(Some(BindingPattern::AssignmentPattern(pattern))),
+                                NONE,
+                            ),
+                            NONE,
+                            Some(ctx.ast.expression_array(
+                                init_item.span(),
+                                ctx.ast.vec1(ArrayExpressionElement::from(init_item)),
+                            )),
+                            decl.definite,
+                        ));
+                    }
+                }
+                // `[a, b] = [c, d]` => `a = c, b = d`
+                Some(id) => {
+                    result.push(ctx.ast.variable_declarator(
+                        id.span(),
+                        decl.kind,
+                        id,
+                        NONE,
+                        Some(init_item),
+                        decl.definite,
+                    ));
+                }
+                // `[] = [??]` => `[] = [??]`
+                None => {
+                    // unused literals can be removed `[] = [1]`, `[] = [void 0]`
+                    if !init_item.is_literal_value(false, ctx) {
+                        result.push(ctx.ast.variable_declarator(
+                            init_item.span(),
+                            decl.kind,
+                            ctx.ast.binding_pattern_array_pattern(decl.span, ctx.ast.vec(), NONE),
+                            NONE,
+                            Some(ctx.ast.expression_array(
+                                init_item.span(),
+                                ctx.ast.vec1(ArrayExpressionElement::from(init_item)),
+                            )),
+                            decl.definite,
+                        ));
+                    }
+                }
+            }
+        }
+
+        if init_iter.len() == 0 {
+            if !id_pattern.elements.is_empty() {
+                for id in id_pattern.elements.drain(..).flatten() {
+                    result.push(ctx.ast.variable_declarator(
+                        id.span(),
+                        decl.kind,
+                        id,
+                        NONE,
+                        Some(ctx.ast.void_0(SPAN)),
+                        decl.definite,
+                    ));
+                }
+            }
+            if let Some(rest) = &mut id_pattern.rest {
+                result.push(ctx.ast.variable_declarator(
+                    rest.span(),
+                    decl.kind,
+                    rest.argument.take_in(ctx.ast),
+                    NONE,
+                    Some(ctx.ast.expression_array(rest.span(), ctx.ast.vec())),
+                    decl.definite,
+                ));
+            }
+            true
+        } else if id_pattern.elements.is_empty()
+            && let Some(rest) = &mut id_pattern.rest
+        {
+            // `[...rest] = [a, b, c]` => `rest = [a, b, c]`
+            result.push(ctx.ast.variable_declarator(
+                rest.span(),
+                decl.kind,
+                rest.argument.take_in(ctx.ast),
+                NONE,
+                Some(ctx.ast.expression_array(rest.span(), ctx.ast.vec_from_iter(init_iter))),
+                decl.definite,
+            ));
+            true
+        } else {
+            init_expr.elements = ctx.ast.vec_from_iter(init_iter);
+            false
+        }
+    }
+
+    /// Simplifies destructuring assignments by transforming array patterns into a sequence of
+    /// variable declarations, whenever possible. This function modifies the input declarations
+    /// and returns whether any changes were made.
+    ///
+    /// For some inputs, this transformation may increase the code size as this transformation
+    /// injects additional temporary variables. But we assume those cases are rare.
+    fn simplify_destructuring_assignment(
+        _kind: VariableDeclarationKind,
+        declarations: &mut Vec<'a, VariableDeclarator<'a>>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
+        let mut changed = false;
+        let mut i = declarations.len();
+        while i > 0 {
+            i -= 1;
+
+            let Some(last) = declarations.get_mut(i) else {
+                continue;
+            };
+
+            if Self::can_simplify_array_to_array_destruction_assignment(last, ctx) {
+                let mut new_var_decl: Vec<'a, VariableDeclarator<'a>> = ctx.ast.vec();
+                let to_remove =
+                    Self::simplify_array_destruction_assignment(last, &mut new_var_decl, ctx);
+
+                if !new_var_decl.is_empty() {
+                    let len = new_var_decl.len();
+                    if to_remove {
+                        declarations.splice(i..=i, new_var_decl.into_iter());
+                    } else {
+                        declarations.splice(i..i, new_var_decl.into_iter());
+                    }
+                    changed = true;
+                    // check for nested destructuring
+                    i += len;
+                } else if to_remove {
+                    declarations.remove(i);
+                    changed = true;
+                }
+            }
+        }
+
+        changed
     }
 
     fn handle_expression_statement(
@@ -1835,7 +2111,7 @@ impl<'a> PeepholeOptimizations {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::test;
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_for_variable_declaration() {
@@ -1868,5 +2144,85 @@ mod test {
         test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
         test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
         test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
+    }
+
+    #[test]
+    fn test_array_variable_destruction() {
+        test_same("let [] = []");
+        test("let [a] = [1]", "let a=1");
+        test("let [a, b, c, d] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, d = 4");
+        test("let [a, b, c, d] = [1, 2, 3]", "let a = 1, b = 2, c = 3, d");
+        test("let [a, b, c = 2, d] = [1]", "let a = 1, b, c = 2, d");
+        test("let [a, b, c] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, [] = [4]");
+        test("let [a, b, c = 2] = [1, 2, 3, 4]", "let a = 1, b = 2, c = 3, [] = [4]");
+        test("let [a, b, c = 3] = [1, 2]", "let a = 1, b = 2, c = 3");
+        test("let [a, b] = [1, 2, 3]", "let a = 1, b = 2, [] = [3]");
+        test("let [a] = [123, 2222, 2222]", "let a = 123, [] = [2222, 2222]");
+        test_same("let [a = 1] = [void foo()]");
+        // spread
+        test("let [...a] = [...b]", "let a = [...b]");
+        test("let [a, a, ...d] = []", "let a, a, d = []");
+        test("let [a, ...d] = []", "let a, d = []");
+        test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
+        test("let [a, ...d] = [1, foo]", "let a = 1, d = [foo] ");
+        test("let [a, b, c, ...d] = [1, 2, ...foo]", "let a = 1, b = 2, [c, ...d] = [...foo]");
+        test("let [a, b, ...c] = [1, 2, 3, ...foo]", "let a = 1, b = 2, c = [3, ...foo]");
+        test("let [a, b] = [...c, ...d]", "let [a, b] = [...c, ...d]");
+        test("let [a, b] = [...c, c, d]", "let [a,b] = [...c, c, d]");
+        // defaults
+        test("let [a = 1] = []", "let a = 1");
+        test("let [a = 1] = [void 0]", "let a = 1");
+        test("let [a = 1] = [null]", "let a = null");
+        test_same("let [a = 1] = [foo]");
+        test("let [a = foo] = [2]", "let a = 2");
+        test("let [a = foo] = [,]", "let a = foo");
+        // holes
+        test("let [, , , ] = [, , , ]", "");
+        test("let [, , ] = [1, 2]", "");
+        test("let [a, , c, d] = [, 3, , 4]", "let a, c, d = 4");
+        test("let [a, , c, d] = [void 0, e, null, f]", "let a, [] = [e], c = null, d = f");
+        test("let [a, , c, d] = [1, 2, 3, 4]", "let a = 1, c = 3, d = 4");
+        test("let [ , , a] = [1, 2, 3, 4]", "let a = 3, [] = [4]");
+        test("let [ , , ...t] = [1, 2, 3, 4]", "let t = [3, 4]");
+        test("let [ , , ...t] = [1, ...a, 2, , 4]", "let [, ...t] = [...a, 2, , 4]");
+        test("let [a, , b] = [, , , ]", "let a, b");
+        test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
+        // nested
+        test("let [a, [b, c]] = [1, [2, 3]]", "let a = 1, b = 2, c = 3");
+        test("let [a, [b, [c, d]]] = [1, ...[2, 3]]", "let a = 1, [[b, [c, d]]] = [...[2, 3]]");
+        test("let [a, [b, [c, ]]] = [1, [...2, 3]]", "let a = 1, [b, [c]] = [...2, 3]");
+        test("let [a, [b, [c, ]]] = [1, [2, [...3]]]", "let a = 1, b = 2, [c] = [...3];");
+        // self reference
+        test("let [a] = [a]", "let a = a");
+        test("let [a, b] = [b, a]", "let b = b");
+        // can't access lexical declaration 'b' before initialization
+        test("let [a, b] = [b, a]", "let b = b");
+        test("let [a, ...b] = [b, a]", "let b = [b]");
+        test_same("let [a, ...b] = [...b, a]");
+        // SyntaxError: redeclaration of let a
+        test("let [a, b] = [1, 2], [a, b] = [b, a]", "let a = 1, b = 2, a = 2, b = 2");
+        test("let [a, b] = [b, a], [a, b] = [b, a]", "let a = b, b = a, a = b, b = a");
+        // const
+        test("const [[x, y, z] = [4, 5, 6]] = []", "const x = 4, y = 5, z = 6;");
+        test("const [a, ...d] = []", "const a = void 0, d = [];");
+        test("const [a] = []", "const a = void 0");
+        // vars
+        test("var [a] = [a]", "var a = a");
+        test("var [...a] = [b, c]", "var a = [b, c]");
+        test("var [a, b] = [1, ...[2, 3]]", "var _ = [2, 3], a = 1, [b] = [..._]");
+        test("var [a, b] = [c, ...[d, e]]", "var _ = c, _2 = [d, e], a = _, [b] = [..._2]");
+        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [, ...t] = [...a, 2, , 4]");
+        test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
+        test("var [c, ...d] = [6]", "var c = 6, d = []");
+        test("var [c, d] = [6]", "var c = 6, d = void 0");
+        test("var [a, b] = [1, 2]", "var a = 1, b = 2");
+        test("var [a, b] = [!d, !a]", "var _ = !d, _2 = !a, a = _, b = _2");
+        test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
+        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = _, b = _2");
+        test("var [a, b] = [b, a]", "var _ = b, _2 = a, a = _, b = _2;");
+        test(
+            "var [a, b] = [b, a], [a, b] = [b, a]",
+            "var _3 = b, _4 = a, a = _3, b = _4, _ = b, _2 = a, a = _, b = _2",
+        );
     }
 }
