@@ -7,6 +7,22 @@ const styles = css`.button{color:red;background:blue;padding:10px 20px;}.contain
 const styledComponent = styled`background-color:#ffffff;border-radius:4px;padding:8px;`;
 
 // ============================================================================
+// Member Expression Tags - styled.div, styled.button, etc.
+// ============================================================================
+
+const styledDiv = styled.div`color:blue;font-size:16px;padding:12px;background:#f0f0f0;`;
+
+const styledButton = styled.button`border:1px solid #ccc;padding:8px 16px;border-radius:4px;cursor:pointer;`;
+
+const styledInput = styled.input`border:1px solid #ddd;padding:8px;border-radius:2px;font-size:14px;`;
+
+const styledHeader = styled["h1"]`font-weight:bold;font-size:24px;color:#333;margin-bottom:16px;`;
+
+const styledFooter = (styled.footer)`background-color:#f8f8f8;padding:20px;text-align:center;`;
+
+const styledWrapper = styled(styledButton)`display:inline-block;margin:10px;position:relative;`;
+
+// ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
 
@@ -41,6 +57,8 @@ npm install package
 // ============================================================================
 
 const mixedStyles = css`.button{color:red;}`;
+
+const mixedStyled = styled.span`color:green;font-weight:bold;`;
 
 const mixedQuery = gql`query{users{name}}`;
 
