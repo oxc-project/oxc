@@ -2138,6 +2138,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_binding_identifier(&specifier.local);
         self.leave_node(kind);
     }
+
+    fn visit_ts_import_equals_declaration(&mut self, decl: &TSImportEqualsDeclaration<'a>) {
+        let kind = AstKind::TSImportEqualsDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_binding_identifier(&decl.id);
+        self.visit_ts_module_reference(&decl.module_reference);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2159,9 +2169,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSImportEqualsDeclaration(decl) => {
-                decl.bind(self);
-            }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
