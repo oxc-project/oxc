@@ -222,14 +222,6 @@
         }
       ]
     },
-    "DummyRuleMap": {
-      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      },
-      "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-    },
     "ExternalPluginEntry": {
       "anyOf": [
         {
@@ -564,7 +556,1928 @@
       }
     },
     "OxlintRules": {
-      "$ref": "#/definitions/DummyRuleMap"
+      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
+      "type": "object",
+      "properties": {
+        "accessor-pairs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "array-callback-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "arrow-body-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "block-scoped-var": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "capitalized-comments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "class-methods-use-this": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "constructor-super": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "curly": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "default-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "default-case-last": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "default-param-last": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "eqeqeq": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "for-direction": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "func-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "func-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "getter-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "grouped-accessor-pairs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "guard-for-in": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "id-length": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/consistent-type-specifier-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/default": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/exports-last": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/extensions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/first": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/group-exports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/max-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/named": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/namespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-absolute-path": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-amd": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-anonymous-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-commonjs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-cycle": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-duplicates": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-dynamic-require": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-empty-named-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-mutable-exports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-named-as-default": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-named-as-default-member": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-named-default": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-named-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-namespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-self-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-unassigned-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/no-webpack-loader-syntax": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/prefer-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "import/unambiguous": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "init-declarations": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/consistent-test-it": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/expect-expect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/max-expects": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/max-nested-describe": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-alias-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-commented-out-tests": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-conditional-expect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-conditional-in-test": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-confusing-set-timeout": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-deprecated-functions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-disabled-tests": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-done-callback": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-duplicate-hooks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-focused-tests": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-hooks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-identical-title": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-interpolation-in-snapshots": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-jasmine-globals": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-large-snapshots": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-mocks-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-restricted-jest-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-restricted-matchers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-standalone-expect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-test-prefixes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-test-return-statement": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/no-untyped-mock-factory": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/padding-around-test-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-called-with": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-comparison-matcher": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-each": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-equality-matcher": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-expect-resolves": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-hooks-in-order": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-hooks-on-top": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-jest-mocked": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-lowercase-title": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-mock-promise-shorthand": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-spy-on": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-strict-equal": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-to-be": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-to-contain": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-to-have-been-called": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-to-have-been-called-times": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-to-have-length": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/prefer-todo": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/require-hook": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/require-to-throw-message": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/require-top-level-describe": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/valid-describe-callback": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/valid-expect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/valid-title": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/check-access": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/check-property-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/check-tag-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/empty-tags": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/implements-on-classes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/no-defaults": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-param": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-param-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-param-name": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-param-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-property": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-property-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-property-name": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-property-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-returns": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-returns-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-returns-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-yields": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/alt-text": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/anchor-ambiguous-text": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/anchor-has-content": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/anchor-is-valid": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/aria-activedescendant-has-tabindex": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/aria-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/aria-role": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/aria-unsupported-elements": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/autocomplete-valid": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/click-events-have-key-events": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/heading-has-content": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/html-has-lang": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/iframe-has-title": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/img-redundant-alt": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/label-has-associated-control": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/lang": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/media-has-caption": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/mouse-events-have-key-events": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-access-key": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-aria-hidden-on-focusable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-autofocus": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-distracting-elements": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-noninteractive-tabindex": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/no-redundant-roles": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/prefer-tag-over-role": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/role-has-required-aria-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/role-supports-aria-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/scope": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsx_a11y/tabindex-no-positive": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-classes-per-file": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-depth": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-lines": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-lines-per-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-nested-callbacks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "max-params": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "new-cap": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/google-font-display": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/google-font-preconnect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/inline-script-id": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/next-script-for-ga": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-assign-module-variable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-async-client-component": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-before-interactive-script-outside-document": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-css-tags": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-document-import-in-page": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-duplicate-head": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-head-element": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-head-import-in-document": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-html-link-for-pages": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-img-element": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-page-custom-font": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-script-component-in-head": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-styled-jsx-in-document": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-sync-scripts": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-title-in-document-head": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-typos": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "nextjs/no-unwanted-polyfillio": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-alert": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-array-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-async-promise-executor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-await-in-loop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-bitwise": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-caller": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-case-declarations": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-class-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-compare-neg-zero": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-cond-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-console": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-const-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-constant-binary-expression": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-constant-condition": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-constructor-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-continue": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-control-regex": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-debugger": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-delete-var": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-div-regex": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-dupe-class-members": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-dupe-else-if": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-dupe-keys": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-duplicate-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-duplicate-imports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-else-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-empty": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-empty-character-class": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-empty-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-empty-pattern": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-empty-static-block": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-eq-null": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-eval": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-ex-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-extend-native": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-extra-bind": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-extra-boolean-cast": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-extra-label": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-fallthrough": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-func-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-global-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-implicit-coercion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-import-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-inline-comments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-inner-declarations": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-invalid-regexp": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-irregular-whitespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-iterator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-label-var": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-labels": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-lone-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-lonely-if": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-loop-func": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-loss-of-precision": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-magic-numbers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-misleading-character-class": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-multi-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-multi-str": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-negated-condition": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-nested-ternary": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-new": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-new-func": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-new-native-nonconstructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-new-wrappers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-nonoctal-decimal-escape": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-obj-calls": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-object-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-param-reassign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-plusplus": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-promise-executor-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-proto": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-prototype-builtins": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-redeclare": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-regex-spaces": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-restricted-globals": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-restricted-imports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-return-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-script-url": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-self-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-self-compare": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-sequences": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-setter-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-shadow-restricted-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-sparse-arrays": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-template-curly-in-string": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-ternary": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-this-before-super": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-throw-literal": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unassigned-vars": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-undef": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-undefined": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unexpected-multiline": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unneeded-ternary": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unreachable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unsafe-finally": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unsafe-negation": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unsafe-optional-chaining": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unused-expressions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unused-labels": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unused-private-class-members": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-unused-vars": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-backreference": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-call": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-catch": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-computed-key": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-concat": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-escape": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-rename": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-useless-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-var": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-void": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-warning-comments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "no-with": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "node/no-exports-assign": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "node/no-new-require": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "node/no-process-env": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "operator-assignment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/approx-constant": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-array-method-on-arguments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-bitwise-operator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-char-at-comparison": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-comparison-sequence": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-min-max-func": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-object-literal-comparison": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-replace-all-arg": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/branches-sharing-code": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/const-comparisons": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/double-comparisons": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/erasing-op": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/misrefactored-assign-op": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/missing-throw": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-accumulating-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-async-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-async-endpoint-handlers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-barrel-file": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-const-enum": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-map-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-optional-chaining": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-rest-spread-properties": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/no-this-in-exported-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/number-arg-out-of-range": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/only-used-in-recursion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/uninvoked-array-callback": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-destructuring": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-exponentiation-operator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-numeric-literals": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-object-has-own": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-object-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-promise-reject-errors": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-rest-params": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-template": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "preserve-caught-error": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/always-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/avoid-new": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/catch-or-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-callback-in-promise": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-multiple-resolved": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-nesting": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-new-statics": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-promise-in-callback": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-return-in-finally": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/no-return-wrap": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/param-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/prefer-await-to-callbacks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/prefer-await-to-then": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/prefer-catch": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/spec-only": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "promise/valid-params": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "radix": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/button-has-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/checked-requires-onchange-or-readonly": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/exhaustive-deps": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/forbid-dom-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/forbid-elements": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/forward-ref-uses-ref": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/iframe-missing-sandbox": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-boolean-value": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-curly-brace-presence": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-filename-extension": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-fragments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-handler-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-key": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-comment-textnodes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-duplicate-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-script-url": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-target-blank": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-undef": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-no-useless-fragment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-pascal-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-props-no-spread-multi": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/jsx-props-no-spreading": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-array-index-key": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-children-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-danger": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-danger-with-children": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-direct-mutation-state": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-find-dom-node": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-is-mounted": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-namespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-redundant-should-component-update": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-render-return-value": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-set-state": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-string-refs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-unescaped-entities": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-unknown-property": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-unsafe": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/only-export-components": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/prefer-es6-class": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/react-in-jsx-scope": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/require-render-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/rules-of-hooks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/self-closing-comp": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/state-in-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/style-prop-object": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/void-dom-elements-no-children": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react_perf/jsx-no-jsx-as-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react_perf/jsx-no-new-array-as-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react_perf/jsx-no-new-function-as-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react_perf/jsx-no-new-object-as-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "require-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "require-yield": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "sort-imports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "sort-keys": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "sort-vars": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "symbol-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/adjacent-overload-signatures": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/array-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/await-thenable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/ban-ts-comment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/ban-tslint-comment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/ban-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/consistent-generic-constructors": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/consistent-indexed-object-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/consistent-type-definitions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/consistent-type-imports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/explicit-function-return-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/explicit-module-boundary-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-array-delete": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-base-to-string": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-confusing-non-null-assertion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-confusing-void-expression": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-deprecated": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-duplicate-enum-values": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-duplicate-type-constituents": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-dynamic-delete": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-empty-interface": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-empty-object-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-explicit-any": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-extra-non-null-assertion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-extraneous-class": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-floating-promises": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-for-in-array": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-implied-eval": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-import-type-side-effects": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-inferrable-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-meaningless-void-operator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-misused-new": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-misused-promises": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-misused-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-mixed-enums": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-namespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-non-null-asserted-nullish-coalescing": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-non-null-asserted-optional-chain": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-non-null-assertion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-redundant-type-constituents": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-require-imports": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-restricted-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-this-alias": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-boolean-literal-compare": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-parameter-property-assignment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-template-expression": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-type-arguments": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-type-assertion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unnecessary-type-constraint": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-argument": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-assignment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-call": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-declaration-merging": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-enum-comparison": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-function-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-member-access": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-type-assertion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-unsafe-unary-minus": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-useless-empty-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-var-requires": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-wrapper-object-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/non-nullable-type-assertion-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/only-throw-error": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-as-const": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-enum-initializers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-for-of": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-function-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-includes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-literal-enum-member": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-namespace-keyword": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-nullish-coalescing": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-promise-reject-errors": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-reduce-type-parameter": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-return-this-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/prefer-ts-expect-error": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/promise-function-async": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/related-getter-setter-pairs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/require-array-sort-compare": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/require-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/restrict-plus-operands": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/restrict-template-expressions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/return-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/strict-boolean-expressions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/switch-exhaustiveness-check": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/triple-slash-reference": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/unbound-method": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/use-unknown-in-catch-callback-variable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicode-bom": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/catch-error-name": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/consistent-assert": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/consistent-date-clone": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/consistent-empty-array-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/consistent-existence-index-check": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/consistent-function-scoping": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/empty-brace-spaces": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/error-message": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/escape-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/explicit-length-check": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/filename-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/new-for-builtins": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-abusive-eslint-disable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-accessor-recursion": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-anonymous-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-callback-reference": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-for-each": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-method-this-argument": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-reduce": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-reverse": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-array-sort": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-await-expression-member": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-console-spaces": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-document-cookie": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-empty-file": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-hex-escape": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-immediate-mutation": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-instanceof-array": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-instanceof-builtins": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-invalid-fetch-options": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-invalid-remove-event-listener": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-length-as-slice-end": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-lonely-if": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-magic-array-flat-depth": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-negation-in-equality-check": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-nested-ternary": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-new-array": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-new-buffer": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-null": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-object-as-default-parameter": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-process-exit": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-single-promise-in-promise-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-static-only-class": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-thenable": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-this-assignment": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-typeof-undefined": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unnecessary-array-flat-depth": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unnecessary-array-splice-count": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unnecessary-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unnecessary-slice-end": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unreadable-array-destructuring": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-unreadable-iife": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-collection-argument": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-error-capture-stack-trace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-fallback-in-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-length-check": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-promise-resolve-reject": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-switch-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-useless-undefined": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-zero-fractions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/number-literal-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/numeric-separators-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-add-event-listener": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-array-find": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-array-flat": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-array-flat-map": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-array-index-of": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-array-some": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-at": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-bigint-literals": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-blob-reading-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-class-fields": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-classlist-toggle": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-code-point": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-date-now": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-default-parameters": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-dom-node-append": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-dom-node-dataset": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-dom-node-remove": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-dom-node-text-content": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-event-target": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-global-this": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-includes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-keyboard-event-key": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-logical-operator-over-ternary": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-math-min-max": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-math-trunc": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-modern-dom-apis": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-modern-math-apis": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-native-coercion-functions": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-negative-index": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-node-protocol": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-number-properties": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-object-from-entries": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-optional-catch-binding": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-prototype-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-query-selector": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-reflect-apply": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-regexp-test": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-response-static-json": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-set-has": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-set-size": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-spread": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-string-raw": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-string-replace-all": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-string-slice": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-string-starts-ends-with": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-string-trim-start-end": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-structured-clone": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-top-level-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/prefer-type-error": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/require-array-join-separator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/require-module-attributes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/require-module-specifiers": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/require-number-to-fixed-digits-argument": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/require-post-message-target-origin": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/switch-case-braces": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/text-encoding-identifier-case": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/throw-new-error": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "use-isnan": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "valid-typeof": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vars-on-top": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/no-conditional-tests": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/no-import-node-test": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/prefer-called-times": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/prefer-to-be-falsy": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/prefer-to-be-object": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/prefer-to-be-truthy": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/require-local-test-context-for-concurrent-snapshots": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/define-emits-declaration": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/define-props-declaration": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/define-props-destructuring": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/max-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-export-in-script-setup": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-import-compiler-macros": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-multiple-slot-args": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-required-prop-with-default": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/prefer-import-from-vue": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/require-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/require-typed-ref": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/valid-define-emits": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/valid-define-props": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "yoda": {
+          "$ref": "#/definitions/DummyRule"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      },
+      "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
     },
     "OxlintSettings": {
       "title": "Oxlint Plugin Settings",

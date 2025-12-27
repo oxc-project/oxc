@@ -2,7 +2,11 @@ use std::{borrow::Cow, fmt};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
-use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
+use schemars::{
+    JsonSchema,
+    r#gen::SchemaGenerator,
+    schema::{InstanceType, Metadata, ObjectValidation, Schema, SchemaObject},
+};
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
@@ -180,14 +184,37 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(Vec<serde_json::Value>),
         }
 
-        #[expect(unused)]
-        #[derive(Debug, JsonSchema)]
-        #[schemars(
-            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-        )]
-        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+        // Get the schema for a single rule configuration
+        let rule_schema = r#gen.subschema_for::<DummyRule>();
 
-        r#gen.subschema_for::<DummyRuleMap>()
+        // Build properties map with all known rules
+        let mut properties = schemars::Map::new();
+        for rule in RULES.iter() {
+            let key = if rule.plugin_name() == "eslint" {
+                rule.name().to_string()
+            } else {
+                format!("{}/{}", rule.plugin_name(), rule.name())
+            };
+            properties.insert(key, rule_schema.clone());
+        }
+
+        Schema::Object(SchemaObject {
+            instance_type: Some(InstanceType::Object.into()),
+            metadata: Some(Box::new(Metadata {
+                description: Some(
+                    "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+                        .to_string(),
+                ),
+                ..Default::default()
+            })),
+            object: Some(Box::new(ObjectValidation {
+                properties,
+                // Allow additional properties for external/unknown rules
+                additional_properties: Some(Box::new(rule_schema)),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
