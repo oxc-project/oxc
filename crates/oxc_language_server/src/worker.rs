@@ -44,12 +44,18 @@ impl WorkspaceWorker {
     }
 
     /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI starts with the root URI of the worker
+    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
     /// e.g. root URI: file:///path/to/root
     ///      responsible for: file:///path/to/root/file.js
     ///      not responsible for: file:///path/to/other/file.js
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        uri.as_str().starts_with(self.root_uri.as_str())
+        let Some(path) = uri.to_file_path() else {
+            return false;
+        };
+        let Some(root_path) = self.root_uri.to_file_path() else {
+            return false;
+        };
+        path.starts_with(root_path)
     }
 
     /// Start all programs (linter, formatter) for the worker.
