@@ -2078,6 +2078,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_catch_parameter(&mut self, param: &CatchParameter<'a>) {
         let kind = AstKind::CatchParameter(self.alloc(param));
         self.enter_node(kind);
+        param.bind(self);
         self.visit_span(&param.span);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
@@ -2242,9 +2243,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::CatchParameter(param) => {
-                param.bind(self);
-            }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
             }
