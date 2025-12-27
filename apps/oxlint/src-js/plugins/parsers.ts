@@ -8,6 +8,7 @@
  */
 
 import { getErrorMessage } from "../utils/utils.ts";
+import { serializeScopeManagerFrom } from "./scope.ts";
 
 /**
  * Stringify an object to JSON, handling circular references by replacing them with null.
@@ -218,11 +219,16 @@ export function parseFile(
     // - scopeManager has methods and circular references
     parseResultCache.set(filePath, { ast, scopeManager });
 
+    // Serialize the scope manager for Rust consumption (Phase 3 ESTree deserialization).
+    // This extracts scope, variable, and reference information into a flat JSON structure
+    // that can be used by Rust to inject external scope data into the linter.
+    const serializedScopeManager = serializeScopeManagerFrom(scopeManager);
+
     // We still serialize the AST to JSON for the Rust side, but the JS side will use
     // the cached original AST with parent pointers intact.
     const result: ParseFileResult = {
       astJson: safeJsonStringify(ast),
-      scopeManagerJson: null, // Not serializable, use cache instead
+      scopeManagerJson: serializedScopeManager ? JSON.stringify(serializedScopeManager) : null,
       visitorKeysJson: visitorKeys ? safeJsonStringify(visitorKeys) : null,
       servicesJson: null, // Not serializable (may have circular refs)
     };

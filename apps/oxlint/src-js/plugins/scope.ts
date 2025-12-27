@@ -505,6 +505,26 @@ export function serializeScopeManager(): SerializedScopeManager | null {
     // No scope manager available
     return null;
   }
+  return serializeScopeManagerFrom(tsScopeManager);
+}
+
+/**
+ * Serialize a given scope manager to JSON for Rust consumption.
+ *
+ * This extracts all scope, variable, and reference information from the
+ * provided scope manager and converts it to a flat structure that can be
+ * deserialized on the Rust side.
+ *
+ * @param scopeManager - The scope manager to serialize
+ * @returns Serialized scope manager, or null if scopeManager is null/undefined
+ */
+export function serializeScopeManagerFrom(scopeManager: unknown): SerializedScopeManager | null {
+  if (scopeManager === null || scopeManager === undefined) {
+    return null;
+  }
+
+  // Cast to TSESLintScopeManager - custom parsers should provide compatible scope managers
+  const sm = scopeManager as TSESLintScopeManager;
 
   const scopeToId = new Map<TSScope, number>();
   const variableToId = new Map<TSVariable, number>();
@@ -513,7 +533,7 @@ export function serializeScopeManager(): SerializedScopeManager | null {
   const serializedReferences: SerializedReference[] = [];
 
   // First pass: assign IDs to all scopes and variables
-  const allScopes = tsScopeManager.scopes;
+  const allScopes = sm.scopes;
   for (let i = 0; i < allScopes.length; i++) {
     const scope = allScopes[i];
     scopeToId.set(scope, i);
