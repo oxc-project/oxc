@@ -194,7 +194,7 @@ unsafe fn parse_raw_impl(
 
     // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let metadata = RawTransferMetadata::new(program_offset, is_ts);
+    let metadata = RawTransferMetadata::new(program_offset, is_ts, source_type.is_jsx());
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
     const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.

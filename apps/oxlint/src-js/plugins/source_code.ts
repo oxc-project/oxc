@@ -1,8 +1,8 @@
 import {
   DATA_POINTER_POS_32,
+  IS_JSX_FLAG_POS,
   IS_TS_FLAG_POS,
   SOURCE_LEN_OFFSET,
-  SOURCE_TYPE_OFFSET,
 } from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
@@ -71,22 +71,16 @@ export function initSourceText(): void {
   sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
 }
 
-// Byte offset of `variant` field within `SourceType` struct.
-// SourceType layout: language (1 byte), module_kind (1 byte), variant (1 byte).
-// `variant` is `LanguageVariant` enum: 0 = Standard, 1 = Jsx.
-const SOURCE_TYPE_VARIANT_OFFSET = 2;
-
 /**
  * Check if the source type is JSX/TSX based on the parsed AST's SourceType.
- * This reads the `variant` field from the `SourceType` struct in the Program.
+ * This reads the `is_jsx` flag from the buffer metadata.
  *
  * @returns `true` if the source is JSX/TSX
  */
 export function isJsx(): boolean {
   debugAssertIsNonNull(buffer);
-  const programPos = buffer.uint32[DATA_POINTER_POS_32];
-  // Read the `variant` byte from SourceType (0 = Standard, 1 = Jsx)
-  return buffer[programPos + SOURCE_TYPE_OFFSET + SOURCE_TYPE_VARIANT_OFFSET] === 1;
+  // IS_JSX_FLAG_POS contains a bool: 0 = not JSX, 1 = JSX
+  return buffer[IS_JSX_FLAG_POS] === 1;
 }
 
 /**
