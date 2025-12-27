@@ -292,8 +292,10 @@ impl Oxlintrc {
             .collect::<Vec<_>>();
 
         let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+        // Merge env: self (child) values override other (parent), parent values preserved if not in child
+        let env = self.env.clone().merge(other.env.clone());
+        // Merge globals: self (child) values override other (parent), parent values preserved if not in child
+        let globals = self.globals.clone().merge(other.globals.clone());
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());

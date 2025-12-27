@@ -43,6 +43,16 @@ impl OxlintEnv {
         self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
     }
 
+    /// Merge `self` into `other`, returning the merged environment.
+    /// When both define the same key, `self`'s value takes priority.
+    /// This implements merge semantics compatible with ESLint's extends.
+    pub fn merge(self, mut other: Self) -> Self {
+        for (env, enabled) in self.0 {
+            other.0.insert(env, enabled);
+        }
+        other
+    }
+
     pub(crate) fn override_envs(&self, envs_to_override: &mut OxlintEnv) {
         for (env, supported) in self.0.clone() {
             envs_to_override.0.insert(env, supported);
@@ -86,5 +96,30 @@ mod test {
         override_env.override_envs(&mut env);
 
         assert!(env.contains("browser"));
+    }
+
+    #[test]
+    fn test_merge() {
+        // Child config values should override parent values
+        let parent = OxlintEnv::deserialize(&serde_json::json!({
+            "browser": true,
+            "es6": true
+        }))
+        .unwrap();
+
+        let child = OxlintEnv::deserialize(&serde_json::json!({
+            "node": true,
+            "es6": false
+        }))
+        .unwrap();
+
+        let merged = child.merge(parent);
+
+        // Parent values preserved
+        assert!(merged.contains("browser"));
+        // Child values added
+        assert!(merged.contains("node"));
+        // Child overrides parent
+        assert!(!merged.contains("es6"));
     }
 }
