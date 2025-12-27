@@ -741,6 +741,27 @@ type: `string`
 
 
 
+#### settings.react.pragma
+
+type: `string | null`
+
+default: `null`
+
+Pragma to use for React. Defaults to "React".
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"pragma": "Preact"
+}
+}
+}
+```
+
+
 #### settings.react.version
 
 type: `string | null`
