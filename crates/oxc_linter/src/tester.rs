@@ -603,11 +603,16 @@ impl Tester {
         let file_system = TesterFileSystem::new(path_to_lint.clone(), source_text.to_string());
 
         let (sender, _receiver) = mpsc::channel();
-        let result = lint_service.run_test_source(&file_system, paths, false, &sender);
+        let mut result = lint_service.run_test_source(&file_system, paths, false, &sender);
 
         if result.is_empty() {
             return TestResult::Passed;
         }
+
+        // Sort diagnostics by span and message for deterministic ordering across platforms
+        result.sort_by(|a, b| {
+            a.span.cmp(&b.span).then_with(|| a.error.message.cmp(&b.error.message))
+        });
 
         if fix_kind.is_some() {
             let fix_result =

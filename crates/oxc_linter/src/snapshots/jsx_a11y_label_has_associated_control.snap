@@ -92,18 +92,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
-  × Unterminated string
-   ╭─[label_has_associated_control.tsx:1:71]
- 1 │ <label><span><span><span>A label<input /></span></span></span></label>'
-   ·                                                                       ─
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[label_has_associated_control.tsx:1:71]
  1 │ <label><span><span><span>A label<input /></span></span></span></label>'
    ·                                                                       ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Unterminated string
+   ╭─[label_has_associated_control.tsx:1:71]
+ 1 │ <label><span><span><span>A label<input /></span></span></span></label>'
+   ·                                                                       ─
+   ╰────
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]

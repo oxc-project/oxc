@@ -211,18 +211,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──
    ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[no_nonoctal_decimal_escape.tsx:1:15]
- 1 │ var foo = '8'\n  bar = '\\9'
-   ·               ─
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[no_nonoctal_decimal_escape.tsx:1:14]
  1 │ var foo = '8'\n  bar = '\\9'
    ·              ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Invalid Unicode escape sequence
+   ╭─[no_nonoctal_decimal_escape.tsx:1:15]
+ 1 │ var foo = '8'\n  bar = '\\9'
+   ·               ─
+   ╰────
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:5]

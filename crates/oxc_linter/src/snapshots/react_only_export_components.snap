@@ -117,14 +117,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                   ─────────
    ╰────
 
-  ⚠ eslint-plugin-react-refresh(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
-   ╭─[only_export_components.tsx:1:31]
- 1 │ const MyComponent = () => {}; export default observer(MyComponent);
-   ·                               ─────────────────────────────────────
-   ╰────
-
   ⚠ eslint-plugin-react-refresh(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
    ╭─[only_export_components.tsx:1:7]
  1 │ const MyComponent = () => {}; export default observer(MyComponent);
    ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react-refresh(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+   ╭─[only_export_components.tsx:1:31]
+ 1 │ const MyComponent = () => {}; export default observer(MyComponent);
+   ·                               ─────────────────────────────────────
    ╰────

@@ -260,19 +260,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:30]
- 1 │ var o = { get ' a'() {}, set 'a'(foo) {} };
-   ·                              ───
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ var o = { get ' a'() {}, set 'a'(foo) {} };
    ·               ────
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:30]
+ 1 │ var o = { get ' a'() {}, set 'a'(foo) {} };
+   ·                              ───
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -330,19 +330,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:29]
- 1 │ var o = { get [a]() {}, set a(foo) {} };
-   ·                             ─
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:16]
  1 │ var o = { get [a]() {}, set a(foo) {} };
    ·                ─
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:29]
+ 1 │ var o = { get [a]() {}, set a(foo) {} };
+   ·                             ─
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -415,13 +415,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:57]
- 1 │ var o = { get a() {}, set b(foo) {}, set c(foo) {}, get d() {} };
-   ·                                                         ─
-   ╰────
-  help: Define a setter for this property
-
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ var o = { get a() {}, set b(foo) {}, set c(foo) {}, get d() {} };
    ·               ─
@@ -441,6 +434,13 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ─
    ╰────
   help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:57]
+ 1 │ var o = { get a() {}, set b(foo) {}, set c(foo) {}, get d() {} };
+   ·                                                         ─
+   ╰────
+  help: Define a setter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:16]
@@ -512,19 +512,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:73]
- 1 │ var o = { get v1() {}, set i1(foo) {}, get v2() {}, set v2(bar) {}, get i2() {}, set v1(baz) {} };
-   ·                                                                         ──
-   ╰────
-  help: Define a setter for this property
-
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:28]
  1 │ var o = { get v1() {}, set i1(foo) {}, get v2() {}, set v2(bar) {}, get i2() {}, set v1(baz) {} };
    ·                            ──
    ╰────
   help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:73]
+ 1 │ var o = { get v1() {}, set i1(foo) {}, get v2() {}, set v2(bar) {}, get i2() {}, set v1(baz) {} };
+   ·                                                                         ──
+   ╰────
+  help: Define a setter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:27]
@@ -1030,19 +1030,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:29]
- 1 │ class A { get 'a '() {} set 'a'(foo) {} }
-   ·                             ───
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ class A { get 'a '() {} set 'a'(foo) {} }
    ·               ────
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:29]
+ 1 │ class A { get 'a '() {} set 'a'(foo) {} }
+   ·                             ───
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -1058,19 +1058,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:26]
- 1 │ class A { get 1() {} set 2(foo) {} }
-   ·                          ─
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ class A { get 1() {} set 2(foo) {} }
    ·               ─
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:26]
+ 1 │ class A { get 1() {} set 2(foo) {} }
+   ·                          ─
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -1142,19 +1142,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:27]
- 1 │ class A { get #a() {} set '#a'(foo) {} }
-   ·                           ────
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ class A { get #a() {} set '#a'(foo) {} }
    ·               ──
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:27]
+ 1 │ class A { get #a() {} set '#a'(foo) {} }
+   ·                           ────
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -1184,19 +1184,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:35]
- 1 │ A = class { static get a() {} set a(foo) {} };
-   ·                                   ─
-   ╰────
-  help: Define a getter for this property
-
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:24]
  1 │ A = class { static get a() {} set a(foo) {} };
    ·                        ─
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:35]
+ 1 │ A = class { static get a() {} set a(foo) {} };
+   ·                                   ─
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:16]
@@ -1212,19 +1212,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a setter for this property
 
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:39]
- 1 │ class A { static set [a](foo) {} get [a]() {} }
-   ·                                       ─
-   ╰────
-  help: Define a setter for this property
-
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:23]
  1 │ class A { static set [a](foo) {} get [a]() {} }
    ·                       ─
    ╰────
   help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:39]
+ 1 │ class A { static set [a](foo) {} get [a]() {} }
+   ·                                       ─
+   ╰────
+  help: Define a setter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -1310,10 +1310,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Define a getter for this property
 
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:22]
+ 1 │ class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }
+   ·                      ─
+   ╰────
+  help: Define a setter for this property
+
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:33]
  1 │ class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }
    ·                                 ─
+   ╰────
+  help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:54]
+ 1 │ class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }
+   ·                                                      ─
    ╰────
   help: Define a getter for this property
 
@@ -1323,20 +1337,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                    ─
    ╰────
   help: Define a setter for this property
-
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:22]
- 1 │ class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }
-   ·                      ─
-   ╰────
-  help: Define a setter for this property
-
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:54]
- 1 │ class A { static get a() {} set b(foo) {} static set c(bar) {} get d() {} }
-   ·                                                      ─
-   ╰────
-  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:15]
@@ -1444,20 +1444,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Define a setter for this property
 
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
-   ╭─[accessor_pairs.tsx:1:135]
- 1 │ class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }
-   ·                                                                                                                                       ──
-   ╰────
-  help: Define a getter for this property
-
-  ⚠ eslint(accessor-pairs): Getter is defined without a setter
-   ╭─[accessor_pairs.tsx:1:90]
- 1 │ class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }
-   ·                                                                                          ──
-   ╰────
-  help: Define a setter for this property
-
-  ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:35]
  1 │ class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }
    ·                                   ──
@@ -1470,6 +1456,20 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                       ──
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:90]
+ 1 │ class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }
+   ·                                                                                          ──
+   ╰────
+  help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:135]
+ 1 │ class A { get [v1](){} static set i1(foo){} static set v2(bar){} get [i2](){} static get i3(){} set [v1](baz){} static get v2(){} set i4(quux){} }
+   ·                                                                                                                                       ──
+   ╰────
+  help: Define a getter for this property
 
   ⚠ eslint(accessor-pairs): Getter is defined without a setter
    ╭─[accessor_pairs.tsx:1:26]

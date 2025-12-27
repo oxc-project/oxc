@@ -134,15 +134,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
-   ╭─[no_self_assign.tsx:1:15]
- 1 │ ({a, b} = {b, a})
-   ·               ─
-   ╰────
-
-  ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:12]
  1 │ ({a, b} = {b, a})
    ·            ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:15]
+ 1 │ ({a, b} = {b, a})
+   ·               ─
    ╰────
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself

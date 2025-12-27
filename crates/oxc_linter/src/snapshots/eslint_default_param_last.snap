@@ -9,13 +9,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:19]
- 1 │ function f(a = 5, b = 6, c) {}
-   ·                   ─────
-   ╰────
-  help: Enforce default parameters to be last.
-
-  ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:12]
  1 │ function f(a = 5, b = 6, c) {}
    ·            ─────
@@ -23,9 +16,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:23]
- 1 │ function f (a = 5, b, c = 6, d) {}
-   ·                       ─────
+   ╭─[default_param_last.tsx:1:19]
+ 1 │ function f(a = 5, b = 6, c) {}
+   ·                   ─────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -33,6 +26,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[default_param_last.tsx:1:13]
  1 │ function f (a = 5, b, c = 6, d) {}
    ·             ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ function f (a = 5, b, c = 6, d) {}
+   ·                       ─────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -100,6 +100,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b = 2, c: number) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:21]
  1 │ function foo(a = 1, b = 2, c: number) {}
    ·                     ─────
@@ -108,7 +115,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:14]
- 1 │ function foo(a = 1, b = 2, c: number) {}
+ 1 │ function foo(a = 1, b: number, c = 2, d: number) {}
    ·              ─────
    ╰────
   help: Enforce default parameters to be last.
@@ -117,13 +124,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[default_param_last.tsx:1:32]
  1 │ function foo(a = 1, b: number, c = 2, d: number) {}
    ·                                ─────
-   ╰────
-  help: Enforce default parameters to be last.
-
-  ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:14]
- 1 │ function foo(a = 1, b: number, c = 2, d: number) {}
-   ·              ─────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -156,16 +156,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:21]
+   ╭─[default_param_last.tsx:1:14]
  1 │ function foo(a = 1, b?: number, c: number) {}
-   ·                     ──────────
+   ·              ─────
    ╰────
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:14]
+   ╭─[default_param_last.tsx:1:21]
  1 │ function foo(a = 1, b?: number, c: number) {}
-   ·              ─────
+   ·                     ──────────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -198,6 +198,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b = 2, c: number) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:30]
  1 │ const foo = function (a = 1, b = 2, c: number) {};
    ·                              ─────
@@ -206,7 +213,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:23]
- 1 │ const foo = function (a = 1, b = 2, c: number) {};
+ 1 │ const foo = function (a = 1, b: number, c = 2, d: number) {};
    ·                       ─────
    ╰────
   help: Enforce default parameters to be last.
@@ -215,13 +222,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[default_param_last.tsx:1:41]
  1 │ const foo = function (a = 1, b: number, c = 2, d: number) {};
    ·                                         ─────
-   ╰────
-  help: Enforce default parameters to be last.
-
-  ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:23]
- 1 │ const foo = function (a = 1, b: number, c = 2, d: number) {};
-   ·                       ─────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -254,16 +254,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:30]
+   ╭─[default_param_last.tsx:1:23]
  1 │ const foo = function (a = 1, b?: number, c: number) {};
-   ·                              ──────────
+   ·                       ─────
    ╰────
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:23]
+   ╭─[default_param_last.tsx:1:30]
  1 │ const foo = function (a = 1, b?: number, c: number) {};
-   ·                       ─────
+   ·                              ──────────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -296,6 +296,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b = 2, c: number) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:21]
  1 │ const foo = (a = 1, b = 2, c: number) => {};
    ·                     ─────
@@ -304,7 +311,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:14]
- 1 │ const foo = (a = 1, b = 2, c: number) => {};
+ 1 │ const foo = (a = 1, b: number, c = 2, d: number) => {};
    ·              ─────
    ╰────
   help: Enforce default parameters to be last.
@@ -313,13 +320,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[default_param_last.tsx:1:32]
  1 │ const foo = (a = 1, b: number, c = 2, d: number) => {};
    ·                                ─────
-   ╰────
-  help: Enforce default parameters to be last.
-
-  ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:14]
- 1 │ const foo = (a = 1, b: number, c = 2, d: number) => {};
-   ·              ─────
    ╰────
   help: Enforce default parameters to be last.
 
@@ -352,16 +352,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:21]
+   ╭─[default_param_last.tsx:1:14]
  1 │ const foo = (a = 1, b?: number, c: number) => {};
-   ·                     ──────────
+   ·              ─────
    ╰────
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:1:14]
+   ╭─[default_param_last.tsx:1:21]
  1 │ const foo = (a = 1, b?: number, c: number) => {};
-   ·              ─────
+   ·                     ──────────
    ╰────
   help: Enforce default parameters to be last.
 

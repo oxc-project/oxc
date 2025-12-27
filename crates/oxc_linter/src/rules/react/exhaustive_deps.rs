@@ -595,7 +595,9 @@ impl Rule for ExhaustiveDeps {
         });
 
         if undeclared_deps.clone().count() > 0 {
-            let undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+            let mut undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+            // Sort by span for deterministic output (maintains source order)
+            undeclared.sort_by_key(|n| n.span);
             ctx.diagnostic_with_dangerous_suggestion(
                 missing_dependency_diagnostic(hook_name, &undeclared, dependencies_node.span()),
                 |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),

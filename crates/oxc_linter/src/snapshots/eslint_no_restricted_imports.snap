@@ -375,19 +375,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Don"t use "foo" or "baz" from "mod".
 
-  ⚠ eslint(no-restricted-imports): * import is invalid because 'foo' from 'mod' is restricted.
-   ╭─[no_restricted_imports.tsx:1:1]
- 1 │ import * as mod from 'mod'
-   · ──────────────────────────
-   ╰────
-  help: Import foo from qux instead.
-
   ⚠ eslint(no-restricted-imports): * import is invalid because 'bar' from 'mod' is restricted.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import * as mod from 'mod'
    · ──────────────────────────
    ╰────
   help: Import bar from qux instead.
+
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'foo' from 'mod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import * as mod from 'mod'
+   · ──────────────────────────
+   ╰────
+  help: Import foo from qux instead.
 
   ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
@@ -414,16 +414,16 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
-   ╭─[no_restricted_imports.tsx:1:8]
- 1 │ import foo, * as bar from 'mod';
-   ·        ───
-   ╰────
-
   ⚠ eslint(no-restricted-imports): * import is invalid because 'default' from 'mod' is restricted.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo, * as bar from 'mod';
    · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
+ 1 │ import foo, * as bar from 'mod';
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
@@ -537,16 +537,16 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Import from @/utils instead.
 
-  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:8]
- 1 │ import def, * as ns from 'mod';
-   ·        ───
-   ╰────
-
   ⚠ eslint(no-restricted-imports): * import is invalid because 'default' from 'mod' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import def, * as ns from 'mod';
    · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:8]
+ 1 │ import def, * as ns from 'mod';
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted from being used by a pattern.

@@ -428,13 +428,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
-  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ Array.from(set).concat([2, 3])
-   · ──────────────────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(set).concat([2, 3])
@@ -444,8 +437,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
    ╭─[prefer_spread.tsx:1:1]
- 1 │ foo.concat([2, 3]).concat(4)
-   · ────────────────────────────
+ 1 │ Array.from(set).concat([2, 3])
+   · ──────────────────────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
@@ -453,6 +446,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([2, 3]).concat(4)
    · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([2, 3]).concat(4)
+   · ────────────────────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
@@ -783,14 +783,14 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice().slice()
-   · ─────────────────────
+   · ─────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice().slice()
-   · ─────────────
+   · ─────────────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
@@ -889,14 +889,14 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.toSpliced().toSpliced()
-   · ─────────────────────────────
+   · ─────────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.toSpliced().toSpliced()
-   · ─────────────────
+   · ─────────────────────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 

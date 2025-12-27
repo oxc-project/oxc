@@ -442,20 +442,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
-   ╭─[prefer_array_find.tsx:5:6]
- 4 │                 array.filter(fn)[0]
- 5 │             ].filter(
-   ·               ──────
- 6 │                 array.filter(fn).shift()
-   ╰────
-  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
-
-  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:4:11]
  3 │             [{bar: baz}] = foo[
  4 │                 array.filter(fn)[0]
    ·                       ──────
  5 │             ].filter(
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:5:6]
+ 4 │                 array.filter(fn)[0]
+ 5 │             ].filter(
+   ·               ──────
+ 6 │                 array.filter(fn).shift()
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 

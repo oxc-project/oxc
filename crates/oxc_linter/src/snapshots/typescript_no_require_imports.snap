@@ -80,6 +80,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:1:13]
+ 1 │ const pkg = require('./package.jsonc');
+   ·             ──────────────────────────
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:21]
  1 │ const pkg = require('./package.jsonc');
    ·                     ─────────────────
@@ -88,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:13]
- 1 │ const pkg = require('./package.jsonc');
+ 1 │ const pkg = require(`./package.jsonc`);
    ·             ──────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
@@ -101,23 +108,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:13]
- 1 │ const pkg = require(`./package.jsonc`);
-   ·             ──────────────────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:1]
  1 │ import pkg = require('./package.json');
    · ───────────────────────────────────────
-   ╰────
-  help: Do not use CommonJS `require` calls
-
-  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:1:14]
- 1 │ import pkg = require('./package.jsonc');
-   ·              ──────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
@@ -130,8 +123,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:14]
- 1 │ import pkg = require('./package.json');
-   ·              ─────────────────────────
+ 1 │ import pkg = require('./package.jsonc');
+   ·              ──────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
@@ -139,6 +132,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_require_imports.ts:1:1]
  1 │ import pkg = require('./package.json');
    · ───────────────────────────────────────
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:1:14]
+ 1 │ import pkg = require('./package.json');
+   ·              ─────────────────────────
    ╰────
   help: Do not use CommonJS `require` calls
 
