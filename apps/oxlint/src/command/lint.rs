@@ -39,6 +39,10 @@ pub struct LintCommand {
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
 
+    /// List all files that would be linted, then exit without linting
+    #[bpaf(long("list-files"), switch, hide_usage)]
+    pub list_files: bool,
+
     /// Start the language server
     #[bpaf(long("lsp"), switch, hide_usage)]
     pub lsp: bool,
@@ -600,6 +604,12 @@ mod lint_options {
     fn list_rules() {
         let options = get_lint_options("--rules");
         assert!(options.list_rules);
+    }
+
+    #[test]
+    fn list_files() {
+        let options = get_lint_options("--list-files .");
+        assert!(options.list_files);
     }
 
     #[test]
