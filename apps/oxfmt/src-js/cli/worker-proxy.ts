@@ -21,7 +21,7 @@ export async function formatEmbeddedCode(
   tagName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, tagName } satisfies FormatEmbeddedCodeParam, {
+  return pool!.run({ options: toPlainOptions(options), code, tagName } satisfies FormatEmbeddedCodeParam, {
     name: "formatEmbeddedCode",
   });
 }
@@ -32,7 +32,17 @@ export async function formatFile(
   fileName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, fileName, parserName } satisfies FormatFileParam, {
+  return pool!.run({ options: toPlainOptions(options), code, fileName, parserName } satisfies FormatFileParam, {
     name: "formatFile",
   });
+}
+
+function toPlainOptions(options: Options) {
+  // now bun napi value could not cloned
+  // but for Web Workers in Bun, structuredClone used.
+  // https://github.com/oven-sh/bun/issues/25658
+  if ((globalThis as any).Bun) {
+    return {...options}
+  }
+  return options
 }
