@@ -7,6 +7,12 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────
    ╰────
 
+  ⚠ eslint-plugin-react(no-deprecated): `Foo.renderComponent` is deprecated. Use `React.render` instead.
+   ╭─[no_deprecated.tsx:1:5]
+ 1 │ Foo.renderComponent()
+   ·     ───────────────
+   ╰────
+
   ⚠ eslint-plugin-react(no-deprecated): `this.transferPropsTo` is deprecated. Use `spread operator ({...})` instead.
    ╭─[no_deprecated.tsx:1:1]
  1 │ this.transferPropsTo()
@@ -65,6 +71,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_deprecated.tsx:1:7]
  1 │ React.createClass({});
    ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(no-deprecated): `Foo.createClass` is deprecated. Use `create-react-class package` instead.
+   ╭─[no_deprecated.tsx:1:5]
+ 1 │ Foo.createClass({});
+   ·     ───────────
    ╰────
 
   ⚠ eslint-plugin-react(no-deprecated): `React.PropTypes` is deprecated. Use `prop-types package` instead.

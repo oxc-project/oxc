@@ -122,6 +122,7 @@ expression: json
           "rootDir": []
         },
         "react": {
+          "pragma": null,
           "formComponents": [],
           "linkComponents": [],
           "version": null
@@ -616,6 +617,7 @@ expression: json
         },
         "react": {
           "default": {
+            "pragma": null,
             "formComponents": [],
             "linkComponents": [],
             "version": null
@@ -660,6 +662,15 @@ expression: json
             "$ref": "#/definitions/CustomComponent"
           },
           "markdownDescription": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```"
+        },
+        "pragma": {
+          "description": "Pragma to use for React. Defaults to \"React\".\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"pragma\": \"Preact\"\n}\n}\n}\n```",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Pragma to use for React. Defaults to \"React\".\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"pragma\": \"Preact\"\n}\n}\n}\n```"
         },
         "version": {
           "description": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
