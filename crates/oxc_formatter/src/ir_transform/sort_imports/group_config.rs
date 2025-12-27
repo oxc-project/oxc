@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// Parse groups from string-based configuration.
 /// If parsing fails (= undefined), it falls back to `Unknown` selector.
 pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<GroupName>> {
@@ -18,19 +20,19 @@ pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<Gr
 /// A group name consists of 1 selector and N modifiers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GroupName {
-    pub modifiers: Vec<ImportModifier>,
     pub selector: ImportSelector,
+    pub modifiers: Vec<ImportModifier>,
 }
 
 impl GroupName {
     /// Create a new group name with no modifiers.
     pub fn new(selector: ImportSelector) -> Self {
-        Self { modifiers: vec![], selector }
+        Self { selector, modifiers: vec![] }
     }
 
     /// Create a new group name with one modifier.
     pub fn with_modifier(selector: ImportSelector, modifier: ImportModifier) -> Self {
-        Self { modifiers: vec![modifier], selector }
+        Self { selector, modifiers: vec![modifier] }
     }
 
     /// Check if this is a plain selector (no modifiers).
@@ -79,9 +81,43 @@ impl GroupName {
     }
 }
 
+impl PartialOrd for GroupName {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match self.selector.partial_cmp(&other.selector) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        let self_modifier_cnt = self.modifiers.len();
+        let other_modifier_cnt = self.modifiers.len();
+        if self_modifier_cnt > other_modifier_cnt {
+            return Some(Ordering::Less);
+        } else if self_modifier_cnt < other_modifier_cnt {
+            return Some(Ordering::Greater);
+        }
+        self.modifiers.partial_cmp(&other.modifiers)
+    }
+}
+
+impl Ord for GroupName {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.selector.cmp(&other.selector) {
+            Ordering::Equal => {},
+            ord => return ord,
+        }
+        let self_modifier_cnt = self.modifiers.len();
+        let other_modifier_cnt = self.modifiers.len();
+        if self_modifier_cnt > other_modifier_cnt {
+            return Ordering::Less;
+        } else if self_modifier_cnt < other_modifier_cnt {
+            return Ordering::Greater;
+        }
+        self.modifiers.cmp(&other.modifiers)
+    }
+}
+
 /// Selector types for import categorization.
 /// Selectors identify the type or location of an import.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ImportSelector {
     /// Type-only imports (`import type { ... }`)
     Type,
@@ -164,7 +200,7 @@ impl ImportSelector {
 
 /// Modifier types for import categorization.
 /// Modifiers describe characteristics of how an import is declared.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ImportModifier {
     /// Side-effect imports
     SideEffect,
@@ -184,6 +220,7 @@ pub enum ImportModifier {
 
 impl ImportModifier {
     /// Parse a string into an ImportModifier.
+    #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "side-effect" => Some(Self::SideEffect),
