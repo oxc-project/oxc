@@ -44,6 +44,8 @@ export default class LinterTool implements ToolInterface {
   // LSP client instance
   private client: LanguageClient | undefined;
 
+  private linterVersion: string | undefined;
+
   async getBinary(
     context: ExtensionContext,
     outputChannel: LogOutputChannel,
@@ -74,12 +76,14 @@ export default class LinterTool implements ToolInterface {
 
     const restartCommand = commands.registerCommand(OxcCommands.RestartServerLint, async () => {
       await this.restartClient();
+      this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
     });
 
     const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnableLint, async () => {
       await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
       await this.toggleClient(configService);
+      this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
     });
 
     const applyAllFixesFile = commands.registerCommand(OxcCommands.ApplyAllFixesFile, async () => {
@@ -206,7 +210,6 @@ export default class LinterTool implements ToolInterface {
 
     context.subscriptions.push(onDeleteFilesDispose);
 
-    this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
     if (this.allowedToStartServer) {
       if (configService.vsCodeConfig.enable) {
         await this.client.start();
@@ -214,6 +217,8 @@ export default class LinterTool implements ToolInterface {
     } else {
       this.generateActivatorByConfig(configService.vsCodeConfig, context, statusBarItemHandler);
     }
+
+    this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
   }
 
   async deactivate(): Promise<void> {
@@ -263,10 +268,10 @@ export default class LinterTool implements ToolInterface {
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
   ): Promise<void> {
-    this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
     if (event.affectsConfiguration(`${ConfigService.namespace}.enable`)) {
       await this.toggleClient(configService); // update the client state
     }
+    this.updateStatusBar(statusBarItemHandler, configService.vsCodeConfig.enable);
 
     if (this.client === undefined) {
       return;
@@ -307,10 +312,12 @@ export default class LinterTool implements ToolInterface {
         tooltipText: "oxlint is disabled",
       };
     } else {
+      const version = this.client?.initializeResult?.serverInfo?.version ?? "unknown";
+
       return {
         bgColor: "statusBarItem.activeBackground",
         icon: "check-all",
-        tooltipText: "oxlint is enabled",
+        tooltipText: `oxlint is enabled (v${version})`,
       };
     }
   }

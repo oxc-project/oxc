@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    ast_util::{get_function_name_with_kind, is_function_node, iter_outer_expressions},
+    ast_util::{get_function_name_with_kind, iter_outer_expressions},
     context::LintContext,
     rule::Rule,
     utils::count_comment_lines,
@@ -162,7 +162,13 @@ impl Rule for MaxLinesPerFunction {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_function_node(node) || (!self.iifes && is_iife(node, ctx.semantic())) {
+        match node.kind() {
+            AstKind::Function(f) if f.is_function_declaration() => {}
+            AstKind::Function(f) if f.is_expression() => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
+        }
+        if !self.iifes && is_iife(node, ctx.semantic()) {
             return;
         }
         let span = node.span();

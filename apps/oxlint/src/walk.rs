@@ -97,8 +97,14 @@ impl Walk {
             }
         }
 
-        let inner =
-            inner.ignore(false).git_global(false).follow_links(true).hidden(false).build_parallel();
+        let inner = inner
+            .ignore(false)
+            .git_global(false)
+            .git_ignore(true)
+            .follow_links(true)
+            .hidden(false)
+            .require_git(false)
+            .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
 
@@ -135,7 +141,7 @@ impl Walk {
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString, path::Path};
+    use std::{env, ffi::OsString, fs, path::Path};
 
     use ignore::overrides::OverrideBuilder;
 
@@ -165,5 +171,54 @@ mod test {
         paths.sort();
 
         assert_eq!(paths, vec!["bar.vue", "foo.js"]);
+    }
+
+    #[test]
+    fn test_gitignore_without_git_repo() {
+        // Validate that `.gitignore` files are respected even when no `.git` directory is present.
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Create test files
+        fs::write(temp_path.join("included.js"), "debugger;").unwrap();
+        fs::write(temp_path.join("ignored.js"), "debugger;").unwrap();
+
+        // Create .gitignore to ignore one file
+        fs::write(temp_path.join(".gitignore"), "ignored.js\n").unwrap();
+
+        // Verify no .git directory exists
+        assert!(!temp_path.join(".git").exists());
+
+        // Use empty ignore_path to rely on auto-discovery, not explicit loading
+        let ignore_options = IgnoreOptions {
+            no_ignore: false,
+            ignore_path: OsString::from(""), // Empty = rely on auto-discovery
+            ignore_pattern: vec![],
+        };
+
+        let override_builder = OverrideBuilder::new(temp_path).build().unwrap();
+
+        let mut paths =
+            Walk::new(&[temp_path.to_path_buf()], &ignore_options, Some(override_builder))
+                .with_extensions(Extensions(["js"].to_vec()))
+                .paths()
+                .into_iter()
+                .map(|path| {
+                    Path::new(&path)
+                        .strip_prefix(temp_path)
+                        .unwrap()
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string()
+                })
+                .collect::<Vec<_>>();
+
+        paths.sort();
+
+        // Only included.js should be found; ignored.js should be filtered by auto-discovered .gitignore
+        // Without .git_ignore(true) and .require_git(false), both files would be found
+        assert_eq!(paths, vec!["included.js"]);
     }
 }
