@@ -374,7 +374,11 @@ impl NoDeprecated {
                             "create-react-class package",
                         ));
                     } else if key == "PropTypes" && react_settings.version_at_least(15, 5, 0) {
-                        ctx.diagnostic(no_deprecated_diagnostic(prop.span, &key, "prop-types package"));
+                        ctx.diagnostic(no_deprecated_diagnostic(
+                            prop.span,
+                            &key,
+                            "prop-types package",
+                        ));
                     }
                 }
             }
