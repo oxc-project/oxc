@@ -5,22 +5,22 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Plugin name 'import' is reserved, and cannot be used for JS plugins.
-  | 
-  | The 'import' plugin is already implemented natively in Rust within oxlint.
-  | Using both the native and JS versions would create ambiguity about which rules to use.
-  | 
-  | To use an external 'import' plugin instead, provide a custom alias:
-  | 
-  | "jsPlugins": [{ "name": "import-js", "specifier": "eslint-plugin-import" }]
-  | 
-  | Then reference rules using your alias:
-  | 
-  | "rules": {
-  |   "import-js/rule-name": "error"
-  | }
-  | 
-  | See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mPlugin name 'import' is reserved, and cannot be used for JS plugins.
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m The 'import' plugin is already implemented natively in Rust within oxlint.
+  [38;2;225;80;80;1m│[0m Using both the native and JS versions would create ambiguity about which rules to use.
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m To use an external 'import' plugin instead, provide a custom alias:
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m "jsPlugins": [{ "name": "import-js", "specifier": "eslint-plugin-import" }]
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m Then reference rules using your alias:
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m "rules": {
+  [38;2;225;80;80;1m│[0m   "import-js/rule-name": "error"
+  [38;2;225;80;80;1m│[0m }
+  [38;2;225;80;80;1m│[0m 
+  [38;2;225;80;80;1m│[0m See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html[0m
 ```
 
 # stderr

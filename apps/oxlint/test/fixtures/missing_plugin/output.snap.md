@@ -5,8 +5,8 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to load JS plugin: ./plugin.js
-  |   Cannot find module './plugin.js'
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mFailed to load JS plugin: ./plugin.js
+  [38;2;225;80;80;1m│[0m   Cannot find module './plugin.js'[0m
 ```
 
 # stderr

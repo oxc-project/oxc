@@ -82,6 +82,10 @@ impl<'a, T: FromESTree<'a>> FromESTree<'a> for AVec<'a, T> {
         let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
         let mut vec = AVec::with_capacity_in(arr.len(), allocator);
         for item in arr {
+            // Try to deserialize each element
+            // Unknown node types will either:
+            // - Return a placeholder (for Expression/Statement/etc. which handle this internally)
+            // - Return an error (which we propagate)
             vec.push(T::from_estree(item, allocator)?);
         }
         Ok(vec)

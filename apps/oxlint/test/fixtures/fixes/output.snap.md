@@ -3,99 +3,99 @@
 
 # stdout
 ```
-  x fixes-plugin(fixes): Remove debugger statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
- 2 | 
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Remove debugger statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+ [2m2[0m │ 
+   ╰────
 
-  x fixes-plugin(fixes): Replace "a" with "daddy"
-   ,-[files/index.js:3:5]
- 2 | 
- 3 | let a = 1;
-   :     ^
- 4 | let b = 2;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "a" with "daddy"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:3:5]
+ [2m2[0m │ 
+ [2m3[0m │ let a = 1;
+   · [38;2;246;87;248m    ─[0m
+ [2m4[0m │ let b = 2;
+   ╰────
 
-  x fixes-plugin(fixes): Replace "b" with "abacus"
-   ,-[files/index.js:4:5]
- 3 | let a = 1;
- 4 | let b = 2;
-   :     ^
- 5 | let c = 3;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "b" with "abacus"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:4:5]
+ [2m3[0m │ let a = 1;
+ [2m4[0m │ let b = 2;
+   · [38;2;246;87;248m    ─[0m
+ [2m5[0m │ let c = 3;
+   ╰────
 
-  x fixes-plugin(fixes): Prefix "c" with "magi"
-   ,-[files/index.js:5:5]
- 4 | let b = 2;
- 5 | let c = 3;
-   :     ^
- 6 | let d = 4;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Prefix "c" with "magi"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:5:5]
+ [2m4[0m │ let b = 2;
+ [2m5[0m │ let c = 3;
+   · [38;2;246;87;248m    ─[0m
+ [2m6[0m │ let d = 4;
+   ╰────
 
-  x fixes-plugin(fixes): Prefix "d" with "damne"
-   ,-[files/index.js:6:5]
- 5 | let c = 3;
- 6 | let d = 4;
-   :     ^
- 7 | let e = 5;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Prefix "d" with "damne"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:6:5]
+ [2m5[0m │ let c = 3;
+ [2m6[0m │ let d = 4;
+   · [38;2;246;87;248m    ─[0m
+ [2m7[0m │ let e = 5;
+   ╰────
 
-  x fixes-plugin(fixes): Postfix "e" with "lephant"
-   ,-[files/index.js:7:5]
- 6 | let d = 4;
- 7 | let e = 5;
-   :     ^
- 8 | let f = 6;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Postfix "e" with "lephant"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:7:5]
+ [2m6[0m │ let d = 4;
+ [2m7[0m │ let e = 5;
+   · [38;2;246;87;248m    ─[0m
+ [2m8[0m │ let f = 6;
+   ╰────
 
-  x fixes-plugin(fixes): Postfix "f" with "eck"
-   ,-[files/index.js:8:5]
- 7 | let e = 5;
- 8 | let f = 6;
-   :     ^
- 9 | let g = 7;
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Postfix "f" with "eck"[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:8:5]
+ [2m7[0m │ let e = 5;
+ [2m8[0m │ let f = 6;
+   · [38;2;246;87;248m    ─[0m
+ [2m9[0m │ let g = 7;
+   ╰────
 
-  x fixes-plugin(fixes): Replace "g" with "numpty"
-    ,-[files/index.js:9:5]
-  8 | let f = 6;
-  9 | let g = 7;
-    :     ^
- 10 | let h = 8;
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "g" with "numpty"[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:9:5]
+ [2m 8[0m │ let f = 6;
+ [2m 9[0m │ let g = 7;
+    · [38;2;246;87;248m    ─[0m
+ [2m10[0m │ let h = 8;
+    ╰────
 
-  x fixes-plugin(fixes): Replace "h" with "dangermouse"
-    ,-[files/index.js:10:5]
-  9 | let g = 7;
- 10 | let h = 8;
-    :     ^
- 11 | let i = 9;
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "h" with "dangermouse"[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:10:5]
+ [2m 9[0m │ let g = 7;
+ [2m10[0m │ let h = 8;
+    · [38;2;246;87;248m    ─[0m
+ [2m11[0m │ let i = 9;
+    ╰────
 
-  x fixes-plugin(fixes): Replace "i" with "granular"
-    ,-[files/index.js:11:5]
- 10 | let h = 8;
- 11 | let i = 9;
-    :     ^
- 12 | let j = 10;
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "i" with "granular"[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:11:5]
+ [2m10[0m │ let h = 8;
+ [2m11[0m │ let i = 9;
+    · [38;2;246;87;248m    ─[0m
+ [2m12[0m │ let j = 10;
+    ╰────
 
-  x fixes-plugin(fixes): Replace "j" with "cowabunga"
-    ,-[files/index.js:12:5]
- 11 | let i = 9;
- 12 | let j = 10;
-    :     ^
- 13 | 
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Replace "j" with "cowabunga"[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:12:5]
+ [2m11[0m │ let i = 9;
+ [2m12[0m │ let j = 10;
+    · [38;2;246;87;248m    ─[0m
+ [2m13[0m │ 
+    ╰────
 
-  x fixes-plugin(fixes): Remove debugger statement
-    ,-[files/index.js:14:1]
- 13 | 
- 14 | debugger;
-    : ^^^^^^^^^
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mfixes-plugin(fixes): Remove debugger statement[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:14:1]
+ [2m13[0m │ 
+ [2m14[0m │ debugger;
+    · [38;2;246;87;248m─────────[0m
+    ╰────
 
 Found 0 warnings and 12 errors.
 Finished in Xms on 1 file with 1 rules using X threads.

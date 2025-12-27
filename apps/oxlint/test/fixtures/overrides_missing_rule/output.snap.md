@@ -5,7 +5,7 @@
 ```
 Failed to build configuration.
 
-  x Rule 'missing' not found in plugin 'basic-custom-plugin'
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mRule 'missing' not found in plugin 'basic-custom-plugin'[0m
 ```
 
 # stderr

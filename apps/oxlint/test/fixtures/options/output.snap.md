@@ -3,269 +3,269 @@
 
 # stdout
 ```
-  x options-plugin(default-options):
-  | options: [
-  |   "string",
-  |   123,
-  |   true,
-  |   {
-  |     "toBe": false,
-  |     "notToBe": true
-  |   },
-  |   {
-  |     "deep": [
-  |       {
-  |         "deeper": {
-  |           "evenDeeper": [
-  |             {
-  |               "soDeep": {
-  |                 "soSoDeep": true
-  |               }
-  |             }
-  |           ]
-  |         }
-  |       }
-  |     ]
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(no-options):
+  [38;2;225;80;80;1m│[0m options: []
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(empty-default-options):
-  | options: [
-  |   "from-config",
-  |   42
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   false,
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "array": [
+  [38;2;225;80;80;1m│[0m       {
+  [38;2;225;80;80;1m│[0m         "deep": true,
+  [38;2;225;80;80;1m│[0m         "str": "hello"
+  [38;2;225;80;80;1m│[0m       },
+  [38;2;225;80;80;1m│[0m       456
+  [38;2;225;80;80;1m│[0m     ],
+  [38;2;225;80;80;1m│[0m     "not": null
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(merge-options):
-  | options: [
-  |   {
-  |     "fromConfig": 11,
-  |     "overrideDefault": 12,
-  |     "nested": {
-  |       "fromConfig": 13,
-  |       "overrideDefault": 14,
-  |       "fromConfigObject": {
-  |         "objectKey": 17
-  |       },
-  |       "fromDefault": 3
-  |     },
-  |     "fromDefault": 1
-  |   },
-  |   15,
-  |   true,
-  |   [],
-  |   16
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   "string",
+  [38;2;225;80;80;1m│[0m   123,
+  [38;2;225;80;80;1m│[0m   true,
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "toBe": false,
+  [38;2;225;80;80;1m│[0m     "notToBe": true
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "deep": [
+  [38;2;225;80;80;1m│[0m       {
+  [38;2;225;80;80;1m│[0m         "deeper": {
+  [38;2;225;80;80;1m│[0m           "evenDeeper": [
+  [38;2;225;80;80;1m│[0m             {
+  [38;2;225;80;80;1m│[0m               "soDeep": {
+  [38;2;225;80;80;1m│[0m                 "soSoDeep": true
+  [38;2;225;80;80;1m│[0m               }
+  [38;2;225;80;80;1m│[0m             }
+  [38;2;225;80;80;1m│[0m           ]
+  [38;2;225;80;80;1m│[0m         }
+  [38;2;225;80;80;1m│[0m       }
+  [38;2;225;80;80;1m│[0m     ]
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(no-options):
-  | options: []
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(merge-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromConfig": 11,
+  [38;2;225;80;80;1m│[0m     "overrideDefault": 12,
+  [38;2;225;80;80;1m│[0m     "nested": {
+  [38;2;225;80;80;1m│[0m       "fromConfig": 13,
+  [38;2;225;80;80;1m│[0m       "overrideDefault": 14,
+  [38;2;225;80;80;1m│[0m       "fromConfigObject": {
+  [38;2;225;80;80;1m│[0m         "objectKey": 17
+  [38;2;225;80;80;1m│[0m       },
+  [38;2;225;80;80;1m│[0m       "fromDefault": 3
+  [38;2;225;80;80;1m│[0m     },
+  [38;2;225;80;80;1m│[0m     "fromDefault": 1
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   15,
+  [38;2;225;80;80;1m│[0m   true,
+  [38;2;225;80;80;1m│[0m   [],
+  [38;2;225;80;80;1m│[0m   16
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(options):
-  | options: [
-  |   false,
-  |   {
-  |     "array": [
-  |       {
-  |         "deep": true,
-  |         "str": "hello"
-  |       },
-  |       456
-  |     ],
-  |     "not": null
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(empty-default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   "from-config",
+  [38;2;225;80;80;1m│[0m   42
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-and-default-options):
-  | options: [
-  |   {
-  |     "fromConfig": 72,
-  |     "overrideSchemaByConfig": 32,
-  |     "overrideDefaultOptionsByConfig": 62,
-  |     "overrideBothByConfig": 42,
-  |     "fromDefaultOptions": 51,
-  |     "overrideSchemaByDefaultOptions": 21,
-  |     "fromSchema": 10
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-defaults):
+  [38;2;225;80;80;1m│[0m options: []
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-and-empty-default-options):
-  | options: [
-  |   {
-  |     "fromConfig": 72,
-  |     "overrideSchemaByConfig": 32,
-  |     "overrideDefaultOptionsByConfig": 62,
-  |     "overrideBothByConfig": 42,
-  |     "fromSchema": 10,
-  |     "overrideSchemaByDefaultOptions": 20
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-and-default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromConfig": 72,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByConfig": 32,
+  [38;2;225;80;80;1m│[0m     "overrideDefaultOptionsByConfig": 62,
+  [38;2;225;80;80;1m│[0m     "overrideBothByConfig": 42,
+  [38;2;225;80;80;1m│[0m     "fromDefaultOptions": 51,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByDefaultOptions": 21,
+  [38;2;225;80;80;1m│[0m     "fromSchema": 10
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-defaults):
-  | options: []
-  | isDeepFrozen: true
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-and-empty-default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromConfig": 72,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByConfig": 32,
+  [38;2;225;80;80;1m│[0m     "overrideDefaultOptionsByConfig": 62,
+  [38;2;225;80;80;1m│[0m     "overrideBothByConfig": 42,
+  [38;2;225;80;80;1m│[0m     "fromSchema": 10,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByDefaultOptions": 20
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(default-options):
-  | options: [
-  |   "string",
-  |   123,
-  |   true,
-  |   {
-  |     "toBe": false,
-  |     "notToBe": true
-  |   },
-  |   {
-  |     "deep": [
-  |       {
-  |         "deeper": {
-  |           "evenDeeper": [
-  |             {
-  |               "soDeep": {
-  |                 "soSoDeep": true
-  |               }
-  |             }
-  |           ]
-  |         }
-  |       }
-  |     ]
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(no-options):
+  [38;2;225;80;80;1m│[0m options: []
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(empty-default-options):
-  | options: []
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-and-empty-default-options):
+  [38;2;225;80;80;1m│[0m options: []
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(merge-options):
-  | options: [
-  |   {
-  |     "fromConfig": 21,
-  |     "fromDefault": 1,
-  |     "overrideDefault": 2,
-  |     "nested": {
-  |       "fromDefault": 3,
-  |       "overrideDefault": 4
-  |     }
-  |   },
-  |   {
-  |     "fromConfig": 22,
-  |     "fromDefault": 5
-  |   },
-  |   {
-  |     "fromDefault": 6
-  |   },
-  |   7
-  | ]
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(merge-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromConfig": 21,
+  [38;2;225;80;80;1m│[0m     "fromDefault": 1,
+  [38;2;225;80;80;1m│[0m     "overrideDefault": 2,
+  [38;2;225;80;80;1m│[0m     "nested": {
+  [38;2;225;80;80;1m│[0m       "fromDefault": 3,
+  [38;2;225;80;80;1m│[0m       "overrideDefault": 4
+  [38;2;225;80;80;1m│[0m     }
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromConfig": 22,
+  [38;2;225;80;80;1m│[0m     "fromDefault": 5
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromDefault": 6
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   7
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(no-options):
-  | options: []
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-and-default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "fromDefaultOptions": 51,
+  [38;2;225;80;80;1m│[0m     "overrideDefaultOptionsByConfig": 61,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByDefaultOptions": 21,
+  [38;2;225;80;80;1m│[0m     "overrideBothByConfig": 41,
+  [38;2;225;80;80;1m│[0m     "fromSchema": 10,
+  [38;2;225;80;80;1m│[0m     "overrideSchemaByConfig": 30
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(options):
-  | options: [
-  |   {
-  |     "somethingElse": true
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(default-options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   "string",
+  [38;2;225;80;80;1m│[0m   123,
+  [38;2;225;80;80;1m│[0m   true,
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "toBe": false,
+  [38;2;225;80;80;1m│[0m     "notToBe": true
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "deep": [
+  [38;2;225;80;80;1m│[0m       {
+  [38;2;225;80;80;1m│[0m         "deeper": {
+  [38;2;225;80;80;1m│[0m           "evenDeeper": [
+  [38;2;225;80;80;1m│[0m             {
+  [38;2;225;80;80;1m│[0m               "soDeep": {
+  [38;2;225;80;80;1m│[0m                 "soSoDeep": true
+  [38;2;225;80;80;1m│[0m               }
+  [38;2;225;80;80;1m│[0m             }
+  [38;2;225;80;80;1m│[0m           ]
+  [38;2;225;80;80;1m│[0m         }
+  [38;2;225;80;80;1m│[0m       }
+  [38;2;225;80;80;1m│[0m     ]
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-and-default-options):
-  | options: [
-  |   {
-  |     "fromDefaultOptions": 51,
-  |     "overrideDefaultOptionsByConfig": 61,
-  |     "overrideSchemaByDefaultOptions": 21,
-  |     "overrideBothByConfig": 41,
-  |     "fromSchema": 10,
-  |     "overrideSchemaByConfig": 30
-  |   }
-  | ]
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(schema-defaults):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "overrideSchema": 21,
+  [38;2;225;80;80;1m│[0m     "fromConfig": 31,
+  [38;2;225;80;80;1m│[0m     "fromSchema": 10
+  [38;2;225;80;80;1m│[0m   },
+  [38;2;225;80;80;1m│[0m   "config-string"
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-and-empty-default-options):
-  | options: []
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(options):
+  [38;2;225;80;80;1m│[0m options: [
+  [38;2;225;80;80;1m│[0m   {
+  [38;2;225;80;80;1m│[0m     "somethingElse": true
+  [38;2;225;80;80;1m│[0m   }
+  [38;2;225;80;80;1m│[0m ]
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
-  x options-plugin(schema-defaults):
-  | options: [
-  |   {
-  |     "overrideSchema": 21,
-  |     "fromConfig": 31,
-  |     "fromSchema": 10
-  |   },
-  |   "config-string"
-  | ]
-  | isDeepFrozen: true
-   ,-[files/nested/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1moptions-plugin(empty-default-options):
+  [38;2;225;80;80;1m│[0m options: []
+  [38;2;225;80;80;1m│[0m isDeepFrozen: true[0m
+   ╭─[[38;2;92;157;255;1mfiles/nested/index.js[0m:1:1]
+ [2m1[0m │ let x;
+   · [38;2;246;87;248m▲[0m
+   ╰────
 
 Found 0 warnings and 16 errors.
 Finished in Xms on 2 files with 8 rules using X threads.

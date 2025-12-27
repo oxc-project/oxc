@@ -185,6 +185,10 @@ fn generate_field_deserialization(
     // Determine if field is optional
     let is_optional = matches!(field_type, TypeDef::Option(_));
 
+    // TypeScript-specific fields (#[ts]) should be treated as optional with defaults
+    // since JS parsers won't provide them
+    let is_ts_only = field.estree.is_ts;
+
     if is_optional {
         // For Option<T>, use estree_field_opt
         (
@@ -194,6 +198,21 @@ fn generate_field_deserialization(
                         Some(FromESTree::from_estree(field_json, allocator)?)
                     }
                     _ => None,
+                };
+            },
+            true, // allocator is passed to FromESTree
+        )
+    } else if is_ts_only {
+        // For TypeScript-only fields, try to get the field but default if not present
+        // This allows JS parsers (which don't have TS fields) to work
+        let (default_value, _) = generate_default_for_type(field_type, field, schema);
+        (
+            quote! {
+                let #field_ident = match json.estree_field_opt(#estree_name_str) {
+                    Some(field_json) if !field_json.is_null() => {
+                        FromESTree::from_estree(field_json, allocator)?
+                    }
+                    _ => #default_value,
                 };
             },
             true, // allocator is passed to FromESTree
@@ -209,6 +228,59 @@ fn generate_field_deserialization(
             },
             true, // allocator is passed to FromESTree
         )
+    }
+}
+
+/// Generate a default value for a type.
+/// Returns (default value TokenStream, uses_allocator bool).
+fn generate_default_for_type(
+    type_def: &TypeDef,
+    _field: &FieldDef,
+    schema: &Schema,
+) -> (TokenStream, bool) {
+    match type_def {
+        TypeDef::Primitive(prim) => {
+            let default = match prim.name() {
+                "bool" => quote!(false),
+                "u8" | "u16" | "u32" | "u64" | "usize" => quote!(0),
+                "i8" | "i16" | "i32" | "i64" | "isize" => quote!(0),
+                "f32" | "f64" => quote!(0.0),
+                _ => quote!(Default::default()),
+            };
+            (default, false)
+        }
+        TypeDef::Option(_) => (quote!(None), false),
+        TypeDef::Vec(_) => {
+            // Vec needs allocator - use AVec::new_in
+            (quote!(AVec::new_in(allocator)), true)
+        }
+        TypeDef::Box(box_def) => {
+            // Box<T> needs allocator and inner default - can't easily default
+            let inner_type = box_def.inner_type(schema);
+            let inner_name = inner_type.name();
+            (
+                quote!(panic!("Cannot default Box<{}> - field should not be skipped", #inner_name)),
+                false,
+            )
+        }
+        _ => {
+            // Check the innermost type name for known types without Default
+            let inner_type = type_def.innermost_type(schema);
+            let type_name = inner_type.name();
+            match type_name {
+                "VariableDeclarationKind" => {
+                    (quote!(crate::ast::js::VariableDeclarationKind::Var), false)
+                }
+                "WithClauseKeyword" => (quote!(crate::ast::js::WithClauseKeyword::With), false),
+                "NumberBase" => (quote!(oxc_syntax::number::NumberBase::Decimal), false),
+                "BigintBase" => (quote!(oxc_syntax::number::BigintBase::Decimal), false),
+                "RegExpFlags" => (quote!(crate::ast::literal::RegExpFlags::empty()), false),
+                "ImportOrExportKind" => {
+                    (quote!(crate::ast::ts::ImportOrExportKind::Value), false)
+                }
+                _ => (quote!(Default::default()), false),
+            }
+        }
     }
 }
 
@@ -327,6 +399,28 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
     }
 }
 
+/// Returns true if this enum type should use placeholders for unknown node types
+/// instead of returning an error.
+///
+/// According to the plan:
+/// - Expression → NullLiteral placeholder
+/// - Statement → EmptyStatement placeholder
+/// - Declaration → EmptyStatement placeholder (valid declaration)
+fn enum_uses_placeholder(enum_name: &str) -> Option<&'static str> {
+    match enum_name {
+        "Expression" => Some("NullLiteral"),
+        "Statement" => Some("EmptyStatement"),
+        // Note: Declaration does NOT use placeholders because it doesn't have
+        // a simple "no-op" variant like EmptyStatement. Unknown declarations
+        // will cause an error, and lint_with_external_ast handles this by
+        // returning UnknownNode result and skipping Rust rules.
+        // This is acceptable because:
+        // - Most custom syntax appears at statement level, not declaration level
+        // - JS plugin rules still run and handle custom syntax
+        _ => None,
+    }
+}
+
 /// Generate body for enum with fields - dispatch based on `type` field.
 fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     // Collect match arms, tracking duplicates
@@ -360,11 +454,43 @@ fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> To
         })
         .collect();
 
+    // Determine fallback behavior for unknown types
+    let enum_name = enum_def.name();
+    let fallback_arm = if let Some(placeholder_type) = enum_uses_placeholder(enum_name) {
+        // Use a placeholder for unknown nodes in this enum type
+        // This allows custom syntax (GlimmerTemplate, SvelteComponent, etc.) to be skipped
+        // while Rust rules continue running on the surrounding valid JS/TS code
+        match placeholder_type {
+            "NullLiteral" => quote! {
+                // Unknown node type (likely custom syntax) - use NullLiteral placeholder
+                _other => Ok(Self::NullLiteral(ABox::new_in(
+                    crate::ast::literal::NullLiteral { span: parse_span_or_empty(json) },
+                    allocator
+                ))),
+            },
+            "EmptyStatement" => quote! {
+                // Unknown node type (likely custom syntax) - use EmptyStatement placeholder
+                _other => Ok(Self::EmptyStatement(ABox::new_in(
+                    crate::ast::js::EmptyStatement { span: parse_span_or_empty(json) },
+                    allocator
+                ))),
+            },
+            _ => quote! {
+                other => Err(DeserError::UnknownNodeType(other.to_string())),
+            },
+        }
+    } else {
+        // No placeholder - return error for unknown types
+        quote! {
+            other => Err(DeserError::UnknownNodeType(other.to_string())),
+        }
+    };
+
     quote! {
         let type_name = json.estree_type()?;
         match type_name {
             #(#match_arms)*
-            other => Err(DeserError::UnknownNodeType(other.to_string())),
+            #fallback_arm
         }
     }
 }

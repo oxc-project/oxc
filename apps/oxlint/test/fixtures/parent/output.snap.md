@@ -3,101 +3,101 @@
 
 # stdout
 ```
-  x parents(check): VariableDeclaration:
-  | parent: Program
-  | ancestors: [ Program ]
-   ,-[files/index.js:1:1]
- 1 | const obj = { a: [b, c], ...d };
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Program:
+  [38;2;225;80;80;1m│[0m parent: undefined
+  [38;2;225;80;80;1m│[0m ancestors: [  ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m─────────────────────────────────[0m
+   ╰────
 
-  x parents(check): Program:
-  | parent: undefined
-  | ancestors: [  ]
-   ,-[files/index.js:1:1]
- 1 | const obj = { a: [b, c], ...d };
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): VariableDeclaration:
+  [38;2;225;80;80;1m│[0m parent: Program
+  [38;2;225;80;80;1m│[0m ancestors: [ Program ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m────────────────────────────────[0m
+   ╰────
 
-  x parents(check): Identifier:
-  | parent: VariableDeclarator
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator ]
-   ,-[files/index.js:1:7]
- 1 | const obj = { a: [b, c], ...d };
-   :       ^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): VariableDeclarator:
+  [38;2;225;80;80;1m│[0m parent: VariableDeclaration
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:7]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m      ─────────────────────────[0m
+   ╰────
 
-  x parents(check): VariableDeclarator:
-  | parent: VariableDeclaration
-  | ancestors: [ Program, VariableDeclaration ]
-   ,-[files/index.js:1:7]
- 1 | const obj = { a: [b, c], ...d };
-   :       ^^^^^^^^^^^^^^^^^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Identifier:
+  [38;2;225;80;80;1m│[0m parent: VariableDeclarator
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:7]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m      ───[0m
+   ╰────
 
-  x parents(check): ObjectExpression:
-  | parent: VariableDeclarator
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator ]
-   ,-[files/index.js:1:13]
- 1 | const obj = { a: [b, c], ...d };
-   :             ^^^^^^^^^^^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): ObjectExpression:
+  [38;2;225;80;80;1m│[0m parent: VariableDeclarator
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:13]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m            ───────────────────[0m
+   ╰────
 
-  x parents(check): Identifier:
-  | parent: Property
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property ]
-   ,-[files/index.js:1:15]
- 1 | const obj = { a: [b, c], ...d };
-   :               ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Property:
+  [38;2;225;80;80;1m│[0m parent: ObjectExpression
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:15]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m              ─────────[0m
+   ╰────
 
-  x parents(check): Property:
-  | parent: ObjectExpression
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression ]
-   ,-[files/index.js:1:15]
- 1 | const obj = { a: [b, c], ...d };
-   :               ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Identifier:
+  [38;2;225;80;80;1m│[0m parent: Property
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:15]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m              ─[0m
+   ╰────
 
-  x parents(check): ArrayExpression:
-  | parent: Property
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property ]
-   ,-[files/index.js:1:18]
- 1 | const obj = { a: [b, c], ...d };
-   :                  ^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): ArrayExpression:
+  [38;2;225;80;80;1m│[0m parent: Property
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:18]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m                 ──────[0m
+   ╰────
 
-  x parents(check): Identifier:
-  | parent: ArrayExpression
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property, ArrayExpression ]
-   ,-[files/index.js:1:19]
- 1 | const obj = { a: [b, c], ...d };
-   :                   ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Identifier:
+  [38;2;225;80;80;1m│[0m parent: ArrayExpression
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property, ArrayExpression ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:19]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m                  ─[0m
+   ╰────
 
-  x parents(check): Identifier:
-  | parent: ArrayExpression
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property, ArrayExpression ]
-   ,-[files/index.js:1:22]
- 1 | const obj = { a: [b, c], ...d };
-   :                      ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Identifier:
+  [38;2;225;80;80;1m│[0m parent: ArrayExpression
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, Property, ArrayExpression ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:22]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m                     ─[0m
+   ╰────
 
-  x parents(check): SpreadElement:
-  | parent: ObjectExpression
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression ]
-   ,-[files/index.js:1:26]
- 1 | const obj = { a: [b, c], ...d };
-   :                          ^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): SpreadElement:
+  [38;2;225;80;80;1m│[0m parent: ObjectExpression
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:26]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m                         ────[0m
+   ╰────
 
-  x parents(check): Identifier:
-  | parent: SpreadElement
-  | ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, SpreadElement ]
-   ,-[files/index.js:1:29]
- 1 | const obj = { a: [b, c], ...d };
-   :                             ^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparents(check): Identifier:
+  [38;2;225;80;80;1m│[0m parent: SpreadElement
+  [38;2;225;80;80;1m│[0m ancestors: [ Program, VariableDeclaration, VariableDeclarator, ObjectExpression, SpreadElement ][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:29]
+ [2m1[0m │ const obj = { a: [b, c], ...d };
+   · [38;2;246;87;248m                            ─[0m
+   ╰────
 
 Found 0 warnings and 12 errors.
 Finished in Xms on 1 file with 1 rules using X threads.
