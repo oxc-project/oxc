@@ -799,7 +799,7 @@ impl Backend {
     /// Assert that all workspace URIs are valid file paths.
     /// If any URI is not a valid file path, return an error.
     ///
-    /// The server is searching mostly for local file paths, so we need to ensure that the URIs are valid file paths.
+    /// The server requires file paths to work with the local file system, so we need to ensure that all workspace URIs can be converted to valid file paths.
     fn assert_workspaces_are_valid_paths(workspaces: &[Uri]) -> Result<()> {
         for uri in workspaces {
             if uri.to_file_path().is_none() {
