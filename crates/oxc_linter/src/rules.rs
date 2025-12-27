@@ -382,6 +382,7 @@ pub(crate) mod react {
     pub mod no_danger;
     pub mod no_danger_with_children;
     pub mod no_did_mount_set_state;
+    pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
@@ -1084,6 +1085,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_props_no_spread_multi,
     react::jsx_props_no_spreading,
     react::no_did_mount_set_state,
+    react::no_did_update_set_state,
     react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
