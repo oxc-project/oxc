@@ -2110,6 +2110,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_reference_flags = ReferenceFlags::empty();
         self.leave_node(kind);
     }
+
+    fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
+        let kind = AstKind::ImportSpecifier(self.alloc(specifier));
+        self.enter_node(kind);
+        specifier.bind(self);
+        self.visit_span(&specifier.span);
+        self.visit_module_export_name(&specifier.imported);
+        self.visit_binding_identifier(&specifier.local);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2131,9 +2141,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ImportSpecifier(specifier) => {
-                specifier.bind(self);
-            }
             AstKind::ImportDefaultSpecifier(specifier) => {
                 specifier.bind(self);
             }
