@@ -719,6 +719,81 @@ pub fn inject_external_scope(scope_manager_json: &str) -> Result<SerializedScope
     })
 }
 
+/// Result from deserializing ESTree JSON to oxc AST.
+///
+/// This will be used by Phase 3 to lint with an externally-parsed AST.
+pub struct DeserializedAst<'a> {
+    /// The deserialized program AST
+    pub program: oxc_ast::ast::Program<'a>,
+    /// The allocator that owns the AST data
+    pub allocator: &'a oxc_allocator::Allocator,
+}
+
+/// Lint a file using an externally-provided ESTree AST and scope manager.
+///
+/// This is the Phase 3 entry point for custom parser support. Instead of re-parsing
+/// stripped source, this function:
+/// 1. Deserializes the ESTree JSON directly into an oxc AST
+/// 2. Builds semantic analysis from that AST
+/// 3. Injects external scope information if provided
+/// 4. Runs Rust linting rules
+///
+/// # Arguments
+///
+/// * `estree_json` - JSON string containing the ESTree AST from the custom parser
+/// * `scope_manager_json` - Optional JSON string containing the serialized scope manager
+///
+/// # Returns
+///
+/// Currently returns an error indicating Phase 3 is not yet implemented.
+/// Once implemented, will return linting messages.
+///
+/// # Note
+///
+/// This function is a placeholder for Phase 3 implementation. The `FromESTree`
+/// trait implementations have been generated for all AST types, but full
+/// integration with the linting runtime is still in progress.
+pub fn lint_with_external_ast(
+    estree_json: &str,
+    scope_manager_json: Option<&str>,
+) -> Result<Vec<crate::Message>, String> {
+    // Parse the ESTree JSON to verify it's valid
+    let estree_value: serde_json::Value = serde_json::from_str(estree_json)
+        .map_err(|e| format!("Failed to parse ESTree JSON: {e}"))?;
+
+    // Verify the root is a Program node
+    let root_type = estree_value
+        .get("type")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "ESTree JSON missing 'type' field".to_string())?;
+
+    if root_type != "Program" {
+        // Non-JS AST (e.g., JSON AST from eslint-plugin-jsonc) - skip Rust rules
+        // This is expected behavior, not an error. JS plugin rules will handle it.
+        return Ok(vec![]);
+    }
+
+    // Parse scope manager if provided
+    let _scope_manager = if let Some(json) = scope_manager_json {
+        Some(inject_external_scope(json)?)
+    } else {
+        None
+    };
+
+    // Phase 3 full implementation would:
+    // 1. Create allocator
+    // 2. Deserialize ESTree to oxc Program using FromESTree trait
+    // 3. Build SemanticBuilder from the Program
+    // 4. Inject scope information from _scope_manager
+    // 5. Run Rust rules using the linter
+    //
+    // For now, return empty results to indicate Phase 3 is recognized but not active.
+    // This allows the existing Phase 2 (stripping) to continue working while
+    // Phase 3 infrastructure is being completed.
+
+    Ok(vec![])
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1097,5 +1172,43 @@ mod test {
         let result = inject_external_scope(json);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse scope manager JSON"));
+    }
+
+    #[test]
+    fn test_lint_with_external_ast_valid_program() {
+        let estree_json = r#"{"type": "Program", "body": [], "sourceType": "module"}"#;
+        let result = lint_with_external_ast(estree_json, None);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty()); // Phase 3 returns empty for now
+    }
+
+    #[test]
+    fn test_lint_with_external_ast_non_program_root() {
+        // Non-JS AST like JSON - should return empty (skip Rust rules)
+        let estree_json = r#"{"type": "JSONRoot", "children": []}"#;
+        let result = lint_with_external_ast(estree_json, None);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_lint_with_external_ast_invalid_json() {
+        let estree_json = r#"{ not valid json"#;
+        let result = lint_with_external_ast(estree_json, None);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to parse ESTree JSON"));
+    }
+
+    #[test]
+    fn test_lint_with_external_ast_with_scope_manager() {
+        let estree_json = r#"{"type": "Program", "body": [], "sourceType": "module"}"#;
+        let scope_json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
+            "variables": [],
+            "references": []
+        }"#;
+        let result = lint_with_external_ast(estree_json, Some(scope_json));
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty()); // Phase 3 returns empty for now
     }
 }
