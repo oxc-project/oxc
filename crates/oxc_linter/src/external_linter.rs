@@ -692,6 +692,33 @@ impl SerializedReference {
     }
 }
 
+/// Inject external scope information from a custom parser into oxc's semantic analysis.
+///
+/// This function takes the serialized scope manager from a custom parser's `parseForESLint()`
+/// output and merges it with the existing semantic data. This enables Rust rules like
+/// `no-unused-vars` to work correctly with custom syntax by providing scope/reference
+/// information that oxc's parser couldn't extract from the stripped source.
+///
+/// # Arguments
+///
+/// * `scope_manager_json` - JSON string containing the serialized scope manager
+///
+/// # Returns
+///
+/// The deserialized scope manager, or an error if parsing fails.
+///
+/// # Example
+///
+/// ```ignore
+/// let scope_json = r#"{"scopes": [], "variables": [], "references": []}"#;
+/// let scope_manager = inject_external_scope(scope_json)?;
+/// ```
+pub fn inject_external_scope(scope_manager_json: &str) -> Result<SerializedScopeManager, String> {
+    serde_json::from_str(scope_manager_json).map_err(|e| {
+        format!("Failed to parse scope manager JSON: {e}")
+    })
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1047,5 +1074,28 @@ mod test {
         let oxc_span = span.to_span();
         assert_eq!(oxc_span.start, 10);
         assert_eq!(oxc_span.end, 25);
+    }
+
+    #[test]
+    fn test_inject_external_scope_success() {
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
+            "variables": [],
+            "references": []
+        }"#;
+
+        let result = inject_external_scope(json);
+        assert!(result.is_ok());
+        let scope_manager = result.unwrap();
+        assert_eq!(scope_manager.scopes.len(), 1);
+        assert_eq!(scope_manager.scopes[0].scope_type, "global");
+    }
+
+    #[test]
+    fn test_inject_external_scope_invalid_json() {
+        let json = r#"{ invalid json }"#;
+        let result = inject_external_scope(json);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to parse scope manager JSON"));
     }
 }
