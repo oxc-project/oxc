@@ -8,7 +8,7 @@ use oxc_span::{ContentEq, Span};
 
 /// Indicates a line or block comment.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, FromESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(no_rename_variants, no_ts_def)]
 pub enum CommentKind {
@@ -125,7 +125,7 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, FromESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
