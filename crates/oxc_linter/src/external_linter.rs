@@ -10,8 +10,7 @@ use oxc_span::SourceType;
 use crate::module_record::ModuleRecord;
 
 use crate::{
-    Linter, Message,
-    PossibleFixes,
+    Linter, Message, PossibleFixes,
     config::{LintConfig, OxlintEnv, OxlintGlobals},
     context::{ContextHost, ContextSubHost},
 };
@@ -267,11 +266,7 @@ impl StripSourceType {
     /// Convert to oxc's SourceType.
     #[must_use]
     pub fn to_source_type(&self) -> SourceType {
-        let mut source_type = if self.module {
-            SourceType::mjs()
-        } else {
-            SourceType::cjs()
-        };
+        let mut source_type = if self.module { SourceType::mjs() } else { SourceType::cjs() };
 
         if self.typescript {
             source_type = source_type.with_typescript(true);
@@ -386,11 +381,8 @@ impl<'a> StrippedSource<'a> {
             m.original_start.saturating_add(offset)
         } else {
             // Fallback: find the closest preceding mapping and extrapolate
-            let preceding = self
-                .span_mappings
-                .iter()
-                .filter(|m| m.stripped_end <= stripped_start)
-                .last();
+            let preceding =
+                self.span_mappings.iter().filter(|m| m.stripped_end <= stripped_start).last();
 
             if let Some(m) = preceding {
                 let offset = stripped_start.saturating_sub(m.stripped_end);
@@ -402,7 +394,8 @@ impl<'a> StrippedSource<'a> {
                     // Before first mapping
                     stripped_start
                 } else {
-                    first.original_start
+                    first
+                        .original_start
                         .saturating_add(stripped_start.saturating_sub(first.stripped_start))
                 }
             }
@@ -413,11 +406,8 @@ impl<'a> StrippedSource<'a> {
             m.original_start.saturating_add(offset)
         } else {
             // Fallback: find the closest preceding mapping and extrapolate
-            let preceding = self
-                .span_mappings
-                .iter()
-                .filter(|m| m.stripped_end <= stripped_end)
-                .last();
+            let preceding =
+                self.span_mappings.iter().filter(|m| m.stripped_end <= stripped_end).last();
 
             if let Some(m) = preceding {
                 let offset = stripped_end.saturating_sub(m.stripped_end);
@@ -711,9 +701,8 @@ impl SerializedReference {
 ///
 /// The deserialized scope manager, or an error if parsing fails.
 pub fn parse_external_scope(scope_manager_json: &str) -> Result<SerializedScopeManager, String> {
-    serde_json::from_str(scope_manager_json).map_err(|e| {
-        format!("Failed to parse scope manager JSON: {e}")
-    })
+    serde_json::from_str(scope_manager_json)
+        .map_err(|e| format!("Failed to parse scope manager JSON: {e}"))
 }
 
 /// Inject external scope references into oxc's semantic analysis.
@@ -742,11 +731,8 @@ pub fn inject_scope_references(
 
     // Build a mapping from external variable IDs to variable names
     // We'll use this to look up variable names when processing references
-    let variable_names: std::collections::HashMap<u32, &str> = scope_manager
-        .variables
-        .iter()
-        .map(|v| (v.id, v.name.as_str()))
-        .collect();
+    let variable_names: std::collections::HashMap<u32, &str> =
+        scope_manager.variables.iter().map(|v| (v.id, v.name.as_str())).collect();
 
     // For each resolved reference in the external scope manager,
     // try to find the corresponding symbol and add a reference
@@ -857,7 +843,10 @@ pub fn lint_with_external_ast(
             Ok(sm) => Some(sm),
             Err(e) => {
                 // Log warning but continue without scope injection
-                return (vec![], DeserializeResult::Error(format!("Failed to parse scope manager: {e}")));
+                return (
+                    vec![],
+                    DeserializeResult::Error(format!("Failed to parse scope manager: {e}")),
+                );
             }
         }
     } else {
@@ -876,7 +865,10 @@ pub fn lint_with_external_ast(
             return (vec![], DeserializeResult::UnknownNode(node_type));
         }
         Err(e) => {
-            return (vec![], DeserializeResult::Error(format!("Failed to deserialize ESTree: {e}")));
+            return (
+                vec![],
+                DeserializeResult::Error(format!("Failed to deserialize ESTree: {e}")),
+            );
         }
     };
 
@@ -915,11 +907,8 @@ pub fn lint_with_external_ast(
     let ctx_sub_host = ContextSubHost::new(semantic, module_record, 0);
 
     // Run only Rust rules
-    let (messages, _disable_directives) = linter.run_rust_rules_only(
-        path,
-        vec![ctx_sub_host],
-        &allocator,
-    );
+    let (messages, _disable_directives) =
+        linter.run_rust_rules_only(path, vec![ctx_sub_host], &allocator);
 
     (messages, DeserializeResult::Success)
 }
@@ -1043,7 +1032,8 @@ mod test {
         // Stripped: "const x = 1;" (positions 0-11)
         // Mapping: stripped 0-11 -> original 10-21
         let mappings = vec![SpanMapping::new(0, 11, 10, 21)];
-        let source = StrippedSource::new(Cow::Borrowed("const x = 1;"), SourceType::mjs(), mappings);
+        let source =
+            StrippedSource::new(Cow::Borrowed("const x = 1;"), SourceType::mjs(), mappings);
 
         // Position 0 in stripped -> position 10 in original
         assert_eq!(source.remap_span(0, 5), (10, 15));

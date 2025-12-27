@@ -65,7 +65,17 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    ContentEq,
+    GetSpan,
+    GetSpanMut,
+    ESTree,
+    FromESTree,
+    UnstableAddress
+)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
@@ -89,7 +99,17 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    ContentEq,
+    GetSpan,
+    GetSpanMut,
+    ESTree,
+    FromESTree,
+    UnstableAddress
+)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
     /// Node location in source code
@@ -119,7 +139,17 @@ pub struct StringLiteral<'a> {
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    ContentEq,
+    GetSpan,
+    GetSpanMut,
+    ESTree,
+    FromESTree,
+    UnstableAddress
+)]
 #[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -142,7 +172,17 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, FromESTree, UnstableAddress)]
+#[generate_derive(
+    CloneIn,
+    Dummy,
+    TakeIn,
+    ContentEq,
+    GetSpan,
+    GetSpanMut,
+    ESTree,
+    FromESTree,
+    UnstableAddress
+)]
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),

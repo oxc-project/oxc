@@ -422,57 +422,54 @@ impl Linter {
         )?;
 
         // Convert JS rule results to Messages
-        let js_messages = js_results
-            .into_iter()
-            .map(|diagnostic| {
-                let span = Span::new(diagnostic.start, diagnostic.end);
+        let js_messages = js_results.into_iter().map(|diagnostic| {
+            let span = Span::new(diagnostic.start, diagnostic.end);
 
-                // Check for sentinel value (u32::MAX) indicating a system error
-                // rather than a specific rule violation
-                if diagnostic.rule_index == u32::MAX {
-                    return Message::new(
-                        OxcDiagnostic::warn(diagnostic.message).with_label(span),
-                        PossibleFixes::None,
-                    );
-                }
+            // Check for sentinel value (u32::MAX) indicating a system error
+            // rather than a specific rule violation
+            if diagnostic.rule_index == u32::MAX {
+                return Message::new(
+                    OxcDiagnostic::warn(diagnostic.message).with_label(span),
+                    PossibleFixes::None,
+                );
+            }
 
-                let (external_rule_id, _options_id, severity) =
-                    external_rules[diagnostic.rule_index as usize];
-                let (plugin_name, rule_name) =
-                    self.config.resolve_plugin_rule_names(external_rule_id);
+            let (external_rule_id, _options_id, severity) =
+                external_rules[diagnostic.rule_index as usize];
+            let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
 
-                // Convert fixes if present
-                let fix = if let Some(fixes) = diagnostic.fixes {
-                    if fixes.len() == 1 {
-                        let fix = &fixes[0];
-                        PossibleFixes::Single(Fix::new(
-                            fix.text.clone(),
-                            Span::new(fix.range[0], fix.range[1]),
-                        ))
-                    } else if fixes.is_empty() {
-                        PossibleFixes::None
-                    } else {
-                        let fix_list: Vec<Fix> = fixes
-                            .into_iter()
-                            .map(|f| Fix::new(f.text, Span::new(f.range[0], f.range[1])))
-                            .collect();
-                        match CompositeFix::merge_fixes_fallible(fix_list, source_text) {
-                            Ok(fix) => PossibleFixes::Single(fix),
-                            Err(_) => PossibleFixes::None,
-                        }
-                    }
-                } else {
+            // Convert fixes if present
+            let fix = if let Some(fixes) = diagnostic.fixes {
+                if fixes.len() == 1 {
+                    let fix = &fixes[0];
+                    PossibleFixes::Single(Fix::new(
+                        fix.text.clone(),
+                        Span::new(fix.range[0], fix.range[1]),
+                    ))
+                } else if fixes.is_empty() {
                     PossibleFixes::None
-                };
+                } else {
+                    let fix_list: Vec<Fix> = fixes
+                        .into_iter()
+                        .map(|f| Fix::new(f.text, Span::new(f.range[0], f.range[1])))
+                        .collect();
+                    match CompositeFix::merge_fixes_fallible(fix_list, source_text) {
+                        Ok(fix) => PossibleFixes::Single(fix),
+                        Err(_) => PossibleFixes::None,
+                    }
+                }
+            } else {
+                PossibleFixes::None
+            };
 
-                Message::new(
-                    OxcDiagnostic::error(diagnostic.message)
-                        .with_label(span)
-                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                        .with_severity(severity.into()),
-                    fix,
-                )
-            });
+            Message::new(
+                OxcDiagnostic::error(diagnostic.message)
+                    .with_label(span)
+                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                    .with_severity(severity.into()),
+                fix,
+            )
+        });
 
         // Combine Rust and JS rule messages
         all_messages.extend(js_messages);

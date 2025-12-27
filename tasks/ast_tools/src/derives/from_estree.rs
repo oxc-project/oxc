@@ -252,9 +252,7 @@ fn generate_default_field(field: &FieldDef, schema: &Schema) -> (TokenStream, bo
                 "VariableDeclarationKind" => {
                     (quote!(crate::ast::js::VariableDeclarationKind::Var), false)
                 }
-                "WithClauseKeyword" => {
-                    (quote!(crate::ast::js::WithClauseKeyword::With), false)
-                }
+                "WithClauseKeyword" => (quote!(crate::ast::js::WithClauseKeyword::With), false),
                 "NumberBase" => (quote!(oxc_syntax::number::NumberBase::Decimal), false),
                 "BigintBase" => (quote!(oxc_syntax::number::BigintBase::Decimal), false),
                 "RegExpFlags" => (quote!(crate::ast::literal::RegExpFlags::empty()), false),

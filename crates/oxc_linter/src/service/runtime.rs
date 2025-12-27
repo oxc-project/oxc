@@ -1216,10 +1216,9 @@ impl Runtime {
 
         // Apply fixes if enabled
         let messages = if self.linter.options().fix.is_some() {
-            let source_type =
-                SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
-                    if st.is_javascript() { st.with_jsx(true) } else { st }
-                });
+            let source_type = SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
+                if st.is_javascript() { st.with_jsx(true) } else { st }
+            });
 
             let fix_result = Fixer::new(source_text, all_messages, Some(source_type)).fix();
 
@@ -1253,11 +1252,8 @@ impl Runtime {
         use crate::external_linter::StrippedSource;
 
         // Determine source type - use parser's hint or infer from path
-        let source_type = strip_result
-            .source_type
-            .as_ref()
-            .map(|st| st.to_source_type())
-            .unwrap_or_else(|| {
+        let source_type =
+            strip_result.source_type.as_ref().map(|st| st.to_source_type()).unwrap_or_else(|| {
                 SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
                     if st.is_javascript() { st.with_jsx(true) } else { st }
                 })
@@ -1321,11 +1317,8 @@ impl Runtime {
         let ctx_sub_host = ContextSubHost::new(semantic, module_record, 0);
 
         // Run only Rust rules (no allocator pool needed for stripped source)
-        let (mut messages, _disable_directives) = self.linter.run_rust_rules_only(
-            path,
-            vec![ctx_sub_host],
-            &allocator,
-        );
+        let (mut messages, _disable_directives) =
+            self.linter.run_rust_rules_only(path, vec![ctx_sub_host], &allocator);
 
         // Remap all spans to original positions
         for msg in &mut messages {
@@ -1348,10 +1341,8 @@ impl Runtime {
         // Remap error labels
         if let Some(labels) = &mut msg.error.labels {
             for label in labels {
-                let (new_start, _new_end) = stripped_source.remap_span(
-                    label.offset() as u32,
-                    (label.offset() + label.len()) as u32,
-                );
+                let (new_start, _new_end) = stripped_source
+                    .remap_span(label.offset() as u32, (label.offset() + label.len()) as u32);
                 label.set_span_offset(new_start as usize);
                 // Note: miette's LabeledSpan doesn't have a mutable len setter,
                 // so we can only adjust the offset. The length will be based on
