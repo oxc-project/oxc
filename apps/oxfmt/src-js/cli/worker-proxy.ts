@@ -36,3 +36,11 @@ export async function formatFile(
     name: "formatFile",
   });
 }
+
+export async function processTailwindClasses(
+  filepath: string,
+  options: Options,
+  classes: string[],
+): Promise<string[]> {
+  return pool!.run({ filepath, options, classes }, { name: "processTailwindClasses" });
+}

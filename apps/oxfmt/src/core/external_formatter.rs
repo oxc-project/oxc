@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use napi::{
     Status,
@@ -6,6 +6,8 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use serde_json::Value;
+
+use oxc_formatter::TailwindCallback;
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument and returns plugin languages.
@@ -52,6 +54,16 @@ pub type JsFormatFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// Type alias for Tailwind class processing callback.
+/// Takes (filepath, options, classes) and returns sorted array.
+pub type JsTailwindCb = ThreadsafeFunction<
+    FnArgs<(String, Value, Vec<String>)>, // Input: (filepath, options, classes)
+    Promise<Vec<String>>,                 // Return: promise of sorted array
+    FnArgs<(String, Value, Vec<String>)>,
+    Status,
+    false,
+>;
+
 /// Callback function type for formatting embedded code with config.
 /// Takes (options, tag_name, code) and returns formatted code or an error.
 type FormatEmbeddedWithConfigCallback =
@@ -67,12 +79,18 @@ type FormatFileWithConfigCallback =
 type InitExternalFormatterCallback =
     Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
 
+/// Internal callback type for Tailwind processing with config.
+/// Takes (filepath, options, classes) and returns sorted classes.
+type TailwindWithConfigCallback =
+    Arc<dyn Fn(&str, &Value, Vec<String>) -> Vec<String> + Send + Sync>;
+
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
+    process_tailwind: TailwindWithConfigCallback,
 }
 
 impl std::fmt::Debug for ExternalFormatter {
@@ -81,6 +99,7 @@ impl std::fmt::Debug for ExternalFormatter {
             .field("init", &"<callback>")
             .field("format_embedded", &"<callback>")
             .field("format_file", &"<callback>")
+            .field("process_tailwind", &"<callback>")
             .finish()
     }
 }
@@ -91,14 +110,17 @@ impl ExternalFormatter {
         init_cb: JsInitExternalFormatterCb,
         format_embedded_cb: JsFormatEmbeddedCb,
         format_file_cb: JsFormatFileCb,
+        tailwind_cb: JsTailwindCb,
     ) -> Self {
         let rust_init = wrap_init_external_formatter(init_cb);
         let rust_format_embedded = wrap_format_embedded(format_embedded_cb);
         let rust_format_file = wrap_format_file(format_file_cb);
+        let rust_tailwind = wrap_tailwind(tailwind_cb);
         Self {
             init: rust_init,
             format_embedded: rust_format_embedded,
             format_file: rust_format_file,
+            process_tailwind: rust_tailwind,
         }
     }
 
@@ -114,6 +136,14 @@ impl ExternalFormatter {
         let callback =
             Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));
         oxc_formatter::EmbeddedFormatter::new(callback)
+    }
+
+    /// Convert this external formatter to the oxc_formatter::TailwindCallback type.
+    /// The filepath and options are captured in the closure and passed to JS on each call.
+    pub fn to_tailwind_callback(&self, filepath: &Path, options: Value) -> TailwindCallback {
+        let file_path = filepath.to_string_lossy().to_string();
+        let process_tailwind = Arc::clone(&self.process_tailwind);
+        Arc::new(move |classes: Vec<String>| (process_tailwind)(&file_path, &options, classes))
     }
 
     /// Format non-js file using the JS callback.
@@ -203,6 +233,28 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
                 Err(err) => Err(format!(
                     "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
                 )),
+            }
+        })
+    })
+}
+
+/// Wrap JS `processTailwindClasses` callback as a normal Rust function.
+fn wrap_tailwind(cb: JsTailwindCb) -> TailwindWithConfigCallback {
+    Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
+        block_on(async {
+            let args = FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
+            match cb.call_async(args).await {
+                Ok(promise) => match promise.await {
+                    Ok(sorted) => sorted,
+                    Err(_) => {
+                        // Return original classes on error
+                        classes
+                    }
+                },
+                Err(_) => {
+                    // Return original classes on error
+                    classes
+                }
             }
         })
     })

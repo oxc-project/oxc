@@ -16,7 +16,9 @@ mod write;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
-pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::embedded_formatter::{
+    EmbeddedFormatter, EmbeddedFormatterCallback, TailwindCallback,
+};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::service::*;
@@ -48,22 +50,24 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
-        self.format_impl(program, None)
+        self.format_impl(program, None, None)
     }
 
     #[inline]
-    pub fn format_with_embedded(
+    pub fn format_with_all(
         self,
         program: &'a Program<'a>,
-        embedded_formatter: EmbeddedFormatter,
+        embedded_formatter: Option<EmbeddedFormatter>,
+        tailwind_callback: Option<&TailwindCallback>,
     ) -> Formatted<'a> {
-        self.format_impl(program, Some(embedded_formatter))
+        self.format_impl(program, embedded_formatter, tailwind_callback)
     }
 
     pub fn format_impl(
         self,
         program: &'a Program<'a>,
         embedded_formatter: Option<EmbeddedFormatter>,
+        tailwind_callback: Option<&TailwindCallback>,
     ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
@@ -81,6 +85,15 @@ impl<'a> Formatter<'a> {
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         );
+
+        // Call tailwind callback to sort classes if provided
+        if let Some(callback) = tailwind_callback {
+            let classes = formatted.context_mut().take_tailwind_classes();
+            if !classes.is_empty() {
+                let sorted = callback(classes);
+                formatted.set_sorted_tailwind_classes(sorted);
+            }
+        }
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.

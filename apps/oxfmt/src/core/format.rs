@@ -137,28 +137,38 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
+        let (embedded_formatter, tailwind_callback) = {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+
+            let embedded_formatter = if format_options.embedded_language_formatting.is_off() {
+                None
+            } else {
+                Some(external_formatter.to_embedded_formatter(external_options.clone()))
+            };
+
+            let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
+                Some(external_formatter.to_tailwind_callback(path, external_options))
+            } else {
+                None
+            };
+            (embedded_formatter, tailwind_callback)
+        };
+
+        #[cfg(not(feature = "napi"))]
+        let (embedded_formatter, tailwind_callback) = {
+            let _ = external_options;
+            (None, None)
+        };
 
         let base_formatter = Formatter::new(&allocator, format_options);
-
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if is_embed_off {
-                base_formatter.format(&ret.program)
-            } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
-            }
-        };
-        #[cfg(not(feature = "napi"))]
-        let formatted = {
-            let _ = external_options;
-            base_formatter.format(&ret.program)
-        };
+        let formatted = base_formatter.format_with_all(
+            &ret.program,
+            embedded_formatter,
+            tailwind_callback.as_ref(),
+        );
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(

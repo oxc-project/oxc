@@ -501,6 +501,9 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         write!(f, [ContentArrayStart]);
                     }
                 }
+                FormatElement::TailwindClass(_) => {
+                    // TODO: get sorted string to print
+                }
             }
         }
 

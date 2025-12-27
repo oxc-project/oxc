@@ -95,6 +95,11 @@ pub enum FormatElement<'a> {
 
     /// A [Tag] that marks the start/end of some content to which some special formatting is applied.
     Tag(Tag),
+
+    /// A Tailwind CSS class sorting marker.
+    /// The usize is an index into the collected tailwind classes array.
+    /// During printing, this will be replaced with the sorted class name.
+    TailwindClass(usize),
 }
 
 impl std::fmt::Debug for FormatElement<'_> {
@@ -111,6 +116,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             }
             FormatElement::Interned(interned) => fmt.debug_list().entries(&**interned).finish(),
             FormatElement::Tag(tag) => fmt.debug_tuple("Tag").field(tag).finish(),
+            FormatElement::TailwindClass(index) => {
+                fmt.debug_tuple("TailwindClass").field(index).finish()
+            }
         }
     }
 }
@@ -278,7 +286,8 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
-            | FormatElement::HardSpace => false,
+            | FormatElement::HardSpace
+            | FormatElement::TailwindClass(_) => false,
         }
     }
 

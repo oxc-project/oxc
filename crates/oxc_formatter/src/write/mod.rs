@@ -50,7 +50,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Buffer, Format, Formatter,
+        Buffer, Format, Formatter, TailwindContextEntry,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -72,6 +72,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
+        tailwindcss::{is_tailwind_function_call, write_tailwind_string_literal},
     },
     write,
     write::parameters::can_avoid_parentheses,
@@ -270,7 +271,30 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                         write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
                     }
                 }
-                write!(f, [optional.then_some("?."), type_arguments, arguments]);
+                write!(f, [optional.then_some("?."), type_arguments]);
+
+                // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
+                // Extract context entry before mutating f
+                let tailwind_ctx_to_push = f
+                    .options()
+                    .experimental_tailwindcss
+                    .as_ref()
+                    .filter(|opts| is_tailwind_function_call(&self.callee, opts))
+                    .map(|opts| {
+                        TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace)
+                    });
+
+                // Push Tailwind context before formatting arguments
+                if let Some(ctx) = tailwind_ctx_to_push {
+                    f.context_mut().push_tailwind_context(ctx);
+                }
+
+                write!(f, arguments);
+
+                // Pop Tailwind context after formatting
+                if tailwind_ctx_to_push.is_some() {
+                    f.context_mut().pop_tailwind_context();
+                }
             });
             if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)]);
@@ -1025,14 +1049,36 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
-        FormatLiteralStringToken::new(
-            f.source_text().text_for(self),
-            /* jsx */
-            is_jsx,
-            StringLiteralParentKind::Expression,
-        )
-        .fmt(f);
+        // Check if we're in a Tailwind context via stack (O(1) lookup)
+        // This handles nested string literals inside JSXAttribute/CallExpression values
+        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
+            // No whitespace means only one class, so no need to sort
+            let content = f.source_text().text_for(self);
+            content.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+        });
+
+        if let Some(ctx) = tailwind_ctx {
+            // We're inside a Tailwind context - sort this string literal as Tailwind classes
+            let quote = if ctx.is_jsx {
+                f.options().jsx_quote_style.as_char()
+            } else {
+                f.options().quote_style.as_char()
+            };
+            let quote_str = if quote == '"' { "\"" } else { "'" };
+
+            write!(f, quote_str);
+            write_tailwind_string_literal(self, ctx.preserve_whitespace, f);
+            write!(f, quote_str);
+        } else {
+            // Not in Tailwind context - use normal string literal formatting
+            let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
+            FormatLiteralStringToken::new(
+                f.source_text().text_for(self),
+                is_jsx,
+                StringLiteralParentKind::Expression,
+            )
+            .fmt(f);
+        }
     }
 }
 
