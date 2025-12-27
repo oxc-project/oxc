@@ -280,19 +280,23 @@ impl TestServer {
     }
 }
 
-fn initialize_request_workspace_folders(
+#[derive(Default)]
+struct InitializeRequestOptions {
     workspace_configuration: bool,
     dynamic_watchers: bool,
     workspace_edit: bool,
     pull_mode: bool,
     initialization_options: Option<Value>,
-    workspace_folders: Vec<WorkspaceFolder>,
-) -> Request {
+    workspace_folders: Option<Vec<WorkspaceFolder>>,
+    root_uri: Option<Uri>,
+}
+
+fn initialize_request_workspace_folders(options: InitializeRequestOptions) -> Request {
     let params = InitializeParams {
-        workspace_folders: Some(workspace_folders),
+        workspace_folders: options.workspace_folders,
         capabilities: ClientCapabilities {
             text_document: Some(TextDocumentClientCapabilities {
-                diagnostic: if pull_mode {
+                diagnostic: if options.pull_mode {
                     Some(DiagnosticClientCapabilities::default())
                 } else {
                     None
@@ -300,43 +304,35 @@ fn initialize_request_workspace_folders(
                 ..Default::default()
             }),
             workspace: Some(WorkspaceClientCapabilities {
-                apply_edit: Some(workspace_edit),
-                configuration: Some(workspace_configuration),
+                apply_edit: Some(options.workspace_edit),
+                configuration: Some(options.workspace_configuration),
                 diagnostics: Some(DiagnosticWorkspaceClientCapabilities {
-                    refresh_support: Some(pull_mode),
+                    refresh_support: Some(options.pull_mode),
                 }),
                 did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
-                    dynamic_registration: Some(dynamic_watchers),
+                    dynamic_registration: Some(options.dynamic_watchers),
                     ..Default::default()
                 }),
                 ..Default::default()
             }),
             ..Default::default()
         },
-        initialization_options,
+        initialization_options: options.initialization_options,
         #[expect(deprecated)]
-        root_uri: Some(WORKSPACE.parse().unwrap()),
+        root_uri: options.root_uri,
         ..Default::default()
     };
 
     Request::build("initialize").params(json!(params)).id(1).finish()
 }
 
-fn initialize_request(
-    workspace_configuration: bool,
-    dynamic_watchers: bool,
-    workspace_edit: bool,
-    pull_mode: bool,
-    initialization_options: Option<Value>,
-) -> Request {
-    initialize_request_workspace_folders(
-        workspace_configuration,
-        dynamic_watchers,
-        workspace_edit,
-        pull_mode,
-        initialization_options,
-        vec![WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() }],
-    )
+fn initialize_request(mut options: InitializeRequestOptions) -> Request {
+    options.workspace_folders = Some(vec![WorkspaceFolder {
+        uri: WORKSPACE.parse().unwrap(),
+        name: "workspace".to_string(),
+    }]);
+
+    initialize_request_workspace_folders(options)
 }
 
 fn initialized_notification() -> Request {
@@ -501,7 +497,7 @@ fn diagnostic(id: i64, uri: &str) -> Request {
 mod test_suite {
     use serde_json::{Value, json};
     use tower_lsp_server::{
-        jsonrpc::{Id, Response},
+        jsonrpc::{Error, ErrorCode, Id, Response},
         ls_types::{
             ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
             WorkspaceEdit, WorkspaceFolder,
@@ -511,13 +507,13 @@ mod test_suite {
     use crate::{
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, TestServer, WORKSPACE, WORKSPACE_2,
-            acknowledge_diagnostic_refresh, acknowledge_registrations, acknowledge_unregistrations,
-            code_action, diagnostic, did_change, did_change_configuration,
-            did_change_watched_files, did_close, did_open, did_save, execute_command_request,
-            initialize_request, initialize_request_workspace_folders, initialized_notification,
-            response_to_configuration, shutdown_request, test_configuration_request,
-            workspace_folders_changed,
+            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
+            WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
+            acknowledge_unregistrations, code_action, diagnostic, did_change,
+            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
+            execute_command_request, initialize_request, initialize_request_workspace_folders,
+            initialized_notification, response_to_configuration, shutdown_request,
+            test_configuration_request, workspace_folders_changed,
         },
     };
 
@@ -529,7 +525,7 @@ mod test_suite {
     async fn test_basic_start_and_shutdown_flow() {
         let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
         // initialize request
-        server.send_request(initialize_request(false, false, false, false, None)).await;
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
         let initialize_result = server.recv_response().await;
 
         assert!(initialize_result.is_ok());
@@ -555,20 +551,23 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_initialize_with_options() {
-        let init_options = json!([
-            {
-                "workspaceUri": WORKSPACE,
-                "options": {
-                    "run": true,
-                    "configPath": "./custom.json",
-                    "fmt.experimental": true
+        let init_options = InitializeRequestOptions {
+            initialization_options: Some(json!([
+                {
+                    "workspaceUri": WORKSPACE,
+                    "options": {
+                        "run": true,
+                        "configPath": "./custom.json",
+                        "fmt.experimental": true
+                    }
                 }
-            }
-        ]);
+            ])),
+            ..Default::default()
+        };
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![]),
-            initialize_request(false, false, false, false, Some(init_options.clone())),
+            initialize_request(init_options),
         )
         .await;
 
@@ -592,17 +591,21 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_initialize_with_deprecated_options() {
-        let init_options = json!({
-            "settings": {
-                "run": true,
-                "configPath": "./custom.json",
-                "fmt.experimental": true
-            }
-        });
+        let init_options = InitializeRequestOptions {
+            initialization_options: Some(json!({
+                "settings": {
+                    "run": true,
+                    "configPath": "./custom.json",
+                    "fmt.experimental": true
+                }
+            })),
+            root_uri: Some(WORKSPACE.parse().unwrap()),
+            ..Default::default()
+        };
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![]),
-            initialize_request(false, false, false, false, Some(init_options)),
+            initialize_request_workspace_folders(init_options),
         )
         .await;
 
@@ -624,10 +627,43 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_initialize_non_file_workspace_uri() {
+        let init_options = InitializeRequestOptions {
+            workspace_folders: Some(vec![WorkspaceFolder {
+                uri: "file://".parse().unwrap(),
+                name: "workspace".to_string(),
+            }]),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
+        let initialize = initialize_request_workspace_folders(init_options);
+
+        let initialize_id = initialize.id().cloned();
+        // Send initialize request
+        server.send_request(initialize).await;
+        let initialize_response = server.recv_response().await;
+
+        assert_eq!(Some(initialize_response.id()), initialize_id.as_ref());
+        assert!(initialize_response.is_error());
+        assert_eq!(
+            *initialize_response.error().unwrap(),
+            Error {
+                code: ErrorCode::InvalidParams,
+                message: "workspace URI is not a valid file path: file://".into(),
+                data: None,
+            }
+        );
+    }
+
+    #[tokio::test]
     async fn test_workspace_configuration_on_initialized() {
+        let init_options =
+            InitializeRequestOptions { workspace_configuration: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![]),
-            initialize_request(true, false, false, false, None),
+            initialize_request(init_options),
         )
         .await;
 
@@ -663,9 +699,12 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_dynamic_watched_files_registration() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
 
@@ -711,9 +750,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_execute_workspace_command_with_apply_edit() {
+        let init_options = InitializeRequestOptions { workspace_edit: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, true, false, None),
+            initialize_request(init_options),
         )
         .await;
 
@@ -757,7 +798,8 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_initialize_with_options_and_multiple_workspace_folders() {
-        let init_options = json!([
+        let init_options = InitializeRequestOptions {
+            initialization_options: Some(json!([
             // correctly matches options to workspace folders regardless of order
             {
                 "workspaceUri": WORKSPACE_2,
@@ -775,27 +817,20 @@ mod test_suite {
                     "fmt.experimental": true
                 }
             },
-        ]);
+            ])),
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: WORKSPACE_2.parse().unwrap(),
+                    name: "workspace_2".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![]),
-            initialize_request_workspace_folders(
-                false,
-                false,
-                false,
-                false,
-                Some(init_options.clone()),
-                vec![
-                    WorkspaceFolder {
-                        uri: WORKSPACE.parse().unwrap(),
-                        name: "workspace".to_string(),
-                    },
-                    WorkspaceFolder {
-                        uri: WORKSPACE_2.parse().unwrap(),
-                        name: "workspace_2".to_string(),
-                    },
-                ],
-            ),
+            initialize_request_workspace_folders(init_options),
         )
         .await;
 
@@ -828,7 +863,7 @@ mod test_suite {
     async fn test_execute_workspace_command_with_no_edit() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -850,7 +885,7 @@ mod test_suite {
     async fn test_execute_workspace_command_with_invalid_command() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -880,7 +915,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
         server.send_request(folders_changed_notification).await;
@@ -900,9 +935,12 @@ mod test_suite {
             vec![],
         );
 
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -924,9 +962,12 @@ mod test_suite {
             vec![],
         );
 
+        let init_options =
+            InitializeRequestOptions { workspace_configuration: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(true, false, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         // workspace configuration request expected, one for initial workspace
@@ -953,7 +994,7 @@ mod test_suite {
 
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
         server.send_request(folders_changed_notification).await;
@@ -973,9 +1014,12 @@ mod test_suite {
             }],
         );
 
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -989,9 +1033,12 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_watched_file_changed_unknown() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1009,9 +1056,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_watched_file_changed_new_watchers() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1031,9 +1080,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_watched_file_changed_revalidate_diagnostics() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1066,9 +1117,15 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_watched_file_changed_revalidate_diagnostics_pull_mode() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            pull_mode: true,
+            ..Default::default()
+        };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, true, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1090,9 +1147,12 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_did_change_configuration_no_changes() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1108,9 +1168,12 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_did_change_configuration_config_passed_new_watchers() {
+        let init_options =
+            InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         acknowledge_registrations(&mut server).await;
@@ -1134,9 +1197,15 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_did_change_configuration_config_requested_new_watchers() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            workspace_configuration: true,
+            ..Default::default()
+        };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(true, true, false, false, None),
+            initialize_request(init_options),
         )
         .await;
         response_to_configuration(&mut server, vec![json!(null)]).await;
@@ -1161,7 +1230,7 @@ mod test_suite {
     async fn test_did_change_configuration_config_revalidate_diagnostics() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
         let uri = format!("{WORKSPACE}/diagnostics.config");
@@ -1196,9 +1265,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_did_change_configuration_config_revalidate_diagnostics_pull_mode() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, true, None),
+            initialize_request(init_options),
         )
         .await;
         let uri = format!("{WORKSPACE}/diagnostics.config");
@@ -1224,7 +1295,7 @@ mod test_suite {
     async fn test_file_notifications() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1241,7 +1312,7 @@ mod test_suite {
     async fn test_code_action_no_actions() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1263,7 +1334,7 @@ mod test_suite {
     async fn test_code_actions_with_actions() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1288,7 +1359,7 @@ mod test_suite {
     async fn test_diagnostic_on_open() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1314,7 +1385,7 @@ mod test_suite {
     async fn test_diagnostic_on_change() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1344,7 +1415,7 @@ mod test_suite {
     async fn test_diagnostic_on_save() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, false, None),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
@@ -1377,9 +1448,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_no_diagnostics_on_pull_mode_on_save() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, true, None),
+            initialize_request(init_options),
         )
         .await;
 
@@ -1393,9 +1466,11 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_diagnostics_pull_mode() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
-            initialize_request(false, false, false, true, None),
+            initialize_request(init_options),
         )
         .await;
 
