@@ -77,6 +77,30 @@ impl Derive for DeriveFromESTree {
 fn generate_impl_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     // Use concrete lifetime 'a (not anonymous '_) since we return data with that lifetime
     let ty = struct_def.ty_with_lifetime(schema, false);
+
+    // Check if this is a tuple struct (field name is numeric)
+    let is_tuple_struct =
+        struct_def.fields.first().is_some_and(|f| f.name().chars().all(|c| c.is_ascii_digit()));
+
+    if is_tuple_struct {
+        // For tuple structs, generate using a sensible default
+        // This handles cases like `struct RegExpFlagsAlias(#[estree(skip)] u8)`
+        let struct_name = struct_def.name();
+        let default_value = match struct_name {
+            // RegExpFlags is a bitflags struct - use empty()
+            "RegExpFlags" => quote!(Self::empty()),
+            // Other tuple structs use Default
+            _ => quote!(Default::default()),
+        };
+        return quote! {
+            impl<'a> FromESTree<'a> for #ty {
+                fn from_estree(_json: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+                    Ok(#default_value)
+                }
+            }
+        };
+    }
+
     let (body, uses_allocator) = generate_body_for_struct(struct_def, schema);
 
     // Use underscore prefix for allocator if it's not used
@@ -84,7 +108,7 @@ fn generate_impl_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     quote! {
         impl<'a> FromESTree<'a> for #ty {
-            fn from_estree(value: &serde_json::Value, #allocator_param: &'a Allocator) -> DeserResult<Self> {
+            fn from_estree(json: &serde_json::Value, #allocator_param: &'a Allocator) -> DeserResult<Self> {
                 #body
             }
         }
@@ -140,7 +164,7 @@ fn generate_field_deserialization(
     if field_name == "span" {
         return (
             quote! {
-                let span = parse_span_or_empty(value);
+                let span = parse_span_or_empty(json);
             },
             false, // span parsing doesn't use allocator
         );
@@ -165,9 +189,9 @@ fn generate_field_deserialization(
         // For Option<T>, use estree_field_opt
         (
             quote! {
-                let #field_ident = match value.estree_field_opt(#estree_name_str) {
-                    Some(field_value) if !field_value.is_null() => {
-                        Some(FromESTree::from_estree(field_value, allocator)?)
+                let #field_ident = match json.estree_field_opt(#estree_name_str) {
+                    Some(field_json) if !field_json.is_null() => {
+                        Some(FromESTree::from_estree(field_json, allocator)?)
                     }
                     _ => None,
                 };
@@ -179,7 +203,7 @@ fn generate_field_deserialization(
         (
             quote! {
                 let #field_ident = FromESTree::from_estree(
-                    value.estree_field(#estree_name_str)?,
+                    json.estree_field(#estree_name_str)?,
                     allocator
                 )?;
             },
@@ -209,7 +233,34 @@ fn generate_default_field(field: &FieldDef, schema: &Schema) -> (TokenStream, bo
             };
             (default, false)
         }
-        _ => (quote!(Default::default()), false),
+        TypeDef::Box(box_def) => {
+            // Box<T> needs allocator and inner default - can't easily default
+            // Skip this field entirely with a panic placeholder
+            let inner_type = box_def.inner_type(schema);
+            let inner_name = inner_type.name();
+            (
+                quote!(panic!("Cannot default Box<{}> - field should not be skipped", #inner_name)),
+                false,
+            )
+        }
+        _ => {
+            // Check the innermost type name for known types without Default
+            let inner_type = field_type.innermost_type(schema);
+            let type_name = inner_type.name();
+            match type_name {
+                // Specific defaults for types that don't implement Default
+                "VariableDeclarationKind" => {
+                    (quote!(crate::ast::js::VariableDeclarationKind::Var), false)
+                }
+                "WithClauseKeyword" => {
+                    (quote!(crate::ast::js::WithClauseKeyword::With), false)
+                }
+                "NumberBase" => (quote!(oxc_syntax::number::NumberBase::Decimal), false),
+                "BigintBase" => (quote!(oxc_syntax::number::BigintBase::Decimal), false),
+                "RegExpFlags" => (quote!(crate::ast::literal::RegExpFlags::empty()), false),
+                _ => (quote!(Default::default()), false),
+            }
+        }
     };
 
     (
@@ -235,7 +286,7 @@ fn generate_impl_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
     quote! {
         impl<'a> FromESTree<'a> for #ty {
-            fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+            fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
                 #body
             }
         }
@@ -252,10 +303,10 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
         .filter(|variant| !should_skip_enum_variant(variant))
         .map(|variant| {
             let variant_ident = variant.ident();
-            let value = get_fieldless_variant_value(enum_def, variant);
-            let value_str = value.as_ref();
+            let estree_value = get_fieldless_variant_value(enum_def, variant);
+            let estree_value_str = estree_value.as_ref();
             quote! {
-                #value_str => Ok(Self::#variant_ident),
+                #estree_value_str => Ok(Self::#variant_ident),
             }
         })
         .collect::<Vec<_>>();
@@ -264,8 +315,8 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
 
     quote! {
         impl<'a> FromESTree<'a> for #ty {
-            fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
-                let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+            fn from_estree(json: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+                let s = json.as_str().ok_or(DeserError::ExpectedString)?;
                 match s {
                     #(#match_arms)*
                     other => Err(DeserError::InvalidFieldValue(
@@ -280,14 +331,39 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
 
 /// Generate body for enum with fields - dispatch based on `type` field.
 fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let match_arms = enum_def
-        .all_variants(schema)
-        .filter(|variant| !should_skip_enum_variant(variant))
-        .filter_map(|variant| generate_enum_variant_arm(variant, enum_def, schema))
-        .collect::<Vec<_>>();
+    // Collect match arms, tracking duplicates
+    let mut arms_by_type: std::collections::HashMap<String, Vec<(&VariantDef, TokenStream)>> =
+        std::collections::HashMap::new();
+
+    for variant in enum_def.all_variants(schema) {
+        if should_skip_enum_variant(variant) {
+            continue;
+        }
+        if let Some((type_name, arm)) = generate_enum_variant_arm_with_type(variant, schema) {
+            arms_by_type.entry(type_name).or_default().push((variant, arm));
+        }
+    }
+
+    // Generate match arms, handling duplicates with disambiguation
+    let match_arms: Vec<TokenStream> = arms_by_type
+        .into_iter()
+        .map(|(type_name, variants)| {
+            if variants.len() == 1 {
+                // Single variant for this type - use directly
+                let (_, arm) = &variants[0];
+                let type_name_str = type_name.as_str();
+                quote! { #type_name_str => { #arm } }
+            } else {
+                // Multiple variants map to same type - need disambiguation
+                let type_name_str = type_name.as_str();
+                let disambiguation = generate_disambiguation(&type_name, &variants, schema);
+                quote! { #type_name_str => { #disambiguation } }
+            }
+        })
+        .collect();
 
     quote! {
-        let type_name = value.estree_type()?;
+        let type_name = json.estree_type()?;
         match type_name {
             #(#match_arms)*
             other => Err(DeserError::UnknownNodeType(other.to_string())),
@@ -295,12 +371,171 @@ fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> To
     }
 }
 
-/// Generate a match arm for an enum variant.
-fn generate_enum_variant_arm(
-    variant: &VariantDef,
-    _enum_def: &EnumDef,
+/// Generate disambiguation logic for variants that share an ESTree type name.
+fn generate_disambiguation(
+    type_name: &str,
+    variants: &[(&VariantDef, TokenStream)],
     schema: &Schema,
-) -> Option<TokenStream> {
+) -> TokenStream {
+    match type_name {
+        "Literal" => generate_literal_disambiguation(variants, schema),
+        "MemberExpression" => generate_member_expression_disambiguation(variants, schema),
+        "BinaryExpression" => generate_binary_expression_disambiguation(variants, schema),
+        "Class" | "Function" => {
+            // Class/Function can be expression or declaration - use first one
+            // (The correct one depends on context, which we don't have here)
+            let (_, arm) = &variants[0];
+            arm.clone()
+        }
+        _ => {
+            // Unknown disambiguation case - use first variant
+            let (_, arm) = &variants[0];
+            arm.clone()
+        }
+    }
+}
+
+/// Generate disambiguation for Literal variants based on value type.
+fn generate_literal_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    // Find specific literal variants
+    let mut null_arm: Option<TokenStream> = None;
+    let mut bool_arm: Option<TokenStream> = None;
+    let mut number_arm: Option<TokenStream> = None;
+    let mut bigint_arm: Option<TokenStream> = None;
+    let mut regex_arm: Option<TokenStream> = None;
+    let mut string_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            "NullLiteral" => null_arm = Some(arm.clone()),
+            "BooleanLiteral" => bool_arm = Some(arm.clone()),
+            "NumericLiteral" => number_arm = Some(arm.clone()),
+            "BigIntLiteral" => bigint_arm = Some(arm.clone()),
+            "RegExpLiteral" => regex_arm = Some(arm.clone()),
+            "StringLiteral" => string_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    // Default fallback - use first variant
+    let fallback = variants[0].1.clone();
+
+    // Use fallback for any missing arms
+    let null_arm = null_arm.unwrap_or_else(|| fallback.clone());
+    let bool_arm = bool_arm.unwrap_or_else(|| fallback.clone());
+    let number_arm = number_arm.unwrap_or_else(|| fallback.clone());
+    let bigint_arm = bigint_arm.unwrap_or_else(|| fallback.clone());
+    let regex_arm = regex_arm.unwrap_or_else(|| fallback.clone());
+    let string_arm = string_arm.unwrap_or_else(|| fallback.clone());
+
+    quote! {
+        // Disambiguate Literal based on value type
+        if json.get("value").is_some_and(|v| v.is_null()) {
+            #null_arm
+        } else if json.get("value").is_some_and(|v| v.is_boolean()) {
+            #bool_arm
+        } else if json.get("value").is_some_and(|v| v.is_number()) {
+            #number_arm
+        } else if json.get("bigint").is_some() {
+            #bigint_arm
+        } else if json.get("regex").is_some() {
+            #regex_arm
+        } else if json.get("value").is_some_and(|v| v.is_string()) {
+            #string_arm
+        } else {
+            #fallback
+        }
+    }
+}
+
+/// Generate disambiguation for MemberExpression variants based on computed/property.
+fn generate_member_expression_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    let mut computed_arm: Option<TokenStream> = None;
+    let mut static_arm: Option<TokenStream> = None;
+    let mut private_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            "ComputedMemberExpression" => computed_arm = Some(arm.clone()),
+            "StaticMemberExpression" => static_arm = Some(arm.clone()),
+            "PrivateFieldExpression" => private_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    let fallback = variants[0].1.clone();
+    let computed_arm = computed_arm.unwrap_or_else(|| fallback.clone());
+    let static_arm = static_arm.unwrap_or_else(|| fallback.clone());
+    let private_arm = private_arm.unwrap_or_else(|| fallback.clone());
+
+    quote! {
+        // Disambiguate MemberExpression based on computed flag and property type
+        let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+        let property_type = json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+
+        if property_type == Some("PrivateIdentifier") {
+            #private_arm
+        } else if is_computed {
+            #computed_arm
+        } else {
+            #static_arm
+        }
+    }
+}
+
+/// Generate disambiguation for BinaryExpression (vs PrivateInExpression).
+fn generate_binary_expression_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    let mut binary_arm: Option<TokenStream> = None;
+    let mut private_in_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            "BinaryExpression" => binary_arm = Some(arm.clone()),
+            "PrivateInExpression" => private_in_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    let fallback = variants[0].1.clone();
+    let binary_arm = binary_arm.unwrap_or_else(|| fallback.clone());
+    let private_in_arm = private_in_arm.unwrap_or_else(|| fallback.clone());
+
+    quote! {
+        // Disambiguate BinaryExpression vs PrivateInExpression
+        let operator = json.get("operator").and_then(|v| v.as_str());
+        let left_type = json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+
+        if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+            #private_in_arm
+        } else {
+            #binary_arm
+        }
+    }
+}
+
+/// Generate a match arm for an enum variant, returning (type_name, arm_body).
+fn generate_enum_variant_arm_with_type(
+    variant: &VariantDef,
+    schema: &Schema,
+) -> Option<(String, TokenStream)> {
     let variant_ident = variant.ident();
 
     // Get the inner type of the variant
@@ -312,19 +547,17 @@ fn generate_enum_variant_arm(
     // Check if this is a Box type (most enum variants are Box<T>)
     let is_boxed = matches!(inner_type, TypeDef::Box(_));
 
-    if is_boxed {
-        Some(quote! {
-            #estree_type_name => {
-                Ok(Self::#variant_ident(ABox::new_in(FromESTree::from_estree(value, allocator)?, allocator)))
-            }
-        })
+    let arm_body = if is_boxed {
+        quote! {
+            Ok(Self::#variant_ident(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+        }
     } else {
-        Some(quote! {
-            #estree_type_name => {
-                Ok(Self::#variant_ident(FromESTree::from_estree(value, allocator)?))
-            }
-        })
-    }
+        quote! {
+            Ok(Self::#variant_ident(FromESTree::from_estree(json, allocator)?))
+        }
+    };
+
+    Some((estree_type_name.to_string(), arm_body))
 }
 
 /// Get the ESTree `type` field value for a type.

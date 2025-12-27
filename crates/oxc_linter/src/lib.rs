@@ -61,7 +61,7 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        DeserializedAst, ExternalLinter, ExternalLinterLintFileCb,
+        DeserializeResult, ExternalLinter, ExternalLinterLintFileCb,
         ExternalLinterLintFileWithCustomAstCb, ExternalLinterLoadParserCb,
         ExternalLinterLoadPluginCb, ExternalLinterParseFileCb, ExternalLinterSetupConfigsCb,
         ExternalLinterStripFileCb, JsFix, LintFileResult, LoadParserResult, LoadPluginResult,
