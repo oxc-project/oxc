@@ -5,7 +5,7 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { isJsx, isTypescript, sourceText } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -51,6 +51,9 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
+  // Determine ScriptKind based on the parsed AST's SourceType
+  const scriptKind = getScriptKind(tsModule);
+
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
     filePath,
@@ -62,8 +65,7 @@ export function parseTokens(): Token[] {
       setExternalModuleIndicator: undefined,
     },
     true, // `setParentNodes`
-    // TODO: Use `TS` or `TSX` depending on source type
-    tsModule.ScriptKind.TSX,
+    scriptKind,
   );
 
   // Check that TypeScript hasn't altered source text.
@@ -266,4 +268,27 @@ function hasJSXAncestor(node: ts.Node | undefined): boolean {
  */
 function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
   return kind >= tsSyntaxKind.JsxElement && kind <= tsSyntaxKind.JsxAttribute;
+}
+
+/**
+ * Determine TypeScript ScriptKind based on the parsed AST's SourceType.
+ *
+ * This reads the JSX flag and TypeScript flag from the buffer to determine
+ * the correct ScriptKind for TypeScript's parser. This is more accurate than
+ * using file extensions because it reflects what Oxc actually parsed.
+ *
+ * @param tsModule - TypeScript module
+ * @returns Appropriate ScriptKind for the file
+ */
+function getScriptKind(tsModule: typeof import("typescript")): ts.ScriptKind {
+  // Check if this is TypeScript (as opposed to JavaScript)
+  const isTs = isTypescript();
+
+  // Check if this is JSX/TSX based on SourceType.variant
+  const isJsxSource = isJsx();
+
+  if (isTs) {
+    return isJsxSource ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
+  }
+  return isJsxSource ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
 }

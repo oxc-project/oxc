@@ -1267,10 +1267,14 @@ struct Constants {
     data_pointer_pos: u32,
     /// Offset within buffer of `bool` indicating if AST is TS or JS
     is_ts_pos: u32,
+    /// Offset within buffer of `bool` indicating if AST is JSX
+    is_jsx_pos: u32,
     /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,
     /// Offset of `u32` source text length, relative to position of `Program`
     source_len_offset: u32,
+    /// Offset of `SourceType` relative to position of `Program`
+    source_type_offset: u32,
     /// Size of `RawTransferData` in bytes
     raw_metadata_size: u32,
 }
@@ -1281,8 +1285,10 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         buffer_size,
         data_pointer_pos,
         is_ts_pos,
+        is_jsx_pos,
         program_offset,
         source_len_offset,
+        source_type_offset,
         raw_metadata_size,
     } = consts;
 
@@ -1294,8 +1300,10 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const BUFFER_ALIGN = {BLOCK_ALIGN};
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
         export const IS_TS_FLAG_POS = {is_ts_pos};
+        export const IS_JSX_FLAG_POS = {is_jsx_pos};
         export const PROGRAM_OFFSET = {program_offset};
         export const SOURCE_LEN_OFFSET = {source_len_offset};
+        export const SOURCE_TYPE_OFFSET = {source_type_offset};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);
@@ -1327,6 +1335,7 @@ fn get_constants(schema: &Schema) -> Constants {
 
     let mut data_offset_field = None;
     let mut is_ts_field = None;
+    let mut is_jsx_field = None;
     for (field1, field2) in raw_metadata_struct.fields.iter().zip(&raw_metadata2_struct.fields) {
         assert_eq!(field1.name(), field2.name());
         assert_eq!(field1.type_id, field2.type_id);
@@ -1334,11 +1343,13 @@ fn get_constants(schema: &Schema) -> Constants {
         match field1.name() {
             "data_offset" => data_offset_field = Some(field1),
             "is_ts" => is_ts_field = Some(field1),
+            "is_jsx" => is_jsx_field = Some(field1),
             _ => {}
         }
     }
     let data_offset_field = data_offset_field.unwrap();
     let is_ts_field = is_ts_field.unwrap();
+    let is_jsx_field = is_jsx_field.unwrap();
 
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
 
@@ -1354,6 +1365,7 @@ fn get_constants(schema: &Schema) -> Constants {
     let raw_metadata_pos = buffer_size - raw_metadata_size;
     let data_pointer_pos = raw_metadata_pos + data_offset_field.offset_64();
     let is_ts_pos = raw_metadata_pos + is_ts_field.offset_64();
+    let is_jsx_pos = raw_metadata_pos + is_jsx_field.offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
@@ -1362,20 +1374,21 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    let source_len_offset = schema
-        .type_by_name("Program")
-        .as_struct()
-        .unwrap()
-        .field_by_name("source_text")
-        .offset_64()
-        + STR_LEN_OFFSET;
+    let program_struct = schema.type_by_name("Program").as_struct().unwrap();
+
+    let source_len_offset =
+        program_struct.field_by_name("source_text").offset_64() + STR_LEN_OFFSET;
+
+    let source_type_offset = program_struct.field_by_name("source_type").offset_64();
 
     Constants {
         buffer_size,
         data_pointer_pos,
         is_ts_pos,
+        is_jsx_pos,
         program_offset,
         source_len_offset,
+        source_type_offset,
         raw_metadata_size,
     }
 }
