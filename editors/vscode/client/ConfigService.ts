@@ -111,7 +111,7 @@ export class ConfigService implements IDisposable {
 
   private async searchBinaryPath(
     settingsBinary: string | undefined,
-    defaultPattern: string,
+    defaultBinaryName: string,
   ): Promise<string | undefined> {
     const cwd = this.workspaceConfigs.keys().next().value;
     if (!cwd) {
@@ -119,14 +119,7 @@ export class ConfigService implements IDisposable {
     }
 
     if (!settingsBinary) {
-      // try to find the binary in node_modules/.bin, resolve to the first workspace folder
-      const files = await workspace.findFiles(
-        new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
-        null,
-        1,
-      );
-
-      return files.length > 0 ? files[0].fsPath : undefined;
+      return this.searchNodeModulesBin(cwd, defaultBinaryName);
     }
 
     if (!workspace.isTrusted) {
@@ -134,20 +127,59 @@ export class ConfigService implements IDisposable {
     }
 
     // validates the given path is safe to use
-    if (validateSafeBinaryPath(settingsBinary) === false) {
+    if (!validateSafeBinaryPath(settingsBinary)) {
       return undefined;
     }
 
     if (!path.isAbsolute(settingsBinary)) {
       // if the path is not absolute, resolve it to the first workspace folder
       settingsBinary = path.normalize(path.join(cwd, settingsBinary));
-      // strip the leading slash on Windows
-      if (process.platform === "win32" && settingsBinary.startsWith("\\")) {
-        settingsBinary = settingsBinary.slice(1);
-      }
+      settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
     }
 
     return settingsBinary;
+  }
+
+  /**
+   * strip the leading slash on Windows
+   */
+  private removeWindowsLeadingSlash(path: string): string {
+    if (process.platform === "win32" && path.startsWith("\\")) {
+      return path.slice(1);
+    }
+    return path;
+  }
+
+  /**
+   * Search for the binary in the workspace's node_modules/.bin directory.
+   */
+  private async searchNodeModulesBin(
+    workspacePath: string,
+    binaryName: string,
+  ): Promise<string | undefined> {
+    // try to find the binary in workspace's node_modules/.bin.
+    //
+    // Performance: this is a fast check before searching with glob.
+    // glob on windows is very slow.
+    const binPath = this.removeWindowsLeadingSlash(
+      path.normalize(path.join(workspacePath, "node_modules", ".bin", binaryName)),
+    );
+    try {
+      await workspace.fs.stat(Uri.file(binPath));
+      return binPath;
+    } catch {
+      // not found, continue to glob search
+    }
+
+    // fallback: search with glob
+    // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
+    const files = await workspace.findFiles(
+      new RelativePattern(workspacePath, `**/node_modules/.bin/${binaryName}`),
+      null,
+      1,
+    );
+
+    return files.length > 0 ? files[0].fsPath : undefined;
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
