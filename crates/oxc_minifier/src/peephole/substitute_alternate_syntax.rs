@@ -36,6 +36,17 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // <https://tc39.es/ecma262/2024/multipage/ordinary-and-exotic-objects-behaviours.html#sec-makemethod>
+        if !prop.method
+            && let Expression::FunctionExpression(func) = &prop.value
+            && func.name().is_none()
+        {
+            // TODO: if super is used inside the function, we cannot convert it to a method due to missing [[HomeObject]]
+            // this is going to remove expected error `SyntaxError: 'super' keyword unexpected here`
+            prop.method = true;
+            ctx.state.changed = true;
+        }
+
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -2373,6 +2384,15 @@ mod test {
             "class C { static accessor __proto__ = 0 }",
         );
 
+        // <https://tc39.es/ecma262/2024/multipage/ordinary-and-exotic-objects-behaviours.html#sec-makemethod>
+        // test_same("v = { fn: () => { super.fn2() } }"); // TODO: requires `super` handling
+        // test_same("v = { fn: function () { super.fn2() } }"); // TODO: requires `super` handling
+        test_same("v = { fn() { super.fn2() } }");
+        test_same("v = { fn() {} }");
+        test("v = { fn: function () {} }", "v = { fn() {} }");
+        test("v = { ['fn']: function () {} }", "v = { fn() {} }");
+        test_same("v = { fn: () => {} }");
+
         // Patch KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
         // <https://github.com/oxc-project/unicode-id-start/pull/3>
         test_same("x = { 'x・': 0 };");
@@ -2470,7 +2490,7 @@ mod test {
         test_same("var s = Symbol(), a = String(s);");
 
         test_same("var a = String('hello', bar());");
-        test_same("var a = String({valueOf: function() { return 1; }});");
+        test_same("var a = String({valueOf() { return 1; }});");
     }
 
     #[test]
