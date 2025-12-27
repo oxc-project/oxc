@@ -1183,48 +1183,22 @@ impl Runtime {
             }
         };
 
-        // Collect all messages from both phases
+        // Run all rules (Rust + JS) via custom parser
+        // Phase 3 (ESTree deserialization) is now integrated into run_with_custom_parser,
+        // so we no longer need the Phase 2 stripping approach.
+        //
+        // Note: Phase 2 stripping is disabled since Phase 3 provides better scope fidelity.
+        // Phase 3 deserializes the ESTree AST directly and injects scope references from
+        // the custom parser's scope manager, fixing false positives in rules like no-unused-vars.
+
+        // Collect all messages
         let mut all_messages: Vec<Message> = Vec::new();
 
-        // Phase 2: Try to strip custom syntax and run Rust rules
-        if self.linter.has_strip_support() {
-            match self.linter.strip_with_custom_parser(
-                parser_id,
-                path,
-                source_text,
-                parser_options_json,
-            ) {
-                Some(Ok(Some(strip_result))) => {
-                    // Stripping succeeded - parse with oxc and run Rust rules
-                    let stripped_messages = self.lint_stripped_source(
-                        path,
-                        source_text,
-                        &strip_result,
-                    );
-                    all_messages.extend(stripped_messages);
-                }
-                Some(Ok(None)) => {
-                    // Parser doesn't support stripping - Phase 2 not available
-                }
-                Some(Err(err)) => {
-                    // Stripping failed - report error but continue with JS rules
-                    let error = Error::new(OxcDiagnostic::warn(format!(
-                        "Error stripping {} with custom parser (Rust rules skipped): {err}",
-                        path.display()
-                    )));
-                    let _ = tx_error.send(vec![error]);
-                }
-                None => {
-                    // No strip callback configured - Phase 2 not available
-                }
-            }
-        }
-
-        // Phase 1: Run JS rules via custom parser
+        // Run Rust rules (Phase 3) + JS rules (Phase 1) via run_with_custom_parser
         match self.linter.run_with_custom_parser(path, source_text, parser_id, parser_options_json)
         {
-            Ok(js_messages) => {
-                all_messages.extend(js_messages);
+            Ok(messages) => {
+                all_messages.extend(messages);
             }
             Err(err) => {
                 let error = Error::new(OxcDiagnostic::error(format!(
