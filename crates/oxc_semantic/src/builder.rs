@@ -2193,6 +2193,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_binding_pattern(&element.argument);
         self.leave_node(kind);
     }
+
+    fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
+        let kind = AstKind::FormalParameter(self.alloc(param));
+        self.enter_node(kind);
+        param.bind(self);
+        self.visit_span(&param.span);
+        self.visit_decorators(&param.decorators);
+        self.visit_binding_pattern(&param.pattern);
+        if let Some(type_annotation) = &param.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(initializer) = &param.initializer {
+            self.visit_expression(initializer);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2214,9 +2230,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::FormalParameter(param) => {
-                param.bind(self);
-            }
             AstKind::FormalParameterRest(param) => {
                 param.bind(self);
             }
