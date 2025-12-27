@@ -37,6 +37,23 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::camelcase::Camelcase {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::BreakStatement,
+        AstType::ContinueStatement,
+        AstType::ExportAllDeclaration,
+        AstType::ExportSpecifier,
+        AstType::LabeledStatement,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PrivateIdentifier,
+        AstType::PropertyDefinition,
+        AstType::UpdateExpression,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::eslint::capitalized_comments::CapitalizedComments {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
