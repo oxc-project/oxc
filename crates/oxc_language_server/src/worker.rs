@@ -430,6 +430,11 @@ mod tests {
             !worker
                 .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
+        assert!(
+            !worker.is_responsible_for_uri(
+                &Uri::from_str("file:///path/to/root_second/file.js").unwrap()
+            )
+        );
     }
 
     #[tokio::test]
