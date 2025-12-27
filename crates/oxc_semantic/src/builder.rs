@@ -2222,6 +2222,30 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
+        let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_ts_module_declaration_name(&decl.id);
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if decl.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
+                {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &decl.scope_id,
+        );
+        if let Some(body) = &decl.body {
+            self.visit_ts_module_declaration_body(body);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2243,9 +2267,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSModuleDeclaration(module_declaration) => {
-                module_declaration.bind(self);
-            }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
             }
