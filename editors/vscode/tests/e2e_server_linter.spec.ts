@@ -18,9 +18,11 @@ import {
   getDiagnosticsWithoutClose,
   loadFixture,
   sleep,
+  testMultiFolderMode,
   testSingleFolderMode,
   waitForDiagnosticChange,
   WORKSPACE_DIR,
+  WORKSPACE_SECOND_DIR,
   writeToFixtureFile
 } from './test-helpers';
 import assert = require('assert');
@@ -205,22 +207,22 @@ suite('E2E Server Linter', () => {
     strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
-  // somehow this test is flaky in CI
-  // testMultiFolderMode('different diagnostic severity', async () => {
-  //   await loadFixture('debugger', WORKSPACE_DIR);
-  //   await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
-  //
-  //   const firstDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_DIR);
-  //   const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
-  //
-  //   assert(typeof firstDiagnostics[0].code == 'object');
-  //   strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
-  //   strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
-  //
-  //   assert(typeof secondDiagnostics[0].code == 'object');
-  //   strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
-  //   strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
-  // });
+  testMultiFolderMode('different diagnostic severity', async () => {
+    await loadFixture('debugger', WORKSPACE_DIR);
+    await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
+    await sleep(500);
+
+    const firstDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_DIR);
+    const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
+
+    assert(typeof firstDiagnostics[0].code == 'object');
+    strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    assert(typeof secondDiagnostics[0].code == 'object');
+    strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
 
   // somehow this test is flaky in CI
   test.skip('changing config from `extends` will revalidate the diagnostics', async () => {
