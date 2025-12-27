@@ -2184,6 +2184,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&ident.span);
         self.leave_node(kind);
     }
+
+    fn visit_binding_rest_element(&mut self, element: &BindingRestElement<'a>) {
+        let kind = AstKind::BindingRestElement(self.alloc(element));
+        self.enter_node(kind);
+        element.bind(self);
+        self.visit_span(&element.span);
+        self.visit_binding_pattern(&element.argument);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2205,9 +2214,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::BindingRestElement(element) => {
-                element.bind(self);
-            }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
