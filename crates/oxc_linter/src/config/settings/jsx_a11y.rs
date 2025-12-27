@@ -64,3 +64,33 @@ pub struct JSXA11yPluginSettings {
     #[serde(default)]
     pub attributes: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
+
+impl JSXA11yPluginSettings {
+    pub(crate) fn is_empty(&self) -> bool {
+        self.polymorphic_prop_name.is_none()
+            && self.components.is_empty()
+            && self.attributes.is_empty()
+    }
+
+    /// Deep merge self into other (self takes priority).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        if self.is_empty() {
+            return other;
+        }
+
+        // Primitives: self takes priority
+        if self.polymorphic_prop_name.is_none() {
+            self.polymorphic_prop_name = other.polymorphic_prop_name;
+        }
+
+        // HashMaps: merge entries, self takes priority on conflict
+        for (key, value) in other.components {
+            self.components.entry(key).or_insert(value);
+        }
+        for (key, value) in other.attributes {
+            self.attributes.entry(key).or_insert(value);
+        }
+
+        self
+    }
+}
