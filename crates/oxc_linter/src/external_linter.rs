@@ -698,12 +698,10 @@ impl SerializedReference {
     }
 }
 
-/// Inject external scope information from a custom parser into oxc's semantic analysis.
+/// Parse external scope manager JSON.
 ///
-/// This function takes the serialized scope manager from a custom parser's `parseForESLint()`
-/// output and merges it with the existing semantic data. This enables Rust rules like
-/// `no-unused-vars` to work correctly with custom syntax by providing scope/reference
-/// information that oxc's parser couldn't extract from the stripped source.
+/// This function parses the serialized scope manager from a custom parser's `parseForESLint()`
+/// output. The result can be used with `inject_scope_references` to merge it with oxc's Semantic.
 ///
 /// # Arguments
 ///
@@ -712,17 +710,77 @@ impl SerializedReference {
 /// # Returns
 ///
 /// The deserialized scope manager, or an error if parsing fails.
-///
-/// # Example
-///
-/// ```ignore
-/// let scope_json = r#"{"scopes": [], "variables": [], "references": []}"#;
-/// let scope_manager = inject_external_scope(scope_json)?;
-/// ```
-pub fn inject_external_scope(scope_manager_json: &str) -> Result<SerializedScopeManager, String> {
+pub fn parse_external_scope(scope_manager_json: &str) -> Result<SerializedScopeManager, String> {
     serde_json::from_str(scope_manager_json).map_err(|e| {
         format!("Failed to parse scope manager JSON: {e}")
     })
+}
+
+/// Inject external scope references into oxc's semantic analysis.
+///
+/// This function merges reference information from a custom parser's scope manager
+/// into oxc's Semantic. This enables rules like `no-unused-vars` to work correctly
+/// with custom syntax by adding references that oxc couldn't detect from the AST.
+///
+/// The injection works by:
+/// 1. For each reference in the external scope manager
+/// 2. Finding the corresponding symbol in oxc's symbol table by name
+/// 3. Adding a synthetic reference to mark the symbol as "used"
+///
+/// # Arguments
+///
+/// * `semantic` - Mutable reference to the semantic analysis data
+/// * `scope_manager` - The deserialized scope manager from the custom parser
+pub fn inject_scope_references(
+    semantic: &mut oxc_semantic::Semantic<'_>,
+    scope_manager: &SerializedScopeManager,
+) {
+    use oxc_syntax::{node::NodeId, reference::Reference};
+
+    let scoping = semantic.scoping_mut();
+    let root_scope_id = scoping.root_scope_id();
+
+    // Build a mapping from external variable IDs to variable names
+    // We'll use this to look up variable names when processing references
+    let variable_names: std::collections::HashMap<u32, &str> = scope_manager
+        .variables
+        .iter()
+        .map(|v| (v.id, v.name.as_str()))
+        .collect();
+
+    // For each resolved reference in the external scope manager,
+    // try to find the corresponding symbol and add a reference
+    for ext_ref in &scope_manager.references {
+        // Skip unresolved references (they reference global variables)
+        let Some(variable_id) = ext_ref.variable_id else {
+            continue;
+        };
+
+        // Get the variable name
+        let Some(name) = variable_names.get(&variable_id) else {
+            continue;
+        };
+
+        // Try to find the symbol in oxc's scope tree
+        // Start from root scope and search all scopes
+        // (A more precise approach would match scope hierarchies, but this is simpler)
+        let Some(symbol_id) = scoping.find_binding(root_scope_id, name) else {
+            // Symbol not found in oxc's scope tree - it might be:
+            // - A variable declared in custom syntax (not in the stripped JS)
+            // - A global variable
+            // Skip it
+            continue;
+        };
+
+        // Create a synthetic reference
+        // We use NodeId::ROOT as a sentinel since we don't have an actual AST node
+        let flags = ext_ref.to_reference_flags();
+        let reference = Reference::new_with_symbol_id(NodeId::ROOT, symbol_id, flags);
+
+        // Add the reference to the scoping data
+        let reference_id = scoping.create_reference(reference);
+        scoping.add_resolved_reference(symbol_id, reference_id);
+    }
 }
 
 /// Result from deserializing ESTree JSON to oxc AST.
@@ -795,7 +853,7 @@ pub fn lint_with_external_ast(
 
     // Parse scope manager if provided
     let external_scope = if let Some(json) = scope_manager_json {
-        match inject_external_scope(json) {
+        match parse_external_scope(json) {
             Ok(sm) => Some(sm),
             Err(e) => {
                 // Log warning but continue without scope injection
@@ -844,12 +902,10 @@ pub fn lint_with_external_ast(
 
     let mut semantic = semantic_ret.semantic;
 
-    // TODO: Inject external scope information
-    // This is where we'd add references from custom syntax to fix no-unused-vars
-    if let Some(_scope_manager) = external_scope {
-        // Phase 3.3: Inject scope information
-        // For now, just acknowledge we have scope info
-        // inject_scope_references(&mut semantic, &scope_manager);
+    // Inject external scope information to fix no-unused-vars false positives
+    // This adds references from custom syntax that oxc couldn't detect
+    if let Some(scope_manager) = &external_scope {
+        inject_scope_references(&mut semantic, scope_manager);
     }
 
     // Create module record (empty for external AST)
@@ -1226,14 +1282,14 @@ mod test {
     }
 
     #[test]
-    fn test_inject_external_scope_success() {
+    fn test_parse_external_scope_success() {
         let json = r#"{
             "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
             "variables": [],
             "references": []
         }"#;
 
-        let result = inject_external_scope(json);
+        let result = parse_external_scope(json);
         assert!(result.is_ok());
         let scope_manager = result.unwrap();
         assert_eq!(scope_manager.scopes.len(), 1);
@@ -1241,9 +1297,9 @@ mod test {
     }
 
     #[test]
-    fn test_inject_external_scope_invalid_json() {
+    fn test_parse_external_scope_invalid_json() {
         let json = r#"{ invalid json }"#;
-        let result = inject_external_scope(json);
+        let result = parse_external_scope(json);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse scope manager JSON"));
     }
