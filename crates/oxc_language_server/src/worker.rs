@@ -44,25 +44,21 @@ impl WorkspaceWorker {
     }
 
     /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
+    /// A worker is responsible for a URI if the URI starts with the root URI of the worker
     /// e.g. root URI: file:///path/to/root
     ///      responsible for: file:///path/to/root/file.js
     ///      not responsible for: file:///path/to/other/file.js
-    ///
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(path) = uri.to_file_path() {
-            return path.starts_with(self.root_uri.to_file_path().unwrap());
-        }
-        false
+        uri.as_str().starts_with(self.root_uri.as_str())
     }
 
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value, tools: &[Box<dyn ToolBuilder>]) {
-        *self.tools.write().await =
-            tools.iter().map(|tool| tool.build_boxed(&self.root_uri, options.clone())).collect();
+        *self.tools.write().await = tools
+            .iter()
+            .filter_map(|tool| tool.build_boxed(&self.root_uri, options.clone()))
+            .collect();
 
         *self.options.lock().await = Some(options);
     }

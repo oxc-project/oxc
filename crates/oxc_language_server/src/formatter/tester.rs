@@ -59,6 +59,7 @@ impl Tester<'_> {
             &Self::get_root_uri(self.relative_root_dir),
             self.options.clone(),
         )
+        .expect("test requires valid root URI")
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
