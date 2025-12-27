@@ -2209,6 +2209,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_formal_parameter_rest(&mut self, param: &FormalParameterRest<'a>) {
+        let kind = AstKind::FormalParameterRest(self.alloc(param));
+        self.enter_node(kind);
+        param.bind(self);
+        self.visit_span(&param.span);
+        self.visit_binding_rest_element(&param.rest);
+        if let Some(type_annotation) = &param.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2230,9 +2242,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::FormalParameterRest(param) => {
-                param.bind(self);
-            }
             AstKind::CatchParameter(param) => {
                 param.bind(self);
             }
