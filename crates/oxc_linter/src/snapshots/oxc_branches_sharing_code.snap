@@ -50,24 +50,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the shared code outside the `if` statement to reduce code duplication
 
-  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
-   ╭─[branches_sharing_code.tsx:2:9]
- 1 │ 
- 2 │         if (x) {
-   ·         ─┬
-   ·          ╰── `if` statement declared here
- 3 │             console.log('before');
-   ·             ──────────────────────
- 4 │             doX();
-   ╰────
-   ╭─[branches_sharing_code.tsx:7:13]
- 6 │         } else {
- 7 │             console.log('before');
-   ·             ──────────────────────
- 8 │             doY();
-   ╰────
-  help: Move the shared code outside the `if` statement to reduce code duplication
-
   ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the end
    ╭─[branches_sharing_code.tsx:2:9]
  1 │ 
@@ -91,18 +73,18 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
    ╭─[branches_sharing_code.tsx:2:9]
  1 │ 
- 2 │         if (flag) {
+ 2 │         if (x) {
    ·         ─┬
    ·          ╰── `if` statement declared here
- 3 │             initialize();
-   ·             ─────────────
- 4 │             processData();
+ 3 │             console.log('before');
+   ·             ──────────────────────
+ 4 │             doX();
    ╰────
    ╭─[branches_sharing_code.tsx:7:13]
  6 │         } else {
- 7 │             initialize();
-   ·             ─────────────
- 8 │             processOtherData();
+ 7 │             console.log('before');
+   ·             ──────────────────────
+ 8 │             doY();
    ╰────
   help: Move the shared code outside the `if` statement to reduce code duplication
 
@@ -124,6 +106,24 @@ source: crates/oxc_linter/src/tester.rs
     ·             ───────────
  10 │         }
     ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (flag) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             initialize();
+   ·             ─────────────
+ 4 │             processData();
+   ╰────
+   ╭─[branches_sharing_code.tsx:7:13]
+ 6 │         } else {
+ 7 │             initialize();
+   ·             ─────────────
+ 8 │             processOtherData();
+   ╰────
   help: Move the shared code outside the `if` statement to reduce code duplication
 
   ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start

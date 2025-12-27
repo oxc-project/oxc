@@ -24,16 +24,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite into one string literal
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:7]
+   ╭─[no_useless_concat.tsx:1:1]
  1 │ 'a' + 'b' + 'c'
-   ·       ─────────
+   · ─────────
    ╰────
   help: Rewrite into one string literal
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:1]
+   ╭─[no_useless_concat.tsx:1:7]
  1 │ 'a' + 'b' + 'c'
-   · ─────────
+   ·       ─────────
    ╰────
   help: Rewrite into one string literal
 
@@ -82,16 +82,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite into one string literal
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:19]
+   ╭─[no_useless_concat.tsx:1:1]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
-   ·                   ─────────
-   ╰────
-  help: Rewrite into one string literal
-
-  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:13]
- 1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
-   ·             ─────────
+   · ─────────
    ╰────
   help: Rewrite into one string literal
 
@@ -103,8 +96,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite into one string literal
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:1]
+   ╭─[no_useless_concat.tsx:1:13]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
-   · ─────────
+   ·             ─────────
+   ╰────
+  help: Rewrite into one string literal
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:19]
+ 1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
+   ·                   ─────────
    ╰────
   help: Rewrite into one string literal

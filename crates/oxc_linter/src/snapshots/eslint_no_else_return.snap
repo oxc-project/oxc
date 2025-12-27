@@ -74,20 +74,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
   ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
-   ╭─[no_else_return.tsx:1:81]
- 1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
-   ·                                                                                 ────┬────  ───┬──
-   ·                                                                                     │         ╰── Making this `else` block unnecessary.
-   ·                                                                                     ╰── This consequent block always returns,
-   ╰────
-  help: Remove the `else` block, moving its contents outside of the `if` statement.
-
-  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
    ╭─[no_else_return.tsx:1:54]
  1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
    ·                                                      ────┬───────┬──
    ·                                                          │       ╰── Making this `else` block unnecessary.
    ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:81]
+ 1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
+   ·                                                                                 ────┬────  ───┬──
+   ·                                                                                     │         ╰── Making this `else` block unnecessary.
+   ·                                                                                     ╰── This consequent block always returns,
    ╰────
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 

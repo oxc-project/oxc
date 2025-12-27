@@ -67,20 +67,27 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
+   · ──
+   ╰────
+  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+
+  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+   ╭─[no_non_null_assertion.tsx:1:1]
+ 1 │ x!!!;
+   · ───
+   ╰────
+  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+
+  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+   ╭─[no_non_null_assertion.tsx:1:1]
+ 1 │ x!!!;
    · ────
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
- 1 │ x!!!;
-   · ───
-   ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
-
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:1:1]
- 1 │ x!!!;
+ 1 │ x!!.y;
    · ──
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
@@ -94,8 +101,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
- 1 │ x!!.y;
-   · ──
+ 1 │ x.y!!;
+   · ────
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
@@ -108,8 +115,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
- 1 │ x.y!!;
-   · ────
+ 1 │ x.y.z!!();
+   · ──────
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
@@ -117,13 +124,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!!();
    · ───────
-   ╰────
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
-
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:1:1]
- 1 │ x.y.z!!();
-   · ──────
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 

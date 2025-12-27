@@ -111,15 +111,6 @@ source: crates/oxc_linter/src/tester.rs
   help: This should be done within a hook
 
   ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
-    ╭─[require_hook.tsx:51:17]
- 50 │ 
- 51 │                 clearCityDatabase();
-    ·                 ───────────────────
- 52 │             
-    ╰────
-  help: This should be done within a hook
-
-  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
     ╭─[require_hook.tsx:32:21]
  31 │                 describe('when loading cities from the api', () => {
  32 │                     let consoleWarnSpy = jest.spyOn(console, 'warn');
@@ -134,6 +125,15 @@ source: crates/oxc_linter/src/tester.rs
  34 │                     loadCities.mockResolvedValue(['Wellington', 'London']);
     ·                     ──────────────────────────────────────────────────────
  35 │ 
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:51:17]
+ 50 │ 
+ 51 │                 clearCityDatabase();
+    ·                 ───────────────────
+ 52 │             
     ╰────
   help: This should be done within a hook
 
@@ -265,15 +265,6 @@ source: crates/oxc_linter/src/tester.rs
   help: This should be done within a hook
 
   ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
-    ╭─[require_hook.tsx:51:11]
- 50 │ 
- 51 │                    clearCityDatabase();
-    ·                    ───────────────────
- 52 │                  
-    ╰────
-  help: This should be done within a hook
-
-  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
     ╭─[require_hook.tsx:32:10]
  31 │                    describe('when loading cities from the api', () => {
  32 │                   let consoleWarnSpy = vi.spyOn(console, 'warn');
@@ -288,5 +279,14 @@ source: crates/oxc_linter/src/tester.rs
  34 │                   loadCities.mockResolvedValue(['Wellington', 'London']);
     ·                   ──────────────────────────────────────────────────────
  35 │ 
+    ╰────
+  help: This should be done within a hook
+
+  ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
+    ╭─[require_hook.tsx:51:11]
+ 50 │ 
+ 51 │                    clearCityDatabase();
+    ·                    ───────────────────
+ 52 │                  
     ╰────
   help: This should be done within a hook

@@ -38,6 +38,11 @@ mod js_plugins;
 // Use Mimalloc as the global allocator if `--features allocator` is enabled.
 // Mimalloc has better performance, but this is feature-gated because it's slow to compile.
 // `--features allocator` is only used in release builds.
-#[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(miri),
+    not(target_family = "wasm"),
+    not(target_pointer_width = "32")
+))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;

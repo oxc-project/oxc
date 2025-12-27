@@ -79,16 +79,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use the variable's original name or rename it to a different name
 
   ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
-   ╭─[no_useless_rename.tsx:1:23]
+   ╭─[no_useless_rename.tsx:1:12]
  1 │ let {foo: {bar: bar}, baz: baz} = obj;
-   ·                       ────────
+   ·            ────────
    ╰────
   help: Use the variable's original name or rename it to a different name
 
   ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
-   ╭─[no_useless_rename.tsx:1:12]
+   ╭─[no_useless_rename.tsx:1:23]
  1 │ let {foo: {bar: bar}, baz: baz} = obj;
-   ·            ────────
+   ·                       ────────
    ╰────
   help: Use the variable's original name or rename it to a different name
 
@@ -135,16 +135,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use the variable's original name or rename it to a different name
 
   ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
-   ╭─[no_useless_rename.tsx:1:27]
+   ╭─[no_useless_rename.tsx:1:14]
  1 │ let {'foo': {'bar': bar}, 'baz': baz} = obj;
-   ·                           ──────────
+   ·              ──────────
    ╰────
   help: Use the variable's original name or rename it to a different name
 
   ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
-   ╭─[no_useless_rename.tsx:1:14]
+   ╭─[no_useless_rename.tsx:1:27]
  1 │ let {'foo': {'bar': bar}, 'baz': baz} = obj;
-   ·              ──────────
+   ·                           ──────────
    ╰────
   help: Use the variable's original name or rename it to a different name
 

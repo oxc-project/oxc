@@ -177,15 +177,15 @@ source: crates/oxc_linter/src/tester.rs
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
   ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
-   ╭─[no_useless_length_check.tsx:1:47]
+   ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean) || array.length === 0
-   ·                                               ──────────────────
+   · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
   ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
-   ╭─[no_useless_length_check.tsx:1:1]
+   ╭─[no_useless_length_check.tsx:1:47]
  1 │ array.length === 0 || array.every(Boolean) || array.length === 0
-   · ──────────────────
+   ·                                               ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.

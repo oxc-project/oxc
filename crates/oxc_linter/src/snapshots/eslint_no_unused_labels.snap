@@ -72,15 +72,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `B: { }` with `{ }`.
 
   ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
-   ╭─[no_unused_labels.tsx:1:32]
- 1 │ label: while (true) { (() => { label: while (false) {} })(); }
-   ·                                ─────
-   ╰────
-  help: Replace `label: while (false) {}` with `while (false) {}`.
-
-  ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ label: while (true) { (() => { label: while (false) {} })(); }
    · ─────
    ╰────
   help: Replace `label: while (true) { (() => { label: while (false) {} })(); }` with `while (true) { (() => { label: while (false) {} })(); }`.
+
+  ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:32]
+ 1 │ label: while (true) { (() => { label: while (false) {} })(); }
+   ·                                ─────
+   ╰────
+  help: Replace `label: while (false) {}` with `while (false) {}`.

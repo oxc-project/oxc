@@ -155,21 +155,21 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the unnecessary assignment
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
-    ╭─[no_unnecessary_parameter_property_assignment.tsx:9:13]
-  8 │             }
-  9 │             this.foo = foo;
-    ·             ──────────────
- 10 │           }
-    ╰────
-  help: Remove the unnecessary assignment
-
-  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:6:17]
  5 │               constructor(private foo: string) {
  6 │                 this.foo = foo;
    ·                 ──────────────
  7 │               }
    ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+    ╭─[no_unnecessary_parameter_property_assignment.tsx:9:13]
+  8 │             }
+  9 │             this.foo = foo;
+    ·             ──────────────
+ 10 │           }
+    ╰────
   help: Remove the unnecessary assignment
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
