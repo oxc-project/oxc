@@ -228,4 +228,108 @@ mod tests {
         assert_eq!(result.span.start, 0);
         assert_eq!(result.span.end, 0);
     }
+
+    #[test]
+    fn test_program_with_variable_declaration() {
+        use crate::ast::js::Program;
+
+        let allocator = Allocator::default();
+        let json = serde_json::json!({
+            "type": "Program",
+            "body": [
+                {
+                    "type": "VariableDeclaration",
+                    "kind": "var",
+                    "start": 0,
+                    "end": 7,
+                    "declarations": [{
+                        "type": "VariableDeclarator",
+                        "start": 4,
+                        "end": 7,
+                        "id": {
+                            "type": "Identifier",
+                            "name": "foo",
+                            "start": 4,
+                            "end": 7
+                        },
+                        "init": null
+                    }]
+                }
+            ],
+            "sourceType": "script",
+            "start": 0,
+            "end": 8
+        });
+
+        let result: Program = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.body.len(), 1);
+    }
+
+    #[test]
+    fn test_program_with_call_expression() {
+        use crate::ast::js::Program;
+
+        let allocator = Allocator::default();
+        let json = serde_json::json!({
+            "type": "Program",
+            "body": [
+                {
+                    "type": "ExpressionStatement",
+                    "start": 0,
+                    "end": 20,
+                    "expression": {
+                        "type": "CallExpression",
+                        "start": 0,
+                        "end": 19,
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "console",
+                            "start": 0,
+                            "end": 7
+                        },
+                        "arguments": [
+                            {
+                                "type": "Identifier",
+                                "name": "foo",
+                                "start": 8,
+                                "end": 11
+                            }
+                        ],
+                        "optional": false
+                    }
+                }
+            ],
+            "sourceType": "script",
+            "start": 0,
+            "end": 20
+        });
+
+        let result: Program = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.body.len(), 1);
+    }
+
+    #[test]
+    fn test_unknown_node_uses_placeholder() {
+        use crate::ast::js::{Expression, Statement};
+
+        let allocator = Allocator::default();
+
+        // Unknown expression type should become NullLiteral placeholder
+        let json = serde_json::json!({
+            "type": "GlimmerTemplate",
+            "start": 0,
+            "end": 10
+        });
+        let result: Expression = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result, Expression::NullLiteral(_)));
+
+        // Unknown statement type should become EmptyStatement placeholder
+        let json = serde_json::json!({
+            "type": "SvelteComponent",
+            "start": 0,
+            "end": 10
+        });
+        let result: Statement = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result, Statement::EmptyStatement(_)));
+    }
 }

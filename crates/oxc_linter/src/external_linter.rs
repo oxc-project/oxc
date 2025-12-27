@@ -856,24 +856,31 @@ pub fn lint_with_external_ast(
     // Create allocator for AST
     let allocator = Allocator::default();
 
+    // Allocate source text in the allocator (needs to live as long as the Program)
+    let source_text_alloc = allocator.alloc_str(source_text);
+
     // Deserialize ESTree JSON to oxc Program
-    let program: oxc_ast::ast::Program = match FromESTree::from_estree(&estree_value, &allocator) {
-        Ok(p) => p,
-        Err(DeserError::UnknownNodeType(node_type)) => {
-            // Unknown node type - likely custom syntax. For now, skip Rust rules.
-            // TODO: Implement placeholder handling as per plan
-            return (vec![], DeserializeResult::UnknownNode(node_type));
-        }
-        Err(e) => {
-            return (
-                vec![],
-                DeserializeResult::Error(format!("Failed to deserialize ESTree: {e}")),
-            );
-        }
-    };
+    let mut program: oxc_ast::ast::Program =
+        match FromESTree::from_estree(&estree_value, &allocator) {
+            Ok(p) => p,
+            Err(DeserError::UnknownNodeType(node_type)) => {
+                // Unknown node type - likely custom syntax. For now, skip Rust rules.
+                // TODO: Implement placeholder handling as per plan
+                return (vec![], DeserializeResult::UnknownNode(node_type));
+            }
+            Err(e) => {
+                return (
+                    vec![],
+                    DeserializeResult::Error(format!("Failed to deserialize ESTree: {e}")),
+                );
+            }
+        };
+
+    // Set the source text on the program (needed for span operations in rules)
+    program.source_text = source_text_alloc;
 
     // Determine source type from the program
-    let source_type = SourceType::from_path(path).unwrap_or_default();
+    let _source_type = SourceType::from_path(path).unwrap_or_default();
 
     // Build semantic analysis
     let semantic_ret = SemanticBuilder::new()

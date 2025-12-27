@@ -3,77 +3,77 @@
 
 # stdout
 ```
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
- 2 | // £
-   `----
-  help: Remove the debugger statement
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-debugger): `debugger` statement is not allowed[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+ [2m2[0m │ // £
+   ╰────
+[38;2;106;159;181m  help: [0mRemove the debugger statement
 
-  x utf16-plugin(no-debugger): debugger:
-  | start/end: [0,9]
-  | range: [0,9]
-  | loc: [{"start":{"line":1,"column":0},"end":{"line":1,"column":9}}]
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
- 2 | // £
-   `----
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-debugger): `debugger` statement is not allowed[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:3:1]
+ [2m2[0m │ // £
+ [2m3[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+ [2m4[0m │ // 🤨
+   ╰────
+[38;2;106;159;181m  help: [0mRemove the debugger statement
 
-  x utf16-plugin(no-debugger): program:
-  | start/end: [0,47]
-  | range: [0,47]
-  | loc: [{"start":{"line":1,"column":0},"end":{"line":8,"column":0}}]
-   ,-[files/index.js:1:1]
- 1 | ,-> debugger;
- 2 | |   // £
- 3 | |   debugger;
- 4 | |   // 🤨
- 5 | |   {
- 6 | |     debugger;
- 7 | `-> }
-   `----
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-debugger): `debugger` statement is not allowed[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:6:3]
+ [2m5[0m │ {
+ [2m6[0m │   debugger;
+   · [38;2;246;87;248m  ─────────[0m
+ [2m7[0m │ }
+   ╰────
+[38;2;106;159;181m  help: [0mRemove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[files/index.js:3:1]
- 2 | // £
- 3 | debugger;
-   : ^^^^^^^^^
- 4 | // 🤨
-   `----
-  help: Remove the debugger statement
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mutf16-plugin(no-debugger): program:
+  [38;2;225;80;80;1m│[0m start/end: [0,47]
+  [38;2;225;80;80;1m│[0m range: [0,47]
+  [38;2;225;80;80;1m│[0m loc: [{"start":{"line":1,"column":0},"end":{"line":8,"column":0}}][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ [38;2;246;87;248m╭[0m[38;2;246;87;248m─[0m[38;2;246;87;248m▶[0m debugger;
+ [2m2[0m │ [38;2;246;87;248m│[0m   // £
+ [2m3[0m │ [38;2;246;87;248m│[0m   debugger;
+ [2m4[0m │ [38;2;246;87;248m│[0m   // 🤨
+ [2m5[0m │ [38;2;246;87;248m│[0m   {
+ [2m6[0m │ [38;2;246;87;248m│[0m     debugger;
+ [2m7[0m │ [38;2;246;87;248m╰[0m[38;2;246;87;248m─[0m[38;2;246;87;248m▶[0m }
+   ╰────
 
-  x utf16-plugin(no-debugger): debugger:
-  | start/end: [15,24]
-  | range: [15,24]
-  | loc: [{"start":{"line":3,"column":0},"end":{"line":3,"column":9}}]
-   ,-[files/index.js:3:1]
- 2 | // £
- 3 | debugger;
-   : ^^^^^^^^^
- 4 | // 🤨
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mutf16-plugin(no-debugger): debugger:
+  [38;2;225;80;80;1m│[0m start/end: [0,9]
+  [38;2;225;80;80;1m│[0m range: [0,9]
+  [38;2;225;80;80;1m│[0m loc: [{"start":{"line":1,"column":0},"end":{"line":1,"column":9}}][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+ [2m2[0m │ // £
+   ╰────
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[files/index.js:6:3]
- 5 | {
- 6 |   debugger;
-   :   ^^^^^^^^^
- 7 | }
-   `----
-  help: Remove the debugger statement
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mutf16-plugin(no-debugger): debugger:
+  [38;2;225;80;80;1m│[0m start/end: [15,24]
+  [38;2;225;80;80;1m│[0m range: [15,24]
+  [38;2;225;80;80;1m│[0m loc: [{"start":{"line":3,"column":0},"end":{"line":3,"column":9}}][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:3:1]
+ [2m2[0m │ // £
+ [2m3[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+ [2m4[0m │ // 🤨
+   ╰────
 
-  x utf16-plugin(no-debugger): debugger:
-  | start/end: [35,44]
-  | range: [35,44]
-  | loc: [{"start":{"line":6,"column":2},"end":{"line":6,"column":11}}]
-   ,-[files/index.js:6:3]
- 5 | {
- 6 |   debugger;
-   :   ^^^^^^^^^
- 7 | }
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mutf16-plugin(no-debugger): debugger:
+  [38;2;225;80;80;1m│[0m start/end: [35,44]
+  [38;2;225;80;80;1m│[0m range: [35,44]
+  [38;2;225;80;80;1m│[0m loc: [{"start":{"line":6,"column":2},"end":{"line":6,"column":11}}][0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:6:3]
+ [2m5[0m │ {
+ [2m6[0m │   debugger;
+   · [38;2;246;87;248m  ─────────[0m
+ [2m7[0m │ }
+   ╰────
 
 Found 3 warnings and 4 errors.
 Finished in Xms on 1 file using X threads.
