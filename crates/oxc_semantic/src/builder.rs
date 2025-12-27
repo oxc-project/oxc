@@ -2148,6 +2148,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_module_reference(&decl.module_reference);
         self.leave_node(kind);
     }
+
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        let kind = AstKind::VariableDeclarator(self.alloc(decl));
+        self.enter_node(kind);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_binding_pattern(&decl.id);
+        if let Some(type_annotation) = &decl.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(init) = &decl.init {
+            self.visit_expression(init);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2169,10 +2184,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::VariableDeclarator(decl) => {
-                decl.bind(self);
-            }
-
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
