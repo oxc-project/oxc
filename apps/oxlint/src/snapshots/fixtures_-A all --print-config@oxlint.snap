@@ -38,7 +38,8 @@ working directory: fixtures
       "tagNamePreference": {}
     },
     "vitest": {
-      "typecheck": false
+      "typecheck": false,
+      "vitestImports": []
     }
   },
   "env": {

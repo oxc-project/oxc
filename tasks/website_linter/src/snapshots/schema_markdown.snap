@@ -784,3 +784,13 @@ default: `false`
 Whether to enable typecheck mode for Vitest rules.
 When enabled, some rules will skip certain checks for describe blocks
 to accommodate TypeScript type checking scenarios.
+
+
+#### settings.vitest.vitestImports
+
+type: `string[]`
+
+default: `[]`
+
+When user provided an array of custom fixtures, those functions
+will be linted as well.
