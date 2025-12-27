@@ -1,5 +1,7 @@
 use std::{iter, ops::ControlFlow};
 
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
@@ -8,12 +10,37 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{Atom, ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
+
+/// Visitor to collect all identifier names referenced in an expression.
+/// This is used to quickly check if a variable name could possibly be inlined
+/// before doing an expensive expression tree traversal.
+struct IdentifierCollector<'a> {
+    identifiers: FxHashSet<Atom<'a>>,
+}
+
+impl<'a> IdentifierCollector<'a> {
+    fn new() -> Self {
+        Self { identifiers: FxHashSet::default() }
+    }
+
+    fn collect(expr: &Expression<'a>) -> FxHashSet<Atom<'a>> {
+        let mut collector = Self::new();
+        collector.visit_expression(expr);
+        collector.identifiers
+    }
+}
+
+impl<'a> Visit<'a> for IdentifierCollector<'a> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.identifiers.insert(ident.name);
+    }
+}
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -1205,6 +1232,14 @@ impl<'a> PeepholeOptimizations {
         ctx: &Ctx<'a, '_>,
         non_scoped_literal_only: bool,
     ) -> usize {
+        // Lazily collect all identifier names referenced in the target expression.
+        // This allows us to quickly skip declarators whose names aren't even present,
+        // avoiding expensive tree traversals.
+        // Only use this optimization when there are enough declarators to amortize the cost.
+        const DECLARATORS_COUNT_CACHE_THRESHOLD: usize = 2;
+        let use_identifier_cache = declarators.len() >= DECLARATORS_COUNT_CACHE_THRESHOLD;
+        let mut referenced_identifiers: Option<FxHashSet<Atom<'a>>> = None;
+
         let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
             let Some(prev_decl_init) = &mut prev_decl.init else {
                 return true;
@@ -1212,6 +1247,13 @@ impl<'a> PeepholeOptimizations {
             let BindingPattern::BindingIdentifier(prev_decl_id) = &prev_decl.id else {
                 return true;
             };
+            if use_identifier_cache
+                && !referenced_identifiers
+                    .get_or_insert_with(|| IdentifierCollector::collect(target_expr))
+                    .contains(&prev_decl_id.name)
+            {
+                return true;
+            }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
