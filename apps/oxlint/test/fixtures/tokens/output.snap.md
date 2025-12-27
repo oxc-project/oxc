@@ -485,8 +485,295 @@
    : ^^^^^^^^^^^^^^^^^^^
    `----
 
-Found 0 warnings and 49 errors.
-Finished in Xms on 2 files using X threads.
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | const Component = () => {
+   : ^^^^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:15   range= 6-15    "Component"
+  | Punctuator        loc= 1:16 - 1:17  range= 16-17   "="
+  | Punctuator        loc= 1:18 - 1:19  range= 18-19   "("
+  | Punctuator        loc= 1:19 - 1:20  range= 19-20   ")"
+  | Punctuator        loc= 1:21 - 1:23  range= 21-23   "=>"
+  | Punctuator        loc= 1:24 - 1:25  range= 24-25   "{"
+  | Keyword           loc= 2:2 - 2:8    range= 28-34   "return"
+  | Punctuator        loc= 2:9 - 2:10   range= 35-36   "<"
+  | JSXIdentifier     loc= 2:10 - 2:13  range= 36-39   "div"
+  | JSXIdentifier     loc= 2:14 - 2:23  range= 40-49   "className"
+  | Punctuator        loc= 2:23 - 2:24  range= 49-50   "="
+  | JSXText           loc= 2:24 - 2:30  range= 50-56   "\"test\""
+  | Punctuator        loc= 2:30 - 2:31  range= 56-57   ">"
+  | JSXText           loc= 2:31 - 2:36  range= 57-62   "Hello"
+  | Punctuator        loc= 2:36 - 2:37  range= 62-63   "<"
+  | Punctuator        loc= 2:37 - 2:38  range= 63-64   "/"
+  | JSXIdentifier     loc= 2:38 - 2:41  range= 64-67   "div"
+  | Punctuator        loc= 2:41 - 2:42  range= 67-68   ">"
+  | Punctuator        loc= 2:42 - 2:43  range= 68-69   ";"
+  | Punctuator        loc= 3:0 - 3:1    range= 70-71   "}"
+  | Punctuator        loc= 3:1 - 3:2    range= 71-72   ";"
+  | Keyword           loc= 6:0 - 6:6    range= 107-113 "export"
+  | Punctuator        loc= 6:7 - 6:8    range= 114-115 "{"
+  | Identifier        loc= 6:9 - 6:18   range= 116-125 "Component"
+  | Punctuator        loc= 6:19 - 6:20  range= 126-127 "}"
+  | Punctuator        loc= 6:20 - 6:21  range= 127-128 ";"
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | ,-> const Component = () => {
+ 2 | |     return <div className="test">Hello</div>;
+ 3 | |   };
+ 4 | |   
+ 5 | |   // A comment after the component
+ 6 | `-> export { Component };
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:15   range= 6-15    "Component"
+  | Punctuator        loc= 1:16 - 1:17  range= 16-17   "="
+  | Punctuator        loc= 1:18 - 1:19  range= 18-19   "("
+  | Punctuator        loc= 1:19 - 1:20  range= 19-20   ")"
+  | Punctuator        loc= 1:21 - 1:23  range= 21-23   "=>"
+  | Punctuator        loc= 1:24 - 1:25  range= 24-25   "{"
+  | Keyword           loc= 2:2 - 2:8    range= 28-34   "return"
+  | Punctuator        loc= 2:9 - 2:10   range= 35-36   "<"
+  | JSXIdentifier     loc= 2:10 - 2:13  range= 36-39   "div"
+  | JSXIdentifier     loc= 2:14 - 2:23  range= 40-49   "className"
+  | Punctuator        loc= 2:23 - 2:24  range= 49-50   "="
+  | JSXText           loc= 2:24 - 2:30  range= 50-56   "\"test\""
+  | Punctuator        loc= 2:30 - 2:31  range= 56-57   ">"
+  | JSXText           loc= 2:31 - 2:36  range= 57-62   "Hello"
+  | Punctuator        loc= 2:36 - 2:37  range= 62-63   "<"
+  | Punctuator        loc= 2:37 - 2:38  range= 63-64   "/"
+  | JSXIdentifier     loc= 2:38 - 2:41  range= 64-67   "div"
+  | Punctuator        loc= 2:41 - 2:42  range= 67-68   ">"
+  | Punctuator        loc= 2:42 - 2:43  range= 68-69   ";"
+  | Punctuator        loc= 3:0 - 3:1    range= 70-71   "}"
+  | Punctuator        loc= 3:1 - 3:2    range= 71-72   ";"
+  | Line              loc= 5:0 - 5:32   range= 74-106  " A comment after the component"
+  | Keyword           loc= 6:0 - 6:6    range= 107-113 "export"
+  | Punctuator        loc= 6:7 - 6:8    range= 114-115 "{"
+  | Identifier        loc= 6:9 - 6:18   range= 116-125 "Component"
+  | Punctuator        loc= 6:19 - 6:20  range= 126-127 "}"
+  | Punctuator        loc= 6:20 - 6:21  range= 127-128 ";"
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | ,-> const Component = () => {
+ 2 | |     return <div className="test">Hello</div>;
+ 3 | |   };
+ 4 | |   
+ 5 | |   // A comment after the component
+ 6 | `-> export { Component };
+   `----
+
+  x tokens-plugin(tokens): Identifier ("Component")
+   ,-[files/jsx_element.tsx:1:7]
+ 1 | const Component = () => {
+   :       ^^^^^^^^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/jsx_element.tsx:1:17]
+ 1 | const Component = () => {
+   :                 ^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("(")
+   ,-[files/jsx_element.tsx:1:19]
+ 1 | const Component = () => {
+   :                   ^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (")")
+   ,-[files/jsx_element.tsx:1:20]
+ 1 | const Component = () => {
+   :                    ^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=>")
+   ,-[files/jsx_element.tsx:1:22]
+ 1 | const Component = () => {
+   :                      ^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/jsx_element.tsx:1:25]
+ 1 | const Component = () => {
+   :                         ^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Keyword ("return")
+   ,-[files/jsx_element.tsx:2:3]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :   ^^^^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<")
+   ,-[files/jsx_element.tsx:2:10]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :          ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): JSXIdentifier ("div")
+   ,-[files/jsx_element.tsx:2:11]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :           ^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): JSXIdentifier ("className")
+   ,-[files/jsx_element.tsx:2:15]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :               ^^^^^^^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/jsx_element.tsx:2:24]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                        ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): JSXText ("\"test\"")
+   ,-[files/jsx_element.tsx:2:25]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                         ^^^^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (">")
+   ,-[files/jsx_element.tsx:2:31]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                               ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): JSXText ("Hello")
+   ,-[files/jsx_element.tsx:2:32]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                ^^^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<")
+   ,-[files/jsx_element.tsx:2:37]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                     ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("/")
+   ,-[files/jsx_element.tsx:2:38]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                      ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): JSXIdentifier ("div")
+   ,-[files/jsx_element.tsx:2:39]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                       ^^^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (">")
+   ,-[files/jsx_element.tsx:2:42]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                          ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/jsx_element.tsx:2:43]
+ 1 | const Component = () => {
+ 2 |   return <div className="test">Hello</div>;
+   :                                           ^
+ 3 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/jsx_element.tsx:3:1]
+ 2 |   return <div className="test">Hello</div>;
+ 3 | };
+   : ^
+ 4 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/jsx_element.tsx:3:2]
+ 2 |   return <div className="test">Hello</div>;
+ 3 | };
+   :  ^
+ 4 | 
+   `----
+
+  x tokens-plugin(tokens): Line (" A comment after the component")
+   ,-[files/jsx_element.tsx:5:1]
+ 4 | 
+ 5 | // A comment after the component
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | export { Component };
+   `----
+
+  x tokens-plugin(tokens): Keyword ("export")
+   ,-[files/jsx_element.tsx:6:1]
+ 5 | // A comment after the component
+ 6 | export { Component };
+   : ^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/jsx_element.tsx:6:8]
+ 5 | // A comment after the component
+ 6 | export { Component };
+   :        ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("Component")
+   ,-[files/jsx_element.tsx:6:10]
+ 5 | // A comment after the component
+ 6 | export { Component };
+   :          ^^^^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/jsx_element.tsx:6:20]
+ 5 | // A comment after the component
+ 6 | export { Component };
+   :                    ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/jsx_element.tsx:6:21]
+ 5 | // A comment after the component
+ 6 | export { Component };
+   :                     ^
+   `----
+
+Found 0 warnings and 79 errors.
+Finished in Xms on 3 files using X threads.
 ```
 
 # stderr
