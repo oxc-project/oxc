@@ -2172,6 +2172,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_class_elements(&body.body);
         self.leave_node(kind);
     }
+
+    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
+        let kind = AstKind::PrivateIdentifier(self.alloc(ident));
+        self.enter_node(kind);
+        self.class_table_builder.add_private_identifier_reference(
+            ident,
+            self.current_node_id,
+            &self.nodes,
+        );
+        self.visit_span(&ident.span);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2193,13 +2205,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::PrivateIdentifier(ident) => {
-                self.class_table_builder.add_private_identifier_reference(
-                    ident,
-                    self.current_node_id,
-                    &self.nodes,
-                );
-            }
             AstKind::BindingRestElement(element) => {
                 element.bind(self);
             }
