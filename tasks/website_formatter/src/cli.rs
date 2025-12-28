@@ -25,5 +25,5 @@ pub fn print_cli() {
 
 fn generate_cli() -> String {
     let markdown = format_command().render_markdown("oxfmt");
-    generate_cli_docs(&markdown, "oxfmt", None)
+    generate_cli_docs(&markdown, "oxfmt")
 }

@@ -105,9 +105,6 @@ Arguments:
 
 
 
-> [!NOTE]
-> `.gitignore` is only respected inside a Git repository.
-
 ## Handle Warnings
 - **`    --quiet`** &mdash; 
   Disable reporting on warnings, only errors are reported
