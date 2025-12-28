@@ -2332,6 +2332,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&ident.span);
         self.leave_node(kind);
     }
+
+    fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
+        let kind = AstKind::YieldExpression(self.alloc(expr));
+        self.enter_node(kind);
+        // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
+        // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
+        *self.nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
+        self.visit_span(&expr.span);
+        if let Some(argument) = &expr.argument {
+            self.visit_expression(argument);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2369,11 +2382,6 @@ impl<'a> SemanticBuilder<'a> {
                 if let Some(label) = &label {
                     self.unused_labels.reference(&label.name);
                 }
-            }
-            AstKind::YieldExpression(_) => {
-                // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
-                // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
-                *self.nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
