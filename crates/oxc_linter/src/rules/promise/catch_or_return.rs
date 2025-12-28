@@ -137,6 +137,11 @@ impl Rule for CatchOrReturn {
             return;
         }
 
+        // Check if this expression statement is being returned (implicitly or explicitly)
+        if is_in_returned_context(node, ctx) {
+            return;
+        }
+
         if self.is_allowed_promise_termination(call_expr) {
             return;
         }
@@ -221,6 +226,30 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
     };
 
     is_cypress_call(object_call_expr)
+}
+
+/// Check if an ExpressionStatement is in a context where it's being returned
+/// (either explicitly via return statement, or implicitly via arrow function)
+fn is_in_returned_context(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    // Check if parent is a FunctionBody
+    let AstKind::FunctionBody(_function_body) = parent.kind() else {
+        return false;
+    };
+
+    // Check if the FunctionBody belongs to an arrow function with expression body
+    let grandparent = ctx.nodes().parent_node(parent.id());
+
+    // If it's an arrow function with expression = true, it's implicitly returned
+    if let AstKind::ArrowFunctionExpression(arrow_func) = grandparent.kind() {
+        return arrow_func.expression;
+    }
+
+    // For regular functions or arrow functions with block bodies,
+    // we need to check if there's an explicit return
+    // (This is already handled by the fact that return statements don't contain ExpressionStatements)
+    false
 }
 
 #[test]
@@ -313,6 +342,16 @@ fn test() {
         // Cypress
         ("cy.get('.myClass').then(go)", None),
         ("cy.get('button').click().then()", None),
+        // Arrow functions with implicit return (should pass)
+        ("const a = () => Promise.resolve(null)", None),
+        ("const b = () => Promise.resolve({ id: '' })", None),
+        ("const obj = { method: () => Promise.resolve(null) }", None),
+        ("const obj = { openLinkModalPrompt: () => Promise.resolve(null) }", None),
+        ("const arr = [() => Promise.resolve(null)]", None),
+        ("foo(() => Promise.resolve(null))", None),
+        // Arrow functions with explicit block and return (should pass)
+        ("const a = () => { return Promise.resolve(null); }", None),
+        ("function a() { const b = () => Promise.resolve(null); return b; }", None),
     ];
 
     let fail = vec![
@@ -346,6 +385,9 @@ fn test() {
         ("frank().catch(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
         ("frank().catch(go).someOtherMethod()", None),
         ("frank()['catch'](go).someOtherMethod()", None),
+        // Arrow functions with block body but no return (should fail)
+        ("const a = () => { Promise.resolve(null); }", None),
+        ("function a() { const b = () => { Promise.resolve(null); }; return b; }", None),
     ];
 
     Tester::new(CatchOrReturn::NAME, CatchOrReturn::PLUGIN, pass, fail).test_and_snapshot();
