@@ -2374,6 +2374,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_class_implements(&mut self, implements: &TSClassImplements<'a>) {
+        let kind = AstKind::TSClassImplements(self.alloc(implements));
+        self.enter_node(kind);
+        // class A implements B {}
+        //         ^^^^^^^^^^^^
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.visit_span(&implements.span);
+        self.visit_ts_type_name(&implements.expression);
+        if let Some(type_arguments) = &implements.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2395,10 +2409,7 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSClassImplements(_) | AstKind::TSTypeReference(_) => {
-                // class A implements B {}
-                //         ^^^^^^^^^^^^
-
+            AstKind::TSTypeReference(_) => {
                 self.current_reference_flags = ReferenceFlags::Type;
             }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
