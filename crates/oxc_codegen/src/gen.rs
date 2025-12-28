@@ -2823,18 +2823,18 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        let name = if let Some(private_member_mappings) = &p.private_member_mappings
-            && let Some(mangled) = p.current_class_ids().find_map(|class_id| {
-                private_member_mappings.get(class_id).and_then(|m| m.get(self.name.as_str()))
-            }) {
-            (*mangled).clone()
-        } else {
-            self.name.into_compact_str()
-        };
-
         p.print_ascii_byte(b'#');
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(name.as_str());
+
+        if let Some(mangled) = p.private_member_mappings.as_ref().and_then(|mappings| {
+            p.current_class_ids()
+                .find_map(|class_id| mappings.get(class_id).and_then(|m| m.get(self.name.as_str())))
+                .cloned()
+        }) {
+            p.print_str(mangled.as_str());
+        } else {
+            p.print_str(self.name.as_str());
+        }
     }
 }
 
