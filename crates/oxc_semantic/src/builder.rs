@@ -2345,6 +2345,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        let kind = AstKind::CallExpression(self.alloc(expr));
+        self.enter_node(kind);
+        if !expr.optional && expr.callee.is_specific_id("eval") {
+            self.scoping.scope_flags_mut(self.current_scope_id).insert(ScopeFlags::DirectEval);
+        }
+        self.visit_span(&expr.span);
+        self.visit_expression(&expr.callee);
+        if let Some(type_arguments) = &expr.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.visit_arguments(&expr.arguments);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2381,13 +2396,6 @@ impl<'a> SemanticBuilder<'a> {
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
                     self.unused_labels.reference(&label.name);
-                }
-            }
-            AstKind::CallExpression(call_expr) => {
-                if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
-                    self.scoping
-                        .scope_flags_mut(self.current_scope_id)
-                        .insert(ScopeFlags::DirectEval);
                 }
             }
             _ => {}
