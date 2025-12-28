@@ -66,4 +66,14 @@ mod test {
         let options = FormatOptions::try_from(json).unwrap();
         assert!(options.config_path.is_none());
     }
+
+    #[test]
+    fn test_empty_string_config_path() {
+        let json = json!({
+            "fmt.configPath": ""
+        });
+
+        let options = FormatOptions::try_from(json).unwrap();
+        assert_eq!(options.config_path, Some(String::new()));
+    }
 }

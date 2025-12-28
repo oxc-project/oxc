@@ -115,7 +115,7 @@ impl ServerFormatterBuilder {
     }
 
     fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
-        if let Some(config_path) = config_path {
+        if let Some(config_path) = config_path.filter(|s| !s.is_empty()) {
             let config = normalize_path(root_path.join(config_path));
             if config.try_exists().is_ok_and(|exists| exists) {
                 return Some(config);
@@ -215,7 +215,7 @@ impl Tool for ServerFormatter {
             }
         };
 
-        if let Some(config_path) = options.config_path.as_ref() {
+        if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
             return vec![config_path.clone()];
         }
 
@@ -415,6 +415,20 @@ mod test_watchers {
             .get_watcher_patterns();
             assert_eq!(patterns.len(), 1);
             assert_eq!(patterns[0], "configs/formatter.json");
+        }
+
+        #[test]
+        fn test_empty_string_config_path() {
+            let patterns = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.configPath": ""
+                }),
+            )
+            .get_watcher_patterns();
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], ".oxfmtrc.json");
+            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
         }
     }
 
