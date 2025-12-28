@@ -6,10 +6,7 @@
 
 // @ts-expect-error - internal module of ESLint with no types
 import CodePathAnalyzer from "../../node_modules/eslint/lib/linter/code-path-analysis/code-path-analyzer.js";
-// @ts-expect-error - internal module of ESLint with no types
-import Traverser from "../../node_modules/eslint/lib/shared/traverser.js";
 
-import { VisitNodeStep, CallMethodStep } from "@eslint/plugin-kit";
 import visitorKeys from "../generated/keys.ts";
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
@@ -20,18 +17,29 @@ import type { Node, Program } from "../generated/types.d.ts";
 import type { CompiledVisitors } from "../generated/walk.js";
 
 /**
- * Step to walk AST.
+ * Step type encoding:
+ * - 0 = enter visit (visiting a node, enter phase)
+ * - 1 = exit visit (visiting a node, exit phase)
+ * - 2 = call method (CFG event)
  */
-type Step = VisitNodeStep | CallMethodStep;
+const STEP_TYPE_ENTER_VISIT = 0;
+const STEP_TYPE_EXIT_VISIT = 1;
+const STEP_TYPE_CALL_METHOD = 2;
 
-const STEP_KIND_VISIT = 1;
+// Struct of Arrays (SoA) pattern for step storage.
+// Using separate arrays for each property improves memory locality and V8 optimization.
 
-const STEP_PHASE_ENTER = 1;
-const STEP_PHASE_EXIT = 2;
+/** Step types: 0=enter visit, 1=exit visit, 2=call method */
+const stepTypes: number[] = [];
 
-// Array of steps to walk AST.
-// Singleton array which is re-used for each walk, and emptied after each walk.
-const steps: Step[] = [];
+/** For visit steps: target node. For call steps: null */
+const stepTargets: (Node | null)[] = [];
+
+/** Pre-computed type IDs (node type ID or CFG event ID) */
+const stepTypeIds: number[] = [];
+
+/** For call steps only: args array. For visit steps: null */
+const stepArgs: (unknown[] | null)[] = [];
 
 /**
  * Reset state for walking AST with CFG.
@@ -40,7 +48,10 @@ const steps: Step[] = [];
  * So it's only necessary to call this function if an error occurs during AST walking.
  */
 export function resetCfgWalk(): void {
-  steps.length = 0;
+  stepTypes.length = 0;
+  stepTargets.length = 0;
+  stepTypeIds.length = 0;
+  stepArgs.length = 0;
 }
 
 /**
@@ -54,13 +65,10 @@ export function resetCfgWalk(): void {
  *
  * 1. First time to build the CFG graph.
  *    In this first pass, it builds a list of steps to walk AST (including visiting nodes and CFG events).
- *    This list is stored in `steps` array.
+ *    This list is stored in the SoA arrays (stepTypes, stepTargets, stepTypeIds, stepArgs).
  *
  * 2. Visit AST with provided visitor.
  *    Run through the steps, in order, calling visit functions for each step.
- *
- * TODO: This is copied from ESLint and is not very efficient. We could improve its performance in many ways.
- * See TODO comments in the code below for some ideas for optimization.
  *
  * @param ast - AST
  * @param visitors - Visitors array
@@ -70,104 +78,131 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
   prepareSteps(ast);
 
   // Walk the AST
-  const stepsLen = steps.length;
-  debugAssert(stepsLen > 0, "`steps` should not be empty");
+  const stepsLen = stepTypes.length;
+  debugAssert(stepsLen > 0, "`stepTypes` should not be empty");
 
   for (let i = 0; i < stepsLen; i++) {
-    const step = steps[i];
-    if (step.kind === STEP_KIND_VISIT) {
-      const node = step.target as Node;
+    const stepType = stepTypes[i];
+    const typeId = stepTypeIds[i];
 
-      if (step.phase === STEP_PHASE_ENTER) {
-        // Enter node - can be leaf or non-leaf node
-        const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
-        const visit = visitors[typeId];
-        if (typeId < LEAF_NODE_TYPES_COUNT) {
-          // Leaf node
-          if (visit !== null) {
-            typeAssertIs<VisitFn>(visit);
-            visit(node);
-          }
-          // Don't add node to `ancestors`, because we don't visit them on exit
-        } else {
-          // Non-leaf node
-          if (visit !== null) {
-            typeAssertIs<EnterExit>(visit);
-            const { enter } = visit;
-            if (enter !== null) enter(node);
-          }
+    if (stepType === STEP_TYPE_ENTER_VISIT) {
+      // Enter node - can be leaf or non-leaf node
+      const node = stepTargets[i]!;
+      const visit = visitors[typeId];
 
-          ancestors.unshift(node);
+      if (typeId < LEAF_NODE_TYPES_COUNT) {
+        // Leaf node
+        if (visit != null) {
+          typeAssertIs<VisitFn>(visit);
+          visit(node);
         }
+        // Don't add node to `ancestors`, because we don't visit them on exit
       } else {
-        // Exit non-leaf node
-        ancestors.shift();
-
-        const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
-        const enterExit = visitors[typeId];
-        if (enterExit !== null) {
-          typeAssertIs<EnterExit>(enterExit);
-          const { exit } = enterExit;
-          if (exit !== null) exit(node);
+        // Non-leaf node
+        if (visit != null) {
+          typeAssertIs<EnterExit>(visit);
+          const { enter } = visit;
+          if (enter != null) enter(node);
         }
+
+        ancestors.unshift(node);
+      }
+    } else if (stepType === STEP_TYPE_EXIT_VISIT) {
+      // Exit non-leaf node
+      ancestors.shift();
+
+      const enterExit = visitors[typeId];
+      if (enterExit != null) {
+        typeAssertIs<EnterExit>(enterExit);
+        const { exit } = enterExit;
+        if (exit != null) exit(stepTargets[i]!);
       }
     } else {
-      const eventId = NODE_TYPE_IDS_MAP.get(step.target)!;
-      const visit = visitors[eventId];
-      if (visit !== null) {
-        (visit as any).apply(undefined, step.args);
+      // Call method (CFG event)
+      const visit = visitors[typeId];
+      if (visit != null && typeof visit === "function") {
+        visit.apply(undefined, stepArgs[i]);
       }
     }
   }
 
-  // Reset `steps` array
-  steps.length = 0;
+  // Reset all SoA arrays
+  stepTypes.length = 0;
+  stepTargets.length = 0;
+  stepTypeIds.length = 0;
+  stepArgs.length = 0;
+}
+
+// Pre-computed array check for performance
+const { isArray } = Array;
+
+/**
+ * Lightweight AST traverser for CFG building.
+ * This is a simplified version that only calls enter/leave callbacks,
+ * without building ancestors array or other overhead.
+ *
+ * @param node - AST node to traverse
+ * @param enter - Callback for entering a node
+ * @param leave - Callback for leaving a node
+ */
+function traverseNode(
+  node: Node | null | undefined,
+  enter: (node: Node) => void,
+  leave: (node: Node) => void,
+): void {
+  if (node == null) return;
+
+  if (isArray(node)) {
+    const len = node.length;
+    for (let i = 0; i < len; i++) {
+      traverseNode(node[i], enter, leave);
+    }
+    return;
+  }
+
+  // Enter the node
+  enter(node);
+
+  // Traverse children using visitorKeys
+  const keys = visitorKeys[node.type as keyof typeof visitorKeys];
+  if (keys != null) {
+    const keysLen = keys.length;
+    for (let i = 0; i < keysLen; i++) {
+      const child = (node as any)[keys[i]];
+      if (child != null) {
+        traverseNode(child, enter, leave);
+      }
+    }
+  }
+
+  // Leave the node
+  leave(node);
 }
 
 /**
- * Walk AST and put a list of all steps to walk AST into `steps` array.
+ * Walk AST and put a list of all steps to walk AST into the SoA arrays.
  * @param ast - AST
  */
 function prepareSteps(ast: Program) {
-  debugAssert(steps.length === 0, "`steps` should be empty at start of `prepareSteps`");
+  debugAssert(stepTypes.length === 0, "`stepTypes` should be empty at start of `prepareSteps`");
 
-  // Length of `steps` array after entering each node.
+  // Length of step arrays after entering each node.
   // Used in debug build to check that no leaf nodes emit CFG events (see below).
   // Minifier removes this var in release build.
   let stepsLenAfterEnter = 0;
 
   // Create `CodePathAnalyzer`.
-  // It stores steps to walk AST.
-  //
-  // This is really inefficient code.
-  // We could improve it in several ways (in ascending order of complexity):
-  //
-  // * Get rid of the bloated `VisitNodeStep` and `CallMethodStep` classes. Just use plain objects.
-  // * Combine `step.kind` and `step.phase` into a single `step.type` property.
-  // * Reduce object creation by storing steps as 2 arrays (struct of arrays pattern):
-  //   * Array 1: Step type (number).
-  //   * Array 2: Step data - AST node object for enter/exit node steps, args for CFG events.
-  // * Alternatively, use a single array containing step objects as now, but recycle the objects
-  //   (SoA option is probably better).
-  // * Avoid repeated conversions from `type` (string) to `typeId` (number) when iterating through steps.
-  //   * Generate separate `enterNode` / `exitNode` functions for each node type.
-  //   * Set them on `analyzer.original` before calling `analyzer.enterNode` / `analyzer.exitNode`.
-  //   * These functions would know the type ID of the node already, and then could store type ID in steps.
-  //   * When iterating through steps, use that type ID instead of converting `node.type` to `typeId` every time.
-  // * Copy `CodePathAnalyzer` code into this repo and rewrite it to work entirely with type IDs instead of strings.
-  //
-  // TODO: Apply these optimizations (or at least some of them).
+  // It stores steps to walk AST in the SoA arrays.
   const analyzer = new CodePathAnalyzer({
     enterNode(node: Node) {
-      steps.push(
-        new VisitNodeStep({
-          target: node,
-          phase: STEP_PHASE_ENTER,
-          args: [node],
-        }),
-      );
+      const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
 
-      if (DEBUG) stepsLenAfterEnter = steps.length;
+      stepTypes.push(STEP_TYPE_ENTER_VISIT);
+      stepTargets.push(node);
+      stepTypeIds.push(typeId);
+      stepArgs.push(null);
+
+      if (DEBUG) stepsLenAfterEnter = stepTypes.length;
     },
 
     leaveNode(node: Node) {
@@ -175,13 +210,10 @@ function prepareSteps(ast: Program) {
 
       if (typeId >= LEAF_NODE_TYPES_COUNT) {
         // Non-leaf node
-        steps.push(
-          new VisitNodeStep({
-            target: node,
-            phase: STEP_PHASE_EXIT,
-            args: [node],
-          }),
-        );
+        stepTypes.push(STEP_TYPE_EXIT_VISIT);
+        stepTargets.push(node);
+        stepTypeIds.push(typeId);
+        stepArgs.push(null);
       } else {
         // Leaf node.
         // Don't add a step.
@@ -193,8 +225,23 @@ function prepareSteps(ast: Program) {
         // But if CFG events were emitted between entering node and exiting node, then the order the rule's
         // visit functions are called in would be wrong.
         // `exit` visit fn would be called before the CFG event handlers, instead of after.
-        if (DEBUG && steps.length !== stepsLenAfterEnter) {
-          const eventNames = steps.slice(stepsLenAfterEnter).map((step) => step.target) as string[];
+        if (DEBUG && stepTypes.length !== stepsLenAfterEnter) {
+          const eventNames: string[] = [];
+          for (let j = stepsLenAfterEnter; j < stepTypes.length; j++) {
+            if (stepTypes[j] === STEP_TYPE_CALL_METHOD) {
+              // Get event name from the CFG event ID
+              // We need to reverse lookup the event name from typeId
+              // Since stepArgs contains the args for CFG events, we use a different approach
+              const eventTypeId = stepTypeIds[j];
+              // Find the event name by iterating NODE_TYPE_IDS_MAP
+              for (const [name, id] of NODE_TYPE_IDS_MAP) {
+                if (id === eventTypeId) {
+                  eventNames.push(name);
+                  break;
+                }
+              }
+            }
+          }
           throw new Error(
             `CFG events emitted during visiting leaf node \`${node.type}\`: ${eventNames.join(", ")}`,
           );
@@ -202,28 +249,20 @@ function prepareSteps(ast: Program) {
       }
     },
 
-    emit(eventName: string, args: any[]) {
-      steps.push(
-        new CallMethodStep({
-          target: eventName,
-          args,
-        }),
-      );
+    emit(eventName: string, args: unknown[]) {
+      const typeId = NODE_TYPE_IDS_MAP.get(eventName)!;
+
+      stepTypes.push(STEP_TYPE_CALL_METHOD);
+      stepTargets.push(null);
+      stepTypeIds.push(typeId);
+      stepArgs.push(args);
     },
   });
 
-  // Walk AST passing enter and exit event to the `CodePathAnalyzer`
-  //
-  // TODO: Use a faster walker.
-  // Could use our own `walkProgram`, though that builds `ancestors` array unnecessarily, which is probably slow.
-  // Would be better to generate a separate walker for this purpose.
-  Traverser.traverse(ast, {
-    enter(node: Node) {
-      analyzer.enterNode(node);
-    },
-    leave(node: Node) {
-      analyzer.leaveNode(node);
-    },
-    visitorKeys,
-  });
+  // Walk AST using our lightweight traverser instead of ESLint's Traverser
+  traverseNode(
+    ast,
+    (node) => analyzer.enterNode(node),
+    (node) => analyzer.leaveNode(node),
+  );
 }

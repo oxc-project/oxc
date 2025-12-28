@@ -90,9 +90,6 @@ importers:
       '@arethetypeswrong/core':
         specifier: 'catalog:'
         version: 0.18.2
-      '@eslint/plugin-kit':
-        specifier: ^0.5.0
-        version: 0.5.0
       '@napi-rs/cli':
         specifier: 'catalog:'
         version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
@@ -1000,10 +997,6 @@ packages:
     resolution: {integrity: sha512-78Md3/Rrxh83gCxoUc0EiciuOHsIITzLy53m3d9UyiW8y9Dj2D29FeETqyKA+BRK76tnTp6RXWb3pCay8Oyomg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@eslint/core@1.0.0':
-    resolution: {integrity: sha512-PRfWP+8FOldvbApr6xL7mNCw4cJcSTq4GA7tYbgq15mRb0kWKO/wEB2jr+uwjFH3sZvEZneZyCUGTxsv4Sahyw==}
-    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-
   '@eslint/eslintrc@3.3.3':
     resolution: {integrity: sha512-Kr+LPIUVKz2qkx1HAMH8q1q6azbqBAsXJUxBl/ODDuVPX45Z9DfwB8tPjTi6nNZ8BuM3nbJxC5zCAg5elnBUTQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1019,10 +1012,6 @@ packages:
   '@eslint/plugin-kit@0.3.5':
     resolution: {integrity: sha512-Z5kJ+wU3oA7MMIqVR9tyZRtjYPr4OC004Q4Rw7pgOKUOKkJfZ3O24nz3WYfGRpMDNmcOi3TwQOmgm7B7Tpii0w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@eslint/plugin-kit@0.5.0':
-    resolution: {integrity: sha512-rSXBsAcmx80jI9OUevyNBU0f5pZRQJkNmk4bLX6hCbm1qKe5Z/TcU7vwXc2nR8814mhRlgbZIHL1+HSiYS0VkQ==}
-    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6062,10 +6051,6 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
 
-  '@eslint/core@1.0.0':
-    dependencies:
-      '@types/json-schema': 7.0.15
-
   '@eslint/eslintrc@3.3.3':
     dependencies:
       ajv: 6.12.6
@@ -6087,11 +6072,6 @@ snapshots:
   '@eslint/plugin-kit@0.3.5':
     dependencies:
       '@eslint/core': 0.15.2
-      levn: 0.4.1
-
-  '@eslint/plugin-kit@0.5.0':
-    dependencies:
-      '@eslint/core': 1.0.0
       levn: 0.4.1
 
   '@humanfs/core@0.19.1': {}
