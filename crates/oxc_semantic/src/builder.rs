@@ -2261,6 +2261,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
         self.leave_node(kind);
     }
+
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
+        if let Some(type_parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_ts_interface_heritages(&decl.extends);
+        self.visit_ts_interface_body(&decl.body);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2282,9 +2298,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSInterfaceDeclaration(interface_declaration) => {
-                interface_declaration.bind(self);
-            }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
