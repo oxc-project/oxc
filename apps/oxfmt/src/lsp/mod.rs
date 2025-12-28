@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use oxc_language_server::{ExternalFormatterBridge, ServerFormatterBuilder, run_server};
 use serde_json::Value;
+use tokio::task::block_in_place;
 
 use crate::core::{
     ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
@@ -13,7 +14,7 @@ struct NapiExternalFormatterBridge {
 
 impl ExternalFormatterBridge for NapiExternalFormatterBridge {
     fn init(&self, num_threads: usize) -> Result<(), String> {
-        self.formatter.init(num_threads).map(|_| ())
+        block_in_place(|| self.formatter.init(num_threads).map(|_| ()))
     }
 
     fn format_file(
@@ -23,7 +24,7 @@ impl ExternalFormatterBridge for NapiExternalFormatterBridge {
         file: &str,
         code: &str,
     ) -> Result<String, String> {
-        self.formatter.format_file(options, parser, file, code)
+        block_in_place(|| self.formatter.format_file(options, parser, file, code))
     }
 }
 
