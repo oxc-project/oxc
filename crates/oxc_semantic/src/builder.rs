@@ -2324,6 +2324,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let kind = AstKind::IdentifierReference(self.alloc(ident));
+        self.enter_node(kind);
+        self.reference_identifier(ident);
+        self.visit_span(&ident.span);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2355,9 +2363,6 @@ impl<'a> SemanticBuilder<'a> {
                 //         ^^^^^^^^^^^^
 
                 self.current_reference_flags = ReferenceFlags::Type;
-            }
-            AstKind::IdentifierReference(ident) => {
-                self.reference_identifier(ident);
             }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
