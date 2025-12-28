@@ -2091,6 +2091,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         let kind = AstKind::TSTypeQuery(self.alloc(ty));
         self.enter_node(kind);
+        // type A = typeof a;
+        //          ^^^^^^^^
+        self.current_reference_flags = ReferenceFlags::ValueAsType;
         self.visit_span(&ty.span);
         self.visit_ts_type_query_expr_name(&ty.expr_name);
         if let Some(type_arguments) = &ty.type_arguments {
@@ -2342,11 +2345,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSTypeQuery(_) => {
-                // type A = typeof a;
-                //          ^^^^^^^^
-                self.current_reference_flags = ReferenceFlags::ValueAsType;
-            }
             AstKind::TSInterfaceHeritage(_)
             | AstKind::TSClassImplements(_)
             | AstKind::TSTypeReference(_) => {
