@@ -2360,6 +2360,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_arguments(&expr.arguments);
         self.leave_node(kind);
     }
+
+    fn visit_ts_interface_heritage(&mut self, heritage: &TSInterfaceHeritage<'a>) {
+        let kind = AstKind::TSInterfaceHeritage(self.alloc(heritage));
+        self.enter_node(kind);
+        // interface A extends B {}
+        //             ^^^^^^^^^
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.visit_span(&heritage.span);
+        self.visit_expression(&heritage.expression);
+        if let Some(type_arguments) = &heritage.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2381,12 +2395,7 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSInterfaceHeritage(_)
-            | AstKind::TSClassImplements(_)
-            | AstKind::TSTypeReference(_) => {
-                // interface A extends B {}
-                //             ^^^^^^^^^
-                //
+            AstKind::TSClassImplements(_) | AstKind::TSTypeReference(_) => {
                 // class A implements B {}
                 //         ^^^^^^^^^^^^
 
