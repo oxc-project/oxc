@@ -240,6 +240,18 @@ fn is_var_declarator_or_test_block<'a>(
             if additional_test_block_functions.contains(&node_name) {
                 return true;
             }
+
+            // Check if this CallExpression is an argument to a test block
+            // This handles cases like: it('test', wrapperFn(() => { expect(...) }))
+            let parent = ctx.nodes().parent_node(node.id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
+                );
+            }
         }
         AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
             let mut current = node;
