@@ -284,9 +284,13 @@
     ]
   },
   "activationEvents": [
+    "onLanguage:css",
     "onLanguage:astro",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
+    "onLanguage:json",
+    "onLanguage:jsonc",
+    "onLanguage:markdown",
     "onLanguage:svelte",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
