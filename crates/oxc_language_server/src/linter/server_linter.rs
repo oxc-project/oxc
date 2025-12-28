@@ -57,7 +57,10 @@ impl ServerLinterBuilder {
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
             Self::create_nested_configs(&root_path, &options, &mut nested_ignore_patterns);
-        let config_path = options.config_path.as_ref().map_or(LINT_CONFIG_FILE, |v| v);
+        let config_path = match options.config_path.as_deref() {
+            Some("") | None => LINT_CONFIG_FILE,
+            Some(v) => v,
+        };
         let config = normalize_path(root_path.join(config_path));
         let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
             if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
@@ -383,9 +386,11 @@ impl Tool for ServerLinter {
                 LSPLintOptions::default()
             }
         };
-        let mut watchers = vec![
-            options.config_path.as_ref().unwrap_or(&"**/.oxlintrc.json".to_string()).to_owned(),
-        ];
+        let config_pattern = match options.config_path.as_deref() {
+            Some("") | None => "**/.oxlintrc.json".to_string(),
+            Some(v) => v.to_string(),
+        };
+        let mut watchers = vec![config_pattern];
 
         for path in &self.extended_paths {
             // ignore .oxlintrc.json files when using nested configs
@@ -815,6 +820,20 @@ mod test_watchers {
         fn test_default_options() {
             let patterns =
                 Tester::new("fixtures/linter/watchers/default", json!({})).get_watcher_patterns();
+
+            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+        }
+
+        #[test]
+        fn test_empty_string_config_path() {
+            let patterns = Tester::new(
+                "fixtures/linter/watchers/default",
+                json!({
+                    "configPath": ""
+                }),
+            )
+            .get_watcher_patterns();
 
             assert_eq!(patterns.len(), 1);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
