@@ -2103,6 +2103,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_property_signature(&mut self, sig: &TSPropertySignature<'a>) {
         let kind = AstKind::TSPropertySignature(self.alloc(sig));
         self.enter_node(kind);
+        if sig.key.is_expression() {
+            // interface A { [prop]: string }
+            //               ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+            self.current_reference_flags = ReferenceFlags::ValueAsType;
+        }
         self.visit_span(&sig.span);
         self.visit_property_key(&sig.key);
         if let Some(type_annotation) = &sig.type_annotation {
@@ -2337,13 +2342,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSPropertySignature(signature) => {
-                if signature.key.is_expression() {
-                    // interface A { [prop]: string }
-                    //               ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
-                    self.current_reference_flags = ReferenceFlags::ValueAsType;
-                }
-            }
             AstKind::TSTypeQuery(_) => {
                 // type A = typeof a;
                 //          ^^^^^^^^
