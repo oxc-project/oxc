@@ -90,6 +90,14 @@ jobs:
           mv target/release/deps/${{ matrix.component }}-* target/codspeed/simulation/oxc_benchmark
           rm target/codspeed/simulation/oxc_benchmark/*.d
 
+      # Download github.com/calcom/cal.com repository for linter benchmark
+      - name: Download files for benchmark
+        if: ${{ matrix.component == 'linter' }}
+        run: |
+          REPOSITORY="https://github.com/calcom/cal.com"
+          git clone --depth 1 $REPOSITORY calcom
+          echo "CALCOM_PATH=$(pwd)/calcom/apps/web" >> $GITHUB_ENV
+
       - name: Run benchmark
         uses: CodSpeedHQ/action@972e3437949c89e1357ebd1a2dbc852fcbc57245 # v4.5.1
         timeout-minutes: 30
