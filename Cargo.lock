@@ -1963,6 +1963,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_format_support"
+version = "0.1.0"
+dependencies = [
+ "json-strip-comments",
+ "oxc_formatter",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "oxc_formatter"
 version = "0.20.0"
 dependencies = [
@@ -2027,6 +2037,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_format_support",
  "oxc_formatter",
  "oxc_linter",
  "oxc_parser",

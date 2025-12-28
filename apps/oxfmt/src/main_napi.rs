@@ -62,7 +62,12 @@ pub async fn run_cli(
         Mode::Init => ("init".to_string(), None),
         Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
         Mode::Lsp => {
-            run_lsp().await;
+            run_lsp(
+                init_external_formatter_cb,
+                format_embedded_cb,
+                format_file_cb,
+            )
+            .await;
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {

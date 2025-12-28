@@ -58,6 +58,7 @@ impl Tester<'_> {
         ServerFormatterBuilder::build(
             &Self::get_root_uri(self.relative_root_dir),
             self.options.clone(),
+            None,
         )
     }
 

@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use log::{debug, warn};
@@ -9,21 +10,38 @@ use oxc_formatter::{
     oxfmtrc::{OxfmtOptions, Oxfmtrc},
 };
 use oxc_parser::Parser;
+use serde_json::Value;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
 use crate::{
     capabilities::Capabilities,
-    formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
+    formatter::{ExternalFormatterBridge, FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
     tool::{Tool, ToolBuilder, ToolRestartChanges},
     utils::normalize_path,
 };
 
-pub struct ServerFormatterBuilder;
+#[cfg(feature = "lsp-prettier")]
+use oxc_format_support::{PrettierFileStrategy, detect_prettier_file, load_oxfmtrc};
+
+#[derive(Clone, Default)]
+pub struct ServerFormatterBuilder {
+    external_bridge: Option<Arc<dyn ExternalFormatterBridge>>,
+}
 
 impl ServerFormatterBuilder {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
+    pub fn new(external_bridge: Option<Arc<dyn ExternalFormatterBridge>>) -> Self {
+        Self { external_bridge }
+    }
+
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn build(
+        root_uri: &Uri,
+        options: serde_json::Value,
+        external_bridge: Option<Arc<dyn ExternalFormatterBridge>>,
+    ) -> ServerFormatter {
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(err) => {
@@ -49,7 +67,10 @@ impl ServerFormatterBuilder {
                 }
             };
 
-        ServerFormatter::new(format_options, gitignore_glob)
+        let (external_options, external_bridge) =
+            Self::resolve_external_options(&root_path, external_bridge);
+
+        ServerFormatter::new(format_options, gitignore_glob, external_options, external_bridge)
     }
 }
 
@@ -63,7 +84,11 @@ impl ToolBuilder for ServerFormatterBuilder {
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerFormatterBuilder::build(root_uri, options))
+        Box::new(ServerFormatterBuilder::build(
+            root_uri,
+            options,
+            self.external_bridge.clone(),
+        ))
     }
 }
 
@@ -152,10 +177,47 @@ impl ServerFormatterBuilder {
 
         builder.build().map_err(|_| "Failed to build ignore globs".to_string())
     }
+
+    fn resolve_external_options(
+        _root_path: &Path,
+        external_bridge: Option<Arc<dyn ExternalFormatterBridge>>,
+    ) -> (Value, Option<Arc<dyn ExternalFormatterBridge>>) {
+        #[cfg(feature = "lsp-prettier")]
+        {
+            let mut external_options = Value::Object(serde_json::Map::new());
+            let mut external_bridge = external_bridge;
+
+            match load_oxfmtrc(_root_path) {
+                Ok((_, options)) => {
+                    external_options = options;
+                }
+                Err(err) => {
+                    debug!("Failed to load .oxfmtrc for external formatter: {err}");
+                }
+            }
+
+            if let Some(bridge) = external_bridge.as_ref() {
+                if let Err(err) = bridge.init(1) {
+                    debug!("Failed to initialize external formatter bridge: {err}");
+                    external_bridge = None;
+                }
+            }
+
+            return (external_options, external_bridge);
+        }
+
+        #[cfg(not(feature = "lsp-prettier"))]
+        {
+            (Value::Object(serde_json::Map::new()), external_bridge)
+        }
+    }
 }
 pub struct ServerFormatter {
     options: FormatOptions,
     gitignore_glob: Option<Gitignore>,
+    #[cfg_attr(not(feature = "lsp-prettier"), allow(dead_code))]
+    external_options: Value,
+    external_bridge: Option<Arc<dyn ExternalFormatterBridge>>,
 }
 
 impl Tool for ServerFormatter {
@@ -196,7 +258,11 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
+        let new_formatter = ServerFormatterBuilder::build(
+            root_uri,
+            new_options_json.clone(),
+            self.external_bridge.clone(),
+        );
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
@@ -230,7 +296,8 @@ impl Tool for ServerFormatter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, options);
+        let new_formatter =
+            ServerFormatterBuilder::build(root_uri, options, self.external_bridge.clone());
 
         ToolRestartChanges {
             tool: Some(Box::new(new_formatter)),
@@ -249,7 +316,6 @@ impl Tool for ServerFormatter {
             return None;
         }
 
-        let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
         // Declaring Variable to satisfy borrow checker
         let file_content;
         let source_text = if let Some(content) = content {
@@ -268,6 +334,53 @@ impl Tool for ServerFormatter {
             &file_content
         };
 
+        #[cfg(feature = "lsp-prettier")]
+        if let Some(strategy) = detect_prettier_file(&path) {
+            let PrettierFileStrategy::External { parser_name } = strategy;
+            let Some(bridge) = &self.external_bridge else {
+                debug!(
+                    "External formatter bridge not available for {}",
+                    path.display()
+                );
+                return None;
+            };
+
+            let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+            let code = match bridge.format_file(
+                &self.external_options,
+                parser_name,
+                file_name,
+                source_text,
+            ) {
+                Ok(code) => code,
+                Err(err) => {
+                    debug!(
+                        "External formatter failed for {}: {err}",
+                        path.display()
+                    );
+                    return None;
+                }
+            };
+
+            if code == *source_text {
+                return Some(vec![]);
+            }
+
+            let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
+            let rope = Rope::from(source_text);
+            let (start_line, start_character) = get_line_column(&rope, start, source_text);
+            let (end_line, end_character) = get_line_column(&rope, end, source_text);
+
+            return Some(vec![TextEdit::new(
+                Range::new(
+                    Position::new(start_line, start_character),
+                    Position::new(end_line, end_character),
+                ),
+                replacement.to_string(),
+            )]);
+        }
+
+        let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(get_parse_options())
@@ -300,8 +413,13 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    pub fn new(options: FormatOptions, gitignore_glob: Option<Gitignore>) -> Self {
-        Self { options, gitignore_glob }
+    pub fn new(
+        options: FormatOptions,
+        gitignore_glob: Option<Gitignore>,
+        external_options: Value,
+        external_bridge: Option<Arc<dyn ExternalFormatterBridge>>,
+    ) -> Self {
+        Self { options, gitignore_glob, external_options, external_bridge }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -377,7 +495,7 @@ mod tests_builder {
     fn test_server_capabilities() {
         use tower_lsp_server::ls_types::{OneOf, ServerCapabilities};
 
-        let builder = ServerFormatterBuilder;
+        let builder = ServerFormatterBuilder::default();
         let mut capabilities = ServerCapabilities::default();
 
         builder.server_capabilities(&mut capabilities, &Capabilities::default());
@@ -466,7 +584,9 @@ mod tests {
     use serde_json::json;
 
     use super::compute_minimal_text_edit;
-    use crate::formatter::tester::Tester;
+    use crate::formatter::tester::{Tester, get_file_uri};
+    use crate::tool::Tool;
+    use crate::ServerFormatterBuilder;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -603,5 +723,14 @@ mod tests {
             }),
         )
         .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+    }
+
+    #[test]
+    fn test_prettier_only_without_bridge() {
+        let root_uri = Tester::get_root_uri("fixtures/formatter/prettier_only");
+        let formatter = ServerFormatterBuilder::build(&root_uri, json!({}), None);
+        let uri = get_file_uri("fixtures/formatter/prettier_only/sample.json");
+        let formatted = formatter.run_format(&uri, None);
+        assert!(formatted.is_none());
     }
 }
