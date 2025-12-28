@@ -602,9 +602,9 @@ impl Gen for CatchClause<'_> {
         p.print_str("catch");
         if let Some(param) = &self.param {
             p.print_soft_space();
-            p.print_str("(");
+            p.print_ascii_byte(b'(');
             param.pattern.print(p, ctx);
-            p.print_str(")");
+            p.print_ascii_byte(b')');
         }
         p.print_soft_space();
         p.print_comments_at(self.body.span.start);
@@ -728,7 +728,7 @@ impl Gen for Function<'_> {
             if let Some(this_param) = &self.this_param {
                 this_param.print(p, ctx);
                 if !self.params.is_empty() || self.params.rest.is_some() {
-                    p.print_str(",");
+                    p.print_ascii_byte(b',');
                     p.print_soft_space();
                 }
             }
@@ -792,7 +792,7 @@ impl Gen for FormalParameter<'_> {
         }
         self.pattern.print(p, ctx);
         if self.optional {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
@@ -1449,7 +1449,7 @@ impl GenExpr for PrivateFieldExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         }
         p.print_ascii_byte(b'.');
         self.field.print(p, ctx);
@@ -1625,7 +1625,7 @@ impl Gen for ObjectProperty<'_> {
                     p.print_soft_space();
                 }
                 if func.generator {
-                    p.print_str("*");
+                    p.print_ascii_byte(b'*');
                 }
                 if self.computed {
                     p.print_ascii_byte(b'[');
@@ -1732,7 +1732,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                 self.params.print(p, ctx);
             });
             if let Some(return_type) = &self.return_type {
-                p.print_str(":");
+                p.print_colon();
                 p.print_soft_space();
                 return_type.print(p, ctx);
             }
@@ -2309,14 +2309,14 @@ impl GenExpr for TSInstantiationExpression<'_> {
 impl GenExpr for TSTypeAssertion<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.print_str("<");
+            p.print_ascii_byte(b'<');
             // var r = < <T>(x: T) => T > ((x) => { return null; });
             //          ^ make sure space is printed here.
             if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
                 p.print_hard_space();
             }
             self.type_annotation.print(p, ctx);
-            p.print_str(">");
+            p.print_ascii_byte(b'>');
             self.expression.print_expr(p, Precedence::Member, ctx);
         });
     }
@@ -2556,7 +2556,7 @@ impl Gen for JSXElement<'_> {
         }
         if self.closing_element.is_none() {
             p.print_soft_space();
-            p.print_str("/");
+            p.print_ascii_byte(b'/');
         }
         p.print_ascii_byte(b'>');
 
@@ -2679,7 +2679,7 @@ impl Gen for MethodDefinition<'_> {
             p.print_soft_space();
         }
         if self.value.generator {
-            p.print_str("*");
+            p.print_ascii_byte(b'*');
         }
         if self.computed {
             p.print_ascii_byte(b'[');
@@ -2698,7 +2698,7 @@ impl Gen for MethodDefinition<'_> {
         if let Some(this_param) = &self.value.this_param {
             this_param.print(p, ctx);
             if !self.value.params.is_empty() || self.value.params.rest.is_some() {
-                p.print_str(",");
+                p.print_ascii_byte(b',');
                 p.print_soft_space();
             }
         }
@@ -2755,7 +2755,7 @@ impl Gen for PropertyDefinition<'_> {
             p.print_ascii_byte(b']');
         }
         if self.optional {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
@@ -3012,7 +3012,7 @@ impl Gen for TSTypeParameterDeclaration<'_> {
         } else if p.is_jsx {
             // `<T,>() => {}`
             //    ^ We need a comma here, otherwise it will be regarded as a JSX element.
-            p.print_str(",");
+            p.print_ascii_byte(b',');
         }
         p.print_ascii_byte(b'>');
     }
@@ -3078,9 +3078,9 @@ impl Gen for TSArrayType<'_> {
 
 impl Gen for TSTupleType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_str("[");
+        p.print_ascii_byte(b'[');
         p.print_list(&self.element_types, ctx);
-        p.print_str("]");
+        p.print_ascii_byte(b']');
     }
 }
 
@@ -3101,7 +3101,7 @@ impl Gen for TSUnionType<'_> {
         });
         for item in rest {
             p.print_soft_space();
-            p.print_str("|");
+            p.print_ascii_byte(b'|');
             p.print_soft_space();
             p.wrap(parenthesize_check_type_of_conditional_type(item), |p| {
                 item.print(p, ctx);
@@ -3126,7 +3126,7 @@ impl Gen for TSIntersectionType<'_> {
         first.print(p, ctx);
         for item in rest {
             p.print_soft_space();
-            p.print_str("&");
+            p.print_ascii_byte(b'&');
             p.print_soft_space();
             item.print(p, ctx);
         }
@@ -3155,15 +3155,15 @@ impl Gen for TSInferType<'_> {
 impl Gen for TSIndexedAccessType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.object_type.print(p, ctx);
-        p.print_str("[");
+        p.print_ascii_byte(b'[');
         self.index_type.print(p, ctx);
-        p.print_str("]");
+        p.print_ascii_byte(b']');
     }
 }
 
 impl Gen for TSMappedType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_str("{");
+        p.print_ascii_byte(b'{');
         p.print_soft_space();
         match self.readonly {
             Some(TSMappedTypeModifierOperator::True) => p.print_str("readonly "),
@@ -3171,7 +3171,7 @@ impl Gen for TSMappedType<'_> {
             Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-readonly "),
             None => {}
         }
-        p.print_str("[");
+        p.print_ascii_byte(b'[');
         self.type_parameter.name.print(p, ctx);
         if let Some(constraint) = &self.type_parameter.constraint {
             p.print_str(" in ");
@@ -3185,28 +3185,28 @@ impl Gen for TSMappedType<'_> {
             p.print_str(" as ");
             name_type.print(p, ctx);
         }
-        p.print_str("]");
+        p.print_ascii_byte(b']');
         match self.optional {
-            Some(TSMappedTypeModifierOperator::True) => p.print_str("?"),
+            Some(TSMappedTypeModifierOperator::True) => p.print_ascii_byte(b'?'),
             Some(TSMappedTypeModifierOperator::Plus) => p.print_str("+?"),
             Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-?"),
             None => {}
         }
         p.print_soft_space();
         if let Some(type_annotation) = &self.type_annotation {
-            p.print_str(":");
+            p.print_colon();
             p.print_soft_space();
             type_annotation.print(p, ctx);
         }
         p.print_soft_space();
-        p.print_str("}");
+        p.print_ascii_byte(b'}');
     }
 }
 
 impl Gen for TSQualifiedName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.left.print(p, ctx);
-        p.print_str(".");
+        p.print_ascii_byte(b'.');
         self.right.print(p, ctx);
     }
 }
@@ -3252,9 +3252,9 @@ impl Gen for JSDocNullableType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
             self.type_annotation.print(p, ctx);
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         } else {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
             self.type_annotation.print(p, ctx);
         }
     }
@@ -3264,9 +3264,9 @@ impl Gen for JSDocNonNullableType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
             self.type_annotation.print(p, ctx);
-            p.print_str("!");
+            p.print_ascii_byte(b'!');
         } else {
-            p.print_str("!");
+            p.print_ascii_byte(b'!');
             self.type_annotation.print(p, ctx);
         }
     }
@@ -3274,18 +3274,18 @@ impl Gen for JSDocNonNullableType<'_> {
 
 impl Gen for TSTemplateLiteralType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_str("`");
+        p.print_ascii_byte(b'`');
         for (index, item) in self.quasis.iter().enumerate() {
             if index != 0
                 && let Some(types) = self.types.get(index - 1)
             {
                 p.print_str("${");
                 types.print(p, ctx);
-                p.print_str("}");
+                p.print_ascii_byte(b'}');
             }
             p.print_str(item.value.raw.as_str());
         }
-        p.print_str("`");
+        p.print_ascii_byte(b'`');
     }
 }
 
@@ -3311,7 +3311,7 @@ impl Gen for TSTypeName<'_> {
             }
             Self::QualifiedName(decl) => {
                 decl.left.print(p, ctx);
-                p.print_str(".");
+                p.print_ascii_byte(b'.');
                 decl.right.print(p, ctx);
             }
             Self::ThisExpression(e) => {
@@ -3362,16 +3362,16 @@ impl Gen for TSFunctionType<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        p.print_str("(");
+        p.print_ascii_byte(b'(');
         if let Some(this_param) = &self.this_param {
             this_param.print(p, ctx);
             if !self.params.is_empty() || self.params.rest.is_some() {
-                p.print_str(",");
+                p.print_ascii_byte(b',');
                 p.print_soft_space();
             }
         }
         self.params.print(p, ctx);
-        p.print_str(")");
+        p.print_ascii_byte(b')');
         p.print_soft_space();
         p.print_str("=>");
         p.print_soft_space();
@@ -3398,16 +3398,16 @@ impl Gen for TSSignature<'_> {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
                 }
-                p.print_str("(");
+                p.print_ascii_byte(b'(');
                 if let Some(this_param) = &signature.this_param {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
-                        p.print_str(",");
+                        p.print_ascii_byte(b',');
                         p.print_soft_space();
                     }
                 }
                 signature.params.print(p, ctx);
-                p.print_str(")");
+                p.print_ascii_byte(b')');
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
@@ -3419,9 +3419,9 @@ impl Gen for TSSignature<'_> {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
                 }
-                p.print_str("(");
+                p.print_ascii_byte(b'(');
                 signature.params.print(p, ctx);
-                p.print_str(")");
+                p.print_ascii_byte(b')');
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
@@ -3455,21 +3455,21 @@ impl Gen for TSSignature<'_> {
                     }
                 }
                 if signature.optional {
-                    p.print_str("?");
+                    p.print_ascii_byte(b'?');
                 }
                 if let Some(type_parameters) = &signature.type_parameters {
                     type_parameters.print(p, ctx);
                 }
-                p.print_str("(");
+                p.print_ascii_byte(b'(');
                 if let Some(this_param) = &signature.this_param {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
-                        p.print_str(",");
+                        p.print_ascii_byte(b',');
                         p.print_soft_space();
                     }
                 }
                 signature.params.print(p, ctx);
-                p.print_str(")");
+                p.print_ascii_byte(b')');
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
@@ -3506,7 +3506,7 @@ impl Gen for TSPropertySignature<'_> {
             }
         }
         if self.optional {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
@@ -3543,7 +3543,7 @@ impl Gen for TSImportType<'_> {
             p.print_str(", ");
             options.print_expr(p, Precedence::Lowest, ctx);
         }
-        p.print_str(")");
+        p.print_ascii_byte(b')');
         if let Some(qualifier) = &self.qualifier {
             p.print_ascii_byte(b'.');
             qualifier.print(p, ctx);
@@ -3577,9 +3577,9 @@ impl Gen for TSImportTypeQualifiedName<'_> {
 
 impl Gen for TSTypeParameterInstantiation<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_str("<");
+        p.print_ascii_byte(b'<');
         p.print_list(&self.params, ctx);
-        p.print_str(">");
+        p.print_ascii_byte(b'>');
     }
 }
 
@@ -3588,10 +3588,10 @@ impl Gen for TSIndexSignature<'_> {
         if self.readonly {
             p.print_str("readonly ");
         }
-        p.print_str("[");
+        p.print_ascii_byte(b'[');
         for (index, parameter) in self.parameters.iter().enumerate() {
             if index != 0 {
-                p.print_str(",");
+                p.print_ascii_byte(b',');
                 p.print_soft_space();
             }
             p.print_str(parameter.name.as_str());
@@ -3599,7 +3599,7 @@ impl Gen for TSIndexSignature<'_> {
             p.print_soft_space();
             parameter.type_annotation.print(p, ctx);
         }
-        p.print_str("]");
+        p.print_ascii_byte(b']');
         p.print_colon();
         p.print_soft_space();
         self.type_annotation.print(p, ctx);
@@ -3612,7 +3612,7 @@ impl Gen for TSTupleElement<'_> {
             match_ts_type!(TSTupleElement) => self.to_ts_type().print(p, ctx),
             TSTupleElement::TSOptionalType(ts_type) => {
                 ts_type.type_annotation.print(p, ctx);
-                p.print_str("?");
+                p.print_ascii_byte(b'?');
             }
             TSTupleElement::TSRestType(ts_type) => {
                 p.print_str("...");
@@ -3626,9 +3626,9 @@ impl Gen for TSNamedTupleMember<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.label.print(p, ctx);
         if self.optional {
-            p.print_str("?");
+            p.print_ascii_byte(b'?');
         }
-        p.print_str(":");
+        p.print_colon();
         p.print_soft_space();
         self.element_type.print(p, ctx);
     }
@@ -3713,7 +3713,7 @@ impl Gen for TSTypeAliasDeclaration<'_> {
             type_parameters.print(p, ctx);
         }
         p.print_soft_space();
-        p.print_str("=");
+        p.print_ascii_byte(b'=');
         p.print_soft_space();
         self.type_annotation.print(p, ctx);
     }
@@ -3824,9 +3824,9 @@ impl Gen for TSConstructorType<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        p.print_str("(");
+        p.print_ascii_byte(b'(');
         self.params.print(p, ctx);
-        p.print_str(")");
+        p.print_ascii_byte(b')');
         p.print_soft_space();
         p.print_str("=>");
         p.print_soft_space();
@@ -3849,7 +3849,7 @@ impl Gen for TSModuleReference<'_> {
             Self::ExternalModuleReference(decl) => {
                 p.print_str("require(");
                 p.print_string_literal(&decl.expression, false);
-                p.print_str(")");
+                p.print_ascii_byte(b')');
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
         }
