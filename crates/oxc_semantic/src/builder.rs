@@ -693,6 +693,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
+        if let Some(label) = &stmt.label {
+            self.unused_labels.reference(label.name.as_str());
+        }
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -2458,9 +2461,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
+        #[expect(clippy::single_match, clippy::collapsible_match)]
         match kind {
-            AstKind::ContinueStatement(ContinueStatement { label, .. })
-            | AstKind::BreakStatement(BreakStatement { label, .. }) => {
+            AstKind::ContinueStatement(ContinueStatement { label, .. }) => {
                 if let Some(label) = &label {
                     self.unused_labels.reference(&label.name);
                 }
