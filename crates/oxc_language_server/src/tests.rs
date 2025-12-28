@@ -254,7 +254,28 @@ impl TestServer {
             }
         }
         let res = self.responses.pop_back().unwrap();
-        serde_json::from_str(&res).unwrap()
+        // If the next payload is a response (no `method`), keep it queued for recv_response
+        // and attempt to return the next available notification without looping.
+        let val: serde_json::Value = serde_json::from_str(&res).unwrap();
+        if val.get("method").is_some() {
+            serde_json::from_value(val).unwrap()
+        } else {
+            // Put back the response for recv_response to consume
+            self.responses.push_front(res);
+            // If another message is already queued, return it
+            if let Some(next) = self.responses.pop_back() {
+                return serde_json::from_str(&next).unwrap();
+            }
+            // Otherwise perform a single read to fetch the notification
+            let mut buf = vec![0; 1024];
+            let n = self.res_stream.read(&mut buf).await.unwrap();
+            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
+            for x in Self::decode(&ret) {
+                self.responses.push_front(x);
+            }
+            let res = self.responses.pop_back().unwrap();
+            serde_json::from_str(&res).unwrap()
+        }
     }
 
     /// Creates a new TestServer and performs the initialize and initialized sequence.
@@ -279,6 +300,23 @@ impl TestServer {
 
     async fn shutdown(&mut self, id: i64) {
         self.send_request(shutdown_request(id)).await;
+        let shutdown_result = self.recv_response().await;
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(id));
+    }
+
+    async fn shutdown_with_diagnostic_clear(&mut self, id: i64, uris_to_clear: Vec<Uri>) {
+        self.send_request(shutdown_request(id)).await;
+
+        for uri in uris_to_clear {
+            let publish_diagnostics = self.recv_notification().await;
+            assert_eq!(publish_diagnostics.method(), "textDocument/publishDiagnostics");
+            let params: PublishDiagnosticsParams =
+                serde_json::from_value(publish_diagnostics.params().unwrap().clone()).unwrap();
+            assert_eq!(params.uri, uri);
+            assert!(params.diagnostics.is_empty());
+        }
+
         let shutdown_result = self.recv_response().await;
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(id));
@@ -1117,7 +1155,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(3).await;
+        server.shutdown_with_diagnostic_clear(3, vec![uri.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1265,7 +1303,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(3).await;
+        server.shutdown_with_diagnostic_clear(3, vec![uri.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1383,7 +1421,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1413,7 +1451,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1448,7 +1486,7 @@ mod test_suite {
             format!("Fake diagnostic for content: {content}")
         );
 
-        server.shutdown(4).await;
+        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
     }
 
     #[tokio::test]

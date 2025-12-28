@@ -128,9 +128,9 @@ pub trait Tool: Send + Sync {
         // Default implementation does nothing.
     }
 
-    /// Shutdown the tool and return any necessary changes to be made after shutdown.
-    fn shutdown(&self) -> ToolShutdownChanges {
-        ToolShutdownChanges { uris_to_clear_diagnostics: None }
+    /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
+    fn shutdown(&self) {
+        // Default implementation does nothing.
     }
 }
 
@@ -141,9 +141,4 @@ pub struct ToolRestartChanges {
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
-}
-
-pub struct ToolShutdownChanges {
-    /// The URIs that need to have their diagnostics removed after the tool shutdown
-    pub uris_to_clear_diagnostics: Option<Vec<Uri>>,
 }

@@ -34,7 +34,7 @@ use crate::{
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges},
     utils::normalize_path,
 };
 
@@ -323,10 +323,6 @@ impl Tool for ServerLinter {
         "linter"
     }
 
-    fn shutdown(&self) -> ToolShutdownChanges {
-        ToolShutdownChanges { uris_to_clear_diagnostics: Some(self.get_cached_uris()) }
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -567,10 +563,6 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
         }
-    }
-
-    fn get_cached_uris(&self) -> Vec<Uri> {
-        self.code_actions.pin().keys().cloned().collect()
     }
 
     fn get_code_actions_for_uri(&self, uri: &Uri) -> Option<Vec<LinterCodeAction>> {

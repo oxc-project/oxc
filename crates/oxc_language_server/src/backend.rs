@@ -125,13 +125,15 @@ impl LanguageServer for Backend {
 
             workspace_folders
                 .into_iter()
-                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri))
+                .map(|workspace_folder| {
+                    WorkspaceWorker::new(workspace_folder.uri, !capabilities.use_push_diagnostics())
+                })
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
             Self::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
 
-            vec![WorkspaceWorker::new(root_uri)]
+            vec![WorkspaceWorker::new(root_uri, !capabilities.use_push_diagnostics())]
         // client is in single file mode, create no workers
         } else {
             vec![]
@@ -494,6 +496,9 @@ impl LanguageServer for Backend {
             self.clear_diagnostics(cleared_diagnostics).await;
         }
 
+        let is_push_diagnostics =
+            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
+
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
         {
@@ -504,7 +509,7 @@ impl LanguageServer for Backend {
                 .await;
 
             for (index, folder) in params.event.added.into_iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri);
+                let worker = WorkspaceWorker::new(folder.uri, !is_push_diagnostics);
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(options.clone(), &self.tool_builders).await;
@@ -515,7 +520,7 @@ impl LanguageServer for Backend {
         // client does not support the request
         } else {
             for folder in params.event.added {
-                let worker = WorkspaceWorker::new(folder.uri);
+                let worker = WorkspaceWorker::new(folder.uri, !is_push_diagnostics);
                 // use default options
                 worker.start_worker(serde_json::Value::Null, &self.tool_builders).await;
                 added_registrations.extend(worker.init_watchers().await);
