@@ -2289,6 +2289,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
         self.leave_node(kind);
     }
+
+    fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {
+        let kind = AstKind::TSEnumMember(self.alloc(member));
+        self.enter_node(kind);
+        member.bind(self);
+        self.visit_span(&member.span);
+        self.visit_ts_enum_member_name(&member.id);
+        if let Some(initializer) = &member.initializer {
+            self.visit_expression(initializer);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2310,9 +2322,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSEnumMember(enum_member) => {
-                enum_member.bind(self);
-            }
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
