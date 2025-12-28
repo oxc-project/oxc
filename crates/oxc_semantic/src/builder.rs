@@ -789,6 +789,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_continue_statement(&mut self, stmt: &ContinueStatement<'a>) {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
+        if let Some(label) = &stmt.label {
+            self.unused_labels.reference(label.name.as_str());
+        }
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -2460,17 +2463,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    fn enter_kind(&mut self, kind: AstKind<'a>) {
-        #[expect(clippy::single_match, clippy::collapsible_match)]
-        match kind {
-            AstKind::ContinueStatement(ContinueStatement { label, .. }) => {
-                if let Some(label) = &label {
-                    self.unused_labels.reference(&label.name);
-                }
-            }
-            _ => {}
-        }
-    }
+    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
+    fn enter_kind(&mut self, _kind: AstKind<'a>) {}
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
