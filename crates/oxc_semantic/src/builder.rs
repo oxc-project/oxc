@@ -2301,6 +2301,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_type_parameter(&mut self, param: &TSTypeParameter<'a>) {
+        let kind = AstKind::TSTypeParameter(self.alloc(param));
+        self.enter_node(kind);
+        param.bind(self);
+        self.visit_span(&param.span);
+        self.visit_binding_identifier(&param.name);
+        if let Some(constraint) = &param.constraint {
+            self.visit_ts_type(constraint);
+        }
+        if let Some(default) = &param.default {
+            self.visit_ts_type(default);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2322,9 +2337,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSTypeParameter(type_parameter) => {
-                type_parameter.bind(self);
-            }
             AstKind::TSPropertySignature(signature) => {
                 if signature.key.is_expression() {
                     // interface A { [prop]: string }
