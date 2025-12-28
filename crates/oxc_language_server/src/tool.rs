@@ -21,7 +21,7 @@ pub trait ToolBuilder: Send + Sync {
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
 
-pub type DiagnosticResult = Vec<(Uri, Vec<Diagnostic>)>;
+pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 
 pub trait Tool: Send + Sync {
     /// Get the name of the tool.
@@ -93,25 +93,34 @@ pub trait Tool: Send + Sync {
 
     /// Run diagnostics on the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
-    /// Not all tools will implement diagnostics, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on save for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
-    /// Not all tools will implement diagnostics on save, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics on save, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on change for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
-    /// Not all tools will implement diagnostics on change, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics on change, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Remove internal cache for the given URI, if any.

@@ -22,7 +22,7 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
         .expect("failed to convert file path to URL")
 }
 
-fn get_snapshot_from_diagnostic_result(diagnostic_result: &DiagnosticResult) -> String {
+fn get_snapshot_from_diagnostic_result(diagnostic_result: &[(Uri, Vec<Diagnostic>)]) -> String {
     if diagnostic_result.is_empty() {
         return "No diagnostics / Files are ignored".to_string();
     }
@@ -148,7 +148,12 @@ fn get_snapshot_from_code_action_or_command(action_or_command: &CodeActionOrComm
 }
 
 fn get_snapshot_from_report(report: &FileResult) -> String {
-    if report.diagnostic.is_empty() {
+    let diagnostics = match &report.diagnostic {
+        Err(err) => return format!("Error running diagnostics: {err}"),
+        Ok(diagnostics) => diagnostics,
+    };
+
+    if diagnostics.is_empty() {
         return "No diagnostics / Files are ignored".to_string();
     }
 
@@ -157,7 +162,7 @@ fn get_snapshot_from_report(report: &FileResult) -> String {
 {}
 ########### Code Actions/Commands
 {}",
-        get_snapshot_from_diagnostic_result(&report.diagnostic),
+        get_snapshot_from_diagnostic_result(diagnostics),
         report
             .actions
             .iter()

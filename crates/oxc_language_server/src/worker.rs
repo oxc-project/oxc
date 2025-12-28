@@ -107,7 +107,7 @@ impl WorkspaceWorker {
         uri: &Uri,
         content: Option<&str>,
         run: F,
-    ) -> Vec<(Uri, Vec<Diagnostic>)>
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
         F: Fn(&Box<dyn Tool>, &Uri, Option<&str>) -> DiagnosticResult,
     {
@@ -116,8 +116,15 @@ impl WorkspaceWorker {
         for tool in self.tools.read().await.iter() {
             let tool_diagnostics = run(tool, uri, content);
 
-            for (entry_uri, mut diags) in tool_diagnostics {
-                aggregated.entry(entry_uri).or_default().append(&mut diags);
+            match tool_diagnostics {
+                Ok(diags) => {
+                    for (entry_uri, mut diags) in diags {
+                        aggregated.entry(entry_uri).or_default().append(&mut diags);
+                    }
+                }
+                Err(err) => {
+                    return Err(err);
+                }
             }
         }
 
@@ -125,7 +132,7 @@ impl WorkspaceWorker {
         for (uri, diags) in aggregated {
             result.push((uri, diags));
         }
-        result
+        Ok(result)
     }
 
     /// Run different tools to collect diagnostics.
@@ -133,7 +140,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<&str>,
-    ) -> Vec<(Uri, Vec<Diagnostic>)> {
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(uri, content, |tool, uri, content| {
             tool.run_diagnostic(uri, content)
         })
@@ -145,7 +152,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<&str>,
-    ) -> Vec<(Uri, Vec<Diagnostic>)> {
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(uri, content, |tool, uri, content| {
             tool.run_diagnostic_on_change(uri, content)
         })
@@ -157,7 +164,7 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<&str>,
-    ) -> Vec<(Uri, Vec<Diagnostic>)> {
+    ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(uri, content, |tool, uri, content| {
             tool.run_diagnostic_on_save(uri, content)
         })
@@ -331,8 +338,15 @@ impl WorkspaceWorker {
                 let Some(file_system) = file_system else {
                     continue;
                 };
+
                 for uri in file_system.keys() {
-                    let mut reports = tool.run_diagnostic(&uri, file_system.get(&uri).as_deref());
+                    let Ok(mut reports) =
+                        tool.run_diagnostic(&uri, file_system.get(&uri).as_deref())
+                    else {
+                        // If diagnostics could not be run, skip this URI, but continue with others
+                        // TODO: Should we aggregate errors instead? One by one, or all together?
+                        continue;
+                    };
                     if !reports.is_empty() {
                         if let Some(existing_diagnostics) = &mut diagnostics {
                             existing_diagnostics.append(&mut reports);
@@ -666,41 +680,7 @@ mod tests {
 
         worker.start_worker(serde_json::Value::Null, &tools).await;
 
-        let diagnostics_no_content = worker.run_diagnostic(&uri, None).await;
-
-        assert_eq!(diagnostics_no_content.len(), 1);
-        assert_eq!(diagnostics_no_content[0].0, uri);
-        assert_eq!(diagnostics_no_content[0].1.len(), 1);
-        assert_eq!(
-            diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
-        );
-
-        let diagnostics_with_content = worker.run_diagnostic(&uri, Some("helloworld")).await;
-
-        assert_eq!(diagnostics_with_content.len(), 1);
-        assert_eq!(diagnostics_with_content[0].0, uri);
-        assert_eq!(diagnostics_with_content[0].1.len(), 1);
-        assert_eq!(
-            diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
-        );
-
-        let no_diagnostics =
-            worker.run_diagnostic(&Uri::from_str("file:///root/unknown.file").unwrap(), None).await;
-
-        assert!(no_diagnostics.is_empty());
-    }
-
-    #[tokio::test]
-    async fn test_run_diagnostic_on_change() {
-        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
-        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
-        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
-
-        worker.start_worker(serde_json::Value::Null, &tools).await;
-
-        let diagnostics_no_content = worker.run_diagnostic_on_change(&uri, None).await;
+        let diagnostics_no_content = worker.run_diagnostic(&uri, None).await.unwrap();
 
         assert_eq!(diagnostics_no_content.len(), 1);
         assert_eq!(diagnostics_no_content[0].0, uri);
@@ -711,7 +691,51 @@ mod tests {
         );
 
         let diagnostics_with_content =
-            worker.run_diagnostic_on_change(&uri, Some("helloworld")).await;
+            worker.run_diagnostic(&uri, Some("helloworld")).await.unwrap();
+
+        assert_eq!(diagnostics_with_content.len(), 1);
+        assert_eq!(diagnostics_with_content[0].0, uri);
+        assert_eq!(diagnostics_with_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_with_content[0].1[0].message,
+            "Fake diagnostic for content: helloworld"
+        );
+
+        let no_diagnostics = worker
+            .run_diagnostic(&Uri::from_str("file:///root/unknown.file").unwrap(), None)
+            .await
+            .unwrap();
+
+        assert!(no_diagnostics.is_empty());
+
+        let error = worker
+            .run_diagnostic(&Uri::from_str("file:///root/error.config").unwrap(), None)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, "Fake diagnostic error");
+    }
+
+    #[tokio::test]
+    async fn test_run_diagnostic_on_change() {
+        let worker = WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap());
+        let tools: Vec<Box<dyn ToolBuilder>> = vec![Box::new(FakeToolBuilder)];
+        let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
+
+        worker.start_worker(serde_json::Value::Null, &tools).await;
+
+        let diagnostics_no_content = worker.run_diagnostic_on_change(&uri, None).await.unwrap();
+
+        assert_eq!(diagnostics_no_content.len(), 1);
+        assert_eq!(diagnostics_no_content[0].0, uri);
+        assert_eq!(diagnostics_no_content[0].1.len(), 1);
+        assert_eq!(
+            diagnostics_no_content[0].1[0].message,
+            "Fake diagnostic for content: <no content>"
+        );
+
+        let diagnostics_with_content =
+            worker.run_diagnostic_on_change(&uri, Some("helloworld")).await.unwrap();
 
         assert_eq!(diagnostics_with_content.len(), 1);
         assert_eq!(diagnostics_with_content[0].0, uri);
@@ -723,9 +747,17 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_change(&Uri::from_str("file:///root/unknown.file").unwrap(), None)
-            .await;
+            .await
+            .unwrap();
 
         assert!(no_diagnostics.is_empty());
+
+        let error = worker
+            .run_diagnostic_on_change(&Uri::from_str("file:///root/error.config").unwrap(), None)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, "Fake diagnostic error");
     }
 
     #[tokio::test]
@@ -735,7 +767,7 @@ mod tests {
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
         worker.start_worker(serde_json::Value::Null, &tools).await;
 
-        let diagnostics_no_content = worker.run_diagnostic_on_save(&uri, None).await;
+        let diagnostics_no_content = worker.run_diagnostic_on_save(&uri, None).await.unwrap();
 
         assert_eq!(diagnostics_no_content.len(), 1);
         assert_eq!(diagnostics_no_content[0].0, uri);
@@ -746,7 +778,7 @@ mod tests {
         );
 
         let diagnostics_with_content =
-            worker.run_diagnostic_on_save(&uri, Some("helloworld")).await;
+            worker.run_diagnostic_on_save(&uri, Some("helloworld")).await.unwrap();
 
         assert_eq!(diagnostics_with_content.len(), 1);
         assert_eq!(diagnostics_with_content[0].0, uri);
@@ -758,8 +790,16 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_save(&Uri::from_str("file:///root/unknown.file").unwrap(), None)
-            .await;
+            .await
+            .unwrap();
 
         assert!(no_diagnostics.is_empty());
+
+        let error = worker
+            .run_diagnostic_on_save(&Uri::from_str("file:///root/error.config").unwrap(), None)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error, "Fake diagnostic error");
     }
 }

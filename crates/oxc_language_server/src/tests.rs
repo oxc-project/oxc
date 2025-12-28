@@ -124,7 +124,7 @@ impl Tool for FakeTool {
 
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if uri.as_str().ends_with("diagnostics.config") {
-            return vec![(
+            return Ok(vec![(
                 uri.clone(),
                 vec![Diagnostic {
                     message: format!(
@@ -133,9 +133,14 @@ impl Tool for FakeTool {
                     ),
                     ..Default::default()
                 }],
-            )];
+            )]);
         }
-        vec![]
+
+        if uri.as_str().ends_with("error.config") {
+            return Err("Fake diagnostic error".to_string());
+        }
+
+        Ok(Vec::new())
     }
 
     fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {

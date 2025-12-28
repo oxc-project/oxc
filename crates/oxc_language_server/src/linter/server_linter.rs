@@ -517,9 +517,9 @@ impl Tool for ServerLinter {
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         let Some(diagnostics) = self.run_file(uri, content) else {
-            return vec![];
+            return Ok(vec![]);
         };
-        vec![(uri.clone(), diagnostics)]
+        Ok(vec![(uri.clone(), diagnostics)])
     }
 
     /// Lint a file with the current linter
@@ -527,7 +527,7 @@ impl Tool for ServerLinter {
     /// - If the linter is not set to `OnType`, an empty vector is returned
     fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnType {
-            return vec![];
+            return Ok(vec![]);
         }
         self.run_diagnostic(uri, content)
     }
@@ -537,7 +537,7 @@ impl Tool for ServerLinter {
     /// - If the linter is not set to `OnSave`, an empty vector is returned
     fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnSave {
-            return vec![];
+            return Ok(vec![]);
         }
         self.run_diagnostic(uri, content)
     }
