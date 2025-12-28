@@ -2388,6 +2388,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_type_reference(&mut self, ty: &TSTypeReference<'a>) {
+        let kind = AstKind::TSTypeReference(self.alloc(ty));
+        self.enter_node(kind);
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.visit_span(&ty.span);
+        self.visit_ts_type_name(&ty.type_name);
+        if let Some(type_arguments) = &ty.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2409,9 +2421,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::TSTypeReference(_) => {
-                self.current_reference_flags = ReferenceFlags::Type;
-            }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
