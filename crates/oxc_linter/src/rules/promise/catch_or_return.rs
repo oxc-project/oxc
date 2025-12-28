@@ -230,11 +230,16 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
 }
 
 /// Check if an ExpressionStatement is in a context where it's being returned
-/// (either explicitly via return statement, or implicitly via arrow function)
+/// (implicitly via arrow function expression body)
+///
+/// Note: Explicit returns (via ReturnStatement) are already handled because
+/// the ExpressionStatement would be a child of ReturnStatement, not appearing
+/// as a standalone ExpressionStatement that this rule triggers on.
 fn is_in_returned_context(node: &AstNode, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
 
     // Check if parent is a FunctionBody
+    // (All arrow functions have a FunctionBody, even with expression syntax)
     let AstKind::FunctionBody(_function_body) = parent.kind() else {
         return false;
     };
@@ -242,14 +247,14 @@ fn is_in_returned_context(node: &AstNode, ctx: &LintContext) -> bool {
     // Check if the FunctionBody belongs to an arrow function with expression body
     let grandparent = ctx.nodes().parent_node(parent.id());
 
-    // If it's an arrow function with expression = true, it's implicitly returned
+    // If it's an arrow function with expression = true, the expression is implicitly returned
+    // Example: `() => Promise.resolve()` is equivalent to `() => { return Promise.resolve(); }`
     if let AstKind::ArrowFunctionExpression(arrow_func) = grandparent.kind() {
         return arrow_func.expression;
     }
 
-    // For regular functions or arrow functions with block bodies,
-    // we need to check if there's an explicit return
-    // (This is already handled by the fact that return statements don't contain ExpressionStatements)
+    // For regular functions or arrow functions with block bodies { },
+    // returning false here means we'll check for catch/return as normal
     false
 }
 
