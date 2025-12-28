@@ -1,3 +1,4 @@
+#![expect(clippy::inline_always)]
 mod nodes;
 
 pub use nodes::AstNodes;
@@ -30,7 +31,7 @@ impl<'a> AstNode<'a> {
     }
 
     /// Access the underlying struct from [`oxc_ast`].
-    #[inline]
+    #[inline(always)]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
