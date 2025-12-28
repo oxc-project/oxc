@@ -76,6 +76,7 @@ declare_oxc_lint!(
     /// function doSomethingElse() {
     ///  return myPromise.then(doSomething)
     /// }
+    /// const arrowFunc = () => myPromise.then(doSomething)
     /// ```
     CatchOrReturn,
     promise,
