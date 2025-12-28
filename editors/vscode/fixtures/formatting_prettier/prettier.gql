@@ -1,0 +1,1 @@
+query{user{id name}}
