@@ -613,12 +613,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.unresolved_references.decrement_scope_depth();
     }
 
-    // Setup all the context for the binder.
-    // The order is important here.
     // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
-        self.enter_kind(kind);
     }
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
@@ -2463,9 +2460,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
-    fn enter_kind(&mut self, _kind: AstKind<'a>) {}
-
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);
