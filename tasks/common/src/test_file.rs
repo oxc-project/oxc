@@ -59,6 +59,17 @@ impl TestFiles {
         }
     }
 
+    pub fn linter() -> Self {
+        Self {
+            files: [
+                // cal.com is excluded, since we benchmark it separately as the entire repository
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
+                "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+            ].into_iter().map(TestFile::new).collect(),
+        }
+    }
+
     pub fn minimal() -> Self {
         Self {
             files: [
