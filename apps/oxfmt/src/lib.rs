@@ -9,6 +9,11 @@ pub mod stdin;
 #[cfg(feature = "napi")]
 pub use main_napi::*;
 
-#[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(miri),
+    not(target_family = "wasm"),
+    not(target_pointer_width = "32")
+))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;

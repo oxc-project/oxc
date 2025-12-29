@@ -90,7 +90,7 @@ fn no_invalid_tokens_beyond_source() {
 }
 
 #[test]
-#[cfg(not(target_endian = "big"))] // we run big endian tests on docker that does not have node installed
+#[cfg(not(any(target_endian = "big", target_pointer_width = "32")))] // we run big endian and 32-bit tests on docker that does not have node installed
 fn stacktrace_is_correct() {
     let cases = &[
         "\
