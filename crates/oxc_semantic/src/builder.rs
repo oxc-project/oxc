@@ -613,12 +613,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.unresolved_references.decrement_scope_depth();
     }
 
-    // Setup all the context for the binder.
-    // The order is important here.
     // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
-        self.enter_kind(kind);
     }
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
@@ -693,6 +690,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
+        if let Some(label) = &stmt.label {
+            self.unused_labels.reference(label.name.as_str());
+        }
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -751,6 +751,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(self.alloc(it));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         let parent_scope_id = self.current_scope_id;
         self.enter_scope(ScopeFlags::empty(), &it.scope_id);
@@ -785,6 +786,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_continue_statement(&mut self, stmt: &ContinueStatement<'a>) {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
+        if let Some(label) = &stmt.label {
+            self.unused_labels.reference(label.name.as_str());
+        }
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -806,6 +810,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_do_while_statement(&mut self, stmt: &DoWhileStatement<'a>) {
         let kind = AstKind::DoWhileStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -1065,6 +1070,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
@@ -1135,6 +1141,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
@@ -1198,6 +1205,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
@@ -1260,6 +1268,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
         let kind = AstKind::IfStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -1333,6 +1342,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.unused_labels.add(stmt.label.name.as_str(), self.current_node_id);
 
         /* cfg */
@@ -1399,6 +1409,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.visit_expression(&stmt.discriminant);
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
@@ -1524,6 +1535,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_try_statement(&mut self, stmt: &TryStatement<'a>) {
         let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg */
 
@@ -1658,6 +1670,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
         let kind = AstKind::WhileStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -1706,6 +1719,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_with_statement(&mut self, stmt: &WithStatement<'a>) {
         let kind = AstKind::WithStatement(self.alloc(stmt));
         self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
@@ -2388,40 +2402,64 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_type_reference(&mut self, ty: &TSTypeReference<'a>) {
+        let kind = AstKind::TSTypeReference(self.alloc(ty));
+        self.enter_node(kind);
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.visit_span(&ty.span);
+        self.visit_ts_type_name(&ty.type_name);
+        if let Some(type_arguments) = &ty.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_expression_statement(&mut self, it: &ExpressionStatement<'a>) {
+        let kind = AstKind::ExpressionStatement(self.alloc(it));
+        self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        self.visit_span(&it.span);
+        self.visit_expression(&it.expression);
+        self.leave_node(kind);
+    }
+
+    fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
+        let kind = AstKind::VariableDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        self.visit_span(&it.span);
+        self.visit_variable_declarators(&it.declarations);
+        self.leave_node(kind);
+    }
+
+    fn visit_empty_statement(&mut self, it: &EmptyStatement) {
+        let kind = AstKind::EmptyStatement(self.alloc(it));
+        self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        self.visit_span(&it.span);
+        self.leave_node(kind);
+    }
+
+    fn visit_debugger_statement(&mut self, it: &DebuggerStatement) {
+        let kind = AstKind::DebuggerStatement(self.alloc(it));
+        self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        self.visit_span(&it.span);
+        self.leave_node(kind);
+    }
+
+    fn visit_export_default_declaration(&mut self, it: &ExportDefaultDeclaration<'a>) {
+        let kind = AstKind::ExportDefaultDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
+        self.visit_span(&it.span);
+        self.visit_export_default_declaration_kind(&it.declaration);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
-    fn enter_kind(&mut self, kind: AstKind<'a>) {
-        /* cfg */
-        control_flow!(self, |cfg| {
-            match kind {
-                AstKind::ReturnStatement(_)
-                | AstKind::BreakStatement(_)
-                | AstKind::ContinueStatement(_)
-                | AstKind::ThrowStatement(_) => { /* These types have their own `InstructionKind`. */
-                }
-                it if it.is_statement() => {
-                    cfg.enter_statement(self.current_node_id);
-                }
-                _ => { /* ignore the rest */ }
-            }
-        });
-        /* cfg */
-
-        match kind {
-            AstKind::TSTypeReference(_) => {
-                self.current_reference_flags = ReferenceFlags::Type;
-            }
-            AstKind::ContinueStatement(ContinueStatement { label, .. })
-            | AstKind::BreakStatement(BreakStatement { label, .. }) => {
-                if let Some(label) = &label {
-                    self.unused_labels.reference(&label.name);
-                }
-            }
-            _ => {}
-        }
-    }
-
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);

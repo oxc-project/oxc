@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use futures::future::join_all;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use rustc_hash::FxBuildHasher;
 use serde_json::Value;
 use tokio::sync::{OnceCell, RwLock, SetError};
@@ -15,7 +15,8 @@ use tower_lsp_server::{
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit, Uri,
+        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit,
+        Uri,
     },
 };
 
@@ -124,13 +125,15 @@ impl LanguageServer for Backend {
 
             workspace_folders
                 .into_iter()
-                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri))
+                .map(|workspace_folder| {
+                    WorkspaceWorker::new(workspace_folder.uri, !capabilities.use_push_diagnostics())
+                })
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
             Self::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
 
-            vec![WorkspaceWorker::new(root_uri)]
+            vec![WorkspaceWorker::new(root_uri, !capabilities.use_push_diagnostics())]
         // client is in single file mode, create no workers
         } else {
             vec![]
@@ -227,7 +230,15 @@ impl LanguageServer for Backend {
                     }
                     let content = self.file_system.read().await.get(uri);
                     let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
-                    new_diagnostics.extend(diagnostics);
+                    match diagnostics {
+                        Err(err) => {
+                            error!("running diagnostics for {} failed: {err}", uri.as_str());
+                            if self.capabilities.get().is_some_and(|cap| cap.show_message) {
+                                self.client.show_message(MessageType::ERROR, err).await;
+                            }
+                        }
+                        Ok(diagnostics) => new_diagnostics.extend(diagnostics),
+                    }
                 }
             }
 
@@ -485,6 +496,9 @@ impl LanguageServer for Backend {
             self.clear_diagnostics(cleared_diagnostics).await;
         }
 
+        let is_push_diagnostics =
+            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
+
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
         {
@@ -495,7 +509,7 @@ impl LanguageServer for Backend {
                 .await;
 
             for (index, folder) in params.event.added.into_iter().enumerate() {
-                let worker = WorkspaceWorker::new(folder.uri);
+                let worker = WorkspaceWorker::new(folder.uri, !is_push_diagnostics);
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(options.clone(), &self.tool_builders).await;
@@ -506,7 +520,7 @@ impl LanguageServer for Backend {
         // client does not support the request
         } else {
             for folder in params.event.added {
-                let worker = WorkspaceWorker::new(folder.uri);
+                let worker = WorkspaceWorker::new(folder.uri, !is_push_diagnostics);
                 // use default options
                 worker.start_worker(serde_json::Value::Null, &self.tool_builders).await;
                 added_registrations.extend(worker.init_watchers().await);
@@ -543,9 +557,19 @@ impl LanguageServer for Backend {
         };
 
         if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
-            let diagnostics = worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await;
-            if !diagnostics.is_empty() {
-                self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default()).await;
+            match worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await {
+                Err(err) => {
+                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
+                        self.client.show_message(MessageType::ERROR, err).await;
+                    }
+                }
+                Ok(diagnostics) => {
+                    if !diagnostics.is_empty() {
+                        self.publish_all_diagnostics(diagnostics, ConcurrentHashMap::default())
+                            .await;
+                    }
+                }
             }
         }
     }
@@ -566,11 +590,20 @@ impl LanguageServer for Backend {
         }
 
         if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
-            let diagnostics = worker.run_diagnostic_on_change(&uri, content.as_deref()).await;
-            if !diagnostics.is_empty() {
-                let version_map = ConcurrentHashMap::default();
-                version_map.pin().insert(uri.clone(), params.text_document.version);
-                self.publish_all_diagnostics(diagnostics, version_map).await;
+            match worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
+                Err(err) => {
+                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
+                        self.client.show_message(MessageType::ERROR, err).await;
+                    }
+                }
+                Ok(diagnostics) => {
+                    if !diagnostics.is_empty() {
+                        let version_map = ConcurrentHashMap::default();
+                        version_map.pin().insert(uri.clone(), params.text_document.version);
+                        self.publish_all_diagnostics(diagnostics, version_map).await;
+                    }
+                }
             }
         }
     }
@@ -591,11 +624,20 @@ impl LanguageServer for Backend {
         self.file_system.write().await.set(uri.clone(), content.clone());
 
         if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
-            let diagnostics = worker.run_diagnostic(&uri, Some(&content)).await;
-            if !diagnostics.is_empty() {
-                let version_map = ConcurrentHashMap::default();
-                version_map.pin().insert(uri.clone(), params.text_document.version);
-                self.publish_all_diagnostics(diagnostics, version_map).await;
+            match worker.run_diagnostic(&uri, Some(&content)).await {
+                Err(err) => {
+                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
+                        self.client.show_message(MessageType::ERROR, err).await;
+                    }
+                }
+                Ok(diagnostics) => {
+                    if !diagnostics.is_empty() {
+                        let version_map = ConcurrentHashMap::default();
+                        version_map.pin().insert(uri.clone(), params.text_document.version);
+                        self.publish_all_diagnostics(diagnostics, version_map).await;
+                    }
+                }
             }
         }
     }
@@ -679,6 +721,18 @@ impl LanguageServer for Backend {
         };
         let diagnostics =
             worker.run_diagnostic(uri, self.file_system.read().await.get(uri).as_deref()).await;
+
+        let diagnostics = match diagnostics {
+            Err(err) => {
+                error!("running diagnostics for {} failed: {err}", uri.as_str());
+                return Err(Error {
+                    code: ErrorCode::ServerError(1),
+                    message: Cow::Owned(err),
+                    data: None,
+                });
+            }
+            Ok(diagnostics) => diagnostics,
+        };
 
         let uri_diagnostics = diagnostics
             .iter()

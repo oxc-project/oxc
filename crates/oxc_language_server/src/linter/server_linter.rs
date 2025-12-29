@@ -34,7 +34,7 @@ use crate::{
         isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     },
-    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolShutdownChanges},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges},
     utils::normalize_path,
 };
 
@@ -323,10 +323,6 @@ impl Tool for ServerLinter {
         "linter"
     }
 
-    fn shutdown(&self) -> ToolShutdownChanges {
-        ToolShutdownChanges { uris_to_clear_diagnostics: Some(self.get_cached_uris()) }
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -517,9 +513,9 @@ impl Tool for ServerLinter {
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         let Some(diagnostics) = self.run_file(uri, content) else {
-            return vec![];
+            return Ok(vec![]);
         };
-        vec![(uri.clone(), diagnostics)]
+        Ok(vec![(uri.clone(), diagnostics)])
     }
 
     /// Lint a file with the current linter
@@ -527,7 +523,7 @@ impl Tool for ServerLinter {
     /// - If the linter is not set to `OnType`, an empty vector is returned
     fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnType {
-            return vec![];
+            return Ok(vec![]);
         }
         self.run_diagnostic(uri, content)
     }
@@ -537,7 +533,7 @@ impl Tool for ServerLinter {
     /// - If the linter is not set to `OnSave`, an empty vector is returned
     fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
         if self.run != Run::OnSave {
-            return vec![];
+            return Ok(vec![]);
         }
         self.run_diagnostic(uri, content)
     }
@@ -567,10 +563,6 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
         }
-    }
-
-    fn get_cached_uris(&self) -> Vec<Uri> {
-        self.code_actions.pin().keys().cloned().collect()
     }
 
     fn get_code_actions_for_uri(&self, uri: &Uri) -> Option<Vec<LinterCodeAction>> {
