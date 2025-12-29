@@ -1,16 +1,16 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
@@ -24,7 +24,7 @@ fn consistent_vitest_vi_diagnostic(span: Span, fn_value: &VitestFnName) -> OxcDi
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentVitestVi(Box<ConsistentVitestConfig>);
 
 impl std::ops::Deref for ConsistentVitestVi {
@@ -35,7 +35,7 @@ impl std::ops::Deref for ConsistentVitestVi {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum VitestFnName {
     #[default]
@@ -101,10 +101,9 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentVitestVi {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config: ConsistentVitestConfig =
-            value.get(0).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
-
-        Self(Box::new(config))
+        serde_json::from_value::<DefaultRuleConfig<ConsistentVitestVi>>(value)
+            .unwrap_or_default()
+            .into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -133,7 +132,7 @@ impl Rule for ConsistentVitestVi {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
-                                    .map(|spec| spec.name())
+                                    .map(ImportDeclarationSpecifier::name)
                                     .collect()
                             })
                             .unwrap_or_default();
