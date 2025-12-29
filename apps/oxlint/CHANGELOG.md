@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 267e255 linter/react: Implement react/no-did-mount-set-state (#17313) (Kenzo Wada)
+- 5cc7c90 linter/plugins: Pass `env` from Rust to JS (#17291) (overlookmotel)
+- b97101a linter: Implement aria/proptypes (#17253) (mehm8128)
+
+### 🐛 Bug Fixes
+
+- fec2863 linter: Respect `.gitignore` regardless of if a git repo is initialized (#17375) (copilot-swe-agent)
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+- 7eaa660 linter/plugins: Set up global scope correctly (#17293) (overlookmotel)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🚀 Features
