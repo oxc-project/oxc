@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 289bff7 transformer: Export `ESFeature` from options (#17347) (shulaoda)
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+### ⚡ Performance
+
+- e35049b transformer: Avoid unneccessary vec allocation (#17270) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### ⚡ Performance
