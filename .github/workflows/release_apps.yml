@@ -119,9 +119,6 @@ jobs:
       - name: Build Rust binary
         run: cross build --release -p oxlint --features allocator --target=${{ matrix.target }}
 
-      - name: Build language server
-        run: cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
-
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive oxlint .node binary
         uses: ./.github/actions/archive-binary
@@ -137,13 +134,6 @@ jobs:
           binary_name: oxlint-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
           archive_name: rust-oxlint-${{ matrix.code-target }}
 
-      - name: Archive language server binary
-        uses: ./.github/actions/archive-binary
-        with:
-          source_path: target/${{ matrix.target }}/release/oxc_language_server${{ runner.os == 'Windows' && '.exe' || '' }}
-          binary_name: oxc_language_server-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
-          archive_name: oxc_language_server-${{ matrix.code-target }}
-
       - name: Upload Binary
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
@@ -152,8 +142,6 @@ jobs:
           path: |
             oxlint**.zip
             oxlint**.tar.gz
-            oxc_language_server**.zip
-            oxc_language_server**.tar.gz
 
       # For github release
       - name: Upload Binary

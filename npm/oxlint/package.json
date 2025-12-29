@@ -16,14 +16,12 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "bin": {
-    "oxc_language_server": "bin/oxc_language_server",
     "oxlint": "bin/oxlint"
   },
   "files": [
     "configuration_schema.json",
     "dist",
     "README.md",
-    "bin/oxc_language_server",
     "bin/oxlint"
   ],
   "type": "module",
