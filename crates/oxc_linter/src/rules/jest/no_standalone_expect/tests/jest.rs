@@ -103,6 +103,15 @@ fn test() {
             });",
             None,
         ),
+        (
+            r"import {fakeAsync} from '@angular/core/testing';
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
+        (
+            r"describe('App', () => { it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -180,6 +189,7 @@ fn test() {
             None,
         ),
         ("describe.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
+        (r"describe('App', () => { wrapperFn(() => { expect(true).toBeTruthy(); }); });", None),
         (
             "
                 import { expect as pleaseExpect } from '@jest/globals';
