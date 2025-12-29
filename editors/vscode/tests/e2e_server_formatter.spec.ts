@@ -73,7 +73,7 @@ suite('E2E Server Formatter', () => {
 
       await sleep(500);
 
-      const expectedJson = "{\n  \"a\": 1,\n  \"b\": [1, 2]\n}\n";
+      const expectedJson = "{ \"a\": 1, \"b\": [1, 2] }\n";
       const expectedCss = ".foo {\n  color: red;\n}\n";
       const expectedMarkdown = "# Title\n\n- a\n- b\n";
 
@@ -84,9 +84,9 @@ suite('E2E Server Formatter', () => {
         ["prettier.md", expectedMarkdown],
       ];
 
+      // oxlint-disable eslint/no-await-in-loop -- VS Code formatting must be run sequentially per file.
       for (const [file, expected] of cases) {
         const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', file);
-        const original = (await workspace.fs.readFile(fileUri)).toString();
         const document = await workspace.openTextDocument(fileUri);
         await window.showTextDocument(document);
         await commands.executeCommand('editor.action.formatDocument');
@@ -94,10 +94,9 @@ suite('E2E Server Formatter', () => {
         const content = await workspace.fs.readFile(fileUri);
 
         const actual = content.toString();
-        const matchesExpected = actual === expected;
-        const matchesOriginal = actual === original;
-        strictEqual(matchesExpected || matchesOriginal, true, `${file} should be formatted or unchanged`);
+        strictEqual(actual, expected, `${file} should be formatted`);
       }
+      // oxlint-enable eslint/no-await-in-loop
     });
 
 });
