@@ -1,7 +1,9 @@
+use std::borrow::Cow;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -13,14 +15,12 @@ use crate::{
 };
 
 fn consistent_vitest_vi_diagnostic(span: Span, fn_value: &VitestFnName) -> OxcDiagnostic {
-    let message = format!(
-        "Prefer using `{}` instead of `{}`.",
-        fn_value.get_string(),
-        fn_value.get_opposite_accessor()
-    );
-
     OxcDiagnostic::warn("The vitest function accessor used is not allowed")
-        .with_help(message)
+        .with_help(format!(
+            "Prefer using `{}` instead of `{}`.",
+            fn_value.as_str(),
+            fn_value.not().as_str()
+        ))
         .with_label(span)
 }
 
@@ -44,17 +44,17 @@ pub enum VitestFnName {
 }
 
 impl VitestFnName {
-    fn get_opposite_accessor(&self) -> CompactStr {
+    fn not(&self) -> Self {
         match self {
-            VitestFnName::Vi => CompactStr::new("vitest"),
-            VitestFnName::Vitest => CompactStr::new("vi"),
+            VitestFnName::Vi => VitestFnName::Vitest,
+            VitestFnName::Vitest => VitestFnName::Vi,
         }
     }
 
-    fn get_string(&self) -> CompactStr {
+    fn as_str(&self) -> &'static str {
         match self {
-            VitestFnName::Vi => CompactStr::new("vi"),
-            VitestFnName::Vitest => CompactStr::new("vitest"),
+            VitestFnName::Vi => "vi",
+            VitestFnName::Vitest => "vitest",
         }
     }
 }
@@ -67,7 +67,6 @@ pub struct ConsistentVitestConfig {
     function: VitestFnName,
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -95,7 +94,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentVitestVi,
     vitest,
-    correctness,
+    style,
     fix,
     config = ConsistentVitestConfig,
 );
@@ -115,42 +114,39 @@ impl Rule for ConsistentVitestVi {
                     return;
                 }
 
-                let Some(vitest_import) = import.specifiers.as_ref().and_then(|specs| {
-                    specs.iter().find(|spec| spec.name() == self.function.get_opposite_accessor())
-                }) else {
+                let opposite = self.function.not();
+                let Some(vitest_import) = import
+                    .specifiers
+                    .as_ref()
+                    .and_then(|specs| specs.iter().find(|spec| spec.name() == opposite.as_str()))
+                else {
                     return;
                 };
 
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
-                        let mut specifiers_without_opposite_accessor = import
+                        let mut specifiers_without_opposite_accessor: Vec<Cow<str>> = import
                             .specifiers
                             .as_ref()
                             .map(|specs| {
                                 specs
                                     .iter()
-                                    .map(|spec| CompactStr::from(spec.name()))
-                                    .filter(|spec_name| {
-                                        *spec_name != self.function.get_opposite_accessor()
-                                    })
-                                    .collect::<Vec<CompactStr>>()
+                                    .filter(|spec| spec.name() != opposite.as_str())
+                                    .map(|spec| spec.name())
+                                    .collect()
                             })
-                            .unwrap_or(vec![]);
+                            .unwrap_or_default();
 
                         if specifiers_without_opposite_accessor.is_empty() {
-                            match self.function {
-                                VitestFnName::Vi => fixer.replace(vitest_import.local().span, "vi"),
-                                VitestFnName::Vitest => {
-                                    fixer.replace(vitest_import.local().span, "vitest")
-                                }
-                            }
+                            fixer.replace(vitest_import.local().span, self.function.as_str())
                         } else {
                             if !specifiers_without_opposite_accessor
-                                .contains(&self.function.get_string())
+                                .iter()
+                                .any(|s| s.as_ref() == self.function.as_str())
                             {
                                 specifiers_without_opposite_accessor
-                                    .push(self.function.get_string());
+                                    .push(self.function.as_str().into());
                             }
 
                             let import_text = specifiers_without_opposite_accessor.join(", ");
@@ -190,7 +186,7 @@ impl Rule for ConsistentVitestVi {
                     return;
                 }
 
-                if vitest_fn.name == self.function.get_opposite_accessor() {
+                if vitest_fn.name == self.function.not().as_str() {
                     let Some(member_expression) = call_expr.callee.as_member_expression() else {
                         return;
                     };
@@ -201,10 +197,7 @@ impl Rule for ConsistentVitestVi {
                             &self.function,
                         ),
                         |fixer| {
-                            fixer.replace(
-                                member_expression.object().span(),
-                                self.function.get_string(),
-                            )
+                            fixer.replace(member_expression.object().span(), self.function.as_str())
                         },
                     );
                 }
