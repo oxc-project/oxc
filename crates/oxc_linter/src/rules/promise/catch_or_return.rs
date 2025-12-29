@@ -138,8 +138,7 @@ impl Rule for CatchOrReturn {
             return;
         }
 
-        // Check if this expression statement is being returned (implicitly or explicitly)
-        if is_in_returned_context(node, ctx) {
+        if is_arrow_function_expression_return(node, ctx) {
             return;
         }
 
@@ -229,7 +228,7 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
     is_cypress_call(object_call_expr)
 }
 
-fn is_in_returned_context(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_arrow_function_expression_return(node: &AstNode, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
 
     if !matches!(parent.kind(), AstKind::FunctionBody(_)) {
