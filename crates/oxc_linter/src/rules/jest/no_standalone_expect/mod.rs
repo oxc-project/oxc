@@ -241,8 +241,6 @@ fn is_var_declarator_or_test_block<'a>(
                 return true;
             }
 
-            // Check if this CallExpression is an argument to a test block
-            // This handles cases like: it('test', wrapperFn(() => { expect(...) }))
             let parent = ctx.nodes().parent_node(node.id());
             if matches!(parent.kind(), AstKind::CallExpression(_)) {
                 return is_var_declarator_or_test_block(

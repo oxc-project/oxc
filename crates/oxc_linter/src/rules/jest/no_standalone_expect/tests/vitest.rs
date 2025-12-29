@@ -38,18 +38,12 @@ fn test() {
         ),
         (
             r"import {fakeAsync} from '@angular/core/testing';
-            describe('App', () => {
-              it('should create the app', fakeAsync(() => {
-                expect(true).toBeTruthy();
-              }));
-            });",
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
             None,
         ),
         (
             r"describe('App', () => {
-              it('should work with wrapper function', wrapperFn(() => {
-                expect(true).toBeTruthy();
-              }));
+              it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); }));
             });",
             None,
         ),

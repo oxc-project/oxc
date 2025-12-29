@@ -124,11 +124,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
   ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
-   ╭─[no_standalone_expect.tsx:3:17]
- 2 │               wrapperFn(() => {
- 3 │                 expect(true).toBeTruthy();
-   ·                 ──────
- 4 │               });
+   ╭─[no_standalone_expect.tsx:1:43]
+ 1 │ describe('App', () => { wrapperFn(() => { expect(true).toBeTruthy(); }); });
+   ·                                           ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 

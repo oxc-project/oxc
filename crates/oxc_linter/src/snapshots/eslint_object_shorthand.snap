@@ -1,0 +1,1215 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {x: x}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'x': x}
+   ·          ──────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y: y, x: x}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:16]
+ 1 │ var x = {y: y, x: x}
+   ·                ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:16]
+ 1 │ var x = {y: z, x: x, a: b}
+   ·                ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:2:5]
+ 1 │ var x = {y: z,
+ 2 │              x: x,
+   ·              ────
+ 3 │              a: b
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:4:4]
+ 3 │              // comment 
+ 4 │             f: function() {}}
+   ·             ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:3:4]
+ 2 │             /* comment */
+ 3 │             y: y
+   ·             ────
+ 4 │              }
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:4:6]
+ 3 │               /* comment */
+ 4 │               y: y
+   ·               ────
+ 5 │             }
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:2:6]
+ 1 │     var x = {
+ 2 │ ╭─▶               f: function() {
+ 3 │ │                   /* comment */
+ 4 │ │                   a(b);
+ 5 │ ╰─▶                 }
+ 6 │                   }
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:2:6]
+ 1 │     var x = {
+ 2 │ ╭─▶               [f]: function() {
+ 3 │ │                   /* comment */
+ 4 │ │                   a(b);
+ 5 │ ╰─▶                 }
+ 6 │                   }
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:2:6]
+ 1 │     var x = {
+ 2 │ ╭─▶               f: function*() {
+ 3 │ │                   /* comment */
+ 4 │ │                   a(b);
+ 5 │ ╰─▶                 }
+ 6 │                   }
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:2:6]
+ 1 │     var x = {
+ 2 │ ╭─▶               f: /* comment */ function() {
+ 3 │ ╰─▶               }
+ 4 │                   }
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:2:5]
+ 1 │     var x = {
+ 2 │ ╭─▶              f /* comment */: function() {
+ 3 │ ╰─▶               }
+ 4 │                   }
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: /* comment */ a}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a /* comment */: a}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: (a /* comment */)}
+   ·          ────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a': /* comment */ a}
+   ·          ────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a': (a /* comment */)}
+   ·          ──────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a' /* comment */: a}
+   ·          ────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y: function() {}}
+   ·          ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y: function*() {}}
+   ·          ─────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:22]
+ 1 │ var x = {x: y, y: z, a: a}
+   ·                      ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {ConstructorFunction: function(){}, a: b}
+   ·          ─────────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:22]
+ 1 │ var x = {x: y, y: z, a: function(){}, b() {}}
+   ·                      ───────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {x: x, y: function() {}}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:16]
+ 1 │ var x = {x: x, y: function() {}}
+   ·                ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ doSomething({x: x})
+   ·              ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ doSomething({'x': x})
+   ·              ──────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:22]
+ 1 │ doSomething({a: 'a', 'x': x})
+   ·                      ──────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ doSomething({y: function() {}})
+   ·              ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ doSomething({[y]: function() {}})
+   ·              ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ doSomething({['y']: function() {}})
+   ·              ────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ foo: async function () {} })
+   ·    ─────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ 'foo': async function() {} })
+   ·    ──────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [foo]: async function() {} })
+   ·    ──────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [foo.bar]: function*() {} })
+   ·    ─────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [foo   ]: function() {} })
+   ·    ───────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [ foo ]: async function() {} })
+   ·    ────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ foo: function *() {} })
+   ·    ────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [  foo   ]: function() {} })
+   ·    ─────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [  foo]: function() {} })
+   ·    ──────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y: function() {}}
+   ·          ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:21]
+ 1 │ var x = {x, y() {}, z: function() {}}
+   ·                     ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {ConstructorFunction: function(){}, a: b}
+   ·          ─────────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {[y]: function() {}}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [(foo)]: function() { return; } })
+   ·    ───────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [(foo)]: async function() { return; } })
+   ·    ─────────────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [(((((((foo)))))))]: function() { return; } })
+   ·    ───────────────────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [(foo)]() { return; } })
+   ·    ─────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ async [(foo)]() { return; } })
+   ·    ───────────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ *[((foo))]() { return; } })
+   ·    ────────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [(((((((foo)))))))]() { return; } })
+   ·    ─────────────────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ 'foo bar'() { return; } })
+   ·    ───────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ *foo() { return; } })
+   ·    ──────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ async foo() { return; } })
+   ·    ───────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ *['foo bar']() { return; } })
+   ·    ──────────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {x: x}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:23]
+ 1 │ var x = {a, b, c(){}, x: x}
+   ·                       ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y() {}}
+   ·          ──────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {*y() {}}
+   ·          ───────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform property syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y}
+   ·          ─
+   ╰────
+  help: Use longform property syntax instead of shorthand.
+
+  ⚠ eslint(object-shorthand): Expected longform property syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y, a: b, *x(){}}
+   ·          ─
+   ╰────
+  help: Use longform property syntax instead of shorthand.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:19]
+ 1 │ var x = {y, a: b, *x(){}}
+   ·                   ──────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform property syntax.
+   ╭─[object_shorthand.tsx:1:14]
+ 1 │ var x = {y: {x}}
+   ·              ─
+   ╰────
+  help: Use longform property syntax instead of shorthand.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {ConstructorFunction(){}, a: b}
+   ·          ───────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {notConstructorFunction(){}, b: c}
+   ·          ──────────────────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {foo: foo, bar: baz, ...qux}
+   ·          ────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected longform property syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {foo, bar: baz, ...qux}
+   ·          ───
+   ╰────
+  help: Use longform property syntax instead of shorthand.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {y: function() {}}
+   ·          ────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {_y: function() {}}
+   ·          ─────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {$y: function() {}}
+   ·          ─────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {__y: function() {}}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {_0y: function() {}}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { afoob: function() {} }
+   ·           ────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { afoob: function() {} }
+   ·           ────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { 'afoob': function() {} }
+   ·           ──────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { 1234: function() {} }
+   ·           ───────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { bar: function() {} }
+   ·           ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { [foo]: function() {} }
+   ·           ────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:11]
+ 1 │ var x = { foo: foo }
+   ·           ────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: a}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: function(){}}
+   ·          ───────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {[a]: function(){}}
+   ·          ─────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected longform syntax for quoted property.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a'(){}}
+   ·          ───────
+   ╰────
+  help: Use longform syntax for properties with quoted keys.
+
+  ⚠ eslint(object-shorthand): Expected longform syntax for quoted property.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {['a'](){}}
+   ·          ─────────
+   ╰────
+  help: Use longform syntax for properties with quoted keys.
+
+  ⚠ eslint(object-shorthand): Inconsistent use of shorthand property syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: a, b}
+   ·          ────
+   ╰────
+  help: All properties should use consistent syntax (all shorthand or all longhand).
+
+  ⚠ eslint(object-shorthand): Inconsistent use of shorthand property syntax.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {b, c: d, f: g}
+   ·          ─
+   ╰────
+  help: All properties should use consistent syntax (all shorthand or all longhand).
+
+  ⚠ eslint(object-shorthand): Inconsistent use of shorthand property syntax.
+   ╭─[object_shorthand.tsx:1:15]
+ 1 │ var x = {foo, bar: baz, ...qux}
+   ·               ────────
+   ╰────
+  help: All properties should use consistent syntax (all shorthand or all longhand).
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: a, b: b}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:16]
+ 1 │ var x = {a: a, b: b}
+   ·                ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Inconsistent use of shorthand property syntax.
+   ╭─[object_shorthand.tsx:1:13]
+ 1 │ var x = {a, z: function z(){}}
+   ·             ─────────────────
+   ╰────
+  help: All properties should use consistent syntax (all shorthand or all longhand).
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {foo: function() {}}
+   ·          ──────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: a, b: b, ...baz}
+   ·          ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:16]
+ 1 │ var x = {a: a, b: b, ...baz}
+   ·                ────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Inconsistent use of shorthand property syntax.
+   ╭─[object_shorthand.tsx:1:15]
+ 1 │ var x = {foo, bar: bar, ...qux}
+   ·               ────────
+   ╰────
+  help: All properties should use consistent syntax (all shorthand or all longhand).
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: (arg => { return; }) })
+   ·    ───────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { return; } })
+   ·    ────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:21]
+ 1 │ ({ x() { return; }, y: () => { return; } })
+   ·                     ────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { return; }, y: () => foo })
+   ·    ────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { return; }, y: () => { return; } })
+   ·    ────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:26]
+ 1 │ ({ x: () => { return; }, y: () => { return; } })
+   ·                          ────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: foo => { return; } })
+   ·    ─────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: (foo = 1) => { return; } })
+   ·    ───────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: ({ foo: bar = 1 } = {}) => { return; } })
+   ·    ─────────────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { function foo() { this; } } })
+   ·    ─────────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { var foo = function() { arguments; } } })
+   ·    ────────────────────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ x: () => { function foo() { arguments; } } })
+   ·    ──────────────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:3:24]
+  2 │                                 ({
+  3 │ ╭─▶                                 x: () => {
+  4 │ │                                       class Foo extends Bar {
+  5 │ │                                           constructor() {
+  6 │ │                                               super();
+  7 │ │                                           }
+  8 │ │                                       }
+  9 │ ╰─▶                                 }
+ 10 │                                 })
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:3:24]
+ 2 │                                 ({
+ 3 │ ╭─▶                                 x: () => {
+ 4 │ │                                       function foo() {
+ 5 │ │                                           new.target;
+ 6 │ │                                       }
+ 7 │ ╰─▶                                 }
+ 8 │                                 })
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ 'foo bar': () => { return; } })
+   ·    ────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [foo]: () => { return; } })
+   ·    ────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ ({ a: 1, foo: async (bar = 1) => { return; } })
+   ·          ───────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ [ foo ]: async bar => { return; } })
+   ·    ─────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ key: (arg = () => {}) => {} })
+   ·    ───────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:6:41]
+ 5 │                                         this;
+ 6 │                                         return { y: () => { foo; } };
+   ·                                                  ─────────────────
+ 7 │                                     }
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:5:35]
+ 4 │                                     x: () => {
+ 5 │                                         ({ y: () => { foo; } });
+   ·                                            ─────────────────
+ 6 │                                         this;
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: (function(){ return foo; }) })
+   ·    ──────────────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: (() => { return foo; }) })
+   ·    ──────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: ((arg) => { return foo; }) })
+   ·    ─────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: ((arg, arg2) => { return foo; }) })
+   ·    ───────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: (async () => { return foo; }) })
+   ·    ────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: (async (arg) => { return foo; }) })
+   ·    ───────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: (async (arg, arg2) => { return foo; }) })
+   ·    ─────────────────────────────────────────
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ a: async function*() {} })
+   ·    ───────────────────────
+   ╰────
+  help: Use shorthand method syntax.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ async* a() {} })
+   ·    ─────────────
+   ╰────
+  help: Use longform method syntax with `function` keyword.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:3:24]
+ 2 │                             const test = {
+ 3 │                                 key: <T,>(): void => { },
+   ·                                 ────────────────────────
+ 4 │                                 key: async <T,>(): Promise<void> => { },
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:4:24]
+ 3 │                                 key: <T,>(): void => { },
+ 4 │                                 key: async <T,>(): Promise<void> => { },
+   ·                                 ───────────────────────────────────────
+ 5 │             
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:6:24]
+ 5 │             
+ 6 │                                 key: <T,>(arg: T): T => { return arg },
+   ·                                 ──────────────────────────────────────
+ 7 │                                 key: async <T,>(arg: T): Promise<T> => { return arg },
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:7:24]
+ 6 │                                 key: <T,>(arg: T): T => { return arg },
+ 7 │                                 key: async <T,>(arg: T): Promise<T> => { return arg },
+   ·                                 ─────────────────────────────────────────────────────
+ 8 │                             }
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:3:24]
+ 2 │                             const test = {
+ 3 │                                 key: (): void => {x()},
+   ·                                 ──────────────────────
+ 4 │                                 key: ( (): void => {x()} ),
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:4:24]
+ 3 │                                 key: (): void => {x()},
+ 4 │                                 key: ( (): void => {x()} ),
+   ·                                 ──────────────────────────
+ 5 │                                 key: ( (): (void) => {x()} ),
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:5:24]
+ 4 │                                 key: ( (): void => {x()} ),
+ 5 │                                 key: ( (): (void) => {x()} ),
+   ·                                 ────────────────────────────
+ 6 │             
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:7:24]
+ 6 │             
+ 7 │                                 key: (arg: t): void => {x()},
+   ·                                 ────────────────────────────
+ 8 │                                 key: ( (arg: t): void => {x()} ),
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+   ╭─[object_shorthand.tsx:8:24]
+ 7 │                                 key: (arg: t): void => {x()},
+ 8 │                                 key: ( (arg: t): void => {x()} ),
+   ·                                 ────────────────────────────────
+ 9 │                                 key: ( (arg: t): (void) => {x()} ),
+   ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:9:24]
+  8 │                                 key: ( (arg: t): void => {x()} ),
+  9 │                                 key: ( (arg: t): (void) => {x()} ),
+    ·                                 ──────────────────────────────────
+ 10 │             
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:11:24]
+ 10 │             
+ 11 │                                 key: (arg: t, arg2: t): void => {x()},
+    ·                                 ─────────────────────────────────────
+ 12 │                                 key: ( (arg: t, arg2: t): void => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:12:24]
+ 11 │                                 key: (arg: t, arg2: t): void => {x()},
+ 12 │                                 key: ( (arg: t, arg2: t): void => {x()} ),
+    ·                                 ─────────────────────────────────────────
+ 13 │                                 key: ( (arg: t, arg2: t): (void) => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:13:24]
+ 12 │                                 key: ( (arg: t, arg2: t): void => {x()} ),
+ 13 │                                 key: ( (arg: t, arg2: t): (void) => {x()} ),
+    ·                                 ───────────────────────────────────────────
+ 14 │             
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:15:24]
+ 14 │             
+ 15 │                                 key: async (): void => {x()},
+    ·                                 ────────────────────────────
+ 16 │                                 key: ( async (): void => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:16:24]
+ 15 │                                 key: async (): void => {x()},
+ 16 │                                 key: ( async (): void => {x()} ),
+    ·                                 ────────────────────────────────
+ 17 │                                 key: ( async (): (void) => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:17:24]
+ 16 │                                 key: ( async (): void => {x()} ),
+ 17 │                                 key: ( async (): (void) => {x()} ),
+    ·                                 ──────────────────────────────────
+ 18 │             
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:19:24]
+ 18 │             
+ 19 │                                 key: async (arg: t): void => {x()},
+    ·                                 ──────────────────────────────────
+ 20 │                                 key: ( async (arg: t): void => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:20:24]
+ 19 │                                 key: async (arg: t): void => {x()},
+ 20 │                                 key: ( async (arg: t): void => {x()} ),
+    ·                                 ──────────────────────────────────────
+ 21 │                                 key: ( async (arg: t): (void) => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:21:24]
+ 20 │                                 key: ( async (arg: t): void => {x()} ),
+ 21 │                                 key: ( async (arg: t): (void) => {x()} ),
+    ·                                 ────────────────────────────────────────
+ 22 │             
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:23:24]
+ 22 │             
+ 23 │                                 key: async (arg: t, arg2: t): void => {x()},
+    ·                                 ───────────────────────────────────────────
+ 24 │                                 key: ( async (arg: t, arg2: t): void => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:24:24]
+ 23 │                                 key: async (arg: t, arg2: t): void => {x()},
+ 24 │                                 key: ( async (arg: t, arg2: t): void => {x()} ),
+    ·                                 ───────────────────────────────────────────────
+ 25 │                                 key: ( async (arg: t, arg2: t): (void) => {x()} ),
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected a method shorthand instead of arrow function.
+    ╭─[object_shorthand.tsx:25:24]
+ 24 │                                 key: ( async (arg: t, arg2: t): void => {x()} ),
+ 25 │                                 key: ( async (arg: t, arg2: t): (void) => {x()} ),
+    ·                                 ─────────────────────────────────────────────────
+ 26 │                             }
+    ╰────
+  help: Convert arrow function to method shorthand.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ val: /** regular comment */ (val) })
+   ·    ─────────────────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ val: /** @param {string} name */ (val) })
+   ·    ──────────────────────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ val: /** @returns {number} */ (val) })
+   ·    ───────────────────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ({ val: /** @description some text */ (val) })
+   ·    ────────────────────────────────────────
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                * @param {string} name
+ 3 │ ╰─▶              */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                 * @returns {number}
+ 3 │ ╰─▶               */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                  * @description some text
+ 3 │ ╰─▶                */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                   * @param {string} name
+ 3 │ ╰─▶                 */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                    * @returns {number}
+ 3 │ ╰─▶                  */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                 *  @param   {string}  name  
+ 3 │ ╰─▶               */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                *  @returns   {number} result
+ 3 │ ╰─▶              */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:4]
+ 1 │ ╭─▶ ({ val: /**
+ 2 │ │                  *
+ 3 │ │                  * @param {string} name
+ 4 │ │                  * @returns {number}
+ 5 │ ╰─▶                */ (val) })
+   ╰────
+  help: Use shorthand property syntax.
