@@ -104,7 +104,7 @@ impl CommentConfigJson {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 struct OptionsJson {
     #[serde(flatten)]
     base: CommentConfigJson,
@@ -120,7 +120,7 @@ struct OptionsJson {
 /// - First element: `"always"` (default) or `"never"` - controls whether comments should be capitalized
 /// - Second element: Optional object with additional configuration properties
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields, default)]
+#[serde(default)]
 struct CapitalizedCommentsSchema(
     /// Controls whether comments should start with an uppercase or lowercase letter. Default: "always".
     CapitalizeOption,
@@ -623,7 +623,7 @@ fn test() {
 			// lineCommentIgnorePattern
 			/* blockCommentIgnorePattern */",
             Some(
-                serde_json::json!([				"always",				{					"line": {						"ignorePattern": "lineCommentIgnorePattern",					},					"block": {						"ignorePattern": "blockCommentIgnorePattern",					},				},			]),
+                serde_json::json!([ "always", { "line": { "ignorePattern": "lineCommentIgnorePattern" }, "block": { "ignorePattern": "blockCommentIgnorePattern" } }]),
             ),
         ),
     ];
