@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 220e8e8 oxlint/lsp: Support `textDocument/diagnostic` (#17209) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 786a505 lsp: Fmt.configPath empty string handling (#17425) (copilot-swe-agent)
+- 97aef58 language_server: Treat empty string config path as None in language server (#17415) (copilot-swe-agent)
+- b7e8bca lsp: Do not sent de-registrations for watched files on shutdown request (#17318) (Sysix)
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+
 ## [1.33.0] - 2025-12-15
 
 ### ⚡ Performance

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.21.0] - 2025-12-29
+
+### 🚀 Features
+
+- 4df8063 oxfmt: Respect `.gitignore` in sub directries (#17352) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+
 ## [0.20.0] - 2025-12-22
 
 ### 🚀 Features

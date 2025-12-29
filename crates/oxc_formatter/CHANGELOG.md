@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.21.0] - 2025-12-29
+
+### 🚀 Features
+
+- 7c3dae3 formatter: Support Vitest test functions (#17340) (leaysgur)
+- b00da37 formatter: Normalize line break for directive (#17303) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 1bf0ffc formatter: Incorrect JSX text wrapping when the expression container is an arrow function that will break (#17445) (Dunqing)
+- 42ad9d6 formatter: JSXFragment missed a leading semicolon when semicolon is disabled (#17386) (Dunqing)
+- c8c5341 formatter: Complete `is_complex_type_arguments()` (take2) (#17362) (leaysgur)
+- 745bc5d formatter: Do not consider rest param as simple (#17354) (leaysgur)
+- e836f37 formatter: Fix `Deno()` to not detect as test functions (#17339) (leaysgur)
+- 09848b3 formatter: Handle more test functions (#17337) (leaysgur)
+- a55bfc1 formatter: Count emoji sequences correctly (#17331) (leaysgur)
+- 0a39cba oxfmt: Update wrong doc comment (#17288) (leaysgur)
+- 2d556cb formatter: Should treat TSMappedType as a complex type in assignment-like formatting (#17257) (Dunqing)
+- fa5cef3 formatter: Shouldn't treat `TaggedTemplateExpression` as a simple argument in the member chain (#17256) (Dunqing)
+- 6ad3951 formatter: Trailing comments of JSX in call arguments are moved out the of call (#17255) (Dunqing)
+
 ## [0.20.0] - 2025-12-22
 
 ### 🚀 Features

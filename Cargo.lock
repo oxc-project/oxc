@@ -1964,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2016,7 +2016,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "1.35.0"
+version = "1.36.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -2040,7 +2040,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.35.0"
+version = "1.36.0"
 dependencies = [
  "bitflags",
  "constcat",
@@ -2551,7 +2551,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2583,7 +2583,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.35.0"
+version = "1.36.0"
 dependencies = [
  "bpaf",
  "cow-utils",
