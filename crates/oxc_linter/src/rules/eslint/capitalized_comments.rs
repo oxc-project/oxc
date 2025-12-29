@@ -77,7 +77,7 @@ impl std::ops::Deref for CapitalizedComments {
 #[serde(rename_all = "camelCase")]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
-    /// A regex pattern. Comments that match the pattern will be not cause violations.
+    /// A regex pattern. Comments that match the pattern will not cause violations.
     ignore_pattern: Option<String>,
     /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
