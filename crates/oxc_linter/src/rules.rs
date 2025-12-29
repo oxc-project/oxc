@@ -701,7 +701,11 @@ pub(crate) mod vitest {
     pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
+<<<<<<< HEAD
     pub mod no_importing_vitest_globals;
+=======
+    pub mod prefer_called_exactly_once_with;
+>>>>>>> 16e001a543 (feat(linter/eslint-plugin-vitest): not error pass test)
     pub mod prefer_called_once;
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
