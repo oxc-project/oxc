@@ -327,6 +327,7 @@ impl Tool for ServerLinter {
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
@@ -356,7 +357,7 @@ impl Tool for ServerLinter {
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
-        let new_linter = ServerLinterBuilder::build(root_uri, new_options_json.clone());
+        let new_linter = builder.build_boxed(root_uri, new_options_json.clone());
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -369,7 +370,7 @@ impl Tool for ServerLinter {
             }
         };
 
-        ToolRestartChanges { tool: Some(Box::new(new_linter)), watch_patterns: patterns }
+        ToolRestartChanges { tool: Some(new_linter), watch_patterns: patterns }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -408,15 +409,16 @@ impl Tool for ServerLinter {
 
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
-        let new_linter = ServerLinterBuilder::build(root_uri, options);
+        let new_linter = builder.build_boxed(root_uri, options);
 
         ToolRestartChanges {
-            tool: Some(Box::new(new_linter)),
+            tool: Some(new_linter),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
         }

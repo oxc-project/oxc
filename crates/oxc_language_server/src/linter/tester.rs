@@ -250,7 +250,9 @@ impl Tester<'_> {
         &self,
         new_options: serde_json::Value,
     ) -> ToolRestartChanges {
+        let builder = ServerLinterBuilder;
         self.create_linter().handle_configuration_change(
+            &builder,
             &Self::get_root_uri(self.relative_root_dir),
             &self.options,
             new_options,

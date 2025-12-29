@@ -166,6 +166,7 @@ impl Tool for ServerFormatter {
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
@@ -196,12 +197,9 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
+        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
-        ToolRestartChanges {
-            tool: Some(Box::new(new_formatter)),
-            watch_patterns: Some(watch_patterns),
-        }
+        ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -224,16 +222,17 @@ impl Tool for ServerFormatter {
 
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, options);
+        let new_formatter = builder.build_boxed(root_uri, options);
 
         ToolRestartChanges {
-            tool: Some(Box::new(new_formatter)),
+            tool: Some(new_formatter),
             // TODO: update watch patterns if config_path changed
             watch_patterns: None,
         }
