@@ -119,7 +119,7 @@ struct OptionsJson {
 ///
 /// - First element: `"always"` (default) or `"never"` - controls whether comments should be capitalized
 /// - Second element: Optional object with additional configuration properties
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 #[expect(dead_code)] // Only used for schema generation
 struct CapitalizedCommentsSchema(
