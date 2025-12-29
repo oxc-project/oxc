@@ -1,0 +1,37 @@
+name: Generate DotSlash Files
+
+permissions: {}
+
+on:
+  workflow_run:
+    workflows: [Release Apps]
+    types:
+      - completed
+
+jobs:
+  generate-dotslash:
+    name: Generate DotSlash files
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write # for uploading DotSlash files to the release
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Get release tag from workflow run
+        id: get-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find the most recent apps release tag
+          TAG=$(gh release list --limit 10 --json tagName,isPrerelease,isDraft --jq '[.[] | select(.tagName | startswith("apps_v"))] | .[0].tagName')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Found release tag: $TAG"
+
+      - name: Generate DotSlash files
+        uses: facebook/dotslash-publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config: .github/workflows/dotslash-config.json
+          tag: ${{ steps.get-tag.outputs.tag }}

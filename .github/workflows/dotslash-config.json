@@ -1,0 +1,106 @@
+{
+  "outputs": {
+    "oxlint": {
+      "platforms": {
+        "macos-aarch64": {
+          "regex": "^oxlint-darwin-arm64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxlint-darwin-arm64"
+        },
+        "macos-x86_64": {
+          "regex": "^oxlint-darwin-x64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxlint-darwin-x64"
+        },
+        "linux-x86_64": {
+          "regex": "^oxlint-linux-x64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxlint-linux-x64-gnu"
+        },
+        "linux-aarch64": {
+          "regex": "^oxlint-linux-arm64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxlint-linux-arm64-gnu"
+        },
+        "windows-x86_64": {
+          "regex": "^oxlint-win32-x64\\.zip$",
+          "format": "zip",
+          "path": "oxlint-win32-x64.exe"
+        },
+        "windows-aarch64": {
+          "regex": "^oxlint-win32-arm64\\.zip$",
+          "format": "zip",
+          "path": "oxlint-win32-arm64.exe"
+        }
+      }
+    },
+    "oxfmt": {
+      "platforms": {
+        "macos-aarch64": {
+          "regex": "^oxfmt-darwin-arm64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxfmt-darwin-arm64"
+        },
+        "macos-x86_64": {
+          "regex": "^oxfmt-darwin-x64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxfmt-darwin-x64"
+        },
+        "linux-x86_64": {
+          "regex": "^oxfmt-linux-x64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxfmt-linux-x64-gnu"
+        },
+        "linux-aarch64": {
+          "regex": "^oxfmt-linux-arm64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxfmt-linux-arm64-gnu"
+        },
+        "windows-x86_64": {
+          "regex": "^oxfmt-win32-x64\\.zip$",
+          "format": "zip",
+          "path": "oxfmt-win32-x64.exe"
+        },
+        "windows-aarch64": {
+          "regex": "^oxfmt-win32-arm64\\.zip$",
+          "format": "zip",
+          "path": "oxfmt-win32-arm64.exe"
+        }
+      }
+    },
+    "oxc_language_server": {
+      "platforms": {
+        "macos-aarch64": {
+          "regex": "^oxc_language_server-darwin-arm64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxc_language_server-darwin-arm64"
+        },
+        "macos-x86_64": {
+          "regex": "^oxc_language_server-darwin-x64\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxc_language_server-darwin-x64"
+        },
+        "linux-x86_64": {
+          "regex": "^oxc_language_server-linux-x64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxc_language_server-linux-x64-gnu"
+        },
+        "linux-aarch64": {
+          "regex": "^oxc_language_server-linux-arm64-gnu\\.tar\\.gz$",
+          "format": "tar.gz",
+          "path": "oxc_language_server-linux-arm64-gnu"
+        },
+        "windows-x86_64": {
+          "regex": "^oxc_language_server-win32-x64\\.zip$",
+          "format": "zip",
+          "path": "oxc_language_server-win32-x64.exe"
+        },
+        "windows-aarch64": {
+          "regex": "^oxc_language_server-win32-arm64\\.zip$",
+          "format": "zip",
+          "path": "oxc_language_server-win32-arm64.exe"
+        }
+      }
+    }
+  }
+}

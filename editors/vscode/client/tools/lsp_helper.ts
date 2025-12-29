@@ -14,11 +14,15 @@ export function runExecutable(path: string, nodePath?: string, tsgolintPath?: st
   }
   const isNode = path.endsWith(".js") || path.endsWith(".cjs") || path.endsWith(".mjs");
   const isWindows = process.platform === "win32";
+  // oxc_language_server is the direct LSP binary and doesn't need --lsp flag
+  // oxlint CLI needs --lsp flag to run in language server mode
+  const isDirectLspBinary = /oxc_language_server(?:\.exe)?$/.test(path);
+  const args = isDirectLspBinary ? [] : ["--lsp"];
 
   return isNode
     ? {
         command: "node",
-        args: [path, "--lsp"],
+        args: [path, ...args],
         options: {
           env: serverEnv,
         },
@@ -26,7 +30,7 @@ export function runExecutable(path: string, nodePath?: string, tsgolintPath?: st
     : {
         // On Windows with shell, quote the command path to handle spaces in usernames/paths
         command: isWindows ? `"${path}"` : path,
-        args: ["--lsp"],
+        args,
         options: {
           // On Windows we need to run the binary in a shell to be able to execute the shell npm bin script.
           // Searching for the right `.exe` file inside `node_modules/` is not reliable as it depends on

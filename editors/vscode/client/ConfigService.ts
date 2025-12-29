@@ -84,6 +84,12 @@ export class ConfigService implements IDisposable {
   }
 
   public async getOxlintServerBinPath(): Promise<string | undefined> {
+    // First try to find oxc_language_server (direct LSP binary)
+    const lspPath = await this.searchBinaryPath(this.vsCodeConfig.binPathOxlint, "oxc_language_server");
+    if (lspPath) {
+      return lspPath;
+    }
+    // Fall back to oxlint (CLI with --lsp flag)
     return this.searchBinaryPath(this.vsCodeConfig.binPathOxlint, "oxlint");
   }
 
@@ -119,7 +125,22 @@ export class ConfigService implements IDisposable {
     }
 
     if (!settingsBinary) {
-      // try to find the binary in node_modules/.bin, resolve to the first workspace folder
+      // First, try to find a DotSlash binary in common locations (bin/, .bin/)
+      // DotSlash files are text files that download the real binary on first run
+      const dotslashLocations = [`bin/${defaultPattern}`, `.bin/${defaultPattern}`];
+
+      for (const location of dotslashLocations) {
+        const dotslashFiles = await workspace.findFiles(
+          new RelativePattern(cwd, location),
+          null,
+          1,
+        );
+        if (dotslashFiles.length > 0) {
+          return dotslashFiles[0].fsPath;
+        }
+      }
+
+      // Fall back to node_modules/.bin
       const files = await workspace.findFiles(
         new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
         null,

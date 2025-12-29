@@ -165,6 +165,16 @@ jobs:
             rust-oxlint-**.zip
             rust-oxlint-**.tar.gz
 
+      # For github release (language server)
+      - name: Upload Language Server Binary
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          if-no-files-found: error
+          name: gh-release-oxc_language_server-${{ matrix.code-target }}
+          path: |
+            oxc_language_server-**.zip
+            oxc_language_server-**.tar.gz
+
   publish-oxlint:
     name: Publish Oxlint
     needs: [check, build-oxlint]
@@ -436,6 +446,12 @@ jobs:
         with:
           path: ./release-artifacts
           pattern: rust-*
+          merge-multiple: true
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: ./release-artifacts
+          pattern: gh-release-oxc_language_server-*
           merge-multiple: true
 
       - name: Remove rust- prefix from filenames
