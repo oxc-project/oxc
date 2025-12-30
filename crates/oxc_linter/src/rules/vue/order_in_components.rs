@@ -409,13 +409,16 @@ impl OrderInComponents {
             return fix;
         };
 
-        // Find the comma/brace before the property we're moving
-        let text_before_from = &source_text[..from_prop.span.start as usize];
-        let comma_before_from = text_before_from.rfind(',');
-        let brace_before_from = text_before_from.rfind('{');
+        let obj_start = obj.span.start as usize;
+        let obj_end = obj.span.end as usize;
 
-        // Find if there's a comma after the property we're moving
-        let text_after_from = &source_text[from_prop.span.end as usize..];
+        // Find the comma/brace before the property we're moving (within obj bounds)
+        let text_before_from = &source_text[obj_start..from_prop.span.start as usize];
+        let comma_before_from = text_before_from.rfind(',').map(|p| obj_start + p);
+        let brace_before_from = text_before_from.rfind('{').map(|p| obj_start + p);
+
+        // Find if there's a comma after the property we're moving (within obj bounds)
+        let text_after_from = &source_text[from_prop.span.end as usize..obj_end];
         let comma_after_from = text_after_from.find(',');
 
         // Determine the code start position (after the comma/brace before this property)
@@ -458,10 +461,10 @@ impl OrderInComponents {
         fix.push(Fix::delete(Span::new(delete_start, delete_end)));
 
         // Determine insert position and text
-        // Find the comma/brace before the target property
-        let text_before_to = &source_text[..to_prop.span.start as usize];
-        let comma_before_to = text_before_to.rfind(',');
-        let brace_before_to = text_before_to.rfind('{');
+        // Find the comma/brace before the target property (within obj bounds)
+        let text_before_to = &source_text[obj_start..to_prop.span.start as usize];
+        let comma_before_to = text_before_to.rfind(',').map(|p| obj_start + p);
+        let brace_before_to = text_before_to.rfind('{').map(|p| obj_start + p);
 
         let insert_pos = if let Some(comma_pos) = comma_before_to {
             // Insert after the comma before target
