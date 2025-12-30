@@ -563,6 +563,10 @@ fn test() {
         r#"<div aria-relevant={"false"} />"#,
         r#"<div aria-relevant="additions removalss" />"#,
         r#"<div aria-relevant="additions removalss " />"#,
+        // Fails because these should not allow boolean values or numbers.
+        "<div aria-labelledby={true} />",
+        "<div aria-labelledby={false} />",
+        "<div aria-labelledby={123} />",
         // Fails because this is a string, and so not interpolated.
         r#"<div aria-hidden={"!!foo"} />"#,
     ];
