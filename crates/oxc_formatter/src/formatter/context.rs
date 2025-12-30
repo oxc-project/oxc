@@ -217,20 +217,18 @@ impl<'ast> FormatContext<'ast> {
         self.tailwind_classes.push(class);
         index
     }
+    pub fn get_tailwind_class(&self, index: usize) -> Option<&String> {
+        self.tailwind_classes.get(index)
+    }
 
     /// Take all collected Tailwind classes, clearing the internal storage.
     pub fn take_tailwind_classes(&mut self) -> Vec<String> {
         mem::take(&mut self.tailwind_classes)
     }
 
-    /// Sort Tailwind CSS classes using the external callback if set.
-    pub fn sort_tailwind_classes(&mut self) {
-        let tailwind_classes = mem::take(&mut self.tailwind_classes);
-        if let Some(sorted_classes) =
-            self.external_callbacks.sort_tailwind_classes(tailwind_classes)
-        {
-            self.tailwind_classes = sorted_classes;
-        }
+    /// Set the collected Tailwind CSS classes.
+    pub fn set_tailwind_classes(&mut self, classes: Vec<String>) {
+        self.tailwind_classes = classes;
     }
 
     /// Push a Tailwind context entry onto the stack.

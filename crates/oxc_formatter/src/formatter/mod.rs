@@ -105,20 +105,20 @@ impl<'a> Formatted<'a> {
 }
 
 impl Formatted<'_> {
-    pub fn print(&self) -> PrintResult<Printed> {
+    pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-
-        let printed =
-            Printer::new(print_options, &self.sorted_tailwind_classes).print(&self.document)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
         Ok(printed)
     }
 
-    pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
+    pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-        let printed = Printer::new(print_options, &self.sorted_tailwind_classes)
-            .print_with_indent(&self.document, indent)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes)
+            .print_with_indent(elements, indent)?;
         Ok(printed)
     }
 }
@@ -344,11 +344,13 @@ pub fn format<'ast>(
     let elements = buffer.into_vec();
     let mut context = state.into_context();
 
-    let document = Document::from(elements);
-    document.propagate_expand();
+    let tailwind_classes = context.take_tailwind_classes();
+    let sorted_tailwind_classes =
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes).unwrap_or_default();
 
-    // Sort Tailwind CSS classes collected during formatting
-    context.sort_tailwind_classes();
+    let document = Document::new(elements, sorted_tailwind_classes);
+
+    document.propagate_expand();
 
     Formatted::new(document, context)
 }

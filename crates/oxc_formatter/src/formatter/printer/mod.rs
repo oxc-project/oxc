@@ -13,7 +13,7 @@ use unicode_width::UnicodeWidthChar;
 use self::call_stack::PrintIndentStack;
 use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    format_element::{BestFittingElement, LineMode, PrintMode, document::Document, tag::Condition},
+    format_element::{BestFittingElement, LineMode, PrintMode, tag::Condition},
     prelude::{
         Tag::EndFill,
         TextWidth,
@@ -52,7 +52,7 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints the passed in element as well as all its content
-    pub fn print(self, document: &'a Document) -> PrintResult<Printed> {
+    pub fn print(self, document: &'a [FormatElement<'a>]) -> PrintResult<Printed> {
         self.print_with_indent(document, 0)
     }
 
@@ -60,11 +60,11 @@ impl<'a> Printer<'a> {
     /// starting at the specified indentation level
     pub fn print_with_indent(
         mut self,
-        document: &'a Document<'a>,
+        document: &'a [FormatElement<'a>],
         indent: u16,
     ) -> PrintResult<Printed> {
         let mut stack = PrintCallStack::new(PrintElementArgs::new());
-        let mut queue: PrintQueue<'a> = PrintQueue::new(document.as_ref());
+        let mut queue: PrintQueue<'a> = PrintQueue::new(document);
         let mut indent_stack = PrintIndentStack::new(Indention::Level(indent));
 
         while let Some(element) = queue.pop() {
