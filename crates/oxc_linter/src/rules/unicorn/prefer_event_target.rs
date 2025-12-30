@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{AstNode, context::LintContext, module_record::ImportImportName, rule::Rule};
 
@@ -12,18 +12,20 @@ fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 // Packages that should be ignored because they provide their own EventEmitter
-const IGNORED_PACKAGES: &[&str] = &["@angular/core", "eventemitter3"];
+const IGNORED_PACKAGES: &[CompactStr] =
+    &[CompactStr::new_const("@angular/core"), CompactStr::new_const("eventemitter3")];
+const EVENT_EMITTER: CompactStr = CompactStr::new_const("EventEmitter");
 
 /// Check if EventEmitter is imported from an ignored package (module-scoped check)
 fn is_event_emitter_from_ignored_package(ctx: &LintContext) -> bool {
     ctx.module_record().import_entries.iter().any(|import| {
-        if !IGNORED_PACKAGES.contains(&import.module_request.name.as_str()) {
+        if !IGNORED_PACKAGES.contains(&import.module_request.name) {
             return false;
         }
 
         match &import.import_name {
-            ImportImportName::Name(name_span) => name_span.name.as_str() == "EventEmitter",
-            ImportImportName::Default(_) => import.local_name.name.as_str() == "EventEmitter",
+            ImportImportName::Name(name_span) => name_span.name == EVENT_EMITTER,
+            ImportImportName::Default(_) => import.local_name.name == EVENT_EMITTER,
             ImportImportName::NamespaceObject => false,
         }
     })
