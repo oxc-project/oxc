@@ -115,7 +115,9 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
 
 impl Rule for NoStringRefs {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

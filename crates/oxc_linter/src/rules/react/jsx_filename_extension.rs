@@ -142,7 +142,11 @@ impl Rule for JsxFilenameExtension {
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 
-        Ok(Self(Box::new(JsxFilenameExtensionConfig { allow, extensions, ignore_files_without_code })))
+        Ok(Self(Box::new(JsxFilenameExtensionConfig {
+            allow,
+            extensions,
+            ignore_files_without_code,
+        })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -89,7 +89,9 @@ impl Rule for NoTypeofUndefined {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 }
 

@@ -91,7 +91,9 @@ declare_oxc_lint!(
 
 impl Rule for NoShadowRestrictedNames {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run_once(&self, ctx: &LintContext) {
