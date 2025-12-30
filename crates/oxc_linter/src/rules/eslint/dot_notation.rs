@@ -144,14 +144,15 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// var x = foo["bar"];
-    /// var y = obj["hello world"]; // when property is a valid identifier
+    /// var y = obj["helloWorld"]; // valid identifier should use dot notation
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// var x = foo.bar;
     /// var y = foo[bar]; // dynamic property
-    /// var z = foo["hello-world"]; // invalid identifier character
+    /// var z = foo["hello-world"]; // invalid identifier character (hyphen)
+    /// var w = obj["hello world"]; // invalid identifier (contains space)
     /// ```
     DotNotation,
     eslint,
