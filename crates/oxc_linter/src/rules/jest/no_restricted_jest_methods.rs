@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
@@ -23,16 +23,21 @@ fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnost
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
+/// A map of restricted Jest method names to custom error messages.
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoRestrictedJestMethodsConfig {
-    /// A mapping of restricted Jest method names to custom messages - or
-    /// `null`, for a generic message.
-    restricted_jest_methods: FxHashMap<String, String>,
-}
+#[serde(transparent)]
+pub struct NoRestrictedJestMethodsConfig(FxHashMap<String, Option<String>>);
 
 impl std::ops::Deref for NoRestrictedJestMethods {
     type Target = NoRestrictedJestMethodsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::Deref for NoRestrictedJestMethodsConfig {
+    type Target = FxHashMap<String, Option<String>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -91,15 +96,12 @@ declare_oxc_lint!(
 
 impl Rule for NoRestrictedJestMethods {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let restricted_jest_methods = &value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_jest_methods)
-            .unwrap_or_default();
+        let config =
+            serde_json::from_value::<DefaultRuleConfig<NoRestrictedJestMethodsConfig>>(value)
+                .unwrap_or_default()
+                .into_inner();
 
-        Self(Box::new(NoRestrictedJestMethodsConfig {
-            restricted_jest_methods: restricted_jest_methods.clone(),
-        }))
+        Self(Box::new(config))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -113,11 +115,7 @@ impl Rule for NoRestrictedJestMethods {
 
 impl NoRestrictedJestMethods {
     fn contains(&self, key: &str) -> bool {
-        self.restricted_jest_methods.contains_key(key)
-    }
-
-    fn get_message(&self, name: &str) -> Option<String> {
-        self.restricted_jest_methods.get(name).cloned()
+        self.contains_key(key)
     }
 
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
@@ -149,30 +147,15 @@ impl NoRestrictedJestMethods {
         };
 
         if self.contains(property_name) {
-            self.get_message(property_name).map_or_else(
-                || {
+            match self.get(property_name).and_then(|m| m.as_deref()) {
+                None | Some("") => {
                     ctx.diagnostic(restricted_jest_method(property_name, span));
-                },
-                |message| {
-                    if message.trim() == "" {
-                        ctx.diagnostic(restricted_jest_method(property_name, span));
-                    } else {
-                        ctx.diagnostic(restricted_jest_method_with_message(&message, span));
-                    }
-                },
-            );
+                }
+                Some(message) => {
+                    ctx.diagnostic(restricted_jest_method_with_message(message, span));
+                }
+            }
         }
-    }
-
-    pub fn compile_restricted_jest_methods(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, String> {
-        matchers
-            .iter()
-            .map(|(key, value)| {
-                (String::from(key), String::from(value.as_str().unwrap_or_default()))
-            })
-            .collect()
     }
 }
 

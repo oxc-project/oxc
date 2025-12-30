@@ -6,10 +6,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, KnownMemberExpressionProperty, PossibleJestNode, is_type_of_jest_fn_call,
         parse_expect_jest_fn_call,
@@ -29,17 +30,21 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoRestrictedMatchersConfig {
-    /// A map of restricted matchers/modifiers to custom messages.
-    /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
-    /// The value is an optional custom message to display when the matcher/modifier is used.
-    restricted_matchers: FxHashMap<String, String>,
-}
+/// A map of restricted matcher/modifier names to custom error messages.
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(transparent)]
+pub struct NoRestrictedMatchersConfig(FxHashMap<String, Option<String>>);
 
 impl std::ops::Deref for NoRestrictedMatchers {
     type Target = NoRestrictedMatchersConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::Deref for NoRestrictedMatchersConfig {
+    type Target = FxHashMap<String, Option<String>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -126,13 +131,11 @@ const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let restricted_matchers = value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_matchers)
-            .unwrap_or_default();
+        let config = serde_json::from_value::<DefaultRuleConfig<NoRestrictedMatchersConfig>>(value)
+            .unwrap_or_default()
+            .into_inner();
 
-        Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers }))
+        Self(Box::new(config))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -174,12 +177,15 @@ impl NoRestrictedMatchers {
 
         let span = Span::new(members.first().unwrap().span.start, members.last().unwrap().span.end);
 
-        for (restriction, message) in &self.restricted_matchers {
+        for (restriction, message) in self.iter() {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
-                if message.is_empty() {
-                    ctx.diagnostic(restricted_chain(&chain_call, span));
-                } else {
-                    ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                match message.as_deref() {
+                    None | Some("") => {
+                        ctx.diagnostic(restricted_chain(&chain_call, span));
+                    }
+                    Some(message) => {
+                        ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                    }
                 }
             }
         }
@@ -193,17 +199,6 @@ impl NoRestrictedMatchers {
         } else {
             chain_call == restriction
         }
-    }
-
-    pub fn compile_restricted_matchers(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, String> {
-        matchers
-            .iter()
-            .map(|(key, value)| {
-                (String::from(key), String::from(value.as_str().unwrap_or_default()))
-            })
-            .collect()
     }
 }
 
