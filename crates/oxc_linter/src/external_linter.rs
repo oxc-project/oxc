@@ -800,6 +800,7 @@ pub enum DeserializeResult {
 /// * `source_text` - Original source text (for diagnostics)
 /// * `estree_json` - JSON string containing the ESTree AST from the custom parser
 /// * `scope_manager_json` - Optional JSON string containing the serialized scope manager
+/// * `parser_options_json` - Optional JSON string containing parser options (for sourceType override)
 ///
 /// # Returns
 ///
@@ -811,6 +812,7 @@ pub fn lint_with_external_ast(
     source_text: &str,
     estree_json: &str,
     scope_manager_json: Option<&str>,
+    parser_options_json: Option<&str>,
 ) -> (Vec<Message>, DeserializeResult) {
     // Parse the ESTree JSON
     let estree_value: serde_json::Value = match serde_json::from_str(estree_json) {
@@ -887,8 +889,20 @@ pub fn lint_with_external_ast(
     // Set the source text on the program (needed for span operations in rules)
     program.source_text = source_text_alloc;
 
-    // Determine source type from the program
-    let _source_type = SourceType::from_path(path).unwrap_or_default();
+    // Override source type if parser options specify "module" but AST says "script".
+    // Some parsers (like ember-eslint-parser) don't propagate the sourceType option
+    // to the AST's sourceType field, so we need to handle this ourselves.
+    if !program.source_type.is_module() {
+        if let Some(options_json) = parser_options_json {
+            if let Ok(options) = serde_json::from_str::<serde_json::Value>(options_json) {
+                if let Some(source_type) = options.get("sourceType").and_then(|v| v.as_str()) {
+                    if source_type == "module" {
+                        program.source_type = SourceType::mjs();
+                    }
+                }
+            }
+        }
+    }
 
     // Build semantic analysis
     let program_ref = allocator.alloc(program);
