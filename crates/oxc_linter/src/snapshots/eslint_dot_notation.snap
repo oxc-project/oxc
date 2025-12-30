@@ -278,3 +278,59 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Use `["true"]` instead of `.true`
+
+  ⚠ eslint(dot-notation): [prop] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 0xFF['prop']
+   · ────────────
+   ╰────
+  help: Use `.prop` instead of `["prop"]`
+
+  ⚠ eslint(dot-notation): [prop] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 0o77['prop']
+   · ────────────
+   ╰────
+  help: Use `.prop` instead of `["prop"]`
+
+  ⚠ eslint(dot-notation): [prop] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 0O77['prop']
+   · ────────────
+   ╰────
+  help: Use `.prop` instead of `["prop"]`
+
+  ⚠ eslint(dot-notation): [prop] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 5n['prop']
+   · ──────────
+   ╰────
+  help: Use `.prop` instead of `["prop"]`
+
+  ⚠ eslint(dot-notation): [$] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['$']
+   · ──────
+   ╰────
+  help: Use `.$` instead of `["$"]`
+
+  ⚠ eslint(dot-notation): [_] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['_']
+   · ──────
+   ╰────
+  help: Use `._` instead of `["_"]`
+
+  ⚠ eslint(dot-notation): [$$] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['$$']
+   · ───────
+   ╰────
+  help: Use `.$$` instead of `["$$"]`
+
+  ⚠ eslint(dot-notation): [__proto__] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['__proto__']
+   · ──────────────
+   ╰────
+  help: Use `.__proto__` instead of `["__proto__"]`
