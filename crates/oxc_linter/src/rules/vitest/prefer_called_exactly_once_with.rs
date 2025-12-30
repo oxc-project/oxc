@@ -1,10 +1,8 @@
-use std::fmt::format;
-
 use itertools::Itertools;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierName, Statement},
+    ast::{CallExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,9 +12,12 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_and_typeof_vitest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        parse_expect_and_typeof_vitest_fn_call, parse_expect_jest_fn_call,
+        parse_general_jest_fn_call, parse_jest_fn_call,
+    },
 };
 
 fn prefer_called_exactly_once_with_diagnostic(span: Span) -> OxcDiagnostic {
@@ -171,6 +172,36 @@ impl Rule for PreferCalledExactlyOnceWith {
     }
 }
 
+fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+    let args = &call_expr.arguments;
+
+    // Find the callback function (last function argument)
+    for arg in args.iter().rev() {
+        if let Some(expr) = arg.as_expression()
+            && matches!(
+                expr,
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+            )
+        {
+            return Some(expr);
+        }
+    }
+
+    None
+}
+
+fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&FunctionBody<'a>> {
+    match callback {
+        Expression::FunctionExpression(func) => func.body.as_ref().map(|body| body.as_ref()),
+        Expression::ArrowFunctionExpression(func) => {
+            // Arrow functions with expression bodies implicitly return the expression
+            // So we don't need to check those - they're always "returned"
+            Some(&func.body)
+        }
+        _ => None,
+    }
+}
+
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
         &self,
@@ -209,12 +240,46 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            let Some(expect_call) = parse_expect_and_typeof_vitest_fn_call(
+            let Some(parsed_vitest_fn) =
+                parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+            else {
+                let Some(callee) = call_expr.callee_name() else {
+                    continue;
+                };
+
+                if !mock_reset_methods.contains(callee) {
+                    continue;
+                }
+
+                let Some(Expression::Identifier(identify)) =
+                    call_expr.callee.as_member_expression().map(|member| member.object())
+                else {
+                    continue;
+                };
+
+                variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
+
+                continue;
+            };
+
+            if matches!(parsed_vitest_fn.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
+                let Some(callback) = get_test_callback(call_expr) else {
+                    return;
+                };
+
+                let Some(body) = get_callback_body(callback) else {
+                    return;
+                };
+
+                self.check_block_body(&body.statements, node, ctx);
+                continue;
+            }
+
+            let Some(expect_call) = parse_expect_jest_fn_call(
                 call_expr,
                 &PossibleJestNode { node, original: None },
                 ctx,
             ) else {
-                // Wrap in a fn to be understood
                 let Some(callee) = call_expr.callee_name() else {
                     continue;
                 };
@@ -447,6 +512,12 @@ fn test() {
 			      expect(x).toHaveBeenCalledOnce();
 			      ",
         "
+			      test('example',() => {
+			        expect(x).toHaveBeenCalledWith('hoge', 123);
+			        expect(x).toHaveBeenCalledOnce();
+			      });
+			      ",
+        "
 			      expect(x).toHaveBeenCalledWith('hoge', 123);
 			      expect(x).toHaveBeenCalledOnce();
 			      expect(y).toHaveBeenCalledWith('foo', 456);
@@ -529,6 +600,20 @@ fn test() {
 			      ",
             "
 			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge', 123);
+			      ",
+            None,
+        ),
+        (
+            "
+			      test('example',() => {
+			        expect(x).toHaveBeenCalledWith('hoge', 123);
+			        expect(x).toHaveBeenCalledOnce();
+			      });
+			      ",
+            "
+			      test('example',() => {
+			        expect(x).toHaveBeenCalledExactlyOnceWith('hoge', 123);
+			      });
 			      ",
             None,
         ),

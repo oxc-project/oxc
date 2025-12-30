@@ -33,6 +33,15 @@ assertion_line: 444
    ╭─[prefer_called_exactly_once_with.tsx:1:1]
  1 │ 
    · ▲
+ 2 │                   test('example',() => {
+ 3 │                     expect(x).toHaveBeenCalledWith('hoge', 123);
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
  2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
  3 │                   expect(x).toHaveBeenCalledOnce();
    ╰────
