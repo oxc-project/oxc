@@ -239,6 +239,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         let arguments = self.arguments();
         let optional = self.optional();
 
+        // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
+        let is_tailwind_call = f
+            .options()
+            .experimental_tailwindcss
+            .as_ref()
+            .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
+
+        // For nested non-Tailwind calls inside a Tailwind context, disable sorting
+        // to prevent sorting strings inside the nested call's arguments.
+        // (e.g., `classNames("a", x.includes("\n") ? "b" : "c")` - don't sort "\n")
+        let was_disabled =
+            if !is_tailwind_call && let Some(ctx) = f.context_mut().tailwind_context_mut() {
+                let was = ctx.disabled;
+                ctx.disabled = true;
+                Some(was)
+            } else {
+                None
+            };
+
         let is_template_literal_single_arg = arguments.len() == 1
             && arguments.first().unwrap().as_expression().is_some_and(|expr| {
                 is_multiline_template_starting_on_same_line(expr, f.source_text())
@@ -273,16 +292,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 }
                 write!(f, [optional.then_some("?."), type_arguments]);
 
-                // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
-                // Extract context entry before mutating f
-                let tailwind_ctx_to_push = f
-                    .options()
-                    .experimental_tailwindcss
-                    .as_ref()
-                    .filter(|opts| is_tailwind_function_call(&self.callee, opts))
-                    .map(|opts| {
+                // If this IS a Tailwind function call, push the Tailwind context
+                let tailwind_ctx_to_push = if is_tailwind_call {
+                    f.options().experimental_tailwindcss.as_ref().map(|opts| {
                         TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace)
-                    });
+                    })
+                } else {
+                    None
+                };
 
                 // Push Tailwind context before formatting arguments
                 if let Some(ctx) = tailwind_ctx_to_push {
@@ -301,6 +318,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             } else {
                 write!(f, [format_inner]);
             }
+        }
+
+        // Restore the previous disabled state
+        if let Some(was) = was_disabled
+            && let Some(ctx) = f.context_mut().tailwind_context_mut()
+        {
+            ctx.disabled = was;
         }
     }
 }
@@ -1052,7 +1076,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
+        let tailwind_ctx = f.context().tailwind_context().copied().filter(|ctx| {
+            // Skip if context is disabled (e.g., inside nested non-Tailwind call expressions)
+            if ctx.disabled {
+                return false;
+            }
             // No whitespace means only one class, so no need to sort
             let content = f.source_text().text_for(self);
             content.as_bytes().iter().any(|&b| b.is_ascii_whitespace())

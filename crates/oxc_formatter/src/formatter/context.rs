@@ -27,6 +27,11 @@ pub struct TailwindContextEntry {
     /// Whether the quasi after this expression starts with whitespace.
     /// Only relevant when `in_template_expression` is true.
     pub quasi_after_has_leading_ws: bool,
+    /// Whether Tailwind sorting is disabled in this context.
+    /// Used to prevent sorting strings inside nested non-Tailwind call expressions.
+    /// For example, in `classNames("a", x.includes("\n") ? "b" : "c")`, the `"\n"`
+    /// inside `includes()` should NOT be sorted as a Tailwind class.
+    pub disabled: bool,
 }
 
 impl TailwindContextEntry {
@@ -38,6 +43,7 @@ impl TailwindContextEntry {
             in_template_expression: false,
             quasi_before_has_trailing_ws: true, // Default: can collapse
             quasi_after_has_leading_ws: true,   // Default: can collapse
+            disabled: false,
         }
     }
 
@@ -54,6 +60,7 @@ impl TailwindContextEntry {
             in_template_expression: true,
             quasi_before_has_trailing_ws,
             quasi_after_has_leading_ws,
+            disabled: false,
         }
     }
 }
@@ -247,5 +254,10 @@ impl<'ast> FormatContext<'ast> {
     /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression).
     pub fn tailwind_context(&self) -> Option<&TailwindContextEntry> {
         self.tailwind_context_stack.last()
+    }
+
+    /// Get a mutable reference to the current Tailwind context, if any.
+    pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
+        self.tailwind_context_stack.last_mut()
     }
 }

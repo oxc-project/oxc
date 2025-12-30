@@ -712,4 +712,85 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.code).toContain("`flex p-4`");
     expect(result.errors).toStrictEqual([]);
   });
+
+  // Tests for nested call expressions - strings inside non-Tailwind calls should NOT be sorted
+  // Issue: https://github.com/tailwindlabs/prettier-plugin-tailwindcss/issues/426
+  test("should NOT sort strings inside nested non-Tailwind call expressions", async () => {
+    // The "\n" inside value.includes() should NOT be treated as a Tailwind class
+    const input = `const A = <div className={classNames(
+  "bg-red-500",
+  value.includes("\\n") ? "pt-2" : "pt-1"
+)} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["classNames"],
+      },
+    });
+
+    // The "\n" should remain as "\n", not be corrupted
+    expect(result.code).toContain('value.includes("\\n")');
+    // Direct Tailwind class strings should still be sorted (single classes, no sorting needed here)
+    expect(result.code).toContain('"bg-red-500"');
+    expect(result.code).toContain('"pt-2"');
+    expect(result.code).toContain('"pt-1"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should NOT sort strings inside deeply nested call expressions", async () => {
+    // Multiple levels of nested calls - strings in inner calls should be preserved
+    const input = `const A = <div className={clsx(
+  "flex p-4",
+  arr.filter(x => x.startsWith("prefix")).join(" ")
+)} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["clsx"],
+      },
+    });
+
+    // Direct Tailwind classes should be sorted
+    expect(result.code).toContain('"flex p-4"');
+    // Strings inside nested calls should be preserved
+    expect(result.code).toContain('startsWith("prefix")');
+    expect(result.code).toContain('join(" ")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort Tailwind classes but preserve strings in member expression calls", async () => {
+    // str.split(" ") - the " " should not be sorted as Tailwind
+    const input = `const A = <div className={clsx("p-4 flex", input.split(" ").map(x => x))} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["clsx"],
+      },
+    });
+
+    // Direct Tailwind classes should be sorted
+    expect(result.code).toContain('"flex p-4"');
+    // The " " in split should be preserved
+    expect(result.code).toContain('split(" ")');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve escape sequences in nested call expressions", async () => {
+    // Various escape sequences should be preserved in nested calls
+    const input = `const A = <div className={clsx(
+  "flex",
+  str.includes("\\t") && "p-4",
+  str.match(/\\s/) && "m-2"
+)} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        tailwindFunctions: ["clsx"],
+      },
+    });
+
+    // Escape sequences should be preserved
+    expect(result.code).toContain('includes("\\t")');
+    expect(result.errors).toStrictEqual([]);
+  });
 });
