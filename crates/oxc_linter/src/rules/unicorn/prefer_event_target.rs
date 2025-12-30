@@ -20,12 +20,12 @@ const IGNORED_PACKAGES: &[&str] = &["@angular/core", "eventemitter3"];
 /// Check if EventEmitter is imported from an ignored package (module-scoped check)
 fn is_event_emitter_from_ignored_package(ctx: &LintContext) -> bool {
     use crate::module_record::ImportImportName;
-    
+
     ctx.module_record().import_entries.iter().any(|import| {
         if !IGNORED_PACKAGES.contains(&import.module_request.name.as_str()) {
             return false;
         }
-        
+
         match &import.import_name {
             ImportImportName::Name(name_span) => name_span.name.as_str() == "EventEmitter",
             ImportImportName::Default(_) => import.local_name.name.as_str() == "EventEmitter",
