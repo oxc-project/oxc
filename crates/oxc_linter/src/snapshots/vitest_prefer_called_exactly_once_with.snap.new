@@ -1,0 +1,138 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+ 3 │                   expect(x).toHaveBeenCalledWith('hoge');
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge');
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
+ 3 │                   const hoge = 'foo';
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+ 3 │                   y.mockClear();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+ 3 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce<[number]>();
+ 3 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+ 3 │                   expect(x).toHaveBeenCalledWith<
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+ 3 │                   expect(x).toHaveBeenCalledOnce();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Should be an imperative statement about what is wrong.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   expect(x).toHaveBeenCalledOnce();
+ 3 │                   y.mockClear();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
