@@ -3,9 +3,9 @@ use std::{borrow::Cow, fmt::Debug, path::Path, sync::Arc};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
-use oxc_ast::deserialize::{DeserError, FromESTree};
+use oxc_ast::deserialize::{DeserError, FromESTree, clear_unknown_spans, take_unknown_spans};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 
 use crate::module_record::ModuleRecord;
 
@@ -859,6 +859,9 @@ pub fn lint_with_external_ast(
     // Allocate source text in the allocator (needs to live as long as the Program)
     let source_text_alloc = allocator.alloc_str(source_text);
 
+    // Clear any previously recorded unknown spans before deserializing
+    clear_unknown_spans();
+
     // Deserialize ESTree JSON to oxc Program
     let mut program: oxc_ast::ast::Program =
         match FromESTree::from_estree(&estree_value, &allocator) {
@@ -875,6 +878,11 @@ pub fn lint_with_external_ast(
                 );
             }
         };
+
+    // Retrieve spans of unknown nodes (custom syntax like GlimmerTemplate) that were
+    // replaced with placeholders. These will be used to filter out false positive
+    // diagnostics from rules that don't understand the placeholder nodes.
+    let unknown_spans = take_unknown_spans();
 
     // Set the source text on the program (needed for span operations in rules)
     program.source_text = source_text_alloc;
@@ -918,7 +926,37 @@ pub fn lint_with_external_ast(
     let (messages, _disable_directives) =
         linter.run_rust_rules_only(path, vec![ctx_sub_host], &allocator);
 
+    // Filter out diagnostics that fall within unknown node spans.
+    // Rules may report false positives on placeholder nodes (e.g., no-empty-static-block
+    // on a StaticBlock placeholder for GlimmerTemplate), so we remove diagnostics
+    // whose spans overlap with regions containing custom syntax.
+    let messages = if unknown_spans.is_empty() {
+        messages
+    } else {
+        filter_messages_in_unknown_spans(messages, &unknown_spans)
+    };
+
     (messages, DeserializeResult::Success)
+}
+
+/// Filter out messages whose spans overlap with unknown node spans.
+///
+/// A message is filtered out if its span overlaps with any unknown span.
+/// Two spans overlap if they share any source positions.
+fn filter_messages_in_unknown_spans(messages: Vec<Message>, unknown_spans: &[Span]) -> Vec<Message> {
+    messages
+        .into_iter()
+        .filter(|message| {
+            // Keep the message if it doesn't overlap with any unknown span
+            !unknown_spans.iter().any(|unknown| spans_overlap(message.span, *unknown))
+        })
+        .collect()
+}
+
+/// Check if two spans overlap (share any common source positions).
+fn spans_overlap(a: Span, b: Span) -> bool {
+    // Spans overlap if neither ends before the other begins
+    a.start < b.end && b.start < a.end
 }
 
 #[cfg(test)]
@@ -1319,5 +1357,78 @@ mod test {
         let result = DeserializeResult::Error("test error".to_string());
         assert!(format!("{:?}", result).contains("Error"));
         assert!(format!("{:?}", result).contains("test error"));
+    }
+
+    #[test]
+    fn test_spans_overlap() {
+        // No overlap - a ends before b starts
+        assert!(!spans_overlap(Span::new(0, 10), Span::new(10, 20)));
+        assert!(!spans_overlap(Span::new(0, 10), Span::new(15, 20)));
+
+        // No overlap - b ends before a starts
+        assert!(!spans_overlap(Span::new(10, 20), Span::new(0, 10)));
+        assert!(!spans_overlap(Span::new(15, 20), Span::new(0, 10)));
+
+        // Overlap - a contains b
+        assert!(spans_overlap(Span::new(0, 20), Span::new(5, 15)));
+
+        // Overlap - b contains a
+        assert!(spans_overlap(Span::new(5, 15), Span::new(0, 20)));
+
+        // Overlap - partial overlap
+        assert!(spans_overlap(Span::new(0, 15), Span::new(10, 20)));
+        assert!(spans_overlap(Span::new(10, 20), Span::new(0, 15)));
+
+        // Overlap - same span
+        assert!(spans_overlap(Span::new(10, 20), Span::new(10, 20)));
+
+        // Edge case - empty spans
+        assert!(!spans_overlap(Span::new(10, 10), Span::new(10, 10)));
+        assert!(!spans_overlap(Span::new(0, 10), Span::new(10, 10)));
+    }
+
+    #[test]
+    fn test_filter_messages_in_unknown_spans() {
+        use oxc_diagnostics::OxcDiagnostic;
+
+        fn make_message(start: u32, end: u32) -> Message {
+            let diag = OxcDiagnostic::error("test").with_label(Span::new(start, end));
+            Message::new(diag, PossibleFixes::None)
+        }
+
+        let messages = vec![
+            make_message(0, 10),   // Before unknown span
+            make_message(20, 30),  // Inside unknown span
+            make_message(50, 60),  // After unknown span
+            make_message(35, 45),  // Overlaps end of unknown span
+        ];
+
+        let unknown_spans = vec![Span::new(15, 40)];
+
+        let filtered = filter_messages_in_unknown_spans(messages, &unknown_spans);
+
+        // Should only keep messages that don't overlap with unknown spans
+        assert_eq!(filtered.len(), 2);
+        assert_eq!(filtered[0].span, Span::new(0, 10));
+        assert_eq!(filtered[1].span, Span::new(50, 60));
+    }
+
+    #[test]
+    fn test_filter_messages_no_unknown_spans() {
+        use oxc_diagnostics::OxcDiagnostic;
+
+        fn make_message(start: u32, end: u32) -> Message {
+            let diag = OxcDiagnostic::error("test").with_label(Span::new(start, end));
+            Message::new(diag, PossibleFixes::None)
+        }
+
+        let messages = vec![make_message(0, 10), make_message(20, 30)];
+
+        let unknown_spans: Vec<Span> = vec![];
+
+        let filtered = filter_messages_in_unknown_spans(messages.clone(), &unknown_spans);
+
+        // All messages should be kept
+        assert_eq!(filtered.len(), 2);
     }
 }
