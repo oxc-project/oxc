@@ -513,12 +513,14 @@ fn test() {
         "<div aria-labelledby={null} />",
         "<div aria-labelledby={undefined} />",
         // Ensure that template literals with expressions are allowed for idlist aria props.
-        r#"<div aria-labelledby={`${id}-label`} />"#,
-        r#"<div aria-labelledby={`${id}`} />"#,
-        r#"<div aria-labelledby={`${id}-label ${id}-help-text`} />"#,
-        r#"<div aria-describedby={`${id}-label`} />"#,
-        r#"<div aria-describedby={`${id}`} />"#,
-        r#"<div aria-describedby={`${id}-label ${id}-help-text`} />"#,
+        "<div aria-labelledby={`${id}-label`} />",
+        "<div aria-labelledby={`${id}`} />",
+        "<div aria-labelledby={`${id}-label ${id}-help-text`} />",
+        "<div aria-describedby={`${id}-label`} />",
+        "<div aria-describedby={`${id}`} />",
+        "<div aria-describedby={`${foo.bar}`} />",
+        "<div aria-describedby={`${id}-label ${id}-help-text`} />",
+        "<div aria-describedby={`${foo.bar}-label ${foo.bar}-help-text`} />",
     ];
 
     let fail = vec![
