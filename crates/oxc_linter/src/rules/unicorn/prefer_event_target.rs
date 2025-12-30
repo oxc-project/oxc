@@ -11,6 +11,118 @@ fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+// Packages that should be ignored because they provide their own EventEmitter
+const IGNORED_PACKAGES: &[&str] = &["@angular/core", "eventemitter3"];
+
+/// Check if EventEmitter is imported from an ignored package via ES6 import
+fn is_event_emitter_from_ignored_import(ctx: &LintContext) -> bool {
+    ctx.module_record().import_entries.iter().any(|import| {
+        import.local_name.name() == "EventEmitter"
+            && IGNORED_PACKAGES.contains(&import.module_request.name())
+    })
+}
+
+/// Check if an identifier is from an ignored package via require() or dynamic import
+fn is_from_ignored_package_via_require(
+    ident: &oxc_ast::ast::IdentifierReference,
+    ctx: &LintContext,
+) -> bool {
+    // Get the reference for this identifier
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+
+    // Get the symbol_id for this reference
+    // If there's no symbol, this identifier is likely undefined or global
+    let symbol_id = match reference.symbol_id() {
+        Some(id) => id,
+        None => return false,
+    };
+
+    // Get the declaration node for this symbol
+    let decl_id = ctx.scoping().symbol_declaration(symbol_id);
+    let decl_node = ctx.nodes().get_node(decl_id);
+
+    // For BindingIdentifier, find the VariableDeclarator ancestor
+    if !matches!(decl_node.kind(), AstKind::BindingIdentifier(_)) {
+        return false;
+    }
+
+    // Use ancestors to find the VariableDeclarator
+    for ancestor in ctx.nodes().ancestors(decl_id) {
+        if let AstKind::VariableDeclarator(declarator) = ancestor.kind() {
+            if let Some(init) = &declarator.init {
+                return is_ignored_package_expression(init);
+            }
+            return false;
+        }
+    }
+
+    false
+}
+
+/// Check if an expression is a require() or dynamic import from an ignored package
+fn is_ignored_package_expression(expr: &Expression) -> bool {
+    match expr {
+        // require("@angular/core") - for destructuring: const { EventEmitter } = require(...)
+        Expression::CallExpression(call_expr) => {
+            if let Some(arg) = call_expr.common_js_require() {
+                return IGNORED_PACKAGES.contains(&arg.value.as_str());
+            }
+        }
+        // require("@angular/core").EventEmitter or (await import("eventemitter3")).EventEmitter
+        Expression::StaticMemberExpression(member_expr) => {
+            // Only check if the property is EventEmitter
+            if member_expr.property.name == "EventEmitter" {
+                // Check if the object is a require() or import from an ignored package
+                return is_ignored_package_source(&member_expr.object);
+            }
+        }
+        // await import("eventemitter3") - for destructuring: const { EventEmitter } = await import(...)
+        Expression::AwaitExpression(await_expr) => {
+            return is_ignored_package_source(&await_expr.argument);
+        }
+        // import("eventemitter3") - less common but possible
+        Expression::ImportExpression(import_expr) => {
+            if let Expression::StringLiteral(str_lit) = &import_expr.source {
+                return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
+            }
+        }
+        // (await import("eventemitter3")) - for destructuring with parens
+        Expression::ParenthesizedExpression(paren_expr) => {
+            return is_ignored_package_expression(&paren_expr.expression);
+        }
+        _ => {}
+    }
+    false
+}
+
+/// Check if an expression is a require() or import() call from an ignored package
+fn is_ignored_package_source(expr: &Expression) -> bool {
+    match expr {
+        // require("@angular/core")
+        Expression::CallExpression(call_expr) => {
+            if let Some(arg) = call_expr.common_js_require() {
+                return IGNORED_PACKAGES.contains(&arg.value.as_str());
+            }
+        }
+        // import("eventemitter3")
+        Expression::ImportExpression(import_expr) => {
+            if let Expression::StringLiteral(str_lit) = &import_expr.source {
+                return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
+            }
+        }
+        // (await import("eventemitter3"))
+        Expression::ParenthesizedExpression(paren_expr) => {
+            return is_ignored_package_source(&paren_expr.expression);
+        }
+        // await import("eventemitter3")
+        Expression::AwaitExpression(await_expr) => {
+            return is_ignored_package_source(&await_expr.argument);
+        }
+        _ => {}
+    }
+    false
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferEventTarget;
 
@@ -67,6 +179,16 @@ impl Rule for PreferEventTarget {
             _ => return,
         }
 
+        // Check if EventEmitter is from an ES6 import from an ignored package
+        if is_event_emitter_from_ignored_import(ctx) {
+            return;
+        }
+
+        // Check if EventEmitter is from require() or dynamic import from an ignored package
+        if is_from_ignored_package_via_require(ident, ctx) {
+            return;
+        }
+
         ctx.diagnostic(prefer_event_target_diagnostic(ident.span));
     }
 }
@@ -95,6 +217,11 @@ fn test() {
         r"const target = new Foo(EventEmitter);",
         r"EventEmitter()",
         r"const emitter = EventEmitter()",
+        // EventEmitter from ignored packages should be allowed - ES6 imports
+        r#"import { EventEmitter } from "@angular/core";
+class Foo extends EventEmitter {}"#,
+        r#"import { EventEmitter } from "eventemitter3";
+class Foo extends EventEmitter {}"#,
     ];
 
     let fail = vec![
