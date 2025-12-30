@@ -171,9 +171,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<PreferLowercaseTitle>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
     fn run_on_jest_node<'a, 'c>(

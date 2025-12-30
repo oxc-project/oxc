@@ -112,9 +112,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFloatingPromises {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoFloatingPromises>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

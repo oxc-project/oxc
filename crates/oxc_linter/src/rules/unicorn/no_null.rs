@@ -173,7 +173,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 
 impl Rule for NoNull {
     fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoNull>>(value).unwrap_or_default().into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

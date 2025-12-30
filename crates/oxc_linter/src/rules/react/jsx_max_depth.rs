@@ -102,7 +102,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxMaxDepth {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxMaxDepth>>(value)
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .map(DefaultRuleConfig::into_inner)
             .unwrap_or_default()
     }

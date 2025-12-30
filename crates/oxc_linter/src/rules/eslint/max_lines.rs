@@ -73,7 +73,7 @@ impl Rule for MaxLines {
         {
             Self(Box::new(MaxLinesConfig { max, skip_comments: false, skip_blank_lines: false }))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxLines>>(value)
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
                 .unwrap_or_default()
                 .into_inner()
         }

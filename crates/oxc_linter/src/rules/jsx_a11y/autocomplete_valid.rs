@@ -154,9 +154,7 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
 
 impl Rule for AutocompleteValid {
     fn from_configuration(config: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<AutocompleteValid>>(config)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(config).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
