@@ -167,6 +167,8 @@ impl Rule for DotNotation {
             .and_then(|c| c.get("allowKeywords"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(true);
+        // Note: Invalid regex patterns are silently ignored (pattern becomes None).
+        // This matches the behavior of other oxc rules with regex config options.
         let allow_pattern = config
             .and_then(|c| c.get("allowPattern"))
             .and_then(serde_json::Value::as_str)
@@ -225,6 +227,14 @@ impl DotNotation {
         if let Some(ref regex) = self.allow_pattern
             && regex.is_match(property_name)
         {
+            return;
+        }
+
+        // Check for comments inside the bracket notation - don't auto-fix if present
+        // to avoid destroying user comments (matches ESLint behavior)
+        let bracket_span = Span::new(expr.object.span().end, expr.span.end);
+        if ctx.has_comments_between(bracket_span) {
+            ctx.diagnostic(use_dot_notation_diagnostic(property_name, expr.span));
             return;
         }
 
@@ -297,6 +307,13 @@ impl DotNotation {
 
         // Report if the property is an ES3 keyword
         if is_es3_keyword(property_name) {
+            // Check for comments between object and property - don't auto-fix if present
+            let member_span = Span::new(expr.object.span().end, expr.span.end);
+            if ctx.has_comments_between(member_span) {
+                ctx.diagnostic(use_bracket_notation_diagnostic(property_name, expr.span));
+                return;
+            }
+
             ctx.diagnostic_with_fix(
                 use_bracket_notation_diagnostic(property_name, expr.span),
                 |fixer| {
@@ -535,4 +552,17 @@ fn test() {
     Tester::new(DotNotation::NAME, DotNotation::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+/// Verify that ES3_KEYWORDS is sorted (required for binary_search to work correctly)
+#[test]
+fn es3_keywords_is_sorted() {
+    for window in ES3_KEYWORDS.windows(2) {
+        assert!(
+            window[0] < window[1],
+            "ES3_KEYWORDS must be sorted for binary_search: '{}' should come before '{}'",
+            window[0],
+            window[1]
+        );
+    }
 }
