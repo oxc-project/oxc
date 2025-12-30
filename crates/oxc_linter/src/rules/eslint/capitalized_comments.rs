@@ -141,9 +141,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for CapitalizedComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(arr) = value.as_array() else {
-            return Self::default();
+            return Ok(Self::default());
         };
 
         let capitalize =
@@ -155,7 +155,7 @@ impl Rule for CapitalizedComments {
         let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
         let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);
 
-        Self(Box::new(CapitalizedCommentsConfig { capitalize, line_config, block_config }))
+        Ok(Self(Box::new(CapitalizedCommentsConfig { capitalize, line_config, block_config })))
     }
 
     fn run_once(&self, ctx: &LintContext) {
