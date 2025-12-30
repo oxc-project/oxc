@@ -10,10 +10,12 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 
+#[cold]
 fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDiagnostic {
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
+#[cold]
 fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
     modifier: &str,
     span: Span,
@@ -50,6 +52,7 @@ pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBu
 }
 
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+#[cold]
 fn jsdoc_type_in_annotation(
     modifier: char,
     is_start: bool,
@@ -103,6 +106,7 @@ pub fn check_ts_type_alias_declaration<'a>(
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
+#[cold]
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
     ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
 }
@@ -133,6 +137,7 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
+#[cold]
 fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
         "1235",
@@ -146,6 +151,7 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
+#[cold]
 fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> OxcDiagnostic {
     ts_error(
         "2670",
@@ -182,6 +188,7 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
     }
 }
 
+#[cold]
 fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
@@ -214,6 +221,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
 }
 
 /// TS(1392)
+#[cold]
 fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
@@ -231,16 +239,19 @@ pub fn check_ts_import_equals_declaration<'a>(
 
 /// - Abstract properties can only appear within an abstract class. (1253)
 /// - Abstract methods can only appear within an abstract class. (1244)
+#[cold]
 fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnostic {
     let (code, elem_kind) = if is_property { ("1253", "properties") } else { ("1244", "methods") };
     ts_error(code, format!("Abstract {elem_kind} can only appear within an abstract class."))
         .with_label(span)
 }
 
+#[cold]
 fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
     ts_error("2390", "Constructor implementation is missing.").with_label(span)
 }
 
+#[cold]
 fn function_implementation_missing(span: Span) -> OxcDiagnostic {
     ts_error(
         "2391",
@@ -327,11 +338,13 @@ fn check_type_name_is_reserved<'a>(
     }
 }
 
+#[cold]
 fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
     ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
+#[cold]
 fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     ts_error(
         "1242",
@@ -341,6 +354,7 @@ fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
 }
 
 /// A parameter property is only allowed in a constructor implementation.ts(2369)
+#[cold]
 fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
     ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
         .with_label(span)
@@ -348,6 +362,7 @@ fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
 
 /// Getter or setter without a body. There is no corresponding TS error code,
 /// since in TSC this is a parse error.
+#[cold]
 fn accessor_without_body(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Getters and setters must have an implementation.").with_label(span)
 }
@@ -401,6 +416,7 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
 }
 
 /// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+#[cold]
 fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
     let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
     ts_error(
@@ -424,6 +440,7 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     }
 }
 
+#[cold]
 fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
     ts_error("18007", "JSX expressions may not use the comma operator")
         .with_help("Did you mean to write an array?")
@@ -439,6 +456,7 @@ pub fn check_jsx_expression_container(
     }
 }
 
+#[cold]
 fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
     ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
         .with_label(span)
