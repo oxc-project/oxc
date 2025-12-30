@@ -285,6 +285,8 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/wrap-regex",
   "eslint/yield-star-spacing",
 
+  "react/jsx-uses-vars", // handled by eslint/no-unused-vars, which already evaluates whether vars are used in JSX
+
   "unicorn/no-named-default", // implemented via import/no-named-default
 
   // not supported as it requires parsing the vue template
