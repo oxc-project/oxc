@@ -1651,7 +1651,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 ctx.state.changed = true;
                 if is_pure {
-                    UpdatePureStatus::default().visit_expression(e);
+                    UpdatePureStatus.visit_expression(e);
                 }
                 return;
             }
@@ -1670,7 +1670,7 @@ impl<'a> PeepholeOptimizations {
                     }
 
                     if is_pure {
-                        UpdatePureStatus::default().visit_expression(e);
+                        UpdatePureStatus.visit_expression(e);
                     }
                     ctx.state.changed = true;
                 }
@@ -1684,7 +1684,7 @@ impl<'a> PeepholeOptimizations {
                         }
                         ctx.state.changed = true;
                         if is_pure {
-                            UpdatePureStatus::default().visit_expression(e);
+                            UpdatePureStatus.visit_expression(e);
                         }
                     }
                 }
@@ -1756,7 +1756,6 @@ where
     }
 }
 
-#[derive(Default)]
 struct UpdatePureStatus;
 
 impl<'a> VisitMut<'a> for UpdatePureStatus {
