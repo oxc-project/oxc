@@ -378,6 +378,16 @@ impl OrderInComponents {
         }
     }
 
+    /// Creates a fix to reorder a property in the component object.
+    ///
+    /// The fix consists of two operations:
+    /// 1. Delete the out-of-order property (including its comma and leading whitespace)
+    /// 2. Insert the property before the target position
+    ///
+    /// Comma handling:
+    /// - If the property has a trailing comma, include it in the delete/insert
+    /// - If the property is last (no trailing comma), delete the preceding comma
+    /// - When inserting, ensure proper comma placement for valid syntax
     fn create_reorder_fix<'a>(
         &self,
         source_text: &str,
