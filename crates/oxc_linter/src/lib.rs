@@ -377,6 +377,7 @@ impl Linter {
             source_text,
             &parse_result.ast_json,
             parse_result.scope_manager_json.as_deref(),
+            Some(parser_options_json),
         );
         all_messages.extend(rust_messages);
 
