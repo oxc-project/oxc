@@ -1,100 +1,341 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:29]
- 1 │ export default { data() {}, name: 'burger' }
-   ·                             ──────────────
-   ╰────
+  ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "data" property.
+    ╭─[order_in_components.tsx:9:14]
+  8 │                           },
+  9 │ ╭─▶                       props: {
+ 10 │ │                           propA: Number,
+ 11 │ ╰─▶                       },
+ 12 │                         }
+    ╰────
   help: Enforce a convention in the order of component options for better readability.
 
   ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:40]
- 1 │ export default { name: 'a', data() {}, props: {} }
-   ·                                        ─────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "computed" property should be above the "methods" property.
-   ╭─[order_in_components.tsx:1:31]
- 1 │ export default { methods: {}, computed: {} }
-   ·                               ────────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "methods" property should be above the "render" property.
-   ╭─[order_in_components.tsx:1:31]
- 1 │ export default { render() {}, methods: {} }
-   ·                               ───────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "data" property should be above the "mounted" property.
-   ╭─[order_in_components.tsx:1:32]
- 1 │ export default { mounted() {}, data() {} }
-   ·                                ─────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "computed" property should be above the "watch" property.
-   ╭─[order_in_components.tsx:1:29]
- 1 │ export default { watch: {}, computed: {} }
-   ·                             ────────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:84]
- 1 │ import { defineComponent } from 'vue'; export default defineComponent({ data() {}, name: 'app' })
-   ·                                                                                    ───────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "props" property.
-   ╭─[order_in_components.tsx:1:29]
- 1 │ export default { props: {}, name: 'a' }
-   ·                             ─────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:28]
- 1 │ defineOptions({ data() {}, name: 'app' })
-   ·                            ───────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:36]
- 1 │ app.component('name', { data() {}, name: 'app' })
-   ·                                    ───────────
-   ╰────
-  help: Enforce a convention in the order of component options for better readability.
-
-  ⚠ eslint-plugin-vue(order-in-components): The "el" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:21]
- 1 │ new Vue({ data: {}, el: '#app' })
-   ·                     ──────────
-   ╰────
+    ╭─[order_in_components.tsx:10:14]
+  9 │                           },
+ 10 │ ╭─▶                       props: {
+ 11 │ │                           propA: Number,
+ 12 │ ╰─▶                       },
+ 13 │                         })
+    ╰────
   help: Enforce a convention in the order of component options for better readability.
 
   ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:29]
- 1 │ export default { data() {}, props: {}, name: 'a' }
-   ·                             ─────────
+    ╭─[order_in_components.tsx:10:14]
+  9 │                           },
+ 10 │ ╭─▶                       props: {
+ 11 │ │                           propA: Number,
+ 12 │ ╰─▶                       },
+ 13 │                         })
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "render" property.
+   ╭─[order_in_components.tsx:8:14]
+ 7 │                       },
+ 8 │                       name: 'app',
+   ·                       ───────────
+ 9 │                       data () {
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "data" property should be above the "render" property.
+    ╭─[order_in_components.tsx:9:14]
+  8 │                           name: 'app',
+  9 │ ╭─▶                       data () {
+ 10 │ │                           return {
+ 11 │ │                             msg: 'Welcome to Your Vue.js App'
+ 12 │ │                           }
+ 13 │ ╰─▶                       },
+ 14 │                           props: {
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "render" property.
+    ╭─[order_in_components.tsx:14:14]
+ 13 │                           },
+ 14 │ ╭─▶                       props: {
+ 15 │ │                           propA: Number,
+ 16 │ ╰─▶                       },
+ 17 │                         }
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "components" property should be above the "data" property.
+    ╭─[order_in_components.tsx:9:14]
+  8 │                       },
+  9 │                       components: {},
+    ·                       ──────────────
+ 10 │                       template: '<div></div>'
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "components" property should be above the "data" property.
+    ╭─[order_in_components.tsx:9:14]
+  8 │                       },
+  9 │                       components: {},
+    ·                       ──────────────
+ 10 │                       template: '<div></div>'
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "components" property should be above the "data" property.
+    ╭─[order_in_components.tsx:10:14]
+  9 │                       },
+ 10 │                       components: {},
+    ·                       ──────────────
+ 11 │                       template: '<div></div>'
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "el" property should be above the "name" property.
+   ╭─[order_in_components.tsx:4:14]
+ 3 │                       name: 'app',
+ 4 │                       el: '#app',
+   ·                       ──────────
+ 5 │                       data () {
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "components" property should be above the "data" property.
+    ╭─[order_in_components.tsx:10:14]
+  9 │                       },
+ 10 │                       components: {},
+    ·                       ──────────────
+ 11 │                       template: '<div></div>'
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "methods" property.
+    ╭─[order_in_components.tsx:16:14]
+ 15 │                       },
+ 16 │                       name: 'burger',
+    ·                       ──────────────
+ 17 │                     };
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "test" property should be above the "name" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       name: 'burger',
+ 6 │                       test: 'ok'
+   ·                       ──────────
+ 7 │                     };
    ╰────
   help: Enforce a convention in the order of component options for better readability.
 
   ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
-   ╭─[order_in_components.tsx:1:40]
- 1 │ export default { data() {}, props: {}, name: 'a' }
-   ·                                        ─────────
+   ╭─[order_in_components.tsx:7:14]
+ 6 │                       /** name of vue component */
+ 7 │                       name: 'burger'
+   ·                       ──────────────
+ 8 │                     };
    ╰────
   help: Enforce a convention in the order of component options for better readability.
 
-  ⚠ eslint-plugin-vue(order-in-components): The "data" property should be above the "beforeRouteEnter" property.
-   ╭─[order_in_components.tsx:1:41]
- 1 │ export default { beforeRouteEnter() {}, data() {} }
-   ·                                         ─────────
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:7:14]
+ 6 │                       /** name of vue component */
+ 7 │                       name: 'burger'
+   ·                       ──────────────
+ 8 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:1:26]
+ 1 │ export default {data(){},name:'burger'};
+   ·                          ─────────────
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: obj.fn(),
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: new MyClass(),
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: i++,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: i = 0,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: template`${foo}`,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       [obj.fn()]: 'test',
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: {test: obj.fn()},
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: [obj.fn(), 1],
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: obj.fn().prop,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: delete obj.prop,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: fn() + a + b,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: a ? fn() : null,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                       test: `test ${fn()} ${a}`,
+ 6 │                       name: 'burger',
+   ·                       ──────────────
+ 7 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "data" property should be above the "computed" property.
+   ╭─[order_in_components.tsx:6:14]
+ 5 │                           },
+ 6 │ ╭─▶                       data() {
+ 7 │ ╰─▶                       },
+ 8 │                         };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+   ╭─[order_in_components.tsx:5:14]
+ 4 │                       },
+ 5 │                       name: 'burger',
+   ·                       ──────────────
+ 6 │                       test: fn(),
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "data" property.
+    ╭─[order_in_components.tsx:15:14]
+ 14 │                       testOptionalChaining: a?.b?.c,
+ 15 │                       name: 'burger',
+    ·                       ──────────────
+ 16 │                     };
+    ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "props" property should be above the "setup" property.
+   ╭─[order_in_components.tsx:5:16]
+ 4 │                             setup () {},
+ 5 │ ╭─▶                         props: {
+ 6 │ │                             foo: { type: Array as PropType<number[]> },
+ 7 │ ╰─▶                         },
+ 8 │                           };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "name" property should be above the "inheritAttrs" property.
+   ╭─[order_in_components.tsx:5:14]
+ 4 │                       inheritAttrs: true,
+ 5 │                       name: 'Foo',
+   ·                       ───────────
+ 6 │                     })
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "slots" property should be above the "setup" property.
+   ╭─[order_in_components.tsx:4:14]
+ 3 │                       setup,
+ 4 │                       slots,
+   ·                       ─────
+ 5 │                       expose,
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "expose" property should be above the "setup" property.
+   ╭─[order_in_components.tsx:5:14]
+ 4 │                       slots,
+ 5 │                       expose,
+   ·                       ──────
+ 6 │                     };
+   ╰────
+  help: Enforce a convention in the order of component options for better readability.
+
+  ⚠ eslint-plugin-vue(order-in-components): The "expose" property should be above the "setup" property.
+   ╭─[order_in_components.tsx:5:14]
+ 4 │                       setup,
+ 5 │                       expose,
+   ·                       ──────
+ 6 │                     };
    ╰────
   help: Enforce a convention in the order of component options for better readability.
