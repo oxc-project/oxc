@@ -1523,18 +1523,36 @@ impl Gen for ArrayExpression<'_> {
         if is_multi_line {
             p.indent();
         }
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
+        if let Some((last, rest)) = self.elements.split_last() {
+            if let Some((first, middle)) = rest.split_first() {
+                if is_multi_line {
+                    p.print_soft_newline();
+                    p.print_indent();
+                }
+                first.print(p, ctx);
+                for item in middle {
+                    p.print_comma();
+                    if is_multi_line {
+                        p.print_soft_newline();
+                        p.print_indent();
+                    } else {
+                        p.print_soft_space();
+                    }
+                    item.print(p, ctx);
+                }
                 p.print_comma();
-            }
-            if is_multi_line {
+                if is_multi_line {
+                    p.print_soft_newline();
+                    p.print_indent();
+                } else {
+                    p.print_soft_space();
+                }
+            } else if is_multi_line {
                 p.print_soft_newline();
                 p.print_indent();
-            } else if i != 0 {
-                p.print_soft_space();
             }
-            item.print(p, ctx);
-            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
+            last.print(p, ctx);
+            if matches!(last, ArrayExpressionElement::Elision(_)) {
                 p.print_comma();
             }
         }
@@ -1567,17 +1585,24 @@ impl GenExpr for ObjectExpression<'_> {
             if is_multi_line {
                 p.indent();
             }
-            for (i, item) in self.properties.iter().enumerate() {
-                if i != 0 {
-                    p.print_comma();
-                }
+            if let Some((first, rest)) = self.properties.split_first() {
                 if is_multi_line {
                     p.print_soft_newline();
                     p.print_indent();
                 } else {
                     p.print_soft_space();
                 }
-                item.print(p, ctx);
+                first.print(p, ctx);
+                for item in rest {
+                    p.print_comma();
+                    if is_multi_line {
+                        p.print_soft_newline();
+                        p.print_indent();
+                    } else {
+                        p.print_soft_space();
+                    }
+                    item.print(p, ctx);
+                }
             }
             if is_multi_line {
                 p.print_soft_newline();
@@ -1955,15 +1980,18 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
+        if let Some((last, rest)) = self.elements.split_last() {
+            for item in rest {
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
                 p.print_comma();
                 p.print_soft_space();
             }
-            if let Some(item) = item {
+            if let Some(item) = last {
                 item.print(p, ctx);
             }
-            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+            if last.is_none() || self.rest.is_some() {
                 p.print_comma();
             }
         }
@@ -2920,15 +2948,18 @@ impl Gen for ArrayPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
+        if let Some((last, rest)) = self.elements.split_last() {
+            for item in rest {
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
                 p.print_comma();
                 p.print_soft_space();
             }
-            if let Some(item) = item {
+            if let Some(item) = last {
                 item.print(p, ctx);
             }
-            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+            if last.is_none() || self.rest.is_some() {
                 p.print_comma();
             }
         }
