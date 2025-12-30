@@ -71,6 +71,39 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `.SHOUT_CASE` instead of `["SHOUT_CASE"]`
 
+  ⚠ eslint(dot-notation): [SHOUT_CASE] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ ╭─▶ a
+ 2 │ ╰─▶  ['SHOUT_CASE'];
+   ╰────
+  help: Use `.SHOUT_CASE` instead of `["SHOUT_CASE"]`
+
+  ⚠ eslint(dot-notation): [catch] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ ╭─▶ getResource()
+ 2 │ │    .then(function(){})
+ 3 │ │    ["catch"](function(){})
+ 4 │ │    .then(function(){})
+ 5 │ ╰─▶  ["catch"](function(){});
+   ╰────
+  help: Use `.catch` instead of `["catch"]`
+
+  ⚠ eslint(dot-notation): [catch] is better written in dot notation
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ ╭─▶ getResource()
+ 2 │ │    .then(function(){})
+ 3 │ ╰─▶  ["catch"](function(){})
+ 4 │      .then(function(){})
+   ╰────
+  help: Use `.catch` instead of `["catch"]`
+
+  ⚠ eslint(dot-notation): .while is a reserved word
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo.while;
+   · ─────────
+   ╰────
+  help: Use `["while"]` instead of `.while`
+
   ⚠ eslint(dot-notation): [bar] is better written in dot notation
    ╭─[dot_notation.tsx:1:1]
  1 │ foo[ /* comment */ 'bar' ]
