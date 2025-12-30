@@ -113,17 +113,19 @@ impl Rule for NoUnneededAsyncExpectFunction {
         };
 
         ctx.diagnostic_with_fix(no_unneeded_async_expect_function_diagnostic(func_span), |fixer| {
-            let inner_call_text = fixer.source_range(inner_call_span).to_string();
-            fixer.replace(func_span, inner_call_text)
+            // Note: .to_string() is required here due to lifetime constraints
+            fixer.replace(func_span, fixer.source_range(inner_call_span).to_string())
         });
     }
 }
 
-/// Get the span of the awaited call expression from an async arrow function
+/// Gets the span of the awaited call expression from an async arrow function.
+/// Returns `None` if the function body doesn't contain exactly one await of a call expression.
 fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> Option<Span> {
     // Case 1: Arrow function with expression body (async () => await doSomething())
     if arrow.expression {
-        // When arrow.expression is true, body has exactly one ExpressionStatement
+        // When arrow.expression is true (concise body), the AST wraps the expression
+        // in a single ExpressionStatement within FunctionBody
         let stmt = arrow.body.statements.first()?;
         let Statement::ExpressionStatement(expr_stmt) = stmt else {
             return None;
@@ -174,14 +176,18 @@ fn test() {
     let pass = vec![
         // Simple cases that should pass
         "expect.hasAssertions()",
+        // Empty expect (edge case)
+        "expect()",
         // Direct promise to expect (correct usage)
         "await expect(doSomethingAsync()).rejects.toThrow();",
         "await expect(doSomethingAsync()).resolves.toBe(1);",
+        // Await in expect argument position (already awaited)
+        "await expect(await doSomethingAsync()).rejects.toThrow();",
         // Multiple statements in async wrapper (can't simplify)
         "await expect(async () => { await a(); await b(); }).rejects.toThrow();",
         // No await in wrapper (can't simplify)
         "await expect(async () => { doSync(); }).rejects.toThrow();",
-        // Non-async wrapper
+        // Sync function (not async) - no simplification possible
         "await expect(() => { throw new Error(); }).rejects.toThrow();",
         // Variable declaration before await
         "await expect(async () => { const a = 1; await fn(a); }).rejects.toThrow();",
@@ -206,6 +212,10 @@ fn test() {
         "await expect(async () => { await doSomethingAsync(); }).resolves.toBe(1);",
         // Promise.all wrapped
         "await expect(async () => await Promise.all([a(), b()])).rejects.toThrow();",
+        // Async reference function call
+        "const a = async () => doSomethingAsync(); await expect(async () => { await a(); }).rejects.toThrow();",
+        // With .not matcher
+        "await expect(async () => { await doSomethingAsync(); }).resolves.not.toThrow();",
     ];
 
     let fix = vec![
@@ -237,6 +247,16 @@ fn test() {
         (
             "await expect(async () => await Promise.all([a(), b()])).rejects.toThrow();",
             "await expect(Promise.all([a(), b()])).rejects.toThrow();",
+            None,
+        ),
+        (
+            "const a = async () => doSomethingAsync(); await expect(async () => { await a(); }).rejects.toThrow();",
+            "const a = async () => doSomethingAsync(); await expect(a()).rejects.toThrow();",
+            None,
+        ),
+        (
+            "await expect(async () => { await doSomethingAsync(); }).resolves.not.toThrow();",
+            "await expect(doSomethingAsync()).resolves.not.toThrow();",
             None,
         ),
     ];
