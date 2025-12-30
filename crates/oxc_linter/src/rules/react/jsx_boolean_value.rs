@@ -89,7 +89,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxBooleanValue {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let enforce_boolean_attribute = value
             .get(0)
             .and_then(serde_json::Value::as_str)
@@ -117,11 +117,11 @@ impl Rule for JsxBooleanValue {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(JsxBooleanValueConfig {
+        Ok(Self(Box::new(JsxBooleanValueConfig {
             enforce_boolean_attribute,
             exceptions,
             assume_undefined_is_false,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

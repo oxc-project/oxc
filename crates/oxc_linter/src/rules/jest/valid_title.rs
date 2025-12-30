@@ -143,7 +143,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidTitle {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let get_as_bool = |name: &str| -> bool {
             config
@@ -169,7 +169,8 @@ impl Rule for ValidTitle {
             .and_then(|v| v.get("mustMatch"))
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
-        Self(Box::new(ValidTitleConfig {
+
+        Ok(Self(Box::new(ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
             allow_arguments,
@@ -177,7 +178,7 @@ impl Rule for ValidTitle {
             ignore_space,
             must_not_match_patterns,
             must_match_patterns,
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(

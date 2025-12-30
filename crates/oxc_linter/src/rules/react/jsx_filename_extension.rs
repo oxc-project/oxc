@@ -116,7 +116,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxFilenameExtension {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let ignore_files_without_code = config
@@ -142,7 +142,11 @@ impl Rule for JsxFilenameExtension {
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 
-        Self(Box::new(JsxFilenameExtensionConfig { allow, extensions, ignore_files_without_code }))
+        Ok(Self(Box::new(JsxFilenameExtensionConfig {
+            allow,
+            extensions,
+            ignore_files_without_code,
+        })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -136,11 +136,11 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn from_configuration(&self, value: serde_json::Value) -> Self {
+            pub fn from_configuration(&self, value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
                 match self {
-                    #(Self::#struct_names(_) => Self::#struct_names(
-                        #struct_names::from_configuration(value),
-                    )),*
+                    #(Self::#struct_names(_) => Ok(Self::#struct_names(
+                        #struct_names::from_configuration(value)?,
+                    ))),*
                 }
             }
 
