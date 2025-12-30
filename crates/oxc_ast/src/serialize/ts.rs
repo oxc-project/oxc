@@ -650,7 +650,9 @@ mod from_estree_converters {
             Ok(ABox::new_in(
                 js::FormalParameters {
                     span: oxc_span::SPAN,
-                    kind: js::FormalParameterKind::FormalParameter,
+                    // Use Signature kind for type signatures - this prevents no-unused-vars
+                    // from flagging parameters in function type annotations as unused
+                    kind: js::FormalParameterKind::Signature,
                     items,
                     rest: None,
                 },
