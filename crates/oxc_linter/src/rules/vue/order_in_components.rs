@@ -377,53 +377,81 @@ impl OrderInComponents {
             return fix;
         };
 
-        // Get the source text of the property
-        let property_code =
-            &source_text[from_prop.span.start as usize..from_prop.span.end as usize];
-
-        // Find the comma before the property we're moving (if not first property)
-        let text_before = &source_text[..from_prop.span.start as usize];
-        let comma_before_offset = text_before.rfind(',');
+        // Find the comma/brace before the property we're moving
+        let text_before_from = &source_text[..from_prop.span.start as usize];
+        let comma_before_from = text_before_from.rfind(',');
+        let brace_before_from = text_before_from.rfind('{');
 
         // Find if there's a comma after the property we're moving
-        let text_after = &source_text[from_prop.span.end as usize..];
-        let comma_after_offset = text_after.find(',');
+        let text_after_from = &source_text[from_prop.span.end as usize..];
+        let comma_after_from = text_after_from.find(',');
 
-        // Calculate delete range
-        let delete_start = if from_index > 0 {
-            // Delete from after previous comma (to include whitespace before property)
-            if let Some(offset) = comma_before_offset {
-                offset as u32 + 1 // Start after the comma
-            } else {
-                from_prop.span.start
-            }
+        // Determine the code start position (after the comma/brace before this property)
+        let code_start = if let Some(comma_pos) = comma_before_from {
+            comma_pos + 1 // After the comma
+        } else if let Some(brace_pos) = brace_before_from {
+            brace_pos + 1 // After the opening brace
         } else {
-            from_prop.span.start
+            from_prop.span.start as usize
         };
 
-        let delete_end = if let Some(offset) = comma_after_offset {
-            from_prop.span.end + offset as u32 + 1
-        } else if comma_before_offset.is_some() && from_index > 0 {
-            // If this is the last property and there's a comma before, delete including that comma
-            from_prop.span.end
+        // Determine the code end position
+        let code_end = if let Some(offset) = comma_after_from {
+            from_prop.span.end as usize + offset + 1 // Include the comma after
         } else {
-            from_prop.span.end
+            from_prop.span.end as usize
         };
 
-        // Special case: if we're moving the last property, we need to delete the comma before it too
-        if from_index > 0 && comma_after_offset.is_none() {
-            if let Some(offset) = comma_before_offset {
-                fix.push(Fix::delete(Span::new(offset as u32, delete_end)));
-            } else {
-                fix.push(Fix::delete(Span::new(delete_start, delete_end)));
-            }
+        // Extract the property code (including leading whitespace)
+        let property_code_with_whitespace = &source_text[code_start..code_end];
+
+        // Determine what to delete
+        let delete_start: u32;
+        let delete_end: u32;
+
+        if comma_after_from.is_some() {
+            // Property has a comma after it - delete from code_start to code_end
+            delete_start = code_start as u32;
+            delete_end = code_end as u32;
+        } else if let Some(comma_pos) = comma_before_from {
+            // Property is last (no comma after) - delete including the comma before
+            delete_start = comma_pos as u32;
+            delete_end = from_prop.span.end;
         } else {
-            fix.push(Fix::delete(Span::new(delete_start, delete_end)));
+            // First and only property or no comma found
+            delete_start = from_prop.span.start;
+            delete_end = from_prop.span.end;
         }
 
-        // Insert the property at the target location, adding comma after
-        let insert_text = format!("{property_code},");
-        fix.push(Fix::new(insert_text, Span::sized(to_prop.span.start, 0)));
+        fix.push(Fix::delete(Span::new(delete_start, delete_end)));
+
+        // Determine insert position and text
+        // Find the comma/brace before the target property
+        let text_before_to = &source_text[..to_prop.span.start as usize];
+        let comma_before_to = text_before_to.rfind(',');
+        let brace_before_to = text_before_to.rfind('{');
+
+        let insert_pos = if let Some(comma_pos) = comma_before_to {
+            // Insert after the comma before target
+            comma_pos as u32 + 1
+        } else if let Some(brace_pos) = brace_before_to {
+            // Insert after the opening brace
+            brace_pos as u32 + 1
+        } else {
+            to_prop.span.start
+        };
+
+        // Prepare the insert text
+        let insert_text = if comma_after_from.is_some() {
+            // Already has comma, use as-is
+            property_code_with_whitespace.to_string()
+        } else {
+            // Need to add comma after
+            let trimmed = property_code_with_whitespace.trim_end();
+            format!("{trimmed},")
+        };
+
+        fix.push(Fix::new(insert_text, Span::sized(insert_pos, 0)));
 
         fix.with_message(format!(
             "Move `{}` to correct position",
@@ -1169,6 +1197,108 @@ fn test() {
         (
             "export default {data(){},name:'burger'};",
             "export default {name:'burger',data(){}};",
+            None,
+        ),
+        // Multi-line: props should be before data
+        (
+            "
+export default {
+  name: 'app',
+  data () {
+    return {
+      msg: 'Welcome'
+    }
+  },
+  props: {
+    propA: Number,
+  },
+}
+",
+            "
+export default {
+  name: 'app',
+  props: {
+    propA: Number,
+  },
+  data () {
+    return {
+      msg: 'Welcome'
+    }
+  },
+}
+",
+            None,
+        ),
+        // Vue.component registration
+        (
+            "
+Vue.component('smart-list', {
+  name: 'app',
+  data () {
+    return { msg: 'Hello' }
+  },
+  components: {},
+  template: '<div></div>'
+})
+",
+            "
+Vue.component('smart-list', {
+  name: 'app',
+  components: {},
+  data () {
+    return { msg: 'Hello' }
+  },
+  template: '<div></div>'
+})
+",
+            None,
+        ),
+        // new Vue
+        (
+            "
+new Vue({
+  name: 'app',
+  el: '#app',
+  data () {
+    return { msg: 'Hello' }
+  },
+})
+",
+            "
+new Vue({
+  el: '#app',
+  name: 'app',
+  data () {
+    return { msg: 'Hello' }
+  },
+})
+",
+            None,
+        ),
+        // name should be before methods (last property)
+        (
+            "
+export default {
+  data() {
+    return { isActive: false };
+  },
+  methods: {
+    toggle() { this.isActive = !this.isActive; }
+  },
+  name: 'burger',
+};
+",
+            "
+export default {
+  name: 'burger',
+  data() {
+    return { isActive: false };
+  },
+  methods: {
+    toggle() { this.isActive = !this.isActive; }
+  },
+};
+",
             None,
         ),
     ];
