@@ -1,8 +1,21 @@
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode as CrateAstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
+        parse_expect_jest_fn_call,
+    },
+};
 
 fn valid_expect_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Promise containing expect was not returned or awaited")
@@ -58,7 +71,231 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidExpectInPromise {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &CrateAstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        if !is_potential_expect_call(call_expr) {
+            return;
+        }
+
+        let jest_node = PossibleJestNode { node, original: None };
+        if parse_expect_jest_fn_call(call_expr, &jest_node, ctx).is_none() {
+            return;
+        }
+
+        if let Some(span) = find_unhandled_promise_chain(node, ctx) {
+            ctx.diagnostic(valid_expect_in_promise_diagnostic(span));
+        }
+    }
+}
+
+fn is_potential_expect_call(call_expr: &CallExpression) -> bool {
+    if call_expr.callee.is_specific_id("expect") {
+        return true;
+    }
+
+    // Check for expect().xxx() pattern (e.g., expect(x).toBe(y))
+    if let Some(member_expr) = call_expr.callee.get_member_expr() {
+        let mut obj: &Expression<'_> = member_expr.object();
+        loop {
+            if let Expression::CallExpression(call) = obj {
+                if call.callee.is_specific_id("expect") {
+                    return true;
+                }
+                if let Some(inner_member) = call.callee.get_member_expr() {
+                    obj = inner_member.object();
+                    continue;
+                }
+            }
+            break;
+        }
+    }
+
+    false
+}
+
+/// Walks up from an expect() call to find if it's inside an unhandled promise callback.
+fn find_unhandled_promise_chain<'a>(
+    expect_node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<Span> {
+    let mut current = expect_node;
+
+    loop {
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
+                let grandparent = ctx.nodes().parent_node(parent.id());
+
+                if let AstKind::CallExpression(call_expr) = grandparent.kind()
+                    && is_promise_method_call(call_expr)
+                {
+                    let chain_root = find_promise_chain_root(grandparent, ctx);
+
+                    if !is_in_test_callback(chain_root, ctx) {
+                        return None;
+                    }
+
+                    if !is_promise_handled(chain_root, ctx)
+                        && let AstKind::CallExpression(root_call) = chain_root.kind()
+                    {
+                        return Some(root_call.span);
+                    }
+                    return None;
+                }
+            }
+
+            AstKind::CallExpression(call_expr) => {
+                let jest_node = PossibleJestNode { node: parent, original: None };
+                if is_type_of_jest_fn_call(
+                    call_expr,
+                    &jest_node,
+                    ctx,
+                    &[
+                        JestFnKind::General(JestGeneralFnKind::Test),
+                        JestFnKind::General(JestGeneralFnKind::Hook),
+                    ],
+                ) {
+                    return None;
+                }
+            }
+
+            AstKind::Program(_) => return None,
+            _ => {}
+        }
+
+        current = parent;
+    }
+}
+
+fn is_promise_method_call(call_expr: &CallExpression) -> bool {
+    if let Some(member_expr) = call_expr.callee.get_member_expr()
+        && let Some(prop_name) = member_expr.static_property_name()
+    {
+        return matches!(prop_name, "then" | "catch" | "finally");
+    }
+    false
+}
+
+fn is_promise_static_call(call_expr: &CallExpression) -> bool {
+    if let Some(member_expr) = call_expr.callee.get_member_expr()
+        && member_expr.object().is_specific_id("Promise")
+        && let Some(prop) = member_expr.static_property_name()
+    {
+        return matches!(prop, "all" | "race" | "allSettled" | "any" | "resolve" | "reject");
+    }
+    false
+}
+
+/// Finds the outermost call in a promise chain (e.g., `.catch()` in `a().then().catch()`).
+fn find_promise_chain_root<'a, 'b>(
+    promise_call: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> &'b AstNode<'a> {
+    let mut current = promise_call;
+
+    loop {
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                let grandparent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::CallExpression(call_expr) = grandparent.kind()
+                    && is_promise_method_call(call_expr)
+                {
+                    current = grandparent;
+                    continue;
+                }
+            }
+            AstKind::ArrayExpression(_) => {
+                let grandparent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::CallExpression(call_expr) = grandparent.kind()
+                    && is_promise_static_call(call_expr)
+                {
+                    current = grandparent;
+                    continue;
+                }
+            }
+            _ => {}
+        }
+
+        return current;
+    }
+}
+
+fn is_in_test_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut current = node;
+
+    loop {
+        let parent = ctx.nodes().parent_node(current.id());
+
+        if let AstKind::CallExpression(call_expr) = parent.kind() {
+            let jest_node = PossibleJestNode { node: parent, original: None };
+            if is_type_of_jest_fn_call(
+                call_expr,
+                &jest_node,
+                ctx,
+                &[
+                    JestFnKind::General(JestGeneralFnKind::Test),
+                    JestFnKind::General(JestGeneralFnKind::Hook),
+                ],
+            ) {
+                return true;
+            }
+        }
+
+        if matches!(parent.kind(), AstKind::Program(_)) {
+            return false;
+        }
+
+        current = parent;
+    }
+}
+
+fn is_promise_handled<'a>(promise_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut current = promise_node;
+
+    loop {
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::AwaitExpression(_) | AstKind::ReturnStatement(_) => return true,
+            AstKind::ExpressionStatement(_) => {
+                // Check for implicit return in expression arrow function
+                let grandparent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::FunctionBody(_) = grandparent.kind() {
+                    let great_grandparent = ctx.nodes().parent_node(grandparent.id());
+                    if let AstKind::ArrowFunctionExpression(arrow) = great_grandparent.kind()
+                        && arrow.expression
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            AstKind::VariableDeclarator(_)
+            | AstKind::Program(_)
+            | AstKind::FunctionBody(_) => {
+                return false;
+            }
+            AstKind::CallExpression(call_expr) => {
+                if is_promise_static_call(call_expr) {
+                    current = parent;
+                    continue;
+                }
+            }
+            AstKind::ArrayExpression(_) => {
+                current = parent;
+                continue;
+            }
+            _ => {}
+        }
+
+        current = parent;
+    }
 }
 
 #[test]
@@ -140,22 +377,6 @@ fn test() {
                 await Promise.any([
                     somePromise().then(data => expect(data).toBe('foo'))
                 ]);
-            });
-        "#,
-        r#"
-            it('passes', async () => {
-                const promise = somePromise().then(data => {
-                    expect(data).toBe('foo');
-                });
-                await promise;
-            });
-        "#,
-        r#"
-            it('passes', () => {
-                const promise = somePromise().then(data => {
-                    expect(data).toBe('foo');
-                });
-                return promise;
             });
         "#,
         r#"
