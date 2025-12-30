@@ -202,7 +202,9 @@ impl DotNotation {
         let property_name = match inner_expr {
             Expression::StringLiteral(lit) => Some(lit.value.as_str()),
             Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                lit.quasis.first().map(|q| q.value.raw.as_str())
+                // Use cooked value (interpreted) to match ESLint behavior.
+                // cooked is None for invalid escape sequences in tagged templates.
+                lit.quasis.first().and_then(|q| q.value.cooked.as_ref().map(|s| s.as_str()))
             }
             Expression::NullLiteral(_) => Some("null"),
             Expression::BooleanLiteral(lit) => Some(if lit.value { "true" } else { "false" }),
@@ -442,6 +444,10 @@ fn test() {
             "class C { #in; foo() { this.#in; } }",
             Some(serde_json::json!([{ "allowKeywords": false }])),
         ), // { "ecmaVersion": 2022 }
+        // Empty template literal - empty string is not a valid identifier
+        ("a[``];", None),
+        // Invalid identifiers (whitespace in property name)
+        ("a[`  prop  `];", None),
     ];
 
     let fail = vec![
@@ -492,6 +498,17 @@ fn test() {
         ("0?.['prop']", None),         // { "ecmaVersion": 2020 },
         ("obj?.true", Some(serde_json::json!([{ "allowKeywords": false }]))), // { "ecmaVersion": 2020 },
         ("let?.true", Some(serde_json::json!([{ "allowKeywords": false }]))), // { "ecmaVersion": 2020 }
+        // Hex and octal literals
+        ("0xFF['prop']", None),
+        ("0o77['prop']", None),
+        ("0O77['prop']", None),
+        // BigInt literals
+        ("5n['prop']", None),
+        // Unicode identifiers ($ and _ are valid identifier starts)
+        ("a['$']", None),
+        ("a['_']", None),
+        ("a['$$']", None),
+        ("a['__proto__']", None),
     ];
 
     let fix = vec![
@@ -548,6 +565,17 @@ fn test() {
         ("0?.['prop']", "0?.prop", None),
         ("obj?.true", r#"obj?.["true"]"#, Some(serde_json::json!([{ "allowKeywords": false }]))),
         ("let?.true", r#"let?.["true"]"#, Some(serde_json::json!([{ "allowKeywords": false }]))),
+        // Hex and octal literals (no space needed)
+        ("0xFF['prop']", "0xFF.prop", None),
+        ("0o77['prop']", "0o77.prop", None),
+        ("0O77['prop']", "0O77.prop", None),
+        // BigInt literals (no space needed - 5n.prop is valid syntax)
+        ("5n['prop']", "5n.prop", None),
+        // Unicode identifiers
+        ("a['$']", "a.$", None),
+        ("a['_']", "a._", None),
+        ("a['$$']", "a.$$", None),
+        ("a['__proto__']", "a.__proto__", None),
     ];
     Tester::new(DotNotation::NAME, DotNotation::PLUGIN, pass, fail)
         .expect_fix(fix)
