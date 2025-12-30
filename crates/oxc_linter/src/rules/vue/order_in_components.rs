@@ -11,7 +11,12 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{Fix, RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 /// Information about a property in the component definition
 struct PropertyInfo {
@@ -21,6 +26,8 @@ struct PropertyInfo {
     order_position: Option<usize>,
     /// The span of the property for error reporting
     span: Span,
+    /// Index in the original properties array
+    index: usize,
 }
 
 fn order_in_components_diagnostic(
@@ -211,6 +218,7 @@ declare_oxc_lint!(
     OrderInComponents,
     vue,
     style,
+    fix,
     config = OrderInComponentsConfig,
 );
 
@@ -294,10 +302,10 @@ impl Rule for OrderInComponents {
 
 impl OrderInComponents {
     fn check_order<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        // Collect properties with their names and order positions
+        // Collect properties with their names, order positions, and indices
         let mut properties: Vec<PropertyInfo> = Vec::new();
 
-        for prop in &obj.properties {
+        for (index, prop) in obj.properties.iter().enumerate() {
             if let ObjectPropertyKind::ObjectProperty(property) = prop
                 && let Some(name) = property.key.static_name()
             {
@@ -306,6 +314,7 @@ impl OrderInComponents {
                     name: name.to_string(),
                     order_position,
                     span: property.span,
+                    index,
                 });
             }
         }
@@ -320,12 +329,24 @@ impl OrderInComponents {
                     && pos < max
                 {
                     // This property should be before the previous one
-                    ctx.diagnostic(order_in_components_diagnostic(
-                        &prop.name,
-                        &max_position_name,
-                        prop.span,
-                    ));
-                    // Continue checking remaining properties to report all ordering errors
+                    // Find the target property (the first property with order_position >= pos)
+                    let target_index = properties
+                        .iter()
+                        .position(|p| p.order_position.is_some_and(|o| o >= pos))
+                        .unwrap_or(0);
+
+                    ctx.diagnostic_with_fix(
+                        order_in_components_diagnostic(&prop.name, &max_position_name, prop.span),
+                        |fixer| {
+                            self.create_reorder_fix(
+                                fixer.source_text(),
+                                obj,
+                                prop.index,
+                                target_index,
+                                &fixer,
+                            )
+                        },
+                    );
                 }
                 if max_position.is_none_or(|max| pos >= max) {
                     max_position = Some(pos);
@@ -333,6 +354,81 @@ impl OrderInComponents {
                 }
             }
         }
+    }
+
+    fn create_reorder_fix<'a>(
+        &self,
+        source_text: &str,
+        obj: &ObjectExpression<'a>,
+        from_index: usize,
+        to_index: usize,
+        fixer: &RuleFixer<'_, 'a>,
+    ) -> RuleFix {
+        let mut fix = fixer.new_fix_with_capacity(2);
+
+        // Get the property to move
+        let Some(ObjectPropertyKind::ObjectProperty(from_prop)) = obj.properties.get(from_index)
+        else {
+            return fix;
+        };
+
+        // Get the target property (where we want to insert before)
+        let Some(ObjectPropertyKind::ObjectProperty(to_prop)) = obj.properties.get(to_index) else {
+            return fix;
+        };
+
+        // Get the source text of the property
+        let property_code =
+            &source_text[from_prop.span.start as usize..from_prop.span.end as usize];
+
+        // Find the comma before the property we're moving (if not first property)
+        let text_before = &source_text[..from_prop.span.start as usize];
+        let comma_before_offset = text_before.rfind(',');
+
+        // Find if there's a comma after the property we're moving
+        let text_after = &source_text[from_prop.span.end as usize..];
+        let comma_after_offset = text_after.find(',');
+
+        // Calculate delete range
+        let delete_start = if from_index > 0 {
+            // Delete from after previous comma (to include whitespace before property)
+            if let Some(offset) = comma_before_offset {
+                offset as u32 + 1 // Start after the comma
+            } else {
+                from_prop.span.start
+            }
+        } else {
+            from_prop.span.start
+        };
+
+        let delete_end = if let Some(offset) = comma_after_offset {
+            from_prop.span.end + offset as u32 + 1
+        } else if comma_before_offset.is_some() && from_index > 0 {
+            // If this is the last property and there's a comma before, delete including that comma
+            from_prop.span.end
+        } else {
+            from_prop.span.end
+        };
+
+        // Special case: if we're moving the last property, we need to delete the comma before it too
+        if from_index > 0 && comma_after_offset.is_none() {
+            if let Some(offset) = comma_before_offset {
+                fix.push(Fix::delete(Span::new(offset as u32, delete_end)));
+            } else {
+                fix.push(Fix::delete(Span::new(delete_start, delete_end)));
+            }
+        } else {
+            fix.push(Fix::delete(Span::new(delete_start, delete_end)));
+        }
+
+        // Insert the property at the target location, adding comma after
+        let insert_text = format!("{property_code},");
+        fix.push(Fix::new(insert_text, Span::sized(to_prop.span.start, 0)));
+
+        fix.with_message(format!(
+            "Move `{}` to correct position",
+            from_prop.key.static_name().unwrap_or_default()
+        ))
     }
 }
 
@@ -1068,5 +1164,16 @@ fn test() {
         ), // languageOptions
     ];
 
-    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        // Simple case: name should be before data
+        (
+            "export default {data(){},name:'burger'};",
+            "export default {name:'burger',data(){}};",
+            None,
+        ),
+    ];
+
+    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
