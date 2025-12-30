@@ -18,7 +18,6 @@ pub struct RuleTableSection {
     pub plugin_column_width: usize,
 }
 
-#[derive(Debug, Clone)]
 pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
