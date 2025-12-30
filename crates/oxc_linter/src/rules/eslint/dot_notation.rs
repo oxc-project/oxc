@@ -230,17 +230,56 @@ impl DotNotation {
 
         // Report: should use dot notation
         ctx.diagnostic_with_fix(use_dot_notation_diagnostic(property_name, expr.span), |fixer| {
-            let object_text = ctx.source_range(expr.object.span());
-            // Only need space before dot for regular member access, not optional chaining
-            let needs_space_before = !expr.optional && needs_space_before_dot(&expr.object, ctx);
+            // Find the bracket position to preserve whitespace between object and bracket
+            let source = ctx.source_text();
+            let object_end = expr.object.span().end as usize;
+            let expr_end = expr.span.end as usize;
+
+            // Find the '[' or '?.[' position after the object
+            let text_between = &source[object_end..expr_end];
+            let bracket_offset = if expr.optional {
+                // For optional chaining: obj?.['prop']
+                // Find '?.' first, then '['
+                text_between.find("?.[").map(|p| p + 2) // Skip '?.' to point at '['
+            } else {
+                text_between.find('[')
+            };
+
+            let Some(bracket_offset) = bracket_offset else {
+                // Fallback: replace entire expression
+                let object_text = ctx.source_range(expr.object.span());
+                let needs_space_before =
+                    !expr.optional && needs_space_before_dot(&expr.object, ctx);
+                let needs_space_after = needs_space_after_property(expr.span, property_name, ctx);
+                let operator = if expr.optional { "?." } else { "." };
+                let space_before = if needs_space_before { " " } else { "" };
+                let space_after = if needs_space_after { " " } else { "" };
+                let fixed =
+                    format!("{object_text}{space_before}{operator}{property_name}{space_after}");
+                return fixer.replace(expr.span, fixed);
+            };
+
+            // Calculate positions
+            let bracket_start = object_end + bracket_offset;
+
+            // Check if we need space before dot (for numeric literals)
+            // Only when there's no whitespace between object and bracket
+            let has_whitespace_before =
+                text_between[..bracket_offset].chars().any(char::is_whitespace);
+            let needs_space_before = !has_whitespace_before
+                && !expr.optional
+                && needs_space_before_dot(&expr.object, ctx);
             let needs_space_after = needs_space_after_property(expr.span, property_name, ctx);
-            let operator = if expr.optional { "?." } else { "." };
+
+            let operator = if expr.optional { "" } else { "." }; // '?.' already in source for optional
             let space_before = if needs_space_before { " " } else { "" };
             let space_after = if needs_space_after { " " } else { "" };
 
-            let fixed =
-                format!("{object_text}{space_before}{operator}{property_name}{space_after}");
-            fixer.replace(expr.span, fixed)
+            // Replace from '[' to end of expression with '.property'
+            #[expect(clippy::cast_possible_truncation)]
+            let replacement_span = Span::new(bracket_start as u32, expr.span.end);
+            let fixed = format!("{space_before}{operator}{property_name}{space_after}");
+            fixer.replace(replacement_span, fixed)
         });
     }
 
@@ -399,6 +438,18 @@ fn test() {
         ("a.b['c'];", None),
         ("a['_dangle'];", Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }]))),
         ("a['SHOUT_CASE'];", Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }]))),
+        // Multiline SHOUT_CASE test
+        (
+            "a\n ['SHOUT_CASE'];",
+            Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
+        ),
+        // Multiple errors in same expression
+        (
+            "getResource()\n .then(function(){})\n [\"catch\"](function(){})\n .then(function(){})\n [\"catch\"](function(){});",
+            None,
+        ),
+        // foo.while without comment
+        ("foo.while;", Some(serde_json::json!([{ "allowKeywords": false }]))),
         ("foo[ /* comment */ 'bar' ]", None),
         ("foo[ 'bar' /* comment */ ]", None),
         ("foo[    'bar'    ];", None),
@@ -445,6 +496,20 @@ fn test() {
             "a.SHOUT_CASE;",
             Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
         ),
+        // Multiline SHOUT_CASE fix
+        (
+            "a\n ['SHOUT_CASE'];",
+            "a\n .SHOUT_CASE;",
+            Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
+        ),
+        // Multiple errors in same expression fix
+        (
+            "getResource()\n .then(function(){})\n [\"catch\"](function(){})\n .then(function(){})\n [\"catch\"](function(){});",
+            "getResource()\n .then(function(){})\n .catch(function(){})\n .then(function(){})\n .catch(function(){});",
+            None,
+        ),
+        // foo.while fix
+        ("foo.while;", r#"foo["while"];"#, Some(serde_json::json!([{ "allowKeywords": false }]))),
         ("foo[    'bar'    ];", "foo.bar;", None),
         ("foo[('bar')]", "foo.bar", None),
         ("foo[(null)]", "foo.null", None),
