@@ -42,7 +42,8 @@ fn order_in_components_diagnostic(
     .with_label(span)
 }
 
-/// Default order based on Vue style guide
+/// Default order based on Vue style guide.
+/// See: <https://vuejs.org/style-guide/rules-recommended.html#component-instance-options-order>
 const DEFAULT_ORDER: &[&[&str]] = &[
     // Side effects
     &["el"],
