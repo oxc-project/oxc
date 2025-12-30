@@ -18,10 +18,25 @@ fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
 const IGNORED_PACKAGES: &[&str] = &["@angular/core", "eventemitter3"];
 
 /// Check if EventEmitter is imported from an ignored package via ES6 import
+/// This applies to the entire module - if EventEmitter is imported from an ignored package,
+/// all uses of EventEmitter in the module are allowed
 fn is_event_emitter_from_ignored_import(ctx: &LintContext) -> bool {
     ctx.module_record().import_entries.iter().any(|import| {
-        import.local_name.name() == "EventEmitter"
-            && IGNORED_PACKAGES.contains(&import.module_request.name())
+        // Check if the import is from an ignored package
+        if !IGNORED_PACKAGES.contains(&import.module_request.name.as_str()) {
+            return false;
+        }
+
+        // Check the import name: handles `import { EventEmitter }` and `import { EventEmitter as EE }`
+        use crate::module_record::ImportImportName;
+        match &import.import_name {
+            // Named import: `import { EventEmitter } from "..."`
+            ImportImportName::Name(name_span) => name_span.name.as_str() == "EventEmitter",
+            // Default import: `import EventEmitter from "..."` - check local name
+            ImportImportName::Default(_) => import.local_name.name.as_str() == "EventEmitter",
+            // Namespace imports like `import * as ns` don't apply
+            _ => false,
+        }
     })
 }
 
@@ -31,7 +46,8 @@ fn is_from_ignored_package_via_require(ident: &IdentifierReference, ctx: &LintCo
     let reference = ctx.scoping().get_reference(ident.reference_id());
 
     // Get the symbol_id for this reference
-    // If there's no symbol, this identifier is likely undefined or global
+    // If there's no symbol, this identifier is unresolved (e.g., global or undefined)
+    // In this case, we should report the diagnostic (not from an ignored package)
     let symbol_id = match reference.symbol_id() {
         Some(id) => id,
         None => return false,
@@ -50,7 +66,7 @@ fn is_from_ignored_package_via_require(ident: &IdentifierReference, ctx: &LintCo
     for ancestor in ctx.nodes().ancestors(decl_id) {
         if let AstKind::VariableDeclarator(declarator) = ancestor.kind() {
             if let Some(init) = &declarator.init {
-                return is_ignored_package_expression(init);
+                return is_expression_from_ignored_package(init);
             }
             return false;
         }
@@ -59,8 +75,8 @@ fn is_from_ignored_package_via_require(ident: &IdentifierReference, ctx: &LintCo
     false
 }
 
-/// Check if an expression is a require() or dynamic import from an ignored package
-fn is_ignored_package_expression(expr: &Expression) -> bool {
+/// Check if an expression is a require() or dynamic import() from an ignored package
+fn is_expression_from_ignored_package(expr: &Expression) -> bool {
     match expr {
         // require("@angular/core") - for destructuring: const { EventEmitter } = require(...)
         Expression::CallExpression(call_expr) => {
@@ -89,7 +105,7 @@ fn is_ignored_package_expression(expr: &Expression) -> bool {
         }
         // (await import("eventemitter3")) - for destructuring with parens
         Expression::ParenthesizedExpression(paren_expr) => {
-            is_ignored_package_expression(&paren_expr.expression)
+            is_expression_from_ignored_package(&paren_expr.expression)
         }
         _ => false,
     }
@@ -185,6 +201,8 @@ impl Rule for PreferEventTarget {
         }
 
         // Check if EventEmitter is from an ES6 import from an ignored package
+        // Note: This check is module-scoped. If EventEmitter is imported from an ignored package,
+        // all uses of EventEmitter in the module are allowed. This matches the upstream ESLint behavior.
         if is_event_emitter_from_ignored_import(ctx) {
             return;
         }
@@ -227,6 +245,9 @@ fn test() {
 class Foo extends EventEmitter {}"#,
         r#"import { EventEmitter } from "eventemitter3";
 class Foo extends EventEmitter {}"#,
+        // Import aliases should also work
+        r#"import { EventEmitter as EE } from "@angular/core";
+class Foo extends EE {}"#,
         // TODO: CommonJS require and dynamic imports - need to investigate why these don't work
         // r#"const { EventEmitter } = require("@angular/core");
         // class Foo extends EventEmitter {}"#,
