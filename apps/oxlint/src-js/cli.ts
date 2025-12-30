@@ -31,7 +31,15 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, loadParser, parseFile, stripFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
+      ({
+        loadPlugin,
+        loadParser,
+        parseFile,
+        stripFile,
+        lintFile,
+        lintFileWithCustomAst,
+        setupConfigs,
+      } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias);
     });
   }
@@ -95,7 +103,15 @@ function loadParserWrapper(url: string, parserOptionsJson: string): Promise<stri
     // Use promises here instead of making `loadParserWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadParserWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, loadParser, parseFile, stripFile, lintFile, lintFileWithCustomAst, setupConfigs } = mod);
+      ({
+        loadPlugin,
+        loadParser,
+        parseFile,
+        stripFile,
+        lintFile,
+        lintFileWithCustomAst,
+        setupConfigs,
+      } = mod);
       return loadParser(url, parserOptionsJson);
     });
   }

@@ -49,7 +49,7 @@ impl Derive for DeriveFromESTree {
             use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
             use crate::deserialize::{
                 DeserError, DeserResult, ESTreeField, ESTreeType, FromESTree,
-                parse_span, parse_span_or_empty,
+                FromESTreeConverter, parse_span, parse_span_or_empty,
             };
         }
     }
@@ -154,7 +154,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> (TokenSt
 /// Returns (TokenStream, uses_allocator bool).
 fn generate_field_deserialization(
     field: &FieldDef,
-    _struct_def: &StructDef,
+    struct_def: &StructDef,
     schema: &Schema,
 ) -> (TokenStream, bool) {
     let field_ident = field.ident();
@@ -181,6 +181,28 @@ fn generate_field_deserialization(
 
     // Get field type
     let field_type = field.type_def(schema);
+
+    // Check if field has a `via` converter
+    if let Some(converter_name) = &field.estree.via {
+        return generate_via_field_deserialization(
+            field,
+            converter_name,
+            &estree_name,
+            struct_def,
+            schema,
+        );
+    }
+
+    // Handle flattened fields - pass the entire parent object to deserialize the field
+    // because its properties are merged into the parent in ESTree representation
+    if field.estree.flatten {
+        return (
+            quote! {
+                let #field_ident = FromESTree::from_estree(json, allocator)?;
+            },
+            true, // allocator is passed to FromESTree
+        );
+    }
 
     // Determine if field is optional
     let is_optional = matches!(field_type, TypeDef::Option(_));
@@ -231,6 +253,46 @@ fn generate_field_deserialization(
     }
 }
 
+/// Generate deserialization for a field with `#[estree(via = ...)]` converter.
+/// Returns (TokenStream, uses_allocator bool).
+fn generate_via_field_deserialization(
+    field: &FieldDef,
+    converter_name: &str,
+    estree_name: &str,
+    struct_def: &StructDef,
+    schema: &Schema,
+) -> (TokenStream, bool) {
+    let field_ident = field.ident();
+    let estree_name_str = estree_name;
+
+    // Get the converter path
+    let krate = struct_def.file(schema).krate();
+    let converter_path = get_converter_path(converter_name, krate, schema);
+
+    // Fields with `via` are typically optional in ESTree (might be empty array, null, etc.)
+    // Use the converter's from_estree_converter method
+    (
+        quote! {
+            let #field_ident = match json.estree_field_opt(#estree_name_str) {
+                Some(field_json) => {
+                    #converter_path::from_estree_converter(field_json, allocator)?
+                }
+                None => {
+                    #converter_path::from_estree_converter(&serde_json::Value::Null, allocator)?
+                }
+            };
+        },
+        true, // allocator is passed to the converter
+    )
+}
+
+/// Get the path to a converter type.
+/// Uses the same approach as the ESTree derive - look up the converter in the schema's meta types.
+fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -> TokenStream {
+    let converter = schema.meta_by_name(converter_name);
+    converter.import_path_from_crate(from_krate, schema)
+}
+
 /// Generate a default value for a type.
 /// Returns (default value TokenStream, uses_allocator bool).
 fn generate_default_for_type(
@@ -275,9 +337,7 @@ fn generate_default_for_type(
                 "NumberBase" => (quote!(oxc_syntax::number::NumberBase::Decimal), false),
                 "BigintBase" => (quote!(oxc_syntax::number::BigintBase::Decimal), false),
                 "RegExpFlags" => (quote!(crate::ast::literal::RegExpFlags::empty()), false),
-                "ImportOrExportKind" => {
-                    (quote!(crate::ast::ts::ImportOrExportKind::Value), false)
-                }
+                "ImportOrExportKind" => (quote!(crate::ast::ts::ImportOrExportKind::Value), false),
                 _ => (quote!(Default::default()), false),
             }
         }
@@ -405,18 +465,14 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
 /// According to the plan:
 /// - Expression → NullLiteral placeholder
 /// - Statement → EmptyStatement placeholder
-/// - Declaration → EmptyStatement placeholder (valid declaration)
+/// - ClassElement → StaticBlock placeholder (for custom syntax like GlimmerTemplate in class bodies)
 fn enum_uses_placeholder(enum_name: &str) -> Option<&'static str> {
     match enum_name {
         "Expression" => Some("NullLiteral"),
         "Statement" => Some("EmptyStatement"),
-        // Note: Declaration does NOT use placeholders because it doesn't have
-        // a simple "no-op" variant like EmptyStatement. Unknown declarations
-        // will cause an error, and lint_with_external_ast handles this by
-        // returning UnknownNode result and skipping Rust rules.
-        // This is acceptable because:
-        // - Most custom syntax appears at statement level, not declaration level
-        // - JS plugin rules still run and handle custom syntax
+        // ClassElement needs placeholders because custom syntax like GlimmerTemplate
+        // can appear in class bodies (e.g., Ember/Glimmer components)
+        "ClassElement" => Some("StaticBlock"),
         _ => None,
     }
 }
@@ -431,7 +487,8 @@ fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> To
         if should_skip_enum_variant(variant) {
             continue;
         }
-        if let Some((type_name, arm)) = generate_enum_variant_arm_with_type(variant, schema) {
+        // Get all type names this variant can match (some types like Class have multiple)
+        for (type_name, arm) in generate_enum_variant_arms_with_types(variant, schema) {
             arms_by_type.entry(type_name).or_default().push((variant, arm));
         }
     }
@@ -475,6 +532,13 @@ fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> To
                     allocator
                 ))),
             },
+            "StaticBlock" => quote! {
+                // Unknown node type (likely custom syntax like GlimmerTemplate) - use StaticBlock placeholder
+                _other => Ok(Self::StaticBlock(ABox::new_in(
+                    crate::ast::js::StaticBlock { span: parse_span_or_empty(json), body: AVec::new_in(allocator), scope_id: std::cell::Cell::default() },
+                    allocator
+                ))),
+            },
             _ => quote! {
                 other => Err(DeserError::UnknownNodeType(other.to_string())),
             },
@@ -505,12 +569,6 @@ fn generate_disambiguation(
         "Literal" => generate_literal_disambiguation(variants, schema),
         "MemberExpression" => generate_member_expression_disambiguation(variants, schema),
         "BinaryExpression" => generate_binary_expression_disambiguation(variants, schema),
-        "Class" | "Function" => {
-            // Class/Function can be expression or declaration - use first one
-            // (The correct one depends on context, which we don't have here)
-            let (_, arm) = &variants[0];
-            arm.clone()
-        }
         _ => {
             // Unknown disambiguation case - use first variant
             let (_, arm) = &variants[0];
@@ -656,17 +714,21 @@ fn generate_binary_expression_disambiguation(
 }
 
 /// Generate a match arm for an enum variant, returning (type_name, arm_body).
-fn generate_enum_variant_arm_with_type(
+/// Generate match arms for an enum variant.
+/// Returns a list of (type_name, arm_body) pairs because some types like Class
+/// can match multiple ESTree type names (ClassDeclaration, ClassExpression).
+fn generate_enum_variant_arms_with_types(
     variant: &VariantDef,
     schema: &Schema,
-) -> Option<(String, TokenStream)> {
+) -> Vec<(String, TokenStream)> {
     let variant_ident = variant.ident();
+    let variant_name = variant.name();
 
     // Get the inner type of the variant
-    let inner_type = variant.field_type(schema)?;
-
-    // Get the ESTree type name for this variant
-    let estree_type_name = get_estree_type_name_for_type(inner_type, schema);
+    let inner_type = match variant.field_type(schema) {
+        Some(t) => t,
+        None => return vec![],
+    };
 
     // Check if this is a Box type (most enum variants are Box<T>)
     let is_boxed = matches!(inner_type, TypeDef::Box(_));
@@ -681,26 +743,68 @@ fn generate_enum_variant_arm_with_type(
         }
     };
 
-    Some((estree_type_name.to_string(), arm_body))
+    // Get all ESTree type names this variant can match
+    // Use variant name to determine type names (for Class/Function variants)
+    let type_names = get_estree_type_names_for_variant(variant_name, inner_type, schema);
+
+    type_names.into_iter().map(|name| (name, arm_body.clone())).collect()
 }
 
-/// Get the ESTree `type` field value for a type.
-fn get_estree_type_name_for_type<'a>(type_def: &'a TypeDef, schema: &'a Schema) -> &'a str {
+/// Get ESTree `type` field values for an enum variant.
+/// Uses the variant name to determine the appropriate type name(s).
+/// This is important for types like Class/Function where the same inner type
+/// is used in different contexts (ClassDeclaration vs ClassExpression).
+fn get_estree_type_names_for_variant(
+    variant_name: &str,
+    type_def: &TypeDef,
+    schema: &Schema,
+) -> Vec<String> {
     // Unwrap Box/Vec/Option to get to the actual type
     let inner_type = type_def.innermost_type(schema);
 
+    // First, check if the variant name itself is one of the known ESTree type names.
+    // For example, Statement::ClassDeclaration should match "ClassDeclaration",
+    // and Expression::ClassExpression should match "ClassExpression".
+    match variant_name {
+        // Class variants - use the variant name directly
+        "ClassDeclaration" => return vec!["ClassDeclaration".to_string()],
+        "ClassExpression" => return vec!["ClassExpression".to_string()],
+        // Function variants - use the variant name directly
+        "FunctionDeclaration" => return vec!["FunctionDeclaration".to_string()],
+        "FunctionExpression" => return vec!["FunctionExpression".to_string()],
+        // MethodDefinition variants in ClassElement enum
+        "MethodDefinition" => {
+            return vec!["MethodDefinition".to_string(), "TSAbstractMethodDefinition".to_string()];
+        }
+        // PropertyDefinition variants in ClassElement enum
+        "PropertyDefinition" => {
+            return vec![
+                "PropertyDefinition".to_string(),
+                "TSAbstractPropertyDefinition".to_string(),
+            ];
+        }
+        // AccessorProperty variants in ClassElement enum
+        "AccessorProperty" => {
+            return vec!["AccessorProperty".to_string(), "TSAbstractAccessorProperty".to_string()];
+        }
+        _ => {}
+    }
+
+    // Fall back to getting type names from the inner type
     match inner_type {
         TypeDef::Struct(struct_def) => {
+            let name = struct_def.name();
             // Use the renamed name if specified, otherwise use the struct name
-            struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name())
+            let type_name = struct_def.estree.rename.as_deref().unwrap_or(name);
+            vec![type_name.to_string()]
         }
         TypeDef::Enum(enum_def) => {
             // Enums don't have a single type name - this shouldn't happen for enum variants
-            enum_def.name()
+            vec![enum_def.name().to_string()]
         }
         _ => {
             // Primitives don't have type names
-            "unknown"
+            vec!["unknown".to_string()]
         }
     }
 }

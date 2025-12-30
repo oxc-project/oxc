@@ -2551,6 +2551,7 @@ pub enum FunctionType {
 )]
 pub struct FormalParameters<'a> {
     pub span: Span,
+    #[estree(skip)]
     pub kind: FormalParameterKind,
     #[estree(ts_type = "Array<FormalParameter | TSParameterProperty | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
@@ -2619,11 +2620,12 @@ pub struct FormalParameter<'a> {
 }
 
 #[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree, FromESTree)]
 #[estree(no_rename_variants, no_ts_def)]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
+    #[default]
     FormalParameter = 0,
     /// <https://tc39.es/ecma262/#prod-UniqueFormalParameters>
     UniqueFormalParameters = 1,

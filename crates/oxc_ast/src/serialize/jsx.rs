@@ -85,3 +85,32 @@ impl ESTree for JSXElementThisExpression<'_> {
         JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
     }
 }
+
+// ----------------------------------------
+// FromESTreeConverter implementations
+// ----------------------------------------
+// These are gated by the `deserialize` feature since they depend on the deserialize module.
+
+#[cfg(feature = "deserialize")]
+mod from_estree_converters {
+    use crate::ast::jsx;
+    use crate::deserialize::{DeserResult, FromESTree, FromESTreeConverter};
+    use oxc_allocator::{Allocator, Box as ABox};
+
+    use super::JSXElementOpeningElement;
+
+    /// Deserialize `opening_element` field for `JSXElement`.
+    ///
+    /// ESTree provides JSXOpeningElement directly, we just deserialize it.
+    impl<'a> FromESTreeConverter<'a> for JSXElementOpeningElement<'a, '_> {
+        type Output = ABox<'a, jsx::JSXOpeningElement<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            let opening: jsx::JSXOpeningElement = FromESTree::from_estree(value, allocator)?;
+            Ok(ABox::new_in(opening, allocator))
+        }
+    }
+}

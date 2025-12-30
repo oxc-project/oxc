@@ -118,10 +118,52 @@ impl ESTreeField for serde_json::Value {
     }
 }
 
+/// Trait for converter types that can deserialize a field from ESTree JSON.
+///
+/// This is the inverse of the `ESTree` serialization for `#[estree(via = ...)]` converters.
+/// When a struct field has `#[estree(via = SomeConverter)]`, the converter type must implement
+/// both `ESTree` (for serialization) and `FromESTreeConverter` (for deserialization).
+///
+/// The `Output` type is the type of the field being deserialized (e.g., `Option<Box<WithClause>>`).
+pub trait FromESTreeConverter<'a> {
+    /// The type that this converter produces when deserializing.
+    type Output;
+
+    /// Deserialize from a JSON value.
+    ///
+    /// # Arguments
+    /// * `value` - The JSON value to deserialize (the ESTree representation)
+    /// * `allocator` - Arena allocator for AST nodes
+    ///
+    /// # Errors
+    /// Returns `DeserError` if deserialization fails
+    fn from_estree_converter(
+        value: &serde_json::Value,
+        allocator: &'a Allocator,
+    ) -> DeserResult<Self::Output>;
+}
+
 /// Parse a span from ESTree JSON.
 ///
-/// ESTree uses `start` and `end` properties for span information.
+/// ESTree parsers may use different formats for span information:
+/// - `start` and `end` properties (ESLint format)
+/// - `range` array with `[start, end]` (TypeScript ESLint format)
+///
+/// This function supports both formats.
 pub fn parse_span(value: &serde_json::Value) -> DeserResult<oxc_span::Span> {
+    // Try `range` array first (TypeScript ESLint format: [start, end])
+    if let Some(range) = value.get("range").and_then(serde_json::Value::as_array) {
+        if range.len() == 2 {
+            let start = range[0].as_u64().ok_or(DeserError::InvalidSpan)?;
+            let end = range[1].as_u64().ok_or(DeserError::InvalidSpan)?;
+            return Ok(oxc_span::Span::new(
+                u32::try_from(start).map_err(|_| DeserError::InvalidSpan)?,
+                u32::try_from(end).map_err(|_| DeserError::InvalidSpan)?,
+            ));
+        }
+    }
+
+    // Fall back to `start`/`end` properties (ESLint format)
     let start =
         value.get("start").and_then(serde_json::Value::as_u64).ok_or(DeserError::InvalidSpan)?;
     let end =

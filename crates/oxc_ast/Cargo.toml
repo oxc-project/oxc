@@ -40,4 +40,4 @@ serialize = [
   "oxc_syntax/serialize",
   "oxc_estree/serialize",
 ]
-deserialize = ["dep:serde_json"]
+deserialize = ["dep:serde_json", "serialize"]

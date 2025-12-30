@@ -883,11 +883,12 @@ pub fn lint_with_external_ast(
     let _source_type = SourceType::from_path(path).unwrap_or_default();
 
     // Build semantic analysis
+    let program_ref = allocator.alloc(program);
     let semantic_ret = SemanticBuilder::new()
         .with_cfg(true)
         .with_scope_tree_child_ids(true)
         .with_check_syntax_error(true)
-        .build(allocator.alloc(program));
+        .build(program_ref);
 
     if !semantic_ret.errors.is_empty() {
         // Semantic errors - return them as messages
