@@ -129,7 +129,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumericSeparatorsStyle {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut cfg = NumericSeparatorsStyleConfig::default();
 
         if let Some(config) = value.get(0) {
@@ -153,7 +153,7 @@ impl Rule for NumericSeparatorsStyle {
             }
         }
 
-        Self(Box::new(cfg))
+        Ok(Self(Box::new(cfg)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

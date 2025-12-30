@@ -204,11 +204,11 @@ fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
 }
 
 impl Rule for FuncStyle {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let obj1 = value.get(0);
         let obj2 = value.get(1);
 
-        Self {
+        Ok(Self {
             style: obj1.and_then(Value::as_str).map(Style::from).unwrap_or_default(),
             allow_arrow_functions: obj2
                 .and_then(|v| v.get("allowArrowFunctions"))
@@ -223,8 +223,9 @@ impl Rule for FuncStyle {
                 .and_then(|v| v.get("namedExports"))
                 .and_then(Value::as_str)
                 .map(NamedExports::from),
-        }
+        })
     }
+
     fn run_once<'a>(&self, ctx: &LintContext) {
         let semantic = ctx.semantic();
         let is_decl_style = self.style == Style::Declaration;
