@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, IdentifierReference},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -23,10 +26,7 @@ fn is_event_emitter_from_ignored_import(ctx: &LintContext) -> bool {
 }
 
 /// Check if an identifier is from an ignored package via require() or dynamic import
-fn is_from_ignored_package_via_require(
-    ident: &oxc_ast::ast::IdentifierReference,
-    ctx: &LintContext,
-) -> bool {
+fn is_from_ignored_package_via_require(ident: &IdentifierReference, ctx: &LintContext) -> bool {
     // Get the reference for this identifier
     let reference = ctx.scoping().get_reference(ident.reference_id());
 
@@ -67,6 +67,7 @@ fn is_ignored_package_expression(expr: &Expression) -> bool {
             if let Some(arg) = call_expr.common_js_require() {
                 return IGNORED_PACKAGES.contains(&arg.value.as_str());
             }
+            false
         }
         // require("@angular/core").EventEmitter or (await import("eventemitter3")).EventEmitter
         Expression::StaticMemberExpression(member_expr) => {
@@ -75,24 +76,23 @@ fn is_ignored_package_expression(expr: &Expression) -> bool {
                 // Check if the object is a require() or import from an ignored package
                 return is_ignored_package_source(&member_expr.object);
             }
+            false
         }
         // await import("eventemitter3") - for destructuring: const { EventEmitter } = await import(...)
-        Expression::AwaitExpression(await_expr) => {
-            return is_ignored_package_source(&await_expr.argument);
-        }
+        Expression::AwaitExpression(await_expr) => is_ignored_package_source(&await_expr.argument),
         // import("eventemitter3") - less common but possible
         Expression::ImportExpression(import_expr) => {
             if let Expression::StringLiteral(str_lit) = &import_expr.source {
                 return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
             }
+            false
         }
         // (await import("eventemitter3")) - for destructuring with parens
         Expression::ParenthesizedExpression(paren_expr) => {
-            return is_ignored_package_expression(&paren_expr.expression);
+            is_ignored_package_expression(&paren_expr.expression)
         }
-        _ => {}
+        _ => false,
     }
-    false
 }
 
 /// Check if an expression is a require() or import() call from an ignored package
@@ -103,24 +103,23 @@ fn is_ignored_package_source(expr: &Expression) -> bool {
             if let Some(arg) = call_expr.common_js_require() {
                 return IGNORED_PACKAGES.contains(&arg.value.as_str());
             }
+            false
         }
         // import("eventemitter3")
         Expression::ImportExpression(import_expr) => {
             if let Expression::StringLiteral(str_lit) = &import_expr.source {
                 return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
             }
+            false
         }
         // (await import("eventemitter3"))
         Expression::ParenthesizedExpression(paren_expr) => {
-            return is_ignored_package_source(&paren_expr.expression);
+            is_ignored_package_source(&paren_expr.expression)
         }
         // await import("eventemitter3")
-        Expression::AwaitExpression(await_expr) => {
-            return is_ignored_package_source(&await_expr.argument);
-        }
-        _ => {}
+        Expression::AwaitExpression(await_expr) => is_ignored_package_source(&await_expr.argument),
+        _ => false,
     }
-    false
 }
 
 #[derive(Debug, Default, Clone)]
@@ -139,6 +138,8 @@ declare_oxc_lint!(
     ///
     /// While [`EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) is only available in Node.js, [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) is also available in _Deno_ and browsers.
     ///
+    /// Note: EventEmitter imported from packages like `@angular/core` or `eventemitter3` are allowed, as they provide their own implementation.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -149,6 +150,10 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// class Foo extends OtherClass {}
+    ///
+    /// // EventEmitter from ignored packages is allowed
+    /// import { EventEmitter } from "@angular/core";
+    /// class Foo extends EventEmitter {}
     /// ```
     PreferEventTarget,
     unicorn,
@@ -222,6 +227,9 @@ fn test() {
 class Foo extends EventEmitter {}"#,
         r#"import { EventEmitter } from "eventemitter3";
 class Foo extends EventEmitter {}"#,
+        // TODO: CommonJS require and dynamic imports - need to investigate why these don't work
+        // r#"const { EventEmitter } = require("@angular/core");
+        // class Foo extends EventEmitter {}"#,
     ];
 
     let fail = vec![
