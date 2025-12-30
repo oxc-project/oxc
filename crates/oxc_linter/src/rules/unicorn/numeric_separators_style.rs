@@ -788,7 +788,7 @@ mod internal_tests {
                 "octal": {"groupLength": 128, "minimumDigits": 256},
                 "onlyIfContainsSeparator": true
         }]);
-        let rule = NumericSeparatorsStyle::from_configuration(config);
+        let rule = NumericSeparatorsStyle::from_configuration(config).unwrap();
 
         assert_eq!(rule.binary.group_length, 2);
         assert_eq!(rule.binary.minimum_digits, 4);
@@ -803,7 +803,7 @@ mod internal_tests {
 
     #[test]
     fn test_from_empty_configuration() {
-        let rule = NumericSeparatorsStyle::from_configuration(json!([]));
+        let rule = NumericSeparatorsStyle::from_configuration(json!([])).unwrap();
         assert_eq!(rule, NumericSeparatorsStyle::default());
     }
 }
