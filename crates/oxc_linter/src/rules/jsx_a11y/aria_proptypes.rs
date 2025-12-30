@@ -157,6 +157,15 @@ fn is_valid_value_for_aria_prop_type(
             }
         }
         AriaPropType::IdList => {
+            // Template literals with expressions always produce strings at runtime and are
+            // valid for ID list ARIA props (e.g., `${id}-label` or `${id}-label ${id}-help-text`).
+            if let JSXAttributeValue::ExpressionContainer(container) = value
+                && let JSXExpression::TemplateLiteral(t) = &container.expression
+                && t.single_quasi().is_none()
+            {
+                return true;
+            }
+
             let Some(value_string) = parse_aria_prop_value_as_string(value, false) else {
                 return false;
             };
@@ -371,6 +380,7 @@ fn test() {
         "<div aria-hidden={!false} />",
         "<div aria-hidden />",
         "<div aria-hidden={false} />",
+        "<div aria-hidden={!!foo} />",
         "<div aria-hidden={!true} />",
         r#"<div aria-hidden={!"yes"} />"#,
         "<div aria-hidden={foo} />",
@@ -392,6 +402,7 @@ fn test() {
         r#"<input aria-invalid={error ? "true" : "false"} />"#,
         r#"<input aria-invalid={undefined ? "true" : "false"} />"#,
         "<div aria-checked={true} />",
+        "<div aria-checked={!!foo} />",
         r#"<div aria-checked="true" />"#,
         r#"<div aria-checked={"false"} />"#,
         "<div aria-checked={!false} />",
@@ -501,6 +512,13 @@ fn test() {
         "<div aria-labelledby={foo.bar} />",
         "<div aria-labelledby={null} />",
         "<div aria-labelledby={undefined} />",
+        // Ensure that template literals with expressions are allowed for idlist aria props.
+        r#"<div aria-labelledby={`${id}-label`} />"#,
+        r#"<div aria-labelledby={`${id}`} />"#,
+        r#"<div aria-labelledby={`${id}-label ${id}-help-text`} />"#,
+        r#"<div aria-describedby={`${id}-label`} />"#,
+        r#"<div aria-describedby={`${id}`} />"#,
+        r#"<div aria-describedby={`${id}-label ${id}-help-text`} />"#,
     ];
 
     let fail = vec![
@@ -543,6 +561,8 @@ fn test() {
         r#"<div aria-relevant={"false"} />"#,
         r#"<div aria-relevant="additions removalss" />"#,
         r#"<div aria-relevant="additions removalss " />"#,
+        // Fails because this is a string, and so not interpolated.
+        r#"<div aria-hidden={"!!foo"} />"#,
     ];
 
     Tester::new(AriaProptypes::NAME, AriaProptypes::PLUGIN, pass, fail).test_and_snapshot();
