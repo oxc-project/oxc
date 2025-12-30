@@ -70,12 +70,12 @@ pub struct ConsistentVitestConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers an error when a not expected vitest accessor is used.
+    /// This rule triggers an error when an unexpected vitest accessor is used.
     ///
     /// ### Why is this bad?
     ///
-    /// Not having a consistent vitest accessor can lead to confusion on why
-    /// on some contexts `vi` is used, and on other `vitest` is used.
+    /// Not having a consistent vitest accessor can lead to confusion
+    /// when `vi` and `vitest` are used interchangeably.
     ///
     /// ### Examples
     ///
