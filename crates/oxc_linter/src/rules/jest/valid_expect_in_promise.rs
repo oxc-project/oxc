@@ -96,7 +96,6 @@ fn is_potential_expect_call(call_expr: &CallExpression) -> bool {
         return true;
     }
 
-    // Check for expect().xxx() pattern (e.g., expect(x).toBe(y))
     if let Some(member_expr) = call_expr.callee.get_member_expr() {
         let mut obj: &Expression<'_> = member_expr.object();
         loop {
@@ -136,6 +135,11 @@ fn find_unhandled_promise_chain<'a>(
                     let chain_root = find_promise_chain_root(grandparent, ctx);
 
                     if !is_in_test_callback(chain_root, ctx) {
+                        return None;
+                    }
+
+                    // Bail out for legacy async pattern with done callback
+                    if test_has_done_callback(chain_root, ctx) {
                         return None;
                     }
 
@@ -255,6 +259,57 @@ fn is_in_test_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     }
 }
 
+/// Check if the test callback has a `done` parameter (legacy async pattern).
+/// When present, we bail out since promise handling is too complex to analyze.
+fn test_has_done_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut current = node;
+
+    loop {
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let grandparent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::CallExpression(call_expr) = grandparent.kind() {
+                    let jest_node = PossibleJestNode { node: grandparent, original: None };
+                    if is_type_of_jest_fn_call(
+                        call_expr,
+                        &jest_node,
+                        ctx,
+                        &[
+                            JestFnKind::General(JestGeneralFnKind::Test),
+                            JestFnKind::General(JestGeneralFnKind::Hook),
+                        ],
+                    ) {
+                        return !arrow.params.items.is_empty();
+                    }
+                }
+            }
+            AstKind::Function(func) => {
+                let grandparent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::CallExpression(call_expr) = grandparent.kind() {
+                    let jest_node = PossibleJestNode { node: grandparent, original: None };
+                    if is_type_of_jest_fn_call(
+                        call_expr,
+                        &jest_node,
+                        ctx,
+                        &[
+                            JestFnKind::General(JestGeneralFnKind::Test),
+                            JestFnKind::General(JestGeneralFnKind::Hook),
+                        ],
+                    ) {
+                        return !func.params.items.is_empty();
+                    }
+                }
+            }
+            AstKind::Program(_) => return false,
+            _ => {}
+        }
+
+        current = parent;
+    }
+}
+
 fn is_promise_handled<'a>(promise_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let mut current = promise_node;
 
@@ -276,9 +331,7 @@ fn is_promise_handled<'a>(promise_node: &AstNode<'a>, ctx: &LintContext<'a>) -> 
                 }
                 return false;
             }
-            AstKind::VariableDeclarator(_)
-            | AstKind::Program(_)
-            | AstKind::FunctionBody(_) => {
+            AstKind::VariableDeclarator(_) | AstKind::Program(_) | AstKind::FunctionBody(_) => {
                 return false;
             }
             AstKind::CallExpression(call_expr) => {
@@ -427,6 +480,30 @@ fn test() {
         r#"
             it('passes', async () => {
                 await expect(somePromise()).rejects.toThrow();
+            });
+        "#,
+        r#"
+            it('passes', done => {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                    done();
+                });
+            });
+        "#,
+        r#"
+            it('passes', function(done) {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                    done();
+                });
+            });
+        "#,
+        r#"
+            beforeEach(done => {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                    done();
+                });
             });
         "#,
     ];
