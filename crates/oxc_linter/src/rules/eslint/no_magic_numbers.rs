@@ -298,8 +298,8 @@ impl InternConfig<'_> {
 }
 
 impl Rule for NoMagicNumbers {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -441,7 +441,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for Extensions {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         if let Some(first_arg) = value.get(0).and_then(Value::as_str) {
             let default = ExtensionRule::from_str(first_arg);
 
@@ -450,19 +450,19 @@ impl Rule for Extensions {
 
                 let config = ExtensionsConfig::from_json_value(root, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             } else {
                 let config = ExtensionsConfig::from_json_value(&value, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             }
         } else if let Some(first_obj) = value.get(0) {
             // First element is not a string, but is present (e.g., [{ "json": "always" }])
             let config = ExtensionsConfig::from_json_value(first_obj, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         } else {
             let config = ExtensionsConfig::from_json_value(&value, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         }
     }
 
