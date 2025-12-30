@@ -137,38 +137,32 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let (embedded_formatter, tailwind_callback) = {
+        let external_callbacks = {
             let external_formatter = self
                 .external_formatter
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-            let embedded_formatter = if format_options.embedded_language_formatting.is_off() {
-                None
-            } else {
-                Some(external_formatter.to_embedded_formatter(external_options.clone()))
-            };
+            // Only create callbacks if at least one feature needs them
+            let needs_embedded = !format_options.embedded_language_formatting.is_off();
+            let needs_tailwind = format_options.experimental_tailwindcss.is_some();
 
-            let tailwind_callback = if format_options.experimental_tailwindcss.is_some() {
-                Some(external_formatter.to_tailwind_callback(path, external_options))
+            if needs_embedded || needs_tailwind {
+                Some(external_formatter.to_external_callbacks(path, external_options))
             } else {
                 None
-            };
-            (embedded_formatter, tailwind_callback)
+            }
         };
 
         #[cfg(not(feature = "napi"))]
-        let (embedded_formatter, tailwind_callback) = {
-            let _ = external_options;
-            (None, None)
+        let external_callbacks = {
+            let _ = (path, external_options);
+            None
         };
 
         let base_formatter = Formatter::new(&allocator, format_options);
-        let formatted = base_formatter.format_with_all(
-            &ret.program,
-            embedded_formatter,
-            tailwind_callback.as_ref(),
-        );
+        let formatted =
+            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(

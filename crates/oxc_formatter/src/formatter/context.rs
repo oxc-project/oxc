@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    embedded_formatter::EmbeddedFormatter, formatter::FormatElement, options::FormatOptions,
+    external_formatter::ExternalCallbacks, formatter::FormatElement, options::FormatOptions,
 };
 
 use super::{Comments, SourceText};
@@ -86,7 +86,7 @@ pub struct FormatContext<'ast> {
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
 
-    embedded_formatter: Option<EmbeddedFormatter>,
+    external_callbacks: ExternalCallbacks,
 
     allocator: &'ast Allocator,
 }
@@ -112,7 +112,7 @@ impl<'ast> FormatContext<'ast> {
         comments: &'ast [Comment],
         allocator: &'ast Allocator,
         options: FormatOptions,
-        embedded_formatter: Option<EmbeddedFormatter>,
+        external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -124,7 +124,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            embedded_formatter,
+            external_callbacks: external_callbacks.unwrap_or_default(),
             allocator,
         }
     }
@@ -139,14 +139,14 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            embedded_formatter: None,
+            external_callbacks: ExternalCallbacks::default(),
             allocator,
         }
     }
 
-    /// Get the embedded formatter if one is set
-    pub fn embedded_formatter(&self) -> Option<&EmbeddedFormatter> {
-        self.embedded_formatter.as_ref()
+    /// Get the external callbacks if set
+    pub fn external_callbacks(&self) -> &ExternalCallbacks {
+        &self.external_callbacks
     }
 
     /// Returns the formatting options
@@ -221,6 +221,16 @@ impl<'ast> FormatContext<'ast> {
     /// Take all collected Tailwind classes, clearing the internal storage.
     pub fn take_tailwind_classes(&mut self) -> Vec<String> {
         mem::take(&mut self.tailwind_classes)
+    }
+
+    /// Sort Tailwind CSS classes using the external callback if set.
+    pub fn sort_tailwind_classes(&mut self) {
+        let tailwind_classes = mem::take(&mut self.tailwind_classes);
+        if let Some(sorted_classes) =
+            self.external_callbacks.sort_tailwind_classes(tailwind_classes)
+        {
+            self.tailwind_classes = sorted_classes;
+        }
     }
 
     /// Push a Tailwind context entry onto the stack.

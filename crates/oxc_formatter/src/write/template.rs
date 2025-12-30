@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    EmbeddedFormatter, IndentWidth,
+    ExternalCallbacks, IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
@@ -761,17 +761,16 @@ fn try_format_embedded_template<'a>(
 
     let tag_name = ident.name.as_str();
     // Check if the tag is supported by the embedded formatter
-    if !EmbeddedFormatter::is_supported_tag(tag_name) {
+    if !ExternalCallbacks::is_supported_tag(tag_name) {
         return false;
     }
 
-    // Get the embedded formatter from the context
-    let Some(embedded_formatter) = f.context().embedded_formatter() else {
-        return false;
-    };
+    // Get the external callbacks from the context
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
+    let Some(Ok(formatted)) =
+        f.context().external_callbacks().format_embedded(tag_name, template_content)
+    else {
         return false;
     };
 

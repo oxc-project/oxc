@@ -7,7 +7,7 @@ use napi::{
 };
 use serde_json::Value;
 
-use oxc_formatter::TailwindCallback;
+use oxc_formatter::ExternalCallbacks;
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument and returns plugin languages.
@@ -129,21 +129,23 @@ impl ExternalFormatter {
         (self.init)(num_threads)
     }
 
-    /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type.
-    /// The options is captured in the closure and passed to JS on each call.
-    pub fn to_embedded_formatter(&self, options: Value) -> oxc_formatter::EmbeddedFormatter {
+    /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
+    /// The filepath and options are captured in the closures and passed to JS on each call.
+    pub fn to_external_callbacks(&self, filepath: &Path, options: Value) -> ExternalCallbacks {
         let format_embedded = Arc::clone(&self.format_embedded);
-        let callback =
-            Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));
-        oxc_formatter::EmbeddedFormatter::new(callback)
-    }
+        let options_for_embedded = options.clone();
+        let embedded_callback = Arc::new(move |tag_name: &str, code: &str| {
+            (format_embedded)(&options_for_embedded, tag_name, code)
+        });
 
-    /// Convert this external formatter to the oxc_formatter::TailwindCallback type.
-    /// The filepath and options are captured in the closure and passed to JS on each call.
-    pub fn to_tailwind_callback(&self, filepath: &Path, options: Value) -> TailwindCallback {
         let file_path = filepath.to_string_lossy().to_string();
         let process_tailwind = Arc::clone(&self.process_tailwind);
-        Arc::new(move |classes: Vec<String>| (process_tailwind)(&file_path, &options, classes))
+        let tailwind_callback =
+            Arc::new(move |classes: Vec<String>| (process_tailwind)(&file_path, &options, classes));
+
+        ExternalCallbacks::new()
+            .with_embedded_formatter(embedded_callback)
+            .with_tailwind(tailwind_callback)
     }
 
     /// Format non-js file using the JS callback.

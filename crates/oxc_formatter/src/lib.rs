@@ -3,7 +3,7 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
-mod embedded_formatter;
+mod external_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
@@ -16,8 +16,8 @@ mod write;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
-pub use crate::embedded_formatter::{
-    EmbeddedFormatter, EmbeddedFormatterCallback, TailwindCallback,
+pub use crate::external_formatter::{
+    EmbeddedFormatterCallback, ExternalCallbacks, TailwindCallback,
 };
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
@@ -50,24 +50,14 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
-        self.format_impl(program, None, None)
+        self.format_with_external_callbacks(program, None)
     }
 
     #[inline]
-    pub fn format_with_all(
+    pub fn format_with_external_callbacks(
         self,
         program: &'a Program<'a>,
-        embedded_formatter: Option<EmbeddedFormatter>,
-        tailwind_callback: Option<&TailwindCallback>,
-    ) -> Formatted<'a> {
-        self.format_impl(program, embedded_formatter, tailwind_callback)
-    }
-
-    pub fn format_impl(
-        self,
-        program: &'a Program<'a>,
-        embedded_formatter: Option<EmbeddedFormatter>,
-        tailwind_callback: Option<&TailwindCallback>,
+        external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
@@ -78,22 +68,13 @@ impl<'a> Formatter<'a> {
             &program.comments,
             self.allocator,
             self.options,
-            embedded_formatter,
+            external_callbacks,
         );
 
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         );
-
-        // Call tailwind callback to sort classes if provided
-        if let Some(callback) = tailwind_callback {
-            let classes = formatted.context_mut().take_tailwind_classes();
-            if !classes.is_empty() {
-                let sorted = callback(classes);
-                formatted.set_sorted_tailwind_classes(sorted);
-            }
-        }
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.

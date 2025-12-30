@@ -341,8 +341,14 @@ pub fn format<'ast>(
 
     buffer.write_fmt(arguments);
 
-    let document = Document::from(buffer.into_vec());
+    let elements = buffer.into_vec();
+    let mut context = state.into_context();
+
+    let document = Document::from(elements);
     document.propagate_expand();
 
-    Formatted::new(document, state.into_context())
+    // Sort Tailwind CSS classes collected during formatting
+    context.sort_tailwind_classes();
+
+    Formatted::new(document, context)
 }
