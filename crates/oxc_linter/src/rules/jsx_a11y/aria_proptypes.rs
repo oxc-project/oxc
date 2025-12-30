@@ -137,12 +137,11 @@ fn is_valid_value_for_aria_prop_type(
         }
         AriaPropType::String | AriaPropType::Id => {
             // Template literals with expressions always produce strings at runtime
-            if let JSXAttributeValue::ExpressionContainer(container) = value {
-                if let JSXExpression::TemplateLiteral(t) = &container.expression {
-                    if t.single_quasi().is_none() {
-                        return true;
-                    }
-                }
+            if let JSXAttributeValue::ExpressionContainer(container) = value
+                && let JSXExpression::TemplateLiteral(t) = &container.expression
+                && t.single_quasi().is_none()
+            {
+                return true;
             }
             parse_aria_prop_value_as_string(value, false).is_some()
         }
@@ -384,6 +383,8 @@ fn test() {
         "<div aria-label />",
         "<div aria-label={`Close`} />",
         "<div aria-label={`Hello ${foo}`} />",
+        "<div aria-label={`foo-${id}`} />",
+        "<div aria-label={`foo-${id} bar`} />",
         "<div aria-label={foo} />",
         "<div aria-label={foo.bar} />",
         "<div aria-label={null} />",
