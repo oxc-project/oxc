@@ -1,11 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{
+        AssignmentTarget, BindingPattern, CallExpression, Expression, Statement, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode as CrateAstNode,
@@ -138,7 +140,6 @@ fn find_unhandled_promise_chain<'a>(
                         return None;
                     }
 
-                    // Bail out for legacy async pattern with done callback
                     if test_has_done_callback(chain_root, ctx) {
                         return None;
                     }
@@ -260,7 +261,6 @@ fn is_in_test_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 /// Check if the test callback has a `done` parameter (legacy async pattern).
-/// When present, we bail out since promise handling is too complex to analyze.
 fn test_has_done_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let mut current = node;
 
@@ -310,6 +310,82 @@ fn test_has_done_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool
     }
 }
 
+/// Check if a variable storing a promise is later awaited or returned in the same block.
+fn is_variable_awaited_or_returned<'a>(
+    decl: &VariableDeclarator<'a>,
+    decl_node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    // Bail out on destructuring patterns (return true = no error)
+    let BindingPattern::BindingIdentifier(binding) = &decl.id else {
+        return true;
+    };
+    let var_name = binding.name.as_str();
+
+    let mut current = decl_node;
+    let statements: &[Statement<'_>] = loop {
+        let parent = ctx.nodes().parent_node(current.id());
+        match parent.kind() {
+            AstKind::FunctionBody(body) => break body.statements.as_slice(),
+            AstKind::Program(_) => return false,
+            _ => current = parent,
+        }
+    };
+
+    let decl_span = decl.span;
+    let mut found_decl = false;
+
+    for stmt in statements {
+        if !found_decl {
+            if stmt.span().start <= decl_span.start && stmt.span().end >= decl_span.end {
+                found_decl = true;
+            }
+            continue;
+        }
+
+        match stmt {
+            Statement::ExpressionStatement(expr_stmt) => {
+                if let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
+                    && await_expr.argument.is_specific_id(var_name)
+                {
+                    return true;
+                }
+                if let Expression::AssignmentExpression(assign) = &expr_stmt.expression
+                    && let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
+                    && target.name.as_str() == var_name
+                {
+                    if is_chain_reassignment(&assign.right, var_name) {
+                        continue;
+                    }
+                    return false;
+                }
+            }
+            Statement::ReturnStatement(ret) => {
+                if let Some(arg) = &ret.argument
+                    && arg.is_specific_id(var_name)
+                {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    false
+}
+
+fn is_chain_reassignment(expr: &Expression<'_>, var_name: &str) -> bool {
+    if let Expression::CallExpression(call) = expr
+        && let Some(member) = call.callee.get_member_expr()
+        && let Some(prop) = member.static_property_name()
+        && matches!(prop, "then" | "catch" | "finally")
+    {
+        return member.object().is_specific_id(var_name)
+            || is_chain_reassignment(member.object(), var_name);
+    }
+    false
+}
+
 fn is_promise_handled<'a>(promise_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let mut current = promise_node;
 
@@ -331,7 +407,10 @@ fn is_promise_handled<'a>(promise_node: &AstNode<'a>, ctx: &LintContext<'a>) -> 
                 }
                 return false;
             }
-            AstKind::VariableDeclarator(_) | AstKind::Program(_) | AstKind::FunctionBody(_) => {
+            AstKind::VariableDeclarator(decl) => {
+                return is_variable_awaited_or_returned(decl, parent, ctx);
+            }
+            AstKind::Program(_) | AstKind::FunctionBody(_) => {
                 return false;
             }
             AstKind::CallExpression(call_expr) => {
@@ -504,6 +583,31 @@ fn test() {
                     expect(data).toBe('foo');
                     done();
                 });
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                await promise;
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return promise;
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                let promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                promise = promise.then(x => x);
+                await promise;
             });
         "#,
     ];
