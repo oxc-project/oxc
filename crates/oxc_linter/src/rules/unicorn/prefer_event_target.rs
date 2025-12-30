@@ -64,6 +64,9 @@ declare_oxc_lint!(
     /// import { EventEmitter } from "@angular/core";
     /// class Foo extends EventEmitter {}
     /// ```
+    ///
+    /// Note that CommonJS `require`s are not detected for ignored
+    /// packages. ES6 imports should be used instead.
     PreferEventTarget,
     unicorn,
     pedantic
@@ -131,7 +134,7 @@ fn test() {
            class Foo extends EventEmitter {}"#,
         r#"import { EventEmitter } from "eventemitter3";
            class Foo extends EventEmitter {}"#,
-        // TODO: CommonJS require does not work yet.
+        // CommonJS requires are not supported by this rule. ES6 imports should be used instead.
         // r#"const { EventEmitter } = require("@angular/core");
         // class Foo extends EventEmitter {}"#,
     ];
