@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +21,7 @@ use crate::{
 /// Information about a property in the component definition
 struct PropertyInfo {
     /// The name of the property
-    name: String,
+    name: CompactStr,
     /// The position in the order configuration (None if not in order list)
     order_position: Option<usize>,
     /// The span of the property for error reporting
@@ -314,7 +314,7 @@ impl OrderInComponents {
                     if let Some(name) = property.key.static_name() {
                         let order_position = get_order_position(&name, &self.order);
                         properties.push(PropertyInfo {
-                            name: name.to_string(),
+                            name: CompactStr::from(name.as_ref()),
                             order_position,
                             span: property.span,
                             index,
@@ -329,7 +329,7 @@ impl OrderInComponents {
 
         // Check for out-of-order properties
         let mut max_position: Option<usize> = None;
-        let mut max_position_name = String::new();
+        let mut max_position_name = CompactStr::new("");
 
         for prop in &properties {
             if let Some(pos) = prop.order_position {
