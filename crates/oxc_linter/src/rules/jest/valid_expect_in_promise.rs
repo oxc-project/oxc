@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPattern, CallExpression, Expression, Statement, VariableDeclarator,
+        Argument, ArrayExpressionElement, AssignmentTarget, BindingPattern, CallExpression,
+        Expression, Statement, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -344,10 +345,13 @@ fn is_variable_awaited_or_returned<'a>(
 
         match stmt {
             Statement::ExpressionStatement(expr_stmt) => {
-                if let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
-                    && await_expr.argument.is_specific_id(var_name)
-                {
-                    return true;
+                if let Expression::AwaitExpression(await_expr) = &expr_stmt.expression {
+                    if await_expr.argument.is_specific_id(var_name) {
+                        return true;
+                    }
+                    if is_variable_in_promise_all_or_all_settled(var_name, &await_expr.argument) {
+                        return true;
+                    }
                 }
                 if let Expression::AssignmentExpression(assign) = &expr_stmt.expression
                     && let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
@@ -360,10 +364,13 @@ fn is_variable_awaited_or_returned<'a>(
                 }
             }
             Statement::ReturnStatement(ret) => {
-                if let Some(arg) = &ret.argument
-                    && arg.is_specific_id(var_name)
-                {
-                    return true;
+                if let Some(arg) = &ret.argument {
+                    if arg.is_specific_id(var_name) {
+                        return true;
+                    }
+                    if is_variable_in_promise_all_or_all_settled(var_name, arg) {
+                        return true;
+                    }
                 }
             }
             _ => {}
@@ -381,6 +388,22 @@ fn is_chain_reassignment(expr: &Expression<'_>, var_name: &str) -> bool {
     {
         return member.object().is_specific_id(var_name)
             || is_chain_reassignment(member.object(), var_name);
+    }
+    false
+}
+
+/// Check if an expression is a `Promise.all` or `Promise.allSettled` call containing a variable.
+fn is_variable_in_promise_all_or_all_settled(var_name: &str, expr: &Expression<'_>) -> bool {
+    if let Expression::CallExpression(call) = expr
+        && let Some(member) = call.callee.get_member_expr()
+        && member.object().is_specific_id("Promise")
+        && let Some(prop) = member.static_property_name()
+        && matches!(prop, "all" | "allSettled")
+        && let Some(Argument::ArrayExpression(arr)) = call.arguments.first()
+    {
+        return arr.elements.iter().any(|el| {
+            matches!(el, ArrayExpressionElement::Identifier(id) if id.name.as_str() == var_name)
+        });
     }
     false
 }
@@ -609,6 +632,45 @@ fn test() {
                 await promise;
             });
         "#,
+        // Variable in returned Promise.all
+        r#"
+            it('passes', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return Promise.all([promise]);
+            });
+        "#,
+        // Variable in awaited Promise.all
+        r#"
+            it('passes', async () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                await Promise.all([promise]);
+            });
+        "#,
+        // Variable in returned Promise.allSettled
+        r#"
+            it('passes', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return Promise.allSettled([promise]);
+            });
+        "#,
+        // Multiple variables in Promise.all
+        r#"
+            it('passes', async () => {
+                const p1 = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                const p2 = otherPromise().then(data => {
+                    expect(data).toBe('bar');
+                });
+                await Promise.all([p1, p2]);
+            });
+        "#,
     ];
 
     let fail = vec![
@@ -695,6 +757,24 @@ fn test() {
                 promise.then(() => {
                     expect(true).toBe(true);
                 });
+            });
+        "#,
+        // Variable in Promise.any - should fail (doesn't wait for all)
+        r#"
+            it('fails', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return Promise.any([promise]);
+            });
+        "#,
+        // Variable in Promise.race - should fail (doesn't wait for all)
+        r#"
+            it('fails', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return Promise.race([promise]);
             });
         "#,
     ];

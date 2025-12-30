@@ -132,3 +132,23 @@ source: crates/oxc_linter/src/tester.rs
  9 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:33]
+ 2 │                 it('fails', () => {
+ 3 │ ╭─▶                 const promise = somePromise().then(data => {
+ 4 │ │                       expect(data).toBe('foo');
+ 5 │ ╰─▶                 });
+ 6 │                     return Promise.any([promise]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:33]
+ 2 │                 it('fails', () => {
+ 3 │ ╭─▶                 const promise = somePromise().then(data => {
+ 4 │ │                       expect(data).toBe('foo');
+ 5 │ ╰─▶                 });
+ 6 │                     return Promise.race([promise]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
