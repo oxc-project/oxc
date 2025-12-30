@@ -1,8 +1,8 @@
 ---
-source: crates/oxc_language_server/src/formatter/tester.rs
+source: apps/oxfmt/src/lsp/tester.rs
 ---
 ========================================
-File: fixtures/formatter/basic/basic.ts
+File: test/fixtures/lsp/basic/basic.ts
 ========================================
 Range: Range {
     start: Position {

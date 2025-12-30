@@ -11,11 +11,12 @@ use oxc_formatter::{
 use oxc_parser::Parser;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
-use crate::{
-    capabilities::Capabilities,
-    formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
-    tool::{Tool, ToolBuilder, ToolRestartChanges},
+use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
+
+use oxc_language_server::{
+    Capabilities,
     utils::normalize_path,
+    {Tool, ToolBuilder, ToolRestartChanges},
 };
 
 pub struct ServerFormatterBuilder;
@@ -370,7 +371,8 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests_builder {
-    use crate::{ServerFormatterBuilder, ToolBuilder, capabilities::Capabilities};
+    use crate::lsp::server_formatter::ServerFormatterBuilder;
+    use oxc_language_server::{Capabilities, ToolBuilder};
 
     #[test]
     fn test_server_capabilities() {
@@ -392,7 +394,7 @@ mod test_watchers {
     const FAKE_DIR: &str = "fixtures/formatter/watchers";
 
     mod init_watchers {
-        use crate::formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
         use serde_json::json;
 
         #[test]
@@ -432,10 +434,8 @@ mod test_watchers {
     }
 
     mod handle_configuration_change {
-        use crate::{
-            ToolRestartChanges,
-            formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester},
-        };
+        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use oxc_language_server::ToolRestartChanges;
         use serde_json::json;
 
         #[test]
@@ -465,7 +465,7 @@ mod tests {
     use serde_json::json;
 
     use super::compute_minimal_text_edit;
-    use crate::formatter::tester::Tester;
+    use crate::lsp::tester::Tester;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -551,7 +551,7 @@ mod tests {
     #[test]
     fn test_formatter() {
         Tester::new(
-            "fixtures/formatter/basic",
+            "test/fixtures/lsp/basic",
             json!({
                 "fmt.experimental": true
             }),
@@ -562,7 +562,7 @@ mod tests {
     #[test]
     fn test_root_config_detection() {
         Tester::new(
-            "fixtures/formatter/root_config",
+            "test/fixtures/lsp/root_config",
             json!({
                 "fmt.experimental": true
             }),
@@ -573,7 +573,7 @@ mod tests {
     #[test]
     fn test_custom_config_path() {
         Tester::new(
-            "fixtures/formatter/custom_config_path",
+            "test/fixtures/lsp/custom_config_path",
             json!({
                 "fmt.experimental": true,
                 "fmt.configPath": "./format.json",
@@ -585,7 +585,7 @@ mod tests {
     #[test]
     fn test_ignore_files() {
         Tester::new(
-            "fixtures/formatter/ignore-file",
+            "test/fixtures/lsp/ignore-file",
             json!({
                 "fmt.experimental": true
             }),
@@ -596,7 +596,7 @@ mod tests {
     #[test]
     fn test_ignore_pattern() {
         Tester::new(
-            "fixtures/formatter/ignore-pattern",
+            "test/fixtures/lsp/ignore-pattern",
             json!({
                 "fmt.experimental": true
             }),
