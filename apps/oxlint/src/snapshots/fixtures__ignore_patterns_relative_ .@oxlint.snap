@@ -21,6 +21,7 @@ working directory: fixtures/ignore_patterns_relative
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
+╰ 2 fixes are available with '--fix'
 Finished in <variable>ms on 2 files using 1 threads.
 ----------
 CLI result: LintSucceeded
@@ -46,6 +47,7 @@ working directory: fixtures/ignore_patterns_relative
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
+╰ 2 fixes are available with '--fix'
 Finished in <variable>ms on 2 files using 1 threads.
 ----------
 CLI result: LintSucceeded

@@ -15,6 +15,7 @@ working directory:
   help: Remove the debugger statement
 
 Found 1 warning and 0 errors.
+╰ 1 fix is available with '--fix'
 Finished in <variable>ms on 1 file with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded

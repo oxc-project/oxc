@@ -20,7 +20,7 @@ use self_cell::self_cell;
 use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticBatch, DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
@@ -895,7 +895,7 @@ impl Runtime {
                     Ok(v) => v,
                     Err(e) => {
                         if let Some(tx_error) = tx_error {
-                            tx_error.send(vec![e]).unwrap();
+                            tx_error.send(DiagnosticBatch::from_errors(vec![e])).unwrap();
                         }
                         return Err(());
                     }
@@ -926,7 +926,7 @@ impl Runtime {
                 Ok(v) => v,
                 Err(e) => {
                     if let Some(tx_error) = tx_error {
-                        tx_error.send(vec![e]).unwrap();
+                        tx_error.send(DiagnosticBatch::from_errors(vec![e])).unwrap();
                     }
                     return None;
                 }

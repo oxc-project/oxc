@@ -21,6 +21,7 @@ working directory: fixtures/nested_config
   help: Remove the debugger statement
 
 Found 0 warnings and 2 errors.
+╰ 2 fixes are available with '--fix'
 Finished in <variable>ms on 7 files using 1 threads.
 ----------
 CLI result: LintFoundErrors

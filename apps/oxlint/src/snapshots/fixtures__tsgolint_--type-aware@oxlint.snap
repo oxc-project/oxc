@@ -397,6 +397,7 @@ working directory: fixtures/tsgolint
    `----
 
 Found 0 warnings and 51 errors.
+╰ 2 fixes are available with '--fix'
 Finished in <variable>ms on 45 files using 1 threads.
 ----------
 CLI result: LintFoundErrors

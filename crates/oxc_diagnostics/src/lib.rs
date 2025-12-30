@@ -46,7 +46,10 @@
 //! service.run();
 //! ```
 
+mod fix_availability;
 mod service;
+
+pub use fix_availability::FixAvailability;
 
 use std::{
     borrow::Cow,
@@ -56,7 +59,7 @@ use std::{
 
 pub mod reporter;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::service::{DiagnosticBatch, DiagnosticSender, DiagnosticService};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -122,6 +125,8 @@ pub struct OxcDiagnosticInner {
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'static, str>>,
+    /// What kind of automatic fix is available for this diagnostic.
+    pub fix_availability: FixAvailability,
 }
 
 impl Display for OxcDiagnostic {
@@ -178,6 +183,7 @@ impl OxcDiagnostic {
                 severity: Severity::Error,
                 code: OxcCode::default(),
                 url: None,
+                fix_availability: FixAvailability::None,
             }),
         }
     }
@@ -192,6 +198,7 @@ impl OxcDiagnostic {
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
+                fix_availability: FixAvailability::None,
             }),
         }
     }
@@ -330,6 +337,21 @@ impl OxcDiagnostic {
     pub fn with_url<S: Into<Cow<'static, str>>>(mut self, url: S) -> Self {
         self.inner.url = Some(url.into());
         self
+    }
+
+    /// Set the fix availability for this diagnostic.
+    ///
+    /// This indicates what kind of automatic fix is available for this diagnostic,
+    /// which can be used for counting and reporting purposes.
+    pub fn with_fix_availability(mut self, fix_availability: FixAvailability) -> Self {
+        self.inner.fix_availability = fix_availability;
+        self
+    }
+
+    /// Get the fix availability for this diagnostic.
+    #[inline]
+    pub fn fix_availability(&self) -> FixAvailability {
+        self.inner.fix_availability
     }
 
     /// Add source code to this diagnostic and convert it into an [`Error`].

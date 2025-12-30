@@ -396,11 +396,16 @@ impl<'a> LintContext<'a> {
         let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
         if let Some(fix) = fix {
             self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Single(fix))
+                Message::new_with_kind(diagnostic, PossibleFixes::Single(fix), fix_kind)
                     .with_section_offset(self.parent.current_sub_host().source_text_offset),
             );
         } else {
-            self.diagnostic(diagnostic);
+            // Even when the fix is not applied (e.g., --fix not passed), we still
+            // track the fix_kind to count available fixes for reporting purposes.
+            self.add_diagnostic(
+                Message::new_with_kind(diagnostic, PossibleFixes::None, fix_kind)
+                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
+            );
         }
     }
 
@@ -424,14 +429,27 @@ impl<'a> LintContext<'a> {
         .flatten()
         .collect();
 
-        if fixes_result.is_empty() {
-            self.diagnostic(diagnostic);
-        } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
-        }
+        // If there's a safe fix, use that as the primary fix kind, otherwise
+        // use the dangerous fix.
+        let fix_kind = match (fix_one.0, fix_two.0) {
+            (FixKind::SafeFix, _) | (_, FixKind::SafeFix) => FixKind::SafeFix,
+            (FixKind::DangerousFix, _) | (_, FixKind::DangerousFix) => FixKind::DangerousFix,
+            _ => FixKind::None,
+        };
+
+        // Track the fix kind even when fixes aren't applied (e.g., --fix not passed)
+        self.add_diagnostic(
+            Message::new_with_kind(
+                diagnostic,
+                if fixes_result.is_empty() {
+                    PossibleFixes::None
+                } else {
+                    PossibleFixes::Multiple(fixes_result)
+                },
+                fix_kind,
+            )
+            .with_section_offset(self.parent.current_sub_host().source_text_offset),
+        );
     }
 
     /// Report a lint rule violation and provide multiple suggestions for fixing it.
@@ -445,6 +463,8 @@ impl<'a> LintContext<'a> {
     where
         I: IntoIterator<Item = RuleFix>,
     {
+        let mut fix_kind = FixKind::None;
+        let mut first_suggestion_kind = FixKind::None;
         let fixes_result: Vec<Fix> = suggestions
             .into_iter()
             .filter_map(|rule_fix| {
@@ -457,7 +477,16 @@ impl<'a> LintContext<'a> {
                     rule_fix.kind()
                 );
 
+                // Track the first suggestion kind for reporting purposes
+                if first_suggestion_kind.is_none() && !rule_fix.is_empty() {
+                    first_suggestion_kind = rule_fix.kind();
+                }
+
                 if self.parent.fix.can_apply(rule_fix.kind()) && !rule_fix.is_empty() {
+                    // Track the first non-empty fix kind
+                    if fix_kind.is_none() {
+                        fix_kind = rule_fix.kind();
+                    }
                     Some(rule_fix.into_fix(self.source_text()))
                 } else {
                     None
@@ -465,14 +494,22 @@ impl<'a> LintContext<'a> {
             })
             .collect();
 
-        if fixes_result.is_empty() {
-            self.diagnostic(diagnostic);
-        } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
-        }
+        // Use the tracked fix kind, or fall back to the first suggestion kind for reporting
+        let reported_fix_kind = if fix_kind.is_some() { fix_kind } else { first_suggestion_kind };
+
+        // Track the fix kind even when fixes aren't applied (e.g., --fix not passed)
+        self.add_diagnostic(
+            Message::new_with_kind(
+                diagnostic,
+                if fixes_result.is_empty() {
+                    PossibleFixes::None
+                } else {
+                    PossibleFixes::Multiple(fixes_result)
+                },
+                reported_fix_kind,
+            )
+            .with_section_offset(self.parent.current_sub_host().source_text_offset),
+        );
     }
 
     fn create_fix<C, F>(

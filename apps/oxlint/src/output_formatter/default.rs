@@ -104,6 +104,34 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
         .as_str(),
     );
 
+    let total_fixes = result.safe_fixes_available()
+        + result.dangerous_fixes_available()
+        + result.suggestions_available();
+    if total_fixes > 0 {
+        let mut fix_option = "--fix".to_string();
+        if result.dangerous_fixes_available() > 0 {
+            fix_option.push_str(" --fix-dangerously");
+        }
+        if result.suggestions_available() > 0 {
+            fix_option.push_str(" --fix-suggestions");
+        }
+        output.push_str(
+            format!(
+                "╰ {} {} available with '{}'\n",
+                total_fixes,
+                if total_fixes == result.suggestions_available() {
+                    if total_fixes == 1 { "suggestion is" } else { "suggestions are" }
+                } else if total_fixes == 1 {
+                    "fix is"
+                } else {
+                    "fixes are"
+                },
+                fix_option
+            )
+            .as_str(),
+        );
+    }
+
     if result.max_warnings_exceeded() {
         output.push_str(
             format!("Exceeded maximum number of warnings. Found {}.\n", result.warnings_count())
@@ -217,7 +245,7 @@ mod test {
     fn reporter_finish_one_warning_and_one_error() {
         let mut reporter = GraphicalReporter::default();
 
-        let result = reporter.finish(&DiagnosticResult::new(1, 1, false));
+        let result = reporter.finish(&DiagnosticResult::new(1, 1, 0, 0, 0, false));
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "\nFound 1 warning and 1 error.\n");
@@ -227,7 +255,7 @@ mod test {
     fn reporter_finish_multiple_warning_and_errors() {
         let mut reporter = GraphicalReporter::default();
 
-        let result = reporter.finish(&DiagnosticResult::new(6, 4, false));
+        let result = reporter.finish(&DiagnosticResult::new(6, 4, 0, 0, 0, false));
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "\nFound 6 warnings and 4 errors.\n");
@@ -237,12 +265,60 @@ mod test {
     fn reporter_finish_exceeded_warnings() {
         let mut reporter = GraphicalReporter::default();
 
-        let result = reporter.finish(&DiagnosticResult::new(6, 4, true));
+        let result = reporter.finish(&DiagnosticResult::new(6, 4, 0, 0, 0, true));
 
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
             "\nFound 6 warnings and 4 errors.\nExceeded maximum number of warnings. Found 6.\n"
+        );
+    }
+
+    #[test]
+    fn reporter_finish_with_fixes_and_suggestions() {
+        let result =
+            GraphicalReporter::default().finish(&DiagnosticResult::new(2, 3, 5, 1, 4, false));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 2 warnings and 3 errors.\n╰ 10 fixes are available with '--fix --fix-dangerously --fix-suggestions'"
+        );
+
+        let result =
+            GraphicalReporter::default().finish(&DiagnosticResult::new(2, 3, 0, 1, 4, false));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 2 warnings and 3 errors.\n╰ 5 fixes are available with '--fix --fix-dangerously --fix-suggestions'"
+        );
+
+        let result =
+            GraphicalReporter::default().finish(&DiagnosticResult::new(2, 3, 0, 1, 0, false));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 2 warnings and 3 errors.\n╰ 1 fix is available with '--fix --fix-dangerously'"
+        );
+
+        let result =
+            GraphicalReporter::default().finish(&DiagnosticResult::new(2, 3, 0, 0, 1, false));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 2 warnings and 3 errors.\n╰ 1 suggestion is available with '--fix --fix-suggestions'"
+        );
+
+        let result =
+            GraphicalReporter::default().finish(&DiagnosticResult::new(2, 3, 0, 0, 2, false));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 2 warnings and 3 errors.\n╰ 2 suggestions are available with '--fix --fix-suggestions'"
         );
     }
 }
