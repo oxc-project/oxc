@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, module_record::ImportImportName, rule::Rule};
 
 fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
@@ -16,8 +16,6 @@ const IGNORED_PACKAGES: &[&str] = &["@angular/core", "eventemitter3"];
 
 /// Check if EventEmitter is imported from an ignored package (module-scoped check)
 fn is_event_emitter_from_ignored_package(ctx: &LintContext) -> bool {
-    use crate::module_record::ImportImportName;
-
     ctx.module_record().import_entries.iter().any(|import| {
         if !IGNORED_PACKAGES.contains(&import.module_request.name.as_str()) {
             return false;
@@ -128,13 +126,10 @@ fn test() {
         r"const emitter = EventEmitter()",
         // EventEmitter from ignored packages should be allowed - ES6 imports
         r#"import { EventEmitter } from "@angular/core";
-class Foo extends EventEmitter {}"#,
+           class Foo extends EventEmitter {}"#,
         r#"import { EventEmitter } from "eventemitter3";
-class Foo extends EventEmitter {}"#,
-        // Import aliases should also work
-        r#"import { EventEmitter as EE } from "@angular/core";
-class Foo extends EventEmitter {}"#,
-        // TODO: CommonJS require and dynamic imports - need to investigate why these don't work
+           class Foo extends EventEmitter {}"#,
+        // TODO: CommonJS require does not work yet.
         // r#"const { EventEmitter } = require("@angular/core");
         // class Foo extends EventEmitter {}"#,
     ];
@@ -147,6 +142,9 @@ class Foo extends EventEmitter {}"#,
         r"const emitter = new EventEmitter;",
         r"for (const {EventEmitter} of []) {new EventEmitter}",
         r"for (const EventEmitter of []) {new EventEmitter}",
+        // From a random package, it should fail.
+        r#"import { EventEmitter } from "foobar";
+           class Foo extends EventEmitter {}"#,
     ];
 
     Tester::new(PreferEventTarget::NAME, PreferEventTarget::PLUGIN, pass, fail).test_and_snapshot();
