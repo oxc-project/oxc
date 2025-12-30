@@ -1757,7 +1757,7 @@ where
 }
 
 #[derive(Default)]
-struct UpdatePureStatus {}
+struct UpdatePureStatus;
 
 impl<'a> VisitMut<'a> for UpdatePureStatus {
     fn visit_call_expression(&mut self, it: &mut CallExpression<'a>) {
