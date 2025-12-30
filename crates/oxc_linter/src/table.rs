@@ -8,6 +8,7 @@ pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
     pub total: usize,
     pub turned_on_by_default_count: usize,
+    pub rules_with_fixes: usize,
 }
 
 pub struct RuleTableSection {
@@ -17,6 +18,7 @@ pub struct RuleTableSection {
     pub plugin_column_width: usize,
 }
 
+#[derive(Debug, Clone)]
 pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
@@ -75,6 +77,8 @@ impl RuleTable {
 
         rows.sort_by_key(|row| (row.plugin.clone(), row.name));
 
+        let rules_with_fixes = rows.iter().filter(|r| r.autofix.has_fix()).count();
+
         let mut rows_by_category = rows.into_iter().fold(
             FxHashMap::default(),
             |mut map: FxHashMap<RuleCategory, Vec<RuleTableRow>>, row| {
@@ -101,7 +105,12 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: default_rules.len() }
+        RuleTable {
+            total,
+            sections,
+            turned_on_by_default_count: default_rules.len(),
+            rules_with_fixes,
+        }
     }
 }
 
