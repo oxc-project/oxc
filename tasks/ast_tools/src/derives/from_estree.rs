@@ -49,7 +49,7 @@ impl Derive for DeriveFromESTree {
             use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
             use crate::deserialize::{
                 DeserError, DeserResult, ESTreeField, ESTreeType, FromESTree,
-                FromESTreeConverter, parse_span, parse_span_or_empty,
+                FromESTreeConverter, parse_span, parse_span_or_empty, record_unknown_span,
             };
         }
     }
@@ -516,28 +516,41 @@ fn generate_body_for_enum_with_fields(enum_def: &EnumDef, schema: &Schema) -> To
     let fallback_arm = if let Some(placeholder_type) = enum_uses_placeholder(enum_name) {
         // Use a placeholder for unknown nodes in this enum type
         // This allows custom syntax (GlimmerTemplate, SvelteComponent, etc.) to be skipped
-        // while Rust rules continue running on the surrounding valid JS/TS code
+        // while Rust rules continue running on the surrounding valid JS/TS code.
+        // We also record the span so diagnostics in these regions can be filtered out.
         match placeholder_type {
             "NullLiteral" => quote! {
                 // Unknown node type (likely custom syntax) - use NullLiteral placeholder
-                _other => Ok(Self::NullLiteral(ABox::new_in(
-                    crate::ast::literal::NullLiteral { span: parse_span_or_empty(json) },
-                    allocator
-                ))),
+                _other => {
+                    let span = parse_span_or_empty(json);
+                    record_unknown_span(span);
+                    Ok(Self::NullLiteral(ABox::new_in(
+                        crate::ast::literal::NullLiteral { span },
+                        allocator
+                    )))
+                },
             },
             "EmptyStatement" => quote! {
                 // Unknown node type (likely custom syntax) - use EmptyStatement placeholder
-                _other => Ok(Self::EmptyStatement(ABox::new_in(
-                    crate::ast::js::EmptyStatement { span: parse_span_or_empty(json) },
-                    allocator
-                ))),
+                _other => {
+                    let span = parse_span_or_empty(json);
+                    record_unknown_span(span);
+                    Ok(Self::EmptyStatement(ABox::new_in(
+                        crate::ast::js::EmptyStatement { span },
+                        allocator
+                    )))
+                },
             },
             "StaticBlock" => quote! {
                 // Unknown node type (likely custom syntax like GlimmerTemplate) - use StaticBlock placeholder
-                _other => Ok(Self::StaticBlock(ABox::new_in(
-                    crate::ast::js::StaticBlock { span: parse_span_or_empty(json), body: AVec::new_in(allocator), scope_id: std::cell::Cell::default() },
-                    allocator
-                ))),
+                _other => {
+                    let span = parse_span_or_empty(json);
+                    record_unknown_span(span);
+                    Ok(Self::StaticBlock(ABox::new_in(
+                        crate::ast::js::StaticBlock { span, body: AVec::new_in(allocator), scope_id: std::cell::Cell::default() },
+                        allocator
+                    )))
+                },
             },
             _ => quote! {
                 other => Err(DeserError::UnknownNodeType(other.to_string())),
