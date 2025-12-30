@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, IdentifierReference},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -29,72 +26,9 @@ fn is_event_emitter_from_ignored_package(ctx: &LintContext) -> bool {
         match &import.import_name {
             ImportImportName::Name(name_span) => name_span.name.as_str() == "EventEmitter",
             ImportImportName::Default(_) => import.local_name.name.as_str() == "EventEmitter",
-            _ => false,
+            ImportImportName::NamespaceObject => false,
         }
     })
-}
-
-/// Check if an expression is a require() or dynamic import() from an ignored package
-fn is_expression_from_ignored_package(expr: &Expression) -> bool {
-    match expr {
-        // require("@angular/core") - for destructuring: const { EventEmitter } = require(...)
-        Expression::CallExpression(call_expr) => {
-            if let Some(arg) = call_expr.common_js_require() {
-                return IGNORED_PACKAGES.contains(&arg.value.as_str());
-            }
-            false
-        }
-        // require("@angular/core").EventEmitter or (await import("eventemitter3")).EventEmitter
-        Expression::StaticMemberExpression(member_expr) => {
-            // Only check if the property is EventEmitter
-            if member_expr.property.name == "EventEmitter" {
-                // Check if the object is a require() or import from an ignored package
-                return is_ignored_package_source(&member_expr.object);
-            }
-            false
-        }
-        // await import("eventemitter3") - for destructuring: const { EventEmitter } = await import(...)
-        Expression::AwaitExpression(await_expr) => is_ignored_package_source(&await_expr.argument),
-        // import("eventemitter3") - less common but possible
-        Expression::ImportExpression(import_expr) => {
-            if let Expression::StringLiteral(str_lit) = &import_expr.source {
-                return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
-            }
-            false
-        }
-        // (await import("eventemitter3")) - for destructuring with parens
-        Expression::ParenthesizedExpression(paren_expr) => {
-            is_expression_from_ignored_package(&paren_expr.expression)
-        }
-        _ => false,
-    }
-}
-
-/// Check if an expression is a require() or import() call from an ignored package
-fn is_ignored_package_source(expr: &Expression) -> bool {
-    match expr {
-        // require("@angular/core")
-        Expression::CallExpression(call_expr) => {
-            if let Some(arg) = call_expr.common_js_require() {
-                return IGNORED_PACKAGES.contains(&arg.value.as_str());
-            }
-            false
-        }
-        // import("eventemitter3")
-        Expression::ImportExpression(import_expr) => {
-            if let Expression::StringLiteral(str_lit) = &import_expr.source {
-                return IGNORED_PACKAGES.contains(&str_lit.value.as_str());
-            }
-            false
-        }
-        // (await import("eventemitter3"))
-        Expression::ParenthesizedExpression(paren_expr) => {
-            is_ignored_package_source(&paren_expr.expression)
-        }
-        // await import("eventemitter3")
-        Expression::AwaitExpression(await_expr) => is_ignored_package_source(&await_expr.argument),
-        _ => false,
-    }
 }
 
 #[derive(Debug, Default, Clone)]
