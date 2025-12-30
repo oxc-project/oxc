@@ -727,12 +727,24 @@ pub fn inject_scope_references(
     use oxc_syntax::{node::NodeId, reference::Reference};
 
     let scoping = semantic.scoping_mut();
-    let root_scope_id = scoping.root_scope_id();
 
     // Build a mapping from external variable IDs to variable names
     // We'll use this to look up variable names when processing references
     let variable_names: std::collections::HashMap<u32, &str> =
         scope_manager.variables.iter().map(|v| (v.id, v.name.as_str())).collect();
+
+    // Build a mapping from variable names to symbol IDs by iterating all scopes.
+    // This is needed because imports are in the module scope, not the global scope.
+    // We iterate all bindings in all scopes to build this map.
+    // We clone the names to avoid borrow checker issues.
+    let mut name_to_symbol: std::collections::HashMap<String, oxc_semantic::SymbolId> =
+        std::collections::HashMap::new();
+    for (_scope_id, bindings) in scoping.iter_bindings() {
+        for (name, &symbol_id) in bindings.iter() {
+            // Only keep the first binding for each name (typically the outermost scope)
+            name_to_symbol.entry(name.to_string()).or_insert(symbol_id);
+        }
+    }
 
     // For each resolved reference in the external scope manager,
     // try to find the corresponding symbol and add a reference
@@ -748,9 +760,7 @@ pub fn inject_scope_references(
         };
 
         // Try to find the symbol in oxc's scope tree
-        // Start from root scope and search all scopes
-        // (A more precise approach would match scope hierarchies, but this is simpler)
-        let Some(symbol_id) = scoping.find_binding(root_scope_id, name) else {
+        let Some(&symbol_id) = name_to_symbol.get(*name) else {
             // Symbol not found in oxc's scope tree - it might be:
             // - A variable declared in custom syntax (not in the stripped JS)
             // - A global variable

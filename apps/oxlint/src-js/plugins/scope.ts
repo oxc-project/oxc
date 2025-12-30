@@ -647,10 +647,24 @@ export function serializeScopeManagerFrom(scopeManager: unknown): SerializedScop
 
 /**
  * Get the span of an identifier node.
+ * Supports both `start`/`end` properties and `range` array format.
  */
 function getIdentifierSpan(identifier: Identifier): { start: number; end: number } | null {
-  if (identifier && typeof identifier.start === "number" && typeof identifier.end === "number") {
+  if (!identifier) return null;
+
+  // Try start/end properties first
+  if (typeof identifier.start === "number" && typeof identifier.end === "number") {
     return { start: identifier.start, end: identifier.end };
   }
+
+  // Try range array format [start, end] (used by some parsers like ember-eslint-parser)
+  const id = identifier as unknown as { range?: [number, number] };
+  if (Array.isArray(id.range) && id.range.length === 2) {
+    const [start, end] = id.range;
+    if (typeof start === "number" && typeof end === "number") {
+      return { start, end };
+    }
+  }
+
   return null;
 }
