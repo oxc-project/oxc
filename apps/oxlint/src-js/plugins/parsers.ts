@@ -39,7 +39,10 @@ interface EslintParseFunction {
  * ESLint parser interface - `parseForESLint()` method signature
  */
 interface EslintParseForESLintFunction {
-  (code: string, options?: Record<string, unknown>): {
+  (
+    code: string,
+    options?: Record<string, unknown>,
+  ): {
     ast: unknown;
     scopeManager?: unknown;
     visitorKeys?: Record<string, string[]>;
@@ -128,9 +131,9 @@ export async function loadParser(url: string, parserOptionsJson: string): Promis
   try {
     const imported = await import(url);
     // Handle both ES modules and CommonJS modules (where exports are under `default`)
-    const parser = (imported.parseForESLint || imported.parse
-      ? imported
-      : imported.default ?? imported) as EslintParser;
+    const parser = (
+      imported.parseForESLint || imported.parse ? imported : (imported.default ?? imported)
+    ) as EslintParser;
 
     // Validate the parser has at least one of the required methods
     const hasParseForEslint = typeof parser.parseForESLint === "function";

@@ -44,7 +44,12 @@ const countIdentifiersRule: Rule = {
         identifierCount = 0;
         context.report({
           message: `Starting to lint: ${context.filename}`,
-          node: { start: 0, end: 0, range: [0, 0], loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          node: {
+            start: 0,
+            end: 0,
+            range: [0, 0],
+            loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          },
         });
       },
       Identifier(node) {
@@ -58,7 +63,12 @@ const countIdentifiersRule: Rule = {
       after() {
         context.report({
           message: `Total identifiers found: ${identifierCount}`,
-          node: { start: 0, end: 0, range: [0, 0], loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          node: {
+            start: 0,
+            end: 0,
+            range: [0, 0],
+            loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          },
         });
       },
     };

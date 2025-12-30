@@ -545,3 +545,177 @@ impl ESTree for TSParenthesizedTypeConverter<'_, '_> {
         state.end();
     }
 }
+
+// ----------------------------------------
+// FromESTreeConverter implementations
+// ----------------------------------------
+// These are gated by the `deserialize` feature since they depend on the deserialize module.
+
+#[cfg(feature = "deserialize")]
+mod from_estree_converters {
+    use crate::ast::{js, ts};
+    use crate::deserialize::{DeserError, DeserResult, FromESTree, FromESTreeConverter};
+    use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
+
+    use super::{
+        TSCallSignatureDeclarationParams, TSClassImplementsExpression, TSFunctionTypeParams,
+        TSMappedTypeOptional, TSMethodSignatureParams,
+    };
+
+    /// Deserialize `expression` field for `TSClassImplements`.
+    ///
+    /// ESTree serializes as a member expression (Identifier or MemberExpression),
+    /// but oxc uses TSTypeName. We need to reverse the conversion.
+    impl<'a> FromESTreeConverter<'a> for TSClassImplementsExpression<'a, '_> {
+        type Output = ts::TSTypeName<'a>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // ESTree represents as Identifier or MemberExpression
+            // We need to convert to TSTypeName
+            let type_str = value.get("type").and_then(|t| t.as_str());
+            match type_str {
+                Some("Identifier") => {
+                    let ident: js::IdentifierReference = FromESTree::from_estree(value, allocator)?;
+                    Ok(ts::TSTypeName::IdentifierReference(ABox::new_in(ident, allocator)))
+                }
+                Some("MemberExpression") => {
+                    // Convert MemberExpression back to TSQualifiedName
+                    let qualified = convert_member_expr_to_qualified_name(value, allocator)?;
+                    Ok(ts::TSTypeName::QualifiedName(ABox::new_in(qualified, allocator)))
+                }
+                _ => Err(DeserError::UnknownNodeType(type_str.unwrap_or("unknown").to_string())),
+            }
+        }
+    }
+
+    /// Helper to convert ESTree MemberExpression to TSQualifiedName
+    fn convert_member_expr_to_qualified_name<'a>(
+        value: &serde_json::Value,
+        allocator: &'a Allocator,
+    ) -> DeserResult<ts::TSQualifiedName<'a>> {
+        let object = value.get("object").ok_or(DeserError::MissingField("object"))?;
+        let property = value.get("property").ok_or(DeserError::MissingField("property"))?;
+
+        // Property is always an Identifier -> IdentifierName
+        let right: js::IdentifierName = FromESTree::from_estree(property, allocator)?;
+
+        // Object can be Identifier or MemberExpression
+        let object_type = object.get("type").and_then(|t| t.as_str());
+        let left = match object_type {
+            Some("Identifier") => {
+                let ident: js::IdentifierReference = FromESTree::from_estree(object, allocator)?;
+                ts::TSTypeName::IdentifierReference(ABox::new_in(ident, allocator))
+            }
+            Some("MemberExpression") => {
+                let qualified = convert_member_expr_to_qualified_name(object, allocator)?;
+                ts::TSTypeName::QualifiedName(ABox::new_in(qualified, allocator))
+            }
+            _ => {
+                return Err(DeserError::UnknownNodeType(
+                    object_type.unwrap_or("unknown").to_string(),
+                ));
+            }
+        };
+
+        let span = crate::deserialize::parse_span_or_empty(value);
+        Ok(ts::TSQualifiedName { span, left, right })
+    }
+
+    /// Deserialize `params` field for `TSCallSignatureDeclaration`.
+    ///
+    /// Similar to FunctionParams - takes array and produces FormalParameters.
+    impl<'a> FromESTreeConverter<'a> for TSCallSignatureDeclarationParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
+
+            let mut items = AVec::with_capacity_in(arr.len(), allocator);
+            for item in arr {
+                // Skip TSThisParameter if present
+                let item_type = item.get("type").and_then(|t| t.as_str());
+                if item_type == Some("TSThisParameter") {
+                    continue;
+                }
+                let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
+                items.push(param);
+            }
+
+            Ok(ABox::new_in(
+                js::FormalParameters {
+                    span: oxc_span::SPAN,
+                    kind: js::FormalParameterKind::FormalParameter,
+                    items,
+                    rest: None,
+                },
+                allocator,
+            ))
+        }
+    }
+
+    /// Deserialize `params` field for `TSMethodSignature`.
+    impl<'a> FromESTreeConverter<'a> for TSMethodSignatureParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as TSCallSignatureDeclarationParams
+            TSCallSignatureDeclarationParams::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `params` field for `TSFunctionType`.
+    impl<'a> FromESTreeConverter<'a> for TSFunctionTypeParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as TSCallSignatureDeclarationParams
+            TSCallSignatureDeclarationParams::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `optional` field for `TSMappedType`.
+    ///
+    /// ESTree represents as boolean or TSMappedTypeModifierOperator.
+    /// oxc uses Option<TSMappedTypeModifierOperator>.
+    impl<'a> FromESTreeConverter<'a> for TSMappedTypeOptional<'a, '_> {
+        type Output = Option<ts::TSMappedTypeModifierOperator>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            _allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            if value.is_null() {
+                return Ok(None);
+            }
+            // Can be boolean false (meaning no modifier) or a string like "+" or "-"
+            if let Some(b) = value.as_bool() {
+                if !b {
+                    return Ok(None);
+                }
+                // True means just the modifier exists with no +/-
+                return Ok(Some(ts::TSMappedTypeModifierOperator::True));
+            }
+            if let Some(s) = value.as_str() {
+                let op = match s {
+                    "+" => ts::TSMappedTypeModifierOperator::Plus,
+                    "-" => ts::TSMappedTypeModifierOperator::Minus,
+                    _ => ts::TSMappedTypeModifierOperator::True,
+                };
+                return Ok(Some(op));
+            }
+            Ok(None)
+        }
+    }
+} // mod from_estree_converters

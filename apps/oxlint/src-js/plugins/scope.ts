@@ -550,7 +550,7 @@ export function serializeScopeManagerFrom(scopeManager: unknown): SerializedScop
   // Third pass: serialize scopes
   for (let i = 0; i < allScopes.length; i++) {
     const scope = allScopes[i];
-    const parentId = scope.upper ? scopeToId.get(scope.upper) ?? null : null;
+    const parentId = scope.upper ? (scopeToId.get(scope.upper) ?? null) : null;
     const variableIds = scope.variables.map((v) => variableToId.get(v)!);
 
     // Get block span if available
@@ -648,14 +648,8 @@ export function serializeScopeManagerFrom(scopeManager: unknown): SerializedScop
 /**
  * Get the span of an identifier node.
  */
-function getIdentifierSpan(
-  identifier: Identifier,
-): { start: number; end: number } | null {
-  if (
-    identifier &&
-    typeof identifier.start === "number" &&
-    typeof identifier.end === "number"
-  ) {
+function getIdentifierSpan(identifier: Identifier): { start: number; end: number } | null {
+  if (identifier && typeof identifier.start === "number" && typeof identifier.end === "number") {
     return { start: identifier.start, end: identifier.end };
   }
   return null;

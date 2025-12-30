@@ -9,7 +9,8 @@
 )]
 
 use crate::deserialize::{
-    DeserError, DeserResult, ESTreeField, ESTreeType, FromESTree, parse_span, parse_span_or_empty,
+    DeserError, DeserResult, ESTreeField, ESTreeType, FromESTree, FromESTreeConverter, parse_span,
+    parse_span_or_empty,
 };
 use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
 
@@ -51,27 +52,7 @@ impl<'a> FromESTree<'a> for Expression<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -100,7 +81,78 @@ impl<'a> FromESTree<'a> for Expression<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "BinaryExpression" => {
+                let operator = json.get("operator").and_then(|v| v.as_str());
+                let left_type =
+                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateInExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::BinaryExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -142,58 +194,11 @@ impl<'a> FromESTree<'a> for Expression<'a> {
                     )))
                 }
             }
-            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -201,47 +206,23 @@ impl<'a> FromESTree<'a> for Expression<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "BinaryExpression" => {
-                let operator = json.get("operator").and_then(|v| v.as_str());
-                let left_type =
-                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateInExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::BinaryExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
+            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -249,7 +230,27 @@ impl<'a> FromESTree<'a> for Expression<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -314,7 +315,51 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SpreadElement" => Ok(Self::SpreadElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Elision" => Ok(Self::Elision(FromESTree::from_estree(json, allocator)?)),
+            "ChainExpression" => Ok(Self::ChainExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -322,19 +367,7 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -342,61 +375,7 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Elision" => Ok(Self::Elision(FromESTree::from_estree(json, allocator)?)),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ChainExpression" => Ok(Self::ChainExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MemberExpression" => {
-                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
-                let property_type =
-                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if property_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateFieldExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else if is_computed {
-                    Ok(Self::ComputedMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::StaticMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -404,11 +383,27 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+            "BinaryExpression" => {
+                let operator = json.get("operator").and_then(|v| v.as_str());
+                let left_type =
+                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateInExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::BinaryExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -416,7 +411,7 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
+            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -458,7 +453,44 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                     )))
                 }
             }
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MemberExpression" => {
+                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+                let property_type =
+                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if property_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateFieldExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else if is_computed {
+                    Ok(Self::ComputedMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::StaticMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -470,54 +502,23 @@ impl<'a> FromESTree<'a> for ArrayExpressionElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "SpreadElement" => Ok(Self::SpreadElement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "BinaryExpression" => {
-                let operator = json.get("operator").and_then(|v| v.as_str());
-                let left_type =
-                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateInExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::BinaryExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -575,27 +576,15 @@ impl<'a> FromESTree<'a> for PropertyKey<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "BinaryExpression" => {
-                let operator = json.get("operator").and_then(|v| v.as_str());
-                let left_type =
-                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateInExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::BinaryExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -603,7 +592,38 @@ impl<'a> FromESTree<'a> for PropertyKey<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
+            "PrivateIdentifier" => Ok(Self::PrivateIdentifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -628,78 +648,19 @@ impl<'a> FromESTree<'a> for PropertyKey<'a> {
                     )))
                 }
             }
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "PrivateIdentifier" => Ok(Self::PrivateIdentifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Identifier" => Ok(Self::StaticIdentifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -741,11 +702,15 @@ impl<'a> FromESTree<'a> for PropertyKey<'a> {
                     )))
                 }
             }
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -757,27 +722,63 @@ impl<'a> FromESTree<'a> for PropertyKey<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+            "BinaryExpression" => {
+                let operator = json.get("operator").and_then(|v| v.as_str());
+                let left_type =
+                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateInExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::BinaryExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::StaticIdentifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -959,31 +960,38 @@ impl<'a> FromESTree<'a> for Argument<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
+            "BinaryExpression" => {
+                let operator = json.get("operator").and_then(|v| v.as_str());
+                let left_type =
+                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateInExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::BinaryExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
             "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "SpreadElement" => Ok(Self::SpreadElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1025,81 +1033,6 @@ impl<'a> FromESTree<'a> for Argument<'a> {
                     )))
                 }
             }
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "BinaryExpression" => {
-                let operator = json.get("operator").and_then(|v| v.as_str());
-                let left_type =
-                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateInExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::BinaryExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "MemberExpression" => {
                 let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
                 let property_type =
@@ -1121,11 +1054,35 @@ impl<'a> FromESTree<'a> for Argument<'a> {
                     )))
                 }
             }
-            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1133,15 +1090,39 @@ impl<'a> FromESTree<'a> for Argument<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "SpreadElement" => Ok(Self::SpreadElement(ABox::new_in(
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1149,7 +1130,11 @@ impl<'a> FromESTree<'a> for Argument<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1157,11 +1142,27 @@ impl<'a> FromESTree<'a> for Argument<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1242,15 +1243,7 @@ impl<'a> FromESTree<'a> for AssignmentTarget<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1258,15 +1251,7 @@ impl<'a> FromESTree<'a> for AssignmentTarget<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1291,6 +1276,22 @@ impl<'a> FromESTree<'a> for AssignmentTarget<'a> {
                     )))
                 }
             }
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -1300,6 +1301,10 @@ impl<'a> FromESTree<'a> for SimpleAssignmentTarget<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
@@ -1325,7 +1330,7 @@ impl<'a> FromESTree<'a> for SimpleAssignmentTarget<'a> {
                     )))
                 }
             }
-            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1334,10 +1339,6 @@ impl<'a> FromESTree<'a> for SimpleAssignmentTarget<'a> {
                 allocator,
             ))),
             "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1393,27 +1394,11 @@ impl<'a> FromESTree<'a> for AssignmentTargetMaybeDefault<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "AssignmentPattern" => Ok(Self::AssignmentTargetWithDefault(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayPattern" => Ok(Self::ArrayAssignmentTarget(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1438,11 +1423,27 @@ impl<'a> FromESTree<'a> for AssignmentTargetMaybeDefault<'a> {
                     )))
                 }
             }
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayPattern" => Ok(Self::ArrayAssignmentTarget(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1478,10 +1479,17 @@ impl<'a> FromESTree<'a> for AssignmentTargetPropertyIdentifier<'a> {
         let span = parse_span_or_empty(json);
         let binding = FromESTree::from_estree(json.estree_field("key")?, allocator)?;
         let init = match json.estree_field_opt("value") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
+            Some(field_json) => {
+                crate::serialize::js::AssignmentTargetPropertyIdentifierInit::from_estree_converter(
+                    field_json, allocator,
+                )?
             }
-            _ => None,
+            None => {
+                crate::serialize::js::AssignmentTargetPropertyIdentifierInit::from_estree_converter(
+                    &serde_json::Value::Null,
+                    allocator,
+                )?
+            }
         };
         Ok(AssignmentTargetPropertyIdentifier { span, binding, init })
     }
@@ -1536,10 +1544,6 @@ impl<'a> FromESTree<'a> for ChainElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "MemberExpression" => {
                 let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
                 let property_type =
@@ -1561,6 +1565,10 @@ impl<'a> FromESTree<'a> for ChainElement<'a> {
                     )))
                 }
             }
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -1578,39 +1586,7 @@ impl<'a> FromESTree<'a> for Statement<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ForInStatement" => Ok(Self::ForInStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ExportNamedDeclaration" => Ok(Self::ExportNamedDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ForOfStatement" => Ok(Self::ForOfStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInterfaceDeclaration" => Ok(Self::TSInterfaceDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ForStatement" => Ok(Self::ForStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "IfStatement" => Ok(Self::IfStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ExportAllDeclaration" => Ok(Self::ExportAllDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "WhileStatement" => Ok(Self::WhileStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAliasDeclaration" => Ok(Self::TSTypeAliasDeclaration(ABox::new_in(
+            "TSExportAssignment" => Ok(Self::TSExportAssignment(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1618,67 +1594,23 @@ impl<'a> FromESTree<'a> for Statement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSNamespaceExportDeclaration" => Ok(Self::TSNamespaceExportDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ContinueStatement" => Ok(Self::ContinueStatement(ABox::new_in(
+            "FunctionDeclaration" => Ok(Self::FunctionDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "BlockStatement" => Ok(Self::BlockStatement(ABox::new_in(
+            "ClassDeclaration" => Ok(Self::ClassDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "SwitchStatement" => Ok(Self::SwitchStatement(ABox::new_in(
+            "ForOfStatement" => Ok(Self::ForOfStatement(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ThrowStatement" => Ok(Self::ThrowStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ExportDefaultDeclaration" => Ok(Self::ExportDefaultDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "BreakStatement" => Ok(Self::BreakStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ReturnStatement" => Ok(Self::ReturnStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSEnumDeclaration" => Ok(Self::TSEnumDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ExpressionStatement" => Ok(Self::ExpressionStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "WithStatement" => Ok(Self::WithStatement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ImportDeclaration" => Ok(Self::ImportDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSModuleDeclaration" => Ok(Self::TSModuleDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSExportAssignment" => Ok(Self::TSExportAssignment(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "DebuggerStatement" => Ok(Self::DebuggerStatement(ABox::new_in(
+            "ExportAllDeclaration" => Ok(Self::ExportAllDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1686,7 +1618,27 @@ impl<'a> FromESTree<'a> for Statement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Function" => Ok(Self::FunctionDeclaration(ABox::new_in(
+            "ExportNamedDeclaration" => Ok(Self::ExportNamedDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSEnumDeclaration" => Ok(Self::TSEnumDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "BreakStatement" => Ok(Self::BreakStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "BlockStatement" => Ok(Self::BlockStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "DebuggerStatement" => Ok(Self::DebuggerStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSModuleDeclaration" => Ok(Self::TSModuleDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1694,7 +1646,23 @@ impl<'a> FromESTree<'a> for Statement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Class" => Ok(Self::ClassDeclaration(ABox::new_in(
+            "ReturnStatement" => Ok(Self::ReturnStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "WhileStatement" => Ok(Self::WhileStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ForInStatement" => Ok(Self::ForInStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ExpressionStatement" => Ok(Self::ExpressionStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "EmptyStatement" => Ok(Self::EmptyStatement(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1702,7 +1670,47 @@ impl<'a> FromESTree<'a> for Statement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "EmptyStatement" => Ok(Self::EmptyStatement(ABox::new_in(
+            "ImportDeclaration" => Ok(Self::ImportDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInterfaceDeclaration" => Ok(Self::TSInterfaceDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNamespaceExportDeclaration" => Ok(Self::TSNamespaceExportDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SwitchStatement" => Ok(Self::SwitchStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ContinueStatement" => Ok(Self::ContinueStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "WithStatement" => Ok(Self::WithStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "IfStatement" => Ok(Self::IfStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ForStatement" => Ok(Self::ForStatement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ExportDefaultDeclaration" => Ok(Self::ExportDefaultDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeAliasDeclaration" => Ok(Self::TSTypeAliasDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThrowStatement" => Ok(Self::ThrowStatement(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1744,6 +1752,18 @@ impl<'a> FromESTree<'a> for Declaration<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionDeclaration" => Ok(Self::FunctionDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSImportEqualsDeclaration" => Ok(Self::TSImportEqualsDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSTypeAliasDeclaration" => Ok(Self::TSTypeAliasDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
@@ -1752,27 +1772,15 @@ impl<'a> FromESTree<'a> for Declaration<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Class" => Ok(Self::ClassDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSEnumDeclaration" => Ok(Self::TSEnumDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSImportEqualsDeclaration" => Ok(Self::TSImportEqualsDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionDeclaration(ABox::new_in(
+            "ClassDeclaration" => Ok(Self::ClassDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "TSModuleDeclaration" => Ok(Self::TSModuleDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSEnumDeclaration" => Ok(Self::TSEnumDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1913,27 +1921,11 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1941,7 +1933,11 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -1953,26 +1949,43 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "BinaryExpression" => {
-                let operator = json.get("operator").and_then(|v| v.as_str());
-                let left_type =
-                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateInExpression(ABox::new_in(
+            "MemberExpression" => {
+                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+                let property_type =
+                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if property_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateFieldExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else if is_computed {
+                    Ok(Self::ComputedMemberExpression(ABox::new_in(
                         FromESTree::from_estree(json, allocator)?,
                         allocator,
                     )))
                 } else {
-                    Ok(Self::BinaryExpression(ABox::new_in(
+                    Ok(Self::StaticMemberExpression(ABox::new_in(
                         FromESTree::from_estree(json, allocator)?,
                         allocator,
                     )))
                 }
             }
+            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "Literal" => {
                 if json.get("value").is_some_and(|v| v.is_null()) {
                     Ok(Self::NullLiteral(ABox::new_in(
@@ -2011,39 +2024,7 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
                     )))
                 }
             }
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2055,59 +2036,15 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MemberExpression" => {
-                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
-                let property_type =
-                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if property_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateFieldExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else if is_computed {
-                    Ok(Self::ComputedMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::StaticMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2115,7 +2052,78 @@ impl<'a> FromESTree<'a> for ForStatementInit<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "BinaryExpression" => {
+                let operator = json.get("operator").and_then(|v| v.as_str());
+                let left_type =
+                    json.get("left").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if operator == Some("in") && left_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateInExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::BinaryExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2139,15 +2147,31 @@ impl<'a> FromESTree<'a> for ForStatementLeft<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayPattern" => Ok(Self::ArrayAssignmentTarget(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Identifier" => Ok(Self::AssignmentTargetIdentifier(ABox::new_in(
+            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2173,22 +2197,6 @@ impl<'a> FromESTree<'a> for ForStatementLeft<'a> {
                 }
             }
             "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayPattern" => Ok(Self::ArrayAssignmentTarget(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "VariableDeclaration" => Ok(Self::VariableDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ObjectPattern" => Ok(Self::ObjectAssignmentTarget(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2337,7 +2345,7 @@ impl<'a> FromESTree<'a> for CatchClause<'a> {
 impl<'a> FromESTree<'a> for CatchParameter<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let pattern = FromESTree::from_estree(json.estree_field("pattern")?, allocator)?;
+        let pattern = FromESTree::from_estree(json, allocator)?;
         let type_annotation = None;
         Ok(CatchParameter { span, pattern, type_annotation })
     }
@@ -2354,11 +2362,11 @@ impl<'a> FromESTree<'a> for BindingPattern<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "Identifier" => Ok(Self::BindingIdentifier(ABox::new_in(
+            "ObjectPattern" => Ok(Self::ObjectPattern(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ArrayPattern" => Ok(Self::ArrayPattern(ABox::new_in(
+            "Identifier" => Ok(Self::BindingIdentifier(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2366,7 +2374,7 @@ impl<'a> FromESTree<'a> for BindingPattern<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ObjectPattern" => Ok(Self::ObjectPattern(ABox::new_in(
+            "ArrayPattern" => Ok(Self::ArrayPattern(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2446,7 +2454,15 @@ impl<'a> FromESTree<'a> for Function<'a> {
             _ => None,
         };
         let this_param = None;
-        let params = FromESTree::from_estree(json.estree_field("params")?, allocator)?;
+        let params = match json.estree_field_opt("params") {
+            Some(field_json) => {
+                crate::serialize::js::FunctionParams::from_estree_converter(field_json, allocator)?
+            }
+            None => crate::serialize::js::FunctionParams::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let return_type = match json.estree_field_opt("returnType") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -2497,7 +2513,7 @@ impl<'a> FromESTree<'a> for FunctionType {
 impl<'a> FromESTree<'a> for FormalParameters<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let kind = FromESTree::from_estree(json.estree_field("kind")?, allocator)?;
+        let kind = Default::default();
         let items = FromESTree::from_estree(json.estree_field("items")?, allocator)?;
         let rest = None;
         Ok(FormalParameters { span, kind, items, rest })
@@ -2513,7 +2529,7 @@ impl<'a> FromESTree<'a> for FormalParameter<'a> {
             }
             _ => AVec::new_in(allocator),
         };
-        let pattern = FromESTree::from_estree(json.estree_field("pattern")?, allocator)?;
+        let pattern = FromESTree::from_estree(json, allocator)?;
         let type_annotation = match json.estree_field_opt("typeAnnotation") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -2589,7 +2605,17 @@ impl<'a> FromESTree<'a> for ArrowFunctionExpression<'a> {
             }
             _ => None,
         };
-        let body = FromESTree::from_estree(json.estree_field("body")?, allocator)?;
+        let body = match json.estree_field_opt("body") {
+            Some(field_json) => {
+                crate::serialize::js::ArrowFunctionExpressionBody::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::js::ArrowFunctionExpressionBody::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let scope_id = std::cell::Cell::default();
         let pure = false;
         let pife = false;
@@ -2711,15 +2737,11 @@ impl<'a> FromESTree<'a> for ClassElement<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "AccessorProperty" => Ok(Self::AccessorProperty(ABox::new_in(
+            "TSAbstractAccessorProperty" => Ok(Self::AccessorProperty(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSIndexSignature" => Ok(Self::TSIndexSignature(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MethodDefinition" => Ok(Self::MethodDefinition(ABox::new_in(
+            "TSAbstractMethodDefinition" => Ok(Self::MethodDefinition(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -2727,11 +2749,34 @@ impl<'a> FromESTree<'a> for ClassElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "TSIndexSignature" => Ok(Self::TSIndexSignature(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AccessorProperty" => Ok(Self::AccessorProperty(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "StaticBlock" => Ok(Self::StaticBlock(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            other => Err(DeserError::UnknownNodeType(other.to_string())),
+            "TSAbstractPropertyDefinition" => Ok(Self::PropertyDefinition(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MethodDefinition" => Ok(Self::MethodDefinition(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            _other => Ok(Self::StaticBlock(ABox::new_in(
+                crate::ast::js::StaticBlock {
+                    span: parse_span_or_empty(json),
+                    body: AVec::new_in(allocator),
+                    scope_id: std::cell::Cell::default(),
+                },
+                allocator,
+            ))),
         }
     }
 }
@@ -2913,14 +2958,6 @@ impl<'a> FromESTree<'a> for ModuleDeclaration<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ExportAllDeclaration" => Ok(Self::ExportAllDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ExportNamedDeclaration" => Ok(Self::ExportNamedDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSNamespaceExportDeclaration" => Ok(Self::TSNamespaceExportDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
@@ -2929,11 +2966,19 @@ impl<'a> FromESTree<'a> for ModuleDeclaration<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ExportDefaultDeclaration" => Ok(Self::ExportDefaultDeclaration(ABox::new_in(
+            "ImportDeclaration" => Ok(Self::ImportDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ImportDeclaration" => Ok(Self::ImportDeclaration(ABox::new_in(
+            "ExportNamedDeclaration" => Ok(Self::ExportNamedDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ExportAllDeclaration" => Ok(Self::ExportAllDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ExportDefaultDeclaration" => Ok(Self::ExportDefaultDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3031,10 +3076,15 @@ impl<'a> FromESTree<'a> for ImportDeclaration<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
         let specifiers = match json.estree_field_opt("specifiers") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
+            Some(field_json) => {
+                crate::serialize::js::ImportDeclarationSpecifiers::from_estree_converter(
+                    field_json, allocator,
+                )?
             }
-            _ => None,
+            None => crate::serialize::js::ImportDeclarationSpecifiers::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
         };
         let source = FromESTree::from_estree(json.estree_field("source")?, allocator)?;
         let phase = match json.estree_field_opt("phase") {
@@ -3044,10 +3094,15 @@ impl<'a> FromESTree<'a> for ImportDeclaration<'a> {
             _ => None,
         };
         let with_clause = match json.estree_field_opt("attributes") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
+            Some(field_json) => {
+                crate::serialize::js::ImportDeclarationWithClause::from_estree_converter(
+                    field_json, allocator,
+                )?
             }
-            _ => None,
+            None => crate::serialize::js::ImportDeclarationWithClause::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
         };
         let import_kind = match json.estree_field_opt("importKind") {
             Some(field_json) if !field_json.is_null() => {
@@ -3144,8 +3199,8 @@ impl<'a> FromESTree<'a> for ImportAttributeKey<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "Identifier" => Ok(Self::Identifier(FromESTree::from_estree(json, allocator)?)),
             "Literal" => Ok(Self::StringLiteral(FromESTree::from_estree(json, allocator)?)),
+            "Identifier" => Ok(Self::Identifier(FromESTree::from_estree(json, allocator)?)),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -3174,10 +3229,15 @@ impl<'a> FromESTree<'a> for ExportNamedDeclaration<'a> {
             _ => crate::ast::ts::ImportOrExportKind::Value,
         };
         let with_clause = match json.estree_field_opt("attributes") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
+            Some(field_json) => {
+                crate::serialize::js::ExportNamedDeclarationWithClause::from_estree_converter(
+                    field_json, allocator,
+                )?
             }
-            _ => None,
+            None => crate::serialize::js::ExportNamedDeclarationWithClause::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
         };
         Ok(ExportNamedDeclaration {
             span,
@@ -3209,10 +3269,15 @@ impl<'a> FromESTree<'a> for ExportAllDeclaration<'a> {
         };
         let source = FromESTree::from_estree(json.estree_field("source")?, allocator)?;
         let with_clause = match json.estree_field_opt("attributes") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
+            Some(field_json) => {
+                crate::serialize::js::ExportAllDeclarationWithClause::from_estree_converter(
+                    field_json, allocator,
+                )?
             }
-            _ => None,
+            None => crate::serialize::js::ExportAllDeclarationWithClause::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
         };
         let export_kind = match json.estree_field_opt("exportKind") {
             Some(field_json) if !field_json.is_null() => {
@@ -3243,35 +3308,60 @@ impl<'a> FromESTree<'a> for ExportDefaultDeclarationKind<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "Function" => Ok(Self::FunctionDeclaration(ABox::new_in(
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ClassDeclaration" => Ok(Self::ClassDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MemberExpression" => {
+                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+                let property_type =
+                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if property_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateFieldExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else if is_computed {
+                    Ok(Self::ComputedMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::StaticMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3313,108 +3403,11 @@ impl<'a> FromESTree<'a> for ExportDefaultDeclarationKind<'a> {
                     )))
                 }
             }
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Class" => Ok(Self::ClassDeclaration(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSInterfaceDeclaration" => Ok(Self::TSInterfaceDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MemberExpression" => {
-                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
-                let property_type =
-                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if property_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateFieldExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else if is_computed {
-                    Ok(Self::ComputedMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::StaticMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ChainExpression" => Ok(Self::ChainExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3434,7 +3427,42 @@ impl<'a> FromESTree<'a> for ExportDefaultDeclarationKind<'a> {
                     )))
                 }
             }
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+            "ArrowFunctionExpression" => Ok(Self::ArrowFunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionDeclaration" => Ok(Self::FunctionDeclaration(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TemplateLiteral" => Ok(Self::TemplateLiteral(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ChainExpression" => Ok(Self::ChainExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3442,13 +3470,58 @@ impl<'a> FromESTree<'a> for ExportDefaultDeclarationKind<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "LogicalExpression" => Ok(Self::LogicalExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -3458,8 +3531,8 @@ impl<'a> FromESTree<'a> for ModuleExportName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "Literal" => Ok(Self::StringLiteral(FromESTree::from_estree(json, allocator)?)),
             "Identifier" => Ok(Self::IdentifierName(FromESTree::from_estree(json, allocator)?)),
+            "Literal" => Ok(Self::StringLiteral(FromESTree::from_estree(json, allocator)?)),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -3507,7 +3580,17 @@ impl<'a> FromESTree<'a> for NumericLiteral<'a> {
 impl<'a> FromESTree<'a> for StringLiteral<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let value = FromESTree::from_estree(json.estree_field("value")?, allocator)?;
+        let value = match json.estree_field_opt("value") {
+            Some(field_json) => {
+                crate::serialize::literal::StringLiteralValue::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::literal::StringLiteralValue::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let raw = match json.estree_field_opt("raw") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -3522,7 +3605,17 @@ impl<'a> FromESTree<'a> for StringLiteral<'a> {
 impl<'a> FromESTree<'a> for BigIntLiteral<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let value = FromESTree::from_estree(json.estree_field("value")?, allocator)?;
+        let value = match json.estree_field_opt("value") {
+            Some(field_json) => {
+                crate::serialize::literal::BigIntLiteralValue::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::literal::BigIntLiteralValue::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let raw = match json.estree_field_opt("raw") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -3573,8 +3666,17 @@ impl<'a> FromESTree<'a> for RegExpFlags {
 impl<'a> FromESTree<'a> for JSXElement<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let opening_element =
-            FromESTree::from_estree(json.estree_field("openingElement")?, allocator)?;
+        let opening_element = match json.estree_field_opt("openingElement") {
+            Some(field_json) => {
+                crate::serialize::jsx::JSXElementOpeningElement::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::jsx::JSXElementOpeningElement::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let children = FromESTree::from_estree(json.estree_field("children")?, allocator)?;
         let closing_element = match json.estree_field_opt("closingElement") {
             Some(field_json) if !field_json.is_null() => {
@@ -3639,6 +3741,10 @@ impl<'a> FromESTree<'a> for JSXElementName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "JSXIdentifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "JSXMemberExpression" => Ok(Self::MemberExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
@@ -3647,15 +3753,11 @@ impl<'a> FromESTree<'a> for JSXElementName<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "JSXNamespacedName" => Ok(Self::NamespacedName(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXIdentifier" => Ok(Self::Identifier(ABox::new_in(
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3690,11 +3792,11 @@ impl<'a> FromESTree<'a> for JSXMemberExpressionObject<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXMemberExpression" => Ok(Self::MemberExpression(ABox::new_in(
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+            "JSXMemberExpression" => Ok(Self::MemberExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3715,44 +3817,47 @@ impl<'a> FromESTree<'a> for JSXExpression<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "MemberExpression" => {
-                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
-                let property_type =
-                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
-                if property_type == Some("PrivateIdentifier") {
-                    Ok(Self::PrivateFieldExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else if is_computed {
-                    Ok(Self::ComputedMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                } else {
-                    Ok(Self::StaticMemberExpression(ABox::new_in(
-                        FromESTree::from_estree(json, allocator)?,
-                        allocator,
-                    )))
-                }
-            }
-            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "ChainExpression" => Ok(Self::ChainExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+            "TSAsExpression" => Ok(Self::TSAsExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "JSXFragment" => Ok(Self::JSXFragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "FunctionExpression" => Ok(Self::FunctionExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3794,15 +3899,23 @@ impl<'a> FromESTree<'a> for JSXExpression<'a> {
                     )))
                 }
             }
-            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Function" => Ok(Self::FunctionExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSNonNullExpression" => Ok(Self::TSNonNullExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ArrayExpression" => Ok(Self::ArrayExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3814,6 +3927,66 @@ impl<'a> FromESTree<'a> for JSXExpression<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "MetaProperty" => Ok(Self::MetaProperty(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "Identifier" => Ok(Self::Identifier(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSSatisfiesExpression" => Ok(Self::TSSatisfiesExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "MemberExpression" => {
+                let is_computed = json.get("computed").and_then(|v| v.as_bool()).unwrap_or(false);
+                let property_type =
+                    json.get("property").and_then(|v| v.get("type")).and_then(|v| v.as_str());
+                if property_type == Some("PrivateIdentifier") {
+                    Ok(Self::PrivateFieldExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else if is_computed {
+                    Ok(Self::ComputedMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                } else {
+                    Ok(Self::StaticMemberExpression(ABox::new_in(
+                        FromESTree::from_estree(json, allocator)?,
+                        allocator,
+                    )))
+                }
+            }
+            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXEmptyExpression" => {
+                Ok(Self::EmptyExpression(FromESTree::from_estree(json, allocator)?))
+            }
             "BinaryExpression" => {
                 let operator = json.get("operator").and_then(|v| v.as_str());
                 let left_type =
@@ -3830,23 +4003,10 @@ impl<'a> FromESTree<'a> for JSXExpression<'a> {
                     )))
                 }
             }
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "V8IntrinsicExpression" => Ok(Self::V8IntrinsicExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "SequenceExpression" => Ok(Self::SequenceExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "YieldExpression" => Ok(Self::YieldExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "CallExpression" => Ok(Self::CallExpression(ABox::new_in(
+            "Super" => {
+                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
+            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3854,69 +4014,11 @@ impl<'a> FromESTree<'a> for JSXExpression<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSInstantiationExpression" => Ok(Self::TSInstantiationExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "UpdateExpression" => Ok(Self::UpdateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ObjectExpression" => Ok(Self::ObjectExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeAssertion" => Ok(Self::TSTypeAssertion(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXElement" => Ok(Self::JSXElement(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "JSXEmptyExpression" => {
-                Ok(Self::EmptyExpression(FromESTree::from_estree(json, allocator)?))
-            }
-            "Identifier" => Ok(Self::Identifier(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TaggedTemplateExpression" => Ok(Self::TaggedTemplateExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "AssignmentExpression" => Ok(Self::AssignmentExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Super" => {
-                Ok(Self::Super(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "AwaitExpression" => Ok(Self::AwaitExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Class" => Ok(Self::ClassExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "ConditionalExpression" => Ok(Self::ConditionalExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "ImportExpression" => Ok(Self::ImportExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "NewExpression" => Ok(Self::NewExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "ParenthesizedExpression" => Ok(Self::ParenthesizedExpression(ABox::new_in(
+            "ClassExpression" => Ok(Self::ClassExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3975,11 +4077,11 @@ impl<'a> FromESTree<'a> for JSXAttributeName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "JSXNamespacedName" => Ok(Self::NamespacedName(ABox::new_in(
+            "JSXIdentifier" => Ok(Self::Identifier(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXIdentifier" => Ok(Self::Identifier(ABox::new_in(
+            "JSXNamespacedName" => Ok(Self::NamespacedName(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -3992,7 +4094,7 @@ impl<'a> FromESTree<'a> for JSXAttributeValue<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "JSXExpressionContainer" => Ok(Self::ExpressionContainer(ABox::new_in(
+            "JSXElement" => Ok(Self::Element(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4000,11 +4102,11 @@ impl<'a> FromESTree<'a> for JSXAttributeValue<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXElement" => Ok(Self::Element(ABox::new_in(
+            "JSXFragment" => Ok(Self::Fragment(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "JSXFragment" => Ok(Self::Fragment(ABox::new_in(
+            "JSXExpressionContainer" => Ok(Self::ExpressionContainer(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4025,24 +4127,24 @@ impl<'a> FromESTree<'a> for JSXChild<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "JSXText" => {
-                Ok(Self::Text(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "JSXSpreadChild" => {
-                Ok(Self::Spread(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
-            }
-            "JSXFragment" => Ok(Self::Fragment(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "JSXExpressionContainer" => Ok(Self::ExpressionContainer(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "JSXText" => {
+                Ok(Self::Text(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
             "JSXElement" => Ok(Self::Element(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "JSXFragment" => Ok(Self::Fragment(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "JSXSpreadChild" => {
+                Ok(Self::Spread(ABox::new_in(FromESTree::from_estree(json, allocator)?, allocator)))
+            }
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -4126,6 +4228,10 @@ impl<'a> FromESTree<'a> for TSEnumMemberName<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "TemplateLiteral" => Ok(Self::ComputedTemplateString(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "Literal" => {
                 if json.get("value").is_some_and(|v| v.is_null()) {
                     Ok(Self::String(ABox::new_in(
@@ -4164,10 +4270,6 @@ impl<'a> FromESTree<'a> for TSEnumMemberName<'a> {
                     )))
                 }
             }
-            "TemplateLiteral" => Ok(Self::ComputedTemplateString(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -4194,6 +4296,10 @@ impl<'a> FromESTree<'a> for TSLiteral<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "Literal" => {
                 if json.get("value").is_some_and(|v| v.is_null()) {
                     Ok(Self::BooleanLiteral(ABox::new_in(
@@ -4236,10 +4342,6 @@ impl<'a> FromESTree<'a> for TSLiteral<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "UnaryExpression" => Ok(Self::UnaryExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -4249,63 +4351,7 @@ impl<'a> FromESTree<'a> for TSType<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSFunctionType" => Ok(Self::TSFunctionType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSMappedType" => Ok(Self::TSMappedType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSBooleanKeyword" => Ok(Self::TSBooleanKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSObjectKeyword" => Ok(Self::TSObjectKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSConditionalType" => Ok(Self::TSConditionalType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSConstructorType" => Ok(Self::TSConstructorType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSLiteralType" => Ok(Self::TSLiteralType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNullKeyword" => Ok(Self::TSNullKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeLiteral" => Ok(Self::TSTypeLiteral(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSIntersectionType" => Ok(Self::TSIntersectionType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNumberKeyword" => Ok(Self::TSNumberKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocNonNullableType" => Ok(Self::JSDocNonNullableType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSAnyKeyword" => Ok(Self::TSAnyKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSIndexedAccessType" => Ok(Self::TSIndexedAccessType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInferType" => Ok(Self::TSInferType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4313,55 +4359,7 @@ impl<'a> FromESTree<'a> for TSType<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSTypePredicate" => Ok(Self::TSTypePredicate(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSStringKeyword" => Ok(Self::TSStringKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeReference" => Ok(Self::TSTypeReference(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocUnknownType" => Ok(Self::JSDocUnknownType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSThisType" => Ok(Self::TSThisType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocNullableType" => Ok(Self::JSDocNullableType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNeverKeyword" => Ok(Self::TSNeverKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTemplateLiteralType" => Ok(Self::TSTemplateLiteralType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTupleType" => Ok(Self::TSTupleType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeQuery" => Ok(Self::TSTypeQuery(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSBigIntKeyword" => Ok(Self::TSBigIntKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNamedTupleMember" => Ok(Self::TSNamedTupleMember(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSVoidKeyword" => Ok(Self::TSVoidKeyword(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4369,15 +4367,11 @@ impl<'a> FromESTree<'a> for TSType<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSUndefinedKeyword" => Ok(Self::TSUndefinedKeyword(ABox::new_in(
+            "TSIntersectionType" => Ok(Self::TSIntersectionType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSIntrinsicKeyword" => Ok(Self::TSIntrinsicKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
+            "TSThisType" => Ok(Self::TSThisType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4385,7 +4379,63 @@ impl<'a> FromESTree<'a> for TSType<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSUnionType" => Ok(Self::TSUnionType(ABox::new_in(
+            "TSMappedType" => Ok(Self::TSMappedType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSJSDocUnknownType" => Ok(Self::JSDocUnknownType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSUndefinedKeyword" => Ok(Self::TSUndefinedKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNullKeyword" => Ok(Self::TSNullKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNeverKeyword" => Ok(Self::TSNeverKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSBooleanKeyword" => Ok(Self::TSBooleanKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSIntrinsicKeyword" => Ok(Self::TSIntrinsicKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSParenthesizedType" => Ok(Self::TSParenthesizedType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSJSDocNullableType" => Ok(Self::JSDocNullableType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSJSDocNonNullableType" => Ok(Self::JSDocNonNullableType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSLiteralType" => Ok(Self::TSLiteralType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTemplateLiteralType" => Ok(Self::TSTemplateLiteralType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSConditionalType" => Ok(Self::TSConditionalType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSFunctionType" => Ok(Self::TSFunctionType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypePredicate" => Ok(Self::TSTypePredicate(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4393,7 +4443,59 @@ impl<'a> FromESTree<'a> for TSType<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSParenthesizedType" => Ok(Self::TSParenthesizedType(ABox::new_in(
+            "TSTypeQuery" => Ok(Self::TSTypeQuery(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSVoidKeyword" => Ok(Self::TSVoidKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTupleType" => Ok(Self::TSTupleType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSUnionType" => Ok(Self::TSUnionType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInferType" => Ok(Self::TSInferType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSObjectKeyword" => Ok(Self::TSObjectKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeReference" => Ok(Self::TSTypeReference(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSConstructorType" => Ok(Self::TSConstructorType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNumberKeyword" => Ok(Self::TSNumberKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNamedTupleMember" => Ok(Self::TSNamedTupleMember(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeLiteral" => Ok(Self::TSTypeLiteral(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSIndexedAccessType" => Ok(Self::TSIndexedAccessType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSBigIntKeyword" => Ok(Self::TSBigIntKeyword(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4520,127 +4622,7 @@ impl<'a> FromESTree<'a> for TSTupleElement<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSArrayType" => Ok(Self::TSArrayType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
             "TSTupleType" => Ok(Self::TSTupleType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSMappedType" => Ok(Self::TSMappedType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocNonNullableType" => Ok(Self::JSDocNonNullableType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTemplateLiteralType" => Ok(Self::TSTemplateLiteralType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSSymbolKeyword" => Ok(Self::TSSymbolKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSFunctionType" => Ok(Self::TSFunctionType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNamedTupleMember" => Ok(Self::TSNamedTupleMember(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSParenthesizedType" => Ok(Self::TSParenthesizedType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSRestType" => Ok(Self::TSRestType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSUnknownKeyword" => Ok(Self::TSUnknownKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSThisType" => Ok(Self::TSThisType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocUnknownType" => Ok(Self::JSDocUnknownType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSIndexedAccessType" => Ok(Self::TSIndexedAccessType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSIntrinsicKeyword" => Ok(Self::TSIntrinsicKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSConditionalType" => Ok(Self::TSConditionalType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSIntersectionType" => Ok(Self::TSIntersectionType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSUnionType" => Ok(Self::TSUnionType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNumberKeyword" => Ok(Self::TSNumberKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeOperator" => Ok(Self::TSTypeOperatorType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSStringKeyword" => Ok(Self::TSStringKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSObjectKeyword" => Ok(Self::TSObjectKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeLiteral" => Ok(Self::TSTypeLiteral(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSOptionalType" => Ok(Self::TSOptionalType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypePredicate" => Ok(Self::TSTypePredicate(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSNeverKeyword" => Ok(Self::TSNeverKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSConstructorType" => Ok(Self::TSConstructorType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSTypeQuery" => Ok(Self::TSTypeQuery(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSAnyKeyword" => Ok(Self::TSAnyKeyword(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSInferType" => Ok(Self::TSInferType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4648,19 +4630,11 @@ impl<'a> FromESTree<'a> for TSTupleElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSBooleanKeyword" => Ok(Self::TSBooleanKeyword(ABox::new_in(
+            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSLiteralType" => Ok(Self::TSLiteralType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSJSDocNullableType" => Ok(Self::JSDocNullableType(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSVoidKeyword" => Ok(Self::TSVoidKeyword(ABox::new_in(
+            "TSJSDocNonNullableType" => Ok(Self::JSDocNonNullableType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4668,11 +4642,139 @@ impl<'a> FromESTree<'a> for TSTupleElement<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSUndefinedKeyword" => Ok(Self::TSUndefinedKeyword(ABox::new_in(
+            "TSStringKeyword" => Ok(Self::TSStringKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNamedTupleMember" => Ok(Self::TSNamedTupleMember(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSIntrinsicKeyword" => Ok(Self::TSIntrinsicKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNumberKeyword" => Ok(Self::TSNumberKeyword(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "TSNullKeyword" => Ok(Self::TSNullKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSInferType" => Ok(Self::TSInferType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSJSDocNullableType" => Ok(Self::JSDocNullableType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSFunctionType" => Ok(Self::TSFunctionType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSVoidKeyword" => Ok(Self::TSVoidKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSArrayType" => Ok(Self::TSArrayType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSIndexedAccessType" => Ok(Self::TSIndexedAccessType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSJSDocUnknownType" => Ok(Self::JSDocUnknownType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSLiteralType" => Ok(Self::TSLiteralType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeOperator" => Ok(Self::TSTypeOperatorType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeQuery" => Ok(Self::TSTypeQuery(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSAnyKeyword" => Ok(Self::TSAnyKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypeLiteral" => Ok(Self::TSTypeLiteral(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSUnknownKeyword" => Ok(Self::TSUnknownKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSSymbolKeyword" => Ok(Self::TSSymbolKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTemplateLiteralType" => Ok(Self::TSTemplateLiteralType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSObjectKeyword" => Ok(Self::TSObjectKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSParenthesizedType" => Ok(Self::TSParenthesizedType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSNeverKeyword" => Ok(Self::TSNeverKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSRestType" => Ok(Self::TSRestType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSConditionalType" => Ok(Self::TSConditionalType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSConstructorType" => Ok(Self::TSConstructorType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSMappedType" => Ok(Self::TSMappedType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSUnionType" => Ok(Self::TSUnionType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSUndefinedKeyword" => Ok(Self::TSUndefinedKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSIntersectionType" => Ok(Self::TSIntersectionType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSThisType" => Ok(Self::TSThisType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSOptionalType" => Ok(Self::TSOptionalType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSBooleanKeyword" => Ok(Self::TSBooleanKeyword(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "TSTypePredicate" => Ok(Self::TSTypePredicate(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4797,15 +4899,15 @@ impl<'a> FromESTree<'a> for TSTypeName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "Identifier" => Ok(Self::IdentifierReference(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
             "TSQualifiedName" => Ok(Self::QualifiedName(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "Identifier" => Ok(Self::IdentifierReference(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4895,7 +4997,17 @@ impl<'a> FromESTree<'a> for TSAccessibility {
 impl<'a> FromESTree<'a> for TSClassImplements<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let span = parse_span_or_empty(json);
-        let expression = FromESTree::from_estree(json.estree_field("expression")?, allocator)?;
+        let expression = match json.estree_field_opt("expression") {
+            Some(field_json) => {
+                crate::serialize::ts::TSClassImplementsExpression::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::ts::TSClassImplementsExpression::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let type_arguments = match json.estree_field_opt("typeArguments") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -4953,11 +5065,11 @@ impl<'a> FromESTree<'a> for TSSignature<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSIndexSignature" => Ok(Self::TSIndexSignature(ABox::new_in(
+            "TSPropertySignature" => Ok(Self::TSPropertySignature(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSPropertySignature" => Ok(Self::TSPropertySignature(ABox::new_in(
+            "TSIndexSignature" => Ok(Self::TSIndexSignature(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -4999,7 +5111,17 @@ impl<'a> FromESTree<'a> for TSCallSignatureDeclaration<'a> {
             _ => None,
         };
         let this_param = None;
-        let params = FromESTree::from_estree(json.estree_field("params")?, allocator)?;
+        let params = match json.estree_field_opt("params") {
+            Some(field_json) => {
+                crate::serialize::ts::TSCallSignatureDeclarationParams::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::ts::TSCallSignatureDeclarationParams::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let return_type = match json.estree_field_opt("returnType") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -5044,7 +5166,17 @@ impl<'a> FromESTree<'a> for TSMethodSignature<'a> {
             _ => None,
         };
         let this_param = None;
-        let params = FromESTree::from_estree(json.estree_field("params")?, allocator)?;
+        let params = match json.estree_field_opt("params") {
+            Some(field_json) => {
+                crate::serialize::ts::TSMethodSignatureParams::from_estree_converter(
+                    field_json, allocator,
+                )?
+            }
+            None => crate::serialize::ts::TSMethodSignatureParams::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let return_type = match json.estree_field_opt("returnType") {
             Some(field_json) if !field_json.is_null() => {
                 Some(FromESTree::from_estree(field_json, allocator)?)
@@ -5132,11 +5264,11 @@ impl<'a> FromESTree<'a> for TSTypePredicateName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSThisType" => Ok(Self::This(FromESTree::from_estree(json, allocator)?)),
             "Identifier" => Ok(Self::Identifier(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
+            "TSThisType" => Ok(Self::This(FromESTree::from_estree(json, allocator)?)),
             other => Err(DeserError::UnknownNodeType(other.to_string())),
         }
     }
@@ -5187,11 +5319,11 @@ impl<'a> FromESTree<'a> for TSModuleDeclarationBody<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "TSModuleDeclaration" => Ok(Self::TSModuleDeclaration(ABox::new_in(
+            "TSModuleBlock" => Ok(Self::TSModuleBlock(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "TSModuleBlock" => Ok(Self::TSModuleBlock(ABox::new_in(
+            "TSModuleDeclaration" => Ok(Self::TSModuleDeclaration(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -5255,6 +5387,10 @@ impl<'a> FromESTree<'a> for TSTypeQueryExprName<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
+            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
             "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
@@ -5264,10 +5400,6 @@ impl<'a> FromESTree<'a> for TSTypeQueryExprName<'a> {
                 allocator,
             ))),
             "TSQualifiedName" => Ok(Self::QualifiedName(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSImportType" => Ok(Self::TSImportType(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -5338,7 +5470,15 @@ impl<'a> FromESTree<'a> for TSFunctionType<'a> {
             _ => None,
         };
         let this_param = None;
-        let params = FromESTree::from_estree(json.estree_field("params")?, allocator)?;
+        let params = match json.estree_field_opt("params") {
+            Some(field_json) => crate::serialize::ts::TSFunctionTypeParams::from_estree_converter(
+                field_json, allocator,
+            )?,
+            None => crate::serialize::ts::TSFunctionTypeParams::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
+        };
         let return_type = FromESTree::from_estree(json.estree_field("returnType")?, allocator)?;
         let scope_id = std::cell::Cell::default();
         Ok(TSFunctionType { span, type_parameters, this_param, params, return_type, scope_id })
@@ -5380,10 +5520,13 @@ impl<'a> FromESTree<'a> for TSMappedType<'a> {
             _ => None,
         };
         let optional = match json.estree_field_opt("optional") {
-            Some(field_json) if !field_json.is_null() => {
-                Some(FromESTree::from_estree(field_json, allocator)?)
-            }
-            _ => None,
+            Some(field_json) => crate::serialize::ts::TSMappedTypeOptional::from_estree_converter(
+                field_json, allocator,
+            )?,
+            None => crate::serialize::ts::TSMappedTypeOptional::from_estree_converter(
+                &serde_json::Value::Null,
+                allocator,
+            )?,
         };
         let readonly = match json.estree_field_opt("readonly") {
             Some(field_json) if !field_json.is_null() => {
@@ -5473,11 +5616,7 @@ impl<'a> FromESTree<'a> for TSModuleReference<'a> {
     fn from_estree(json: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
         let type_name = json.estree_type()?;
         match type_name {
-            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
-                FromESTree::from_estree(json, allocator)?,
-                allocator,
-            ))),
-            "TSQualifiedName" => Ok(Self::QualifiedName(ABox::new_in(
+            "Identifier" => Ok(Self::IdentifierReference(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
@@ -5485,7 +5624,11 @@ impl<'a> FromESTree<'a> for TSModuleReference<'a> {
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),
-            "Identifier" => Ok(Self::IdentifierReference(ABox::new_in(
+            "TSQualifiedName" => Ok(Self::QualifiedName(ABox::new_in(
+                FromESTree::from_estree(json, allocator)?,
+                allocator,
+            ))),
+            "ThisExpression" => Ok(Self::ThisExpression(ABox::new_in(
                 FromESTree::from_estree(json, allocator)?,
                 allocator,
             ))),

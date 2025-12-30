@@ -285,10 +285,7 @@ interface StripResult {
  *
  * Span mappings are provided so diagnostics can be remapped to original positions.
  */
-export function stripCustomSyntax(
-  code: string,
-  _options?: ParserOptions,
-): StripResult | undefined {
+export function stripCustomSyntax(code: string, _options?: ParserOptions): StripResult | undefined {
   const lines = code.split("\n");
   const outputLines: string[] = [];
   const mappings: SpanMapping[] = [];

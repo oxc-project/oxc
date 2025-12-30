@@ -4518,11 +4518,6 @@ export class FormalParameters {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get kind() {
-    const internal = this.#internal;
-    return constructFormalParameterKind(internal.pos + 40, internal.ast);
-  }
-
   get items() {
     const internal = this.#internal,
       cached = internal.$items;
@@ -4535,7 +4530,6 @@ export class FormalParameters {
       type: "FormalParameters",
       start: this.start,
       end: this.end,
-      kind: this.kind,
       items: this.items,
     };
   }
