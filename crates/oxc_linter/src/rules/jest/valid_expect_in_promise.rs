@@ -65,10 +65,240 @@ impl Rule for ValidExpectInPromise {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![];
+    let pass = vec![
+        r#"
+            it('passes', async () => {
+                await somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                return somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+            });
+        "#,
+        r#"
+            it('passes', () => somePromise().then(data => expect(data).toBe('foo')));
+        "#,
+        r#"
+            it('passes', async () => {
+                await somePromise().catch(err => {
+                    expect(err).toBeInstanceOf(Error);
+                });
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                return somePromise().catch(err => {
+                    expect(err).toBeInstanceOf(Error);
+                });
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await somePromise().finally(() => {
+                    expect(cleanup).toHaveBeenCalled();
+                });
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await Promise.all([
+                    somePromise().then(data => expect(data).toBe('foo')),
+                    otherPromise().then(data => expect(data).toBe('bar'))
+                ]);
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                return Promise.all([
+                    somePromise().then(data => expect(data).toBe('foo')),
+                    otherPromise().then(data => expect(data).toBe('bar'))
+                ]);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await Promise.race([
+                    somePromise().then(data => expect(data).toBe('foo')),
+                    otherPromise().then(data => expect(data).toBe('bar'))
+                ]);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await Promise.allSettled([
+                    somePromise().then(data => expect(data).toBe('foo'))
+                ]);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await Promise.any([
+                    somePromise().then(data => expect(data).toBe('foo'))
+                ]);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                await promise;
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                return promise;
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                somePromise().then(data => {
+                    console.log(data);
+                });
+                expect(true).toBe(true);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await somePromise()
+                    .then(data => data.json())
+                    .then(json => {
+                        expect(json).toHaveProperty('foo');
+                    });
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                return somePromise()
+                    .then(data => {
+                        expect(data).toBe('foo');
+                    })
+                    .catch(err => {
+                        expect(err).toBeInstanceOf(Error);
+                    });
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await Promise.resolve().then(() => {
+                    expect(true).toBe(true);
+                });
+            });
+        "#,
+        r#"
+            it('passes', () => {
+                expect(true).toBe(true);
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await expect(somePromise()).resolves.toBe('foo');
+            });
+        "#,
+        r#"
+            it('passes', async () => {
+                await expect(somePromise()).rejects.toThrow();
+            });
+        "#,
+    ];
 
-    let fail = vec![];
+    let fail = vec![
+        r#"
+            it('fails', () => {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                somePromise().catch(err => {
+                    expect(err).toBeInstanceOf(Error);
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                somePromise().finally(() => {
+                    expect(cleanup).toHaveBeenCalled();
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                Promise.all([
+                    somePromise().then(data => expect(data).toBe('foo'))
+                ]);
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                Promise.race([
+                    somePromise().then(data => expect(data).toBe('foo'))
+                ]);
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                otherPromise().then(data => {
+                    expect(data).toBe('bar');
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                somePromise()
+                    .then(data => data.json())
+                    .then(json => {
+                        expect(json).toHaveProperty('foo');
+                    });
+            });
+        "#,
+        r#"
+            it('fails', async () => {
+                somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                Promise.resolve().then(() => {
+                    expect(true).toBe(true);
+                });
+            });
+        "#,
+        r#"
+            it('fails', () => {
+                const promise = somePromise().then(data => {
+                    expect(data).toBe('foo');
+                });
+                promise.then(() => {
+                    expect(true).toBe(true);
+                });
+            });
+        "#,
+    ];
 
     Tester::new(ValidExpectInPromise::NAME, ValidExpectInPromise::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
         .test_and_snapshot();
 }
