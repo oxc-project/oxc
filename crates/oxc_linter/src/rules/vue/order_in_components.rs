@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, CallExpression, ExportDefaultDeclarationKind, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, PropertyKey,
+        ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,15 +118,60 @@ pub enum OrderElement {
     Group(Vec<String>),
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct OrderInComponents(Box<OrderInComponentsConfig>);
+#[derive(Debug, Clone)]
+pub struct OrderInComponents {
+    /// Cached expanded order for performance (avoid repeated allocations)
+    order: Vec<Vec<String>>,
+}
 
-impl std::ops::Deref for OrderInComponents {
-    type Target = OrderInComponentsConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl Default for OrderInComponents {
+    fn default() -> Self {
+        Self { order: expand_default_order() }
     }
+}
+
+/// Expand the default order constant to owned Strings
+fn expand_default_order() -> Vec<Vec<String>> {
+    DEFAULT_ORDER.iter().map(|g| g.iter().map(|s| (*s).to_string()).collect()).collect()
+}
+
+/// Expand custom order configuration, handling LIFECYCLE_HOOKS and ROUTER_GUARDS placeholders
+fn expand_custom_order(custom_order: &[OrderElement]) -> Vec<Vec<String>> {
+    custom_order
+        .iter()
+        .map(|el| match el {
+            OrderElement::Single(s) => {
+                if s == "LIFECYCLE_HOOKS" {
+                    vec![
+                        "beforeCreate".to_string(),
+                        "created".to_string(),
+                        "beforeMount".to_string(),
+                        "mounted".to_string(),
+                        "beforeUpdate".to_string(),
+                        "updated".to_string(),
+                        "activated".to_string(),
+                        "deactivated".to_string(),
+                        "beforeUnmount".to_string(),
+                        "unmounted".to_string(),
+                        "beforeDestroy".to_string(),
+                        "destroyed".to_string(),
+                        "renderTracked".to_string(),
+                        "renderTriggered".to_string(),
+                        "errorCaptured".to_string(),
+                    ]
+                } else if s == "ROUTER_GUARDS" {
+                    vec![
+                        "beforeRouteEnter".to_string(),
+                        "beforeRouteUpdate".to_string(),
+                        "beforeRouteLeave".to_string(),
+                    ]
+                } else {
+                    vec![s.clone()]
+                }
+            }
+            OrderElement::Group(g) => g.clone(),
+        })
+        .collect()
 }
 
 declare_oxc_lint!(
@@ -175,7 +220,15 @@ impl Rule for OrderInComponents {
             .get(0)
             .and_then(|v| serde_json::from_value::<OrderInComponentsConfig>(v.clone()).ok())
             .unwrap_or_default();
-        Self(Box::new(config))
+
+        // Pre-compute and cache the expanded order at configuration time
+        let order = if let Some(ref custom_order) = config.order {
+            expand_custom_order(custom_order)
+        } else {
+            expand_default_order()
+        };
+
+        Self { order }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -240,60 +293,20 @@ impl Rule for OrderInComponents {
 }
 
 impl OrderInComponents {
-    fn get_order(&self) -> Vec<Vec<String>> {
-        if let Some(ref custom_order) = self.order {
-            custom_order
-                .iter()
-                .map(|el| match el {
-                    OrderElement::Single(s) => {
-                        if s == "LIFECYCLE_HOOKS" {
-                            vec![
-                                "beforeCreate".to_string(),
-                                "created".to_string(),
-                                "beforeMount".to_string(),
-                                "mounted".to_string(),
-                                "beforeUpdate".to_string(),
-                                "updated".to_string(),
-                                "activated".to_string(),
-                                "deactivated".to_string(),
-                                "beforeUnmount".to_string(),
-                                "unmounted".to_string(),
-                                "beforeDestroy".to_string(),
-                                "destroyed".to_string(),
-                                "renderTracked".to_string(),
-                                "renderTriggered".to_string(),
-                                "errorCaptured".to_string(),
-                            ]
-                        } else if s == "ROUTER_GUARDS" {
-                            vec![
-                                "beforeRouteEnter".to_string(),
-                                "beforeRouteUpdate".to_string(),
-                                "beforeRouteLeave".to_string(),
-                            ]
-                        } else {
-                            vec![s.clone()]
-                        }
-                    }
-                    OrderElement::Group(g) => g.clone(),
-                })
-                .collect()
-        } else {
-            DEFAULT_ORDER.iter().map(|g| g.iter().map(|s| (*s).to_string()).collect()).collect()
-        }
-    }
-
     fn check_order<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        let order = self.get_order();
-
         // Collect properties with their names and order positions
         let mut properties: Vec<PropertyInfo> = Vec::new();
 
         for prop in &obj.properties {
             if let ObjectPropertyKind::ObjectProperty(property) = prop
-                && let Some(name) = get_property_name(&property.key)
+                && let Some(name) = property.key.static_name()
             {
-                let order_position = get_order_position(&name, &order);
-                properties.push(PropertyInfo { name, order_position, span: property.span });
+                let order_position = get_order_position(&name, &self.order);
+                properties.push(PropertyInfo {
+                    name: name.to_string(),
+                    order_position,
+                    span: property.span,
+                });
             }
         }
 
@@ -325,14 +338,6 @@ impl OrderInComponents {
 
 fn get_order_position(name: &str, order: &[Vec<String>]) -> Option<usize> {
     order.iter().position(|group| group.iter().any(|s| s == name))
-}
-
-fn get_property_name(key: &PropertyKey) -> Option<String> {
-    match key {
-        PropertyKey::StaticIdentifier(id) => Some(id.name.to_string()),
-        PropertyKey::StringLiteral(lit) => Some(lit.value.to_string()),
-        _ => None,
-    }
 }
 
 fn is_vue_component_call(call: &CallExpression) -> bool {
@@ -1063,489 +1068,5 @@ fn test() {
         ), // languageOptions
     ];
 
-    let _fix = vec![
-        (
-            "
-			        export default {
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          props: {
-			            propA: Number,
-			          },
-			        }
-			      ",
-            "
-			        export default {
-			          name: 'app',
-			          props: {
-			            propA: Number,
-			          },
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			        }
-			      ",
-            None,
-        ),
-        (
-            "
-			        import { defineComponent } from 'vue'
-			        export default defineComponent({
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          props: {
-			            propA: Number,
-			          },
-			        })
-			      ",
-            "
-			        import { defineComponent } from 'vue'
-			        export default defineComponent({
-			          name: 'app',
-			          props: {
-			            propA: Number,
-			          },
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        import { defineNuxtComponent } from '#app'
-			        export default defineNuxtComponent({
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          props: {
-			            propA: Number,
-			          },
-			        })
-			      ",
-            "
-			        import { defineNuxtComponent } from '#app'
-			        export default defineNuxtComponent({
-			          name: 'app',
-			          props: {
-			            propA: Number,
-			          },
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          render (h) {
-			            return (
-			              <span>{ this.msg }</span>
-			            )
-			          },
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          props: {
-			            propA: Number,
-			          },
-			        }
-			      ",
-            "
-			        export default {
-			          name: 'app',
-			          render (h) {
-			            return (
-			              <span>{ this.msg }</span>
-			            )
-			          },
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          props: {
-			            propA: Number,
-			          },
-			        }
-			      ",
-            None,
-        ),
-        (
-            "
-			        Vue.component('smart-list', {
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          components: {},
-			          template: '<div></div>'
-			        })
-			      ",
-            "
-			        Vue.component('smart-list', {
-			          name: 'app',
-			          components: {},
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          template: '<div></div>'
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        app.component('smart-list', {
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          components: {},
-			          template: '<div></div>'
-			        })
-			      ",
-            "
-			        app.component('smart-list', {
-			          name: 'app',
-			          components: {},
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          template: '<div></div>'
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        const { component } = Vue;
-			        component('smart-list', {
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          components: {},
-			          template: '<div></div>'
-			        })
-			      ",
-            "
-			        const { component } = Vue;
-			        component('smart-list', {
-			          name: 'app',
-			          components: {},
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          template: '<div></div>'
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        new Vue({
-			          name: 'app',
-			          el: '#app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          components: {},
-			          template: '<div></div>'
-			        })
-			      ",
-            "
-			        new Vue({
-			          el: '#app',
-			          name: 'app',
-			          data () {
-			            return {
-			              msg: 'Welcome to Your Vue.js App'
-			            }
-			          },
-			          components: {},
-			          template: '<div></div>'
-			        })
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          data() {
-			            return {
-			              isActive: false,
-			            };
-			          },
-			          methods: {
-			            toggleMenu() {
-			              this.isActive = !this.isActive;
-			            },
-			            closeMenu() {
-			              this.isActive = false;
-			            }
-			          },
-			          name: 'burger',
-			        };
-			      ",
-            "
-			        export default {
-			          name: 'burger',
-			          data() {
-			            return {
-			              isActive: false,
-			            };
-			          },
-			          methods: {
-			            toggleMenu() {
-			              this.isActive = !this.isActive;
-			            },
-			            closeMenu() {
-			              this.isActive = false;
-			            }
-			          },
-			        };
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          data() {
-			          },
-			          name: 'burger',
-			          test: 'ok'
-			        };
-			      ",
-            "
-			        export default {
-			          data() {
-			          },
-			          test: 'ok',
-			          name: 'burger'
-			        };
-			      ",
-            Some(serde_json::json!([{ "order": ["data", "test", "name"] }])),
-        ),
-        (
-            "
-			        export default {
-			          /** data provider */
-			          data() {
-			          },
-			          /** name of vue component */
-			          name: 'burger'
-			        };
-			      ",
-            "
-			        export default {
-			          /** name of vue component */
-			          name: 'burger',
-			          /** data provider */
-			          data() {
-			          }
-			        };
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          /** data provider */
-			          data() {
-			          }/*test*/,
-			          /** name of vue component */
-			          name: 'burger'
-			        };
-			      ",
-            "
-			        export default {
-			          /** name of vue component */
-			          name: 'burger',
-			          /** data provider */
-			          data() {
-			          }/*test*/
-			        };
-			      ",
-            None,
-        ),
-        (
-            "export default {data(){},name:'burger'};",
-            "export default {name:'burger',data(){}};",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          data() {
-			          },
-			          name: 'burger',
-			          test: fn(),
-			        };
-			      ",
-            "
-			        export default {
-			          name: 'burger',
-			          data() {
-			          },
-			          test: fn(),
-			        };
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          data() {
-			          },
-			          testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
-			          testRegExp: /[a-z]*/,
-			          testSpreadElement: [...array],
-			          testOperator: (!!(a - b + c * d / e % f)) || (a && b),
-			          testArrow: (a) => a,
-			          testConditional: a ? b : c,
-			          testYield: function* () {},
-			          testTemplate: `a:${a},b:${b},c:${c}.`,
-			          testNullish: a ?? b,
-			          testOptionalChaining: a?.b?.c,
-			          name: 'burger',
-			        };
-			      ",
-            "
-			        export default {
-			          name: 'burger',
-			          data() {
-			          },
-			          testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
-			          testRegExp: /[a-z]*/,
-			          testSpreadElement: [...array],
-			          testOperator: (!!(a - b + c * d / e % f)) || (a && b),
-			          testArrow: (a) => a,
-			          testConditional: a ? b : c,
-			          testYield: function* () {},
-			          testTemplate: `a:${a},b:${b},c:${c}.`,
-			          testNullish: a ?? b,
-			          testOptionalChaining: a?.b?.c,
-			        };
-			      ",
-            None,
-        ),
-        (
-            r#"
-			        <script lang="ts">
-			          export default {
-			            setup () {},
-			            props: {
-			              foo: { type: Array as PropType<number[]> },
-			            },
-			          };
-			        </script>
-			      "#,
-            r#"
-			        <script lang="ts">
-			          export default {
-			            props: {
-			              foo: { type: Array as PropType<number[]> },
-			            },
-			            setup () {},
-			          };
-			        </script>
-			      "#,
-            None,
-        ),
-        (
-            "
-			      <script setup>
-			        defineOptions({
-			          inheritAttrs: true,
-			          name: 'Foo',
-			        })
-			      </script>
-			      ",
-            "
-			      <script setup>
-			        defineOptions({
-			          name: 'Foo',
-			          inheritAttrs: true,
-			        })
-			      </script>
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          setup,
-			          slots,
-			          expose,
-			        };
-			      ",
-            "
-			        export default {
-			          slots,
-			          setup,
-			          expose,
-			        };
-			      ",
-            None,
-        ),
-        (
-            "
-			        export default {
-			          slots,
-			          setup,
-			          expose,
-			        };
-			      ",
-            "
-			        export default {
-			          slots,
-			          expose,
-			          setup,
-			        };
-			      ",
-            None,
-        ),
-    ];
-
-    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail)
-        // .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail).test_and_snapshot();
 }
