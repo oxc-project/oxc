@@ -2,6 +2,10 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{
+    VisitMut,
+    walk_mut::{walk_call_expression, walk_new_expression},
+};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -13,6 +17,7 @@ use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
+    scope::ScopeFlags,
 };
 use oxc_traverse::Ancestor;
 
@@ -1645,6 +1650,9 @@ impl<'a> PeepholeOptimizations {
                     *e = expr.take_in(ctx.ast);
                 }
                 ctx.state.changed = true;
+                if is_pure {
+                    UpdatePureStatus::default().visit_expression(e);
+                }
                 return;
             }
             match &mut f.body.statements[0] {
@@ -1661,6 +1669,9 @@ impl<'a> PeepholeOptimizations {
                         });
                     }
 
+                    if is_pure {
+                        UpdatePureStatus::default().visit_expression(e);
+                    }
                     ctx.state.changed = true;
                 }
                 Statement::ReturnStatement(ret_stmt) => {
@@ -1672,6 +1683,9 @@ impl<'a> PeepholeOptimizations {
                             *e = argument.take_in(ctx.ast);
                         }
                         ctx.state.changed = true;
+                        if is_pure {
+                            UpdatePureStatus::default().visit_expression(e);
+                        }
                     }
                 }
                 _ => {}
@@ -1739,6 +1753,26 @@ where
 {
     fn from(prop: &mut T) -> Self {
         (&*prop).into()
+    }
+}
+
+#[derive(Default)]
+struct UpdatePureStatus {}
+
+impl<'a> VisitMut<'a> for UpdatePureStatus {
+    fn visit_call_expression(&mut self, it: &mut CallExpression<'a>) {
+        it.pure = true;
+        walk_call_expression(self, it);
+    }
+    fn visit_new_expression(&mut self, it: &mut NewExpression<'a>) {
+        it.pure = true;
+        walk_new_expression(self, it);
+    }
+    fn visit_function(&mut self, it: &mut Function<'a>, _flags: ScopeFlags) {
+        it.pure = true;
+    }
+    fn visit_arrow_function_expression(&mut self, it: &mut ArrowFunctionExpression<'a>) {
+        it.pure = true;
     }
 }
 

@@ -991,6 +991,8 @@ mod test {
 
     #[test]
     fn test_fold_iife() {
+        let smallest = CompressOptions::smallest();
+
         test_same("var k = () => {}");
         test_same("var k = function () {}");
         test("var a = (() => {})()", "var a = void 0;");
@@ -1034,9 +1036,14 @@ mod test {
         test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
         test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
         test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
+        test("((() => !0)() ? () => /* @__PURE__ */ x() : () => {})();", "");
         test("/* @__PURE__ */ (() => x)()", "");
         test("/* @__PURE__ */ (() => { return x })()", "");
         test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
+
+        test_options("var u = /* @__PURE__ */ (() => s())();", "", &smallest);
+        test_options("var u = /* @__PURE__ */ (() => { s() })();", "", &smallest);
+        test_options("var u = /* @__PURE__ */ (() => new a.b.c())();", "", &smallest);
     }
 
     #[test]
