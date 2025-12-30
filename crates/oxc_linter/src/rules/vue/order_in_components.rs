@@ -359,6 +359,9 @@ impl OrderInComponents {
                                 prop.span,
                             ),
                             |fixer| {
+                                // Use for_multifix() since we create a composite fix with
+                                // multiple operations (delete + insert)
+                                let fixer = fixer.for_multifix();
                                 self.create_reorder_fix(
                                     fixer.source_text(),
                                     obj,
