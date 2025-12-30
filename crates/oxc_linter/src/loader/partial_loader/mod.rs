@@ -34,8 +34,11 @@ impl PartialLoader {
             "vue" => {
                 let sources = VuePartialLoader::new(source_text).parse();
                 if sources.is_empty() {
-                    // Check if it's a Vue SFC (has <template or <style)
-                    // If so, return empty. If not, return None to fallback to raw JS.
+                    // No <script> section found. Determine how to handle:
+                    // - If it's a Vue SFC (has <template> or <style>), return empty
+                    //   to skip JS linting (valid SFC without script)
+                    // - If not a Vue SFC (e.g., raw JS in .vue extension), return None
+                    //   to fallback to treating entire file as JavaScript
                     if Self::is_vue_sfc(source_text) {
                         return Some(vec![]);
                     }
@@ -50,7 +53,9 @@ impl PartialLoader {
         Some(sources)
     }
 
-    /// Check if the source text looks like a Vue Single File Component
+    /// Heuristically check if the source text appears to be a Vue SFC.
+    /// Uses simple substring matching for `<template` or `<style` tags.
+    /// Note: May have false positives for JS files containing these substrings.
     fn is_vue_sfc(source_text: &str) -> bool {
         source_text.contains("<template") || source_text.contains("<style")
     }
