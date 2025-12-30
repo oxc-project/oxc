@@ -1,8 +1,10 @@
+use std::fmt::format;
+
 use itertools::Itertools;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{CallExpression, Expression, IdentifierName, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -26,6 +28,107 @@ fn prefer_called_exactly_once_with_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferCalledExactlyOnceWith;
+
+#[derive(Debug, Eq, PartialEq)]
+enum ExpectPairStates {
+    WaitingOnce,
+    WaitingWith,
+    Paired,
+}
+
+#[derive(Debug)]
+struct TrackingExpectPair {
+    span_to_substitue: Span,
+    span_to_remove: Span,
+    identifier: CompactStr,
+    args_to_be_expected: CompactStr,
+    type_parameters: Option<CompactStr>,
+    current_state: ExpectPairStates,
+}
+
+impl TrackingExpectPair {
+    fn new_from_called_once(matcher_span: Span, identifier: CompactStr) -> Self {
+        Self {
+            span_to_substitue: matcher_span,
+            span_to_remove: Span::empty(0),
+            identifier,
+            args_to_be_expected: CompactStr::new(""),
+            type_parameters: None,
+            current_state: ExpectPairStates::WaitingWith,
+        }
+    }
+
+    fn new_from_called_with(
+        matcher_span: Span,
+        identifier: CompactStr,
+        arguments: CompactStr,
+        type_parameters: Option<CompactStr>,
+    ) -> Self {
+        Self {
+            span_to_substitue: matcher_span,
+            span_to_remove: Span::empty(0),
+            identifier,
+            args_to_be_expected: arguments,
+            type_parameters,
+            current_state: ExpectPairStates::WaitingOnce,
+        }
+    }
+
+    fn update_tracking_with_called_once_information(&mut self, matcher_span: Span) {
+        self.span_to_remove = matcher_span;
+        self.current_state = ExpectPairStates::Paired;
+    }
+
+    fn update_tracking_with_called_with_information(
+        &mut self,
+        matcher_span: Span,
+        identifier: CompactStr,
+        arguments: CompactStr,
+        type_parameters: Option<CompactStr>,
+    ) {
+        self.span_to_remove = matcher_span;
+        self.identifier = identifier;
+        self.args_to_be_expected = arguments;
+        self.type_parameters = type_parameters;
+        self.current_state = ExpectPairStates::Paired;
+    }
+
+    fn is_paired(&self) -> bool {
+        self.current_state == ExpectPairStates::Paired
+    }
+
+    fn get_new_expect(&self) -> CompactStr {
+        let type_params = self
+            .type_parameters
+            .as_ref()
+            .map(|formatted| CompactStr::new(formatted.as_ref()))
+            .unwrap_or(CompactStr::new(""));
+
+        let expect = format!(
+            "expect({}).toHaveBeenCalledExactlyOnceWith{}({})",
+            self.identifier, type_params, self.args_to_be_expected
+        );
+        CompactStr::new(expect.as_ref())
+    }
+
+    fn is_expected_matcher(&self, matcher: &str) -> bool {
+        if self.is_paired() {
+            return false;
+        }
+
+        if self.current_state == ExpectPairStates::WaitingOnce && matcher == "toHaveBeenCalledOnce"
+        {
+            return false;
+        }
+
+        if self.current_state == ExpectPairStates::WaitingWith && matcher == "toHaveBeenCalledWith"
+        {
+            return false;
+        }
+
+        return true;
+    }
+}
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -76,6 +179,7 @@ impl PreferCalledExactlyOnceWith {
         ctx: &LintContext<'a>,
     ) {
         let matchers_to_combine = {
+            //TODO CAPACITY
             let mut set_matchers = FxHashSet::default();
             set_matchers.insert(CompactStr::new("toHaveBeenCalledOnce"));
             set_matchers.insert(CompactStr::new("toHaveBeenCalledWith"));
@@ -84,6 +188,7 @@ impl PreferCalledExactlyOnceWith {
         };
 
         let mock_reset_methods = {
+            //TODO CAPACITY
             let mut mock_reset_methods_set = FxHashSet::default();
             mock_reset_methods_set.insert(CompactStr::new("mockClear"));
             mock_reset_methods_set.insert(CompactStr::new("mockReset"));
@@ -92,10 +197,8 @@ impl PreferCalledExactlyOnceWith {
             mock_reset_methods_set
         };
 
-        let mut variables_expected: FxHashMap<
-            CompactStr,
-            Vec<(CompactStr, ParsedExpectFnCall<'_>)>,
-        > = FxHashMap::default();
+        let mut variables_expected: FxHashMap<CompactStr, TrackingExpectPair> =
+            FxHashMap::default();
 
         for statement in statements {
             let Statement::ExpressionStatement(statement_expression) = statement else {
@@ -165,11 +268,7 @@ impl PreferCalledExactlyOnceWith {
 
             let duplicate_entry = variables_expected
                 .get(&variable_expected_name)
-                .map(|expects| {
-                    expects
-                        .iter()
-                        .any(|(matcher_saved, _span)| matcher_saved == matcher_name.as_ref())
-                })
+                .map(|expects| expects.is_expected_matcher(matcher_name.as_ref()))
                 .unwrap_or(false);
 
             if duplicate_entry {
@@ -177,22 +276,106 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             }
 
-            if let Some(expects) = variables_expected.get_mut(&variable_expected_name) {
-                expects.push((CompactStr::new(matcher_name.as_ref()), expect_call));
-            } else {
-                variables_expected.insert(
-                    variable_expected_name,
-                    vec![(CompactStr::new(matcher_name.as_ref()), expect_call)],
-                );
-            };
+            // TODO MatcherKindEnum
+            match matcher_name.as_ref() {
+                "toHaveBeenCalledOnce" => {
+                    if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
+                        let statement_span = GetSpan::span(statement);
+                        let mut start_remove = statement_span.start;
+
+                        while !ctx
+                            .source_range(Span::new(start_remove, statement_span.end + 1))
+                            .starts_with('\n')
+                        {
+                            start_remove = start_remove - 1;
+                        }
+
+                        let next_line_statemen_span =
+                            Span::new(start_remove + 1, statement_span.end + 1);
+
+                        expect
+                            .update_tracking_with_called_once_information(next_line_statemen_span);
+                    } else {
+                        variables_expected.insert(
+                            variable_expected_name.clone(),
+                            TrackingExpectPair::new_from_called_once(
+                                call_expr.span,
+                                variable_expected_name.clone(),
+                            ),
+                        );
+                    };
+                }
+
+                "toHaveBeenCalledWith" => {
+                    let to_be_arguments = expect_call
+                        .matcher_arguments
+                        .map(|arguments| {
+                            arguments
+                                .iter()
+                                .map(|arg| ctx.source_range(GetSpan::span(arg)))
+                                .join(", ")
+                        })
+                        .map(|arg_str| CompactStr::new(arg_str.as_ref()))
+                        .unwrap_or(CompactStr::new(""));
+
+                    let type_notation = call_expr
+                        .type_arguments
+                        .as_ref()
+                        .map(|type_notation| CompactStr::new(ctx.source_range(type_notation.span)));
+
+                    if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
+                        let statement_span = GetSpan::span(statement);
+
+                        let mut start_remove = statement_span.start;
+
+                        while !ctx
+                            .source_range(Span::new(start_remove, statement_span.end + 1))
+                            .starts_with('\n')
+                        {
+                            start_remove = start_remove - 1;
+                        }
+
+                        let next_line_statemen_span =
+                            Span::new(start_remove + 1, statement_span.end + 1);
+
+                        expect.update_tracking_with_called_with_information(
+                            next_line_statemen_span,
+                            variable_expected_name,
+                            to_be_arguments,
+                            type_notation,
+                        );
+                    } else {
+                        variables_expected.insert(
+                            variable_expected_name.clone(),
+                            TrackingExpectPair::new_from_called_with(
+                                call_expr.span,
+                                variable_expected_name.clone(),
+                                to_be_arguments,
+                                type_notation,
+                            ),
+                        );
+                    };
+                }
+                _ => {}
+            }
         }
 
-        for (_variable, expects) in variables_expected.iter() {
-            if expects.len() != 2 {
+        for expects in variables_expected.values() {
+            if !expects.is_paired() {
                 continue;
             }
 
-            ctx.diagnostic(prefer_called_exactly_once_with_diagnostic(Span::empty(0)));
+            ctx.diagnostic_with_fix(
+                prefer_called_exactly_once_with_diagnostic(Span::empty(0)),
+                |fixer| {
+                    let mut multiple_fixes = fixer.new_fix_with_capacity(2);
+                    multiple_fixes.push(fixer.delete_range(expects.span_to_remove));
+                    let substitute = expects.get_new_expect();
+                    multiple_fixes.push(fixer.replace(expects.span_to_substitue, substitute));
+
+                    multiple_fixes.with_message("Successfully fixed")
+                },
+            );
         }
     }
 }
@@ -255,18 +438,225 @@ fn test() {
 			      expect(x).toHaveBeenCalledOnce();
 			      expect(x).toHaveBeenCalledWith('hoge');
 			      ",
-    ];
-
-    let fix = vec![(
+        "
+			      expect(x).toHaveBeenCalledWith('hoge');
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(y).toHaveBeenCalledWith('foo', 456);
+			      expect(y).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      const hoge = 'foo';
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
         "
 			      expect(x).toHaveBeenCalledOnce();
+			      y.mockClear();
 			      expect(x).toHaveBeenCalledWith('hoge');
 			      ",
         "
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledOnce<[number]>();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+        "
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(x).toHaveBeenCalledWith<
+			        [
+			          {
+			            id: number
+			          }
+			        ]
+			      >('hoge');
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(y).toHaveBeenCalledWith('foo', 456);
+			      expect(y).toHaveBeenCalledOnce();
+			      ",
+        "
+			      expect(x).toHaveBeenCalledOnce();
+			      y.mockClear();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+    ];
+
+    let fix = vec![
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(x).toHaveBeenCalledWith('hoge');
+			      ",
+            "
 			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge');
 			      ",
-        None,
-    )];
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith('hoge');
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge');
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge', 123);
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(y).toHaveBeenCalledWith('foo', 456);
+			      expect(y).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge', 123);
+			      expect(y).toHaveBeenCalledExactlyOnceWith('foo', 456);
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith('hoge', 123);
+			      const hoge = 'foo';
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge', 123);
+			      const hoge = 'foo';
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce();
+			      y.mockClear();
+			      expect(x).toHaveBeenCalledWith('hoge');
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith('hoge');
+			      y.mockClear();
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce<[number]>();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(x).toHaveBeenCalledWith<
+			        [
+			          {
+			            id: number
+			          }
+			        ]
+			      >('hoge');
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<
+			        [
+			          {
+			            id: number
+			          }
+			        ]
+			      >('hoge');
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string, number]>('hoge', 123);
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
+			      expect(x).toHaveBeenCalledOnce();
+			      expect(y).toHaveBeenCalledWith('foo', 456);
+			      expect(y).toHaveBeenCalledOnce();
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string, number]>('hoge', 123);
+			      expect(y).toHaveBeenCalledExactlyOnceWith('foo', 456);
+			      ",
+            None,
+        ),
+        (
+            "
+			      expect(x).toHaveBeenCalledOnce();
+			      y.mockClear();
+			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
+			      ",
+            "
+			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
+			      y.mockClear();
+			      ",
+            None,
+        ),
+    ];
     Tester::new(PreferCalledExactlyOnceWith::NAME, PreferCalledExactlyOnceWith::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
