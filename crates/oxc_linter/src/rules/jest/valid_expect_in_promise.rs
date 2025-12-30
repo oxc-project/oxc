@@ -68,8 +68,7 @@ declare_oxc_lint!(
     /// ```
     ValidExpectInPromise,
     jest,
-    correctness,
-    pending
+    correctness
 );
 
 impl Rule for ValidExpectInPromise {
