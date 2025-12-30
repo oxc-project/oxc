@@ -303,19 +303,26 @@ impl Rule for OrderInComponents {
 impl OrderInComponents {
     fn check_order<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         // Collect properties with their names, order positions, and indices
+        // SpreadProperties are tracked but excluded from ordering checks
         let mut properties: Vec<PropertyInfo> = Vec::new();
+        let mut has_spread = false;
 
         for (index, prop) in obj.properties.iter().enumerate() {
-            if let ObjectPropertyKind::ObjectProperty(property) = prop
-                && let Some(name) = property.key.static_name()
-            {
-                let order_position = get_order_position(&name, &self.order);
-                properties.push(PropertyInfo {
-                    name: name.to_string(),
-                    order_position,
-                    span: property.span,
-                    index,
-                });
+            match prop {
+                ObjectPropertyKind::ObjectProperty(property) => {
+                    if let Some(name) = property.key.static_name() {
+                        let order_position = get_order_position(&name, &self.order);
+                        properties.push(PropertyInfo {
+                            name: name.to_string(),
+                            order_position,
+                            span: property.span,
+                            index,
+                        });
+                    }
+                }
+                ObjectPropertyKind::SpreadProperty(_) => {
+                    has_spread = true;
+                }
             }
         }
 
@@ -335,18 +342,32 @@ impl OrderInComponents {
                         .position(|p| p.order_position.is_some_and(|o| o >= pos))
                         .unwrap_or(0);
 
-                    ctx.diagnostic_with_fix(
-                        order_in_components_diagnostic(&prop.name, &max_position_name, prop.span),
-                        |fixer| {
-                            self.create_reorder_fix(
-                                fixer.source_text(),
-                                obj,
-                                prop.index,
-                                target_index,
-                                &fixer,
-                            )
-                        },
-                    );
+                    // Don't offer auto-fix when spread properties exist (like ESLint)
+                    // Reordering could change semantics due to spread evaluation order
+                    if has_spread {
+                        ctx.diagnostic(order_in_components_diagnostic(
+                            &prop.name,
+                            &max_position_name,
+                            prop.span,
+                        ));
+                    } else {
+                        ctx.diagnostic_with_fix(
+                            order_in_components_diagnostic(
+                                &prop.name,
+                                &max_position_name,
+                                prop.span,
+                            ),
+                            |fixer| {
+                                self.create_reorder_fix(
+                                    fixer.source_text(),
+                                    obj,
+                                    prop.index,
+                                    target_index,
+                                    &fixer,
+                                )
+                            },
+                        );
+                    }
                 }
                 if max_position.is_none_or(|max| pos >= max) {
                     max_position = Some(pos);
@@ -455,7 +476,7 @@ impl OrderInComponents {
 
         fix.with_message(format!(
             "Move `{}` to correct position",
-            from_prop.key.static_name().unwrap_or_default()
+            from_prop.key.static_name().unwrap_or_else(|| "<property>".into())
         ))
     }
 }
