@@ -2,51 +2,59 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn valid_expect_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    OxcDiagnostic::warn("Promise containing expect was not returned or awaited")
+        .with_help("Return or await the promise to ensure the expects in its chain are called")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpectInPromise;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Ensures that promises containing `expect` assertions are properly returned or awaited
+    /// in test functions.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// When a promise containing `expect` calls in its `.then()`, `.catch()`, or `.finally()`
+    /// callbacks is not returned or awaited, the test may complete before the assertions run.
+    /// This can lead to tests that pass even when the assertions would fail, giving false
+    /// confidence in the code being tested.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// it('promises a person', () => {
+    ///   api.getPersonByName('bob').then(person => {
+    ///     expect(person).toHaveProperty('name', 'Bob');
+    ///   });
+    /// });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// it('promises a person', async () => {
+    ///   await api.getPersonByName('bob').then(person => {
+    ///     expect(person).toHaveProperty('name', 'Bob');
+    ///   });
+    /// });
+    ///
+    /// it('promises a person', () => {
+    ///   return api.getPersonByName('bob').then(person => {
+    ///     expect(person).toHaveProperty('name', 'Bob');
+    ///   });
+    /// });
     /// ```
     ValidExpectInPromise,
     jest,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    correctness,
+    pending
 );
 
 impl Rule for ValidExpectInPromise {
