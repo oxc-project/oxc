@@ -166,6 +166,37 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "react/jsx-tag-spacing",
   "react/jsx-space-before-closing",
 
+  // React Compiler rules will not be implemented in oxlint for now,
+  // as they require integration with the react compiler itself.
+  // These rules can be used via JS Plugins if desired.
+  "react/config",
+  "react/error-boundaries",
+  "react/component-hook-factories",
+  "react/gating",
+  "react/globals",
+  "react/immutability",
+  "react/preserve-manual-memoization",
+  "react/purity",
+  "react/refs",
+  "react/set-state-in-effect",
+  "react/set-state-in-render",
+  "react/static-components",
+  "react/unsupported-syntax",
+  "react/use-memo",
+  "react/incompatible-library",
+  "react/automatic-effect-dependencies",
+  "react/capitalized-calls",
+  "react/fbt",
+  "react/fire",
+  "react/invariant",
+  "react/hooks",
+  "react/memoized-effect-dependencies",
+  "react/no-deriving-state-in-effects",
+  "react/rule-suppression",
+  "react/syntax",
+  "react/todo",
+  "react/void-use-memo",
+
   // Deprecated typescript-eslint rules:
   "typescript/sort-type-constituents", // replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.
   "typescript/no-type-alias", // replaced by `typescript-eslint/consistent-type-definitions` rule.
