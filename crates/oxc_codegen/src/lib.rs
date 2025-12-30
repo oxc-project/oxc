@@ -5,7 +5,7 @@
 
 #![warn(missing_docs)]
 
-use std::{borrow::Cow, cmp, slice};
+use std::{borrow::Cow, cmp, fmt::Write, slice};
 
 use cow_utils::CowUtils;
 
@@ -805,8 +805,7 @@ impl<'a> Codegen<'a> {
 
     // Optimized version of `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-    // Instead of building all candidates and finding the shortest, we track the shortest as we go
-    // and use self.print_str directly instead of returning intermediate strings
+    // Uses a stack buffer to avoid heap allocations for building candidate strings.
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
         if num < 1000.0 && num.fract() == 0.0 {
@@ -821,16 +820,27 @@ impl<'a> Codegen<'a> {
             s = &s[1..];
         }
 
-        let mut best_candidate = s.cow_replacen("e+", "e", 1);
+        let best_candidate = s.cow_replacen("e+", "e", 1);
         let mut is_hex = false;
+
+        // 50 bytes is enough for any f64 representation (max ~24 chars for decimal, ~20 for hex).
+        let mut stack_buf: [u8; 50] = [0; 50];
+        let mut stack_len: usize = 0;
 
         // Track the best candidate found so far
         if num.fract() == 0.0 {
-            // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
+            // For integers, check hex format and other optimizations.
+            // Build hex string in stack buffer: "0x" + hex digits
+            let int_val = num as u128;
+            stack_buf[0] = b'0';
+            stack_buf[1] = b'x';
+            // Use write! to format hex into a small stack buffer
+            let mut hex_cursor = StackWriter { buf: &mut stack_buf[2..], pos: 0 };
+            let _ = write!(hex_cursor, "{int_val:x}");
+            let hex_len = 2 + hex_cursor.pos;
+            if hex_len < best_candidate.len() {
                 is_hex = true;
-                best_candidate = hex_candidate.into();
+                stack_len = hex_len;
             }
         }
         // Check for scientific notation optimizations for numbers starting with ".0"
@@ -840,12 +850,18 @@ impl<'a> Codegen<'a> {
                 let len = i + 2; // `+2` to include the dot and first zero.
                 let digits = &best_candidate[len..];
                 let exp = digits.len() + len - 1;
-                let exp_str_len = itoa::Buffer::new().format(exp).len();
+                let mut itoa_buf = itoa::Buffer::new();
+                let exp_str = itoa_buf.format(exp);
                 // Calculate expected length: digits + 'e-' + exp_length
-                let expected_len = digits.len() + 2 + exp_str_len;
+                let expected_len = digits.len() + 2 + exp_str.len();
                 if expected_len < best_candidate.len() {
-                    best_candidate = format!("{digits}e-{exp}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
+                    // Build in stack buffer: digits + "e-" + exp
+                    stack_buf[..digits.len()].copy_from_slice(digits.as_bytes());
+                    stack_buf[digits.len()] = b'e';
+                    stack_buf[digits.len() + 1] = b'-';
+                    stack_buf[digits.len() + 2..expected_len].copy_from_slice(exp_str.as_bytes());
+                    stack_len = expected_len;
+                    debug_assert_eq!(stack_len, expected_len);
                 }
             }
         }
@@ -854,38 +870,66 @@ impl<'a> Codegen<'a> {
         // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
         // from being incorrectly converted to scientific notation
         if !is_hex
+            && stack_len == 0
             && best_candidate.ends_with('0')
             && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
         {
             let base = &best_candidate[0..best_candidate.len() - len];
-            let exp_str_len = itoa::Buffer::new().format(len).len();
+            let mut itoa_buf = itoa::Buffer::new();
+            let len_str = itoa_buf.format(len);
             // Calculate expected length: base + 'e' + len
-            let expected_len = base.len() + 1 + exp_str_len;
+            let expected_len = base.len() + 1 + len_str.len();
             if expected_len < best_candidate.len() {
-                best_candidate = format!("{base}e{len}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
+                // Build in stack buffer: base + "e" + len
+                stack_buf[..base.len()].copy_from_slice(base.as_bytes());
+                stack_buf[base.len()] = b'e';
+                stack_buf[base.len() + 1..expected_len].copy_from_slice(len_str.as_bytes());
+                stack_len = expected_len;
+                debug_assert_eq!(stack_len, expected_len);
             }
         }
 
         // Check for scientific notation optimization: `1.2e101` -> `12e100`
-        if let Some((integer, point, exponent)) = best_candidate
-            .split_once('.')
-            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        if stack_len == 0
+            && let Some((integer, point, exponent)) = best_candidate
+                .split_once('.')
+                .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
-            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
+            // SAFETY: `exponent` comes from ryu_js formatting a valid f64, so it's always a valid integer
+            let new_expr =
+                unsafe { exponent.parse::<isize>().unwrap_unchecked() } - point.len() as isize;
+            let mut itoa_buf = itoa::Buffer::new();
+            let new_exp_str = itoa_buf.format(new_expr);
             // Calculate expected length: integer + point + 'e' + new_exp_str_len
-            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
+            let expected_len = integer.len() + point.len() + 1 + new_exp_str.len();
             if expected_len < best_candidate.len() {
-                best_candidate = format!("{integer}{point}e{new_expr}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
+                // Build in stack buffer: integer + point + "e" + new_expr
+                let mut pos = 0;
+                stack_buf[pos..pos + integer.len()].copy_from_slice(integer.as_bytes());
+                pos += integer.len();
+                stack_buf[pos..pos + point.len()].copy_from_slice(point.as_bytes());
+                pos += point.len();
+                stack_buf[pos] = b'e';
+                pos += 1;
+                stack_buf[pos..pos + new_exp_str.len()].copy_from_slice(new_exp_str.as_bytes());
+                stack_len = expected_len;
+                debug_assert_eq!(stack_len, expected_len);
             }
         }
 
         // Print the best candidate and update need_space_before_dot
-        self.print_str(&best_candidate);
-        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-            self.need_space_before_dot = self.code_len();
+        if stack_len > 0 {
+            // SAFETY: We only write valid UTF-8 (ASCII digits, 'e', '-', 'x', '.') to stack_buf
+            let result = unsafe { std::str::from_utf8_unchecked(&stack_buf[..stack_len]) };
+            self.print_str(result);
+            if !result.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
+        } else {
+            self.print_str(&best_candidate);
+            if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
         }
     }
 
@@ -937,4 +981,23 @@ impl<'a> Codegen<'a> {
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
+}
+
+/// A simple writer for formatting into a stack-allocated buffer.
+struct StackWriter<'a> {
+    buf: &'a mut [u8],
+    pos: usize,
+}
+
+impl Write for StackWriter<'_> {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        let bytes = s.as_bytes();
+        if self.pos + bytes.len() <= self.buf.len() {
+            self.buf[self.pos..self.pos + bytes.len()].copy_from_slice(bytes);
+            self.pos += bytes.len();
+            Ok(())
+        } else {
+            Err(std::fmt::Error)
+        }
+    }
 }
