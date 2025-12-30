@@ -304,7 +304,7 @@ impl OrderInComponents {
     fn check_order<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         // Collect properties with their names, order positions, and indices
         // SpreadProperties are tracked but excluded from ordering checks
-        let mut properties: Vec<PropertyInfo> = Vec::new();
+        let mut properties: Vec<PropertyInfo> = Vec::with_capacity(obj.properties.len());
         let mut has_spread = false;
 
         for (index, prop) in obj.properties.iter().enumerate() {
