@@ -165,6 +165,8 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "react/jsx-props-no-multi-spaces",
   "react/jsx-tag-spacing",
   "react/jsx-space-before-closing",
+  "react/jsx-closing-tag-location",
+  "react/jsx-closing-bracket-location",
 
   // React Compiler rules will not be implemented in oxlint for now,
   // as they require integration with the react compiler itself.
