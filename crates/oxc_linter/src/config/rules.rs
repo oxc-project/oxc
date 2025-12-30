@@ -104,7 +104,7 @@ impl OxlintRules {
                         } else {
                             serde_json::Value::Array(rule_config.config.to_vec())
                         };
-                        rules_to_replace.push((rule.from_configuration(config), severity));
+                        rules_to_replace.push((rule.from_configuration(config).unwrap(), severity));
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
