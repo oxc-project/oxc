@@ -129,9 +129,6 @@ importers:
       execa:
         specifier: ^9.6.0
         version: 9.6.1
-      jiti:
-        specifier: ^2.6.0
-        version: 2.6.1
       json-stable-stringify-without-jsonify:
         specifier: ^1.0.1
         version: 1.0.1
@@ -9444,7 +9441,8 @@ snapshots:
     dependencies:
       '@isaacs/cliui': 8.0.2
 
-  jiti@2.6.1: {}
+  jiti@2.6.1:
+    optional: true
 
   jquery@3.7.1: {}
 
