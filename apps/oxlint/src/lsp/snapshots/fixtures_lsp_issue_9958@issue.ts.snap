@@ -1,18 +1,18 @@
 ---
-source: crates/oxc_language_server/src/linter/tester.rs
+source: apps/oxlint/src/lsp/tester.rs
 ---
 ########## 
-Linted file: fixtures/linter/issue_9958/issue.ts
+Linted file: fixtures/lsp/issue_9958/issue.ts
 ----------
 ########## Diagnostic Reports
-File URI: file://<variable>/fixtures/linter/issue_9958/issue.ts
+File URI: file://<variable>/fixtures/lsp/issue_9958/issue.ts
 
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
 message: "Redundant double negation\nhelp: Remove the double negation as it will already be coerced to a boolean"
 range: Range { start: Position { line: 3, character: 14 }, end: Position { line: 3, character: 17 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/issue_9958/issue.ts"
 related_information[0].location.range: Range { start: Position { line: 3, character: 14 }, end: Position { line: 3, character: 17 } }
 severity: Some(Error)
 source: Some("oxc")
@@ -23,10 +23,10 @@ code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
 range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
 related_information[0].message: "non-null assertion made after optional chain"
-related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/issue_9958/issue.ts"
 related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
 related_information[1].message: "optional chain used"
-related_information[1].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[1].location.uri: "file://<variable>/fixtures/lsp/issue_9958/issue.ts"
 related_information[1].location.range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
 severity: Some(Error)
 source: Some("oxc")
@@ -37,7 +37,7 @@ code_description.href: "None"
 message: "optional chain used"
 range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
 related_information[0].message: "original diagnostic"
-related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/issue_9958/issue.ts"
 related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
 severity: Some(Hint)
 source: Some("oxc")

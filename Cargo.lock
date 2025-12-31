@@ -1252,22 +1252,22 @@ dependencies = [
 
 [[package]]
 name = "jiff"
-version = "0.2.15"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be1f93b8b1eb69c77f24bbb0afdf66f54b632ee39af40ca21c4365a1d7347e49"
+checksum = "a87d9b8105c23642f50cbbae03d1f75d8422c5cb98ce7ee9271f7ff7505be6b8"
 dependencies = [
  "jiff-static",
  "log",
  "portable-atomic",
  "portable-atomic-util",
- "serde",
+ "serde_core",
 ]
 
 [[package]]
 name = "jiff-static"
-version = "0.2.15"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03343451ff899767262ec32146f6d559dd759fdadf42ff0e227c7c48f72594b4"
+checksum = "b787bebb543f8969132630c51fd0afab173a86c6abae56ff3b9e5e3e3f9f6e58"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2020,13 +2020,7 @@ version = "1.36.0"
 dependencies = [
  "env_logger",
  "futures",
- "ignore",
- "insta",
  "log",
- "oxc_allocator",
- "oxc_data_structures",
- "oxc_diagnostics",
- "oxc_linter",
  "papaya",
  "rustc-hash",
  "serde",
@@ -2592,6 +2586,7 @@ dependencies = [
  "ignore",
  "insta",
  "lazy-regex",
+ "log",
  "mimalloc-safe",
  "napi",
  "napi-build",
@@ -2599,6 +2594,7 @@ dependencies = [
  "oxc-miette",
  "oxc_allocator",
  "oxc_ast_visit",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_language_server",
  "oxc_linter",
@@ -2613,6 +2609,7 @@ dependencies = [
  "simdutf8",
  "tempfile",
  "tokio",
+ "tower-lsp-server",
  "tracing-subscriber",
 ]
 
@@ -2783,9 +2780,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "portable-atomic"
-version = "1.11.1"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+checksum = "f89776e4d69bb58bc6993e99ffa1d11f228b839984854c7daeb5d37f87cbe950"
 
 [[package]]
 name = "portable-atomic-util"

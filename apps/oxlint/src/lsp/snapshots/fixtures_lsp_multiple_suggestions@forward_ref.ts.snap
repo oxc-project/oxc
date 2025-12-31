@@ -1,18 +1,18 @@
 ---
-source: crates/oxc_language_server/src/linter/tester.rs
+source: apps/oxlint/src/lsp/tester.rs
 ---
 ########## 
-Linted file: fixtures/linter/multiple_suggestions/forward_ref.ts
+Linted file: fixtures/lsp/multiple_suggestions/forward_ref.ts
 ----------
 ########## Diagnostic Reports
-File URI: file://<variable>/fixtures/linter/multiple_suggestions/forward_ref.ts
+File URI: file://<variable>/fixtures/lsp/multiple_suggestions/forward_ref.ts
 
 code: "eslint-plugin-react(forward-ref-uses-ref)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/react/forward-ref-uses-ref.html"
 message: "Components wrapped with `forwardRef` must have a `ref` parameter\nhelp: Add a `ref` parameter, or remove `forwardRef`"
 range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 24 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/multiple_suggestions/forward_ref.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/multiple_suggestions/forward_ref.ts"
 related_information[0].location.range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 24 } }
 severity: Some(Error)
 source: Some("oxc")

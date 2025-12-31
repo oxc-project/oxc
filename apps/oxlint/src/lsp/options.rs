@@ -208,7 +208,7 @@ mod test {
     mod deprecated_flags {
         use serde_json::json;
 
-        use crate::linter::options::LintFixKindFlag;
+        use crate::lsp::options::LintFixKindFlag;
 
         use super::{LintOptions, Run, UnusedDisableDirectives};
 

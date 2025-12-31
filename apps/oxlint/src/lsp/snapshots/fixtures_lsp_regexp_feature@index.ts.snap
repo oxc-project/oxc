@@ -1,18 +1,18 @@
 ---
-source: crates/oxc_language_server/src/linter/tester.rs
+source: apps/oxlint/src/lsp/tester.rs
 ---
 ########## 
-Linted file: fixtures/linter/regexp_feature/index.ts
+Linted file: fixtures/lsp/regexp_feature/index.ts
 ----------
 ########## Diagnostic Reports
-File URI: file://<variable>/fixtures/linter/regexp_feature/index.ts
+File URI: file://<variable>/fixtures/lsp/regexp_feature/index.ts
 
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
 message: "Unexpected control character\nhelp: '\\u0000' is a control character."
 range: Range { start: Position { line: 1, character: 13 }, end: Position { line: 1, character: 32 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/regexp_feature/index.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/regexp_feature/index.ts"
 related_information[0].location.range: Range { start: Position { line: 1, character: 13 }, end: Position { line: 1, character: 32 } }
 severity: Some(Error)
 source: Some("oxc")
@@ -23,7 +23,7 @@ code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-u
 message: "Unnecessary escape character '/'\nhelp: Replace `\\/` with `/`."
 range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } }
 related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/regexp_feature/index.ts"
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/regexp_feature/index.ts"
 related_information[0].location.range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } }
 severity: Some(Error)
 source: Some("oxc")

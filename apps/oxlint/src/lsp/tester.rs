@@ -1,15 +1,12 @@
 use std::{fmt::Write, path::PathBuf};
 
+use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges};
 use tower_lsp_server::ls_types::{
     CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position, Range,
     Uri,
 };
 
-use crate::{
-    ToolRestartChanges,
-    linter::{ServerLinterBuilder, server_linter::ServerLinter},
-    tool::{DiagnosticResult, Tool},
-};
+use crate::lsp::server_linter::{ServerLinter, ServerLinterBuilder};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -44,9 +41,8 @@ fn get_snapshot_from_diagnostic_result(diagnostic_result: &[(Uri, Vec<Diagnostic
 fn get_snapshot_safe_uri(uri: &Uri) -> String {
     let mut safe_uri = uri.to_string();
     let start = safe_uri.find("file://").expect("file:// protocol not found in URI");
-    let end = safe_uri.find("oxc_language_server").expect("oxc_language_server not found in URI");
-    safe_uri
-        .replace_range(start + "file://".len()..end + "oxc_language_server".len(), "<variable>");
+    let end = safe_uri.find("oxlint").expect("oxlint not found in URI");
+    safe_uri.replace_range(start + "file://".len()..end + "oxlint".len(), "<variable>");
     safe_uri
 }
 

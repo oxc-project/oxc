@@ -1,7 +1,7 @@
 use log::debug;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 
-use crate::linter::error_with_position::{FixedContent, LinterCodeAction};
+use crate::lsp::error_with_position::{FixedContent, LinterCodeAction};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");

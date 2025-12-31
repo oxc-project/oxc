@@ -9,6 +9,8 @@ on:
     paths:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
+      - "apps/oxlint/src/lsp/**"
+      - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
@@ -18,7 +20,7 @@ on:
     paths:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
-      - "apps/oxlint/src/lsp.rs"
+      - "apps/oxlint/src/lsp/**"
       - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - "tasks/vscode_docs/**"
@@ -54,7 +56,7 @@ jobs:
             src:
               - "pnpm-lock.yaml"
               - "crates/oxc_language_server/**"
-              - "apps/oxlint/src/lsp.rs"
+              - "apps/oxlint/src/lsp/**"
               - "editors/vscode/**"
               - ".github/workflows/ci_vscode.yml"
 

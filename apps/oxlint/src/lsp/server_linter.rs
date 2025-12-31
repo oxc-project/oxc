@@ -19,23 +19,22 @@ use oxc_linter::{
     LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
-use crate::{
-    ConcurrentHashMap,
-    capabilities::Capabilities,
-    linter::{
-        LINT_CONFIG_FILE,
-        code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-            fix_all_text_edit,
-        },
-        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-        config_walker::ConfigWalker,
-        error_with_position::LinterCodeAction,
-        isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-    },
-    tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges},
+use oxc_language_server::{
+    Capabilities, ConcurrentHashMap, DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges,
     utils::normalize_path,
+};
+
+use crate::lsp::{
+    LINT_CONFIG_FILE,
+    code_actions::{
+        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+        fix_all_text_edit,
+    },
+    commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
+    config_walker::ConfigWalker,
+    error_with_position::LinterCodeAction,
+    isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+    options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
 };
 
 pub struct ServerLinterBuilder;
@@ -656,10 +655,11 @@ mod tests_builder {
         ServerCapabilities, WorkDoneProgressOptions,
     };
 
-    use crate::{
-        ServerLinterBuilder, ToolBuilder,
-        capabilities::Capabilities,
-        linter::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID},
+    use oxc_language_server::{Capabilities, ToolBuilder};
+
+    use crate::lsp::{
+        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
+        server_linter::ServerLinterBuilder,
     };
 
     #[test]
@@ -807,13 +807,13 @@ mod tests_builder {
 #[cfg(test)]
 mod test_watchers {
     mod init_watchers {
-        use crate::linter::tester::Tester;
+        use crate::lsp::tester::Tester;
         use serde_json::json;
 
         #[test]
         fn test_default_options() {
             let patterns =
-                Tester::new("fixtures/linter/watchers/default", json!({})).get_watcher_patterns();
+                Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
             assert_eq!(patterns.len(), 1);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
@@ -822,7 +822,7 @@ mod test_watchers {
         #[test]
         fn test_empty_string_config_path() {
             let patterns = Tester::new(
-                "fixtures/linter/watchers/default",
+                "fixtures/lsp/watchers/default",
                 json!({
                     "configPath": ""
                 }),
@@ -836,7 +836,7 @@ mod test_watchers {
         #[test]
         fn test_custom_config_path() {
             let patterns = Tester::new(
-                "fixtures/linter/watchers/default",
+                "fixtures/lsp/watchers/default",
                 json!({
                     "configPath": "configs/lint.json"
                 }),
@@ -849,7 +849,7 @@ mod test_watchers {
 
         #[test]
         fn test_linter_extends_configs() {
-            let patterns = Tester::new("fixtures/linter/watchers/linter_extends", json!({}))
+            let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
             // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
@@ -861,7 +861,7 @@ mod test_watchers {
         #[test]
         fn test_linter_extends_custom_config_path() {
             let patterns = Tester::new(
-                "fixtures/linter/watchers/linter_extends",
+                "fixtures/lsp/watchers/linter_extends",
                 json!({
                     "configPath": ".oxlintrc.json"
                 }),
@@ -876,7 +876,7 @@ mod test_watchers {
         #[test]
         fn test_linter_with_type_aware() {
             let patterns = Tester::new(
-                "fixtures/linter/watchers/default",
+                "fixtures/lsp/watchers/default",
                 json!({
                     "typeAware": true
                 }),
@@ -890,13 +890,14 @@ mod test_watchers {
     }
 
     mod handle_configuration_change {
-        use crate::{ToolRestartChanges, linter::tester::Tester};
+        use crate::lsp::tester::Tester;
+        use oxc_language_server::ToolRestartChanges;
         use serde_json::json;
 
         #[test]
         fn test_no_change() {
             let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new("fixtures/linter/watchers/default", json!({}))
+                Tester::new("fixtures/lsp/watchers/default", json!({}))
                     .handle_configuration_change(json!({}));
 
             assert!(watch_patterns.is_none());
@@ -905,7 +906,7 @@ mod test_watchers {
         #[test]
         fn test_lint_config_path_change() {
             let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new("fixtures/linter/watchers/default", json!({}))
+                Tester::new("fixtures/lsp/watchers/default", json!({}))
                     .handle_configuration_change(json!({
                         "configPath": "configs/lint.json"
                     }));
@@ -918,7 +919,7 @@ mod test_watchers {
         #[test]
         fn test_lint_other_option_change() {
             let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new("fixtures/linter/watchers/default", json!({}))
+                Tester::new("fixtures/lsp/watchers/default", json!({}))
                     .handle_configuration_change(json!({
                         // run is the only option that does not require a restart
                         "run": "onSave"
@@ -930,7 +931,7 @@ mod test_watchers {
         #[test]
         fn test_lint_type_aware_change() {
             let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new("fixtures/linter/watchers/default", json!({}))
+                Tester::new("fixtures/lsp/watchers/default", json!({}))
                     .handle_configuration_change(json!({
                         "typeAware": true
                     }));
@@ -948,7 +949,7 @@ mod test {
 
     use serde_json::json;
 
-    use crate::linter::{
+    use crate::lsp::{
         options::LintOptions,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
@@ -970,7 +971,7 @@ mod test {
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
         let (configs, _) = ServerLinterBuilder::create_nested_configs(
-            &get_file_path("fixtures/linter/init_nested_configs"),
+            &get_file_path("fixtures/lsp/init_nested_configs"),
             &LintOptions::default(),
             &mut nested_ignore_patterns,
         );
@@ -987,33 +988,32 @@ mod test {
 
     #[test]
     fn test_no_errors() {
-        Tester::new("fixtures/linter/no_errors", json!({}))
+        Tester::new("fixtures/lsp/no_errors", json!({}))
             .test_and_snapshot_single_file("hello_world.js");
     }
 
     #[test]
     fn test_no_console() {
-        Tester::new("fixtures/linter/deny_no_console", json!({}))
+        Tester::new("fixtures/lsp/deny_no_console", json!({}))
             .test_and_snapshot_single_file("hello_world.js");
     }
 
     // Test case for https://github.com/oxc-project/oxc/issues/9958
     #[test]
     fn test_issue_9958() {
-        Tester::new("fixtures/linter/issue_9958", json!({}))
-            .test_and_snapshot_single_file("issue.ts");
+        Tester::new("fixtures/lsp/issue_9958", json!({})).test_and_snapshot_single_file("issue.ts");
     }
 
     // Test case for https://github.com/oxc-project/oxc/issues/9957
     #[test]
     fn test_regexp() {
-        Tester::new("fixtures/linter/regexp_feature", json!({}))
+        Tester::new("fixtures/lsp/regexp_feature", json!({}))
             .test_and_snapshot_single_file("index.ts");
     }
 
     #[test]
     fn test_frameworks() {
-        Tester::new("fixtures/linter/frameworks", json!({})).test_and_snapshot_multiple_file(&[
+        Tester::new("fixtures/lsp/frameworks", json!({})).test_and_snapshot_multiple_file(&[
             "astro/debugger.astro",
             "vue/debugger.vue",
             "svelte/debugger.svelte",
@@ -1023,38 +1023,38 @@ mod test {
 
     #[test]
     fn test_invalid_syntax_file() {
-        Tester::new("fixtures/linter/invalid_syntax", json!({}))
+        Tester::new("fixtures/lsp/invalid_syntax", json!({}))
             .test_and_snapshot_multiple_file(&["debugger.ts", "invalid.vue"]);
     }
 
     #[test]
     fn test_cross_module_debugger() {
-        Tester::new("fixtures/linter/cross_module", json!({}))
+        Tester::new("fixtures/lsp/cross_module", json!({}))
             .test_and_snapshot_single_file("debugger.ts");
     }
 
     #[test]
     fn test_cross_module_no_cycle() {
-        Tester::new("fixtures/linter/cross_module", json!({}))
+        Tester::new("fixtures/lsp/cross_module", json!({}))
             .test_and_snapshot_single_file("dep-a.ts");
     }
 
     #[test]
     fn test_cross_module_no_cycle_nested_config() {
-        Tester::new("fixtures/linter/cross_module_nested_config", json!({}))
+        Tester::new("fixtures/lsp/cross_module_nested_config", json!({}))
             .test_and_snapshot_multiple_file(&["dep-a.ts", "folder/folder-dep-a.ts"]);
     }
 
     #[test]
     fn test_cross_module_no_cycle_extended_config() {
-        Tester::new("fixtures/linter/cross_module_extended_config", json!({}))
+        Tester::new("fixtures/lsp/cross_module_extended_config", json!({}))
             .test_and_snapshot_single_file("dep-a.ts");
     }
 
     #[test]
     fn test_multiple_suggestions() {
         Tester::new(
-            "fixtures/linter/multiple_suggestions",
+            "fixtures/lsp/multiple_suggestions",
             json!({
                 "fixKind": "safe_fix_or_suggestion"
             }),
@@ -1065,7 +1065,7 @@ mod test {
     #[test]
     fn test_report_unused_directives() {
         Tester::new(
-            "fixtures/linter/unused_disabled_directives",
+            "fixtures/lsp/unused_disabled_directives",
             json!({
                 "unusedDisableDirectives": "deny"
             }),
@@ -1077,7 +1077,7 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_report_tsgolint_unused_directives() {
         Tester::new(
-            "fixtures/linter/tsgolint/unused_disabled_directives",
+            "fixtures/lsp/tsgolint/unused_disabled_directives",
             json!({
                 "unusedDisableDirectives": "deny",
                 "typeAware": true
@@ -1088,7 +1088,7 @@ mod test {
 
     #[test]
     fn test_root_ignore_patterns() {
-        let tester = Tester::new("fixtures/linter/ignore_patterns", json!({}));
+        let tester = Tester::new("fixtures/lsp/ignore_patterns", json!({}));
         tester.test_and_snapshot_multiple_file(&[
             "ignored-file.ts",
             "another_config/not-ignored-file.ts",
@@ -1098,7 +1098,7 @@ mod test {
     #[test]
     fn test_ts_alias() {
         Tester::new(
-            "fixtures/linter/ts_path_alias",
+            "fixtures/lsp/ts_path_alias",
             json!({
                 "tsConfigPath": "./deep/tsconfig.json"
             }),
@@ -1110,7 +1110,7 @@ mod test {
     #[cfg(not(target_endian = "big"))] // TODO: tsgolint doesn't support big endian?
     fn test_tsgo_lint() {
         let tester = Tester::new(
-            "fixtures/linter/tsgolint",
+            "fixtures/lsp/tsgolint",
             json!({
                 "typeAware": true,
                 "fixKind": "all"
@@ -1121,7 +1121,7 @@ mod test {
 
     #[test]
     fn test_ignore_js_plugins() {
-        let tester = Tester::new("fixtures/linter/js_plugins", json!({}));
+        let tester = Tester::new("fixtures/lsp/js_plugins", json!({}));
         tester.test_and_snapshot_single_file("index.js");
     }
 
@@ -1129,7 +1129,7 @@ mod test {
     #[test]
     fn test_issue_14565() {
         let tester = Tester::new(
-            "fixtures/linter/issue_14565",
+            "fixtures/lsp/issue_14565",
             json!({
                 "run": "onSave"
             }),
