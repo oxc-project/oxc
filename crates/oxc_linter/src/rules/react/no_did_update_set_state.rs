@@ -24,6 +24,7 @@ pub enum NoDidUpdateSetStateConfig {
     #[default]
     #[serde(skip)]
     Allowed,
+    /// Also disallow `setState` calls in nested functions within `componentDidUpdate`.
     DisallowInFunc,
 }
 
@@ -71,18 +72,6 @@ declare_oxc_lint!(
     ///   }
     /// });
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// The rule accepts a string value `"disallow-in-func"`:
-    ///
-    /// ```json
-    /// {
-    ///   "react/no-did-update-set-state": ["error", "disallow-in-func"]
-    /// }
-    /// ```
-    ///
-    /// When set, also disallows `setState` calls in nested functions within `componentDidUpdate`.
     NoDidUpdateSetState,
     react,
     correctness,
@@ -91,9 +80,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDidUpdateSetState {
     fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoDidUpdateSetState>>(value)
-            .unwrap_or_default()
-            .into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
