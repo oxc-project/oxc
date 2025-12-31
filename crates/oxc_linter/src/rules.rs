@@ -393,6 +393,7 @@ pub(crate) mod react {
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
+    pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
@@ -1099,6 +1100,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_unescaped_entities,
     react::no_unknown_property,
     react::no_unsafe,
+    react::no_will_update_set_state,
     react::only_export_components,
     react::prefer_es6_class,
     react::react_in_jsx_scope,

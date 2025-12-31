@@ -7,10 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    config::ReactVersion,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_parent_component, is_es5_component},
+    utils::{get_parent_component, is_es5_component, supports_unsafe_lifecycle_prefix},
 };
 
 fn no_unsafe_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
@@ -97,22 +96,21 @@ impl Rule for NoUnsafe {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let react_version = ctx.settings().react.version.as_ref();
+        let check_unsafe_prefix = supports_unsafe_lifecycle_prefix(react_version);
+
         match node.kind() {
             AstKind::MethodDefinition(method_def) => {
-                let react_version = ctx.settings().react.version.as_ref();
-
                 if let Some(name) = method_def.key.static_name()
-                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, check_unsafe_prefix)
                     && get_parent_component(node, ctx).is_some()
                 {
                     ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
-                let react_version = ctx.settings().react.version.as_ref();
-
                 if let Some(name) = obj_prop.key.static_name()
-                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, check_unsafe_prefix)
                 {
                     for ancestor in ctx.nodes().ancestors(node.id()) {
                         if is_es5_component(ancestor) {
@@ -135,11 +133,7 @@ impl Rule for NoUnsafe {
 }
 
 /// Check if a method name is an unsafe lifecycle method
-fn is_unsafe_method(name: &str, check_aliases: bool, react_version: Option<&ReactVersion>) -> bool {
-    // React 16.3 introduced the UNSAFE_ prefixed lifecycle methods
-    let check_unsafe_prefix =
-        react_version.is_none_or(|v| v.major() > 16 || (v.major() == 16 && v.minor() >= 3));
-
+fn is_unsafe_method(name: &str, check_aliases: bool, check_unsafe_prefix: bool) -> bool {
     match name {
         "UNSAFE_componentWillMount"
         | "UNSAFE_componentWillReceiveProps"
