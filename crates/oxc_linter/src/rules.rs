@@ -46,6 +46,7 @@ pub(crate) mod eslint {
     pub mod block_scoped_var;
     pub mod capitalized_comments;
     pub mod class_methods_use_this;
+    pub mod complexity;
     pub mod constructor_super;
     pub mod curly;
     pub mod default_case;
@@ -704,6 +705,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::block_scoped_var,
     eslint::capitalized_comments,
     eslint::class_methods_use_this,
+    eslint::complexity,
     eslint::constructor_super,
     eslint::curly,
     eslint::default_case,
