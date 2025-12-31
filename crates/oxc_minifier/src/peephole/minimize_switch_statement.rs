@@ -8,6 +8,11 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{operator::BinaryOperator, scope::ScopeFlags};
 
 impl<'a> PeepholeOptimizations {
+    /// Attempts to minimize a `switch` statement by applying a series of transformations
+    /// - Removes the trailing `break` statement from the last case of the `switch`, if it's unnecessary.
+    /// - Merges or removes consecutive empty cases within the switch to simplify its structure.
+    /// - Eliminates the entire `switch` statement if it contains no meaningful cases or logic.
+    /// - Converts the `switch` if it contains only one or two cases to `if`/`else` statements.
     pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         Self::try_remove_last_break_from_case(stmt, ctx);
         Self::collapse_empty_switch_cases(stmt, ctx);
@@ -94,6 +99,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
+    /// Removes an empty switch statement from the given AST statement.
     fn remove_empty_switch(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
@@ -238,22 +244,22 @@ impl<'a> PeepholeOptimizations {
         if stmt.is_empty() {
             return false;
         }
-        let mut changed = false;
 
         let len = stmt.len();
         match stmt.last_mut() {
             Some(Statement::BreakStatement(break_stmt)) => {
                 if break_stmt.label.is_none() {
                     stmt.truncate(len - 1);
-                    changed |= true;
+                    true
+                } else {
+                    false
                 }
             }
             Some(Statement::BlockStatement(block_stmt)) => {
-                changed |= Self::remove_last_break(&mut block_stmt.body);
+                Self::remove_last_break(&mut block_stmt.body)
             }
-            _ => {}
+            _ => false,
         }
-        changed
     }
 
     fn is_terminated_switch_case(stmt: &Vec<'a, Statement<'a>>) -> bool {
@@ -293,8 +299,7 @@ impl BreakFinder {
 
 impl<'a> Visit<'a> for BreakFinder {
     fn visit_statement(&mut self, it: &Statement<'a>) {
-        // TODO: check if there we have access to control flow instead??
-        // Only visit blocks where vars could be hoisted
+        // TODO: This is to aggressive, we should allow `break` for last statements
         match it {
             Statement::BlockStatement(it) => self.visit_block_statement(it),
             Statement::BreakStatement(it) => {
@@ -302,33 +307,23 @@ impl<'a> Visit<'a> for BreakFinder {
                     self.nested_unlabelled_break = true;
                 }
             }
-            // TODO: this is not fully correct, we should allow termination if this if is a last statement
             Statement::IfStatement(it) => {
-                if self.top_level {
-                    self.top_level = false;
-                    self.visit_if_statement(it);
-                    self.top_level = true;
-                } else {
-                    self.visit_if_statement(it);
-                }
+                let was_top = self.top_level;
+                self.top_level = false;
+                self.visit_if_statement(it);
+                self.top_level = was_top;
             }
             Statement::TryStatement(it) => {
-                if self.top_level {
-                    self.top_level = false;
-                    self.visit_try_statement(it);
-                    self.top_level = true;
-                } else {
-                    self.visit_try_statement(it);
-                }
+                let was_top = self.top_level;
+                self.top_level = false;
+                self.visit_try_statement(it);
+                self.top_level = was_top;
             }
             Statement::WithStatement(it) => {
-                if self.top_level {
-                    self.top_level = false;
-                    self.visit_with_statement(it);
-                    self.top_level = true;
-                } else {
-                    self.visit_with_statement(it);
-                }
+                let was_top = self.top_level;
+                self.top_level = false;
+                self.visit_with_statement(it);
+                self.top_level = was_top;
             }
             _ => {}
         }
@@ -376,6 +371,16 @@ mod test {
         test("switch(a){case 2: case 1: break; default: break;}", "a;");
         test("switch(a){case 3: b(); case 2: case 1: break;}", "a === 3 && b()");
         test("switch(a){case 3: b(); case 2: case 1: }", "a === 3 && b()");
+        test_same("switch(a){case 3: if (b) break }");
+        test("switch(a){case 3: { if (b) break } }", "switch(a){case 3: if (b) break;}");
+        test(
+            "switch(a){case 3: {if(b) {c()} else {break;}}}",
+            "switch(a){case 3: if (b) c();else break;}",
+        );
+        test("switch(a){case 3: { for (;;) break } }", "if(a === 3) for (;;) break;");
+        test("switch(a){case 3: { for (b of c) break } }", "if (a === 3) for (b of c) break;");
+        test_same("switch(a){case 3: with(b) break}");
+        test("switch(a){case 3: while(!0) break}", "if (a === 3) for (;;) break;");
 
         test(
             "switch(a){case 1: c(); case 2: default: b();break;}",
@@ -383,8 +388,6 @@ mod test {
         );
         test("var x=1;switch(x){case 1: var y;}", "var y;");
         test("function f(){switch(a){case 1: return;}}", "function f() {a;}");
-        test("x:switch(a){case 1: break x;}", "x: if (a === 1) break x;");
-        test_same("x:switch(a){case 2: break x; case 1: break x;}");
         test("switch(a()) { default: {let y;} }", "a();{let y;}");
         test(
             "function f(){switch('x'){case 'x': var x = 1;break; case 'y': break; }}",
@@ -393,6 +396,15 @@ mod test {
         test("switch(a){default: if(a) {break;}c();}", "switch(a){default: if(a) break;c();}");
         test("switch(a){case 1: if(a) {b();}c();}", "a === 1 && (a && b(), c())");
         test("switch ('\\v') {case '\\u000B': foo();}", "foo()");
+
+        test("x: switch(a){case 1: break x;}", "x: if (a === 1) break x;");
+        test_same("x: switch(a){case 2: break x; case 1: break x;}");
+        test("x: switch(2){case 2: f(); break outer; }", "x: {f(); break outer;}");
+        test(
+            "x: switch(x){case 2: f(); for (;;){break outer;}}",
+            "x: if(x===2) for(f();;) break outer",
+        );
+        test("x: switch(a){case 2: if(b) { break outer; } }", "x: if(a===2 && b) break outer;");
 
         test(
             "switch('r'){case 'r': a();break; case 'r': var x=0;break;}",
@@ -428,7 +440,6 @@ mod test {
             "switch(1){case 1: case 2: break; default: b();}",
         );
         test("switch ('d') {case 'foo': foo();break; default: bar();break;}", "bar()");
-        test("outer: switch (2) {case 2: f(); break outer; }", "outer: {f(); break outer;}");
         test(
             "switch(0){case NaN: foobar();break;case -0.0: foo();break; case 2: bar();break;}",
             "switch(0){case NaN: foobar();break;case -0.0: foo();break; case 2: bar();}",
