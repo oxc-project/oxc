@@ -2485,7 +2485,7 @@ impl RuleRunner for crate::rules::react::no_unknown_property::NoUnknownProperty 
 }
 
 impl RuleRunner for crate::rules::react::no_unsafe::NoUnsafe {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::MethodDefinition, AstType::ObjectProperty]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
