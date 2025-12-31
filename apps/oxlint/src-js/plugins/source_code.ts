@@ -39,6 +39,9 @@ export let ast: Program | null = null;
 // Parser services object. Set before linting a file by `setupSourceForFile`.
 let parserServices: Record<string, unknown> | null = null;
 
+// Flag to indicate if we're using a custom parser (pre-parsed AST, no buffer)
+let usingCustomParser = false;
+
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
@@ -53,6 +56,29 @@ export function setupSourceForFile(
   buffer = bufferInput;
   hasBOM = hasBOMInput;
   parserServices = parserServicesInput;
+  usingCustomParser = false;
+}
+
+/**
+ * Set up source for a file parsed by a custom parser.
+ * @param sourceTextInput - Source text of the file
+ * @param astInput - Pre-parsed AST from custom parser
+ * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param parserServicesInput - Parser services object for the file
+ */
+export function setupSourceForCustomParser(
+  sourceTextInput: string,
+  astInput: Program,
+  hasBOMInput: boolean,
+  parserServicesInput: Record<string, unknown>,
+): void {
+  buffer = null;
+  sourceText = sourceTextInput;
+  sourceByteLen = new TextEncoder().encode(sourceTextInput).length;
+  ast = astInput;
+  hasBOM = hasBOMInput;
+  parserServices = parserServicesInput;
+  usingCustomParser = true;
 }
 
 /**
@@ -67,9 +93,15 @@ export function initSourceText(): void {
 }
 
 /**
- * Deserialize AST from buffer.
+ * Deserialize AST from buffer, or use pre-parsed AST for custom parsers.
  */
 export function initAst(): void {
+  // For custom parsers, AST is already set by setupSourceForCustomParser
+  if (usingCustomParser) {
+    debugAssertIsNonNull(ast);
+    return;
+  }
+
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
@@ -93,6 +125,7 @@ export function resetSourceAndAst(): void {
   sourceText = null;
   ast = null;
   parserServices = null;
+  usingCustomParser = false;
   resetBuffer();
   resetLines();
   resetScopeManager();

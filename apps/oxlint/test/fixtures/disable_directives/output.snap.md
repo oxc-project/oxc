@@ -3,44 +3,44 @@
 
 # stdout
 ```
-  x test-plugin(no-var): Use let or const instead of var
-   ,-[files/index.js:1:1]
- 1 | var shouldError = 1;
-   : ^^^^^^^^^^^^^^^^^^^^
- 2 | 
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1meslint(no-debugger): `debugger` statement is not allowed[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:10:1]
+ [2m 9[0m │ // should trigger an error
+ [2m10[0m │ debugger;
+    · [38;2;246;87;248m─────────[0m
+ [2m11[0m │ 
+    ╰────
+[38;2;106;159;181m  help: [0mRemove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-    ,-[files/index.js:10:1]
-  9 | // should trigger an error
- 10 | debugger;
-    : ^^^^^^^^^
- 11 | 
-    `----
-  help: Remove the debugger statement
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ var shouldError = 1;
+   · [38;2;246;87;248m────────────────────[0m
+ [2m2[0m │ 
+   ╰────
 
-  x test-plugin(no-var): Use let or const instead of var
-    ,-[files/index.js:16:1]
- 15 | /* oxlint-disable-next-line test-plugin */ // `test-plugin` should be `test-plugin/no-var`
- 16 | var incorrectlyDisabled = 4;
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 17 | 
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:16:1]
+ [2m15[0m │ /* oxlint-disable-next-line test-plugin */ // `test-plugin` should be `test-plugin/no-var`
+ [2m16[0m │ var incorrectlyDisabled = 4;
+    · [38;2;246;87;248m────────────────────────────[0m
+ [2m17[0m │ 
+    ╰────
 
-  x test-plugin(no-var): Use let or const instead of var
-    ,-[files/index.js:19:1]
- 18 | /* oxlint-disable-next-line no-var */ // `no-var` should be `test-plugin/no-var`
- 19 | var anotherIncorrectlyDisabled = 4;
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 20 | 
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:19:1]
+ [2m18[0m │ /* oxlint-disable-next-line no-var */ // `no-var` should be `test-plugin/no-var`
+ [2m19[0m │ var anotherIncorrectlyDisabled = 4;
+    · [38;2;246;87;248m───────────────────────────────────[0m
+ [2m20[0m │ 
+    ╰────
 
-  x test-plugin(no-var): Use let or const instead of var
-    ,-[files/index.js:22:1]
- 21 | // This var should trigger an error again
- 22 | var shouldErrorAgain = 3;
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^
-    `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+    ╭─[[38;2;92;157;255;1mfiles/index.js[0m:22:1]
+ [2m21[0m │ // This var should trigger an error again
+ [2m22[0m │ var shouldErrorAgain = 3;
+    · [38;2;246;87;248m─────────────────────────[0m
+    ╰────
 
 Found 0 warnings and 5 errors.
 Finished in Xms on 1 file using X threads.

@@ -1338,7 +1338,7 @@ impl ESTree for ArrowFunctionExpression<'_> {
         state.serialize_field("expression", &self.expression);
         state.serialize_field("async", &self.r#async);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::js::ArrowFunctionExpressionParams(self));
         state.serialize_ts_field("returnType", &self.return_type);
         state.serialize_field("body", &crate::serialize::js::ArrowFunctionExpressionBody(self));
         state.serialize_field("id", &crate::serialize::basic::Null(self));
@@ -2815,7 +2815,10 @@ impl ESTree for TSConstructSignatureDeclaration<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSConstructSignatureDeclaration"));
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field(
+            "params",
+            &crate::serialize::ts::TSConstructSignatureDeclarationParams(self),
+        );
         state.serialize_field("returnType", &self.return_type);
         state.serialize_span(self.span);
         state.end();
@@ -3017,7 +3020,7 @@ impl ESTree for TSConstructorType<'_> {
         state.serialize_field("type", &JsonSafeString("TSConstructorType"));
         state.serialize_field("abstract", &self.r#abstract);
         state.serialize_field("typeParameters", &self.type_parameters);
-        state.serialize_field("params", &self.params);
+        state.serialize_field("params", &crate::serialize::ts::TSConstructorTypeParams(self));
         state.serialize_field("returnType", &self.return_type);
         state.serialize_span(self.span);
         state.end();

@@ -15,6 +15,7 @@ pub fn get_trait_crate_and_generics(trait_name: &str) -> Option<(TokenStream, To
         "GetSpanMut" => (quote!(::oxc_span::GetSpanMut), TokenStream::new()),
         "ContentEq" => (quote!(::oxc_span::ContentEq), TokenStream::new()),
         "ESTree" => (quote!(::oxc_estree::ESTree), TokenStream::new()),
+        "FromESTree" => (quote!(::oxc_ast::FromESTree), quote!(< 'static >)),
         _ => return None,
     };
     Some(res)

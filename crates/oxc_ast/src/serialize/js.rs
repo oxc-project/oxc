@@ -564,6 +564,19 @@ impl ESTree for FunctionParams<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `ArrowFunctionExpression`.
+///
+/// Arrow functions don't have `this_param`, so just serialize params directly.
+#[ast_meta]
+#[estree(ts_type = "ParamPattern[]", raw_deser = "DESER[Box<FormalParameters>](POS_OFFSET.params)")]
+pub struct ArrowFunctionExpressionParams<'a, 'b>(pub &'b ArrowFunctionExpression<'a>);
+
+impl ESTree for ArrowFunctionExpressionParams<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.params.serialize(serializer);
+    }
+}
+
 // ----------------------------------------
 // Import / export
 // ----------------------------------------
@@ -802,3 +815,269 @@ impl ESTree for ParenthesizedExpressionConverter<'_, '_> {
         state.end();
     }
 }
+
+// ----------------------------------------
+// FromESTreeConverter implementations
+// ----------------------------------------
+//
+// These implement the inverse of ESTree serialization for `#[estree(via = ...)]` converters.
+// Each converter takes the ESTree JSON representation and produces the Rust field value.
+// These are gated by the `deserialize` feature since they depend on the deserialize module.
+
+#[cfg(feature = "deserialize")]
+mod from_estree_converters {
+    use crate::ast::js;
+    use crate::deserialize::{DeserError, DeserResult, FromESTree, FromESTreeConverter};
+    use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
+
+    use super::{
+        ArrowFunctionExpressionBody, ArrowFunctionExpressionParams,
+        AssignmentTargetPropertyIdentifierInit, ExportAllDeclarationWithClause,
+        ExportNamedDeclarationWithClause, FunctionParams, ImportDeclarationSpecifiers,
+        ImportDeclarationWithClause,
+    };
+
+    /// Deserialize `with_clause` field from ESTree `attributes` array for `ImportDeclaration`.
+    ///
+    /// ESTree represents import attributes as an array directly on the ImportDeclaration:
+    /// ```json
+    /// { "type": "ImportDeclaration", "attributes": [...] }
+    /// ```
+    ///
+    /// oxc represents this as `Option<Box<WithClause>>` where WithClause contains the array.
+    impl<'a> FromESTreeConverter<'a> for ImportDeclarationWithClause<'a, '_> {
+        type Output = Option<ABox<'a, js::WithClause<'a>>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // ESTree gives us the array directly (or null)
+            if value.is_null() {
+                return Ok(None);
+            }
+
+            let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
+            if arr.is_empty() {
+                return Ok(None);
+            }
+
+            // Deserialize each ImportAttribute
+            let mut with_entries = AVec::with_capacity_in(arr.len(), allocator);
+            for item in arr {
+                let attr: js::ImportAttribute = FromESTree::from_estree(item, allocator)?;
+                with_entries.push(attr);
+            }
+
+            Ok(Some(ABox::new_in(
+                js::WithClause {
+                    span: oxc_span::SPAN,
+                    keyword: js::WithClauseKeyword::With,
+                    with_entries,
+                },
+                allocator,
+            )))
+        }
+    }
+
+    /// Deserialize `with_clause` field from ESTree `attributes` array for `ExportNamedDeclaration`.
+    impl<'a> FromESTreeConverter<'a> for ExportNamedDeclarationWithClause<'a, '_> {
+        type Output = Option<ABox<'a, js::WithClause<'a>>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Reuse the same logic as ImportDeclarationWithClause
+            ImportDeclarationWithClause::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `with_clause` field from ESTree `attributes` array for `ExportAllDeclaration`.
+    impl<'a> FromESTreeConverter<'a> for ExportAllDeclarationWithClause<'a, '_> {
+        type Output = Option<ABox<'a, js::WithClause<'a>>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Reuse the same logic as ImportDeclarationWithClause
+            ImportDeclarationWithClause::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `specifiers` field for `ImportDeclaration`.
+    ///
+    /// ESTree always has `specifiers` as an array, but oxc has `Option<Vec<...>>` where
+    /// `None` means `import 'foo'` (no specifiers at all, not even empty array).
+    impl<'a> FromESTreeConverter<'a> for ImportDeclarationSpecifiers<'a, '_> {
+        type Output = Option<AVec<'a, js::ImportDeclarationSpecifier<'a>>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            if value.is_null() {
+                return Ok(None);
+            }
+
+            let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
+
+            // Deserialize each specifier
+            let mut specifiers = AVec::with_capacity_in(arr.len(), allocator);
+            for item in arr {
+                let spec: js::ImportDeclarationSpecifier =
+                    FromESTree::from_estree(item, allocator)?;
+                specifiers.push(spec);
+            }
+
+            Ok(Some(specifiers))
+        }
+    }
+
+    /// Deserialize `init` field for `AssignmentTargetPropertyIdentifier`.
+    ///
+    /// ESTree serializes this as either:
+    /// - `{ type: "Identifier", ... }` (when no init)
+    /// - `{ type: "AssignmentPattern", left: {...}, right: {...} }` (when init exists)
+    ///
+    /// We need to extract the `right` value from AssignmentPattern as the init, or return None.
+    impl<'a> FromESTreeConverter<'a> for AssignmentTargetPropertyIdentifierInit<'a> {
+        type Output = Option<js::Expression<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // The value is the entire serialized node (Identifier or AssignmentPattern)
+            // Check if it's an AssignmentPattern
+            let type_str = value.get("type").and_then(|t| t.as_str());
+            if type_str == Some("AssignmentPattern") {
+                // Has init - extract the 'right' value
+                if let Some(right) = value.get("right") {
+                    let init: js::Expression = FromESTree::from_estree(right, allocator)?;
+                    return Ok(Some(init));
+                }
+            }
+            // No init
+            Ok(None)
+        }
+    }
+
+    /// Deserialize function `params` field.
+    ///
+    /// ESTree has `params` as an array that may include `this_param` in TS.
+    /// oxc has separate `params` (FormalParameters) and `this_param` fields.
+    /// Also handles `RestElement` which ESTree includes in params array but oxc
+    /// stores separately in the `rest` field.
+    impl<'a> FromESTreeConverter<'a> for FunctionParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // The value is the params array from ESTree
+            // Wrap it in a FormalParameters-like structure for deserialization
+            let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
+
+            let mut items = AVec::with_capacity_in(arr.len(), allocator);
+            let mut rest: Option<ABox<'a, js::FormalParameterRest<'a>>> = None;
+
+            for item in arr {
+                let item_type = item.get("type").and_then(|t| t.as_str());
+                match item_type {
+                    // Skip TSThisParameter - it's stored in a separate field in oxc
+                    Some("TSThisParameter") => continue,
+                    // RestElement is stored in the `rest` field, not `items`
+                    Some("RestElement") => {
+                        let rest_elem: js::BindingRestElement =
+                            FromESTree::from_estree(item, allocator)?;
+                        let span = rest_elem.span;
+                        // Extract type annotation if present (for TypeScript)
+                        let type_annotation = item
+                            .get("typeAnnotation")
+                            .filter(|v| !v.is_null())
+                            .map(|v| -> DeserResult<_> {
+                                Ok(ABox::new_in(FromESTree::from_estree(v, allocator)?, allocator))
+                            })
+                            .transpose()?;
+                        rest = Some(ABox::new_in(
+                            js::FormalParameterRest { span, rest: rest_elem, type_annotation },
+                            allocator,
+                        ));
+                    }
+                    // Regular parameters go into items
+                    _ => {
+                        let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
+                        items.push(param);
+                    }
+                }
+            }
+
+            Ok(ABox::new_in(
+                js::FormalParameters {
+                    span: oxc_span::SPAN,
+                    kind: js::FormalParameterKind::FormalParameter,
+                    items,
+                    rest,
+                },
+                allocator,
+            ))
+        }
+    }
+
+    /// Deserialize `params` field for `ArrowFunctionExpression`.
+    ///
+    /// Arrow functions don't have `this_param`, so this is simpler than FunctionParams.
+    impl<'a> FromESTreeConverter<'a> for ArrowFunctionExpressionParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as FunctionParams but without this_param handling
+            FunctionParams::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize arrow function `body` field.
+    ///
+    /// ESTree represents body as either:
+    /// - A `BlockStatement` (when expression is false)
+    /// - An `Expression` (when expression is true)
+    ///
+    /// oxc always stores it as `FunctionBody`, converting expression to expression statement.
+    impl<'a> FromESTreeConverter<'a> for ArrowFunctionExpressionBody<'a> {
+        type Output = ABox<'a, js::FunctionBody<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            let type_str = value.get("type").and_then(|t| t.as_str());
+
+            if type_str == Some("BlockStatement") {
+                // It's a block statement - deserialize as FunctionBody
+                let body: js::FunctionBody = FromESTree::from_estree(value, allocator)?;
+                Ok(ABox::new_in(body, allocator))
+            } else {
+                // It's an expression - wrap in expression statement and function body
+                let expr: js::Expression = FromESTree::from_estree(value, allocator)?;
+                let span = crate::deserialize::parse_span_or_empty(value);
+                let stmt = js::Statement::ExpressionStatement(ABox::new_in(
+                    js::ExpressionStatement { span, expression: expr },
+                    allocator,
+                ));
+                let mut statements = AVec::with_capacity_in(1, allocator);
+                statements.push(stmt);
+
+                Ok(ABox::new_in(
+                    js::FunctionBody { span, directives: AVec::new_in(allocator), statements },
+                    allocator,
+                ))
+            }
+        }
+    }
+} // mod from_estree_converters

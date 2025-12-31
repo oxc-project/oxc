@@ -2,11 +2,61 @@ import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { getAndClearCachedParseResult } from "./parsers.ts";
 import { diagnostics } from "./report.ts";
+import { setExternalScopeManager } from "./scope.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
-import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import {
+  ast,
+  initAst,
+  resetSourceAndAst,
+  setupSourceForFile,
+  setupSourceForCustomParser,
+} from "./source_code.ts";
+import type { Node, Program } from "../generated/types.d.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
+
+/**
+ * Traverse AST and set parent pointers on all nodes.
+ *
+ * ESLint parsers don't set parent pointers - ESLint does this during traversal
+ * before rules run. We need to do the same for custom parser ASTs.
+ *
+ * @param ast - The root Program node
+ */
+function setParentPointers(ast: Program): void {
+  const visit = (value: unknown, parent: Node | null): void => {
+    if (value == null || typeof value !== "object") return;
+
+    if (Array.isArray(value)) {
+      for (let i = 0, len = value.length; i < len; i++) {
+        visit(value[i], parent);
+      }
+      return;
+    }
+
+    // Only set parent on AST nodes (objects with 'type' property)
+    const node = value as Record<string, unknown>;
+    if ("type" in node) {
+      node.parent = parent;
+      // Visit all properties that could contain child nodes
+      for (const key in node) {
+        if (key !== "parent" && key !== "range" && key !== "loc") {
+          visit(node[key], node as unknown as Node);
+        }
+      }
+    }
+  };
+
+  // Program node's parent is null
+  (ast as unknown as Record<string, unknown>).parent = null;
+  for (const key in ast) {
+    if (key !== "parent" && key !== "range" && key !== "loc") {
+      visit((ast as unknown as Record<string, unknown>)[key], ast);
+    }
+  }
+}
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
 
 import {
@@ -270,4 +320,223 @@ export function resetStateAfterError() {
   ancestors.length = 0;
   resetFile();
   resetCfgWalk();
+}
+
+/**
+ * Lint a file using a pre-parsed AST from a custom parser.
+ *
+ * This is used for files parsed by custom JS parsers configured via `jsParsers`.
+ * The AST is already parsed and provided as an ESTree-compatible object.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of the file
+ * @param astJson - Pre-parsed AST as JSON string
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
+ * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
+ * @param parserServicesJson - Parser services from parseForESLint, as JSON string (or "null")
+ * @returns Diagnostics or error serialized to JSON string
+ */
+export function lintFileWithCustomAst(
+  filePath: string,
+  sourceText: string,
+  astJson: string,
+  ruleIds: number[],
+  optionsIds: number[],
+  settingsJSON: string,
+  globalsJSON: string,
+  parserServicesJson: string,
+): string | null {
+  try {
+    lintFileWithCustomAstImpl(
+      filePath,
+      sourceText,
+      astJson,
+      ruleIds,
+      optionsIds,
+      settingsJSON,
+      globalsJSON,
+      parserServicesJson,
+    );
+  } catch (err) {
+    // For custom parser files in Phase 1, some rules may fail because they require
+    // scope information that isn't available. Instead of failing entirely, we add
+    // the error as a diagnostic and return any diagnostics collected before the error.
+    // This allows successful rules to report their findings even if one rule fails.
+    //
+    // Common causes: Rules using eslint-utils ReferenceTracker, which requires scope
+    // info from parseForESLint() that isn't passed through in Phase 1.
+    const errorMessage = getErrorMessage(err);
+
+    // Add error as a diagnostic at position 0 (start of file)
+    // ruleIndex u32::MAX (4294967295) indicates this is a system error, not from a specific rule
+    diagnostics.push({
+      message: `Rule error (may require scope info not available in Phase 1): ${errorMessage}`,
+      start: 0,
+      end: 0,
+      ruleIndex: 4294967295, // u32::MAX sentinel value
+      fixes: null,
+      messageId: null,
+    });
+
+    // Reset traversal state but preserve diagnostics
+    ancestors.length = 0;
+  }
+
+  let ret: string | null = null;
+
+  // Avoid JSON serialization in common case that there are no diagnostics to report
+  if (diagnostics.length !== 0) {
+    ret = JSON.stringify({ Success: diagnostics });
+    diagnostics.length = 0;
+  }
+
+  resetFile();
+
+  return ret;
+}
+
+/**
+ * Run rules on a file with a pre-parsed AST.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of the file
+ * @param astJson - Pre-parsed AST as JSON string
+ * @param ruleIds - IDs of rules to run on this file
+ * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
+ * @param settingsJSON - Settings for this file, as JSON string
+ * @param globalsJSON - Globals for this file, as JSON string
+ * @param parserServicesJson - Parser services from parseForESLint, as JSON string (or "null")
+ * @throws {Error} If any parameters are invalid
+ * @throws {*} If any rule throws
+ */
+function lintFileWithCustomAstImpl(
+  filePath: string,
+  sourceText: string,
+  astJson: string,
+  ruleIds: number[],
+  optionsIds: number[],
+  settingsJSON: string,
+  globalsJSON: string,
+  parserServicesJson: string,
+) {
+  // Debug asserts that input is valid
+  debugAssert(
+    typeof filePath === "string" && filePath.length > 0,
+    "`filePath` should be a non-empty string",
+  );
+  debugAssert(typeof sourceText === "string", "`sourceText` should be a string");
+  debugAssert(typeof astJson === "string", "`astJson` should be a string");
+  debugAssert(Array.isArray(ruleIds) && ruleIds.length > 0, "`ruleIds` should be non-empty array");
+  debugAssert(Array.isArray(optionsIds), "`optionsIds` should be an array");
+  debugAssert(
+    ruleIds.length === optionsIds.length,
+    "`ruleIds` and `optionsIds` should be same length",
+  );
+
+  // Parse parser services
+  let parserServices: Record<string, unknown> = {};
+  if (parserServicesJson && parserServicesJson !== "null") {
+    parserServices = JSON.parse(parserServicesJson) as Record<string, unknown>;
+  }
+
+  // Pass file path to context module
+  setupFileContext(filePath);
+
+  // Retrieve the cached parse result from parseFile (if available).
+  // The cache contains the original AST and scopeManager.
+  // We prefer the cached AST over the JSON-deserialized one because:
+  // 1. ScopeManager has methods that can't be serialized to JSON
+  // 2. ScopeManager references the same AST node objects
+  const cachedResult = getAndClearCachedParseResult(filePath);
+  let parsedAst: Program;
+
+  if (cachedResult) {
+    parsedAst = cachedResult.ast as Program;
+    // ESLint parsers don't set parent pointers - ESLint does this during traversal.
+    // We need to do the same so rules can traverse up the AST via node.parent.
+    setParentPointers(parsedAst);
+    if (cachedResult.scopeManager) {
+      setExternalScopeManager(cachedResult.scopeManager);
+    }
+  } else {
+    // Fallback to JSON-deserialized AST
+    parsedAst = JSON.parse(astJson) as Program;
+    // Also set parent pointers for fallback case
+    setParentPointers(parsedAst);
+  }
+
+  // Set up source with pre-parsed AST
+  const hasBOM = false; // TODO: Detect BOM from source text
+  setupSourceForCustomParser(sourceText, parsedAst, hasBOM, parserServices);
+
+  // Pass settings and globals JSON to modules that handle them
+  setSettingsForFile(settingsJSON);
+  setGlobalsForFile(globalsJSON);
+
+  // Get visitors for this file from all rules
+  initCompiledVisitor();
+
+  for (let i = 0, len = ruleIds.length; i < len; i++) {
+    const ruleId = ruleIds[i];
+    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
+    const ruleDetails = registeredRules[ruleId];
+
+    // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
+    ruleDetails.ruleIndex = i;
+
+    // Set `options` for rule
+    const optionsId = optionsIds[i];
+    debugAssertIsNonNull(allOptions);
+    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+
+    // If the rule has no user-provided options, use the plugin-provided default
+    ruleDetails.options =
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+
+    let { visitor } = ruleDetails;
+    if (visitor === null) {
+      // Rule defined with `create` method
+      debugAssertIsNonNull(ruleDetails.rule.create);
+      visitor = ruleDetails.rule.create(ruleDetails.context);
+    } else {
+      // Rule defined with `createOnce` method
+      const { beforeHook, afterHook } = ruleDetails;
+      if (beforeHook !== null) {
+        const shouldRun = beforeHook();
+        if (shouldRun === false) continue;
+      }
+      if (afterHook !== null) afterHooks.push(afterHook);
+    }
+
+    addVisitorToCompiled(visitor);
+  }
+
+  const visitorState = finalizeCompiledVisitor();
+
+  // Visit AST
+  if (visitorState !== VISITOR_EMPTY) {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
+
+    if (visitorState === VISITOR_CFG) {
+      walkProgramWithCfg(ast, compiledVisitor);
+    } else {
+      walkProgram(ast, compiledVisitor);
+    }
+
+    debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
+  }
+
+  // Run `after` hooks
+  const afterHooksLen = afterHooks.length;
+  if (afterHooksLen !== 0) {
+    for (let i = 0; i < afterHooksLen; i++) {
+      (0, afterHooks[i])();
+    }
+    afterHooks.length = 0;
+  }
 }

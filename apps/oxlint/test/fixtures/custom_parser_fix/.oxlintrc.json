@@ -1,0 +1,12 @@
+{
+  "categories": { "correctness": "off" },
+  "overrides": [
+    {
+      "files": ["*.custom"],
+      "jsParser": "../custom_parser/parser.ts",
+      "rules": {
+        "no-var": "warn"
+      }
+    }
+  ]
+}

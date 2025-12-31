@@ -1,0 +1,15 @@
+{
+  "categories": { "correctness": "off" },
+  "overrides": [
+    {
+      "files": ["*.custom"],
+      "jsParser": "./parser.ts",
+      "jsPlugins": ["./plugin.ts"],
+      "rules": {
+        "custom-parser-plugin/no-foo-var": "error",
+        "custom-parser-plugin/count-identifiers": "error",
+        "no-var": "warn"
+      }
+    }
+  ]
+}

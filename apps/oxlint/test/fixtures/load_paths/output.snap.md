@@ -3,108 +3,108 @@
 
 # stdout
 ```
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
-  help: Remove the debugger statement
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-debugger): `debugger` statement is not allowed[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
+[38;2;106;159;181m  help: [0mRemove the debugger statement
 
-  x plugin1(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin10(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin10(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin12(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin11(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin9(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin12(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin2(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin13(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin4(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin14(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin5(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin15(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin14(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin16(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin7(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin2(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin15(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin3(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin13(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin4(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin1(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin5(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin6(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin6(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin16(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin7(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin11(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin8(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin8(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
-  x plugin9(no-debugger): Unexpected Debugger Statement
-   ,-[files/index.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mplugin3(no-debugger): Unexpected Debugger Statement[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ debugger;
+   · [38;2;246;87;248m─────────[0m
+   ╰────
 
 Found 1 warning and 16 errors.
 Finished in Xms on 1 file using X threads.
