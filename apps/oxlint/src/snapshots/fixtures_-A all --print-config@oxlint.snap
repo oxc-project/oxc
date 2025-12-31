@@ -23,6 +23,7 @@ working directory: fixtures
       "rootDir": []
     },
     "react": {
+      "pragma": null,
       "formComponents": [],
       "linkComponents": [],
       "version": null

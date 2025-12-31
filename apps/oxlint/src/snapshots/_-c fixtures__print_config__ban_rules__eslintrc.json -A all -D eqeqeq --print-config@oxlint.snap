@@ -30,6 +30,7 @@ working directory:
       "rootDir": []
     },
     "react": {
+      "pragma": null,
       "formComponents": [],
       "linkComponents": [],
       "version": null

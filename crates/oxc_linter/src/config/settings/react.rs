@@ -14,6 +14,22 @@ static REACT_VERSION_REGEX: Lazy<Regex> =
 /// Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct ReactPluginSettings {
+    /// Pragma to use for React. Defaults to "React".
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "pragma": "Preact"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub pragma: Option<CompactStr>,
+
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
     /// Example:
@@ -91,6 +107,20 @@ impl ReactPluginSettings {
 
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
+    }
+
+    /// Get the React pragma. Defaults to "React" if not set.
+    pub fn get_pragma(&self) -> &str {
+        self.pragma.as_deref().unwrap_or("React")
+    }
+
+    /// Check if the configured React version is at least the given version.
+    /// Returns true if no version is configured (assumes latest).
+    pub fn version_at_least(&self, major: u32, minor: u32, patch: u32) -> bool {
+        match &self.version {
+            Some(v) => (v.major(), v.minor(), v.patch()) >= (major, minor, patch),
+            None => true, // No version configured, assume latest
+        }
     }
 }
 
