@@ -14,8 +14,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_expect_jest_fn_call,
-        parse_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, KnownMemberExpressionProperty, PossibleJestNode,
+        parse_expect_jest_fn_call, parse_jest_fn_call,
     },
 };
 
@@ -265,7 +265,7 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            if expect_call.members.iter().any(|member| member.is_name_equal("not")) {
+            if expect_call.members.iter().any(is_not_modifier_member) {
                 continue;
             }
 
@@ -286,7 +286,6 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            // TODO CHANGE FOR IDENTITY REFERENCE
             let Some(arguments) = expect_call.expect_arguments else {
                 continue;
             };
@@ -387,6 +386,10 @@ impl PreferCalledExactlyOnceWith {
             );
         }
     }
+}
+
+fn is_not_modifier_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
+    member.is_name_equal("not")
 }
 
 fn is_mock_reset_call_expression<'a>(
