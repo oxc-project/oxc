@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Because lack of this in the beforeRouteEnter.
-    /// This behavior isn't obvious, so it's pretty easy to make a TypeError. Especially during some refactor.
+    /// This behavior isn't obvious, so it's pretty easy to make a TypeError. Especially while refactoring.
     ///
     /// ### Examples
     ///
@@ -56,37 +56,38 @@ declare_oxc_lint!(
 
 impl Rule for NoThisInBeforeRouteEnter {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
-            return;
-        };
+        let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else { return };
         let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
             &export_default_decl.declaration
         else {
             return;
         };
 
-        for prop in &obj_expr.properties {
-            if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-                let Some(key_name) = obj_prop.key.static_name() else {
-                    continue;
-                };
-                if key_name != "beforeRouteEnter" {
-                    continue;
-                }
-                let function_body = match &obj_prop.value {
-                    Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-                    _ => continue,
-                };
+        let before_route_enter_prop = obj_expr.properties.iter().find_map(|prop| {
+            if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+                && let Some(key_name) = obj_prop.key.static_name()
+                && key_name == "beforeRouteEnter"
+            {
+                Some(obj_prop)
+            } else {
+                None
+            }
+        });
 
-                let Some(function_body) = function_body else {
-                    continue;
-                };
+        if let Some(before_route_enter_prop) = before_route_enter_prop {
+            let function_body = match &before_route_enter_prop.value {
+                Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+                _ => return,
+            };
 
-                let mut finder = ThisFinder::new();
-                finder.visit_function_body(function_body);
-                for span in finder.found_this_expressions {
-                    ctx.diagnostic(no_this_in_before_route_enter_diagnostic(span));
-                }
+            let Some(function_body) = function_body else {
+                return;
+            };
+
+            let mut finder = ThisFinder::new();
+            finder.visit_function_body(function_body);
+            for span in finder.found_this_expressions {
+                ctx.diagnostic(no_this_in_before_route_enter_diagnostic(span));
             }
         }
     }
@@ -122,72 +123,109 @@ fn test() {
     let pass = vec![
         (
             r#"
-			<template>
-			  <p>{{ greeting }} World!</p>
-			</template>
-
-			<script>
-			export default {
-			  data () {
-			    return {
-			      greeting: "Hello"
-			    };
-			  },
-			};"#,
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+                const variable = 42;
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+                someFunction(42)
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+            };
+            </script>"#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r"
-			<script>
-			export default {
-			  beforeRouteEnter(to, from, next) {
-			    next();
-			  }
-			};
-			</script>",
-            None,
-            None,
-            Some(PathBuf::from("test.vue")),
-        ),
-        (
-            r"
-			<script>
-			let a = {
-			  beforeRouteEnter() {
-			    this.a;
-			  }
-			};
-			export default a;
-			</script>",
-            None,
-            None,
-            Some(PathBuf::from("test.vue")),
-        ),
-        (
-            r"
-			<script>
-			export default {
-			  beforeRouteEnter(to, from, next) {
-			    function test() {
+            <script>
+            export default {
+              beforeRouteEnter(to, from, next) {
+                function test() {
                   this.a;
                 }
-			  }
-			};
-			</script>",
+              }
+            };
+            </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r"
-			export default {
-			  beforeRouteEnter(to, from, next) {
+            <script>
+            let a = {
+              beforeRouteEnter() {
                 this.a;
-			  }
-			};
-			",
+              }
+            };
+            export default a;
+            </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+            export default {
+              beforeRouteEnter(to, from, next) {
+                this.a;
+              }
+            };
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
@@ -196,41 +234,110 @@ fn test() {
 
     let fail = vec![
         (
-            r"
-			<script>
-			export default {
-			  beforeRouteEnter(to, from, next) {
-			    this.a;
-			    next();
-			  }
-			};
-			</script>",
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+                this.xxx();
+              }
+            };
+            </script>"#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r"
-			<script>
-			export default {
-			  beforeRouteEnter: function(to, from, next) {
-			    this.b;
-			  }
-			};
-			</script>",
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter: function() {
+                this.method();
+              }
+            };
+            </script>"#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r"
-			<script>
-			export default {
-			  beforeRouteEnter: function(to, from, next) {
-			    this.atrr = this.method();
-			  }
-			};
-			</script>",
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+                this.attr = this.method();
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter: function() {
+                this.attr = this.method();
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // this inside if condition
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter() {
+                if (this.method()) {}
+              }
+            };
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script>
+            export default {
+              data () {
+                return {
+                  greeting: "Hello"
+                };
+              },
+              beforeRouteEnter: function() {
+                if (true) { this.method(); }
+              }
+            };
+            </script>"#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
