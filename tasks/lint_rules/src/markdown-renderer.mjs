@@ -72,8 +72,8 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
   ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported}, ⏳: ${counters.isPendingFix} / total: ${counters.total}
 </summary>
 
-| Status | Name |
-| :----: | :--- |
+| Status | Name | Rationale |
+| :----: | :--- | :-------- |
 ${views
   .map((v) => {
     let status = "";
@@ -81,11 +81,12 @@ ${views
     if (v.isNotSupported) status += "🚫";
     if (v.isPendingFix) status += "⏳";
     const name = v.docsUrl ? `[${v.name}](${v.docsUrl})` : v.name;
-    return `| ${status} | ${name} |`;
+    const rationale = v.unsupportedRationale ?? "";
+    return `| ${status} | ${name} | ${rationale} |`;
   })
   .join("\n")}
 
-✅ = Implemented, 🚫 = No need to implement, ⏳ = Fix pending
+✅ = Implemented, 🚫 = Not intending to implement, ⏳ = Fix pending
 
 </details>
 `;
