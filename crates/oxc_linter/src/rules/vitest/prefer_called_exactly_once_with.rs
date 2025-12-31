@@ -14,9 +14,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
-        parse_expect_and_typeof_vitest_fn_call, parse_expect_jest_fn_call,
-        parse_general_jest_fn_call, parse_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_expect_jest_fn_call,
+        parse_jest_fn_call,
     },
 };
 
@@ -35,6 +34,23 @@ enum ExpectPairStates {
     WaitingOnce,
     WaitingWith,
     Paired,
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+enum MatcherKind {
+    ToHaveBeenCalledOnce,
+    ToHaveBeenCalledWith,
+    Unknown,
+}
+
+impl MatcherKind {
+    pub fn from(name: &str) -> Self {
+        match name {
+            "toHaveBeenCalledOnce" => Self::ToHaveBeenCalledOnce,
+            "toHaveBeenCalledWith" => Self::ToHaveBeenCalledWith,
+            _ => Self::Unknown,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -112,17 +128,19 @@ impl TrackingExpectPair {
         CompactStr::new(expect.as_ref())
     }
 
-    fn is_expected_matcher(&self, matcher: &str) -> bool {
+    fn is_expected_matcher(&self, matcher: &MatcherKind) -> bool {
         if self.is_paired() {
             return false;
         }
 
-        if self.current_state == ExpectPairStates::WaitingOnce && matcher == "toHaveBeenCalledOnce"
+        if self.current_state == ExpectPairStates::WaitingOnce
+            && matcher == &MatcherKind::ToHaveBeenCalledOnce
         {
             return false;
         }
 
-        if self.current_state == ExpectPairStates::WaitingWith && matcher == "toHaveBeenCalledWith"
+        if self.current_state == ExpectPairStates::WaitingWith
+            && matcher == &MatcherKind::ToHaveBeenCalledWith
         {
             return false;
         }
@@ -172,36 +190,6 @@ impl Rule for PreferCalledExactlyOnceWith {
     }
 }
 
-fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    let args = &call_expr.arguments;
-
-    // Find the callback function (last function argument)
-    for arg in args.iter().rev() {
-        if let Some(expr) = arg.as_expression()
-            && matches!(
-                expr,
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-            )
-        {
-            return Some(expr);
-        }
-    }
-
-    None
-}
-
-fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&FunctionBody<'a>> {
-    match callback {
-        Expression::FunctionExpression(func) => func.body.as_ref().map(|body| body.as_ref()),
-        Expression::ArrowFunctionExpression(func) => {
-            // Arrow functions with expression bodies implicitly return the expression
-            // So we don't need to check those - they're always "returned"
-            Some(&func.body)
-        }
-        _ => None,
-    }
-}
-
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
         &self,
@@ -212,8 +200,8 @@ impl PreferCalledExactlyOnceWith {
         let matchers_to_combine = {
             //TODO CAPACITY
             let mut set_matchers = FxHashSet::default();
-            set_matchers.insert(CompactStr::new("toHaveBeenCalledOnce"));
-            set_matchers.insert(CompactStr::new("toHaveBeenCalledWith"));
+            set_matchers.insert(MatcherKind::ToHaveBeenCalledOnce);
+            set_matchers.insert(MatcherKind::ToHaveBeenCalledWith);
 
             set_matchers
         };
@@ -307,15 +295,16 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            let Some(matcher) = expect_call.members.get(matcher_index) else {
+            let Some(matcher) = expect_call
+                .members
+                .get(matcher_index)
+                .and_then(|matcher| matcher.name())
+                .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
+            else {
                 continue;
             };
 
-            let Some(matcher_name) = matcher.name() else {
-                continue;
-            };
-
-            if !matchers_to_combine.contains(matcher_name.as_ref()) {
+            if !matchers_to_combine.contains(&matcher) {
                 continue;
             };
 
@@ -333,7 +322,7 @@ impl PreferCalledExactlyOnceWith {
 
             let duplicate_entry = variables_expected
                 .get(&variable_expected_name)
-                .map(|expects| expects.is_expected_matcher(matcher_name.as_ref()))
+                .map(|expects| expects.is_expected_matcher(&matcher))
                 .unwrap_or(false);
 
             if duplicate_entry {
@@ -341,9 +330,8 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             }
 
-            // TODO MatcherKindEnum
-            match matcher_name.as_ref() {
-                "toHaveBeenCalledOnce" => {
+            match matcher {
+                MatcherKind::ToHaveBeenCalledOnce => {
                     if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
                         let statement_span = GetSpan::span(statement);
                         let mut start_remove = statement_span.start;
@@ -371,7 +359,7 @@ impl PreferCalledExactlyOnceWith {
                     };
                 }
 
-                "toHaveBeenCalledWith" => {
+                MatcherKind::ToHaveBeenCalledWith => {
                     let to_be_arguments = expect_call
                         .matcher_arguments
                         .map(|arguments| {
@@ -421,7 +409,7 @@ impl PreferCalledExactlyOnceWith {
                         );
                     };
                 }
-                _ => {}
+                MatcherKind::Unknown => {}
             }
         }
 
@@ -442,6 +430,32 @@ impl PreferCalledExactlyOnceWith {
                 },
             );
         }
+    }
+}
+
+fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+    let args = &call_expr.arguments;
+
+    // Find the callback function (last function argument)
+    for arg in args.iter().rev() {
+        if let Some(expr) = arg.as_expression()
+            && matches!(
+                expr,
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+            )
+        {
+            return Some(expr);
+        }
+    }
+
+    None
+}
+
+fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
+    match callback {
+        Expression::FunctionExpression(func) => func.body.as_ref().map(|body| body.as_ref()),
+        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+        _ => None,
     }
 }
 
