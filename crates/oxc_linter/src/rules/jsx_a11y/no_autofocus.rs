@@ -66,7 +66,7 @@ impl NoAutofocus {
 }
 
 impl Rule for NoAutofocus {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut no_focus = Self::default();
 
         if let Some(arr) = value.as_array()
@@ -82,7 +82,7 @@ impl Rule for NoAutofocus {
             no_focus.set_option(true);
         }
 
-        no_focus
+        Ok(no_focus)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

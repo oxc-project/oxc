@@ -77,7 +77,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInlineComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let ignore_pattern = value
             .get(0)
             .and_then(|config| config.get("ignorePattern"))
@@ -85,7 +85,7 @@ impl Rule for NoInlineComments {
             .and_then(|pattern| RegexBuilder::new(pattern).build().ok());
         let config = NoInlineCommentsConfig { ignore_pattern };
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run_once(&self, ctx: &LintContext) {

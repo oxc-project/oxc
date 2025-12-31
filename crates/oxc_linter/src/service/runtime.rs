@@ -244,9 +244,7 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
+        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
             allocator_pool,
@@ -285,12 +283,14 @@ impl Runtime {
         use oxc_resolver::{
             ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
         };
-        let tsconfig = tsconfig_path.and_then(|path| {
-            path.is_file().then_some(TsconfigDiscovery::Manual(TsconfigOptions {
+        let tsconfig = match tsconfig_path {
+            Some(path) if path.is_file() => Some(TsconfigDiscovery::Manual(TsconfigOptions {
                 config_file: path,
                 references: TsconfigReferences::Auto,
-            }))
-        });
+            })),
+            Some(_) => None, // Path provided but file doesn't exist
+            None => Some(TsconfigDiscovery::Auto),
+        };
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
             vec![
                 (".js".into(), vec![".js".into(), ".ts".into()]),

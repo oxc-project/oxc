@@ -167,14 +167,14 @@ impl Rule for NoNoninteractiveTabindex {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default = Self::default();
 
         let Some(config) = value.get(0) else {
-            return default;
+            return Ok(default);
         };
 
-        Self(Box::new(NoNoninteractiveTabindexConfig {
+        Ok(Self(Box::new(NoNoninteractiveTabindexConfig {
             roles: config
                 .get("roles")
                 .and_then(serde_json::Value::as_array)
@@ -191,7 +191,7 @@ impl Rule for NoNoninteractiveTabindex {
                 .get("allowExpressionValues")
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(default.0.allow_expression_values),
-        }))
+        })))
     }
 }
 

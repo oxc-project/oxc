@@ -10,6 +10,7 @@ workspace = true
 
 [[bin]]
 name = "vscode_docs"
+test = false
 doctest = false
 
 [dependencies]

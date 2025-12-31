@@ -79,7 +79,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAlias {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
         let allowed_names: FxHashSet<CompactStr> = obj
             .and_then(|v| v.get("allowedNames").or_else(|| v.get("allowNames")))
@@ -90,13 +90,13 @@ impl Rule for NoThisAlias {
             .map(CompactStr::from)
             .collect();
 
-        Self(Box::new(NoThisAliasConfig {
+        Ok(Self(Box::new(NoThisAliasConfig {
             allow_destructuring: obj
                 .and_then(|v| v.get("allowDestructuring"))
                 .and_then(Value::as_bool)
                 .unwrap_or(true),
             allowed_names,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

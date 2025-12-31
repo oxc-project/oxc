@@ -8,6 +8,10 @@ publish = false
 [lints]
 workspace = true
 
+[lib]
+doctest = false
+test = false
+
 [dependencies]
 handlebars = { workspace = true }
 itertools = { workspace = true }

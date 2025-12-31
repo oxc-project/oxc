@@ -11,11 +11,12 @@ use oxc_formatter::{
 use oxc_parser::Parser;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
-use crate::{
-    capabilities::Capabilities,
-    formatter::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions},
-    tool::{Tool, ToolBuilder, ToolRestartChanges},
+use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
+
+use oxc_language_server::{
+    Capabilities,
     utils::normalize_path,
+    {Tool, ToolBuilder, ToolRestartChanges},
 };
 
 pub struct ServerFormatterBuilder;
@@ -115,7 +116,7 @@ impl ServerFormatterBuilder {
     }
 
     fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
-        if let Some(config_path) = config_path {
+        if let Some(config_path) = config_path.filter(|s| !s.is_empty()) {
             let config = normalize_path(root_path.join(config_path));
             if config.try_exists().is_ok_and(|exists| exists) {
                 return Some(config);
@@ -166,6 +167,7 @@ impl Tool for ServerFormatter {
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
@@ -196,12 +198,9 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, new_options_json.clone());
+        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
-        ToolRestartChanges {
-            tool: Some(Box::new(new_formatter)),
-            watch_patterns: Some(watch_patterns),
-        }
+        ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -215,7 +214,7 @@ impl Tool for ServerFormatter {
             }
         };
 
-        if let Some(config_path) = options.config_path.as_ref() {
+        if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
             return vec![config_path.clone()];
         }
 
@@ -224,16 +223,17 @@ impl Tool for ServerFormatter {
 
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
 
-        let new_formatter = ServerFormatterBuilder::build(root_uri, options);
+        let new_formatter = builder.build_boxed(root_uri, options);
 
         ToolRestartChanges {
-            tool: Some(Box::new(new_formatter)),
+            tool: Some(new_formatter),
             // TODO: update watch patterns if config_path changed
             watch_patterns: None,
         }
@@ -371,7 +371,8 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests_builder {
-    use crate::{ServerFormatterBuilder, ToolBuilder, capabilities::Capabilities};
+    use crate::lsp::server_formatter::ServerFormatterBuilder;
+    use oxc_language_server::{Capabilities, ToolBuilder};
 
     #[test]
     fn test_server_capabilities() {
@@ -393,7 +394,7 @@ mod test_watchers {
     const FAKE_DIR: &str = "fixtures/formatter/watchers";
 
     mod init_watchers {
-        use crate::formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
         use serde_json::json;
 
         #[test]
@@ -416,13 +417,25 @@ mod test_watchers {
             assert_eq!(patterns.len(), 1);
             assert_eq!(patterns[0], "configs/formatter.json");
         }
+
+        #[test]
+        fn test_empty_string_config_path() {
+            let patterns = Tester::new(
+                FAKE_DIR,
+                json!({
+                    "fmt.configPath": ""
+                }),
+            )
+            .get_watcher_patterns();
+            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns[0], ".oxfmtrc.json");
+            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+        }
     }
 
     mod handle_configuration_change {
-        use crate::{
-            ToolRestartChanges,
-            formatter::{server_formatter::test_watchers::FAKE_DIR, tester::Tester},
-        };
+        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
+        use oxc_language_server::ToolRestartChanges;
         use serde_json::json;
 
         #[test]
@@ -452,7 +465,7 @@ mod tests {
     use serde_json::json;
 
     use super::compute_minimal_text_edit;
-    use crate::formatter::tester::Tester;
+    use crate::lsp::tester::Tester;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -538,7 +551,7 @@ mod tests {
     #[test]
     fn test_formatter() {
         Tester::new(
-            "fixtures/formatter/basic",
+            "test/fixtures/lsp/basic",
             json!({
                 "fmt.experimental": true
             }),
@@ -549,7 +562,7 @@ mod tests {
     #[test]
     fn test_root_config_detection() {
         Tester::new(
-            "fixtures/formatter/root_config",
+            "test/fixtures/lsp/root_config",
             json!({
                 "fmt.experimental": true
             }),
@@ -560,7 +573,7 @@ mod tests {
     #[test]
     fn test_custom_config_path() {
         Tester::new(
-            "fixtures/formatter/custom_config_path",
+            "test/fixtures/lsp/custom_config_path",
             json!({
                 "fmt.experimental": true,
                 "fmt.configPath": "./format.json",
@@ -572,7 +585,7 @@ mod tests {
     #[test]
     fn test_ignore_files() {
         Tester::new(
-            "fixtures/formatter/ignore-file",
+            "test/fixtures/lsp/ignore-file",
             json!({
                 "fmt.experimental": true
             }),
@@ -583,7 +596,7 @@ mod tests {
     #[test]
     fn test_ignore_pattern() {
         Tester::new(
-            "fixtures/formatter/ignore-pattern",
+            "test/fixtures/lsp/ignore-pattern",
             json!({
                 "fmt.experimental": true
             }),

@@ -77,7 +77,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInnerDeclarations {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
             NoInnerDeclarationsConfig::default,
             |value| match value {
@@ -100,7 +100,7 @@ impl Rule for NoInnerDeclarations {
             None
         };
 
-        Self { config, block_scoped_functions }
+        Ok(Self { config, block_scoped_functions })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

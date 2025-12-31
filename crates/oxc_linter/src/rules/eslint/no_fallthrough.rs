@@ -242,14 +242,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFallthrough {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.get(0) else { return Self::default() };
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let Some(value) = value.get(0) else { return Ok(Self::default()) };
         let comment_pattern = value.get("commentPattern").and_then(serde_json::Value::as_str);
         let allow_empty_case = value.get("allowEmptyCase").and_then(serde_json::Value::as_bool);
         let report_unused_fallthrough_comment =
             value.get("reportUnusedFallthroughComment").and_then(serde_json::Value::as_bool);
 
-        Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment)
+        Ok(Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

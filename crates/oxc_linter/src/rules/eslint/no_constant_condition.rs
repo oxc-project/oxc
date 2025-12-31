@@ -107,15 +107,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstantCondition {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
 
-        Self {
+        Ok(Self {
             check_loops: obj
                 .and_then(|v| v.get("checkLoops"))
                 .and_then(CheckLoops::from)
                 .unwrap_or_default(),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

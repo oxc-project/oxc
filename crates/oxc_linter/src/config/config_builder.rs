@@ -783,6 +783,7 @@ mod test {
             assert_eq!(*severity, AllowWarnDeny::Deny);
         }
     }
+
     // turn on a rule that isn't configured yet and set it to "warn"
     // note that this is an eslint rule, a plugin that's already turned on.
     #[test]

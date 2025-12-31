@@ -1,8 +1,8 @@
 ---
-source: crates/oxc_language_server/src/formatter/tester.rs
+source: apps/oxfmt/src/lsp/tester.rs
 ---
 ========================================
-File: fixtures/formatter/custom_config_path/semicolons-as-needed.ts
+File: test/fixtures/lsp/root_config/semicolons-as-needed.ts
 ========================================
 Range: Range {
     start: Position {

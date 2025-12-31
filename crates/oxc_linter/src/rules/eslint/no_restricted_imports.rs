@@ -904,7 +904,7 @@ impl RestrictedPattern {
 }
 
 impl Rule for NoRestrictedImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut paths: Vec<RestrictedPath> = Vec::new();
         let mut patterns: Vec<RestrictedPattern> = Vec::new();
 
@@ -953,7 +953,7 @@ impl Rule for NoRestrictedImports {
             _ => {}
         }
 
-        Self(Box::new(NoRestrictedImportsConfig { paths, patterns }))
+        Ok(Self(Box::new(NoRestrictedImportsConfig { paths, patterns })))
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 5988dfa vscode: Show language server version inside sidebar status item tooltip (#17360) (Sysix)
+- d9aa426 vscode: Support diagnostic pull mode (#17211) (Sysix)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🐛 Bug Fixes

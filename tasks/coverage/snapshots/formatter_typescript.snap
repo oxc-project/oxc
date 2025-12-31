@@ -1,8 +1,8 @@
-commit: 2dfdbbab
+commit: f3770c9b
 
 formatter_typescript Summary:
-AST Parsed     : 9840/9840 (100.00%)
-Positive Passed: 9781/9840 (99.40%)
+AST Parsed     : 9841/9841 (100.00%)
+Positive Passed: 9788/9841 (99.46%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
@@ -18,14 +18,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignment
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/dynamicNames.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryNull.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes2.ts
 Expected `{` but found `Identifier`
@@ -109,10 +101,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeReso
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxExternalModuleEmit2.tsx
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentReactEmit.tsx
-Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitWhitespace2.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUncheckedIndexedAccessDestructuring.ts

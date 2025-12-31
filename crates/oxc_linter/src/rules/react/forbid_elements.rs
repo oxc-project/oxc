@@ -146,7 +146,7 @@ impl Rule for ForbidElements {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut forbid_elements: FxHashMap<CompactStr, Option<CompactStr>> = FxHashMap::default();
 
         match &value {
@@ -167,7 +167,7 @@ impl Rule for ForbidElements {
             _ => {}
         }
 
-        Self(Box::new(ForbidElementsConfig { forbid_elements }))
+        Ok(Self(Box::new(ForbidElementsConfig { forbid_elements })))
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

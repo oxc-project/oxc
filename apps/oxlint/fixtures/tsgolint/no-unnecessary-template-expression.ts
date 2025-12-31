@@ -1,3 +1,4 @@
-const str1 = `Hello world`;
+const text = 'hello';
+const wrapped = `${text}`;
 
 export {};

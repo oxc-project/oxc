@@ -158,10 +158,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for BanTsComment {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0).unwrap_or_default();
 
-        Self(Box::new(BanTsCommentConfig {
+        Ok(Self(Box::new(BanTsCommentConfig {
             ts_expect_error: config
                 .get("ts-expect-error")
                 .and_then(DirectiveConfig::from_json)
@@ -182,7 +182,7 @@ impl Rule for BanTsComment {
                 .get("minimumDescriptionLength")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(3),
-        }))
+        })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

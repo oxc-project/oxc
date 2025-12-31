@@ -76,7 +76,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxClassesPerFile {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         // if it's a number, treat it as the max value
         if let Some(max) = value
             .get(0)
@@ -84,11 +84,11 @@ impl Rule for MaxClassesPerFile {
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false }))
+            Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<MaxClassesPerFile>>(value)
+            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
                 .unwrap_or_default()
-                .into_inner()
+                .into_inner())
         }
     }
 

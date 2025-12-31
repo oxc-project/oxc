@@ -164,7 +164,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAsyncEndpointHandlers {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut allowed_names: Vec<CompactStr> = value
             .get(0)
             .and_then(Value::as_object)
@@ -175,7 +175,7 @@ impl Rule for NoAsyncEndpointHandlers {
         allowed_names.sort_unstable();
         allowed_names.dedup();
 
-        Self(Box::new(NoAsyncEndpointHandlersConfig { allowed_names }))
+        Ok(Self(Box::new(NoAsyncEndpointHandlersConfig { allowed_names })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

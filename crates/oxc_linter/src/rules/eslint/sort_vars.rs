@@ -54,14 +54,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortVars {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let ignore_case = value
             .get(0)
             .and_then(|v| v.get("ignoreCase"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self { ignore_case }
+        Ok(Self { ignore_case })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

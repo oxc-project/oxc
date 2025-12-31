@@ -168,3 +168,17 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Return the promise or chain a `catch()`.
+
+  ⚠ eslint-plugin-promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.tsx:1:19]
+ 1 │ const a = () => { Promise.resolve(null); }
+   ·                   ─────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ eslint-plugin-promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.tsx:1:34]
+ 1 │ function a() { const b = () => { Promise.resolve(null); }; return b; }
+   ·                                  ─────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.

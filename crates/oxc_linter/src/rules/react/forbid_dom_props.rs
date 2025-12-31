@@ -93,7 +93,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ForbidDomProps {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut forbid_map: FxHashMap<CompactStr, ForbidOptions> = FxHashMap::default();
 
         if let Some(config) = value.get(0)
@@ -133,7 +133,7 @@ impl Rule for ForbidDomProps {
             }
         }
 
-        Self(Box::new(ForbidDomPropsConfig { forbid: forbid_map }))
+        Ok(Self(Box::new(ForbidDomPropsConfig { forbid: forbid_map })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

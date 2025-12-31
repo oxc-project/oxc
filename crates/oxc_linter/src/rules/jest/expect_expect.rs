@@ -105,7 +105,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ExpectExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_assert_function_names_jest = vec!["expect".into()];
         let default_assert_function_names_vitest =
             vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()];
@@ -132,11 +132,11 @@ impl Rule for ExpectExpect {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(ExpectExpectConfig {
+        Ok(Self(Box::new(ExpectExpectConfig {
             assert_function_names_jest,
             assert_function_names_vitest,
             additional_test_block_functions,
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(

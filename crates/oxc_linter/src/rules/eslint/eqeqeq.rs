@@ -215,7 +215,7 @@ impl Eqeqeq {
 }
 
 impl Rule for Eqeqeq {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let first_arg = value.get(0).and_then(serde_json::Value::as_str);
 
         let null_type = value
@@ -227,7 +227,7 @@ impl Rule for Eqeqeq {
 
         let compare_type = first_arg.map(CompareType::from).unwrap_or_default();
 
-        Self { compare_type, null_type }
+        Ok(Self { compare_type, null_type })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -162,7 +162,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLargeSnapshots {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let max_size = config
@@ -185,7 +185,7 @@ impl Rule for NoLargeSnapshots {
             .map(Self::compile_allowed_snapshots)
             .unwrap_or_default();
 
-        Self(Box::new(NoLargeSnapshotsConfig { max_size, inline_max_size, allowed_snapshots }))
+        Ok(Self(Box::new(NoLargeSnapshotsConfig { max_size, inline_max_size, allowed_snapshots })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

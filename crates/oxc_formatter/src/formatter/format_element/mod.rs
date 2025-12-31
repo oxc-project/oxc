@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 use std::ptr;
 use std::{borrow::Cow, ops::Deref};
 
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+use unicode_width::UnicodeWidthStr;
 
 use oxc_allocator::Vec as ArenaVec;
 
@@ -452,7 +452,10 @@ impl TextWidth {
 
     /// Calculates width from text, handling tabs, newlines, and Unicode.
     ///
-    /// Returns early on newline detection for efficiency.
+    /// NOTE: Uses `UnicodeWidthStr::width()` for accurate emoji sequence handling.
+    /// Counting by `char` can lead to incorrect widths for complex Unicode sequences.
+    /// e.g. "🗑️" (U+1F5D1 U+FE0F) is a single emoji with width 2, but counting chars gives width 1.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
         // Fast path for empty text
         if text.is_empty() {
@@ -460,17 +463,22 @@ impl TextWidth {
         }
 
         let mut width = 0u32;
-
-        #[expect(clippy::cast_lossless)]
-        for c in text.chars() {
-            let char_width = match c {
-                '\t' => indent_width.value(),
-                '\n' => return Self::multiline(width),
-                #[expect(clippy::cast_possible_truncation)]
-                c => c.width().unwrap_or(0) as u8,
-            };
-            width += char_width as u32;
+        let mut segment_start = 0;
+        for (i, c) in text.char_indices() {
+            match c {
+                '\t' => {
+                    width += text[segment_start..i].width() as u32;
+                    width += u32::from(indent_width.value());
+                    segment_start = i + 1; // Skip the tab character
+                }
+                '\n' => {
+                    width += text[segment_start..i].width() as u32;
+                    return Self::multiline(width);
+                }
+                _ => {}
+            }
         }
+        width += text[segment_start..].width() as u32;
 
         Self::single(width)
     }
@@ -552,6 +560,31 @@ mod tests {
         let width = TextWidth::from_text("你好", indent_width(2));
         debug_assert_eq!(width.value(), 4); // Each CJK char is width 2
         debug_assert!(!width.is_multiline());
+    }
+
+    #[test]
+    fn from_text_handles_emoji_sequences() {
+        use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+        // Emoji with variation selector: 🗑️ = U+1F5D1 + U+FE0F
+        let emoji = "🗑️";
+
+        // Counting by char gives wrong width
+        let wrong: usize = emoji.chars().filter_map(UnicodeWidthChar::width).sum();
+        debug_assert_eq!(wrong, 1);
+        // Need to count by str for correct width
+        debug_assert_eq!(emoji.width(), 2);
+        // Verify `TextWidth` also gets it right
+        let width = TextWidth::from_text(emoji, indent_width(2));
+        debug_assert_eq!(width.value(), 2);
+
+        // Emoji with text
+        let width = TextWidth::from_text("🗑️ DELETE", indent_width(2));
+        debug_assert_eq!(width.value(), 9); // 2 (emoji) + 1 (space) + 6 (DELETE)
+
+        // Another emoji with variation selector: ⚠️ = U+26A0 + U+FE0F
+        let width = TextWidth::from_text("⚠️", indent_width(2));
+        debug_assert_eq!(width.value(), 2);
     }
 
     #[test]

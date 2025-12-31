@@ -75,7 +75,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MouseEventsHaveKeyEvents {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config = MouseEventsHaveKeyEventsConfig::default();
 
         if let Some(hover_in_handlers_config) = value
@@ -102,7 +102,7 @@ impl Rule for MouseEventsHaveKeyEvents {
                 .collect();
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

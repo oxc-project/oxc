@@ -903,7 +903,8 @@ mod test {
             AllowWarnDeny::Deny,
         )];
         let override_rule =
-            EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap());
+            EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
+                .unwrap();
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
             files: GlobSet::new(vec!["*.tsx"]),

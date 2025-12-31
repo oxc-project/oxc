@@ -163,7 +163,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyObjectType {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let (allow_interfaces, allow_object_types, allow_with_name) = value.get(0).map_or(
             (AllowInterfaces::Never, AllowObjectTypes::Never, None),
             |config| {
@@ -185,11 +185,11 @@ impl Rule for NoEmptyObjectType {
                 )
             },
         );
-        Self(Box::new(NoEmptyObjectTypeConfig {
+        Ok(Self(Box::new(NoEmptyObjectTypeConfig {
             allow_interfaces,
             allow_object_types,
             allow_with_name,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

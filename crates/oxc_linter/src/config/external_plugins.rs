@@ -130,7 +130,7 @@ impl JsonSchema for ExternalPluginEntry {
                          natively in Rust within oxlint and cannot be used for JS plugins:\n\
                          - react (includes react-hooks)\n\
                          - unicorn\n\
-                         - typescript\n\
+                         - typescript (includes @typescript-eslint)\n\
                          - oxc\n\
                          - import (includes import-x)\n\
                          - jsdoc\n\
@@ -141,7 +141,6 @@ impl JsonSchema for ExternalPluginEntry {
                          - react-perf\n\
                          - promise\n\
                          - node\n\
-                         - regex\n\
                          - vue\n\
                          - eslint\n\n\
                          If you need to use the JavaScript version of any of these plugins, \

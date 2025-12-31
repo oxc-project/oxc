@@ -86,7 +86,6 @@ jobs:
     name: Build Oxlint ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
-      OXC_VERSION: ${{ needs.check.outputs.oxlint_version }} # Required for `--version` to work.
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
@@ -95,7 +94,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@b9c5db3aef04caffaf95a1d03931de10fb2a140f # v2.65.1
+        uses: taiki-e/install-action@28a9d316db64b78a951f3f8587a5d08cc97ad8eb # v2.65.6
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -119,9 +118,6 @@ jobs:
       - name: Build Rust binary
         run: cross build --release -p oxlint --features allocator --target=${{ matrix.target }}
 
-      - name: Build language server
-        run: cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
-
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive oxlint .node binary
         uses: ./.github/actions/archive-binary
@@ -137,13 +133,6 @@ jobs:
           binary_name: oxlint-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
           archive_name: rust-oxlint-${{ matrix.code-target }}
 
-      - name: Archive language server binary
-        uses: ./.github/actions/archive-binary
-        with:
-          source_path: target/${{ matrix.target }}/release/oxc_language_server${{ runner.os == 'Windows' && '.exe' || '' }}
-          binary_name: oxc_language_server-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
-          archive_name: oxc_language_server-${{ matrix.code-target }}
-
       - name: Upload Binary
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
@@ -152,8 +141,6 @@ jobs:
           path: |
             oxlint**.zip
             oxlint**.tar.gz
-            oxc_language_server**.zip
-            oxc_language_server**.tar.gz
 
       # For github release
       - name: Upload Binary
@@ -265,7 +252,6 @@ jobs:
     name: Build Oxfmt ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     env:
-      OXC_VERSION: ${{ needs.check.outputs.oxfmt_version }} # Required for `--version` to work.
       TARGET_CC: clang # for mimalloc
     defaults:
       run:
@@ -274,7 +260,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@b9c5db3aef04caffaf95a1d03931de10fb2a140f # v2.65.1
+        uses: taiki-e/install-action@28a9d316db64b78a951f3f8587a5d08cc97ad8eb # v2.65.6
         with:
           tool: cross # cross installs the latest rust toolchain
 

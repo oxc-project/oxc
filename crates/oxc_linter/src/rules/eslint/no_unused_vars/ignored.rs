@@ -364,7 +364,8 @@ mod test {
                 "caughtErrors": "all",
                 "destructuredArrayIgnorePattern": "^_",
             }
-        ]));
+        ]))
+        .unwrap();
 
         assert!(rule.is_ignored_var("_x"));
         assert!(rule.is_ignored_var(&Atom::from("_x")));
@@ -391,7 +392,8 @@ mod test {
                 "caughtErrorsIgnorePattern": "^_",
                 "caughtErrors": "all",
             }
-        ]));
+        ]))
+        .unwrap();
         assert!(rule.is_ignored_catch_err("_"));
         assert!(rule.is_ignored_catch_err("_err"));
         assert!(!rule.is_ignored_catch_err("err"));
@@ -400,7 +402,8 @@ mod test {
             {
                 "caughtErrors": "none",
             }
-        ]));
+        ]))
+        .unwrap();
         assert!(rule.is_ignored_catch_err("_"));
         assert!(rule.is_ignored_catch_err("_err"));
         assert!(rule.is_ignored_catch_err("err"));

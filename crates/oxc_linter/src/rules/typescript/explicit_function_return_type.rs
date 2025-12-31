@@ -146,10 +146,10 @@ fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 impl Rule for ExplicitFunctionReturnType {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<ExplicitFunctionReturnType>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

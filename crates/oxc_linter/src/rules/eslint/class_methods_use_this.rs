@@ -114,9 +114,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for ClassMethodsUseThis {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
-        Self(Box::new(ClassMethodsUseThisConfig {
+        Ok(Self(Box::new(ClassMethodsUseThisConfig {
             except_methods: obj
                 .and_then(|o| o.get("exceptMethods"))
                 .and_then(|v| v.as_array())
@@ -150,7 +150,7 @@ impl Rule for ClassMethodsUseThis {
                     "public-fields" => IgnoreClassWithImplements::PublicFields,
                     _ => IgnoreClassWithImplements::All,
                 }),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -91,7 +91,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferDestructuring {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let (variable_declarator, assignment_expression) = if let Some(obj) = value.get(0) {
             let array = obj.get("array").and_then(Value::as_bool);
             let object = obj.get("object").and_then(Value::as_bool);
@@ -121,7 +121,7 @@ impl Rule for PreferDestructuring {
             (Config::default(), Config::default())
         };
 
-        Self {
+        Ok(Self {
             variable_declarator,
             assignment_expression,
             enforce_for_renamed_properties: value
@@ -129,7 +129,7 @@ impl Rule for PreferDestructuring {
                 .and_then(|v| v.get("enforceForRenamedProperties"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -10,7 +10,7 @@ workspace = true
 
 [[bin]]
 name = "oxc_linter_codegen"
-test = true
+test = false
 doctest = false
 
 [dependencies]

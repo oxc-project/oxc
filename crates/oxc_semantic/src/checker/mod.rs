@@ -9,6 +9,12 @@ use typescript as ts;
 
 pub use javascript::is_function_part_of_if_statement;
 
+/// Perform syntax error checking for the given AST node.
+///
+/// Must be inlined along with `SemanticBuilder::leave_node` so the compiler can see the
+/// concrete `AstKind` variant at each call site and eliminate non-matching arms.
+#[expect(clippy::inline_always, reason = "enables compile-time match elimination, see doc comment")]
+#[inline(always)]
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {
         AstKind::Program(program) => {

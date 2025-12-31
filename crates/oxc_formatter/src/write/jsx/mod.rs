@@ -197,24 +197,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 let should_inline = !has_comment(f)
                     && (is_conditional_or_binary || should_inline_jsx_expression(self));
 
-                if should_inline {
-                    write!(f, ["{", self.expression(), line_suffix_boundary(), "}"]);
-                } else {
-                    write!(
-                        f,
-                        [group(&format_args!(
-                            "{",
+                let format_expression = format_with(|f| {
+                    if should_inline {
+                        write!(f, self.expression());
+                    } else {
+                        write!(
+                            f,
                             soft_block_indent(&format_with(|f| {
                                 write!(f, [self.expression()]);
                                 let comments =
                                     f.context().comments().comments_before(self.span.end);
                                 write!(f, [FormatTrailingComments::Comments(comments)]);
-                            })),
-                            line_suffix_boundary(),
-                            "}"
-                        ))]
-                    );
-                }
+                            }))
+                        );
+                    }
+                });
+
+                write!(
+                    f,
+                    [group(&format_args!("{", format_expression, line_suffix_boundary(), "}"))]
+                );
             }
         } else {
             // JSXAttributeValue

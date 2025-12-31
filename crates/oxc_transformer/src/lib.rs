@@ -74,7 +74,7 @@ pub use crate::{
     es2026::ES2026Options,
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
+        ESFeature, ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::{PluginsOptions, StyledComponentsOptions},

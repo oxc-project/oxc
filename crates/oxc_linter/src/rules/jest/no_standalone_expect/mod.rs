@@ -89,10 +89,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoStandaloneExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoStandaloneExpect>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -239,6 +239,16 @@ fn is_var_declarator_or_test_block<'a>(
             let node_name = get_node_name(&call_expr.callee);
             if additional_test_block_functions.contains(&node_name) {
                 return true;
+            }
+
+            let parent = ctx.nodes().parent_node(node.id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
+                );
             }
         }
         AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {

@@ -9,6 +9,7 @@ pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
+    pub show_message: bool,
     /// Whether the client supports pull diagnostics.
     pull_diagnostics: bool,
     /// Whether the client supports the `workspace/diagnostic/refresh` request.
@@ -19,15 +20,20 @@ impl From<ClientCapabilities> for Capabilities {
     fn from(value: ClientCapabilities) -> Self {
         let workspace_apply_edit =
             value.workspace.as_ref().is_some_and(|workspace| workspace.apply_edit.is_some());
+
         let workspace_configuration = value
             .workspace
             .as_ref()
             .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
+
         let dynamic_watchers = value.workspace.as_ref().is_some_and(|workspace| {
             workspace.did_change_watched_files.is_some_and(|watched_files| {
                 watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
             })
         });
+
+        let show_message =
+            value.window.as_ref().is_some_and(|window| window.show_message.is_some());
 
         let pull_diagnostics = value
             .text_document
@@ -44,6 +50,7 @@ impl From<ClientCapabilities> for Capabilities {
             workspace_apply_edit,
             workspace_configuration,
             dynamic_watchers,
+            show_message,
             pull_diagnostics,
             refresh_diagnostics,
         }

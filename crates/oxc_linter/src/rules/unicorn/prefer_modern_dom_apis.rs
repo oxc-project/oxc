@@ -207,6 +207,83 @@ fn test() {
         ),
     ];
 
+    // TODO: Implement autofix and use these tests.
+    let _fix = vec![
+        (
+            "parentNode.replaceChild(newChildNode, oldChildNode);",
+            "oldChildNode.replaceWith(newChildNode);",
+        ),
+        ("parentNode.insertBefore(newNode, referenceNode);", "referenceNode.before(newNode);"),
+        (
+            r#"referenceNode.insertAdjacentText("beforebegin", "text");"#,
+            r#"referenceNode.before("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentText("afterbegin", "text");"#,
+            r#"referenceNode.prepend("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentText("beforeend", "text");"#,
+            r#"referenceNode.append("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentText("afterend", "text");"#,
+            r#"referenceNode.after("text");"#,
+        ),
+        (
+            r#"const foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+            r#"const foo = referenceNode.before("text");"#,
+        ),
+        (
+            r#"foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+            r#"foo = referenceNode.before("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+            "referenceNode.before(newNode);",
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement("afterbegin", "text");"#,
+            r#"referenceNode.prepend("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement("beforeend", "text");"#,
+            r#"referenceNode.append("text");"#,
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement("afterend", newNode);"#,
+            "referenceNode.after(newNode);",
+        ),
+        (
+            "parentNode.replaceChild(
+                newChildNode,
+                oldChildNode
+            );",
+            "oldChildNode.replaceWith(newChildNode);",
+        ),
+        (
+            "parentNode. replaceChild( // inline comments
+                newChildNode, // inline comments
+                oldChildNode // inline comments
+            );",
+            "oldChildNode.replaceWith(newChildNode);",
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement(
+                "afterend",
+                newNode
+            );"#,
+            "referenceNode.after(newNode);",
+        ),
+        (
+            r#"referenceNode.insertAdjacentElement( // inline comments
+                "afterend", // inline comments
+                newNode  // inline comments
+            ); // inline comments"#,
+            "referenceNode.after(newNode); // inline comments",
+        ),
+    ];
+
     Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -105,9 +105,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for ImgRedundantAlt {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let Some(config) = value.get(0) else {
-            return Self::default();
+            return Ok(Self::default());
         };
         let components = config.get("components").and_then(Value::as_array).map_or(
             Vec::from(COMPONENTS_FIXED_TO_VALIDATE),
@@ -123,7 +123,7 @@ impl Rule for ImgRedundantAlt {
                 v.iter().filter_map(Value::as_str).chain(REDUNDANT_WORDS).collect::<Vec<_>>()
             });
 
-        Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice())))
+        Ok(Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice()))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

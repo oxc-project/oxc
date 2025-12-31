@@ -96,10 +96,13 @@ pub struct OxlintOverride {
     #[serde(default)]
     pub plugins: Option<LintPlugins>,
 
-    /// JS plugins for this override.
+    /// JS plugins for this override, allows usage of ESLint plugins with Oxlint.
+    ///
+    /// Read more about JS plugins in
+    /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
     /// Note: JS plugins are experimental and not subject to semver.
-    /// They are not supported in language server at present.
+    /// They are not supported in the language server (and thus editor integrations) at present.
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,

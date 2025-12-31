@@ -184,15 +184,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyFunction {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = match value {
             Value::Object(ref obj) => Some(obj),
             Value::Array(ref arr) => arr.first().and_then(Value::as_object),
             _ => None,
         };
-        let Some(config) = config else { return NoEmptyFunction::default() };
+        let Some(config) = config else { return Ok(NoEmptyFunction::default()) };
         let Some(allow) = config.get("allow").and_then(Value::as_array) else {
-            return NoEmptyFunction::default();
+            return Ok(NoEmptyFunction::default());
         };
         let mut allow_option = Allowed::None;
         for allowed in allow {
@@ -201,7 +201,7 @@ impl Rule for NoEmptyFunction {
             allow_option |= allowed;
         }
 
-        Self { allow: allow_option }
+        Ok(Self { allow: allow_option })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 71ead34 linter/no-nonoctal-decimal-escape: Implement suggestion (#17319) (GRK)
+- 267e255 linter/react: Implement react/no-did-mount-set-state (#17313) (Kenzo Wada)
+- c813582 linter/react: Implement react/jsx-max-depth (#17279) (Kenzo Wada)
+- 94a482b linter/node: Implement n/global-require (#17283) (Mikhail Baev)
+- 5cc7c90 linter/plugins: Pass `env` from Rust to JS (#17291) (overlookmotel)
+- ed79fca linter/eslint-plugin-vitest: Implement consistent-test-filename (#17284) (Said Atrahouch)
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- b97101a linter: Implement aria/proptypes (#17253) (mehm8128)
+- a5ef127 linter: Auto-fixer for prefer-destructuring (#17235) (Hamir Mahal)
+
+### 🐛 Bug Fixes
+
+- 79b83b0 linter/no-unused-vars: Handle non-null assertion in update expressions (#17281) (camc314)
+- b547335 linter/import-first: Correctly respect all relative path imports (#17268) (Mohit Karekar)
+
+### ⚡ Performance
+
+- c27514c linter/only-used-in-recursion: Improve `skip_to_next_char` slicing (#17374) (camchenry)
+- eecee5d linter: Inline `is_function_node` into run functions (#17373) (camchenry)
+- d2abc78 linter: No-multi-str: skip searching strings when in jsx attribute (#17327) (camchenry)
+- 687ffd6 linter: Jest/no-confusing-set-timeout: do not lowercase import name (#17324) (camchenry)
+
+### 📚 Documentation
+
+- e8444bf linter: Fix grammar and typos in consistent_test_filename rule (#17359) (camc314)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🚀 Features

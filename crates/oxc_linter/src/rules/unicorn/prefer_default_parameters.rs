@@ -614,6 +614,7 @@ fn test() {
 }",
     ];
 
+    // TODO: Implement autofix and use these tests.
     let _fix = vec![
         (
             r"function abc(foo) {

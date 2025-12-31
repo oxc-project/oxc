@@ -86,18 +86,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoParamReassign {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut rule = Self::default();
         let config = &mut *rule.0;
-        let Value::Array(array) = value else { return rule };
-        let Some(Value::Object(options)) = array.first() else { return rule };
+        let Value::Array(array) = value else { return Ok(rule) };
+        let Some(Value::Object(options)) = array.first() else { return Ok(rule) };
 
         if let Some(Value::Bool(props)) = options.get("props") {
             config.props = *props;
         }
 
         if !config.props {
-            return rule;
+            return Ok(rule);
         }
 
         if let Some(Value::Array(items)) = options.get("ignorePropertyModificationsFor") {
@@ -118,7 +118,7 @@ impl Rule for NoParamReassign {
             }
         }
 
-        rule
+        Ok(rule)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

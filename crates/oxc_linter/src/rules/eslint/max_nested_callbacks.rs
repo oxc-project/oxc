@@ -91,6 +91,13 @@ declare_oxc_lint!(
 
 impl Rule for MaxNestedCallbacks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Function(f) if f.is_function_declaration() => {}
+            AstKind::Function(f) if f.is_expression() => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
+        }
+
         if is_callback(node, ctx) {
             let depth = 1 + ctx
                 .semantic()
@@ -104,7 +111,7 @@ impl Rule for MaxNestedCallbacks {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let max = if let Some(max) = config
             .and_then(Value::as_number)
@@ -121,7 +128,7 @@ impl Rule for MaxNestedCallbacks {
                     usize::try_from(v).unwrap_or(DEFAULT_MAX_NESTED_CALLBACKS)
                 })
         };
-        Self { max }
+        Ok(Self { max })
     }
 }
 

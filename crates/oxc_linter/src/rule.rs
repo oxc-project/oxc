@@ -15,8 +15,8 @@ use crate::{
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
-    fn from_configuration(_value: serde_json::Value) -> Self {
-        Self::default()
+    fn from_configuration(_value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self::default())
     }
 
     /// Serialize rule configuration to JSON. Only used for sending rule configurations
@@ -82,10 +82,10 @@ pub trait Rule: Sized + Default + fmt::Debug {
 ///
 /// ```ignore
 /// impl Rule for MyRule {
-///     fn from_configuration(value: serde_json::Value) -> Self {
-///         serde_json::from_value::<DefaultRuleConfig<MyRule>>(value)
+///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+///         Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
 ///             .unwrap_or_default()
-///             .into_inner()
+///             .into_inner())
 ///     }
 /// }
 /// ```

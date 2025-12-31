@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.106.0] - 2025-12-29
+
+### 📚 Documentation
+
+- 1005c0a ast: Fix docs for AssignmentPattern in BindingPattern enum (#17309) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🐛 Bug Fixes

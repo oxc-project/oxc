@@ -96,7 +96,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for CatchErrorName {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let ignored_names = value
             .get(0)
             .and_then(|v| v.get("ignore"))
@@ -119,7 +119,7 @@ impl Rule for CatchErrorName {
                 .unwrap_or("error"),
         );
 
-        Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
+        Ok(Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

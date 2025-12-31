@@ -92,7 +92,6 @@ function copyDistFiles() {
 }
 
 // NOTE: Must update npm/oxfmt/bin/oxfmt
-// and npm/oxfmt/bin/oxc_language_server
 const TARGETS = [
   "win32-x64",
   "win32-arm64",

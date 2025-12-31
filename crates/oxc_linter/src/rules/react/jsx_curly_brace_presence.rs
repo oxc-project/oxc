@@ -307,7 +307,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxCurlyBracePresence {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let default = Self::default();
         let value = match value.as_array() {
             Some(arr) => &arr[0],
@@ -319,7 +319,7 @@ impl Rule for JsxCurlyBracePresence {
 				.map_err(|()| Error::msg(
 					r#"Invalid string config for eslint-plugin-react/jsx-curly-brace-presence: only "always", "never", or "ignored" are allowed. "#
 				)).unwrap();
-                Self { props: allowed, children: allowed, prop_element_values: allowed }
+                Ok(Self { props: allowed, children: allowed, prop_element_values: allowed })
             }
             Value::Object(obj) => {
                 let props = obj
@@ -338,9 +338,9 @@ impl Rule for JsxCurlyBracePresence {
                     .and_then(|prop_element_values| Allowed::try_from(prop_element_values).ok())
                     .unwrap_or(default.prop_element_values);
 
-                Self { props, children, prop_element_values }
+                Ok(Self { props, children, prop_element_values })
             }
-            _ => default,
+            _ => Ok(default),
         }
     }
 

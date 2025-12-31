@@ -129,7 +129,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInstanceofBuiltins {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut include = Vec::<String>::new();
         let mut exclude = Vec::<String>::new();
         let mut use_error_is_error = false;
@@ -164,12 +164,12 @@ impl Rule for NoInstanceofBuiltins {
             }
         }
 
-        Self(Box::new(NoInstanceofBuiltinsConfig {
+        Ok(Self(Box::new(NoInstanceofBuiltinsConfig {
             include,
             exclude,
             use_error_is_error,
             strategy,
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

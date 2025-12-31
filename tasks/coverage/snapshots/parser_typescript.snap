@@ -1,9 +1,9 @@
-commit: 2dfdbbab
+commit: f3770c9b
 
 parser_typescript Summary:
-AST Parsed     : 9839/9840 (99.99%)
-Positive Passed: 9830/9840 (99.90%)
-Negative Passed: 1494/2550 (58.59%)
+AST Parsed     : 9840/9841 (99.99%)
+Positive Passed: 9831/9841 (99.90%)
+Negative Passed: 1496/2552 (58.62%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -5753,6 +5753,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  44 │ import lol = Test5.Foo.
     ╰────
 
+  × TS(1253): Abstract properties can only appear within an abstract class.
+   ╭─[typescript/tests/cases/compiler/errorInUnnamedClassExpression.ts:7:14]
+ 6 │     }
+ 7 │     abstract bar;
+   ·              ───
+ 8 │ };
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:17]
  1 │ interface Foo {
@@ -8605,6 +8613,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                     ─
  19 │ var t4 =
     ╰────
+
+  × A rest parameter cannot be optional
+    ╭─[typescript/tests/cases/compiler/noCrashOnMixin2.ts:11:40]
+ 10 │ 
+ 11 │ type Constructor<T = {}> = new (...args?: any[]) => T;
+    ·                                        ─
+ 12 │ 
+    ╰────
+  help: Remove this `?`. The default value is an empty array
 
   × Missing initializer in destructuring declaration
    ╭─[typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:1:5]
