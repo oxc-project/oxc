@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     AstNode,
@@ -198,8 +198,7 @@ impl PreferCalledExactlyOnceWith {
         ctx: &LintContext<'a>,
     ) {
         let matchers_to_combine = {
-            //TODO CAPACITY
-            let mut set_matchers = FxHashSet::default();
+            let mut set_matchers = FxHashSet::with_capacity_and_hasher(2, FxBuildHasher);
             set_matchers.insert(MatcherKind::ToHaveBeenCalledOnce);
             set_matchers.insert(MatcherKind::ToHaveBeenCalledWith);
 
@@ -207,8 +206,7 @@ impl PreferCalledExactlyOnceWith {
         };
 
         let mock_reset_methods = {
-            //TODO CAPACITY
-            let mut mock_reset_methods_set = FxHashSet::default();
+            let mut mock_reset_methods_set = FxHashSet::with_capacity_and_hasher(3, FxBuildHasher);
             mock_reset_methods_set.insert(CompactStr::new("mockClear"));
             mock_reset_methods_set.insert(CompactStr::new("mockReset"));
             mock_reset_methods_set.insert(CompactStr::new("mockRestore"));
