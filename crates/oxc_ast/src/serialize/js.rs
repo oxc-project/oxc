@@ -968,7 +968,8 @@ mod from_estree_converters {
     ///
     /// ESTree has `params` as an array that may include `this_param` in TS.
     /// oxc has separate `params` (FormalParameters) and `this_param` fields.
-    /// For now, just deserialize the params array directly as FormalParameters.
+    /// Also handles `RestElement` which ESTree includes in params array but oxc
+    /// stores separately in the `rest` field.
     impl<'a> FromESTreeConverter<'a> for FunctionParams<'a, '_> {
         type Output = ABox<'a, js::FormalParameters<'a>>;
 
@@ -981,14 +982,37 @@ mod from_estree_converters {
             let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
 
             let mut items = AVec::with_capacity_in(arr.len(), allocator);
+            let mut rest: Option<ABox<'a, js::FormalParameterRest<'a>>> = None;
+
             for item in arr {
-                // Skip TSThisParameter if present (it has type "TSThisParameter")
                 let item_type = item.get("type").and_then(|t| t.as_str());
-                if item_type == Some("TSThisParameter") {
-                    continue;
+                match item_type {
+                    // Skip TSThisParameter - it's stored in a separate field in oxc
+                    Some("TSThisParameter") => continue,
+                    // RestElement is stored in the `rest` field, not `items`
+                    Some("RestElement") => {
+                        let rest_elem: js::BindingRestElement =
+                            FromESTree::from_estree(item, allocator)?;
+                        let span = rest_elem.span;
+                        // Extract type annotation if present (for TypeScript)
+                        let type_annotation = item
+                            .get("typeAnnotation")
+                            .filter(|v| !v.is_null())
+                            .map(|v| -> DeserResult<_> {
+                                Ok(ABox::new_in(FromESTree::from_estree(v, allocator)?, allocator))
+                            })
+                            .transpose()?;
+                        rest = Some(ABox::new_in(
+                            js::FormalParameterRest { span, rest: rest_elem, type_annotation },
+                            allocator,
+                        ));
+                    }
+                    // Regular parameters go into items
+                    _ => {
+                        let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
+                        items.push(param);
+                    }
                 }
-                let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
-                items.push(param);
             }
 
             Ok(ABox::new_in(
@@ -996,7 +1020,7 @@ mod from_estree_converters {
                     span: oxc_span::SPAN,
                     kind: js::FormalParameterKind::FormalParameter,
                     items,
-                    rest: None,
+                    rest,
                 },
                 allocator,
             ))

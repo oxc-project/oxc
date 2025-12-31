@@ -474,4 +474,680 @@ mod tests {
         // Empty span (0,0) should NOT be recorded
         assert!(spans.is_empty());
     }
+
+    // =====================================================
+    // TypeScript-specific deserialization tests
+    // =====================================================
+    // These test edge cases in TypeScript AST patterns that may fail
+    // with custom JS parsers due to complex ESTree ↔ oxc conversions.
+
+    #[test]
+    fn test_ts_enum_member_identifier() {
+        use crate::ast::ts::{TSEnumMember, TSEnumMemberName};
+
+        let allocator = Allocator::default();
+        let json = serde_json::json!({
+            "type": "TSEnumMember",
+            "start": 0,
+            "end": 10,
+            "id": {
+                "type": "Identifier",
+                "name": "Foo",
+                "start": 0,
+                "end": 3
+            },
+            "initializer": null
+        });
+
+        let result: TSEnumMember = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result.id, TSEnumMemberName::Identifier(_)));
+        if let TSEnumMemberName::Identifier(id) = &result.id {
+            assert_eq!(id.name.as_str(), "Foo");
+        }
+    }
+
+    #[test]
+    fn test_ts_enum_member_computed_string() {
+        use crate::ast::ts::{TSEnumMember, TSEnumMemberName};
+
+        let allocator = Allocator::default();
+        // Computed string enum member: enum E { ["computed-key"] = 1 }
+        // In ESTree, computed string keys are represented as Literal with string value
+        let json = serde_json::json!({
+            "type": "TSEnumMember",
+            "start": 0,
+            "end": 20,
+            "id": {
+                "type": "Literal",
+                "value": "computed-key",
+                "start": 0,
+                "end": 14
+            },
+            "initializer": {
+                "type": "Literal",
+                "value": 1,
+                "start": 17,
+                "end": 18
+            }
+        });
+
+        let result: TSEnumMember = FromESTree::from_estree(&json, &allocator).unwrap();
+        // String value literals in enum member IDs become TSEnumMemberName::ComputedString
+        // This is the "computed" variant that raw_deser checks via `DESER[u8](POS_OFFSET.id) > 1`
+        assert!(matches!(result.id, TSEnumMemberName::ComputedString(_)));
+    }
+
+    #[test]
+    fn test_ts_call_signature_declaration_params() {
+        use crate::ast::js::FormalParameterKind;
+        use crate::ast::ts::TSCallSignatureDeclaration;
+
+        let allocator = Allocator::default();
+        // interface Foo { (x: number): void }
+        let json = serde_json::json!({
+            "type": "TSCallSignatureDeclaration",
+            "start": 0,
+            "end": 20,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 1,
+                    "end": 2,
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 2,
+                        "end": 10,
+                        "typeAnnotation": {
+                            "type": "TSNumberKeyword",
+                            "start": 4,
+                            "end": 10
+                        }
+                    }
+                }
+            ],
+            "returnType": {
+                "type": "TSTypeAnnotation",
+                "start": 12,
+                "end": 18,
+                "typeAnnotation": {
+                    "type": "TSVoidKeyword",
+                    "start": 14,
+                    "end": 18
+                }
+            }
+        });
+
+        let result: TSCallSignatureDeclaration =
+            FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.params.items.len(), 1);
+        // Critical: params should use Signature kind to prevent no-unused-vars false positives
+        assert_eq!(result.params.kind, FormalParameterKind::Signature);
+    }
+
+    #[test]
+    fn test_ts_call_signature_with_this_param() {
+        use crate::ast::js::FormalParameterKind;
+        use crate::ast::ts::TSCallSignatureDeclaration;
+
+        let allocator = Allocator::default();
+        // interface Foo { (this: Window, x: number): void }
+        // ESTree includes TSThisParameter in the params array
+        let json = serde_json::json!({
+            "type": "TSCallSignatureDeclaration",
+            "start": 0,
+            "end": 30,
+            "params": [
+                {
+                    "type": "TSThisParameter",
+                    "start": 1,
+                    "end": 13,
+                    "this": { "type": "Identifier", "name": "this", "start": 1, "end": 5 },
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 5,
+                        "end": 13,
+                        "typeAnnotation": {
+                            "type": "TSTypeReference",
+                            "start": 7,
+                            "end": 13,
+                            "typeName": { "type": "Identifier", "name": "Window", "start": 7, "end": 13 }
+                        }
+                    }
+                },
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 15,
+                    "end": 16,
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 16,
+                        "end": 24,
+                        "typeAnnotation": {
+                            "type": "TSNumberKeyword",
+                            "start": 18,
+                            "end": 24
+                        }
+                    }
+                }
+            ],
+            "returnType": null
+        });
+
+        let result: TSCallSignatureDeclaration =
+            FromESTree::from_estree(&json, &allocator).unwrap();
+        // TSThisParameter should be filtered out, leaving only the regular param
+        assert_eq!(result.params.items.len(), 1);
+        assert_eq!(result.params.kind, FormalParameterKind::Signature);
+    }
+
+    #[test]
+    fn test_ts_constructor_type_params() {
+        use crate::ast::js::FormalParameterKind;
+        use crate::ast::ts::TSConstructorType;
+
+        let allocator = Allocator::default();
+        // type T = new (x: number) => Foo
+        let json = serde_json::json!({
+            "type": "TSConstructorType",
+            "start": 0,
+            "end": 25,
+            "abstract": false,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 5,
+                    "end": 6,
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 6,
+                        "end": 14,
+                        "typeAnnotation": {
+                            "type": "TSNumberKeyword",
+                            "start": 8,
+                            "end": 14
+                        }
+                    }
+                }
+            ],
+            "returnType": {
+                "type": "TSTypeAnnotation",
+                "start": 18,
+                "end": 25,
+                "typeAnnotation": {
+                    "type": "TSTypeReference",
+                    "start": 21,
+                    "end": 24,
+                    "typeName": { "type": "Identifier", "name": "Foo", "start": 21, "end": 24 }
+                }
+            }
+        });
+
+        let result: TSConstructorType = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.params.items.len(), 1);
+        // Constructor type params should also use Signature kind
+        assert_eq!(result.params.kind, FormalParameterKind::Signature);
+    }
+
+    #[test]
+    fn test_ts_class_implements_simple_identifier() {
+        use crate::ast::ts::{TSClassImplements, TSTypeName};
+
+        let allocator = Allocator::default();
+        // class Foo implements Bar {}
+        // ESTree represents `Bar` as an Identifier in `expression` field
+        let json = serde_json::json!({
+            "type": "TSClassImplements",
+            "start": 0,
+            "end": 10,
+            "expression": {
+                "type": "Identifier",
+                "name": "Bar",
+                "start": 0,
+                "end": 3
+            }
+        });
+
+        let result: TSClassImplements = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result.expression, TSTypeName::IdentifierReference(_)));
+    }
+
+    #[test]
+    fn test_ts_class_implements_member_expression() {
+        use crate::ast::ts::{TSClassImplements, TSTypeName};
+
+        let allocator = Allocator::default();
+        // class Foo implements A.B {}
+        // ESTree represents `A.B` as MemberExpression, oxc uses TSQualifiedName
+        let json = serde_json::json!({
+            "type": "TSClassImplements",
+            "start": 0,
+            "end": 10,
+            "expression": {
+                "type": "MemberExpression",
+                "start": 0,
+                "end": 3,
+                "object": {
+                    "type": "Identifier",
+                    "name": "A",
+                    "start": 0,
+                    "end": 1
+                },
+                "property": {
+                    "type": "Identifier",
+                    "name": "B",
+                    "start": 2,
+                    "end": 3
+                },
+                "computed": false,
+                "optional": false
+            }
+        });
+
+        let result: TSClassImplements = FromESTree::from_estree(&json, &allocator).unwrap();
+        // Should convert MemberExpression to TSQualifiedName
+        assert!(matches!(result.expression, TSTypeName::QualifiedName(_)));
+    }
+
+    #[test]
+    fn test_ts_class_implements_nested_member_expression() {
+        use crate::ast::ts::{TSClassImplements, TSTypeName};
+
+        let allocator = Allocator::default();
+        // class Foo implements A.B.C {}
+        // Nested MemberExpressions should become nested TSQualifiedNames
+        let json = serde_json::json!({
+            "type": "TSClassImplements",
+            "start": 0,
+            "end": 5,
+            "expression": {
+                "type": "MemberExpression",
+                "start": 0,
+                "end": 5,
+                "object": {
+                    "type": "MemberExpression",
+                    "start": 0,
+                    "end": 3,
+                    "object": {
+                        "type": "Identifier",
+                        "name": "A",
+                        "start": 0,
+                        "end": 1
+                    },
+                    "property": {
+                        "type": "Identifier",
+                        "name": "B",
+                        "start": 2,
+                        "end": 3
+                    },
+                    "computed": false,
+                    "optional": false
+                },
+                "property": {
+                    "type": "Identifier",
+                    "name": "C",
+                    "start": 4,
+                    "end": 5
+                },
+                "computed": false,
+                "optional": false
+            }
+        });
+
+        let result: TSClassImplements = FromESTree::from_estree(&json, &allocator).unwrap();
+        // Should have nested TSQualifiedName structure
+        if let TSTypeName::QualifiedName(qn) = &result.expression {
+            assert_eq!(qn.right.name.as_str(), "C");
+            assert!(matches!(&qn.left, TSTypeName::QualifiedName(_)));
+        } else {
+            panic!("Expected TSQualifiedName");
+        }
+    }
+
+    #[test]
+    fn test_ts_module_declaration_simple() {
+        use crate::ast::ts::{
+            TSModuleDeclaration, TSModuleDeclarationKind, TSModuleDeclarationName,
+        };
+
+        let allocator = Allocator::default();
+        // namespace Foo {}
+        let json = serde_json::json!({
+            "type": "TSModuleDeclaration",
+            "start": 0,
+            "end": 15,
+            "id": {
+                "type": "Identifier",
+                "name": "Foo",
+                "start": 10,
+                "end": 13
+            },
+            "body": {
+                "type": "TSModuleBlock",
+                "start": 14,
+                "end": 16,
+                "body": []
+            },
+            "kind": "namespace",
+            "declare": false,
+            "global": false
+        });
+
+        let result: TSModuleDeclaration = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result.id, TSModuleDeclarationName::Identifier(_)));
+        assert_eq!(result.kind, TSModuleDeclarationKind::Namespace);
+        assert!(result.body.is_some());
+    }
+
+    #[test]
+    fn test_ts_module_declaration_string_literal() {
+        use crate::ast::ts::{
+            TSModuleDeclaration, TSModuleDeclarationKind, TSModuleDeclarationName,
+        };
+
+        let allocator = Allocator::default();
+        // module "foo" {}
+        let json = serde_json::json!({
+            "type": "TSModuleDeclaration",
+            "start": 0,
+            "end": 15,
+            "id": {
+                "type": "Literal",
+                "value": "foo",
+                "start": 7,
+                "end": 12
+            },
+            "body": {
+                "type": "TSModuleBlock",
+                "start": 13,
+                "end": 15,
+                "body": []
+            },
+            "kind": "module",
+            "declare": false,
+            "global": false
+        });
+
+        let result: TSModuleDeclaration = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(matches!(result.id, TSModuleDeclarationName::StringLiteral(_)));
+        assert_eq!(result.kind, TSModuleDeclarationKind::Module);
+    }
+
+    #[test]
+    fn test_ts_mapped_type_optional_false() {
+        use crate::serialize::ts::TSMappedTypeOptional;
+
+        let allocator = Allocator::default();
+
+        // optional: false means no modifier
+        let value = serde_json::json!(false);
+        let result: Option<crate::ast::ts::TSMappedTypeModifierOperator> =
+            TSMappedTypeOptional::from_estree_converter(&value, &allocator).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_ts_mapped_type_optional_true() {
+        use crate::ast::ts::TSMappedTypeModifierOperator;
+        use crate::serialize::ts::TSMappedTypeOptional;
+
+        let allocator = Allocator::default();
+
+        // optional: true means the ? modifier exists
+        let value = serde_json::json!(true);
+        let result: Option<TSMappedTypeModifierOperator> =
+            TSMappedTypeOptional::from_estree_converter(&value, &allocator).unwrap();
+        assert_eq!(result, Some(TSMappedTypeModifierOperator::True));
+    }
+
+    #[test]
+    fn test_ts_mapped_type_optional_plus() {
+        use crate::ast::ts::TSMappedTypeModifierOperator;
+        use crate::serialize::ts::TSMappedTypeOptional;
+
+        let allocator = Allocator::default();
+
+        // optional: "+" means +? modifier
+        let value = serde_json::json!("+");
+        let result: Option<TSMappedTypeModifierOperator> =
+            TSMappedTypeOptional::from_estree_converter(&value, &allocator).unwrap();
+        assert_eq!(result, Some(TSMappedTypeModifierOperator::Plus));
+    }
+
+    #[test]
+    fn test_ts_mapped_type_optional_minus() {
+        use crate::ast::ts::TSMappedTypeModifierOperator;
+        use crate::serialize::ts::TSMappedTypeOptional;
+
+        let allocator = Allocator::default();
+
+        // optional: "-" means -? modifier
+        let value = serde_json::json!("-");
+        let result: Option<TSMappedTypeModifierOperator> =
+            TSMappedTypeOptional::from_estree_converter(&value, &allocator).unwrap();
+        assert_eq!(result, Some(TSMappedTypeModifierOperator::Minus));
+    }
+
+    #[test]
+    fn test_arrow_function_params_simple() {
+        use crate::ast::js::ArrowFunctionExpression;
+
+        let allocator = Allocator::default();
+        // (x) => x
+        let json = serde_json::json!({
+            "type": "ArrowFunctionExpression",
+            "start": 0,
+            "end": 8,
+            "expression": true,
+            "async": false,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 1,
+                    "end": 2
+                }
+            ],
+            "body": {
+                "type": "Identifier",
+                "name": "x",
+                "start": 7,
+                "end": 8
+            }
+        });
+
+        let result: ArrowFunctionExpression = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.params.items.len(), 1);
+        assert!(result.expression);
+    }
+
+    #[test]
+    fn test_arrow_function_params_with_rest() {
+        use crate::ast::js::ArrowFunctionExpression;
+
+        let allocator = Allocator::default();
+        // (...args) => args
+        let json = serde_json::json!({
+            "type": "ArrowFunctionExpression",
+            "start": 0,
+            "end": 16,
+            "expression": true,
+            "async": false,
+            "params": [
+                {
+                    "type": "RestElement",
+                    "start": 1,
+                    "end": 8,
+                    "argument": {
+                        "type": "Identifier",
+                        "name": "args",
+                        "start": 4,
+                        "end": 8
+                    }
+                }
+            ],
+            "body": {
+                "type": "Identifier",
+                "name": "args",
+                "start": 13,
+                "end": 17
+            }
+        });
+
+        let result: ArrowFunctionExpression = FromESTree::from_estree(&json, &allocator).unwrap();
+        // RestElement should be stored in params.rest, not params.items
+        assert_eq!(result.params.items.len(), 0);
+        assert!(result.params.rest.is_some());
+    }
+
+    #[test]
+    fn test_arrow_function_params_with_regular_and_rest() {
+        use crate::ast::js::ArrowFunctionExpression;
+
+        let allocator = Allocator::default();
+        // (a, b, ...rest) => [a, b, ...rest]
+        let json = serde_json::json!({
+            "type": "ArrowFunctionExpression",
+            "start": 0,
+            "end": 30,
+            "expression": true,
+            "async": false,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "a",
+                    "start": 1,
+                    "end": 2
+                },
+                {
+                    "type": "Identifier",
+                    "name": "b",
+                    "start": 4,
+                    "end": 5
+                },
+                {
+                    "type": "RestElement",
+                    "start": 7,
+                    "end": 14,
+                    "argument": {
+                        "type": "Identifier",
+                        "name": "rest",
+                        "start": 10,
+                        "end": 14
+                    }
+                }
+            ],
+            "body": {
+                "type": "ArrayExpression",
+                "start": 19,
+                "end": 30,
+                "elements": []
+            }
+        });
+
+        let result: ArrowFunctionExpression = FromESTree::from_estree(&json, &allocator).unwrap();
+        // Regular params go in items, rest goes in rest field
+        assert_eq!(result.params.items.len(), 2);
+        assert!(result.params.rest.is_some());
+    }
+
+    #[test]
+    fn test_arrow_function_block_body() {
+        use crate::ast::js::ArrowFunctionExpression;
+
+        let allocator = Allocator::default();
+        // (x) => { return x; }
+        let json = serde_json::json!({
+            "type": "ArrowFunctionExpression",
+            "start": 0,
+            "end": 20,
+            "expression": false,
+            "async": false,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 1,
+                    "end": 2
+                }
+            ],
+            "body": {
+                "type": "BlockStatement",
+                "start": 7,
+                "end": 20,
+                "body": [
+                    {
+                        "type": "ReturnStatement",
+                        "start": 9,
+                        "end": 18,
+                        "argument": {
+                            "type": "Identifier",
+                            "name": "x",
+                            "start": 16,
+                            "end": 17
+                        }
+                    }
+                ]
+            }
+        });
+
+        let result: ArrowFunctionExpression = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert!(!result.expression);
+        assert_eq!(result.body.statements.len(), 1);
+    }
+
+    #[test]
+    fn test_arrow_function_with_typescript_annotations() {
+        use crate::ast::js::ArrowFunctionExpression;
+
+        let allocator = Allocator::default();
+        // (x: number): number => x
+        let json = serde_json::json!({
+            "type": "ArrowFunctionExpression",
+            "start": 0,
+            "end": 24,
+            "expression": true,
+            "async": false,
+            "params": [
+                {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 1,
+                    "end": 2,
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 2,
+                        "end": 10,
+                        "typeAnnotation": {
+                            "type": "TSNumberKeyword",
+                            "start": 4,
+                            "end": 10
+                        }
+                    }
+                }
+            ],
+            "returnType": {
+                "type": "TSTypeAnnotation",
+                "start": 11,
+                "end": 19,
+                "typeAnnotation": {
+                    "type": "TSNumberKeyword",
+                    "start": 13,
+                    "end": 19
+                }
+            },
+            "body": {
+                "type": "Identifier",
+                "name": "x",
+                "start": 23,
+                "end": 24
+            }
+        });
+
+        let result: ArrowFunctionExpression = FromESTree::from_estree(&json, &allocator).unwrap();
+        assert_eq!(result.params.items.len(), 1);
+        assert!(result.return_type.is_some());
+    }
 }
