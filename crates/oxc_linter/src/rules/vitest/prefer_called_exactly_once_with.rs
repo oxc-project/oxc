@@ -19,11 +19,12 @@ use crate::{
     },
 };
 
-fn prefer_called_exactly_once_with_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
-        .with_label(span)
+fn prefer_called_exactly_once_substitue_with_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Substitute").with_label(span)
+}
+
+fn prefer_called_exactly_once_remove_with_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Remove").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -374,15 +375,16 @@ impl PreferCalledExactlyOnceWith {
             }
 
             ctx.diagnostic_with_dangerous_fix(
-                prefer_called_exactly_once_with_diagnostic(Span::empty(0)),
+                prefer_called_exactly_once_substitue_with_diagnostic(expects.span_to_substitue),
                 |fixer| {
-                    let mut multiple_fixes = fixer.new_fix_with_capacity(2);
-                    multiple_fixes.push(fixer.delete_range(expects.span_to_remove));
                     let substitute = expects.get_new_expect();
-                    multiple_fixes.push(fixer.replace(expects.span_to_substitue, substitute));
-
-                    multiple_fixes.with_message("Successfully fixed")
+                    fixer.replace(expects.span_to_substitue, substitute)
                 },
+            );
+
+            ctx.diagnostic_with_dangerous_fix(
+                prefer_called_exactly_once_remove_with_diagnostic(expects.span_to_remove),
+                |fixer| fixer.delete_range(expects.span_to_remove),
             );
         }
     }
