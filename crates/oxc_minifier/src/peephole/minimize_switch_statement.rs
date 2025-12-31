@@ -24,11 +24,18 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        // Position of the (last) default if any
-        let default_pos = cases.iter().rposition(SwitchCase::is_default_case)?;
+        // if a default case is last we can skip checking if it has body
+        let default_pos = if let Some(default_pos) =
+            cases.iter().rposition(SwitchCase::is_default_case)
+            && default_pos == case_count - 1
+        {
+            case_count - 1
+        } else {
+            case_count
+        };
 
         // Find the last non-removable case (any case whose consequent is non-empty).
-        let last_non_empty_before_last = cases[..case_count - 1].iter().rposition(|c| {
+        let last_non_empty_before_last = cases[..default_pos].iter().rposition(|c| {
             !c.consequent.is_empty()
                 || c.test.as_ref().is_none_or(|test| test.may_have_side_effects(ctx))
         });
@@ -44,13 +51,6 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        // Reject only when a non-empty default lies inside the removable suffix, and it is not the last case.
-        if default_pos >= start
-            && default_pos != case_count - 1
-            && !&cases[default_pos].consequent.is_empty()
-        {
-            return None;
-        }
         Some((start, case_count))
     }
 
@@ -222,18 +222,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn is_terminated(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::BlockStatement(block_stmt) => {
-                block_stmt.body.last().is_some_and(Self::is_terminated)
-            }
-            Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::ReturnStatement(_)
-            | Statement::ThrowStatement(_) => true,
-            _ => false,
-        }
-    }
+    // fn is_terminated(stmt: &Statement<'a>) -> bool {
+    //     match stmt {
+    //         Statement::BlockStatement(block_stmt) => {
+    //             block_stmt.body.last().is_some_and(Self::is_terminated)
+    //         }
+    //         Statement::BreakStatement(_)
+    //         | Statement::ContinueStatement(_)
+    //         | Statement::ReturnStatement(_)
+    //         | Statement::ThrowStatement(_) => true,
+    //         _ => false,
+    //     }
+    // }
 
     pub fn can_case_be_inlined(case: &SwitchCase) -> bool {
         let mut break_finder = BreakFinder::new();
@@ -255,6 +255,7 @@ impl BreakFinder {
 
 impl<'a> Visit<'a> for BreakFinder {
     fn visit_statement(&mut self, it: &Statement<'a>) {
+        // TODO: check if there we have access to control flow instead??
         // Only visit blocks where vars could be hoisted
         match it {
             Statement::BlockStatement(it) => self.visit_block_statement(it),
@@ -321,7 +322,9 @@ mod test {
         test_same("switch(a){case 1: b(); case 2: break; case 3: c()}");
         test_same("switch(a){case 1: b(); break; case 2: c();break;}");
         test_same("switch(a){case 1: b(); case 2: b();}");
-        test("switch(a){case 1: var c=2; break;}", "if (a === 1) var c = 2;");
+        test("switch(a){case 1: var c=2; break;}", "if (a === 1) var c = 2");
+        test("switch(a){case 1: case 2: default: b(); break;}", "a, b()");
+        test("switch(a){case 1: c(); case 2: default: b(); break;}", "a === 1 ? c() : b()");
 
         test("switch(a){default: case 1: }", "if (a === 1) {} else {}");
         test("switch(a){default: break; case 1: break;}", "if (a === 1) {} else {}");
@@ -330,14 +333,16 @@ mod test {
 
         test("switch(a){case b(): default:}", "if (a === b()) {} else {}");
         test_same("switch(a){case 2: case 1: break; default: break }");
-        test_same("switch(a){case 3: b(); case 2: case 1: break; default: break }");
+        test_same("switch(a){case 3: b(); case 2: case 1: break }");
+        test("switch(a){case 3: b(); case 2: case 1: }", "a === 3 && b()");
 
         test("var x=1;switch(x){case 1: var y;}", "var y;");
         test("function f(){switch(a){case 1: return;}}", "function f() {a;}");
         test("x:switch(a){case 1: break x;}", "x: if (a === 1) break x;");
         test("switch(a()) { default: {let y;} }", "a();{let y;}");
         test_same("function f(){switch('x'){case 'x': var x = 1;break; case 'y': break; }}");
-        test("switch(a){default: if(a) {break;}bar();}", "switch(a){default: if(a) break;bar();}");
+        test("switch(a){default: if(a) {break;}c();}", "switch(a){default: if(a) break;c();}");
+        test("switch(a){case 1: if(a) {b();}c();}", "a === 1 && (a && b(), c())");
         test("switch ('\\v') {case '\\u000B': foo();}", "foo()");
 
         test_same("switch('r'){case 'r': a();break; case 'r': var x=0;break;}");
