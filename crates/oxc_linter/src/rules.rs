@@ -693,6 +693,7 @@ pub(crate) mod vue {
     pub mod no_import_compiler_macros;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
+    pub mod no_this_in_before_route_enter;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
     pub mod require_typed_ref;
@@ -1344,6 +1345,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::no_import_compiler_macros,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
+    vue::no_this_in_before_route_enter,
     vue::prefer_import_from_vue,
     vue::require_default_export,
     vue::require_typed_ref,
