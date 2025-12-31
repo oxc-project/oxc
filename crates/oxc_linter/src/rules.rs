@@ -390,6 +390,7 @@ pub(crate) mod react {
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
+    pub mod no_this_in_sfc;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
@@ -1098,6 +1099,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
+    react::no_this_in_sfc,
     react::no_unescaped_entities,
     react::no_unknown_property,
     react::no_unsafe,
