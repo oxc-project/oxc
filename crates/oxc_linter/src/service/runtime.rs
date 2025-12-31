@@ -24,7 +24,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, Span, VALID_EXTENSIONS};
+use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,
@@ -1237,124 +1237,5 @@ impl Runtime {
                 DiagnosticService::wrap_diagnostics(&self.cwd, path, source_text, errors);
             let _ = tx_error.send(diagnostics);
         }
-    }
-
-    /// Lint stripped source code with Rust rules.
-    ///
-    /// This parses the stripped source with oxc, runs Rust rules, and remaps
-    /// diagnostic spans back to the original source positions.
-    fn lint_stripped_source(
-        &self,
-        path: &Path,
-        original_source_text: &str,
-        strip_result: &crate::external_linter::StripFileResult,
-    ) -> Vec<Message> {
-        use crate::external_linter::StrippedSource;
-
-        // Determine source type - use parser's hint or infer from path
-        let source_type =
-            strip_result.source_type.as_ref().map(|st| st.to_source_type()).unwrap_or_else(|| {
-                SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
-                    if st.is_javascript() { st.with_jsx(true) } else { st }
-                })
-            });
-
-        // Create StrippedSource for span remapping
-        let stripped_source = StrippedSource::new(
-            std::borrow::Cow::Borrowed(&strip_result.source),
-            source_type,
-            strip_result.mappings.clone(),
-        );
-
-        // Parse the stripped source with oxc
-        let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &strip_result.source, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: true,
-                allow_return_outside_function: true,
-                ..ParseOptions::default()
-            })
-            .parse();
-
-        if !ret.errors.is_empty() {
-            // Parse errors in stripped source - remap and return them
-            return ret
-                .errors
-                .into_iter()
-                .map(|err| {
-                    let mut msg = Message::new(err, PossibleFixes::None);
-                    Self::remap_message_spans(&mut msg, &stripped_source, original_source_text);
-                    msg
-                })
-                .collect();
-        }
-
-        // Build semantic
-        let semantic_ret = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_scope_tree_child_ids(true)
-            .with_check_syntax_error(true)
-            .build(allocator.alloc(ret.program));
-
-        if !semantic_ret.errors.is_empty() {
-            return semantic_ret
-                .errors
-                .into_iter()
-                .map(|err| {
-                    let mut msg = Message::new(err, PossibleFixes::None);
-                    Self::remap_message_spans(&mut msg, &stripped_source, original_source_text);
-                    msg
-                })
-                .collect();
-        }
-
-        let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
-
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
-
-        // Create context and run Rust rules
-        let ctx_sub_host = ContextSubHost::new(semantic, module_record, 0);
-
-        // Run only Rust rules (no allocator pool needed for stripped source)
-        let (mut messages, _disable_directives) =
-            self.linter.run_rust_rules_only(path, vec![ctx_sub_host], &allocator);
-
-        // Remap all spans to original positions
-        for msg in &mut messages {
-            Self::remap_message_spans(msg, &stripped_source, original_source_text);
-        }
-
-        messages
-    }
-
-    /// Remap spans in a Message from stripped positions to original positions.
-    fn remap_message_spans(
-        msg: &mut Message,
-        stripped_source: &crate::external_linter::StrippedSource<'_>,
-        _original_source_text: &str,
-    ) {
-        // Remap the main span
-        let (new_start, new_end) = stripped_source.remap_span(msg.span.start, msg.span.end);
-        msg.span = Span::new(new_start, new_end);
-
-        // Remap error labels
-        if let Some(labels) = &mut msg.error.labels {
-            for label in labels {
-                let (new_start, _new_end) = stripped_source
-                    .remap_span(label.offset() as u32, (label.offset() + label.len()) as u32);
-                label.set_span_offset(new_start as usize);
-                // Note: miette's LabeledSpan doesn't have a mutable len setter,
-                // so we can only adjust the offset. The length will be based on
-                // the original span, which may not be perfectly accurate but is
-                // usually close enough for diagnostic display.
-            }
-        }
-
-        // Note: We don't remap fixes for stripped source because:
-        // 1. The fix positions are in stripped-source coordinates
-        // 2. Applying fixes to original source would require complex text surgery
-        // 3. For Phase 2, it's safer to disable auto-fix for Rust rules on stripped files
-        // Future enhancement: could implement fix remapping if needed
     }
 }
