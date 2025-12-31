@@ -11,7 +11,7 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
-use crate::{LintContext, OxlintSettings, config::ReactVersion};
+use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -349,20 +349,6 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
     false
 }
 
-/// Checks if the React version supports UNSAFE_ prefixed lifecycle methods.
-///
-/// React 16.3 introduced the UNSAFE_ prefixed lifecycle methods
-/// (UNSAFE_componentWillMount, UNSAFE_componentWillReceiveProps, UNSAFE_componentWillUpdate).
-///
-/// Returns `true` if:
-/// - The version is `None` (unknown, assumes modern React)
-/// - The version is >= 16.3
-///
-/// Returns `false` if the version is < 16.3
-pub fn supports_unsafe_lifecycle_prefix(react_version: Option<&ReactVersion>) -> bool {
-    react_version.is_none_or(|v| v.major() > 16 || (v.major() == 16 && v.minor() >= 3))
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -442,37 +428,5 @@ mod test {
         assert!(!is_react_hook_name("Use"));
         assert!(!is_react_hook_name("user"));
         assert!(!is_react_hook_name("use_state"));
-    }
-
-    #[test]
-    fn test_supports_unsafe_lifecycle_prefix() {
-        use crate::config::ReactVersion;
-
-        // Version 16.3.0 - should support UNSAFE_ prefix
-        let v16_3: ReactVersion = serde_json::from_str(r#""16.3.0""#).unwrap();
-        assert!(supports_unsafe_lifecycle_prefix(Some(&v16_3)));
-
-        // Version 16.4.0 - should support UNSAFE_ prefix
-        let v16_4: ReactVersion = serde_json::from_str(r#""16.4.0""#).unwrap();
-        assert!(supports_unsafe_lifecycle_prefix(Some(&v16_4)));
-
-        // Version 17.0.0 - should support UNSAFE_ prefix
-        let v17: ReactVersion = serde_json::from_str(r#""17.0.0""#).unwrap();
-        assert!(supports_unsafe_lifecycle_prefix(Some(&v17)));
-
-        // Version 16.2.0 - should NOT support UNSAFE_ prefix
-        let v16_2: ReactVersion = serde_json::from_str(r#""16.2.0""#).unwrap();
-        assert!(!supports_unsafe_lifecycle_prefix(Some(&v16_2)));
-
-        // Version 16.0.0 - should NOT support UNSAFE_ prefix
-        let v16_0: ReactVersion = serde_json::from_str(r#""16.0.0""#).unwrap();
-        assert!(!supports_unsafe_lifecycle_prefix(Some(&v16_0)));
-
-        // Version 15.0.0 - should NOT support UNSAFE_ prefix
-        let v15: ReactVersion = serde_json::from_str(r#""15.0.0""#).unwrap();
-        assert!(!supports_unsafe_lifecycle_prefix(Some(&v15)));
-
-        // None (unknown version) - should default to supporting UNSAFE_ prefix
-        assert!(supports_unsafe_lifecycle_prefix(None));
     }
 }

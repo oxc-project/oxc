@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    config::ReactVersion,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_es5_component, is_es6_component, supports_unsafe_lifecycle_prefix},
+    utils::{is_es5_component, is_es6_component},
 };
 
 fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -91,57 +92,68 @@ impl Rule for NoWillUpdateSetState {
             return;
         }
 
-        let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
+        let check_unsafe_prefix = ctx
+            .settings()
+            .react
+            .version
+            .as_ref()
+            .is_none_or(ReactVersion::supports_unsafe_lifecycle_prefix);
 
-        let react_version = ctx.settings().react.version.as_ref();
-        let check_unsafe_prefix = supports_unsafe_lifecycle_prefix(react_version);
+        let mut function_count = 0;
+        let mut found_component_will_update = false;
+        let mut in_component = false;
 
-        let component_will_update_index =
-            ancestors.iter().position(|ancestor| match ancestor.kind() {
-                AstKind::ObjectProperty(prop) => prop.key.static_name().is_some_and(|key| {
-                    if key == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
-                        return false;
+        for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+            if found_component_will_update {
+                if is_es5_component(ancestor) || is_es6_component(ancestor) {
+                    in_component = true;
+                    break;
+                }
+            } else {
+                if matches!(
+                    ancestor.kind(),
+                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                ) {
+                    function_count += 1;
+                }
+
+                let is_component_will_update = match ancestor.kind() {
+                    AstKind::ObjectProperty(prop) => prop.key.static_name().is_some_and(|key| {
+                        if key == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
+                            return false;
+                        }
+                        key == "componentWillUpdate" || key == "UNSAFE_componentWillUpdate"
+                    }),
+                    AstKind::MethodDefinition(method) => {
+                        method.key.static_name().is_some_and(|name| {
+                            if name == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
+                                return false;
+                            }
+                            name == "componentWillUpdate" || name == "UNSAFE_componentWillUpdate"
+                        })
                     }
-                    key == "componentWillUpdate" || key == "UNSAFE_componentWillUpdate"
-                }),
-                AstKind::MethodDefinition(method) => method.key.static_name().is_some_and(|name| {
-                    if name == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
-                        return false;
+                    AstKind::PropertyDefinition(prop) => {
+                        prop.key.static_name().is_some_and(|name| {
+                            if name == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
+                                return false;
+                            }
+                            name == "componentWillUpdate" || name == "UNSAFE_componentWillUpdate"
+                        })
                     }
-                    name == "componentWillUpdate" || name == "UNSAFE_componentWillUpdate"
-                }),
-                AstKind::PropertyDefinition(prop) => prop.key.static_name().is_some_and(|name| {
-                    if name == "UNSAFE_componentWillUpdate" && !check_unsafe_prefix {
-                        return false;
-                    }
-                    name == "componentWillUpdate" || name == "UNSAFE_componentWillUpdate"
-                }),
-                _ => false,
-            });
+                    _ => false,
+                };
 
-        let Some(component_will_update_idx) = component_will_update_index else {
-            return;
-        };
+                if is_component_will_update {
+                    found_component_will_update = true;
+                }
+            }
+        }
 
-        let in_component_will_update = ancestors[component_will_update_idx..]
-            .iter()
-            .any(|ancestor| is_es5_component(ancestor) || is_es6_component(ancestor));
-
-        if !in_component_will_update {
+        if !found_component_will_update || !in_component {
             return;
         }
 
-        let function_count_before_component_will_update = ancestors[..component_will_update_idx]
-            .iter()
-            .filter(|ancestor| {
-                matches!(
-                    ancestor.kind(),
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                )
-            })
-            .count();
-
-        let in_nested_function = function_count_before_component_will_update > 1;
+        let in_nested_function = function_count > 1;
 
         if in_nested_function && !matches!(self.0, NoWillUpdateSetStateConfig::DisallowInFunc) {
             return;
