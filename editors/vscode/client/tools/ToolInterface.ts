@@ -15,10 +15,10 @@ export default interface ToolInterface {
    */
   activate(
     context: ExtensionContext,
-    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
+    binaryPath?: string,
   ): Promise<void>;
 
   /**

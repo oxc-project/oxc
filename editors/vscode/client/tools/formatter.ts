@@ -48,11 +48,18 @@ export default class FormatterTool implements ToolInterface {
 
   async activate(
     context: ExtensionContext,
-    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
+    binaryPath?: string,
   ) {
+    // No valid binary found for the formatter.
+    if (!binaryPath) {
+      statusBarItemHandler.updateTool("formatter", false, "No valid oxfmt binary found.");
+      outputChannel.appendLine("No valid oxfmt binary found. Formatter will not be activated.");
+      return Promise.resolve();
+    }
+
     const restartCommand = commands.registerCommand(OxcCommands.RestartServerFmt, async () => {
       await this.restartClient();
       this.updateStatsBar(statusBarItemHandler, configService);
@@ -234,16 +241,15 @@ export default class FormatterTool implements ToolInterface {
   }
 
   private updateStatsBar(statusBarItemHandler: StatusBarItemHandler, configService: ConfigService) {
-    const version = this.client?.initializeResult?.serverInfo?.version ?? "unknown";
-
-    let text = configService.vsCodeConfig.enable
-      ? `**oxfmt is enabled (v${version})**\n\n`
-      : `**oxfmt is disabled**\n\n`;
-
-    text +=
+    const text =
       `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannelFmt})\n\n` +
       `[$(refresh) Restart Server](command:${OxcCommands.RestartServerFmt})\n\n`;
 
-    statusBarItemHandler.updateToolTooltip("formatter", text);
+    statusBarItemHandler.updateTool(
+      "formatter",
+      configService.vsCodeConfig.enable,
+      text,
+      this.client?.initializeResult?.serverInfo?.version,
+    );
   }
 }

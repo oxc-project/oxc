@@ -62,11 +62,17 @@ export default class LinterTool implements ToolInterface {
 
   async activate(
     context: ExtensionContext,
-    binaryPath: string,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
+    binaryPath?: string,
   ): Promise<void> {
+    if (!binaryPath) {
+      statusBarItemHandler.updateTool("linter", false, "No valid oxlint binary found.");
+      outputChannel.appendLine("No valid oxlint binary found. Linter will not be activated.");
+      return Promise.resolve();
+    }
+
     this.allowedToStartServer = configService.vsCodeConfig.requireConfig
       ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
       : true;
@@ -292,38 +298,30 @@ export default class LinterTool implements ToolInterface {
    * Get the status bar state based on whether oxc is enabled and allowed to start.
    */
   getStatusBarState(enable: boolean): {
-    bgColor: string;
-    icon: string;
-    tooltipText: string;
+    isEnabled: boolean;
+    tooltipText?: string;
   } {
     if (!this.allowedToStartServer) {
       return {
-        bgColor: "statusBarItem.offlineBackground",
-        icon: "circle-slash",
-        tooltipText: "oxlint is disabled (no .oxlintrc.json found)",
+        isEnabled: false,
+        tooltipText: "no .oxlintrc.json found",
       };
     } else if (!enable) {
       return {
-        bgColor: "statusBarItem.warningBackground",
-        icon: "check",
-        tooltipText: "oxlint is disabled",
-      };
-    } else {
-      const version = this.client?.initializeResult?.serverInfo?.version ?? "unknown";
-
-      return {
-        bgColor: "statusBarItem.activeBackground",
-        icon: "check-all",
-        tooltipText: `oxlint is enabled (v${version})`,
+        isEnabled: false,
+        tooltipText: "`oxc.enable` is false",
       };
     }
+
+    return {
+      isEnabled: true,
+    };
   }
 
   updateStatusBar(statusBarItemHandler: StatusBarItemHandler, enable: boolean) {
-    const { bgColor, icon, tooltipText } = this.getStatusBarState(enable);
+    const { isEnabled, tooltipText } = this.getStatusBarState(enable);
 
     let text =
-      `**${tooltipText}**\n\n` +
       `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannelLint})\n\n` +
       `[$(refresh) Restart Server](command:${OxcCommands.RestartServerLint})\n\n`;
 
@@ -333,8 +331,16 @@ export default class LinterTool implements ToolInterface {
       text += `[$(play) Start Server](command:${OxcCommands.ToggleEnableLint})\n\n`;
     }
 
-    statusBarItemHandler.setColorAndIcon(bgColor, icon);
-    statusBarItemHandler.updateToolTooltip("linter", text);
+    if (tooltipText) {
+      text = `${tooltipText}\n\n` + text;
+    }
+
+    statusBarItemHandler.updateTool(
+      "linter",
+      isEnabled,
+      text,
+      this.client?.initializeResult?.serverInfo?.version,
+    );
   }
 
   generateActivatorByConfig(
