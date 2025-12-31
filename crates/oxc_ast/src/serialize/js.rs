@@ -564,6 +564,19 @@ impl ESTree for FunctionParams<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `ArrowFunctionExpression`.
+///
+/// Arrow functions don't have `this_param`, so just serialize params directly.
+#[ast_meta]
+#[estree(ts_type = "ParamPattern[]", raw_deser = "DESER[Box<FormalParameters>](POS_OFFSET.params)")]
+pub struct ArrowFunctionExpressionParams<'a, 'b>(pub &'b ArrowFunctionExpression<'a>);
+
+impl ESTree for ArrowFunctionExpressionParams<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.params.serialize(serializer);
+    }
+}
+
 // ----------------------------------------
 // Import / export
 // ----------------------------------------
@@ -818,9 +831,10 @@ mod from_estree_converters {
     use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
 
     use super::{
-        ArrowFunctionExpressionBody, AssignmentTargetPropertyIdentifierInit,
-        ExportAllDeclarationWithClause, ExportNamedDeclarationWithClause, FunctionParams,
-        ImportDeclarationSpecifiers, ImportDeclarationWithClause,
+        ArrowFunctionExpressionBody, ArrowFunctionExpressionParams,
+        AssignmentTargetPropertyIdentifierInit, ExportAllDeclarationWithClause,
+        ExportNamedDeclarationWithClause, FunctionParams, ImportDeclarationSpecifiers,
+        ImportDeclarationWithClause,
     };
 
     /// Deserialize `with_clause` field from ESTree `attributes` array for `ImportDeclaration`.
@@ -986,6 +1000,21 @@ mod from_estree_converters {
                 },
                 allocator,
             ))
+        }
+    }
+
+    /// Deserialize `params` field for `ArrowFunctionExpression`.
+    ///
+    /// Arrow functions don't have `this_param`, so this is simpler than FunctionParams.
+    impl<'a> FromESTreeConverter<'a> for ArrowFunctionExpressionParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as FunctionParams but without this_param handling
+            FunctionParams::from_estree_converter(value, allocator)
         }
     }
 
