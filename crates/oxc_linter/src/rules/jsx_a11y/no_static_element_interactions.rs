@@ -30,9 +30,20 @@ fn no_static_element_interactions_diagnostic(span: Span) -> OxcDiagnostic {
 const DEFAULT_HANDLERS: &[&str] =
     &["onClick", "onMouseDown", "onMouseUp", "onKeyPress", "onKeyDown", "onKeyUp"];
 
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoStaticElementInteractions(Box<NoStaticElementInteractionsConfig>);
+
+impl std::ops::Deref for NoStaticElementInteractions {
+    type Target = NoStaticElementInteractionsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct NoStaticElementInteractions {
+pub struct NoStaticElementInteractionsConfig {
     /// An array of event handler names that should trigger this rule (e.g., `onClick`, `onKeyDown`).
     handlers: Option<Vec<CompactStr>>,
     /// If `true`, role attribute values that are JSX expressions (e.g., `role={ROLE}`) are allowed.
@@ -68,7 +79,7 @@ declare_oxc_lint!(
     NoStaticElementInteractions,
     jsx_a11y,
     correctness,
-    config = NoStaticElementInteractions,
+    config = NoStaticElementInteractionsConfig,
 );
 
 const INTERACTIVE_ROLES: [&str; 26] = [
@@ -148,7 +159,9 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
 
 impl Rule for NoStaticElementInteractions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(|x| x.into_inner())
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
