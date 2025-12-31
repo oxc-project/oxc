@@ -173,6 +173,10 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "react/jsx-child-element-spacing",
   "react/jsx-one-expression-per-line",
 
+  "n/prefer-node-protocol", // No need to implement, already implemented by `unicorn/prefer-node-protocol`.
+  "n/no-process-exit", // No need to implement, already implemented by `unicorn/no-process-exit`.
+  "n/file-extension-in-import", // No need to implement, already implemented by `import/extensions`.
+
   // React Compiler rules will not be implemented in oxlint for now,
   // as they require integration with the react compiler itself.
   // These rules can be used via JS Plugins if desired.
@@ -285,6 +289,13 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/wrap-regex",
   "eslint/yield-star-spacing",
 
+  // These rules require type info, not possible yet.
+  "jest/no-unnecessary-assertion",
+  "jest/unbound-method",
+  "jest/no-error-equal",
+  "vitest/unbound-method",
+  "vitest/prefer-vi-mocked",
+
   "react/jsx-uses-vars", // handled by eslint/no-unused-vars, which already evaluates whether vars are used in JSX
 
   "unicorn/no-named-default", // implemented via import/no-named-default
@@ -386,10 +397,12 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "vue/no-template-target-blank",
   "vue/no-textarea-mustache",
   "vue/no-undef-components",
+  "vue/no-undef-properties",
   "vue/no-unsupported-features", // can not be up to date with vue versions + template parsing
   "vue/no-unused-components",
   "vue/no-unused-refs",
   "vue/no-unused-vars",
+  "vue/no-unused-properties",
   "vue/no-use-v-else-with-v-for",
   "vue/no-use-v-if-with-v-for",
   "vue/no-useless-concat",
