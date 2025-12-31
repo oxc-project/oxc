@@ -197,9 +197,11 @@ Custom parser support adds overhead compared to native oxc parsing:
 
 For large codebases, consider whether the parser overhead is acceptable for your use case.
 
-### No Auto-fix for Custom Syntax
+### Auto-fix Support
 
-Auto-fix is currently not supported for custom parser files. Fixes would need to account for the mapping between the parsed AST and the original custom syntax, which is not yet implemented.
+Auto-fix (`--fix`) is supported for custom parser files, provided the parser returns accurate source spans that map directly to positions in the original file. Both Rust rules and JS plugin rules can provide fixes.
+
+Note that oxlint cannot validate that fixes produce syntactically valid output for custom syntax files, since the fixed code may contain syntax that isn't standard JavaScript. Ensure your parser provides correct span information for reliable fix behavior.
 
 ### Scope Analysis Accuracy
 
