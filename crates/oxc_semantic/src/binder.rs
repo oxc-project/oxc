@@ -66,6 +66,15 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     if let Some(symbol_id) =
                         builder.check_redeclaration(scope_id, span, &name, excludes, true)
                     {
+                        // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+                        // A var declaration with the same name as the catch parameter
+                        // should NOT reuse the catch parameter's symbol. Instead, it should
+                        // create a new binding in the function/global scope that the catch
+                        // parameter shadows within the catch block.
+                        if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
+                            continue;
+                        }
+
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 

@@ -1,0 +1,97 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/nested-catch-with-var.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode)",
+                "id": 4,
+                "node": "BlockStatement",
+                "symbols": []
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(StrictMode)",
+                    "id": 6,
+                    "node": "BlockStatement",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                        "id": 1,
+                        "name": "e",
+                        "node": "CatchParameter",
+                        "references": [
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 1,
+                            "name": "e",
+                            "node_id": 23
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(StrictMode | CatchClause)",
+                "id": 5,
+                "node": "CatchClause",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 0,
+                "name": "e",
+                "node": "CatchParameter",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | CatchClause)",
+        "id": 2,
+        "node": "CatchClause",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(FunctionScopedVariable)",
+        "id": 2,
+        "name": "e",
+        "node": "VariableDeclarator(e)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "e",
+            "node_id": 31
+          }
+        ]
+      }
+    ]
+  }
+]
