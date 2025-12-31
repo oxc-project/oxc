@@ -50,6 +50,10 @@ harness = false
 name = "minifier"
 harness = false
 
+[[bench]]
+name = "linter_estree"
+harness = false
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -112,11 +116,13 @@ compiler = [
 ]
 linter = [
   "dep:oxc_allocator",
+  "dep:oxc_ast",
   "dep:oxc_linter",
   "dep:oxc_parser",
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "dep:serde_json",
   "oxc_semantic/cfg",
 ]
 
