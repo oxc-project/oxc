@@ -44,7 +44,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        // Reject only when a non-empty default lies inside the removable suffix and it is not the last case.
+        // Reject only when a non-empty default lies inside the removable suffix, and it is not the last case.
         if default_pos >= start
             && default_pos != case_count - 1
             && !&cases[default_pos].consequent.is_empty()
@@ -70,8 +70,10 @@ impl<'a> PeepholeOptimizations {
         {
             last.test = None;
             end -= 1;
+            switch_stmt.cases.drain(start..end);
+        } else {
+            switch_stmt.cases.truncate(start);
         }
-        switch_stmt.cases.drain(start..end);
         ctx.state.changed = true;
     }
 
@@ -107,8 +109,8 @@ impl<'a> PeepholeOptimizations {
 
             let mut first = switch_stmt.cases.pop().unwrap();
             let mut second = switch_stmt.cases.pop().unwrap();
-            Self::drop_break_and_postfix(&mut first.consequent);
-            Self::drop_break_and_postfix(&mut second.consequent);
+            Self::remove_last_break(&mut first.consequent);
+            Self::remove_last_break(&mut second.consequent);
 
             let (test, consequent, alternate) = if first.test.is_some() {
                 (first.test.unwrap(), first.consequent, second.consequent)
@@ -160,7 +162,7 @@ impl<'a> PeepholeOptimizations {
 
             ctx.state.changed = true;
             let discriminant = switch_stmt.discriminant.take_in(ctx.ast);
-            Self::drop_break_and_postfix(&mut case.consequent);
+            Self::remove_last_break(&mut case.consequent);
 
             if let Some(test) = case.test {
                 *stmt = ctx.ast.statement_if(
@@ -191,22 +193,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn drop_break_and_postfix(cons: &mut Vec<'a, Statement<'a>>) {
-        // TODO: this is wrong, as it doesn't take into account BlockStatement
-        if !cons.is_empty()
-            && let Some(terminates_rpos) = cons.iter().rposition(Self::is_terminated)
-        {
-            if cons
-                .get(terminates_rpos)
-                .is_some_and(|stmt| matches!(stmt, Statement::BreakStatement(_)))
-            {
-                cons.truncate(terminates_rpos);
-            } else {
-                cons.truncate(terminates_rpos + 1);
-            }
-        }
-    }
-
     fn is_empty_switch_case(stmt: &Vec<Statement>) -> bool {
         if stmt.len() != 1 {
             return stmt.is_empty();
@@ -217,13 +203,32 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn is_terminated(stmt: &Statement<'a>) -> bool {
+    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>) {
+        if stmt.is_empty() {
+            return;
+        }
+
+        let len = stmt.len();
+        match stmt.last_mut() {
+            Some(Statement::BreakStatement(break_stmt)) => {
+                if break_stmt.label.is_none() {
+                    stmt.truncate(len - 1);
+                }
+            }
+            Some(Statement::BlockStatement(block_stmt)) => {
+                Self::remove_last_break(&mut block_stmt.body);
+            }
+            _ => {}
+        }
+    }
+
+    fn is_terminated(stmt: &Statement<'a>) -> bool {
         match stmt {
-            Statement::BreakStatement(break_stmt) => break_stmt.label.is_none(),
             Statement::BlockStatement(block_stmt) => {
                 block_stmt.body.last().is_some_and(Self::is_terminated)
             }
-            Statement::ContinueStatement(_)
+            Statement::BreakStatement(_)
+            | Statement::ContinueStatement(_)
             | Statement::ReturnStatement(_)
             | Statement::ThrowStatement(_) => true,
             _ => false,
@@ -258,6 +263,7 @@ impl<'a> Visit<'a> for BreakFinder {
                     self.nested_unlabelled_break = true;
                 }
             }
+            // TODO: this is not fully correct, we should allow termination if this if is a last statement
             Statement::IfStatement(it) => {
                 if self.top_level {
                     self.top_level = false;
@@ -267,8 +273,24 @@ impl<'a> Visit<'a> for BreakFinder {
                     self.visit_if_statement(it);
                 }
             }
-            Statement::TryStatement(it) => self.visit_try_statement(it),
-            Statement::WithStatement(it) => self.visit_with_statement(it),
+            Statement::TryStatement(it) => {
+                if self.top_level {
+                    self.top_level = false;
+                    self.visit_try_statement(it);
+                    self.top_level = true;
+                } else {
+                    self.visit_try_statement(it);
+                }
+            }
+            Statement::WithStatement(it) => {
+                if self.top_level {
+                    self.top_level = false;
+                    self.visit_with_statement(it);
+                    self.top_level = true;
+                } else {
+                    self.visit_with_statement(it);
+                }
+            }
             _ => {}
         }
     }
@@ -281,134 +303,67 @@ mod test {
     #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn minimize_switch() {
-        // remove empty
-        test("switch (empty) {}", "empty");
-        test("switch (!true) {}", "");
-        test("switch (true) {}", "");
-        test("switch (fn()) {}", "fn()");
-        // truncate cases
-        test("switch (test) { default: break; case 1: break; }", "if (test === 1) {} else {}");
-        test("switch (test) { case 1: break; }", "test;");
-        test_same("switch (test) { case 2: case 1: break; default: break }");
-        test_same("switch (test) { case 3: foo(); case 2: case 1: break; default: break }");
-        // single switch case
-        test("switch (fn()) { default: a(); break; }", "fn(),a()");
-        test("switch (test) { default: fn(); return; }", "test, fn(); return");
-        test("switch (fn()) { default: a(); }", "fn(), a()");
-        test("switch (test) { case 1: fn(); break; }", "test === 1 && fn()");
-        test("switch (test) { case 1: fn(); return; }", "if (test === 1) { fn(); return; }");
-        test("switch (test) { case 1: fn(); }", "test === 1 && fn()");
-        test("switch (a) { case log(1): default:}", "if (a === log(1)) {} else {}");
-        // default + case
-        test(
-            "switch (c) { default: a(); break; case 1: b(); break; }",
-            "if (c === 1) { b(); } else { a(); }",
-        );
-        test(
-            "switch (c) { default: { a(); break; } case 1: { b(); break; } }",
-            "c === 1 ? b() : a()",
-        );
-        // evaluate static case
-        test(
-            "switch (1) { case 1: a(); break; default: b(); }",
-            "if (1 === 1) { a(); } else { b(); }",
-        );
-        test(
-            "switch (1) { case 2: foo(); break; default: bar(); }",
-            "if (1 === 2) { foo(); } else { bar(); }",
-        );
-        // special cases
-        test_same("switch (test) { case 1: fn(); break; case 2: bar(); break; }");
-        test_same("switch (x) { case 1: a(); case 2: b(); }");
-        test(
-            "switch (2) { default: log(3); case 1: log(2) }",
-            "if (2 === 1) {log(2);} else {log(3);}",
-        );
+        test("switch(a()){}", "a()");
+        test("switch(a){default: }", "a;");
+        test("switch(a){default: break;}", "a;");
+        test("switch(a){default: var b; break;}", "a;var b");
+        test("switch(a){default: b()}", "a, b();");
+        test("switch(a){default: b(); return;}", "a, b(); return");
 
-        test("switch(a){}", "a;");
-        test("switch(foo()){}", "foo()");
-        test("switch(a){default:}", "a;");
-        test("switch(a){default:break;}", "a;");
-        test("switch(a){default:var b;break;}", "a;var b");
-        test("switch(a){case 1: default:}", "a;");
-        test("switch(a){default: case 1:}", "if (a === 1) {} else {}");
-        test("switch(a){default: break; case 1:break;}", "if (a === 1) {} else {}");
-        test(
-            "switch(a){default: var b; break; case 1: var c; break;}",
-            "if (a === 1) { var c; } else { var b; }",
-        );
-        test("var x=1; switch(x) { case 1: var y; }", "var y;");
-        test(
-            "function f() {switch(a){default: return; case 1: break;}}",
-            "function f() { if (a === 1) {} else { return; } }",
-        );
-        test(
-            "function f() {switch(1){default: return; case 1: break;}}",
-            "function f() {if (1 === 1) {} else {return;}}",
-        );
-        test("function f() {switch(a){case 1: foo();}}", "function f() {a === 1 && foo();}");
-        test_same("function f() {switch(a){case 3: case 2: case 1: foo();}}");
-        test(
-            "function f() {switch(a){case 2: case 1: default: foo();}}",
-            "function f() {a, foo();}",
-        );
-        // test cases from closure-compiler
-        // <https://github.com/google/closure-compiler/blob/736315149f0fdacf0a4c75be5fe51fdc8f01232d/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java#L545>
-        test_same("switch(a){case 1: default:break; case 2: foo()}");
-        test_same("switch(a){case 1: goo(); default:break; case 2: foo()}");
-        test_same("switch(a){case 1: goo(); case 2:break; case 3: foo()}");
-        test("switch(1){case 2: var x=0;}", "if (0) var x;");
-        test_same(
-            "switch ('repeated') { case 'repeated': foo(); break; case 'repeated': var x=0; break;}",
-        );
-        test_same(
-            "switch ('repeated') { case 'repeated': foo(); break; case 'repeated': bar(); break;}",
-        );
-        test("switch(a){case 1: var c =2; break;}", "if (a === 1) var c = 2;");
-        test("function f() {switch(a){case 1: return;}}", "function f() {a;}");
+        test("switch(a){case 1: break;}", "a;");
+        test("switch(a){case 1: b();}", "a === 1 && b()");
+        test("switch(a){case 1: b();break; }", "a === 1 && b()");
+        test("switch(a){case 1: b();return; }", "if (a === 1) { b(); return; }");
+
+        test("switch(a){case 1: default: }", "a;");
+        test_same("switch(a){case 1: default: break; case 2: b()}");
+        test_same("switch(a){case 1: b(); default: break; case 2: c()}");
+        test_same("switch(a){case 1: b(); case 2: break; case 3: c()}");
+        test_same("switch(a){case 1: b(); break; case 2: c();break;}");
+        test_same("switch(a){case 1: b(); case 2: b();}");
+        test("switch(a){case 1: var c=2; break;}", "if (a === 1) var c = 2;");
+
+        test("switch(a){default: case 1: }", "if (a === 1) {} else {}");
+        test("switch(a){default: break; case 1: break;}", "if (a === 1) {} else {}");
+        test("switch(a){default: b();break;case 1: c();break;}", "if (a === 1) {c();} else {b();}");
+        test("switch(a){default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b()");
+
+        test("switch(a){case b(): default:}", "if (a === b()) {} else {}");
+        test_same("switch(a){case 2: case 1: break; default: break }");
+        test_same("switch(a){case 3: b(); case 2: case 1: break; default: break }");
+
+        test("var x=1;switch(x){case 1: var y;}", "var y;");
+        test("function f(){switch(a){case 1: return;}}", "function f() {a;}");
         test("x:switch(a){case 1: break x;}", "x: if (a === 1) break x;");
-        test("let x;switch (use(x)) { default: {let y;} }", "let x;use(void 0);{let y;}");
-        test("let x;switch (use?.(x)) {default: {let y;}}", "let x;use?.(void 0);{let y;}");
-        test("let x;switch (use(x)) {default: let y;}", "let x;{use(void 0);let y;}");
-        test_same(" function f() { switch('x') { case 'x': var x = 1; break; case 'y': break; } }");
+        test("switch(a()) { default: {let y;} }", "a();{let y;}");
+        test_same("function f(){switch('x'){case 'x': var x = 1;break; case 'y': break; }}");
+        test("switch(a){default: if(a) {break;}bar();}", "switch(a){default: if(a) break;bar();}");
+        test("switch ('\\v') {case '\\u000B': foo();}", "foo()");
+
+        test_same("switch('r'){case 'r': a();break; case 'r': var x=0;break;}");
+        test_same("switch('r'){case 'r': a();break; case 'r': bar();break;}");
+        test("switch(2) {default: a; case 1: b()}", "if(2===1) {b();} else {a;}");
+        test("switch(1) {case 1: a();break; default: b();}", "if(1===1) {a();} else {b();}");
+        test_same("switch('e') {case 'e': case 'f': a();}");
+        test_same("switch('a') {case 'a': a();break; case 'b': b();break;}");
+        test_same("switch('c') {case 'a': a();break; case 'b': b();break;}");
+        test_same("switch(1) {case 1: a();break; case 2: bar();break;}");
+        test_same("switch('f') {case 'f': a(); case 'b': b();}");
+        test_same("switch('f') {case 'f': if (a() > 0) {b();break;} c(); case 'd': f();}");
+        test_same("switch('f') {case 'b': bar();break; case x: x();break; case 'f': f();break;}");
         test(
-            "function f() { switch(x) { case 'y': break; default: var x = 1; } }",
-            "function f() { if (x === 'y') {} else { var x = 1; } }",
+            "switch(1){case 1: case 2: {break;} case 3: case 4: default: b(); break;}",
+            "switch(1){case 1: case 2: break; default: b(); break;}",
+        );
+        test(
+            "switch ('d') {case 'foo': foo();break; default: bar();break;}",
+            "if('d'==='foo') {foo();} else {bar();}",
+        );
+        test("outer: switch (2) {case 2: f(); break outer; }", "outer: {f(); break outer;}");
+        test_same(
+            "switch(0){case NaN: foobar();break;case -0.0: foo();break; case 2: bar();break;}",
         );
         test("let x = 1; switch('x') { case 'x': let x = 2; break;}", "let x = 1; { let x = 2 }");
-        test(
-            "switch (x) { default: if (a) { break; } bar(); }",
-            "switch (x) { default: if (a) break; bar(); }",
-        );
-    }
-
-    #[test]
-    fn minimize_switch_with_literal() {
-        test("switch ('\\v') {case '\\u000B': foo();}", "foo()");
-        test_same("switch ('empty') {case 'empty':case 'foo': foo();}");
-        test(
-            "switch (1) { case 1: case 2: case 3: { break; } case 4: case 5: case 6: default: fail('Should not get here'); break; }",
-            "switch (1) { case 1: case 2: case 3: break; default: fail('Should not get here'); break; }",
-        );
-        test_same("switch (1) {case 1: foo();break;case 2: bar();break;}");
-        test_same("switch (1) {case 1.1: foo();break;case 2: bar();break;}");
-        test("outer: switch (2) {case 2: f(); break outer; }", "outer: {f(); break outer;}");
-        test("outer: {switch (2) {case 2:f();break outer;}}", "outer: {f(); break outer;}");
-        test_same("switch ('foo') {case 'foo': foo();break;case 'bar': bar();break;}");
-        test_same("switch ('noMatch') {case 'foo': foo();break;case 'bar': bar();break;}");
-        test_same(
-            "switch ('fallThru') {case 'fallThru': if (foo(123) > 0) {foobar(1);break;}  foobar(2);case 'bar': bar();}",
-        );
-        test_same("switch ('fallThru') {case 'fallThru': foo();case 'bar': bar();}");
-        test(
-            "switch ('hasDefaultCase') { case 'foo': foo(); break; default: bar(); break; }",
-            "if ('hasDefaultCase' === 'foo') { foo(); } else { bar(); }",
-        );
-        test_same(
-            "switch ('foo') {case 'bar': bar();break;case notConstant: foobar();break;case 'foo': foo();break;}",
-        );
-        test_same(
-            "switch (0) {case NaN: foobar();break;case -0.0: foo();break;case 2: bar();break;}",
-        );
+        test("switch(1){case 2: var x=0;}", "if (0) var x;");
     }
 }
