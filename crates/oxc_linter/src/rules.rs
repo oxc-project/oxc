@@ -390,6 +390,7 @@ pub(crate) mod react {
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
+    pub mod no_this_in_sfc;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
@@ -562,6 +563,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_distracting_elements;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
+    pub mod no_static_element_interactions;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
     pub mod role_supports_aria_props;
@@ -983,6 +985,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_noninteractive_tabindex,
+    jsx_a11y::no_static_element_interactions,
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
@@ -1097,6 +1100,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
+    react::no_this_in_sfc,
     react::no_unescaped_entities,
     react::no_unknown_property,
     react::no_unsafe,
