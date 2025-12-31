@@ -69,15 +69,15 @@ declare_oxc_lint!(
 
 impl Rule for NoThisInSfc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ThisExpression(this_expr) = node.kind() else {
-            return;
-        };
+        let AstKind::ThisExpression(this_expr) = node.kind() else { return };
 
-        let Some(component_node) = get_parent_function(node, ctx) else {
-            return;
-        };
+        let Some(component_node) = get_parent_function(node, ctx) else { return };
 
-        if is_in_es6_component(component_node, ctx) || is_in_es5_component(component_node, ctx) {
+        if ctx
+            .nodes()
+            .ancestors(component_node.id())
+            .any(|ancestor| is_es6_component(ancestor) || is_es5_component(ancestor))
+        {
             return;
         }
 
@@ -106,39 +106,26 @@ fn get_parent_function<'a, 'b>(
     })
 }
 
-fn is_in_es6_component(function_node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(function_node.id()).any(|ancestor| is_es6_component(ancestor))
-}
-
-fn is_in_es5_component(function_node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(function_node.id()).any(|ancestor| is_es5_component(ancestor))
-}
-
 fn is_in_nested_this_context<'a>(
     this_node: &AstNode<'a>,
     component_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    for ancestor in ctx.nodes().ancestors(this_node.id()) {
-        if ancestor.id() == component_node.id() {
-            return false;
-        }
-
-        match ancestor.kind() {
+    ctx.nodes()
+        .ancestors(this_node.id())
+        .take_while(|ancestor| ancestor.id() != component_node.id())
+        .any(|ancestor| match ancestor.kind() {
             AstKind::Function(_)
             | AstKind::MethodDefinition(_)
-            | AstKind::PropertyDefinition(_) => return true,
-            AstKind::ObjectProperty(_) => {
-                let parent = ctx.nodes().parent_node(ancestor.id());
-                if matches!(parent.kind(), AstKind::ObjectExpression(_)) {
-                    return true;
-                }
+            | AstKind::PropertyDefinition(_) => {
+                return true;
             }
-            _ => {}
-        }
-    }
+            AstKind::ObjectProperty(_) => {
+                matches!(ctx.nodes().parent_kind(ancestor.id()), AstKind::ObjectExpression(_))
+            }
 
-    false
+            _ => false,
+        })
 }
 
 fn is_potential_react_component<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
