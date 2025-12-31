@@ -14,7 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         is_interactive_element, is_presentation_role,
@@ -27,30 +27,17 @@ fn no_static_element_interactions_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoStaticElementInteractions(Box<NoStaticElementInteractionsConfig>);
+const DEFAULT_HANDLERS: &[&str] =
+    &["onClick", "onMouseDown", "onMouseUp", "onKeyPress", "onKeyDown", "onKeyUp"];
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-struct NoStaticElementInteractionsConfig {
-    handlers: Vec<CompactStr>,
+pub struct NoStaticElementInteractions {
+    /// An array of event handler names that should trigger this rule (e.g., `onClick`, `onKeyDown`).
+    handlers: Option<Vec<CompactStr>>,
+    /// If `true`, role attribute values that are JSX expressions (e.g., `role={ROLE}`) are allowed.
+    /// If `false`, only string literal role values are permitted.
     allow_expression_values: bool,
-}
-
-impl Default for NoStaticElementInteractionsConfig {
-    fn default() -> Self {
-        Self {
-            handlers: vec![
-                CompactStr::new("onClick"),
-                CompactStr::new("onMouseDown"),
-                CompactStr::new("onMouseUp"),
-                CompactStr::new("onKeyPress"),
-                CompactStr::new("onKeyDown"),
-                CompactStr::new("onKeyUp"),
-            ],
-            allow_expression_values: false,
-        }
-    }
 }
 
 declare_oxc_lint!(
@@ -81,7 +68,7 @@ declare_oxc_lint!(
     NoStaticElementInteractions,
     jsx_a11y,
     correctness,
-    config = NoStaticElementInteractionsConfig,
+    config = NoStaticElementInteractions,
 );
 
 const INTERACTIVE_ROLES: [&str; 26] = [
@@ -160,13 +147,20 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
 ];
 
 impl Rule for NoStaticElementInteractions {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value)?.into_inner()
+    }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
 
-        let has_handler =
-            self.0.handlers.iter().any(|handler| has_jsx_prop(jsx_el, handler.as_str()).is_some());
+        let has_handler = match &self.handlers {
+            Some(handlers) => {
+                handlers.iter().any(|handler| has_jsx_prop(jsx_el, handler.as_str()).is_some())
+            }
+            None => DEFAULT_HANDLERS.iter().any(|handler| has_jsx_prop(jsx_el, handler).is_some()),
+        };
 
         if !has_handler {
             return;
@@ -215,7 +209,7 @@ impl Rule for NoStaticElementInteractions {
                 }
             }
             JSXAttributeValue::ExpressionContainer(_) => {
-                if self.0.allow_expression_values {
+                if self.allow_expression_values {
                     return;
                 }
             }
@@ -223,27 +217,6 @@ impl Rule for NoStaticElementInteractions {
         }
 
         ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.name.span()));
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let default = Self::default();
-
-        let Some(config) = value.get(0) else {
-            return Ok(default);
-        };
-
-        Ok(Self(Box::new(NoStaticElementInteractionsConfig {
-            handlers: config
-                .get("handlers")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.0.handlers.clone(), |v| {
-                    v.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect()
-                }),
-            allow_expression_values: config
-                .get("allowExpressionValues")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.0.allow_expression_values),
-        })))
     }
 }
 
