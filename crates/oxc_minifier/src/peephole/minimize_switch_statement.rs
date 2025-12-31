@@ -115,8 +115,8 @@ impl<'a> PeepholeOptimizations {
         if switch_stmt.cases.len() == 2 {
             // check whatever its default + case
             if switch_stmt.cases[0].test.is_some() == switch_stmt.cases[1].test.is_some()
-                || !Self::can_case_be_inlined(&switch_stmt.cases[0])
-                || !Self::can_case_be_inlined(&switch_stmt.cases[1])
+                || !Self::can_case_be_inlined(&switch_stmt.cases[0], ctx)
+                || !Self::can_case_be_inlined(&switch_stmt.cases[1], ctx)
             {
                 return;
             }
@@ -170,7 +170,7 @@ impl<'a> PeepholeOptimizations {
         };
         if switch_stmt.cases.len() == 1 {
             let Some(first_case) = switch_stmt.cases.first() else { return };
-            if !Self::can_case_be_inlined(first_case) {
+            if !Self::can_case_be_inlined(first_case, ctx) {
                 return;
             }
             let Some(mut case) = switch_stmt.cases.pop() else {
@@ -255,7 +255,11 @@ impl<'a> PeepholeOptimizations {
     //     }
     // }
 
-    pub fn can_case_be_inlined(case: &SwitchCase) -> bool {
+    pub fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        if case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
+            return false;
+        }
+
         let mut break_finder = BreakFinder::new();
         break_finder.visit_switch_case(case);
         !break_finder.nested_unlabelled_break
@@ -354,7 +358,7 @@ mod test {
         test("switch(a){default: b();break;case 1: c();break;}", "a === 1 ? c() : b()");
         test("switch(a){default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b()");
 
-        test("switch(a){case b(): default:}", "a, b()");
+        test_same("switch(a){case b(): default:}");
         test(
             "switch(a){case 2: case 1: break; default: break;}",
             "switch(a){case 2: case 1: break; default: }",
