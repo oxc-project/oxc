@@ -16,6 +16,7 @@ impl<'a> PeepholeOptimizations {
         Self::fold_switch_with_two_cases(stmt, ctx);
     }
 
+    /// Attempts to remove the last `break` statement from the last case of a switch statement.
     fn try_remove_last_break_from_case(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
@@ -28,21 +29,35 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn find_trailing_removable_switch_cases_range(
-        cases: &Vec<'_, SwitchCase<'a>>,
-        ctx: &Ctx<'a, '_>,
-    ) -> Option<(usize, usize)> {
-        let case_count = cases.len();
+    /// Collapses empty cases in a `SwitchStatement` by removing redundant cases with empty
+    /// consequent's and consolidating them into a more concise representation.
+    ///
+    /// - If the switch statement contains one or fewer cases, it is considered already optimal, and no actions are taken.
+    /// - If the `default` case is the last case, it is treated as a special case where its emptiness directly
+    ///   influences the analysis of the rest of the cases.
+    /// - The function identifies a `removable suffix` of cases at the end of the statement, starting from the first
+    ///   non-empty case or case with side-effect-producing expressions backward to the last case.
+    /// - All cases in the identified removable suffix are eliminated, except for the last case,
+    ///   which is preserved and its test is removed (if applicable).
+    fn collapse_empty_switch_cases(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else {
+            return;
+        };
+
+        let case_count = switch_stmt.cases.len();
         if case_count <= 1 {
-            return None;
+            return;
         }
 
         // if a default case is last we can skip checking if it has body
         let (end, allow_break) = if let Some(default_pos) =
-            cases.iter().rposition(SwitchCase::is_default_case)
+            switch_stmt.cases.iter().rposition(SwitchCase::is_default_case)
         {
             if default_pos == case_count - 1 {
-                (case_count - 1, Self::is_empty_switch_case(&cases[default_pos].consequent, true))
+                (
+                    case_count - 1,
+                    Self::is_empty_switch_case(&switch_stmt.cases[default_pos].consequent, true),
+                )
             } else {
                 (case_count, false)
             }
@@ -51,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         // Find the last non-removable case (any case whose consequent is non-empty).
-        let last_non_empty_before_last = cases[..end].iter().rposition(|case| {
+        let last_non_empty_before_last = switch_stmt.cases[..end].iter().rposition(|case| {
             !Self::is_empty_switch_case(&case.consequent, allow_break)
                 || case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx))
         });
@@ -64,30 +79,17 @@ impl<'a> PeepholeOptimizations {
 
         // nothing removable
         if start >= case_count - 1 {
-            return None;
+            return;
         }
 
-        Some((start, case_count))
-    }
-
-    fn collapse_empty_switch_cases(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
-        let Statement::SwitchStatement(switch_stmt) = stmt else {
+        let Some(mut last) = switch_stmt.cases.pop() else {
             return;
         };
+        switch_stmt.cases.truncate(start);
 
-        let Some((start, end)) =
-            Self::find_trailing_removable_switch_cases_range(&switch_stmt.cases, ctx)
-        else {
-            return;
-        };
-
-        if let Some(last) = switch_stmt.cases.last_mut()
-            && !Self::is_empty_switch_case(&last.consequent, false)
-        {
+        if !Self::is_empty_switch_case(&last.consequent, true) {
             last.test = None;
-            switch_stmt.cases.drain(start..end - 1);
-        } else {
-            switch_stmt.cases.truncate(start);
+            switch_stmt.cases.push(last);
         }
         ctx.state.changed = true;
     }
@@ -109,44 +111,51 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Simplifies a `switch` statement with exactly two cases into an equivalent `if` statement.
+    ///
+    /// This transformation is applicable when the `switch` statement meets the following criteria:
+    /// - It contains exactly two cases.
+    /// - One of the cases represents the `default` case, and the other defines a condition (`test`).
+    /// - Both cases can be safely inlined without reordering or modifying program behavior.
+    /// - Both cases are terminated properly (e.g., with a `break` statement).
     fn fold_switch_with_two_cases(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
-        if switch_stmt.cases.len() == 2 {
-            // check whatever its default + case
-            if switch_stmt.cases[0].test.is_some() == switch_stmt.cases[1].test.is_some()
-                || !Self::is_terminated_switch_case(&switch_stmt.cases[0].consequent)
-                || !Self::can_case_be_inlined(&switch_stmt.cases[0], ctx)
-                || !Self::can_case_be_inlined(&switch_stmt.cases[1], ctx)
-            {
-                return;
-            }
 
-            let mut first = switch_stmt.cases.pop().unwrap();
-            let mut second = switch_stmt.cases.pop().unwrap();
-            Self::remove_last_break(&mut first.consequent);
-            Self::remove_last_break(&mut second.consequent);
-
-            let (test, consequent, alternate) = if first.test.is_some() {
-                (first.test.unwrap(), first.consequent, second.consequent)
-            } else {
-                (second.test.unwrap(), second.consequent, first.consequent)
-            };
-
-            ctx.state.changed = true;
-            *stmt = ctx.ast.statement_if(
-                switch_stmt.span,
-                ctx.ast.expression_binary(
-                    SPAN,
-                    switch_stmt.discriminant.take_in(ctx.ast),
-                    BinaryOperator::StrictEquality,
-                    test,
-                ),
-                Self::create_if_block_from_switch_case(consequent, ctx),
-                Some(Self::create_if_block_from_switch_case(alternate, ctx)),
-            );
+        // check whatever its default + case
+        if switch_stmt.cases.len() != 2
+            || switch_stmt.cases[0].test.is_some() == switch_stmt.cases[1].test.is_some()
+            || !Self::is_terminated_switch_case(&switch_stmt.cases[0].consequent)
+            || !Self::can_case_be_inlined(&switch_stmt.cases[0], ctx)
+            || !Self::can_case_be_inlined(&switch_stmt.cases[1], ctx)
+        {
+            return;
         }
+
+        let mut first = switch_stmt.cases.pop().unwrap();
+        let mut second = switch_stmt.cases.pop().unwrap();
+        Self::remove_last_break(&mut first.consequent);
+        Self::remove_last_break(&mut second.consequent);
+
+        let (test, consequent, alternate) = if first.test.is_some() {
+            (first.test.unwrap(), first.consequent, second.consequent)
+        } else {
+            (second.test.unwrap(), second.consequent, first.consequent)
+        };
+
+        ctx.state.changed = true;
+        *stmt = ctx.ast.statement_if(
+            switch_stmt.span,
+            ctx.ast.expression_binary(
+                SPAN,
+                switch_stmt.discriminant.take_in(ctx.ast),
+                BinaryOperator::StrictEquality,
+                test,
+            ),
+            Self::create_if_block_from_switch_case(consequent, ctx),
+            Some(Self::create_if_block_from_switch_case(alternate, ctx)),
+        );
     }
 
     fn create_if_block_from_switch_case(
@@ -253,12 +262,7 @@ impl<'a> PeepholeOptimizations {
             Some(Statement::BlockStatement(block_stmt)) => {
                 Self::is_terminated_switch_case(&block_stmt.body)
             }
-            Some(
-                Statement::BreakStatement(_)
-                | Statement::ContinueStatement(_)
-                | Statement::ReturnStatement(_)
-                | Statement::ThrowStatement(_),
-            ) => true,
+            Some(last) => last.is_jump_statement(),
             _ => false,
         }
     }
