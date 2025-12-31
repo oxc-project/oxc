@@ -117,9 +117,7 @@ fn is_in_nested_this_context<'a>(
         .any(|ancestor| match ancestor.kind() {
             AstKind::Function(_)
             | AstKind::MethodDefinition(_)
-            | AstKind::PropertyDefinition(_) => {
-                return true;
-            }
+            | AstKind::PropertyDefinition(_) => true,
             AstKind::ObjectProperty(_) => {
                 matches!(ctx.nodes().parent_kind(ancestor.id()), AstKind::ObjectExpression(_))
             }
