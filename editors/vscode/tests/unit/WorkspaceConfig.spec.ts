@@ -1,8 +1,8 @@
 import { strictEqual } from 'assert';
 import { ConfigurationTarget, workspace } from 'vscode';
 import { DiagnosticPullMode } from 'vscode-languageclient';
-import { FixKind, WorkspaceConfig } from '../client/WorkspaceConfig.js';
-import { WORKSPACE_FOLDER } from './test-helpers.js';
+import { FixKind, WorkspaceConfig } from '../../client/WorkspaceConfig.js';
+import { WORKSPACE_FOLDER } from '../test-helpers.js';
 
 const keys = [
   'lint.run',

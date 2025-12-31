@@ -18,7 +18,7 @@ import {
   loadFixture,
   sleep,
   testSingleFolderMode
-} from './test-helpers';
+} from '../test-helpers';
 import assert = require('assert');
 
 suiteSetup(async () => {

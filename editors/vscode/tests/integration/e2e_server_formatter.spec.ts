@@ -10,7 +10,7 @@ import {
   fixturesWorkspaceUri,
   loadFixture,
   sleep,
-} from './test-helpers';
+} from '../test-helpers';
 
 suiteSetup(async () => {
   await activateExtension();

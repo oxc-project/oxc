@@ -1,7 +1,7 @@
 import { strictEqual } from 'assert';
 import { workspace } from 'vscode';
-import { ConfigService } from '../client/ConfigService.js';
-import { testSingleFolderMode, WORKSPACE_FOLDER } from './test-helpers.js';
+import { ConfigService } from '../../client/ConfigService.js';
+import { WORKSPACE_FOLDER } from '../test-helpers.js';
 
 const conf = workspace.getConfiguration('oxc');
 
@@ -30,7 +30,7 @@ suite('ConfigService', () => {
   };
 
   suite('getOxfmtServerBinPath', () => {
-    testSingleFolderMode('resolves relative server path with workspace folder', async () => {
+    test('resolves relative server path with workspace folder', async () => {
       const service = new ConfigService();
       const nonDefinedServerPath = await service.getOxfmtServerBinPath();
 
@@ -48,7 +48,7 @@ suite('ConfigService', () => {
       strictEqual(relativeServerPath, `${workspace_path}/relative/oxfmt`);
     });
 
-    testSingleFolderMode('returns undefined for unsafe server path', async () => {
+    test('returns undefined for unsafe server path', async () => {
       const service = new ConfigService();
       await conf.update('path.oxfmt', '../unsafe/oxfmt');
       const unsafeServerPath = await service.getOxfmtServerBinPath();
@@ -56,7 +56,7 @@ suite('ConfigService', () => {
       strictEqual(unsafeServerPath, undefined);
     });
 
-    testSingleFolderMode('returns backslashes path on Windows', async () => {
+    test('returns backslashes path on Windows', async () => {
       if (process.platform !== 'win32') {
         return;
       }
@@ -71,7 +71,7 @@ suite('ConfigService', () => {
   });
 
   suite('getOxlintServerBinPath', () => {
-    testSingleFolderMode('resolves relative server path with workspace folder', async () => {
+    test('resolves relative server path with workspace folder', async () => {
       const service = new ConfigService();
       const nonDefinedServerPath = await service.getOxlintServerBinPath();
 
@@ -89,7 +89,7 @@ suite('ConfigService', () => {
       strictEqual(relativeServerPath, `${workspace_path}/relative/oxlint`);
     });
 
-    testSingleFolderMode('returns undefined for unsafe server path', async () => {
+    test('returns undefined for unsafe server path', async () => {
       const service = new ConfigService();
       await conf.update('path.oxlint', '../unsafe/oxlint');
       const unsafeServerPath = await service.getOxlintServerBinPath();
@@ -97,7 +97,7 @@ suite('ConfigService', () => {
       strictEqual(unsafeServerPath, undefined);
     });
 
-    testSingleFolderMode('returns backslashes path on Windows', async () => {
+    test('returns backslashes path on Windows', async () => {
       if (process.platform !== 'win32') {
         return;
       }

@@ -1,5 +1,5 @@
 import { strictEqual } from 'assert';
-import { validateSafeBinaryPath } from '../client/PathValidator';
+import { validateSafeBinaryPath } from '../../client/PathValidator';
 
 suite('validateSafeBinaryPath', () => {
   test('should return true for valid binary paths', () => {
