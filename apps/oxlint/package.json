@@ -37,7 +37,6 @@
     "eslint": "catalog:",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
-    "jiti": "^2.6.0",
     "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.106.0",
     "rolldown": "catalog:",
