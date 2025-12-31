@@ -1352,7 +1352,14 @@ mod test {
     #[test]
     // test a nested directory structure and the ignore file gets applied as expected.
     fn test_list_files_nested() {
-        let args = &["--list-files", "--ignore-path=.oxlintignore"];
+        let args = &["--list-files", "--ignore-path=.oxignore"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    // Ensure that `ignorePatterns` from the oxlint config file are respected by `--list-files`.
+    fn test_list_files_with_oxlintrc_ignore_patterns() {
+        let args = &["--list-files", "--config=oxlint.json"];
         Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
     }
 

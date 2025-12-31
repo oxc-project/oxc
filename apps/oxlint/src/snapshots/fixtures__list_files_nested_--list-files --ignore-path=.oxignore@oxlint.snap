@@ -2,7 +2,7 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
-arguments: --list-files --ignore-path=.oxlintignore
+arguments: --list-files --ignore-path=.oxignore
 working directory: fixtures/list_files_nested
 ----------
 <cwd>/fixtures/list_files_nested/a/b/one.js
