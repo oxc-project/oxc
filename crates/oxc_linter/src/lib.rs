@@ -314,7 +314,7 @@ impl Linter {
         let disable_directives = if is_partial_loader_file {
             None
         } else {
-            Rc::try_unwrap(ctx_host).ok().and_then(|host| host.into_disable_directives())
+            Rc::try_unwrap(ctx_host).ok().and_then(ContextHost::into_disable_directives)
         };
 
         (diagnostics, disable_directives)
@@ -414,7 +414,7 @@ impl Linter {
         let js_results = lint_file_with_custom_ast(
             path.to_string_lossy().to_string(),
             source_text.to_string(),
-            parse_result.ast_json.clone(),
+            parse_result.ast_json,
             rule_ids,
             options_ids,
             settings_json,

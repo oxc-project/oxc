@@ -1,5 +1,7 @@
 use std::{borrow::Cow, fmt::Debug, path::Path, sync::Arc};
 
+use rustc_hash::FxHashMap;
+
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
@@ -381,8 +383,7 @@ impl<'a> StrippedSource<'a> {
             m.original_start.saturating_add(offset)
         } else {
             // Fallback: find the closest preceding mapping and extrapolate
-            let preceding =
-                self.span_mappings.iter().filter(|m| m.stripped_end <= stripped_start).last();
+            let preceding = self.span_mappings.iter().rfind(|m| m.stripped_end <= stripped_start);
 
             if let Some(m) = preceding {
                 let offset = stripped_start.saturating_sub(m.stripped_end);
@@ -406,8 +407,7 @@ impl<'a> StrippedSource<'a> {
             m.original_start.saturating_add(offset)
         } else {
             // Fallback: find the closest preceding mapping and extrapolate
-            let preceding =
-                self.span_mappings.iter().filter(|m| m.stripped_end <= stripped_end).last();
+            let preceding = self.span_mappings.iter().rfind(|m| m.stripped_end <= stripped_end);
 
             if let Some(m) = preceding {
                 let offset = stripped_end.saturating_sub(m.stripped_end);
@@ -657,12 +657,8 @@ impl SerializedScope {
             "class-static-block" => flags |= ScopeFlags::ClassStaticBlock,
             "catch" => flags |= ScopeFlags::CatchClause,
             "with" => flags |= ScopeFlags::With,
-            "block" | "class" | "for" | "switch" | "class-field-initializer" => {
-                // These are block scopes with no special flags
-            }
-            _ => {
-                // Unknown scope type - treat as block scope
-            }
+            // Block scopes and unknown scope types have no special flags
+            _ => {}
         }
 
         flags
@@ -700,6 +696,10 @@ impl SerializedReference {
 /// # Returns
 ///
 /// The deserialized scope manager, or an error if parsing fails.
+///
+/// # Errors
+///
+/// Returns an error string if the JSON is malformed or doesn't match the expected schema.
 pub fn parse_external_scope(scope_manager_json: &str) -> Result<SerializedScopeManager, String> {
     serde_json::from_str(scope_manager_json)
         .map_err(|e| format!("Failed to parse scope manager JSON: {e}"))
@@ -730,17 +730,16 @@ pub fn inject_scope_references(
 
     // Build a mapping from external variable IDs to variable names
     // We'll use this to look up variable names when processing references
-    let variable_names: std::collections::HashMap<u32, &str> =
+    let variable_names: FxHashMap<u32, &str> =
         scope_manager.variables.iter().map(|v| (v.id, v.name.as_str())).collect();
 
     // Build a mapping from variable names to symbol IDs by iterating all scopes.
     // This is needed because imports are in the module scope, not the global scope.
     // We iterate all bindings in all scopes to build this map.
     // We clone the names to avoid borrow checker issues.
-    let mut name_to_symbol: std::collections::HashMap<String, oxc_semantic::SymbolId> =
-        std::collections::HashMap::new();
+    let mut name_to_symbol: FxHashMap<String, oxc_semantic::SymbolId> = FxHashMap::default();
     for (_scope_id, bindings) in scoping.iter_bindings() {
-        for (name, &symbol_id) in bindings.iter() {
+        for (name, &symbol_id) in bindings {
             // Only keep the first binding for each name (typically the outermost scope)
             name_to_symbol.entry(name.to_string()).or_insert(symbol_id);
         }
@@ -833,14 +832,11 @@ pub fn lint_with_external_ast(
     };
 
     // Verify the root is a Program node
-    let root_type = match estree_value.get("type").and_then(|v| v.as_str()) {
-        Some(t) => t,
-        None => {
-            return (
-                vec![],
-                DeserializeResult::Error("ESTree JSON missing 'type' field".to_string()),
-            );
-        }
+    let Some(root_type) = estree_value.get("type").and_then(|v| v.as_str()) else {
+        return (
+            vec![],
+            DeserializeResult::Error("ESTree JSON missing 'type' field".to_string()),
+        );
     };
 
     if root_type != "Program" {
@@ -879,8 +875,10 @@ pub fn lint_with_external_ast(
         match FromESTree::from_estree(&estree_value, &allocator) {
             Ok(p) => p,
             Err(DeserError::UnknownNodeType(node_type)) => {
-                // Unknown node type - likely custom syntax. For now, skip Rust rules.
-                // TODO: Implement placeholder handling as per plan
+                // Unknown node type at a position where we can't create a placeholder.
+                // This typically happens when the parser produces a non-standard AST
+                // structure that doesn't map to any ESTree/oxc node type at a required
+                // position. Skip Rust rules for this file - JS plugin rules can still run.
                 return (vec![], DeserializeResult::UnknownNode(node_type));
             }
             Err(e) => {
@@ -902,16 +900,13 @@ pub fn lint_with_external_ast(
     // Override source type if parser options specify "module" but AST says "script".
     // Some parsers (like ember-eslint-parser) don't propagate the sourceType option
     // to the AST's sourceType field, so we need to handle this ourselves.
-    if !program.source_type.is_module() {
-        if let Some(options_json) = parser_options_json {
-            if let Ok(options) = serde_json::from_str::<serde_json::Value>(options_json) {
-                if let Some(source_type) = options.get("sourceType").and_then(|v| v.as_str()) {
-                    if source_type == "module" {
-                        program.source_type = SourceType::mjs();
-                    }
-                }
-            }
-        }
+    if !program.source_type.is_module()
+        && parser_options_json
+            .and_then(|json| serde_json::from_str::<serde_json::Value>(json).ok())
+            .and_then(|opts| opts.get("sourceType").and_then(|v| v.as_str()).map(|s| s == "module"))
+            .unwrap_or(false)
+    {
+        program.source_type = SourceType::mjs();
     }
 
     // Build semantic analysis
