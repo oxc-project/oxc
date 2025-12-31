@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+   ╭─[no_this_in_before_route_enter.tsx:5:8]
+ 4 │               beforeRouteEnter(to, from, next) {
+ 5 │                 this.a;
+   ·                 ────
+ 6 │                 next();
+   ╰────
+  help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
+
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+   ╭─[no_this_in_before_route_enter.tsx:5:8]
+ 4 │               beforeRouteEnter: function(to, from, next) {
+ 5 │                 this.b;
+   ·                 ────
+ 6 │               }
+   ╰────
+  help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
+
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+   ╭─[no_this_in_before_route_enter.tsx:5:8]
+ 4 │               beforeRouteEnter: function(to, from, next) {
+ 5 │                 this.atrr = this.method();
+   ·                 ────
+ 6 │               }
+   ╰────
+  help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
+
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+   ╭─[no_this_in_before_route_enter.tsx:5:20]
+ 4 │               beforeRouteEnter: function(to, from, next) {
+ 5 │                 this.atrr = this.method();
+   ·                             ────
+ 6 │               }
+   ╰────
+  help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
