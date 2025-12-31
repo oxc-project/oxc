@@ -231,7 +231,7 @@ impl<'a> PeepholeOptimizations {
             Some(Statement::BreakStatement(break_stmt)) => {
                 if break_stmt.label.is_none() {
                     stmt.truncate(len - 1);
-                    changed |= true
+                    changed |= true;
                 }
             }
             Some(Statement::BlockStatement(block_stmt)) => {
