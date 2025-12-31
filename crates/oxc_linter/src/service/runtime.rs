@@ -1215,12 +1215,11 @@ impl Runtime {
         }
 
         // Apply fixes if enabled
+        // Note: We pass `None` for source_type to skip the debug validation that parses
+        // the fixed code with oxc's parser. Custom parser files may contain syntax that
+        // isn't valid JavaScript, so we can't validate the fixed output with oxc.
         let messages = if self.linter.options().fix.is_some() {
-            let source_type = SourceType::from_path(path).ok().map_or_else(SourceType::jsx, |st| {
-                if st.is_javascript() { st.with_jsx(true) } else { st }
-            });
-
-            let fix_result = Fixer::new(source_text, all_messages, Some(source_type)).fix();
+            let fix_result = Fixer::new(source_text, all_messages, None).fix();
 
             if fix_result.fixed {
                 os_file_system.write_file(path, &fix_result.fixed_code).unwrap();
