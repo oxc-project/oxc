@@ -42,10 +42,12 @@ Custom parsers are configured in `.oxlintrc.json` using the `overrides` field:
 #### `jsParser`
 
 The parser module to use. Can be:
+
 - An npm package name: `"ember-eslint-parser"`
 - A relative path to a local parser: `"./my-parser.js"`
 
 The parser must implement the standard ESLint parser interface:
+
 - `parse(code, options)` - Returns an ESTree-compatible AST
 - `parseForESLint(code, options)` - Returns `{ ast, scopeManager?, visitorKeys?, services? }`
 
@@ -83,6 +85,7 @@ export function parseForESLint(code: string, options?: ParserOptions): {
 ### AST Requirements
 
 The returned AST must:
+
 - Have `type: "Program"` as the root node
 - Include span information on all nodes (either `start`/`end` or `range: [start, end]`)
 - Use standard ESTree node types for JavaScript constructs
@@ -164,6 +167,7 @@ Custom parsers work alongside JS plugins. You can use a custom parser for file p
 ```
 
 In this setup:
+
 - `no-var` (Rust rule) runs on the deserialized AST
 - `my-plugin/custom-rule` (JS rule) runs on the original AST from the parser
 
@@ -184,6 +188,7 @@ oxlint --config .oxlintrc.json
 Not all ESTree node types are fully supported for deserialization. If your parser produces uncommon or non-standard nodes, some may be converted to placeholder nodes, and diagnostics on those regions will be filtered out.
 
 Currently known limitations:
+
 - Some TypeScript-specific AST variations may not deserialize correctly
 - Very deeply nested or unusual AST structures may cause issues
 - Parser-specific extensions to ESTree may not be recognized
@@ -191,6 +196,7 @@ Currently known limitations:
 ### Performance
 
 Custom parser support adds overhead compared to native oxc parsing:
+
 - JSON serialization/deserialization of the AST
 - JavaScript execution for the parser
 - Additional memory for maintaining both AST representations
@@ -206,6 +212,7 @@ Note that oxlint cannot validate that fixes produce syntactically valid output f
 ### Scope Analysis Accuracy
 
 If the custom parser doesn't provide a `scopeManager`, oxlint builds scope information from the deserialized AST. This may be less accurate than the parser's native scope analysis, potentially causing:
+
 - False positives for `no-unused-vars` on variables used in custom syntax
 - False negatives for `no-undef` on undefined variables
 
