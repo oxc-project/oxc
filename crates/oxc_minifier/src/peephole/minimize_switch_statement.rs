@@ -227,7 +227,12 @@ impl<'a> PeepholeOptimizations {
             Some(Statement::BlockStatement(block_stmt)) => {
                 Self::is_empty_switch_case(&block_stmt.body, allow_break)
             }
-            Some(Statement::BreakStatement(_)) => allow_break,
+            Some(Statement::BreakStatement(break_stmt)) => {
+                if break_stmt.label.is_none() {
+                    return allow_break;
+                }
+                false
+            }
             _ => false,
         }
     }
@@ -382,6 +387,7 @@ mod test {
         test("var x=1;switch(x){case 1: var y;}", "var y;");
         test("function f(){switch(a){case 1: return;}}", "function f() {a;}");
         test("x:switch(a){case 1: break x;}", "x: if (a === 1) break x;");
+        test_same("x:switch(a){case 2: break x; case 1: break x;}");
         test("switch(a()) { default: {let y;} }", "a();{let y;}");
         test(
             "function f(){switch('x'){case 'x': var x = 1;break; case 'y': break; }}",
