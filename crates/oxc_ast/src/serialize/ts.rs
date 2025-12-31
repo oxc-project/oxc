@@ -503,6 +503,34 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
     }
 }
 
+/// Serializer for `params` field of `TSConstructSignatureDeclaration`.
+///
+/// No `this_param` to prepend, just serialize params directly.
+#[ast_meta]
+#[estree(ts_type = "ParamPattern[]", raw_deser = "DESER[Box<FormalParameters>](POS_OFFSET.params)")]
+pub struct TSConstructSignatureDeclarationParams<'a, 'b>(
+    pub &'b TSConstructSignatureDeclaration<'a>,
+);
+
+impl ESTree for TSConstructSignatureDeclarationParams<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.params.serialize(serializer);
+    }
+}
+
+/// Serializer for `params` field of `TSConstructorType`.
+///
+/// No `this_param` to prepend, just serialize params directly.
+#[ast_meta]
+#[estree(ts_type = "ParamPattern[]", raw_deser = "DESER[Box<FormalParameters>](POS_OFFSET.params)")]
+pub struct TSConstructorTypeParams<'a, 'b>(pub &'b TSConstructorType<'a>);
+
+impl ESTree for TSConstructorTypeParams<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.params.serialize(serializer);
+    }
+}
+
 /// Converter for [`TSParenthesizedType`].
 ///
 /// In raw transfer, do not produce a `TSParenthesizedType` node in AST if `PRESERVE_PARENS` is false.
@@ -558,7 +586,8 @@ mod from_estree_converters {
     use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
 
     use super::{
-        TSCallSignatureDeclarationParams, TSClassImplementsExpression, TSFunctionTypeParams,
+        TSCallSignatureDeclarationParams, TSClassImplementsExpression,
+        TSConstructSignatureDeclarationParams, TSConstructorTypeParams, TSFunctionTypeParams,
         TSMappedTypeOptional, TSMethodSignatureParams,
     };
 
@@ -676,6 +705,32 @@ mod from_estree_converters {
 
     /// Deserialize `params` field for `TSFunctionType`.
     impl<'a> FromESTreeConverter<'a> for TSFunctionTypeParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as TSCallSignatureDeclarationParams
+            TSCallSignatureDeclarationParams::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `params` field for `TSConstructSignatureDeclaration`.
+    impl<'a> FromESTreeConverter<'a> for TSConstructSignatureDeclarationParams<'a, '_> {
+        type Output = ABox<'a, js::FormalParameters<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // Same logic as TSCallSignatureDeclarationParams
+            TSCallSignatureDeclarationParams::from_estree_converter(value, allocator)
+        }
+    }
+
+    /// Deserialize `params` field for `TSConstructorType`.
+    impl<'a> FromESTreeConverter<'a> for TSConstructorTypeParams<'a, '_> {
         type Output = ABox<'a, js::FormalParameters<'a>>;
 
         fn from_estree_converter(

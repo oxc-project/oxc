@@ -967,7 +967,10 @@ pub fn lint_with_external_ast(
 ///
 /// A message is filtered out if its span overlaps with any unknown span.
 /// Two spans overlap if they share any source positions.
-fn filter_messages_in_unknown_spans(messages: Vec<Message>, unknown_spans: &[Span]) -> Vec<Message> {
+fn filter_messages_in_unknown_spans(
+    messages: Vec<Message>,
+    unknown_spans: &[Span],
+) -> Vec<Message> {
     messages
         .into_iter()
         .filter(|message| {
@@ -1421,10 +1424,10 @@ mod test {
         }
 
         let messages = vec![
-            make_message(0, 10),   // Before unknown span
-            make_message(20, 30),  // Inside unknown span
-            make_message(50, 60),  // After unknown span
-            make_message(35, 45),  // Overlaps end of unknown span
+            make_message(0, 10),  // Before unknown span
+            make_message(20, 30), // Inside unknown span
+            make_message(50, 60), // After unknown span
+            make_message(35, 45), // Overlaps end of unknown span
         ];
 
         let unknown_spans = vec![Span::new(15, 40)];

@@ -1549,6 +1549,7 @@ pub struct TSMethodSignature<'a> {
 pub struct TSConstructSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[estree(via = TSConstructSignatureDeclarationParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2060,6 +2061,7 @@ pub struct TSConstructorType<'a> {
     pub span: Span,
     pub r#abstract: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[estree(via = TSConstructorTypeParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
