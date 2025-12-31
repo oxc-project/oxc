@@ -178,7 +178,7 @@ impl CliRunner {
             paths.sort_unstable();
         }
 
-        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
