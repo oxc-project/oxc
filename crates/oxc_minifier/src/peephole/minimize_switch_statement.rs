@@ -25,9 +25,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Position of the (last) default if any
-        let Some(default_pos) = cases.iter().rposition(|c| c.is_default_case()) else {
-            return None;
-        };
+        let default_pos = cases.iter().rposition(SwitchCase::is_default_case)?;
 
         // Find the last non-removable case (any case whose consequent is non-empty).
         let last_non_empty_before_last = cases[..case_count - 1].iter().rposition(|c| {
@@ -67,11 +65,11 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        if let Some(last) = switch_stmt.cases.last_mut() {
-            if !Self::is_empty_switch_case(&last.consequent) {
-                last.test = None;
-                end -= 1;
-            }
+        if let Some(last) = switch_stmt.cases.last_mut()
+            && !Self::is_empty_switch_case(&last.consequent)
+        {
+            last.test = None;
+            end -= 1;
         }
         switch_stmt.cases.drain(start..end);
         ctx.state.changed = true;
@@ -82,13 +80,13 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         if switch_stmt.cases.is_empty() {
-            if !switch_stmt.discriminant.may_have_side_effects(ctx) {
-                *stmt = ctx.ast.statement_empty(switch_stmt.span);
-            } else {
+            if switch_stmt.discriminant.may_have_side_effects(ctx) {
                 *stmt = ctx.ast.statement_expression(
                     switch_stmt.span,
                     switch_stmt.discriminant.take_in(ctx.ast),
                 );
+            } else {
+                *stmt = ctx.ast.statement_empty(switch_stmt.span);
             }
             ctx.state.changed = true;
         }
@@ -136,7 +134,7 @@ impl<'a> PeepholeOptimizations {
         mut vec: Vec<'a, Statement<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Statement<'a> {
-        if vec.len() == 1 && matches!(vec.get(0), Some(Statement::BlockStatement(_))) {
+        if vec.len() == 1 && matches!(vec.first(), Some(Statement::BlockStatement(_))) {
             vec.pop().unwrap()
         } else {
             ctx.ast.statement_block_with_scope_id(
@@ -152,8 +150,8 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         if switch_stmt.cases.len() == 1 {
-            let Some(first_case) = switch_stmt.cases.get(0) else { return };
-            if !Self::can_case_be_inlined(&first_case) {
+            let Some(first_case) = switch_stmt.cases.first() else { return };
+            if !Self::can_case_be_inlined(first_case) {
                 return;
             }
             let Some(mut case) = switch_stmt.cases.pop() else {
@@ -181,21 +179,21 @@ impl<'a> PeepholeOptimizations {
                 if discriminant.may_have_side_effects(ctx) {
                     stmts.push(ctx.ast.statement_expression(discriminant.span(), discriminant));
                 }
-                if case.consequent.len() > 0 {
+                if !case.consequent.is_empty() {
                     stmts.extend(case.consequent);
                 }
                 *stmt = ctx.ast.statement_block_with_scope_id(
                     switch_stmt.span,
                     stmts,
                     ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                )
+                );
             }
         }
     }
 
     pub fn drop_break_and_postfix(cons: &mut Vec<'a, Statement<'a>>) {
         // TODO: this is wrong, as it doesn't take into account BlockStatement
-        if cons.len() > 0
+        if !cons.is_empty()
             && let Some(terminates_rpos) = cons.iter().rposition(Self::is_terminated)
         {
             if cons
@@ -244,7 +242,7 @@ struct BreakFinder {
     nested_unlabelled_break: bool,
 }
 
-impl<'a> BreakFinder {
+impl BreakFinder {
     pub fn new() -> Self {
         Self { top_level: true, nested_unlabelled_break: false }
     }
@@ -280,6 +278,7 @@ impl<'a> Visit<'a> for BreakFinder {
 mod test {
     use crate::tester::{test, test_same};
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn minimize_switch() {
         // remove empty
