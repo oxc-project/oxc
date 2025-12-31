@@ -334,20 +334,10 @@ impl PreferCalledExactlyOnceWith {
                 MatcherKind::ToHaveBeenCalledOnce => {
                     if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
                         let statement_span = GetSpan::span(statement);
-                        let mut start_remove = statement_span.start;
 
-                        while !ctx
-                            .source_range(Span::new(start_remove, statement_span.end + 1))
-                            .starts_with('\n')
-                        {
-                            start_remove = start_remove - 1;
-                        }
-
-                        let next_line_statemen_span =
-                            Span::new(start_remove + 1, statement_span.end + 1);
-
-                        expect
-                            .update_tracking_with_called_once_information(next_line_statemen_span);
+                        expect.update_tracking_with_called_once_information(
+                            get_source_code_line_span(statement_span, ctx),
+                        );
                     } else {
                         variables_expected.insert(
                             variable_expected_name.clone(),
@@ -379,20 +369,8 @@ impl PreferCalledExactlyOnceWith {
                     if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
                         let statement_span = GetSpan::span(statement);
 
-                        let mut start_remove = statement_span.start;
-
-                        while !ctx
-                            .source_range(Span::new(start_remove, statement_span.end + 1))
-                            .starts_with('\n')
-                        {
-                            start_remove = start_remove - 1;
-                        }
-
-                        let next_line_statemen_span =
-                            Span::new(start_remove + 1, statement_span.end + 1);
-
                         expect.update_tracking_with_called_with_information(
-                            next_line_statemen_span,
+                            get_source_code_line_span(statement_span, ctx),
                             variable_expected_name,
                             to_be_arguments,
                             type_notation,
@@ -431,6 +409,25 @@ impl PreferCalledExactlyOnceWith {
             );
         }
     }
+}
+
+/**
+ * Eslint fix is based on deleting the complete line of code. Span currently ignores the
+ * whitespaces, so the test were failing due the trailing whitespaces not being removed.
+ * Currently I'm asuming after the end of the statement, the next span position is the following line.
+ * Even doing it safely the end check, this fix will remain dangerous as it remove code.
+ */
+fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
+    let mut column_0_span_index = statement_span.start;
+
+    while !ctx
+        .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
+        .starts_with('\n')
+    {
+        column_0_span_index = column_0_span_index - 1;
+    }
+
+    Span::new(column_0_span_index, statement_span.end + 1)
 }
 
 fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
