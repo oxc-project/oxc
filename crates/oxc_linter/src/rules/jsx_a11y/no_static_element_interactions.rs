@@ -148,8 +148,9 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
 
 impl Rule for NoStaticElementInteractions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value)?.into_inner()
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(|x| x.into_inner())
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
