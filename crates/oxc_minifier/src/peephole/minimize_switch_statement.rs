@@ -228,10 +228,7 @@ impl<'a> PeepholeOptimizations {
                 Self::is_empty_switch_case(&block_stmt.body, allow_break)
             }
             Some(Statement::BreakStatement(break_stmt)) => {
-                if break_stmt.label.is_none() {
-                    return allow_break;
-                }
-                false
+                break_stmt.label.is_none() && allow_break
             }
             _ => false,
         }
