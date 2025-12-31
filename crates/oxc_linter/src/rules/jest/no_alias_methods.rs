@@ -127,7 +127,7 @@ impl Rule for NoAliasMethods {
 
         let mut span = matcher.span;
         // expect(a).not['toThrow']()
-        // matcher is the node of `toThrow`, we only what to replace the content in the quotes.
+        // matcher is the node of `toThrow`, we only want to replace the content in the quotes.
         if matcher.element.is_string_literal() {
             span.start += 1;
             span.end -= 1;
