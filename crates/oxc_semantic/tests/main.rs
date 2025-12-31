@@ -123,8 +123,10 @@ fn analyze(
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program).semantic;
+    let semantic = SemanticBuilder::new()
+        .with_check_syntax_error(true)
+        .build(&ret.program, ret.stats)
+        .semantic;
     let ctx = TestContext { path, semantic };
     let scope_snapshot = run_scope_snapshot_test(&ctx);
     let conformance_snapshot = conformance_suite.run_on_source(&ctx);

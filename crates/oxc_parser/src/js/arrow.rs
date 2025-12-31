@@ -222,10 +222,14 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        self.stats.add_symbol(); // BindingIdentifier creates a symbol
+        self.stats.add_node(); // BindingIdentifier
         let pattern = BindingPattern::BindingIdentifier(
             self.ast.alloc_binding_identifier(ident.span, ident.name),
         );
+        self.stats.add_node(); // FormalParameter
         let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
+        self.stats.add_node(); // FormalParameters
         let params = self.ast.alloc_formal_parameters(
             ident.span,
             FormalParameterKind::ArrowFormalParameters,
@@ -287,6 +291,8 @@ impl<'a> ParserImpl<'a> {
         arrow_function_head: ArrowFunctionHead<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        // Arrow functions create a scope
+        self.stats.add_scope();
         let ArrowFunctionHead { type_parameters, params, return_type, r#async, span } =
             arrow_function_head;
         let has_await = self.ctx.has_await();
@@ -298,7 +304,9 @@ impl<'a> ParserImpl<'a> {
             let expr = self
                 .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
             let span = expr.span();
+            self.stats.add_node(); // ExpressionStatement
             let expr_stmt = self.ast.statement_expression(span, expr);
+            self.stats.add_node(); // FunctionBody
             self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))
         } else {
             self.parse_function_body()
@@ -306,6 +314,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
+        self.stats.add_node(); // ArrowFunctionExpression
         self.ast.expression_arrow_function(
             self.end_span(span),
             expression,

@@ -10,7 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::{Atom, CompactStr};
 
 pub(crate) mod base54;
@@ -265,9 +265,9 @@ impl<'t> Mangler<'t> {
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> ManglerReturn {
+    pub fn build(self, program: &Program<'_>, stats: Stats) -> ManglerReturn {
         let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program, stats).semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }

@@ -63,7 +63,7 @@ fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
-    let mangler_return = Mangler::new().with_options(options).build(&ret.program);
+    let mangler_return = Mangler::new().with_options(options).build(&ret.program, ret.stats);
     Codegen::new()
         .with_scoping(Some(mangler_return.scoping))
         .with_private_member_mappings(Some(mangler_return.class_private_mappings))

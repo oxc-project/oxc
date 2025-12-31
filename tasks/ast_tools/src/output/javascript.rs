@@ -14,7 +14,7 @@ use oxc_minifier::{
     CompressOptions, CompressOptionsKeepNames, Minifier, MinifierOptions, PropertyReadSideEffects,
     TreeShakeOptions,
 };
-use oxc_parser::Parser;
+use oxc_parser::{Parser, ParserReturn, Stats};
 use oxc_span::SourceType;
 
 use crate::{logln, utils::write_it};
@@ -221,9 +221,9 @@ pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
 
                 // Parse, preprocess, minify, and print
                 let allocator = Allocator::new();
-                let mut program = parse_js(&code, &allocator);
-                self.pre_process_variant(&mut program, flags, &allocator);
-                print_minified(&mut program, &allocator)
+                let mut ret = parse_js(&code, &allocator);
+                self.pre_process_variant(&mut ret.program, flags, &allocator);
+                print_minified(&mut ret.program, ret.stats, &allocator)
             })
             .collect()
     }
@@ -277,11 +277,11 @@ macro_rules! generate_variants {
 pub(crate) use generate_variants;
 
 /// Parse file.
-pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> Program<'a> {
+pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> ParserReturn<'a> {
     let source_type = SourceType::mjs();
     let parser_ret = Parser::new(allocator, source_text, source_type).parse();
     assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
-    parser_ret.program
+    parser_ret
 }
 
 /// Replace `/* IF <FLAG> */ ... /* END_IF */` and `/* IF !<FLAG> */ ... /* END_IF */` comment blocks,
@@ -327,7 +327,11 @@ impl<const FLAG_COUNT: usize> Replacer for FlagCommentReplacer<'_, FLAG_COUNT> {
 ///
 /// Do not remove whitespace, or mangle symbols.
 /// Purpose is not to compress length of code, but to remove dead code.
-pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -> String {
+pub fn print_minified<'a>(
+    program: &mut Program<'a>,
+    stats: Stats,
+    allocator: &'a Allocator,
+) -> String {
     // Minify
     let minify_options = MinifierOptions {
         mangle: None,
@@ -341,7 +345,7 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
             ..CompressOptions::default()
         }),
     };
-    Minifier::new(minify_options).minify(allocator, program);
+    Minifier::new(minify_options).minify(allocator, program, stats);
 
     // Revert minification of `true` to `!0` and `false` to `!1`. It hurts readability.
     let mut unminifier = BooleanUnminifier::new(allocator);

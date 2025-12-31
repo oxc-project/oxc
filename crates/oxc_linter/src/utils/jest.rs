@@ -330,7 +330,8 @@ mod test {
             let source_type = SourceType::default();
             let parser_ret = Parser::new(&allocator, "", source_type).parse();
             let program = allocator.alloc(parser_ret.program);
-            let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+            let semantic =
+                SemanticBuilder::new().with_cfg(true).build(program, parser_ret.stats).semantic;
             Rc::new(ContextHost::new(
                 path,
                 vec![ContextSubHost::new(semantic, Arc::new(ModuleRecord::default()), 0)],

@@ -1047,7 +1047,7 @@ fn module_runner_transform_impl(
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, errors } =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        SemanticBuilder::new().with_check_syntax_error(true).build(&program, parser_ret.stats);
     parser_ret.errors.extend(errors);
 
     let scoping = semantic.into_scoping();

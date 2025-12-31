@@ -31,12 +31,12 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let ParserReturn { mut program, .. } =
+                let ParserReturn { mut program, stats, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
                 let scoping = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
-                    .build(&program)
+                    .build(&program, stats)
                     .semantic
                     .into_scoping();
 

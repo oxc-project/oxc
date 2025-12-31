@@ -19,7 +19,8 @@ fn bench_codegen(criterion: &mut Criterion) {
         assert!(parser_ret.errors.is_empty());
         let mut program = parser_ret.program;
 
-        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let scoping =
+            SemanticBuilder::new().build(&program, parser_ret.stats).semantic.into_scoping();
 
         let transform_options = TransformOptions::enable_all();
         let transformer_ret =

@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser, ParserReturn, Stats};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
@@ -111,6 +111,7 @@ pub trait CompilerInterface {
     fn after_transform(
         &mut self,
         _program: &mut Program<'_>,
+        _stats: Stats,
         _transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         ControlFlow::Continue(())
@@ -140,7 +141,7 @@ pub trait CompilerInterface {
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program);
+        let mut semantic_return = self.semantic(&program, parser_return.stats);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
@@ -163,7 +164,10 @@ pub trait CompilerInterface {
                 return;
             }
 
-            if self.after_transform(&mut program, &mut transformer_return).is_break() {
+            if self
+                .after_transform(&mut program, parser_return.stats, &mut transformer_return)
+                .is_break()
+            {
                 return;
             }
 
@@ -175,8 +179,7 @@ pub trait CompilerInterface {
 
         // Symbols and scopes are out of sync.
         if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+            scoping = SemanticBuilder::new().build(&program, stats).semantic.into_scoping();
         }
 
         if let Some(options) = inject_options {
@@ -200,12 +203,14 @@ pub trait CompilerInterface {
         /* Compress */
 
         if let Some(options) = self.compress_options() {
-            self.compress(&allocator, &mut program, options);
+            self.compress(&allocator, &mut program, parser_return.stats, options);
         }
 
         /* Mangler */
 
-        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+        let mangler = self
+            .mangle_options()
+            .map(|options| self.mangle(&mut program, parser_return.stats, options));
 
         /* Codegen */
 
@@ -224,7 +229,7 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &'a Program<'a>, stats: Stats) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {
@@ -235,7 +240,7 @@ pub trait CompilerInterface {
         builder
             .with_check_syntax_error(self.check_semantic_error())
             .with_scope_tree_child_ids(self.semantic_child_scope_ids())
-            .build(program)
+            .build(program, stats)
     }
 
     fn isolated_declaration<'a>(
@@ -271,13 +276,19 @@ pub trait CompilerInterface {
         &self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
+        stats: Stats,
         options: CompressOptions,
     ) {
-        Compressor::new(allocator).build(program, options);
+        Compressor::new(allocator).build(program, stats, options);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> ManglerReturn {
-        Mangler::new().with_options(options).build(program)
+    fn mangle(
+        &self,
+        program: &mut Program<'_>,
+        stats: Stats,
+        options: MangleOptions,
+    ) -> ManglerReturn {
+        Mangler::new().with_options(options).build(program, stats)
     }
 
     fn codegen(

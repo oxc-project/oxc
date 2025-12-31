@@ -59,7 +59,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_index::IndexVec;
 use oxc_mangler::Mangler;
-use oxc_semantic::{Scoping, SemanticBuilder};
+use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 use oxc_span::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
@@ -100,12 +100,22 @@ impl<'a> Minifier {
         Self { options }
     }
 
-    pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(false, allocator, program)
+    pub fn minify(
+        self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        stats: Stats,
+    ) -> MinifierReturn {
+        self.build(false, allocator, program, stats)
     }
 
-    pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(true, allocator, program)
+    pub fn dce(
+        self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        stats: Stats,
+    ) -> MinifierReturn {
+        self.build(true, allocator, program, stats)
     }
 
     fn build(
@@ -113,12 +123,13 @@ impl<'a> Minifier {
         dce: bool,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
+        stats: Stats,
     ) -> MinifierReturn {
         let (stats, iterations) = self
             .options
             .compress
             .map(|options| {
-                let semantic = SemanticBuilder::new().build(program).semantic;
+                let semantic = SemanticBuilder::new().build(program, stats).semantic;
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
@@ -140,9 +151,8 @@ impl<'a> Minifier {
             .mangle
             .map(|options| {
                 let mut semantic = SemanticBuilder::new()
-                    .with_stats(stats)
                     .with_scope_tree_child_ids(true)
-                    .build(program)
+                    .build(program, stats)
                     .semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)

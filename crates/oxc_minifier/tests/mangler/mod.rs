@@ -12,7 +12,7 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
-    let mangler_return = Mangler::new().with_options(options).build(&program);
+    let mangler_return = Mangler::new().with_options(options).build(&program, ret.stats);
     Codegen::new()
         .with_scoping(Some(mangler_return.scoping))
         .with_private_member_mappings(Some(mangler_return.class_private_mappings))

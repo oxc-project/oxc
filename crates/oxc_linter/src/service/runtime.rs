@@ -1031,7 +1031,7 @@ impl Runtime {
             .with_cfg(true)
             .with_scope_tree_child_ids(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(allocator.alloc(ret.program), ret.stats);
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);

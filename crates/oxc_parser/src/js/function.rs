@@ -38,6 +38,7 @@ impl<'a> ParserImpl<'a> {
         });
 
         self.expect_closing(Kind::RCurly, opening_span);
+        self.stats.add_node();
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
     }
 
@@ -59,6 +60,7 @@ impl<'a> ParserImpl<'a> {
         let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);
         self.expect(Kind::RParen);
 
+        self.stats.add_node();
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
         (this_param, formal_parameters)
@@ -123,6 +125,7 @@ impl<'a> ParserImpl<'a> {
                 let rest_span = rest_element.span;
                 let type_annotation =
                     if self.is_ts { self.parse_ts_type_annotation() } else { None };
+                self.stats.add_node();
                 rest = Some(self.ast.alloc_formal_parameter_rest(
                     rest_span,
                     rest_element,
@@ -198,6 +201,7 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
         }
+        self.stats.add_node();
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
@@ -221,6 +225,8 @@ impl<'a> ParserImpl<'a> {
         param_kind: FormalParameterKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
+        // Functions create a scope
+        self.stats.add_scope();
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
         let type_parameters = self.parse_ts_type_parameters();
@@ -276,6 +282,7 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
+        self.stats.add_node();
         self.ast.alloc_function(
             self.end_span(span),
             function_type,
@@ -441,6 +448,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        self.stats.add_node();
         self.ast.expression_yield(self.end_span(span), delegate, argument)
     }
 
@@ -460,6 +468,8 @@ impl<'a> ParserImpl<'a> {
             self.check_identifier(kind, ctx);
 
             let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            self.stats.add_symbol();
+            self.stats.add_node();
             Some(self.ast.binding_identifier(span, name))
         } else {
             if func_kind.is_id_required() {

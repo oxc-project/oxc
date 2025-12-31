@@ -72,6 +72,7 @@ mod error_handler;
 mod modifiers;
 mod module_record;
 mod state;
+mod stats;
 
 mod js;
 mod jsx;
@@ -102,6 +103,8 @@ use crate::{
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
+
+pub use crate::stats::Stats;
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
@@ -180,6 +183,23 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+
+    /// Statistics about AST nodes, scopes, symbols, and references.
+    ///
+    /// These counts can be used by the semantic analyzer to pre-allocate
+    /// sufficient capacity in `AstNodes`, `ScopeTree`, and `SymbolTable`.
+    ///
+    /// ## Note
+    /// - **Scopes**: May be overestimated (counts all potential scope-creating constructs)
+    /// - **Symbols**: May be overestimated (e.g., `var x; var x;` counts as 2 symbols)
+    /// - **References**: Accurate count of identifier references
+    /// - **Nodes**: Currently 0 - node counting requires additional work (see TODO)
+    ///
+    /// Pass these stats to [`SemanticBuilder::with_stats`] to avoid an additional
+    /// AST traversal for stats calculation.
+    ///
+    /// [`SemanticBuilder::with_stats`]: https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_stats
+    pub stats: Stats,
 }
 
 /// Parse options
@@ -391,6 +411,9 @@ struct ParserImpl<'a> {
 
     /// Precomputed typescript detection
     is_ts: bool,
+
+    /// Statistics about AST nodes, scopes, symbols, and references
+    stats: Stats,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -420,6 +443,7 @@ impl<'a> ParserImpl<'a> {
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
+            stats: Stats::default(),
         }
     }
 
@@ -491,6 +515,7 @@ impl<'a> ParserImpl<'a> {
             irregular_whitespaces,
             panicked,
             is_flow_language,
+            stats: self.stats,
         }
     }
 
@@ -511,6 +536,8 @@ impl<'a> ParserImpl<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Program<'a> {
+        // Program creates the top-level scope
+        self.stats.add_scope();
         // Initialize by moving onto the first token.
         // Checks for hashbang comment.
         self.token = self.lexer.first_token();
@@ -521,6 +548,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
+        self.stats.add_node();
         self.ast.program(
             span,
             self.source_type,
@@ -859,5 +887,112 @@ mod test {
         assert!(!ret.panicked);
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);
+    }
+
+    #[test]
+    fn stats_counting() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        // Test with a simple function
+        let source = r"
+            function foo(a, b) {
+                const x = a + b;
+                return x;
+            }
+            foo(1, 2);
+        ";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.errors.is_empty());
+
+        // Should have stats counted
+        // - scopes: at least 2 (program + function)
+        // - symbols: at least 4 (foo, a, b, x)
+        // - references: at least 4 (a, b, x in body, foo in call)
+        assert!(ret.stats.scopes >= 2, "Expected at least 2 scopes, got {}", ret.stats.scopes);
+        assert!(ret.stats.symbols >= 4, "Expected at least 4 symbols, got {}", ret.stats.symbols);
+        assert!(
+            ret.stats.references >= 4,
+            "Expected at least 4 references, got {}",
+            ret.stats.references
+        );
+    }
+
+    #[test]
+    fn stats_counting_class() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        let source = r"
+            class Foo {
+                constructor(x) {
+                    this.x = x;
+                }
+                bar() {
+                    return this.x;
+                }
+            }
+        ";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.errors.is_empty());
+
+        // Should have scopes: program, class body, constructor, bar method
+        assert!(ret.stats.scopes >= 4, "Expected at least 4 scopes, got {}", ret.stats.scopes);
+        // Should have symbols: Foo, x (constructor param)
+        assert!(ret.stats.symbols >= 2, "Expected at least 2 symbols, got {}", ret.stats.symbols);
+    }
+
+    #[test]
+    fn stats_counting_loop() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        let source = r"
+            for (let i = 0; i < 10; i++) {
+                console.log(i);
+            }
+        ";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.errors.is_empty());
+
+        // Should have scopes: program, for loop, block
+        assert!(ret.stats.scopes >= 3, "Expected at least 3 scopes, got {}", ret.stats.scopes);
+        // Should have symbols: i
+        assert!(ret.stats.symbols >= 1, "Expected at least 1 symbol, got {}", ret.stats.symbols);
+        // Should have references: i (in condition), i (in update), console, log, i (in body)
+        assert!(
+            ret.stats.references >= 4,
+            "Expected at least 4 references, got {}",
+            ret.stats.references
+        );
+    }
+
+    #[test]
+    fn stats_counting_syntax_error() {
+        // Test that stats are correctly counted even for syntax errors
+        // This is a regression test for ((a)) => 0 which fails to parse as arrow function
+        let allocator = Allocator::default();
+        let source_type = SourceType::mjs();
+
+        let source = "((a)) => 0";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+
+        // This should have syntax errors
+        assert!(!ret.errors.is_empty());
+
+        // Debug output
+        eprintln!("Source: {source}");
+        eprintln!(
+            "Stats: nodes={}, scopes={}, symbols={}, references={}",
+            ret.stats.nodes, ret.stats.scopes, ret.stats.symbols, ret.stats.references
+        );
+        eprintln!("Program body: {:?}", ret.program.body.len());
+
+        // The AST should have:
+        // 1. Program
+        // 2. ExpressionStatement (a is wrapped in expr statement after parse failure)
+        // 3. IdentifierReference (a)
+        // So at least 3 nodes
+        assert!(ret.stats.nodes >= 3, "Expected at least 3 nodes, got {}", ret.stats.nodes);
     }
 }

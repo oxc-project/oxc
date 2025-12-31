@@ -31,7 +31,7 @@ pub(crate) fn test(
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
     let ret = Transformer::new(&allocator, Path::new(""), options)
         .build_with_scoping(scoping, &mut program);
     if !ret.errors.is_empty() {

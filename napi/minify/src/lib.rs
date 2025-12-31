@@ -64,7 +64,8 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let scoping = Minifier::new(minifier_options).minify(&allocator, &mut program).scoping;
+    let scoping =
+        Minifier::new(minifier_options).minify(&allocator, &mut program, parser_ret.stats).scoping;
 
     let mut codegen_options = match &options.codegen {
         // Need to remove all comments.

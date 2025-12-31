@@ -16,7 +16,7 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
-    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let mut scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
     assert_eq!(ret.changed, source_text != expected);
     // Use the updated scoping, instead of recreating one.
@@ -282,7 +282,7 @@ log(__MEMBER__);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, c).build(scoping, &mut program);
     let result = Codegen::new()
         .with_options(CodegenOptions {

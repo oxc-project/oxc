@@ -75,8 +75,10 @@ fn main() -> std::io::Result<()> {
     std::fs::write(ast_file_path, format!("{:#?}", &program))?;
     println!("Wrote AST to: {}", &ast_file_name);
 
-    let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).with_cfg(true).build(&program);
+    let semantic = SemanticBuilder::new()
+        .with_check_syntax_error(true)
+        .with_cfg(true)
+        .build(&program, parser_ret.stats);
 
     if !semantic.errors.is_empty() {
         let error_message: String = semantic

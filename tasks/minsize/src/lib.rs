@@ -159,8 +159,9 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
+    let stats = ret.stats;
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(
         &allocator,
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
@@ -170,7 +171,7 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
         mangle: (!options.compress_only).then(MangleOptions::default),
         compress: Some(CompressOptions::default()),
     })
-    .minify(&allocator, &mut program);
+    .minify(&allocator, &mut program, stats);
     let code = Codegen::new()
         .with_options(CodegenOptions { minify: !options.compress_only, ..CodegenOptions::minify() })
         .with_scoping(ret.scoping)

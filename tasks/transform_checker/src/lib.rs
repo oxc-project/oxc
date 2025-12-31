@@ -98,7 +98,7 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{Scoping, SemanticBuilder};
+use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 use oxc_span::CompactStr;
 use oxc_syntax::{
     reference::ReferenceId,
@@ -112,6 +112,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 pub fn check_semantic_after_transform(
     scoping_after_transform: &Scoping,
     program: &Program,
+    stats: Stats,
 ) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
 
@@ -136,7 +137,7 @@ pub fn check_semantic_after_transform(
     let program = program.clone_in(&allocator);
     let scoping_rebuilt = SemanticBuilder::new()
         .with_scope_tree_child_ids(scoping_after_transform.has_scope_child_ids())
-        .build(&program)
+        .build(&program, stats)
         .semantic
         .into_scoping();
 
