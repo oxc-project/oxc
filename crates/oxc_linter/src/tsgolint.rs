@@ -10,7 +10,9 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{
+    DiagnosticBatch, DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity,
+};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -991,7 +993,7 @@ impl DiagnosticHandler {
         let file_path = e.file_path.clone();
         let oxc_diagnostic: OxcDiagnostic = e.into();
 
-        let diagnostics = if let Some(ref file_path) = file_path {
+        let batch = if let Some(ref file_path) = file_path {
             let source_text = self.get_source_text(file_path).to_string();
             DiagnosticService::wrap_diagnostics(
                 &self.cwd,
@@ -1000,10 +1002,10 @@ impl DiagnosticHandler {
                 vec![oxc_diagnostic],
             )
         } else {
-            vec![oxc_diagnostic.into()]
+            DiagnosticBatch::from_errors(vec![oxc_diagnostic.into()])
         };
 
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+        self.error_sender.send(batch).expect("Failed to send diagnostics");
     }
 
     fn send_diagnostic(

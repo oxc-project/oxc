@@ -11,12 +11,40 @@ use percent_encoding::AsciiSet;
 use std::fs::canonicalize as strict_canonicalize;
 
 use crate::{
-    Error, NamedSource, OxcDiagnostic, Severity,
+    Error, FixAvailability, NamedSource, OxcDiagnostic, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
-pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
-pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
+/// A batch of diagnostics with extra metadata for reporting.
+///
+/// This struct is sent over the channel to the [`DiagnosticService`] to report
+/// diagnostics along with metadata about those diagnostics
+#[derive(Debug, Default)]
+pub struct DiagnosticBatch {
+    /// The diagnostics in this batch.
+    pub errors: Vec<Error>,
+    /// Number of diagnostics with safe fixes available.
+    pub safe_fix_count: usize,
+    /// Number of diagnostics with dangerous fixes available.
+    pub dangerous_fix_count: usize,
+    /// Number of diagnostics with suggestions available.
+    pub suggestion_count: usize,
+}
+
+impl DiagnosticBatch {
+    /// Create a new empty diagnostic batch.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Create a diagnostic batch from errors without any fix counts.
+    pub fn from_errors(errors: Vec<Error>) -> Self {
+        Self { errors, safe_fix_count: 0, dangerous_fix_count: 0, suggestion_count: 0 }
+    }
+}
+
+pub type DiagnosticSender = mpsc::Sender<DiagnosticBatch>;
+pub type DiagnosticReceiver = mpsc::Receiver<DiagnosticBatch>;
 
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
@@ -113,7 +141,10 @@ impl DiagnosticService {
         self.max_warnings.is_some_and(|max_warnings| warnings_count > max_warnings)
     }
 
-    /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
+    /// Wrap [diagnostics] with the source code and path, converting them into a [`DiagnosticBatch`].
+    ///
+    /// This method counts fix availability from the diagnostics before wrapping them in [`Error`]s,
+    /// since fix availability information is lost after conversion.
     ///
     /// [diagnostics]: OxcDiagnostic
     pub fn wrap_diagnostics<C: AsRef<Path>, P: AsRef<Path>>(
@@ -121,7 +152,7 @@ impl DiagnosticService {
         path: P,
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
-    ) -> Vec<Error> {
+    ) -> DiagnosticBatch {
         // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
         let is_jetbrains =
             std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
@@ -135,11 +166,29 @@ impl DiagnosticService {
                 normalized_path.to_string()
             });
 
+        // Count fix availability before wrapping in Error
+        let mut safe_fix_count = 0;
+        let mut dangerous_fix_count = 0;
+        let mut suggestion_count = 0;
+
+        for diagnostic in &diagnostics {
+            match diagnostic.fix_availability() {
+                FixAvailability::SafeFix => safe_fix_count += 1,
+                FixAvailability::DangerousFix => dangerous_fix_count += 1,
+                FixAvailability::Suggestion | FixAvailability::DangerousSuggestion => {
+                    suggestion_count += 1;
+                }
+                FixAvailability::None => {}
+            }
+        }
+
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
-        diagnostics
+        let errors = diagnostics
             .into_iter()
             .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
-            .collect()
+            .collect();
+
+        DiagnosticBatch { errors, safe_fix_count, dangerous_fix_count, suggestion_count }
     }
 
     /// # Panics
@@ -154,10 +203,17 @@ impl DiagnosticService {
     pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
+        let mut safe_fixes_available: usize = 0;
+        let mut dangerous_fixes_available: usize = 0;
+        let mut suggestions_available: usize = 0;
 
-        while let Ok(diagnostics) = self.receiver.recv() {
+        while let Ok(batch) = self.receiver.recv() {
+            safe_fixes_available += batch.safe_fix_count;
+            dangerous_fixes_available += batch.dangerous_fix_count;
+            suggestions_available += batch.suggestion_count;
+
             let mut is_minified = false;
-            for diagnostic in diagnostics {
+            for diagnostic in batch.errors {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
                 let is_error = severity == Some(Severity::Error) || severity.is_none();
@@ -218,6 +274,9 @@ impl DiagnosticService {
         let result = DiagnosticResult::new(
             warnings_count,
             errors_count,
+            safe_fixes_available,
+            dangerous_fixes_available,
+            suggestions_available,
             self.max_warnings_exceeded(warnings_count),
         );
 

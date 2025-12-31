@@ -315,11 +315,12 @@ impl<'a> ContextHost<'a> {
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     // eslint-disable
-                    self.push_diagnostic(Message::new(
+                    self.push_diagnostic(Message::new_with_kind(
                         OxcDiagnostic::error(message_for_disable)
                             .with_label(span)
                             .with_severity(rule_severity),
                         PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                        FixKind::SafeFix,
                     ));
                 }
                 RuleCommentType::Single(rules_vec) => {
@@ -331,11 +332,12 @@ impl<'a> ContextHost<'a> {
 
                         let fix = rule.create_fix(source_text, span).with_message(fix_message);
 
-                        self.push_diagnostic(Message::new(
+                        self.push_diagnostic(Message::new_with_kind(
                             OxcDiagnostic::error(rule_message)
                                 .with_label(rule.name_span)
                                 .with_severity(rule_severity),
                             PossibleFixes::Single(fix),
+                            FixKind::SafeFix,
                         ));
                     }
                 }

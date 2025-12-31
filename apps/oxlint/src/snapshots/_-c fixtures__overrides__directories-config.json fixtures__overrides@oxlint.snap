@@ -35,6 +35,7 @@ working directory:
   help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
+╰ 4 fixes are available with '--fix'
 Finished in <variable>ms on 7 files with 89 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -15,6 +15,7 @@ working directory: fixtures/ignore_patterns_empty_nested
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+╰ 1 fix is available with '--fix'
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -34,6 +35,7 @@ working directory: fixtures/ignore_patterns_empty_nested
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+╰ 1 fix is available with '--fix'
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors

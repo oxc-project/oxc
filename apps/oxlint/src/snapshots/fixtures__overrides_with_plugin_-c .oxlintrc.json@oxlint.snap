@@ -42,6 +42,7 @@ working directory: fixtures/overrides_with_plugin
   help: Consider removing this declaration.
 
 Found 2 warnings and 2 errors.
+╰ 1 suggestion is available with '--fix --fix-suggestions'
 Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

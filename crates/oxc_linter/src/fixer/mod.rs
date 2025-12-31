@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{FixAvailability, OxcDiagnostic};
 use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::LintContext;
@@ -221,14 +221,22 @@ pub struct FixResult<'a> {
 pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
+    /// The kind of fix that was created (safe, dangerous, suggestion).
+    /// This is used to track fix availability statistics.
+    pub fix_kind: FixKind,
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
 }
 
 impl Message {
-    #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
+        Self::new_with_kind(error, fixes, FixKind::None)
+    }
+
+    /// Create a new message with a specific fix kind.
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    pub fn new_with_kind(error: OxcDiagnostic, fixes: PossibleFixes, fix_kind: FixKind) -> Self {
         let span = error
             .labels
             .as_ref()
@@ -236,7 +244,7 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0 }
+        Self { error, span, fixes, fix_kind, fixed: false, section_offset: 0 }
     }
 
     #[must_use]
@@ -276,7 +284,22 @@ impl Message {
 impl From<Message> for OxcDiagnostic {
     #[inline]
     fn from(message: Message) -> Self {
-        message.error
+        // Map FixKind to FixAvailability, regardless of whether fixes were actually generated.
+        // This tracks that a fix *would be* available, even if --fix wasn't passed.
+        let fix_availability = match message.fix_kind {
+            FixKind::SafeFix => FixAvailability::SafeFix,
+            FixKind::DangerousFix => FixAvailability::DangerousFix,
+            FixKind::Suggestion => FixAvailability::Suggestion,
+            FixKind::DangerousSuggestion => FixAvailability::DangerousSuggestion,
+            // For other combinations, use the most restrictive applicable category
+            k if k.contains(FixKind::DangerousFix) => FixAvailability::DangerousFix,
+            k if k.contains(FixKind::Fix) => FixAvailability::SafeFix,
+            k if k.contains(FixKind::DangerousSuggestion) => FixAvailability::DangerousSuggestion,
+            k if k.contains(FixKind::Suggestion) => FixAvailability::Suggestion,
+            _ => FixAvailability::None,
+        };
+
+        message.error.with_fix_availability(fix_availability)
     }
 }
 

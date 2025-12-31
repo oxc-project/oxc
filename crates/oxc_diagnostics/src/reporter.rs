@@ -68,11 +68,34 @@ pub struct DiagnosticResult {
     /// Did the threshold for warnings exceeded the max_warnings?
     /// ToDo: We giving the input from outside, let the owner calculate the result
     max_warnings_exceeded: bool,
+
+    /// Total number of safe fixes available for the diagnostics received
+    safe_fixes_available: usize,
+
+    /// Total number of dangerous fixes available for the diagnostics received
+    dangerous_fixes_available: usize,
+
+    /// Total number of suggestions available for the diagnostics received
+    suggestions_available: usize,
 }
 
 impl DiagnosticResult {
-    pub fn new(warnings_count: usize, errors_count: usize, max_warnings_exceeded: bool) -> Self {
-        Self { warnings_count, errors_count, max_warnings_exceeded }
+    pub fn new(
+        warnings_count: usize,
+        errors_count: usize,
+        safe_fixes_available: usize,
+        dangerous_fixes_available: usize,
+        suggestions_available: usize,
+        max_warnings_exceeded: bool,
+    ) -> Self {
+        Self {
+            warnings_count,
+            errors_count,
+            max_warnings_exceeded,
+            safe_fixes_available,
+            dangerous_fixes_available,
+            suggestions_available,
+        }
     }
 
     /// Get the number of warning-level diagnostics received.
@@ -88,6 +111,21 @@ impl DiagnosticResult {
     /// Did the threshold for warnings exceeded the max_warnings?
     pub fn max_warnings_exceeded(&self) -> bool {
         self.max_warnings_exceeded
+    }
+
+    /// Get the number of safe fixes available for the diagnostics received.
+    pub fn safe_fixes_available(&self) -> usize {
+        self.safe_fixes_available
+    }
+
+    /// Get the number of dangerous fixes available for the diagnostics received.
+    pub fn dangerous_fixes_available(&self) -> usize {
+        self.dangerous_fixes_available
+    }
+
+    /// Get the number of suggestions available for the diagnostics received.
+    pub fn suggestions_available(&self) -> usize {
+        self.suggestions_available
     }
 }
 
