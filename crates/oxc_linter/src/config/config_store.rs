@@ -297,7 +297,8 @@ impl ConfigStore {
 
     /// Returns the number of rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
-        if !self.nested_configs.is_empty() {
+        // This includes the base config for now, so 1 is fine :) Reference: https://github.com/oxc-project/oxc/issues/16356
+        if self.nested_configs.len() > 1 {
             return None;
         }
         let count = if type_aware_enabled {
@@ -1018,34 +1019,29 @@ mod test {
         let base_rules = vec![
             (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
             (
+                // This is a type-aware, tsgolint rule
                 RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
                 AllowWarnDeny::Deny,
             ),
         ];
 
-        let store = ConfigStore::new(
-            Config::new(
-                base_rules.clone(),
-                vec![],
-                OxlintCategories::default(),
-                base_config.clone(),
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
+        let base = Config::new(
+            base_rules.clone(),
+            vec![],
+            OxlintCategories::default(),
+            base_config.clone(),
+            ResolvedOxlintOverrides::new(vec![]),
         );
 
+        let store =
+            ConfigStore::new(base.clone(), FxHashMap::default(), ExternalPluginStore::default());
+
         let mut nested_configs = FxHashMap::default();
-        nested_configs.insert(
-            PathBuf::new(),
-            Config::new(
-                vec![],
-                vec![],
-                OxlintCategories::default(),
-                base_config.clone(),
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-        );
+        // Add the base config to nested_configs, as that's how it actually works right now.
+        // TODO: Can remove this addition of the base config when we fix https://github.com/oxc-project/oxc/issues/16356
+        nested_configs.insert(PathBuf::new(), base.clone());
+        // Then add another so we have more than just the base config here.
+        nested_configs.insert(PathBuf::from("nested"), base);
 
         let store_with_nested_configs = ConfigStore::new(
             Config::new(
@@ -1059,8 +1055,10 @@ mod test {
             ExternalPluginStore::default(),
         );
 
+        // Should return only 1 rule when type-aware is disabled, and 2 when it's enabled.
         assert_eq!(store.number_of_rules(false), Some(1));
         assert_eq!(store.number_of_rules(true), Some(2));
+        // Should return None when there are nested configs.
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
     }

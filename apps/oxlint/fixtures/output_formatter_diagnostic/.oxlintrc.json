@@ -1,6 +1,9 @@
 {
-    "rules": {
-        "no-debugger": "error",
-        "no-unused-vars": "warn"
-    }
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-debugger": "error",
+    "no-unused-vars": "warn"
+  }
 }

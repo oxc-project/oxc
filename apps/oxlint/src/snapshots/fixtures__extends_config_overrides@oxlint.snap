@@ -40,7 +40,7 @@ working directory: fixtures/extends_config
   help: Provide an `href` for the `a` element.
 
 Found 1 warning and 3 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
