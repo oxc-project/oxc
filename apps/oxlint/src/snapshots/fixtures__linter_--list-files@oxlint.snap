@@ -2,8 +2,8 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
-arguments: --list-files fixtures/linter
-working directory: 
+arguments: --list-files
+working directory: fixtures/linter
 ----------
 <cwd>/fixtures/linter/debugger.js
 <cwd>/fixtures/linter/js_as_jsx.js

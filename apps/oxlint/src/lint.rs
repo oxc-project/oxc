@@ -1345,8 +1345,8 @@ mod test {
 
     #[test]
     fn test_list_files() {
-        let args = &["--list-files", "fixtures/linter"];
-        Tester::new().test_and_snapshot(args);
+        let args = &["--list-files"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
     }
 
     #[test]
