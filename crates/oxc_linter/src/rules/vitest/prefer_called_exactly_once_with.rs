@@ -228,17 +228,7 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            let Some(parsed_vitest_fn) =
-                parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-            else {
-                let Some(callee) = call_expr.callee_name() else {
-                    continue;
-                };
-
-                if !mock_reset_methods.contains(callee) {
-                    continue;
-                }
-
+            if is_mock_reset_call_expression(call_expr, &mock_reset_methods) {
                 let Some(Expression::Identifier(identify)) =
                     call_expr.callee.as_member_expression().map(|member| member.object())
                 else {
@@ -247,6 +237,12 @@ impl PreferCalledExactlyOnceWith {
 
                 variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
 
+                continue;
+            }
+
+            let Some(parsed_vitest_fn) =
+                parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+            else {
                 continue;
             };
 
@@ -268,22 +264,6 @@ impl PreferCalledExactlyOnceWith {
                 &PossibleJestNode { node, original: None },
                 ctx,
             ) else {
-                let Some(callee) = call_expr.callee_name() else {
-                    continue;
-                };
-
-                if !mock_reset_methods.contains(callee) {
-                    continue;
-                }
-
-                let Some(Expression::Identifier(identify)) =
-                    call_expr.callee.as_member_expression().map(|member| member.object())
-                else {
-                    continue;
-                };
-
-                variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
-
                 continue;
             };
 
@@ -409,6 +389,21 @@ impl PreferCalledExactlyOnceWith {
             );
         }
     }
+}
+
+fn is_mock_reset_call_expression<'a>(
+    call_expr: &'a CallExpression<'a>,
+    mock_reset_methods: &FxHashSet<CompactStr>,
+) -> bool {
+    let Some(callee) = call_expr.callee_name() else {
+        return false;
+    };
+
+    if !mock_reset_methods.contains(callee) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
