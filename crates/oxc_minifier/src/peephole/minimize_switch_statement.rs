@@ -51,9 +51,9 @@ impl<'a> PeepholeOptimizations {
         };
 
         // Find the last non-removable case (any case whose consequent is non-empty).
-        let last_non_empty_before_last = cases[..end].iter().rposition(|c| {
-            !Self::is_empty_switch_case(&c.consequent, allow_break)
-                || c.test.as_ref().is_none_or(|test| test.may_have_side_effects(ctx))
+        let last_non_empty_before_last = cases[..end].iter().rposition(|case| {
+            !Self::is_empty_switch_case(&case.consequent, allow_break)
+                || case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx))
         });
 
         // start is the first index of the removable suffix
@@ -348,7 +348,8 @@ mod test {
         test("switch(a){case 1: b();break; }", "a === 1 && b()");
         test("switch(a){case 1: b();return; }", "if (a === 1) { b(); return; }");
 
-        test("switch(a){case 1: default: }", "a;");
+        test("switch(a){default: case 1: }", "a");
+        test("switch(a){case 1: default: }", "a");
         test_same("switch(a){case 1: default: break; case 2: b()}");
         test_same("switch(a){case 1: b(); default: c()}");
         test_same("switch(a){case 1: b(); default: break; case 2: c()}");
@@ -361,7 +362,6 @@ mod test {
         test("switch(a){case 1: var c=2; break;}", "if (a === 1) var c = 2");
         test("switch(a){case 1: case 2: default: b(); break;}", "a, b()");
 
-        test("switch(a){default: case 1: }", "a");
         test("switch(a){default: break; case 1: break;}", "a");
         test("switch(a){default: b();break;case 1: c();break;}", "a === 1 ? c() : b()");
         test("switch(a){default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b()");
@@ -395,7 +395,7 @@ mod test {
             "switch('r'){case 'r': a();break; case 'r': bar();break;}",
             "switch('r'){case 'r': a();break; case 'r': bar()}",
         );
-        test("switch(2) {default: a; case 1: b()}", "a;");
+        test_same("switch(2) {default: a; case 1: b()}");
         test("switch(1) {case 1: a();break; default: b();}", "a()");
         test_same("switch('e') {case 'e': case 'f': a();}");
         test(
