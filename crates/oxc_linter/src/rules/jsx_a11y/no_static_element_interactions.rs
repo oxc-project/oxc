@@ -1,13 +1,14 @@
 use cow_utils::CowUtils;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -187,12 +188,12 @@ impl Rule for NoStaticElementInteractions {
 
         let Some(JSXAttributeItem::Attribute(role_attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
         else {
-            ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.span));
+            ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.name.span()));
             return;
         };
 
         let Some(role_value) = &role_attr.value else {
-            ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.span));
+            ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.name.span()));
             return;
         };
 
@@ -206,7 +207,9 @@ impl Rule for NoStaticElementInteractions {
                         return;
                     }
                     if NON_INTERACTIVE_ROLES.contains(first_role) {
-                        ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.span));
+                        ctx.diagnostic(no_static_element_interactions_diagnostic(
+                            jsx_el.name.span(),
+                        ));
                         return;
                     }
                 }
@@ -219,7 +222,7 @@ impl Rule for NoStaticElementInteractions {
             _ => {}
         }
 
-        ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.span));
+        ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.name.span()));
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
