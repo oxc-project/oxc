@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --list-files --ignore-path=.oxlintignore
+working directory: fixtures/list_files_nested
+----------
+<cwd>/fixtures/list_files_nested/a/b/one.js
+<cwd>/fixtures/list_files_nested/a/b/two.ts
+<cwd>/fixtures/list_files_nested/d/e/f.js
+<cwd>/fixtures/list_files_nested/top.js
+----------
+CLI result: None
+----------

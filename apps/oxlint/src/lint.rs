@@ -1350,6 +1350,19 @@ mod test {
     }
 
     #[test]
+    // test a nested directory structure and the ignore file gets applied as expected.
+    fn test_list_files_nested() {
+        let args = &["--list-files", "--ignore-path=.oxlintignore"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_list_files_nested_no_ignore() {
+        let args = &["--list-files", "--no-ignore"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_rules_json_output() {
         let args = &["--rules", "-f=json"];
         let stdout = Tester::new().with_cwd("fixtures".into()).test_output(args);
