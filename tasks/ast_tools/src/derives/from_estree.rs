@@ -582,6 +582,8 @@ fn generate_disambiguation(
         "Literal" => generate_literal_disambiguation(variants, schema),
         "MemberExpression" => generate_member_expression_disambiguation(variants, schema),
         "BinaryExpression" => generate_binary_expression_disambiguation(variants, schema),
+        "TSModuleDeclaration" => generate_ts_module_declaration_disambiguation(variants, schema),
+        "JSXIdentifier" => generate_jsx_identifier_disambiguation(variants, schema),
         _ => {
             // Unknown disambiguation case - use first variant
             let (_, arm) = &variants[0];
@@ -726,6 +728,83 @@ fn generate_binary_expression_disambiguation(
     }
 }
 
+/// Generate disambiguation for TSModuleDeclaration (vs TSGlobalDeclaration).
+/// Both types serialize to ESTree type "TSModuleDeclaration", but TSGlobalDeclaration
+/// has `kind: "global"` while TSModuleDeclaration has `kind: "module"` or `kind: "namespace"`.
+fn generate_ts_module_declaration_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    let mut module_arm: Option<TokenStream> = None;
+    let mut global_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            "TSModuleDeclaration" => module_arm = Some(arm.clone()),
+            "TSGlobalDeclaration" => global_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    let fallback = variants[0].1.clone();
+    let module_arm = module_arm.unwrap_or_else(|| fallback.clone());
+    let global_arm = global_arm.unwrap_or_else(|| fallback.clone());
+
+    quote! {
+        // Disambiguate TSModuleDeclaration vs TSGlobalDeclaration based on kind field
+        let kind = json.get("kind").and_then(|v| v.as_str());
+
+        if kind == Some("global") {
+            #global_arm
+        } else {
+            #module_arm
+        }
+    }
+}
+
+/// Generate disambiguation for JSXIdentifier (IdentifierReference vs ThisExpression).
+/// Both serialize to ESTree type "JSXIdentifier", but ThisExpression has `name: "this"`.
+fn generate_jsx_identifier_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    let mut identifier_arm: Option<TokenStream> = None;
+    let mut this_arm: Option<TokenStream> = None;
+    let mut jsx_identifier_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            "IdentifierReference" => identifier_arm = Some(arm.clone()),
+            "ThisExpression" => this_arm = Some(arm.clone()),
+            "JSXIdentifier" => jsx_identifier_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    let fallback = variants[0].1.clone();
+    let identifier_arm = identifier_arm.unwrap_or_else(|| fallback.clone());
+    let this_arm = this_arm.unwrap_or_else(|| identifier_arm.clone());
+    let jsx_identifier_arm = jsx_identifier_arm.unwrap_or_else(|| identifier_arm.clone());
+
+    quote! {
+        // Disambiguate JSXIdentifier variants based on name field
+        let name = json.get("name").and_then(|v| v.as_str());
+
+        if name == Some("this") {
+            #this_arm
+        } else {
+            // Check if we have a dedicated JSXIdentifier variant, otherwise use IdentifierReference
+            #jsx_identifier_arm
+        }
+    }
+}
+
 /// Generate a match arm for an enum variant, returning (type_name, arm_body).
 /// Generate match arms for an enum variant.
 /// Returns a list of (type_name, arm_body) pairs because some types like Class
@@ -742,6 +821,20 @@ fn generate_enum_variant_arms_with_types(
         Some(t) => t,
         None => return vec![],
     };
+
+    // Check if this variant has a `via` converter that changes the ESTree type name
+    if let Some(via_name) = &variant.estree.via {
+        // Look up the converter's ts_type to get the ESTree type name
+        let meta = schema.meta_by_name(via_name);
+        if let Some(ts_type) = &meta.estree.ts_type {
+            // The converter produces a different type - use the converter for deserialization
+            let converter_path = get_converter_path(via_name, "oxc_ast", schema);
+            let arm_body = quote! {
+                Ok(Self::#variant_ident(#converter_path::from_estree_converter(json, allocator)?))
+            };
+            return vec![(ts_type.clone(), arm_body)];
+        }
+    }
 
     // Check if this is a Box type (most enum variants are Box<T>)
     let is_boxed = matches!(inner_type, TypeDef::Box(_));

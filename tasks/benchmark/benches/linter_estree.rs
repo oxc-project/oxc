@@ -103,8 +103,9 @@ fn bench_linter_estree(criterion: &mut Criterion) {
         let json_value: serde_json::Value = serde_json::from_str(&estree_json).unwrap();
         let test_allocator = Allocator::default();
         let test_result: Result<Program, _> = FromESTree::from_estree(&json_value, &test_allocator);
-        if test_result.is_err() {
+        if let Err(e) = &test_result {
             // Skip files that fail deserialization
+            eprintln!("SKIPPING linter_estree/{}: {}", file.file_name, e);
             continue;
         }
 
@@ -156,8 +157,9 @@ fn bench_linter_estree_full(criterion: &mut Criterion) {
         let test_allocator2 = Allocator::default();
         let test_result: Result<Program, _> =
             FromESTree::from_estree(&json_value, &test_allocator2);
-        if test_result.is_err() {
+        if let Err(e) = &test_result {
             // Skip files that fail deserialization
+            eprintln!("SKIPPING linter_estree_full/{}: {}", file.file_name, e);
             continue;
         }
 
@@ -249,10 +251,11 @@ fn bench_estree_deserialize_only(criterion: &mut Criterion) {
         // Test if deserialization works for this file before benchmarking
         let test_allocator = Allocator::default();
         let test_result: Result<Program, _> = FromESTree::from_estree(&json_value, &test_allocator);
-        if test_result.is_err() {
+        if let Err(e) = &test_result {
             // Skip files that fail deserialization (e.g., due to FormalParameters issue)
             // The linter_estree and linter_estree_full benchmarks still work because
             // lint_with_external_ast handles these internally
+            eprintln!("SKIPPING estree_deserialize/{}: {}", file.file_name, e);
             continue;
         }
 
