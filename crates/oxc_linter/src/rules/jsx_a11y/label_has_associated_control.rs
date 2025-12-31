@@ -124,11 +124,11 @@ declare_oxc_lint!(
 );
 
 impl Rule for LabelHasAssociatedControl {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config = LabelHasAssociatedControlConfig::default();
 
         let Some(options) = value.get(0) else {
-            return Self(Box::new(config));
+            return Ok(Self(Box::new(config)));
         };
 
         if let Some(depth) = options.get("depth").and_then(serde_json::Value::as_u64) {
@@ -182,7 +182,7 @@ impl Rule for LabelHasAssociatedControl {
         config.label_attributes.sort_unstable();
         config.label_attributes.dedup();
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

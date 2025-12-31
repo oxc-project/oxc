@@ -190,7 +190,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for FilenameCase {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config =
             FilenameCaseConfig { multiple_file_extensions: true, ..Default::default() };
 
@@ -211,7 +211,7 @@ impl Rule for FilenameCase {
                     "pascalCase" => config.pascal_case = true,
                     _ => config.kebab_case = true,
                 }
-                return Self(Box::new(config));
+                return Ok(Self(Box::new(config)));
             }
 
             if let Some(Value::Object(map)) = value.get("cases") {
@@ -224,12 +224,12 @@ impl Rule for FilenameCase {
                         _ => (),
                     }
                 }
-                return Self(Box::new(config));
+                return Ok(Self(Box::new(config)));
             }
         }
 
         config.kebab_case = true;
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {

@@ -76,14 +76,14 @@ declare_oxc_lint!(
 
 impl Rule for MaxProps {
     #[expect(clippy::cast_possible_truncation)]
-    fn from_configuration(value: Value) -> Self {
-        Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self {
             max_props: value
                 .get(0)
                 .and_then(|v| v.get("maxProps"))
                 .and_then(Value::as_u64)
                 .map_or(1, |n| n as usize),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

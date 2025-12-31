@@ -33,14 +33,14 @@ all = { level = "warn", priority = -1 }
 dbg_macro = "warn"
 todo = "warn"
 unimplemented = "warn"
-print_stdout = "warn"     # Must be opt-in
-print_stderr = "warn"     # Must be opt-in
+print_stdout = "warn" # Must be opt-in
+print_stderr = "warn" # Must be opt-in
 allow_attributes = "warn"
 # I like the explicitness of this rule as it removes confusion around `clone`.
 # This increases readability, avoids `clone` mindlessly and heap allocating by accident.
 clone_on_ref_ptr = "warn"
 # These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
-self_named_module_files = "warn"              # "-Wclippy::mod_module_files"
+self_named_module_files = "warn" # "-Wclippy::mod_module_files"
 empty_drop = "warn"
 empty_structs_with_brackets = "warn"
 exit = "warn"
@@ -96,80 +96,80 @@ unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
-zero_sized_map_values = "allow"         # FIXME https://github.com/rust-lang/rust-clippy/issues/15429 - False positive with serde skip_serializing
+zero_sized_map_values = "allow" # FIXME https://github.com/rust-lang/rust-clippy/issues/15429 - False positive with serde skip_serializing
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.105.0", path = "crates/oxc" } # Main entry point
-oxc_allocator = { version = "0.105.0", path = "crates/oxc_allocator" } # Memory management
-oxc_ast = { version = "0.105.0", path = "crates/oxc_ast" } # AST definitions
-oxc_ast_macros = { version = "0.105.0", path = "crates/oxc_ast_macros" } # AST proc macros
-oxc_ast_visit = { version = "0.105.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
-oxc_cfg = { version = "0.105.0", path = "crates/oxc_cfg" } # Control flow graph
-oxc_codegen = { version = "0.105.0", path = "crates/oxc_codegen", default-features = false } # Code generation
-oxc_compat = { version = "0.105.0", path = "crates/oxc_compat" } # Browser compatibility
-oxc_data_structures = { version = "0.105.0", path = "crates/oxc_data_structures" } # Shared data structures
-oxc_diagnostics = { version = "0.105.0", path = "crates/oxc_diagnostics" } # Error reporting
-oxc_ecmascript = { version = "0.105.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
-oxc_estree = { version = "0.105.0", path = "crates/oxc_estree" } # ESTree format
-oxc_isolated_declarations = { version = "0.105.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
-oxc_mangler = { version = "0.105.0", path = "crates/oxc_mangler" } # Name mangling
-oxc_minifier = { version = "0.105.0", path = "crates/oxc_minifier" } # Code minification
-oxc_minify_napi = { version = "0.105.0", path = "napi/minify" } # Node.js minifier binding
-oxc_napi = { version = "0.105.0", path = "crates/oxc_napi" } # NAPI utilities
-oxc_parser = { version = "0.105.0", path = "crates/oxc_parser", features = [
+oxc = { version = "0.106.0", path = "crates/oxc" } # Main entry point
+oxc_allocator = { version = "0.106.0", path = "crates/oxc_allocator" } # Memory management
+oxc_ast = { version = "0.106.0", path = "crates/oxc_ast" } # AST definitions
+oxc_ast_macros = { version = "0.106.0", path = "crates/oxc_ast_macros" } # AST proc macros
+oxc_ast_visit = { version = "0.106.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
+oxc_cfg = { version = "0.106.0", path = "crates/oxc_cfg" } # Control flow graph
+oxc_codegen = { version = "0.106.0", path = "crates/oxc_codegen", default-features = false } # Code generation
+oxc_compat = { version = "0.106.0", path = "crates/oxc_compat" } # Browser compatibility
+oxc_data_structures = { version = "0.106.0", path = "crates/oxc_data_structures" } # Shared data structures
+oxc_diagnostics = { version = "0.106.0", path = "crates/oxc_diagnostics" } # Error reporting
+oxc_ecmascript = { version = "0.106.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
+oxc_estree = { version = "0.106.0", path = "crates/oxc_estree" } # ESTree format
+oxc_isolated_declarations = { version = "0.106.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
+oxc_mangler = { version = "0.106.0", path = "crates/oxc_mangler" } # Name mangling
+oxc_minifier = { version = "0.106.0", path = "crates/oxc_minifier" } # Code minification
+oxc_minify_napi = { version = "0.106.0", path = "napi/minify" } # Node.js minifier binding
+oxc_napi = { version = "0.106.0", path = "crates/oxc_napi" } # NAPI utilities
+oxc_parser = { version = "0.106.0", path = "crates/oxc_parser", features = [
   "regular_expression",
 ] } # JS/TS parser
-oxc_parser_napi = { version = "0.105.0", path = "napi/parser" } # Node.js parser binding
-oxc_regular_expression = { version = "0.105.0", path = "crates/oxc_regular_expression" } # Regex parser
-oxc_semantic = { version = "0.105.0", path = "crates/oxc_semantic" } # Semantic analysis
-oxc_span = { version = "0.105.0", path = "crates/oxc_span" } # Source positions
-oxc_syntax = { version = "0.105.0", path = "crates/oxc_syntax" } # Syntax utilities
-oxc_transform_napi = { version = "0.105.0", path = "napi/transform" } # Node.js transformer binding
-oxc_transformer = { version = "0.105.0", path = "crates/oxc_transformer" } # Code transformation
-oxc_transformer_plugins = { version = "0.105.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
-oxc_traverse = { version = "0.105.0", path = "crates/oxc_traverse" } # AST traversal
+oxc_parser_napi = { version = "0.106.0", path = "napi/parser" } # Node.js parser binding
+oxc_regular_expression = { version = "0.106.0", path = "crates/oxc_regular_expression" } # Regex parser
+oxc_semantic = { version = "0.106.0", path = "crates/oxc_semantic" } # Semantic analysis
+oxc_span = { version = "0.106.0", path = "crates/oxc_span" } # Source positions
+oxc_syntax = { version = "0.106.0", path = "crates/oxc_syntax" } # Syntax utilities
+oxc_transform_napi = { version = "0.106.0", path = "napi/transform" } # Node.js transformer binding
+oxc_transformer = { version = "0.106.0", path = "crates/oxc_transformer" } # Code transformation
+oxc_transformer_plugins = { version = "0.106.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
+oxc_traverse = { version = "0.106.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
-oxc_formatter = { path = "crates/oxc_formatter" }                                       # Code formatting
+oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
-oxc_linter = { path = "crates/oxc_linter" }                                             # Linting engine
-oxc_macros = { path = "crates/oxc_macros" }                                             # Proc macros
-oxc_tasks_common = { path = "tasks/common" }                                            # Task utilities
-oxc_tasks_transform_checker = { path = "tasks/transform_checker" }                      # Transform validation
-oxlint = { path = "apps/oxlint" }                                                       # Linter CLI
+oxc_linter = { path = "crates/oxc_linter" } # Linting engine
+oxc_macros = { path = "crates/oxc_macros" } # Proc macros
+oxc_tasks_common = { path = "tasks/common" } # Task utilities
+oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation
+oxlint = { path = "apps/oxlint" } # Linter CLI
 
 # Relaxed version so the user can decide which version to use.
 napi = { version = "3", features = ["tokio_rt"] } # Node.js native bindings
-napi-build = "2"                                  # NAPI build tool
-napi-derive = "3"                                 # NAPI proc macros
+napi-build = "2" # NAPI build tool
+napi-derive = "3" # NAPI proc macros
 
 # Relaxed version so the user can decide which version to use.
-indexmap = "2"                                    # Ordered hash map
-proc-macro2 = "1"                                 # Proc macro API
-quote = "1"                                       # Quasi-quoting for macros
-rustc-hash = "2"                                  # Fast hash algorithm
-serde = "1"                                       # Serialization framework
-serde_json = "1"                                  # JSON serialization
+indexmap = "2" # Ordered hash map
+proc-macro2 = "1" # Proc macro API
+quote = "1" # Quasi-quoting for macros
+rustc-hash = "2" # Fast hash algorithm
+serde = "1" # Serialization framework
+serde_json = "1" # JSON serialization
 syn = { version = "2", default-features = false } # Rust parser for macros
-unicode-id-start = "1"                            # Unicode identifier validation
+unicode-id-start = "1" # Unicode identifier validation
 
 #
-javascript-globals = "1.3.4"                                      # JavaScript global definitions
-json-strip-comments = "3.1.0"                                     # Strip JSON comments
-oxc-browserslist = "2.1.4"                                        # Browser compatibility queries
+javascript-globals = "1.3.4" # JavaScript global definitions
+json-strip-comments = "3.1.0" # Strip JSON comments
+oxc-browserslist = "2.1.4" # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
-oxc_resolver = "11.15.0"                                          # Module resolution
-oxc_sourcemap = "6.0.1"                                           # Source map generation
+oxc_resolver = "11.15.0" # Module resolution
+oxc_sourcemap = "6.0.1" # Source map generation
 
 #
 allocator-api2 = "=0.2.21" # Allocator trait
-base64 = "0.22.1"          # Base64 encoding
-bitflags = "2.10.0"        # Bitflag types
-bpaf = "0.9.20"            # CLI parser
+base64 = "0.22.1" # Base64 encoding
+bitflags = "2.10.0" # Bitflag types
+bpaf = "0.9.20" # CLI parser
 # `bumpalo` must be pinned to exactly version 3.19.0.
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
 # of `bumpalo` which may change in a future version.
@@ -205,6 +205,7 @@ miette = { package = "oxc-miette", version = "2.6.0", features = [
   "fancy-no-syscall",
 ] } # Error reporting
 mimalloc-safe = "0.1.55" # Fast allocator
+nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
 num-traits = "0.2.19" # Numeric traits
@@ -240,7 +241,7 @@ walkdir = "2.5.0" # Directory traversal
 editorconfig-parser = "0.0.3"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
-sort-package-json = "0.0.5"
+sort-package-json = "0.0.7"
 oxc-toml = "0.14.1"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
@@ -277,24 +278,24 @@ opt-level = 3
 lto = "fat"
 codegen-units = 1
 strip = "symbols" # Set to `false` for debug information
-debug = false     # Set to `true` for debug information
-panic = "abort"   # Let it crash and force ourselves to write safe Rust
+debug = false # Set to `true` for debug information
+panic = "abort" # Let it crash and force ourselves to write safe Rust
 
 # Profile used for release mode, but with debugging information for profiling
 # and debugging. Use `cargo build --profile=release-with-debug` to build with this profile.
 [profile.release-with-debug]
 inherits = "release"
-strip = false        # Keep debug information in binary
-debug = true         # Include maximum amount of debug information
+strip = false # Keep debug information in binary
+debug = true # Include maximum amount of debug information
 
 # Profile for `cargo coverage`
 [profile.coverage]
 inherits = "release"
-opt-level = 2           # Compile faster
-codegen-units = 256     # Compile faster
-lto = "thin"            # Faster compile time with thin LTO
+opt-level = 2 # Compile faster
+codegen-units = 256 # Compile faster
+lto = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
-overflow-checks = true  # Catch arithmetic overflow errors
+overflow-checks = true # Catch arithmetic overflow errors
 
 # Profile for linting with release mode-like settings.
 # Catches lint errors which only appear in release mode.

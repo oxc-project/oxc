@@ -4,7 +4,7 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength,
 };
-use oxc_toml::formatter::Options as TomlFormatterOptions;
+use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
 use oxc_formatter::{

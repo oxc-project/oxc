@@ -165,6 +165,44 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "react/jsx-props-no-multi-spaces",
   "react/jsx-tag-spacing",
   "react/jsx-space-before-closing",
+  "react/jsx-closing-tag-location",
+  "react/jsx-closing-bracket-location",
+  "react/jsx-first-prop-new-line",
+  "react/jsx-max-props-per-line",
+  "react/jsx-curly-newline",
+  "react/jsx-child-element-spacing",
+  "react/jsx-one-expression-per-line",
+
+  // React Compiler rules will not be implemented in oxlint for now,
+  // as they require integration with the react compiler itself.
+  // These rules can be used via JS Plugins if desired.
+  "react/config",
+  "react/error-boundaries",
+  "react/component-hook-factories",
+  "react/gating",
+  "react/globals",
+  "react/immutability",
+  "react/preserve-manual-memoization",
+  "react/purity",
+  "react/refs",
+  "react/set-state-in-effect",
+  "react/set-state-in-render",
+  "react/static-components",
+  "react/unsupported-syntax",
+  "react/use-memo",
+  "react/incompatible-library",
+  "react/automatic-effect-dependencies",
+  "react/capitalized-calls",
+  "react/fbt",
+  "react/fire",
+  "react/invariant",
+  "react/hooks",
+  "react/memoized-effect-dependencies",
+  "react/no-deriving-state-in-effects",
+  "react/rule-suppression",
+  "react/syntax",
+  "react/todo",
+  "react/void-use-memo",
 
   // Deprecated typescript-eslint rules:
   "typescript/sort-type-constituents", // replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.
@@ -246,6 +284,8 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/wrap-iife",
   "eslint/wrap-regex",
   "eslint/yield-star-spacing",
+
+  "react/jsx-uses-vars", // handled by eslint/no-unused-vars, which already evaluates whether vars are used in JSX
 
   "unicorn/no-named-default", // implemented via import/no-named-default
 

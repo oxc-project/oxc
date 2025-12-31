@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.106.0] - 2025-12-29
+
+### ⚡ Performance
+
+- 5fa85be semantic: Remove `enter_kind` (#17439) (camc314)
+- 19b437b semantic: Inline `enter_kind` for `ContinueStatement` (#17436) (camc314)
+- d66a691 semantic: Inline `enter_kind` for `BreakStatement` (#17435) (camc314)
+- 4a9b302 semantic: Inline `enter_kind` CFG statement handling (#17433) (camc314)
+- d08356e semantic: Inline `enter_kind` for `TSTypeReference` (#17432) (camc314)
+- ea2d639 semantic: Inline `enter_kind` for `TSClassImplements` (#17431) (camc314)
+- e862cac semantic: Inline `enter_kind` for `TSInterfaceHeritage` (#17430) (camc314)
+- 50bd7de semantic: Inline `enter_kind` for `CallExpression` (#17429) (camc314)
+- 7dff312 semantic: Inline `enter_kind` for `YieldExpression` (#17428) (camc314)
+- dff229c semantic: Inline `enter_kind` for `IdentifierReference` (#17422) (camc314)
+- 3352e6c semantic: Inline `enter_kind` for `TSTypeQuery` (#17421) (camc314)
+- 8e803ca semantic: Inline `enter_kind` for `TSPropertySignature` (#17420) (camc314)
+- 739ed7c semantic: Inline `enter_kind` for `TSTypeParameter` (#17419) (camc314)
+- c4ae687 semantic: Inline `enter_kind` for `TSEnumMember` (#17418) (camc314)
+- 4c845a3 semantic: Inline `enter_kind` for `TSEnumDeclaration` (#17417) (camc314)
+- 83cc44d semantic: Inline `enter_kind` for `TSInterfaceDeclaration` (#17414) (camc314)
+- dc35189 semantic: Inline `enter_kind` for `TSTypeAliasDeclaration` (#17413) (camc314)
+- d2afdcf semantic: Inline `enter_kind` for `TSModuleDeclaration` (#17405) (camc314)
+- 1bda570 semantic: Inline `enter_kind` for `CatchParameter` (#17404) (camc314)
+- 7284b76 semantic: Inline `enter_kind` for `FormalParameterRest` (#17403) (camc314)
+- 585ddf8 semantic: Inline `enter_kind` for `FormalParameter` (#17400) (camc314)
+- eacd876 semantic: Inline `enter_kind` for `BindingRestElement` (#17399) (camc314)
+- adc657a semantic: Inline `enter_kind` for `PrivateIdentifier` (#17398) (camc314)
+- 6e9d26b semantic: Inline `enter_kind` for `ClassBody` (#17397) (camc314)
+- d930962 semantic: Inline `enter_kind` for `VariableDeclarator` (#17396) (camc314)
+- 900d42d semantic: Inline `enter_kind` for `TSImportEqualsDeclaration` (#17394) (camc314)
+- f3afe57 semantic: Inline `enter_kind` for `ImportNamespaceSpecifier` (#17393) (camc314)
+- 19392df semantic: Inline `enter_kind` for `ImportDefaultSpecifier` (#17392) (camc314)
+- 22d46d0 semantic: Inline `enter_kind` for `ImportSpecifier` (#17391) (camc314)
+- 3886ddc semantic: Use match_module_declaration! macro instead of match guard (#17184) (camc314)
+- 605a290 semantic: Use swap_remove instead of into_iter().next() in into_root (#17183) (camc314)
+- 315c9ed semantic: Use `split_at_mut` instead of iterator in `current_and_parent_mut` (#17182) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### ⚡ Performance

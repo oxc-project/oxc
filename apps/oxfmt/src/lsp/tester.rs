@@ -2,11 +2,8 @@ use std::{fmt::Write, path::PathBuf};
 
 use tower_lsp_server::ls_types::{TextEdit, Uri};
 
-use crate::{
-    ToolRestartChanges,
-    formatter::server_formatter::{ServerFormatter, ServerFormatterBuilder},
-    tool::Tool,
-};
+use crate::lsp::server_formatter::{ServerFormatter, ServerFormatterBuilder};
+use oxc_language_server::{Tool, ToolRestartChanges};
 
 /// Given a file path relative to the crate root directory, return the absolute path of the file.
 pub fn get_file_path(relative_file_path: &str) -> PathBuf {
@@ -110,7 +107,9 @@ impl Tester<'_> {
         &self,
         new_options: serde_json::Value,
     ) -> ToolRestartChanges {
+        let builder = ServerFormatterBuilder;
         self.create_formatter().handle_configuration_change(
+            &builder,
             &Self::get_root_uri(self.relative_root_dir),
             &self.options,
             new_options,

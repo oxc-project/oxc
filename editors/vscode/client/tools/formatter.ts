@@ -56,6 +56,7 @@ export default class FormatterTool implements ToolInterface {
   ) {
     const restartCommand = commands.registerCommand(OxcCommands.RestartServerFmt, async () => {
       await this.restartClient();
+      this.updateStatsBar(statusBarItemHandler, configService);
     });
 
     outputChannel.info(`Using server binary at: ${binaryPath}`);
@@ -163,10 +164,11 @@ export default class FormatterTool implements ToolInterface {
 
     context.subscriptions.push(restartCommand, onNotificationDispose);
 
-    updateStatsBar(statusBarItemHandler, configService);
     if (configService.vsCodeConfig.enable) {
       await this.client.start();
     }
+
+    this.updateStatsBar(statusBarItemHandler, configService);
   }
 
   async deactivate(): Promise<void> {
@@ -216,7 +218,7 @@ export default class FormatterTool implements ToolInterface {
     configService: ConfigService,
     statusBarItemHandler: StatusBarItemHandler,
   ): Promise<void> {
-    updateStatsBar(statusBarItemHandler, configService);
+    this.updateStatsBar(statusBarItemHandler, configService);
 
     if (this.client === undefined) {
       return;
@@ -231,14 +233,18 @@ export default class FormatterTool implements ToolInterface {
       });
     }
   }
-}
 
-function updateStatsBar(statusBarItemHandler: StatusBarItemHandler, configService: ConfigService) {
-  let text = configService.vsCodeConfig.enable ? `**oxfmt enabled**\n\n` : `**oxfmt disabled**\n\n`;
+  private updateStatsBar(statusBarItemHandler: StatusBarItemHandler, configService: ConfigService) {
+    const version = this.client?.initializeResult?.serverInfo?.version ?? "unknown";
 
-  text +=
-    `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannelFmt})\n\n` +
-    `[$(refresh) Restart Server](command:${OxcCommands.RestartServerFmt})\n\n`;
+    let text = configService.vsCodeConfig.enable
+      ? `**oxfmt is enabled (v${version})**\n\n`
+      : `**oxfmt is disabled**\n\n`;
 
-  statusBarItemHandler.updateToolTooltip("formatter", text);
+    text +=
+      `[$(terminal) Open Output](command:${OxcCommands.ShowOutputChannelFmt})\n\n` +
+      `[$(refresh) Restart Server](command:${OxcCommands.RestartServerFmt})\n\n`;
+
+    statusBarItemHandler.updateToolTooltip("formatter", text);
+  }
 }

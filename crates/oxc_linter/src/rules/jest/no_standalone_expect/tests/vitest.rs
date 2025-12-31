@@ -36,6 +36,17 @@ fn test() {
             r#"it.each([1, true])("trues", value => { expect(value).toBe(true); }); it("an it", () => { expect(1).toBe(1) });"#,
             None,
         ),
+        (
+            r"import {fakeAsync} from '@angular/core/testing';
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
+        (
+            r"describe('App', () => {
+              it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); }));
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![

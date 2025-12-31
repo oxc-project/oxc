@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast_macros"
-version = "0.105.0"
+version = "0.106.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -18,6 +18,7 @@ workspace = true
 
 [lib]
 proc-macro = true
+test = false
 doctest = false
 
 [dependencies]

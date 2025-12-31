@@ -605,6 +605,7 @@ fn test() {
         "array.filter(foo)?.pop()",
     ];
 
+    // TODO: Implement autofix and use these tests.
     let _fix: Vec<(&'static str, &'static str, Option<serde_json::Value>)> = vec![
         ("array.filter(foo)[0]", "array.find(foo)", None),
         ("array.filter(foo, thisArgument)[0]", "array.find(foo, thisArgument)", None),

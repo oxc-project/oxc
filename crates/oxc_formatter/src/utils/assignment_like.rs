@@ -989,38 +989,49 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
     }
 }
 
-/// This function checks if `TSTypeArguments` is complex
-/// We need it to decide if `CallExpression` with the type arguments is breakable or not
-/// If the type arguments is complex the function call is breakable
+/// This function checks if `TSTypeArguments` is complex.
+/// We need it to decide if `CallExpression` with the type arguments is breakable or not.
+/// If the type arguments is complex the function call is breakable.
+///
+/// NOTE: This function does not follow Prettier exactly.
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432>
 fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> bool {
-    let ts_type_argument_list = &type_arguments.params;
-
-    if ts_type_argument_list.len() > 1 {
-        return true;
-    }
-
-    let is_first_argument_complex = ts_type_argument_list.first().is_some_and(|first_argument| {
+    let is_complex_ts_type = |ts_type: &TSType| {
         matches!(
-            first_argument,
+            ts_type,
             TSType::TSUnionType(_)
                 | TSType::TSIntersectionType(_)
                 | TSType::TSTypeLiteral(_)
-                // TODO: This is not part of Prettier's logic, but it makes sense to consider mapped types as
-                // complex because it is the same as type literals in terms of structure.
-                // NOTE: Once the `will_break` logic is added, this will have to be revisited.
+                // NOTE: Prettier does not contain `TSMappedType` in its check.
+                // But it makes sense to consider mapped types as complex,
+                // because it is the same as type literals in terms of structure.
                 | TSType::TSMappedType(_)
         )
-    });
+    };
 
-    if is_first_argument_complex {
+    if type_arguments.params.len() > 1 {
         return true;
     }
 
-    // TODO: add here will_break logic
-    // https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L454
+    type_arguments.params.first().is_some_and(|first_argument| {
+        if is_complex_ts_type(first_argument) {
+            return true;
+        }
 
-    false
+        // NOTE: Prettier checks `willBreak(print(typeArgs))` here.
+        // Our equivalent is `type_arguments.memoized().inspect(f).will_break()`,
+        // but we avoid using it because:
+        // - `inspect(f)` (= `f.intern()`) will update the comment counting state in `f`
+        // - And resulted IRs are discarded after this check
+        // So we approximate it by checking if the type arguments contain complex types.
+        if let TSType::TSTypeReference(type_ref) = first_argument
+            && let Some(type_args) = &type_ref.type_arguments
+        {
+            return is_complex_type_arguments(type_args);
+        }
+
+        false
+    })
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

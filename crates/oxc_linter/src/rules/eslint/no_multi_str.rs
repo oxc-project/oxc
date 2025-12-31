@@ -1,7 +1,6 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -38,10 +37,16 @@ declare_oxc_lint!(
 impl Rule for NoMultiStr {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
+            let is_within_jsx_attribute =
+                matches!(ctx.nodes().parent_kind(node.id()), AstKind::JSXAttribute(_));
+            if is_within_jsx_attribute {
+                return;
+            }
+
             let source = literal.span.source_text(ctx.source_text());
             // https://github.com/eslint/eslint/blob/9e6d6405c3ee774c2e716a3453ede9696ced1be7/lib/shared/ast-utils.js#L12
-            let position = source.find(['\r', '\n', '\u{2028}', '\u{2029}']).unwrap_or(0);
-            if position != 0 && !is_within_jsx_attribute(node.id(), ctx) {
+            let position = source.find(['\r', '\n', '\u{2028}', '\u{2029}']);
+            if let Some(position) = position {
                 // We found the "newline" character but want to highlight the '\', so go back one
                 // character.
                 let multi_span_start =
@@ -50,10 +55,6 @@ impl Rule for NoMultiStr {
             }
         }
     }
-}
-
-fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {
-    matches!(ctx.nodes().parent_kind(id), AstKind::JSXAttribute(_))
 }
 
 #[test]

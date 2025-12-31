@@ -7,3 +7,14 @@ const emitter = createGlobalEmitter<{
 const emitter2 = createGlobalEmitter<{
   longlonglonglongKey: Extract<Event, { type: key }>
 }>()
+
+// Type argument is an `TSTypeReference`
+// https://github.com/oxc-project/oxc/issues/17275
+export class Test {
+  	readonly coordinates = model.required<
+		  Immutable<{
+		  	latitude: number;
+		  	longitude: number;
+		  }>
+	  >();
+}

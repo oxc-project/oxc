@@ -139,7 +139,7 @@ impl Rule for NoUselessEscape {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let allow_regex_characters = value
             .as_array()
             .and_then(|array| array.first())
@@ -155,7 +155,7 @@ impl Rule for NoUselessEscape {
             })
             .unwrap_or_default();
 
-        Self(Box::new(NoUselessEscapeConfig { allow_regex_characters }))
+        Ok(Self(Box::new(NoUselessEscapeConfig { allow_regex_characters })))
     }
 }
 

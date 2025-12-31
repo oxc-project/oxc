@@ -84,10 +84,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferAt {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.as_array().and_then(|arr| arr.first().and_then(|v| v.as_object()));
 
-        Self(Box::new(PreferAtConfig {
+        Ok(Self(Box::new(PreferAtConfig {
             check_all_index_access: config
                 .and_then(|c| c.get("checkAllIndexAccess"))
                 .and_then(serde_json::Value::as_bool)
@@ -104,7 +104,7 @@ impl Rule for PreferAt {
                         .collect()
                 })
                 .unwrap_or_default(),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

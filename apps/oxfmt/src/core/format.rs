@@ -180,8 +180,8 @@ impl SourceFormatter {
     }
 
     /// Format TOML file using `toml`.
-    fn format_by_toml(source_text: &str, options: oxc_toml::formatter::Options) -> String {
-        oxc_toml::formatter::format(source_text, options)
+    fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
+        oxc_toml::format(source_text, options)
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
@@ -228,12 +228,17 @@ impl SourceFormatter {
         sort_package_json: bool,
     ) -> Result<String, OxcDiagnostic> {
         let source_text: Cow<'_, str> = if sort_package_json {
-            Cow::Owned(sort_package_json::sort_package_json(source_text).map_err(|err| {
-                OxcDiagnostic::error(format!(
-                    "Failed to sort package.json: {}\n{err}",
-                    path.display()
-                ))
-            })?)
+            let options = sort_package_json::SortOptions { sort_scripts: false, pretty: false };
+            Cow::Owned(
+                sort_package_json::sort_package_json_with_options(source_text, &options).map_err(
+                    |err| {
+                        OxcDiagnostic::error(format!(
+                            "Failed to sort package.json: {}\n{err}",
+                            path.display()
+                        ))
+                    },
+                )?,
+            )
         } else {
             Cow::Borrowed(source_text)
         };

@@ -192,10 +192,10 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<CheckedRequiresOnchangeOrReadonly>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 }
 

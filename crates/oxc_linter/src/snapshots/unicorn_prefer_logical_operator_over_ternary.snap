@@ -126,3 +126,19 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:2:10]
+ 1 │ const foo = [];
+ 2 │          !+a ? b : +a
+   ·          ────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:2:10]
+ 1 │ const foo = [];
+ 2 │          a && b ? a && b : 1
+   ·          ───────────────────
+   ╰────
+  help: Switch to "||" or "??" operator

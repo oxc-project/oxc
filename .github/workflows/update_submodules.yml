@@ -4,9 +4,7 @@ name: Update Submodules
 permissions: {}
 
 on:
-  schedule:
-    # Run weekly on Tuesday at 00:00 UTC
-    - cron: "0 0 * * 2"
+  # Triggered by https://github.com/oxc-project/estree-conformance/actions/workflows/trigger-oxc-update.yml
   workflow_dispatch:
     inputs:
       test262_sha:

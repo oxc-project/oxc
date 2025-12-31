@@ -182,7 +182,7 @@ declare_oxc_lint!(
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];
 
 impl Rule for OnlyExportComponents {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value
             .as_array()
             .and_then(|arr| arr.first())
@@ -201,7 +201,7 @@ impl Rule for OnlyExportComponents {
             })
             .unwrap_or_default();
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {

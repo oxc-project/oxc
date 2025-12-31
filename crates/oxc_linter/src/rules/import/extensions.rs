@@ -1,10 +1,10 @@
+use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
@@ -441,7 +441,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for Extensions {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         if let Some(first_arg) = value.get(0).and_then(Value::as_str) {
             let default = ExtensionRule::from_str(first_arg);
 
@@ -450,19 +450,19 @@ impl Rule for Extensions {
 
                 let config = ExtensionsConfig::from_json_value(root, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             } else {
                 let config = ExtensionsConfig::from_json_value(&value, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             }
         } else if let Some(first_obj) = value.get(0) {
             // First element is not a string, but is present (e.g., [{ "json": "always" }])
             let config = ExtensionsConfig::from_json_value(first_obj, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         } else {
             let config = ExtensionsConfig::from_json_value(&value, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         }
     }
 
@@ -580,9 +580,7 @@ impl Extensions {
         }
 
         // Built-in Node modules are always skipped
-        if NODEJS_BUILTINS.binary_search(&module_name).is_ok()
-            || ctx.globals().is_enabled(module_name)
-        {
+        if is_nodejs_builtin_module(module_name) || ctx.globals().is_enabled(module_name) {
             return;
         }
 

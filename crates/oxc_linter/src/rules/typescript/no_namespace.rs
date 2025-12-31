@@ -115,8 +115,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNamespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self {
             allow_declarations: value
                 .get(0)
                 .and_then(|x| x.get("allowDeclarations"))
@@ -127,7 +127,7 @@ impl Rule for NoNamespace {
                 .and_then(|x| x.get("allowDefinitionFiles"))
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(true),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

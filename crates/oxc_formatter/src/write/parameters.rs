@@ -382,7 +382,14 @@ pub fn has_only_simple_parameters(
     parameters: &FormalParameters<'_>,
     allow_type_annotations: bool,
 ) -> bool {
-    parameters.items.iter().all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
+    // NOTE: A rest parameter is never considered simple.
+    // Prettier only checks `param.type` is `Identifier` or not.
+    // https://github.com/prettier/prettier/blob/7848357af654883e21ed05c0bbbedf89ee88750e/src/language-js/print/function.js#L72-L74
+    parameters.rest.is_none()
+        && parameters
+            .items
+            .iter()
+            .all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
 }
 
 /// Tests if the single parameter is "simple", as in a plain identifier with no

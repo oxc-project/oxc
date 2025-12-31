@@ -21,7 +21,7 @@ pub trait ToolBuilder: Send + Sync {
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
 }
 
-pub type DiagnosticResult = Vec<(Uri, Vec<Diagnostic>)>;
+pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 
 pub trait Tool: Send + Sync {
     /// Get the name of the tool.
@@ -31,6 +31,7 @@ pub trait Tool: Send + Sync {
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
@@ -45,6 +46,7 @@ pub trait Tool: Send + Sync {
     /// The Tool should decide whether it needs to restart or take any action based on the URI.
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
@@ -93,25 +95,34 @@ pub trait Tool: Send + Sync {
 
     /// Run diagnostics on the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
-    /// Not all tools will implement diagnostics, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on save for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
-    /// Not all tools will implement diagnostics on save, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics on save, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on change for the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of a Uri-Diagnostic tuple representing the diagnostic results.
-    /// Not all tools will implement diagnostics on change, so the default implementation returns an empty vector.
+    /// Not all tools will implement diagnostics on change, so the default implementation returns [`Ok`] with an empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
     fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Remove internal cache for the given URI, if any.
@@ -119,9 +130,9 @@ pub trait Tool: Send + Sync {
         // Default implementation does nothing.
     }
 
-    /// Shutdown the tool and return any necessary changes to be made after shutdown.
-    fn shutdown(&self) -> ToolShutdownChanges {
-        ToolShutdownChanges { uris_to_clear_diagnostics: None }
+    /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
+    fn shutdown(&self) {
+        // Default implementation does nothing.
     }
 }
 
@@ -132,9 +143,4 @@ pub struct ToolRestartChanges {
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
-}
-
-pub struct ToolShutdownChanges {
-    /// The URIs that need to have their diagnostics removed after the tool shutdown
-    pub uris_to_clear_diagnostics: Option<Vec<Uri>>,
 }

@@ -104,12 +104,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireParam {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(value
             .as_array()
             .and_then(|arr| arr.first())
             .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+            .map_or_else(Self::default, |value| Self(Box::new(value))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
