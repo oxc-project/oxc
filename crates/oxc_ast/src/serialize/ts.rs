@@ -656,6 +656,7 @@ mod from_estree_converters {
     /// Deserialize `params` field for `TSCallSignatureDeclaration`.
     ///
     /// Similar to FunctionParams - takes array and produces FormalParameters.
+    /// Handles TSThisParameter (skipped) and RestElement (stored in `rest` field).
     impl<'a> FromESTreeConverter<'a> for TSCallSignatureDeclarationParams<'a, '_> {
         type Output = ABox<'a, js::FormalParameters<'a>>;
 
@@ -666,14 +667,37 @@ mod from_estree_converters {
             let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
 
             let mut items = AVec::with_capacity_in(arr.len(), allocator);
+            let mut rest: Option<ABox<'a, js::FormalParameterRest<'a>>> = None;
+
             for item in arr {
-                // Skip TSThisParameter if present
                 let item_type = item.get("type").and_then(|t| t.as_str());
-                if item_type == Some("TSThisParameter") {
-                    continue;
+                match item_type {
+                    // Skip TSThisParameter - it's stored in a separate field
+                    Some("TSThisParameter") => continue,
+                    // RestElement is stored in the `rest` field, not `items`
+                    Some("RestElement") => {
+                        let rest_elem: js::BindingRestElement =
+                            FromESTree::from_estree(item, allocator)?;
+                        let span = rest_elem.span;
+                        // Extract type annotation if present (for TypeScript)
+                        let type_annotation = item
+                            .get("typeAnnotation")
+                            .filter(|v| !v.is_null())
+                            .map(|v| -> DeserResult<_> {
+                                Ok(ABox::new_in(FromESTree::from_estree(v, allocator)?, allocator))
+                            })
+                            .transpose()?;
+                        rest = Some(ABox::new_in(
+                            js::FormalParameterRest { span, rest: rest_elem, type_annotation },
+                            allocator,
+                        ));
+                    }
+                    // Regular parameters go into items
+                    _ => {
+                        let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
+                        items.push(param);
+                    }
                 }
-                let param: js::FormalParameter = FromESTree::from_estree(item, allocator)?;
-                items.push(param);
             }
 
             Ok(ABox::new_in(
@@ -683,7 +707,7 @@ mod from_estree_converters {
                     // from flagging parameters in function type annotations as unused
                     kind: js::FormalParameterKind::Signature,
                     items,
-                    rest: None,
+                    rest,
                 },
                 allocator,
             ))

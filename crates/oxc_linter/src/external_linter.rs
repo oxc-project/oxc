@@ -833,10 +833,7 @@ pub fn lint_with_external_ast(
 
     // Verify the root is a Program node
     let Some(root_type) = estree_value.get("type").and_then(|v| v.as_str()) else {
-        return (
-            vec![],
-            DeserializeResult::Error("ESTree JSON missing 'type' field".to_string()),
-        );
+        return (vec![], DeserializeResult::Error("ESTree JSON missing 'type' field".to_string()));
     };
 
     if root_type != "Program" {
