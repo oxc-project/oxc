@@ -316,6 +316,11 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
+    /// Whether the configuration file has type-aware rules enabled.
+    pub fn type_aware_enabled(&self) -> bool {
+        self.base.base.config.linter_options.type_aware.unwrap_or(false)
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -778,6 +783,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories to enable restriction rules
@@ -865,6 +871,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories
@@ -970,6 +977,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories

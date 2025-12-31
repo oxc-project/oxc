@@ -1,0 +1,55 @@
+---
+source: crates/oxc_language_server/src/linter/tester.rs
+---
+########## 
+Linted file: fixtures/linter/tsgolint/nested_type_aware/nested/test-lsp-enabled.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/linter/tsgolint/nested_type_aware/nested/test-lsp-enabled.ts
+
+code: "typescript-eslint(require-await)"
+code_description.href: "None"
+message: "Function has no 'await' expression."
+range: Range { start: Position { line: 2, character: 14 }, end: Position { line: 2, character: 32 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/tsgolint/nested_type_aware/nested/test-lsp-enabled.ts"
+related_information[0].location.range: Range { start: Position { line: 2, character: 14 }, end: Position { line: 2, character: 32 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+
+########### Code Actions/Commands
+CodeAction: 
+Title: Disable require-await for this line
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 2,
+            character: 0,
+        },
+        end: Position {
+            line: 2,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line require-await\n",
+}
+
+
+CodeAction: 
+Title: Disable require-await for this whole file
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable require-await\n",
+}
