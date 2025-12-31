@@ -1,8 +1,8 @@
 use super::PeepholeOptimizations;
 use crate::ctx::Ctx;
 use oxc_allocator::{TakeIn, Vec};
-use oxc_ast::ast::{Statement, SwitchCase};
-use oxc_ast_visit::Visit;
+use oxc_ast::ast::*;
+use oxc_ast_visit::{walk, Visit};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{operator::BinaryOperator, scope::ScopeFlags};
@@ -297,36 +297,46 @@ impl BreakFinder {
     }
 }
 
+// TODO: This is to aggressive, we should allow `break` for last elements in statements
 impl<'a> Visit<'a> for BreakFinder {
     fn visit_statement(&mut self, it: &Statement<'a>) {
-        // TODO: This is to aggressive, we should allow `break` for last statements
         match it {
-            Statement::BlockStatement(it) => self.visit_block_statement(it),
-            Statement::BreakStatement(it) => {
-                if !self.top_level && it.label.is_none() {
-                    self.nested_unlabelled_break = true;
-                }
-            }
-            Statement::IfStatement(it) => {
-                let was_top = self.top_level;
-                self.top_level = false;
-                self.visit_if_statement(it);
-                self.top_level = was_top;
-            }
-            Statement::TryStatement(it) => {
-                let was_top = self.top_level;
-                self.top_level = false;
-                self.visit_try_statement(it);
-                self.top_level = was_top;
-            }
-            Statement::WithStatement(it) => {
-                let was_top = self.top_level;
-                self.top_level = false;
-                self.visit_with_statement(it);
-                self.top_level = was_top;
-            }
-            _ => {}
+            Statement::ForInStatement(_)
+            | Statement::ForOfStatement(_)
+            | Statement::WhileStatement(_)
+            | Statement::ForStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ThrowStatement(_)
+            | Statement::ExpressionStatement(_) => {}
+            _ => walk::walk_statement(self, it),
         }
+    }
+
+    fn visit_if_statement(&mut self, it: &IfStatement<'a>) {
+        let was_top = self.top_level;
+        self.top_level = false;
+        walk::walk_if_statement(self, it);
+        self.top_level = was_top;
+    }
+
+    fn visit_break_statement(&mut self, it: &BreakStatement<'a>) {
+        if !self.top_level && it.label.is_none() {
+            self.nested_unlabelled_break = true;
+        }
+    }
+
+    fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
+        let was_top = self.top_level;
+        self.top_level = false;
+        walk::walk_with_statement(self, it);
+        self.top_level = was_top;
+    }
+
+    fn visit_try_statement(&mut self, it: &TryStatement<'a>) {
+        let was_top = self.top_level;
+        self.top_level = false;
+        walk::walk_try_statement(self, it);
+        self.top_level = was_top;
     }
 }
 
