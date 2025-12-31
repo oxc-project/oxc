@@ -39,7 +39,7 @@ fn fold_block_throw() {
 
 #[test]
 fn fold_switch() {
-    test("a;b;c;switch(x){}", "switch(a,b,c,x){}");
+    test("a;b;c;switch(x){}", "a,b,c,x");
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn fuse_into_block() {
 
 #[test]
 fn fuse_into_switch_cases() {
-    test("switch (_) { case _: a; return b }", "switch (_) { case _: return a, b }");
+    test("switch (_) { case _: a; return b }", "if (_ === _) return a, b;");
 }
 
 #[test]

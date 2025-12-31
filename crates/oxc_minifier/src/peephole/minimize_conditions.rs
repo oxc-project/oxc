@@ -293,7 +293,7 @@ mod test {
         test_same("function f(){try{foo()}catch(e){bar(e)}finally{baz()}}");
 
         // Try it out with switch statements
-        test_same("function f(){switch(x){case 1:break}}");
+        test("function f(){switch(x){case 1:break}}", "function f(){x;}");
 
         // Do while loops stay in a block if that's where they started
         test(
@@ -335,7 +335,7 @@ mod test {
         );
 
         test_same("function f(){foo()}");
-        test_same("switch(x){case y: foo()}");
+        test("switch(x){case y: foo()}", "x === y && foo()");
         test(
             "try{foo()}catch(ex){bar()}finally{baz()}",
             "try { foo(); } catch { bar(); } finally { baz(); }",

@@ -285,11 +285,11 @@ fn js_parser_test() {
     test("while(1) { async function* x() {} }", "for (;;) { async function* x() { }}");
     test(
         "function _() { x(); switch (y) { case z: return w; } }",
-        "function _() { switch (x(), y) { case z:  return w; }}",
+        "function _() { if (x(), y === z) return w; }",
     );
     test(
         "function _() { if (t) { x(); switch (y) { case z: return w; } } }",
-        "function _() { if (t) switch (x(), y) { case z:  return w; } }",
+        "function _() { if (t && (x(), y === z)) return w; }",
     );
     test("a = '' + 0", "a = '0';");
     test("a = 0 + ''", "a = '0';");
@@ -2021,7 +2021,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",

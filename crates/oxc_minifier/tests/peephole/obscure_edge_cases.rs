@@ -314,7 +314,10 @@ fn test_switch_statement_edge_cases() {
     // Could be optimized to empty
 
     // Test switch with default
-    test_same("switch (5) { case 1: a(); break; default: b(); break; }");
+    test(
+        "switch (5) { case 1: a(); break; default: b(); break; }",
+        "if (5 === 1) { a(); } else { b(); }",
+    );
     // Could be optimized to just: b();
 
     // Test switch with fall-through - more complex, keep as same for safety
