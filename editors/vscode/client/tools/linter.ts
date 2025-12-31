@@ -44,8 +44,6 @@ export default class LinterTool implements ToolInterface {
   // LSP client instance
   private client: LanguageClient | undefined;
 
-  private linterVersion: string | undefined;
-
   async getBinary(
     outputChannel: LogOutputChannel,
     configService: ConfigService,
