@@ -32,25 +32,27 @@ impl<'a> PeepholeOptimizations {
         cases: &Vec<'_, SwitchCase<'a>>,
         ctx: &Ctx<'a, '_>,
     ) -> Option<(usize, usize)> {
-        // TODO: this is not ideal, if there is default case that is empty, we can remove other cases even if they have break
         let case_count = cases.len();
         if case_count <= 1 {
             return None;
         }
 
         // if a default case is last we can skip checking if it has body
-        let default_pos = if let Some(default_pos) =
+        let (end, allow_break) = if let Some(default_pos) =
             cases.iter().rposition(SwitchCase::is_default_case)
-            && default_pos == case_count - 1
         {
-            case_count - 1
+            if default_pos == case_count - 1 {
+                (case_count - 1, Self::is_empty_switch_case(&cases[default_pos].consequent, true))
+            } else {
+                (case_count, false)
+            }
         } else {
-            case_count
+            (case_count, true)
         };
 
         // Find the last non-removable case (any case whose consequent is non-empty).
-        let last_non_empty_before_last = cases[..default_pos].iter().rposition(|c| {
-            !c.consequent.is_empty()
+        let last_non_empty_before_last = cases[..end].iter().rposition(|c| {
+            !Self::is_empty_switch_case(&c.consequent, allow_break)
                 || c.test.as_ref().is_none_or(|test| test.may_have_side_effects(ctx))
         });
 
@@ -73,18 +75,17 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        let Some((start, mut end)) =
+        let Some((start, end)) =
             Self::find_trailing_removable_switch_cases_range(&switch_stmt.cases, ctx)
         else {
             return;
         };
 
         if let Some(last) = switch_stmt.cases.last_mut()
-            && !Self::is_empty_switch_case(&last.consequent)
+            && !Self::is_empty_switch_case(&last.consequent, false)
         {
             last.test = None;
-            end -= 1;
-            switch_stmt.cases.drain(start..end);
+            switch_stmt.cases.drain(start..end - 1);
         } else {
             switch_stmt.cases.truncate(start);
         }
@@ -115,13 +116,12 @@ impl<'a> PeepholeOptimizations {
         if switch_stmt.cases.len() == 2 {
             // check whatever its default + case
             if switch_stmt.cases[0].test.is_some() == switch_stmt.cases[1].test.is_some()
+                || !Self::is_terminated_switch_case(&switch_stmt.cases[0].consequent)
                 || !Self::can_case_be_inlined(&switch_stmt.cases[0], ctx)
                 || !Self::can_case_be_inlined(&switch_stmt.cases[1], ctx)
             {
                 return;
             }
-
-            // TODO: missing check for fallthrough
 
             let mut first = switch_stmt.cases.pop().unwrap();
             let mut second = switch_stmt.cases.pop().unwrap();
@@ -198,7 +198,7 @@ impl<'a> PeepholeOptimizations {
                 if discriminant.may_have_side_effects(ctx) {
                     stmts.push(ctx.ast.statement_expression(discriminant.span(), discriminant));
                 }
-                if !case.consequent.is_empty() {
+                if !Self::is_empty_switch_case(&case.consequent, true) {
                     stmts.extend(case.consequent);
                 }
                 *stmt = ctx.ast.statement_block_with_scope_id(
@@ -210,12 +210,15 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn is_empty_switch_case(stmt: &Vec<Statement>) -> bool {
+    fn is_empty_switch_case(stmt: &Vec<'a, Statement<'a>>, allow_break: bool) -> bool {
         if stmt.len() != 1 {
             return stmt.is_empty();
         }
         match stmt.last() {
-            Some(Statement::BlockStatement(block_stmt)) => block_stmt.body.is_empty(),
+            Some(Statement::BlockStatement(block_stmt)) => {
+                Self::is_empty_switch_case(&block_stmt.body, allow_break)
+            }
+            Some(Statement::BreakStatement(_)) => allow_break,
             _ => false,
         }
     }
@@ -242,18 +245,23 @@ impl<'a> PeepholeOptimizations {
         changed
     }
 
-    // fn is_terminated(stmt: &Statement<'a>) -> bool {
-    //     match stmt {
-    //         Statement::BlockStatement(block_stmt) => {
-    //             block_stmt.body.last().is_some_and(Self::is_terminated)
-    //         }
-    //         Statement::BreakStatement(_)
-    //         | Statement::ContinueStatement(_)
-    //         | Statement::ReturnStatement(_)
-    //         | Statement::ThrowStatement(_) => true,
-    //         _ => false,
-    //     }
-    // }
+    fn is_terminated_switch_case(stmt: &Vec<'a, Statement<'a>>) -> bool {
+        if stmt.is_empty() {
+            return false;
+        }
+        match stmt.last() {
+            Some(Statement::BlockStatement(block_stmt)) => {
+                Self::is_terminated_switch_case(&block_stmt.body)
+            }
+            Some(
+                Statement::BreakStatement(_)
+                | Statement::ContinueStatement(_)
+                | Statement::ReturnStatement(_)
+                | Statement::ThrowStatement(_),
+            ) => true,
+            _ => false,
+        }
+    }
 
     pub fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &Ctx<'a, '_>) -> bool {
         if case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
@@ -342,6 +350,7 @@ mod test {
 
         test("switch(a){case 1: default: }", "a;");
         test_same("switch(a){case 1: default: break; case 2: b()}");
+        test_same("switch(a){case 1: b(); default: c()}");
         test_same("switch(a){case 1: b(); default: break; case 2: c()}");
         test_same("switch(a){case 1: b(); case 2: break; case 3: c()}");
         test(
@@ -351,7 +360,6 @@ mod test {
         test_same("switch(a){case 1: b(); case 2: b();}");
         test("switch(a){case 1: var c=2; break;}", "if (a === 1) var c = 2");
         test("switch(a){case 1: case 2: default: b(); break;}", "a, b()");
-        test("switch(a){case 1: c(); case 2: default: b(); break;}", "a === 1 ? c() : b()");
 
         test("switch(a){default: case 1: }", "a");
         test("switch(a){default: break; case 1: break;}", "a");
@@ -359,13 +367,14 @@ mod test {
         test("switch(a){default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b()");
 
         test_same("switch(a){case b(): default:}");
-        test(
-            "switch(a){case 2: case 1: break; default: break;}",
-            "switch(a){case 2: case 1: break; default: }",
-        );
+        test("switch(a){case 2: case 1: break; default: break;}", "a;");
         test("switch(a){case 3: b(); case 2: case 1: break;}", "a === 3 && b()");
         test("switch(a){case 3: b(); case 2: case 1: }", "a === 3 && b()");
 
+        test(
+            "switch(a){case 1: c(); case 2: default: b();break;}",
+            "switch(a){case 1: c(); default: b();}",
+        );
         test("var x=1;switch(x){case 1: var y;}", "var y;");
         test("function f(){switch(a){case 1: return;}}", "function f() {a;}");
         test("x:switch(a){case 1: break x;}", "x: if (a === 1) break x;");
