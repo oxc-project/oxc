@@ -2,7 +2,7 @@ use super::PeepholeOptimizations;
 use crate::ctx::Ctx;
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{walk, Visit};
+use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{operator::BinaryOperator, scope::ScopeFlags};
