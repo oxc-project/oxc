@@ -295,18 +295,21 @@ impl ConfigStore {
         }
     }
 
-    /// Returns the number of rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
+    /// Returns the total number of rules, inclusive of JS Plugin rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
-        // This includes the base config for now, so 1 is fine :) Reference: https://github.com/oxc-project/oxc/issues/16356
+        // If there are nested configs the number of rules may vary per-file, so return `None`.
+        // Note: this is `> 1` due to https://github.com/oxc-project/oxc/issues/16356
         if self.nested_configs.len() > 1 {
             return None;
         }
-        let count = if type_aware_enabled {
+
+        let builtin_count = if type_aware_enabled {
             self.base.base.rules.len()
         } else {
             self.base.base.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()).count()
         };
-        Some(count)
+
+        Some(builtin_count + self.base.base.external_rules.len())
     }
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
@@ -1061,6 +1064,25 @@ mod test {
         // Should return None when there are nested configs.
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
+    }
+
+    #[test]
+    fn test_number_of_rules_includes_external_rules() {
+        let base_config = LintConfig::default();
+        let base_rules = vec![(RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny)];
+        let base = Config::new(
+            base_rules,
+            vec![(ExternalRuleId::from_usize(1), ExternalOptionsId::NONE, AllowWarnDeny::Warn)],
+            OxlintCategories::default(),
+            base_config,
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+
+        // builtin (1) + external (1) = 2
+        assert_eq!(store.number_of_rules(false), Some(2));
+        assert_eq!(store.number_of_rules(true), Some(2));
     }
 
     #[test]
