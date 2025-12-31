@@ -11,7 +11,7 @@ import {
   sleep,
   testSingleFolderMode,
   WORKSPACE_DIR
-} from './test-helpers';
+} from '../test-helpers';
 
 const fileUri = Uri.joinPath(WORKSPACE_DIR, 'debugger.js');
 

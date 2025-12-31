@@ -1,7 +1,6 @@
 import { strictEqual } from 'assert';
 import { workspace } from 'vscode';
-import { VSCodeConfig } from '../client/VSCodeConfig.js';
-import { testSingleFolderMode } from './test-helpers.js';
+import { VSCodeConfig } from '../../client/VSCodeConfig.js';
 
 const conf = workspace.getConfiguration('oxc');
 
@@ -15,7 +14,7 @@ suite('VSCodeConfig', () => {
     await Promise.all(keys.map(key => conf.update(key, undefined)));
   });
 
-  testSingleFolderMode('default values on initialization', () => {
+  test('default values on initialization', () => {
     const config = new VSCodeConfig();
 
     strictEqual(config.enable, true);
@@ -27,14 +26,14 @@ suite('VSCodeConfig', () => {
     strictEqual(config.nodePath, '');
   });
 
-  testSingleFolderMode('deprecated values are respected', async () => {
+  test('deprecated values are respected', async () => {
     await conf.update('path.server', './deprecatedBinary');
     const config = new VSCodeConfig();
 
     strictEqual(config.binPathOxlint, './deprecatedBinary');
   });
 
-  testSingleFolderMode('updating values updates the workspace configuration', async () => {
+  test('updating values updates the workspace configuration', async () => {
     const config = new VSCodeConfig();
 
     await Promise.all([

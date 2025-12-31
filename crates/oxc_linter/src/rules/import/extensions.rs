@@ -31,7 +31,7 @@ fn extension_should_not_be_included_in_diagnostic(
 fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
 
-    OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration"))
+    OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration."))
         .with_help(format!("Add a file extension to this {import_or_export}."))
         .with_label(span)
 }
@@ -1172,6 +1172,26 @@ fn test() {
         (r"import x from './foo.JS';", Some(json!(["always", { "js": "always" }]))),
         // Edge case: Case-insensitive extension matching (mixed case)
         (r"import x from './foo.Ts';", Some(json!(["always", { "ts": "always" }]))),
+        // 'react' import when ignorePackages is true should be allowed
+        (r"import React from 'react';", Some(json!(["always", { "ignorePackages": true }]))),
+        (
+            r"import React from 'react';",
+            Some(json!(["ignorePackages"])), // equivalent to the above
+        ),
+        (
+            r#"import React from "react";"#, // works with double-quotes as well
+            Some(json!(["ignorePackages"])),
+        ),
+        // This should also be allowed when set to `never`.
+        (r"import React from 'react';", Some(json!(["never"]))),
+        // Built-in Node modules should always be allowed without extension
+        (r"import fs from 'fs';", Some(json!(["always"]))),
+        (r"import crypto from 'crypto';", Some(json!(["always"]))),
+        // import starting with 'node:' should be treated specially and always be allowed without extension.
+        (r"import fs from 'node:fs';", Some(json!(["always"]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["always"]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["always", { "ignorePackages": true }]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["never"]))),
     ];
 
     let fail = vec![
@@ -1589,6 +1609,30 @@ fn test() {
         (r"import x from './foo.JS';", Some(json!(["never", { "js": "never" }]))),
         // Edge case fail: Case-insensitive - mixed case extension should still fail with "never"
         (r"import x from './foo.Ts';", Some(json!(["never", { "ts": "never" }]))),
+        // Fails because ignorePackages defaults to false. (not great default behavior, but matches ESLint)
+        (r"import React from 'react';", Some(json!(["always"]))),
+        // Not a real node: protocol import, so should fail when extension is required and ignorePackages is false.
+        (r"import crypto from 'node_crypto';", Some(json!(["always"]))),
+        // If an import has the same name as a built-in module, but isn't actually _from_ a built-in module,
+        // it should fail (assuming ignorePackages is false).
+        (r"import fs from 'some-package';", Some(json!(["always"]))),
+        (r"import fs from '@fs/some-package';", Some(json!(["always"]))),
+        (r"import { default as crypto } from '@fs/some-package';", Some(json!(["always"]))),
+        (r"import * as fs from '@fs/some-package';", Some(json!(["always"]))),
+        // When requiring no extension but ignoring packages, still fail when the import is a package subpath.
+        (
+            r"import useState from 'react/useState.ts';",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        (
+            r"import useState from '@foo/bar/useState.ts';",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        // TODO: This should probably fail? Needs further investigation.
+        // (
+        //     r"import useState from '@foo/bar/useState';",
+        //     Some(json!(["always", { "ignorePackages": true }])),
+        // ),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();

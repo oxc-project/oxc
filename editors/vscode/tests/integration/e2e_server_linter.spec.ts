@@ -24,7 +24,7 @@ import {
   WORKSPACE_DIR,
   WORKSPACE_SECOND_DIR,
   writeToFixtureFile
-} from './test-helpers';
+} from '../test-helpers';
 import assert = require('assert');
 
 const fileUri = Uri.joinPath(WORKSPACE_DIR, 'debugger.js');

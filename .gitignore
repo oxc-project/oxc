@@ -24,6 +24,7 @@ target/
 /editors/vscode/node_modules/
 /editors/vscode/icon.png
 /editors/vscode/out/
+/editors/vscode/out_test/
 /editors/vscode/*.vsix
 /editors/vscode/test_workspace/
 /editors/vscode/test_workspace_second/
