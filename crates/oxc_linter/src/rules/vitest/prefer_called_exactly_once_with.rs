@@ -173,7 +173,7 @@ declare_oxc_lint!(
     PreferCalledExactlyOnceWith,
     vitest,
     style,
-    fix,
+    dangerous_fix,
 );
 
 impl Rule for PreferCalledExactlyOnceWith {
@@ -373,7 +373,7 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             }
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_dangerous_fix(
                 prefer_called_exactly_once_with_diagnostic(Span::empty(0)),
                 |fixer| {
                     let mut multiple_fixes = fixer.new_fix_with_capacity(2);
