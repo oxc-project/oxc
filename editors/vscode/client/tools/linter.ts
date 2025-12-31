@@ -47,7 +47,6 @@ export default class LinterTool implements ToolInterface {
   private linterVersion: string | undefined;
 
   async getBinary(
-    context: ExtensionContext,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {

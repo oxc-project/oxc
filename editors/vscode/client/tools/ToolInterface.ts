@@ -7,7 +7,6 @@ export default interface ToolInterface {
    * Gets the path to the tool's language server binary (if applicable).
    */
   getBinary(
-    context: ExtensionContext,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined>;

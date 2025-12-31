@@ -31,7 +31,6 @@ export default class FormatterTool implements ToolInterface {
   private client: LanguageClient | undefined;
 
   async getBinary(
-    _context: ExtensionContext,
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {

@@ -68,7 +68,6 @@ export async function activate(context: ExtensionContext) {
   const binaryPaths = await Promise.all(
     tools.map((tool) =>
       tool.getBinary(
-        context,
         tool instanceof Linter ? outputChannelLint : outputChannelFormat,
         configService,
       ),
