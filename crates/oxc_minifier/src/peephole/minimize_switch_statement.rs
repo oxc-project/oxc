@@ -299,14 +299,18 @@ impl BreakFinder {
 
 // TODO: This is to aggressive, we should allow `break` for last elements in statements
 impl<'a> Visit<'a> for BreakFinder {
+    fn visit_expression(&mut self, _it: &Expression<'a>) {
+        // do nothing
+    }
+
     fn visit_statement(&mut self, it: &Statement<'a>) {
+        if it.is_declaration() || it.is_iteration_statement() {
+            return;
+        }
         match it {
-            Statement::ForInStatement(_)
-            | Statement::ForOfStatement(_)
-            | Statement::WhileStatement(_)
-            | Statement::ForStatement(_)
+            Statement::ThrowStatement(_)
+            | Statement::ContinueStatement(_)
             | Statement::ReturnStatement(_)
-            | Statement::ThrowStatement(_)
             | Statement::ExpressionStatement(_) => {}
             _ => walk::walk_statement(self, it),
         }
