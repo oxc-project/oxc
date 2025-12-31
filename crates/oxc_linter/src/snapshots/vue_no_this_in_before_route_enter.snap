@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
    ╭─[no_this_in_before_route_enter.tsx:5:8]
  4 │               beforeRouteEnter(to, from, next) {
  5 │                 this.a;
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
    ╭─[no_this_in_before_route_enter.tsx:5:8]
  4 │               beforeRouteEnter: function(to, from, next) {
  5 │                 this.b;
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
    ╭─[no_this_in_before_route_enter.tsx:5:8]
  4 │               beforeRouteEnter: function(to, from, next) {
  5 │                 this.atrr = this.method();
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` navigation guard should not access `this`.
+  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
    ╭─[no_this_in_before_route_enter.tsx:5:20]
  4 │               beforeRouteEnter: function(to, from, next) {
  5 │                 this.atrr = this.method();

@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_in_before_route_enter_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("'beforeRouteEnter' does NOT have access to `this` component instance.")
+    OxcDiagnostic::warn("`beforeRouteEnter` does NOT have access to `this` component instance.")
         .with_help("Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.")
         .with_label(span)
 }
