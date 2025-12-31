@@ -10,8 +10,8 @@ catalogs:
       specifier: 0.18.2
       version: 0.18.2
     '@napi-rs/cli':
-      specifier: 3.5.0
-      version: 3.5.0
+      specifier: 3.5.1
+      version: 3.5.1
     '@napi-rs/wasm-runtime':
       specifier: 1.1.0
       version: 1.1.0
@@ -46,7 +46,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
       oxfmt:
         specifier: ^0.21.0
         version: 0.21.0
@@ -71,7 +71,7 @@ importers:
         version: 0.18.2
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -95,7 +95,7 @@ importers:
         version: 0.5.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@types/esquery':
         specifier: ^1.5.4
         version: 1.5.4
@@ -192,7 +192,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -214,7 +214,7 @@ importers:
         version: 5.0.1(tinybench@2.9.0)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1))(vitest@4.0.15)
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@napi-rs/wasm-runtime':
         specifier: 'catalog:'
         version: 1.1.0
@@ -254,7 +254,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@25.0.2)
       publint:
         specifier: 'catalog:'
         version: 0.3.15
@@ -263,7 +263,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
+        version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -1249,8 +1249,8 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@napi-rs/cli@3.5.0':
-    resolution: {integrity: sha512-bJsDvAa9qK9VMkFhr780XWfQlK+GDlAX8qpK20buSmA0ld6nxCtiZ5a0J45zbd0FWT+VTZE1/u8VPH2vLfnVvw==}
+  '@napi-rs/cli@3.5.1':
+    resolution: {integrity: sha512-XBfLQRDcB3qhu6bazdMJsecWW55kR85l5/k0af9BIBELXQSsCFU0fzug7PX8eQp6vVdm7W/U3z6uP5WmITB2Gw==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
@@ -6538,7 +6538,7 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@napi-rs/cli@3.5.0(@emnapi/runtime@1.7.1)(@types/node@24.1.0)':
+  '@napi-rs/cli@3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)':
     dependencies:
       '@inquirer/prompts': 8.1.0(@types/node@24.1.0)
       '@napi-rs/cross-toolchain': 1.0.3
@@ -6569,7 +6569,7 @@ snapshots:
       - node-addon-api
       - supports-color
 
-  '@napi-rs/cli@3.5.0(@emnapi/runtime@1.7.1)(@types/node@25.0.2)':
+  '@napi-rs/cli@3.5.1(@emnapi/runtime@1.7.1)(@types/node@25.0.2)':
     dependencies:
       '@inquirer/prompts': 8.1.0(@types/node@25.0.2)
       '@napi-rs/cross-toolchain': 1.0.3
