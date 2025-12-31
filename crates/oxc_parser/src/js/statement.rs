@@ -19,6 +19,7 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
+            self.stats.add_node();
             Some(self.ast.hashbang(span, Atom::from(src)))
         } else {
             None
@@ -60,6 +61,8 @@ impl<'a> ParserImpl<'a> {
                     if expr.span.start == string.span.start {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
+                        // Subtract 1 for the discarded ExpressionStatement, add 1 for Directive
+                        // Net is 0 change since Directive replaces ExpressionStatement
                         let directive =
                             self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
                         directives.push(directive);
@@ -196,8 +199,10 @@ impl<'a> ParserImpl<'a> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
+                self.stats.add_node();
                 let label = self.ast.label_identifier(ident.span, ident.name);
                 let body = self.parse_statement_list_item(StatementContext::Label);
+                self.stats.add_node();
                 return self.ast.statement_labeled(self.end_span(span), label, body);
             }
         }
@@ -207,9 +212,12 @@ impl<'a> ParserImpl<'a> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> Box<'a, BlockStatement<'a>> {
         let span = self.start_span();
+        // Block statements create a scope
+        self.stats.add_scope();
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
+        self.stats.add_node();
         self.ast.alloc_block_statement(self.end_span(span), body)
     }
 
@@ -243,6 +251,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_empty_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `;`
+        self.stats.add_node();
         self.ast.statement_empty(self.end_span(span))
     }
 
@@ -253,6 +262,7 @@ impl<'a> ParserImpl<'a> {
         expression: Expression<'a>,
     ) -> Statement<'a> {
         self.asi();
+        self.stats.add_node();
         self.ast.statement_expression(self.end_span(span), expression)
     }
 
@@ -264,26 +274,33 @@ impl<'a> ParserImpl<'a> {
         let consequent = self.parse_statement_list_item(StatementContext::If);
         let alternate =
             self.eat(Kind::Else).then(|| self.parse_statement_list_item(StatementContext::If));
+        self.stats.add_node();
         self.ast.statement_if(self.end_span(span), test, consequent, alternate)
     }
 
     /// Section 14.7.2 Do-While Statement
     fn parse_do_while_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
+        // DoWhileStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // advance `do`
         let body = self.parse_statement_list_item(StatementContext::Do);
         self.expect(Kind::While);
         let test = self.parse_paren_expression();
         self.bump(Kind::Semicolon);
+        self.stats.add_node();
         self.ast.statement_do_while(self.end_span(span), body, test)
     }
 
     /// Section 14.7.3 While Statement
     fn parse_while_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
+        // WhileStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::While);
+        self.stats.add_node();
         self.ast.statement_while(self.end_span(span), test, body)
     }
 
@@ -512,6 +529,8 @@ impl<'a> ParserImpl<'a> {
         init: Option<ForStatementInit<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
+        // ForStatement creates a scope
+        self.stats.add_scope();
         self.expect(Kind::Semicolon);
         if let Some(ForStatementInit::VariableDeclaration(decl)) = &init {
             for d in &decl.declarations {
@@ -534,6 +553,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For);
+        self.stats.add_node();
         self.ast.statement_for(self.end_span(span), init, test, update, body)
     }
 
@@ -544,6 +564,8 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        // ForInStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // bump `in`
         let right = self.parse_expr();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
@@ -554,6 +576,7 @@ impl<'a> ParserImpl<'a> {
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
+        self.stats.add_node();
         self.ast.statement_for_in(span, left, right, body)
     }
 
@@ -564,12 +587,15 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        // ForOfStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // bump `of`
         let right = self.parse_assignment_expression_or_higher();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
+        self.stats.add_node();
         self.ast.statement_for_of(span, r#await, left, right, body)
     }
 
@@ -580,6 +606,7 @@ impl<'a> ParserImpl<'a> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
+        self.stats.add_node();
         self.ast.statement_continue(self.end_span(span), label)
     }
 
@@ -590,6 +617,7 @@ impl<'a> ParserImpl<'a> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
+        self.stats.add_node();
         self.ast.statement_break(self.end_span(span), label)
     }
 
@@ -610,25 +638,32 @@ impl<'a> ParserImpl<'a> {
         if !self.ctx.has_return() {
             self.error(diagnostics::return_statement_only_in_function_body(Span::sized(span, 6)));
         }
+        self.stats.add_node();
         self.ast.statement_return(self.end_span(span), argument)
     }
 
     /// Section 14.11 With Statement
     fn parse_with_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
+        // WithStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // bump `with`
         let object = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::With);
         let span = self.end_span(span);
+        self.stats.add_node();
         self.ast.statement_with(span, object, body)
     }
 
     /// Section 14.12 Switch Statement
     fn parse_switch_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
+        // SwitchStatement creates a scope
+        self.stats.add_scope();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression();
         let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case);
+        self.stats.add_node();
         self.ast.statement_switch(self.end_span(span), discriminant, cases)
     }
 
@@ -672,6 +707,7 @@ impl<'a> ParserImpl<'a> {
             }
             consequent.push(stmt);
         }
+        self.stats.add_node();
         self.ast.switch_case(self.end_span(span), test, consequent)
     }
 
@@ -688,6 +724,7 @@ impl<'a> ParserImpl<'a> {
         }
         let argument = self.parse_expr();
         self.asi();
+        self.stats.add_node();
         self.ast.statement_throw(self.end_span(span), argument)
     }
 
@@ -707,11 +744,14 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::expect_catch_finally(range));
         }
 
+        self.stats.add_node();
         self.ast.statement_try(self.end_span(span), block, handler, finalizer)
     }
 
     fn parse_catch_clause(&mut self) -> Box<'a, CatchClause<'a>> {
         let span = self.start_span();
+        // CatchClause creates a scope
+        self.stats.add_scope();
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {
             let (pattern, type_annotation) = self.parse_binding_pattern_with_type_annotation();
@@ -722,6 +762,7 @@ impl<'a> ParserImpl<'a> {
         };
         let body = self.parse_block();
         let param = pattern.map(|(pattern, type_annotation)| {
+            self.stats.add_node();
             self.ast.catch_parameter(
                 Span::new(
                     pattern.span().start,
@@ -731,6 +772,7 @@ impl<'a> ParserImpl<'a> {
                 type_annotation,
             )
         });
+        self.stats.add_node();
         self.ast.alloc_catch_clause(self.end_span(span), param, body)
     }
 
@@ -739,6 +781,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any();
         self.asi();
+        self.stats.add_node();
         self.ast.statement_debugger(self.end_span(span))
     }
 

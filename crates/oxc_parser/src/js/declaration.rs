@@ -92,6 +92,7 @@ impl<'a> ParserImpl<'a> {
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
+        self.stats.add_node();
         self.ast.alloc_variable_declaration(self.end_span(start_span), kind, declarations, declare)
     }
 
@@ -127,6 +128,7 @@ impl<'a> ParserImpl<'a> {
             (None, None)
         };
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
+        self.stats.add_node();
         let decl = self.ast.variable_declarator(
             self.end_span(span),
             kind,
@@ -202,6 +204,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        self.stats.add_node();
         self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
     }
 }

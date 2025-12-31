@@ -5,7 +5,7 @@ use oxc::{
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
     diagnostics::OxcDiagnostic,
-    parser::ParseOptions,
+    parser::{ParseOptions, Stats},
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
 };
@@ -63,11 +63,12 @@ impl CompilerInterface for Driver {
     fn after_transform(
         &mut self,
         program: &mut Program<'_>,
+        stats: Stats,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic
             && let Some(errors) =
-                check_semantic_after_transform(&transformer_return.scoping, program)
+                check_semantic_after_transform(&transformer_return.scoping, program, stats)
         {
             self.errors.extend(errors);
         }

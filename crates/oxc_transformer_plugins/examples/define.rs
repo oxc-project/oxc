@@ -18,7 +18,7 @@ use pico_args::Arguments;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, Stats};
 use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
@@ -39,8 +39,8 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::default();
 
-    let mut program = parse(&allocator, &source_text, source_type);
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let (mut program, stats) = parse(&allocator, &source_text, source_type);
+    let scoping = SemanticBuilder::new().build(&program, stats).semantic.into_scoping();
     let config = ReplaceGlobalDefinesConfig::new(&defines).unwrap();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     let printed = codegen(&program, sourcemap);
@@ -55,7 +55,7 @@ fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
-) -> Program<'a> {
+) -> (Program<'a>, Stats) {
     let ret = Parser::new(allocator, source_text, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,
@@ -65,7 +65,7 @@ fn parse<'a>(
     for error in ret.errors {
         println!("{:?}", error.with_source_code(source_text.to_string()));
     }
-    ret.program
+    (ret.program, ret.stats)
 }
 
 /// Generate JavaScript code from an AST

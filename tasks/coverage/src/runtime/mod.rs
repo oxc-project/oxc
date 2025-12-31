@@ -180,10 +180,11 @@ impl Test262RuntimeCase {
         let is_only_strict = self.base.is_only_strict();
         let source_type = SourceType::cjs().with_module(is_module);
         let allocator = Allocator::default();
-        let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let mut program = ret.program;
 
         if transform {
-            let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+            let scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
             let mut options = TransformOptions::enable_all();
             options.jsx.refresh = None;
             options.helper_loader.mode = HelperLoaderMode::External;
@@ -194,7 +195,7 @@ impl Test262RuntimeCase {
 
         let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
-                .minify(&allocator, &mut program)
+                .minify(&allocator, &mut program, ret.stats)
                 .scoping
         } else {
             None

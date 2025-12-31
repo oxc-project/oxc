@@ -21,15 +21,17 @@ fn bench_semantic(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST for each iteration, as `SemanticBuilder` alters the AST
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let program = black_box(program);
+                let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                let parser_ret = black_box(parser_ret);
 
                 runner.run(|| {
                     // We drop `Semantic` inside this closure as drop time is part of cost of using this API.
                     // We return `errors` to be dropped outside of the measured section, as usually
                     // code would have no errors. One of our benchmarks `cal.com.tsx` has a lot of errors,
                     // but that's atypical, so don't want to include it in benchmark time.
-                    let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+                    let ret = SemanticBuilder::new()
+                        .with_check_syntax_error(true)
+                        .build(&parser_ret.program, parser_ret.stats);
                     let ret = black_box(ret);
                     ret.errors
                 });

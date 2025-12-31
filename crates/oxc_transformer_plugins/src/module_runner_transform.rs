@@ -875,7 +875,7 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let mut program = ret.program;
-        let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let mut scoping = SemanticBuilder::new().build(&program, ret.stats).semantic.into_scoping();
         if is_jsx {
             let mut options = TransformOptions::default();
             options.jsx.runtime = JsxRuntime::Classic;
