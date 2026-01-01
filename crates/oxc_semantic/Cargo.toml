@@ -33,14 +33,12 @@ oxc_syntax = { workspace = true }
 
 itertools = { workspace = true }
 memchr = { workspace = true }
-phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
 oxc_parser = { workspace = true }
-phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
 
