@@ -785,6 +785,7 @@ fn test_property_access() {
 fn test_new_expressions() {
     test("new AggregateError", true);
     test("new DataView", true);
+    test("new Symbol", true);
     test("new Set", false);
     test("new Map", false);
     test("new WeakSet", false);
@@ -803,7 +804,6 @@ fn test_new_expressions() {
     test("new Number", false);
     test("new Object", false);
     test("new String", false);
-    test("new Symbol", false);
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
