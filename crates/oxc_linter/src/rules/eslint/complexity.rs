@@ -15,7 +15,6 @@ use crate::{
     AstNode,
     ast_util::get_function_name_with_kind,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -271,7 +270,7 @@ impl Visit<'_> for ComplexityVisitor {
     }
 
     fn visit_formal_parameter(&mut self, it: &oxc_ast::ast::FormalParameter<'_>) {
-        if let Some(_) = &it.initializer {
+        if it.initializer.is_some() {
             self.complexity += 1;
         }
         walk::walk_formal_parameter(self, it);
@@ -342,17 +341,7 @@ impl Visit<'_> for ComplexityVisitor {
     }
 
     fn visit_property_definition(&mut self, it: &oxc_ast::ast::PropertyDefinition<'_>) {
-        if !self.has_entered_complexity_evaluation {
-            if let Some(value) = &it.value {
-                self.has_entered_complexity_evaluation = true;
-                self.visit_expression(value);
-            } else {
-                // Do not visit any other node if there is no value expression to
-                // evaluate - only visit all other nodes if it is part of another
-                // function / static block evaluation
-                return;
-            }
-        } else {
+        if self.has_entered_complexity_evaluation {
             // Visit all other nodes except for value expression if part of another
             // function / static block's complexity evaluation
             let kind = oxc_ast::AstKind::PropertyDefinition(self.alloc(it));
@@ -363,10 +352,17 @@ impl Visit<'_> for ComplexityVisitor {
             if let Some(type_annotation) = &it.type_annotation {
                 self.visit_ts_type_annotation(type_annotation);
             }
-            if let Some(value) = &it.value {
+            if it.value.is_some() {
                 // Do not enter value expression if we already started evaluating complexity
             }
             self.leave_node(kind);
+        } else if let Some(value) = &it.value {
+            self.has_entered_complexity_evaluation = true;
+            self.visit_expression(value);
+        } else {
+            // Do not visit any other node if there is no value expression to
+            // evaluate - only visit all other nodes if it is part of another
+            // function / static block evaluation
         }
     }
 }
