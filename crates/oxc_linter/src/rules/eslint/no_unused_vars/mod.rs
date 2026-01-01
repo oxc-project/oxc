@@ -15,7 +15,7 @@ use options::{IgnorePattern, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use symbol::Symbol;
 
 use crate::{
@@ -338,12 +338,26 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::CatchParameter(_) => {
-                ctx.diagnostic(diagnostic::declared(
-                    symbol,
-                    &self.caught_errors_ignore_pattern,
-                    false,
-                ));
+            AstKind::CatchParameter(catch) => {
+                // NOTE: these are safe suggestions as deleting unused catch
+                // bindings wont have any side effects.
+                ctx.diagnostic_with_suggestion(
+                    diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
+                    |fixer| {
+                        let source = fixer.source_text();
+                        let span = catch.span();
+                        // note: adding 1 will never cause the span to exceed the source text
+                        // because there must always be at least a `{}` after the catch binding
+                        // for source text to parse correctly
+                        let (Some(start), Some(end)) = (
+                            self.find_prev_token_pos(source, span, '('),
+                            self.find_next_token_pos(source, span, b')').map(|end| end + 1),
+                        ) else {
+                            return fixer.noop();
+                        };
+                        fixer.delete_range(Span::new(start, end))
+                    },
+                );
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
         }

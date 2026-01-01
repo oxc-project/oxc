@@ -3,7 +3,7 @@ use oxc_ast::{
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
@@ -144,6 +144,38 @@ impl NoUnusedVars {
         }
 
         Some(new_name.into())
+    }
+    pub(in super::super) fn find_prev_token_pos<'a>(
+        &self,
+        source_text: &'a str,
+        span: Span,
+        expected: char,
+    ) -> Option<u32> {
+        let source = source_text[0..span.start as usize].chars().rev();
+        let mut pos: u32 = 0;
+        for c in source {
+            pos += c.len_utf8() as u32;
+            if c.is_whitespace() {
+                continue;
+            }
+            return (c == expected).then_some(span.start - pos);
+        }
+        None
+    }
+
+    pub(in super::super) fn find_next_token_pos<'a>(
+        &self,
+        source_text: &'a str,
+        span: Span,
+        expected: u8,
+    ) -> Option<u32> {
+        if span.end >= source_text.len() as u32 {
+            return None;
+        }
+        memchr::memchr(expected, source_text[span.end as usize..].as_bytes()).and_then(|idx| {
+            let source_idx = span.end + idx as u32;
+            (source_idx < source_text.len() as u32).then_some(source_idx)
+        })
     }
 }
 
