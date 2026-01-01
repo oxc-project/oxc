@@ -66,30 +66,73 @@ impl Deref for Complexity {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Enforces a maximum cyclomatic complexity in a program, which is the number
+    /// of linearly independent paths in a program.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// Having high code complexity reduces code readability. This rule
+    /// aims to make the code easier to follow by reducing the number of branches
+    /// in the program.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule with `{ "max": 2 }`
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// function foo() {
+    ///   if (foo1) {
+    ///     return x1; // 1st path
+    ///   } else if (foo2) {
+    ///     return x2; // 2nd path
+    ///   } else {
+    ///     return x3; // 3rd path
+    ///   }
+    /// }
+    ///
+    /// function bar() {
+    ///   // there are 2 paths - when bar1 is falsy, and when bar1 is truthy, in which bar1 = bar1 && bar2;
+    ///   bar1 &&= bar2;
+    ///   // there are 2 paths - when bar3 is truthy, and when bar3 is falsy, in which bar3 = 4;
+    ///   bar3 ||= 4;
+    /// }
+    ///
+    /// // there are 2 paths - when baz1 is defined, and when baz1 is undefined and is assigned 'a'
+    /// function baz(baz1 = 'a') {
+    ///   const { baz2 = 'b' } = baz3; // there are 2 additional paths - when baz2 is defined and when baz2 is not
+    /// }
+    ///
+    /// function d() {
+    ///   d1 = d2?.d3?.(); // optional chaining creates 2 paths each - when object is defined and when it is not
+    /// }
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule with `{ "max": 2 }`
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// // This example is taken directly from ESLint documentation
+    /// function foo() { // this function has complexity = 1
+    ///   class C {
+    ///     x = a + b; // this initializer has complexity = 1
+    ///     y = c || d; // this initializer has complexity = 2
+    ///     z = e && f; // this initializer has complexity = 2
+    ///
+    ///     static p = g || h; // this initializer has complexity = 2
+    ///     static q = i ? j : k; // this initializer has complexity = 2
+    ///
+    ///     static { // this static block has complexity = 2
+    ///       if (foo) {
+    ///         baz = bar;
+    ///       }
+    ///     }
+    ///
+    ///     static { // this static block has complexity = 2
+    ///       qux = baz || quux;
+    ///     }
+    ///   }
+    /// }
     /// ```
     Complexity,
     eslint,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
     config = ComplexityConfig,
 );
 
