@@ -9,7 +9,7 @@ working directory: fixtures/output_formatter_diagnostic
 {"message": "Function 'foo' is declared but never used.","code": "eslint(no-unused-vars)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html","help": "Consider removing this declaration.","filename": "test.js","labels": [{"label": "'foo' is declared here","span": {"offset": 9,"length": 3,"line": 1,"column": 10}}],"related": []},
 {"message": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'.","code": "eslint(no-unused-vars)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html","help": "Consider removing this parameter.","filename": "test.js","labels": [{"label": "'b' is declared here","span": {"offset": 16,"length": 1,"line": 1,"column": 17}}],"related": []}],
               "number_of_files": 1,
-              "number_of_rules": null,
+              "number_of_rules": 2,
               "threads_count": 1,
               "start_time": <variable>
             }

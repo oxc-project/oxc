@@ -17,7 +17,7 @@
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
-Finished in Xms on 1 file using X threads.
+Finished in Xms on 1 file with 2 rules using X threads.
 ```
 
 # stderr

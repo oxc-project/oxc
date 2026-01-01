@@ -1,5 +1,6 @@
 use std::ptr;
 
+use memchr::memchr_iter;
 use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
@@ -328,30 +329,68 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     }
 }
 
+const MIN_STRING_SIZE_FOR_BATCH_CHECK: usize = 16;
+
 pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     // 12.9.4.1 Static Semantics: Early Errors
     // EscapeSequence ::
     //   legacy_octalEscapeSequence
     //   non_octal_decimal_escape_sequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
+    if !ctx.strict_mode() {
+        return;
+    }
     let raw = lit.span.source_text(ctx.source_text);
-    if ctx.strict_mode() && raw.len() != lit.value.len() {
-        let mut chars = raw.chars().peekable();
-        while let Some(c) = chars.next() {
-            if c == '\\' {
-                match chars.next() {
-                    Some('0') => {
-                        if chars.peek().is_some_and(char::is_ascii_digit) {
+    let raw_len = raw.len();
+    if raw_len != lit.value.len() {
+        if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
+            let raw_bytes = raw.as_bytes();
+            let mut skip_next_backslash = false;
+            for backslash_index in memchr_iter(b'\\', raw_bytes) {
+                if skip_next_backslash {
+                    skip_next_backslash = false;
+                    continue;
+                }
+                let next_byte = raw_bytes.get(backslash_index + 1);
+                match next_byte {
+                    Some(b'\\') => {
+                        // Escaped backslash - skip the next backslash in memchr results
+                        skip_next_backslash = true;
+                    }
+                    Some(b'0') => {
+                        let following_byte = raw_bytes.get(backslash_index + 2);
+                        if following_byte.is_some_and(u8::is_ascii_digit) {
                             return ctx.error(diagnostics::legacy_octal(lit.span));
                         }
                     }
-                    Some('1'..='7') => {
+                    Some(b'1'..=b'7') => {
                         return ctx.error(diagnostics::legacy_octal(lit.span));
                     }
-                    Some('8'..='9') => {
+                    Some(b'8'..=b'9') => {
                         return ctx.error(diagnostics::non_octal_decimal_escape_sequence(lit.span));
                     }
                     _ => {}
+                }
+            }
+        } else {
+            let mut bytes = raw.bytes().peekable();
+            while let Some(b) = bytes.next() {
+                if b == b'\\' {
+                    match bytes.next() {
+                        Some(b'0') => {
+                            if bytes.peek().is_some_and(u8::is_ascii_digit) {
+                                return ctx.error(diagnostics::legacy_octal(lit.span));
+                            }
+                        }
+                        Some(b'1'..=b'7') => {
+                            return ctx.error(diagnostics::legacy_octal(lit.span));
+                        }
+                        Some(b'8'..=b'9') => {
+                            return ctx
+                                .error(diagnostics::non_octal_decimal_escape_sequence(lit.span));
+                        }
+                        _ => {}
+                    }
                 }
             }
         }

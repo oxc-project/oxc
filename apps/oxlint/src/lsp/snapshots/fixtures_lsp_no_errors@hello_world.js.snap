@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/no_errors/hello_world.js
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/no_errors/hello_world.js
+
+########### Code Actions/Commands

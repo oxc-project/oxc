@@ -1,5 +1,8 @@
 {
     "plugins": ["import"],
+    "categories": {
+      "correctness": "off"
+    },
     "rules": {
         "import-x/no-default-export": "error",
         "import-x/namespace": "allow"
