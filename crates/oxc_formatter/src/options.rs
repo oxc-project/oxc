@@ -96,11 +96,11 @@ pub struct TailwindcssOptions {
 
     /// List of custom function names whose arguments should be sorted.
     /// e.g., `["clsx", "cva", "tw"]`
-    pub functions: Option<Vec<String>>,
+    pub functions: Vec<String>,
 
     /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
     /// e.g., `["myClassProp", ":class"]`
-    pub attributes: Option<Vec<String>>,
+    pub attributes: Vec<String>,
 
     /// Preserve whitespace around classes.
     /// Defaults to `false`.

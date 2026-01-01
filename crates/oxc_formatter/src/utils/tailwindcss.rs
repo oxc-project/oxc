@@ -25,7 +25,7 @@ use crate::{
 ///
 /// Returns `true` for:
 /// - `class` and `className` (default attributes)
-/// - Custom attributes specified in `tailwindAttributes` option
+/// - Custom attributes specified in `attributes` option
 pub fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
     options: &TailwindcssOptions,
@@ -41,13 +41,13 @@ pub fn is_tailwind_jsx_attribute(
     }
 
     // Custom attributes from options
-    options.attributes.as_ref().is_some_and(|attrs| attrs.iter().any(|a| a == name))
+    options.attributes.iter().any(|a| a == name)
 }
 
 /// Checks if a callee expression is a Tailwind function.
 ///
 /// Traverses through `CallExpression` and `MemberExpression` nodes to find the
-/// root identifier, then checks if it matches any function in `tailwindFunctions`.
+/// root identifier, then checks if it matches any function in `functions`.
 ///
 /// This matches patterns like:
 /// - `clsx(...)` - direct call
@@ -57,9 +57,9 @@ pub fn is_tailwind_jsx_attribute(
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
 pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
-    let Some(functions) = &options.functions else {
+    if options.functions.is_empty() {
         return false;
-    };
+    }
 
     // Traverse property accesses and function calls to find the leading identifier
     let mut node = callee;
@@ -76,7 +76,7 @@ pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssO
                 node = &member.object;
             }
             Expression::Identifier(ident) => {
-                return functions.iter().any(|f| f == ident.name.as_str());
+                return options.functions.iter().any(|f| f == ident.name.as_str());
             }
             _ => return false,
         }

@@ -472,8 +472,8 @@ impl Oxfmtrc {
             format_options.experimental_tailwindcss = Some(TailwindcssOptions {
                 config: config.config,
                 stylesheet: config.stylesheet,
-                functions: config.functions,
-                attributes: config.attributes,
+                functions: config.functions.unwrap_or_default(),
+                attributes: config.attributes.unwrap_or_default(),
                 preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
                 preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
             });
