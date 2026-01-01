@@ -2,7 +2,7 @@ use itertools::Itertools;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -122,8 +122,7 @@ impl TrackingExpectPair {
         let type_params = self
             .type_parameters
             .as_ref()
-            .map(|formatted| CompactStr::new(formatted.as_ref()))
-            .unwrap_or(CompactStr::new(""));
+            .map_or(CompactStr::new(""), |formatted| CompactStr::new(formatted.as_ref()));
 
         let expect = format!(
             "expect({}).toHaveBeenCalledExactlyOnceWith{}({})",
@@ -149,7 +148,7 @@ impl TrackingExpectPair {
             return false;
         }
 
-        return true;
+        true
     }
 }
 
@@ -194,10 +193,10 @@ impl Rule for PreferCalledExactlyOnceWith {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Program(program) => {
-                self.check_block_body(&program.body, node, ctx);
+                Self::check_block_body(&program.body, node, ctx);
             }
             AstKind::BlockStatement(block_statement) => {
-                self.check_block_body(&block_statement.body, node, ctx);
+                Self::check_block_body(&block_statement.body, node, ctx);
             }
             _ => {}
         }
@@ -206,7 +205,6 @@ impl Rule for PreferCalledExactlyOnceWith {
 
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
-        &self,
         statements: &'a OxcVec<'a, Statement<'_>>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
@@ -247,20 +245,19 @@ impl PreferCalledExactlyOnceWith {
             };
 
             match parsed_call_expression_statement {
-                TestCallExpression::MockResetFn => {
+                TestCallExpression::MockReset => {
                     let Some(Expression::Identifier(identify)) =
-                        call_expr.callee.as_member_expression().map(|member| member.object())
+                        call_expr.callee.as_member_expression().map(MemberExpression::object)
                     else {
                         continue;
                     };
 
                     variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
                 }
-                TestCallExpression::TestFn(statements) => {
-                    self.check_block_body(&statements, node, ctx);
-                    continue;
+                TestCallExpression::TestBlock(statements) => {
+                    Self::check_block_body(statements, node, ctx);
                 }
-                TestCallExpression::ExpectFn(expect_call) => {
+                TestCallExpression::ExpectFnCall(expect_call) => {
                     let Some((variable_expected_name, matcher)) =
                         get_identifier_and_matcher_to_be_expected(
                             &expect_call,
@@ -273,8 +270,7 @@ impl PreferCalledExactlyOnceWith {
 
                     let duplicate_entry = variables_expected
                         .get(&variable_expected_name)
-                        .map(|expects| expects.is_expected_matcher(&matcher))
-                        .unwrap_or(false);
+                        .is_some_and(|expects| expects.is_expected_matcher(&matcher));
 
                     if duplicate_entry {
                         variables_expected.remove(&variable_expected_name);
@@ -299,20 +295,20 @@ impl PreferCalledExactlyOnceWith {
                                         variable_expected_name.clone(),
                                     ),
                                 );
-                            };
+                            }
                         }
 
                         MatcherKind::ToHaveBeenCalledWith => {
-                            let to_be_arguments = expect_call
-                                .matcher_arguments
-                                .map(|arguments| {
-                                    arguments
+                            let to_be_arguments = expect_call.matcher_arguments.map_or(
+                                CompactStr::new(""),
+                                |arguments| {
+                                    let arguments_to_be_expected = arguments
                                         .iter()
                                         .map(|arg| ctx.source_range(GetSpan::span(arg)))
-                                        .join(", ")
-                                })
-                                .map(|arg_str| CompactStr::new(arg_str.as_ref()))
-                                .unwrap_or(CompactStr::new(""));
+                                        .join(", ");
+                                    CompactStr::new(arguments_to_be_expected.as_ref())
+                                },
+                            );
 
                             let type_notation =
                                 call_expr.type_arguments.as_ref().map(|type_notation| {
@@ -340,7 +336,7 @@ impl PreferCalledExactlyOnceWith {
                                         type_notation,
                                     ),
                                 );
-                            };
+                            }
                         }
                         MatcherKind::Unknown => {}
                     }
@@ -370,9 +366,9 @@ impl PreferCalledExactlyOnceWith {
 }
 
 enum TestCallExpression<'a> {
-    TestFn(&'a OxcVec<'a, Statement<'a>>),
-    MockResetFn,
-    ExpectFn(ParsedExpectFnCall<'a>),
+    TestBlock(&'a oxc_allocator::Vec<'a, Statement<'a>>),
+    MockReset,
+    ExpectFnCall(ParsedExpectFnCall<'a>),
 }
 
 fn parse_call_expression_statement<'a>(
@@ -381,24 +377,20 @@ fn parse_call_expression_statement<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<TestCallExpression<'a>> {
-    if is_mock_reset_call_expression(call_expr, &mock_reset_methods) {
-        return Some(TestCallExpression::MockResetFn);
+    if is_mock_reset_call_expression(call_expr, mock_reset_methods) {
+        return Some(TestCallExpression::MockReset);
     }
 
     match parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx) {
         Some(ParsedJestFnCallNew::GeneralJest(_)) => {
-            let Some(callback) = get_test_callback(call_expr) else {
-                return None;
-            };
+            let callback = get_test_callback(call_expr)?;
 
-            let Some(body) = get_callback_body(callback) else {
-                return None;
-            };
+            let body = get_callback_body(callback)?;
 
-            Some(TestCallExpression::TestFn(&body.statements))
+            Some(TestCallExpression::TestBlock(&body.statements))
         }
         Some(ParsedJestFnCallNew::Expect(expect_vitest_call)) => {
-            Some(TestCallExpression::ExpectFn(expect_vitest_call))
+            Some(TestCallExpression::ExpectFnCall(expect_vitest_call))
         }
         _ => None,
     }
@@ -413,31 +405,24 @@ fn get_identifier_and_matcher_to_be_expected<'a>(
         return None;
     }
 
-    let Some(matcher_index) = expect_call.matcher_index else {
-        return None;
-    };
+    let matcher_index = expect_call.matcher_index?;
 
-    let Some(matcher) = expect_call
+    let matcher = expect_call
         .members
         .get(matcher_index)
-        .and_then(|matcher| matcher.name())
-        .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
-    else {
-        return None;
-    };
+        .and_then(KnownMemberExpressionProperty::name)
+        .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))?;
 
     if !matchers_to_combine.contains(&matcher) {
         return None;
-    };
+    }
 
-    let Some(arguments) = expect_call.expect_arguments else {
-        return None;
-    };
+    let arguments = expect_call.expect_arguments?;
 
     let identifier_name =
         arguments.iter().map(|argument| ctx.source_range(GetSpan::span(argument))).join(", ");
 
-    return Some((CompactStr::new(identifier_name.as_ref()), matcher));
+    Some((CompactStr::new(identifier_name.as_ref()), matcher))
 }
 
 fn is_not_modifier_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
@@ -456,7 +441,7 @@ fn is_mock_reset_call_expression<'a>(
         return false;
     }
 
-    return true;
+    true
 }
 
 /**
@@ -472,7 +457,7 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
         .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
         .starts_with('\n')
     {
-        column_0_span_index = column_0_span_index - 1;
+        column_0_span_index -= 1;
     }
 
     Span::new(column_0_span_index, statement_span.end + 1)
@@ -497,7 +482,7 @@ fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expres
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
-        Expression::FunctionExpression(func) => func.body.as_ref().map(|body| body.as_ref()),
+        Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
         Expression::ArrowFunctionExpression(func) => Some(&func.body),
         _ => None,
     }
