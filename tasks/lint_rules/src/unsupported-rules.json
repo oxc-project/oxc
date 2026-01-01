@@ -28,6 +28,8 @@
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
     "n/file-extension-in-import": "No need to implement, already implemented by `import/extensions`.",
+    "import/enforce-node-protocol-usage": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
+    "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
 
     "jest/no-unnecessary-assertion": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
