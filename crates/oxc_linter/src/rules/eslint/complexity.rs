@@ -3,6 +3,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::ops::Deref;
 
 use crate::{
     AstNode,
@@ -18,30 +20,40 @@ fn complexity_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(untagged, rename_all = "camelCase")]
-enum ConfigElement0 {
-    Unlabeled1(i32),
-    Unlabeled2(ConfigElement00),
-}
+const THRESHOLD_DEFAULT: usize = 20;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 #[schemars(rename_all = "camelCase")]
-struct ConfigElement00 {
-    max: i32,
-    maximum: i32,
+pub struct ComplexityConfig {
+    max: usize,
     variant: Variant,
 }
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+
+impl Default for ComplexityConfig {
+    fn default() -> Self {
+        Self { max: THRESHOLD_DEFAULT, variant: Variant::Classic }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 #[schemars(untagged, rename_all = "camelCase")]
-enum Variant {
-    #[default]
+pub enum Variant {
     Classic,
     Modified,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct Complexity(ConfigElement0);
+pub struct Complexity(Box<ComplexityConfig>);
+
+impl Deref for Complexity {
+    type Target = ComplexityConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -76,12 +88,24 @@ declare_oxc_lint!(
 
 impl Rule for Complexity {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        // dbg!(&value);
+        if let Some(max) = value
+            .get(0)
+            .and_then(Value::as_number)
+            .and_then(serde_json::Number::as_u64)
+            .and_then(|v| usize::try_from(v).ok())
+        {
+            Ok(Self(Box::new(ComplexityConfig { max, variant: Variant::Classic })))
+        } else {
+            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .unwrap_or_default()
+                .into_inner())
+        }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // dbg!(self.max, self.variant);
+    }
 }
 
 #[test]
