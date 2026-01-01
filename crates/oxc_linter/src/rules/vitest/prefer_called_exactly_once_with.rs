@@ -145,18 +145,14 @@ impl TrackingExpectPair {
             return false;
         }
 
-        // If we're waiting for `toHaveBeenCalledOnce` and get it, we can pair
-        // If we're waiting for `toHaveBeenCalledWith` and get it, we can pair
-        // Otherwise, we can't pair (e.g., getting the same matcher type we already have)
         matches!(
             (&self.current_state, matcher),
             (ExpectPairStates::WaitingOnce, MatcherKind::ToHaveBeenCalledOnce)
-                | (ExpectPairStates::WaitingWith, MatcherKind::ToHaveBeenCalledWith)
+                | (ExpectPairStates::WaitingWith, MatcherKind::ToHaveBeenCalledWith),
         )
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
