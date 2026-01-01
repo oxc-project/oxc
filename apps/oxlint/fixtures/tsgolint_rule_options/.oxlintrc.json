@@ -43,6 +43,14 @@
       {
         "allowOptionalChaining": true
       }
+    ],
+    "typescript/only-throw-error": [
+      "error",
+      {
+        "allowRethrowing": false,
+        "allowThrowingAny": false,
+        "allowThrowingUnknown": true
+      }
     ]
   }
 }

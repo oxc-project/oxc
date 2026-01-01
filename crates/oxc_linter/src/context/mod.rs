@@ -148,6 +148,18 @@ impl<'a> LintContext<'a> {
             .map(|(a, _)| a as u32)
     }
 
+    /// Finds the previous occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn find_prev_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        let source = self.source_range(Span::from(0..start));
+
+        source
+            .rmatch_indices(token)
+            .find(|(a, _)| !self.is_inside_comment(*a as u32))
+            .map(|(a, _)| a as u32)
+    }
+
     /// Finds the next occurrence of the given token within a bounded span,
     /// starting from the specified position, skipping over comments.
     ///

@@ -89,7 +89,7 @@
   help: Add `@param` tag with name.
 
 Found 0 warnings and 12 errors.
-Finished in Xms on 1 file using X threads.
+Finished in Xms on 1 file with 12 rules using X threads.
 ```
 
 # stderr

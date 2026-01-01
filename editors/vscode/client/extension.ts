@@ -68,7 +68,6 @@ export async function activate(context: ExtensionContext) {
   const binaryPaths = await Promise.all(
     tools.map((tool) =>
       tool.getBinary(
-        context,
         tool instanceof Linter ? outputChannelLint : outputChannelFormat,
         configService,
       ),
@@ -77,41 +76,24 @@ export async function activate(context: ExtensionContext) {
 
   await Promise.all(
     tools.map((tool): Promise<void> => {
+      const channel = tool instanceof Linter ? outputChannelLint : outputChannelFormat;
       const binaryPath = binaryPaths[tools.indexOf(tool)];
 
-      if (!binaryPath && tool instanceof Linter) {
-        statusBarItemHandler.setColorAndIcon("statusBarItem.errorBackground", "error");
-        statusBarItemHandler.updateToolTooltip(
-          "linter",
-          "**oxlint disabled**\n\nError: No valid oxlint binary found.",
-        );
-        return Promise.resolve();
-      }
-
-      if (!binaryPath && tool instanceof Formatter) {
-        // No valid binary found for the formatter.
-        statusBarItemHandler.updateToolTooltip(
-          "formatter",
-          "**oxfmt disabled**\n\nNo valid oxfmt binary found.",
-        );
-        outputChannelFormat.appendLine(
-          "No valid oxfmt binary found. Formatter will not be activated.",
-        );
-        return Promise.resolve();
-      }
-
-      // binaryPath is guaranteed to be defined here.
-      const binaryPathResolved = binaryPath!;
-
-      return tool.activate(
-        context,
-        binaryPathResolved,
-        tool instanceof Linter ? outputChannelLint : outputChannelFormat,
-        configService,
-        statusBarItemHandler,
-      );
+      return tool.activate(context, channel, configService, statusBarItemHandler, binaryPath);
     }),
   );
+
+  // No valid binaries found for any tool, show error background.
+  if (binaryPaths.every((path) => !path)) {
+    statusBarItemHandler.setWarnBackground();
+    statusBarItemHandler.setIcon("circle-slash");
+    // Every tool has a valid binary.
+  } else if (binaryPaths.every((path) => path)) {
+    statusBarItemHandler.setIcon("check-all");
+    // Some tools are missing binaries.
+  } else {
+    statusBarItemHandler.setIcon("check");
+  }
 
   // Finally show the status bar item.
   statusBarItemHandler.show();
