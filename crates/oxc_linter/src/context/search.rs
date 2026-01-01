@@ -2,7 +2,7 @@ use super::LintContext;
 use oxc_span::Span;
 use std::ops::Deref;
 
-pub(crate) struct Pattern<T>(pub(super) T);
+pub struct Pattern<T>(pub(super) T);
 
 impl<T> Deref for Pattern<T> {
     type Target = T;
@@ -11,18 +11,6 @@ impl<T> Deref for Pattern<T> {
         &self.0
     }
 }
-
-impl<T> Clone for Pattern<T>
-where
-    T: Clone,
-{
-    #[inline]
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
-}
-
-impl<T> Copy for Pattern<T> where T: Copy {}
 
 macro_rules! into_pattern {
     ($type:ty) => {
@@ -41,12 +29,12 @@ impl<'a> From<&'a str> for Pattern<&'a str> {
 into_pattern!(char);
 into_pattern!(u8);
 
-pub(crate) trait Searcher<P> {
+pub trait Searcher<P> {
     fn find_next(&self, start: u32, pattern: Pattern<P>) -> Option<u32>;
     fn find_prev(&self, end: u32, pattern: Pattern<P>) -> Option<u32>;
 }
 
-impl<'a> Searcher<&str> for LintContext<'a> {
+impl Searcher<&str> for LintContext<'_> {
     fn find_next(&self, start: u32, pattern: Pattern<&str>) -> Option<u32> {
         let source = self.source_after(start);
         let bytes = pattern.as_bytes();
@@ -82,19 +70,21 @@ impl<'a> Searcher<&str> for LintContext<'a> {
                 _ => unreachable!(),
             };
         }
+        #[expect(clippy::cast_possible_truncation)]
         source
             .rmatch_indices(*pattern)
-            .find(|(a, _)| !self.is_inside_comment(*a as u32))
             .map(|(a, _)| a as u32)
+            .find(|a| !self.is_inside_comment(*a))
     }
 }
 
-impl<'a> Searcher<char> for LintContext<'a> {
+impl Searcher<char> for LintContext<'_> {
     #[inline]
     fn find_next(&self, start: u32, pattern: Pattern<char>) -> Option<u32> {
         let source = self.source_after(start);
         let bytes = u32::from(pattern.0);
         match pattern.len_utf8() {
+            #[expect(clippy::cast_possible_truncation)]
             1 => self.search_next(start, memchr::memchr_iter(bytes as u8, source.as_bytes())),
             2 => {
                 let [first, second, ..] = bytes.to_be_bytes();
@@ -116,6 +106,7 @@ impl<'a> Searcher<char> for LintContext<'a> {
         let source = self.source_before(end);
         let bytes = u32::from(pattern.0);
         match pattern.len_utf8() {
+            #[expect(clippy::cast_possible_truncation)]
             1 => self.search_prev(end, memchr::memchr_iter(bytes as u8, source.as_bytes())),
             2 => {
                 let [first, second, ..] = bytes.to_be_bytes();
@@ -130,7 +121,7 @@ impl<'a> Searcher<char> for LintContext<'a> {
     }
 }
 
-impl<'a> Searcher<u8> for LintContext<'a> {
+impl Searcher<u8> for LintContext<'_> {
     fn find_next(&self, start: u32, pattern: Pattern<u8>) -> Option<u32> {
         self.search_next(start, memchr::memchr_iter(pattern.0, self.source_after(start).as_bytes()))
     }
@@ -145,21 +136,26 @@ impl<'a> LintContext<'a> {
         self.source_range(Span::from(0..end))
     }
 
+    #[expect(clippy::cast_possible_truncation)]
     fn source_after(&self, start: u32) -> &'a str {
         self.source_range(Span::new(start, self.source_text().len() as u32))
     }
 
+    #[expect(clippy::cast_possible_truncation)]
     fn search_next<I: Iterator<Item = usize>>(&self, start: u32, mut iter: I) -> Option<u32> {
         iter.find(|&index| !self.is_inside_comment(start + index as u32))
             .map(|index| start + index as u32)
     }
 
+    #[expect(clippy::cast_possible_truncation)]
     fn search_prev<I: DoubleEndedIterator<Item = usize>>(
         &self,
-        end: u32,
+        _end: u32,
         mut iter: I,
     ) -> Option<u32> {
-        iter.rfind(|&index| !self.is_inside_comment(end - index as u32))
-            .map(|index| end - index as u32)
+        // Note: memchr_iter gives indices from the start of the slice (0-based),
+        // so we use rfind to get the last occurrence and return it directly as the absolute position
+        iter.rfind(|&index| !self.is_inside_comment(index as u32))
+            .map(|index| index as u32)
     }
 }

@@ -23,7 +23,7 @@ use crate::{
 mod host;
 mod search;
 pub use host::{ContextHost, ContextSubHost};
-pub(crate) use search::Searcher;
+pub use search::Searcher;
 
 /// Contains all of the state and context specific to this lint rule.
 ///

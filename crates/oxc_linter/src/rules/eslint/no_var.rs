@@ -67,8 +67,17 @@ impl Rule for NoVar {
             }
 
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-            let var_start = ctx.find_next_token_from(dec.span.start, "var").unwrap();
+            
+            // For declarations with `declare` keyword, skip past it to find the actual `var`
+            let search_start = if dec.declare {
+                dec.span.start + 8 // "declare ".len()
+            } else {
+                dec.span.start
+            };
+            
+            let var_start = ctx.find_next_token_from(search_start, "var").unwrap();
             let var_keyword_span = Span::sized(var_start, 3);
+            
             ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
