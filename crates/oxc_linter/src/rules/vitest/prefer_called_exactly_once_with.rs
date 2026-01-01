@@ -464,20 +464,9 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
 }
 
 fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    let args = &call_expr.arguments;
-
-    for arg in args.iter().rev() {
-        if let Some(expr) = arg.as_expression()
-            && matches!(
-                expr,
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-            )
-        {
-            return Some(expr);
-        }
-    }
-
-    None
+    call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
+        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+    })
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
