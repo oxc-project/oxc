@@ -77,6 +77,22 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load JavaScript/TypeScript config files.
+/// This is an experimental feature that allows users to write oxlint configs in TypeScript.
+#[napi]
+pub type JsLoadJsConfigsCb = ThreadsafeFunction<
+    // Arguments: Vec of absolute paths to oxlint.config.ts files
+    Vec<String>,
+    // Return value: JSON string containing success/failure result
+    Promise<String>,
+    // Arguments (repeated)
+    Vec<String>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -84,6 +100,7 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
+/// 5. `load_js_configs`: Load JavaScript/TypeScript config files (experimental).
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -94,8 +111,10 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_js_configs: JsLoadJsConfigsCb,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file).await.report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, setup_configs, lint_file, load_js_configs).await.report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -104,6 +123,7 @@ async fn lint_impl(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_js_configs: JsLoadJsConfigsCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -138,19 +158,23 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter =
-        Some(crate::js_plugins::create_external_linter(load_plugin, setup_configs, lint_file));
+    let (external_linter, js_config_loader) = {
+        let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
+        let external_linter =
+            Some(crate::js_plugins::create_external_linter(load_plugin, setup_configs, lint_file));
+        (external_linter, js_config_loader)
+    };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    let external_linter = {
-        let (_, _, _) = (load_plugin, setup_configs, lint_file);
-        None
+    let (external_linter, js_config_loader) = {
+        let (_, _, _, _) = (load_plugin, setup_configs, lint_file, load_js_configs);
+        (None, None)
     };
 
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
 
-    CliRunner::new(command, external_linter).run(&mut stdout)
+    CliRunner::new(command, external_linter).with_config_loader(js_config_loader).run(&mut stdout)
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
