@@ -104,7 +104,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// #### `"never"` (default)
+    /// #### `"never"`
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
@@ -145,7 +145,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// #### `"as-needed"`
+    /// #### `"as-needed"` (default)
     ///
     /// Examples of **incorrect** code for this rule with the `as-needed` option:
     /// ```js
