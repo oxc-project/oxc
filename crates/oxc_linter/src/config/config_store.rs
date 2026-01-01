@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use rustc_hash::FxHashMap;
@@ -275,11 +275,25 @@ impl Config {
 /// 2. any nested configurations (`nested_configs`)
 ///
 /// If an explicit config has been provided `-c config.json`, then `nested_configs` will be empty
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ConfigStore {
     base: Config,
     nested_configs: FxHashMap<PathBuf, Config>,
     external_plugin_store: Arc<ExternalPluginStore>,
+    /// Cache mapping directory -> nearest config directory
+    /// This avoids repeated parent traversal in get_nearest_config
+    directory_cache: RwLock<FxHashMap<PathBuf, Option<PathBuf>>>,
+}
+
+impl Clone for ConfigStore {
+    fn clone(&self) -> Self {
+        Self {
+            base: self.base.clone(),
+            nested_configs: self.nested_configs.clone(),
+            external_plugin_store: Arc::clone(&self.external_plugin_store),
+            directory_cache: RwLock::new(FxHashMap::default()),
+        }
+    }
 }
 
 impl ConfigStore {
@@ -292,6 +306,7 @@ impl ConfigStore {
             base: base_config,
             nested_configs,
             external_plugin_store: Arc::new(external_plugin_store),
+            directory_cache: RwLock::new(FxHashMap::default()),
         }
     }
 
@@ -337,16 +352,32 @@ impl ConfigStore {
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
-        // TODO(perf): should we cache the computed nearest config for every directory,
-        // so we don't have to recompute it for every file?
-        let mut current = path.parent();
-        while let Some(dir) = current {
-            if let Some(config) = self.nested_configs.get(dir) {
-                return Some(config);
-            }
-            current = dir.parent();
+        let dir = path.parent()?;
+
+        if let Ok(cache) = self.directory_cache.read()
+            && let Some(config_dir) = cache.get(dir)
+        {
+            return config_dir.as_ref().and_then(|d| self.nested_configs.get(d));
         }
-        None
+
+        let nearest_config_dir = {
+            let mut current = Some(dir);
+            let mut found = None;
+            while let Some(d) = current {
+                if self.nested_configs.contains_key(d) {
+                    found = Some(d.to_path_buf());
+                    break;
+                }
+                current = d.parent();
+            }
+            found
+        };
+
+        if let Ok(mut cache) = self.directory_cache.write() {
+            cache.insert(dir.to_path_buf(), nearest_config_dir.clone());
+        }
+
+        nearest_config_dir.as_ref().and_then(|d| self.nested_configs.get(d))
     }
 
     pub(crate) fn resolve_plugin_rule_names(
