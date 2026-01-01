@@ -145,7 +145,7 @@ export async function sortTailwindClasses({
     }
   }
 
-  let tailwindcss = options.experimentalTailwindcss || {};
+  const tailwindcss = options.experimentalTailwindcss || {};
   // Options are flattened at root level (like Prettier)
   const configOptions = {
     filepath,
