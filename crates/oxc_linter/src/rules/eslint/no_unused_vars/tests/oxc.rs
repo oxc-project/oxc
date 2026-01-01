@@ -529,7 +529,12 @@ fn test_vars_catch() {
         ("try {} catch (      e \t\n ) { }", "try {} catch  { }", None, FixKind::Suggestion),
         // typescript
         ("try {} catch (error: Error) { }", "try {} catch  { }", None, FixKind::Suggestion),
-        ("try {} catch (error: (typeof thing)[number]) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch (error: (typeof thing)[number]) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
