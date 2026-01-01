@@ -148,11 +148,11 @@ impl TrackingExpectPair {
         // If we're waiting for `toHaveBeenCalledOnce` and get it, we can pair
         // If we're waiting for `toHaveBeenCalledWith` and get it, we can pair
         // Otherwise, we can't pair (e.g., getting the same matcher type we already have)
-        match (&self.current_state, matcher) {
+        matches!(
+            (&self.current_state, matcher),
             (ExpectPairStates::WaitingOnce, MatcherKind::ToHaveBeenCalledOnce)
-            | (ExpectPairStates::WaitingWith, MatcherKind::ToHaveBeenCalledWith) => true,
-            _ => false,
-        }
+                | (ExpectPairStates::WaitingWith, MatcherKind::ToHaveBeenCalledWith)
+        )
     }
 }
 
