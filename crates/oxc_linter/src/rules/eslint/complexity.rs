@@ -111,23 +111,23 @@ impl Rule for Complexity {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let mut visitor = ComplexityVisitor::new(self.variant);
-        let (complexity, span, diagnostic_type) = match node.kind() {
+        let (span, diagnostic_type) = match node.kind() {
             AstKind::Function(func) => {
                 visitor.visit_function(func, ScopeFlags::Function);
-                (visitor.complexity, func.span, DiagnosticType::Function)
+                (func.span, DiagnosticType::Function)
             }
             AstKind::ArrowFunctionExpression(func) => {
                 visitor.visit_arrow_function_expression(func);
-                (visitor.complexity, func.span, DiagnosticType::Function)
+                (func.span, DiagnosticType::Function)
             }
             AstKind::StaticBlock(block) => {
                 visitor.visit_static_block(block);
-                (visitor.complexity, block.span, DiagnosticType::ClassStaticBlock)
+                (block.span, DiagnosticType::ClassStaticBlock)
             }
             AstKind::PropertyDefinition(prop_def) => {
                 if let Some(expr) = &prop_def.value {
                     visitor.visit_property_definition(prop_def);
-                    (visitor.complexity, expr.span(), DiagnosticType::ClassPropertyInitializer)
+                    (expr.span(), DiagnosticType::ClassPropertyInitializer)
                 } else {
                     return;
                 }
@@ -137,7 +137,7 @@ impl Rule for Complexity {
             }
         };
 
-        if complexity > self.max {
+        if visitor.complexity > self.max {
             let name = match diagnostic_type {
                 DiagnosticType::ClassStaticBlock => "class static block",
                 DiagnosticType::ClassPropertyInitializer => "class field initializer",
@@ -147,7 +147,7 @@ impl Rule for Complexity {
                 }
             };
 
-            ctx.diagnostic(complexity_diagnostic(span, name, complexity, self.max));
+            ctx.diagnostic(complexity_diagnostic(span, name, visitor.complexity, self.max));
         }
     }
 }
