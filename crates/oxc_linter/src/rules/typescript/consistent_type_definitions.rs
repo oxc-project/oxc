@@ -108,8 +108,7 @@ impl Rule for ConsistentTypeDefinitions {
                         let start = if decl.declare {
                             let base_start = decl.span.start + 7;
 
-                            ctx.find_next_token_from(base_start, "type")
-                                .unwrap_or(base_start + 1)
+                            ctx.find_next_token_from(base_start, "type").unwrap_or(base_start + 1)
                         } else {
                             decl.span.start
                         };
@@ -195,8 +194,7 @@ impl Rule for ConsistentTypeDefinitions {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
 
-                    ctx.find_next_token_from(base_start, "interface")
-                        .unwrap_or(base_start + 1)
+                    ctx.find_next_token_from(base_start, "interface").unwrap_or(base_start + 1)
                 } else {
                     decl.span.start
                 };

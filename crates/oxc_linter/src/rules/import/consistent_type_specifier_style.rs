@@ -167,7 +167,9 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         rule_fixes.push(fixer.insert_text_before(item, "type "));
                     }
                     // find the 'type' keyword and remove it
-                    if let Some(type_token_start) = ctx.find_next_token_from(import_decl.span.start, "type") {
+                    if let Some(type_token_start) =
+                        ctx.find_next_token_from(import_decl.span.start, "type")
+                    {
                         let type_token_span = Span::sized(type_token_start, 4);
                         let remove_fix = fixer.delete_range(type_token_span);
                         rule_fixes.push(remove_fix);
