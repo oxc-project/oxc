@@ -1,21 +1,5 @@
 use std::cmp::Ordering;
 
-/// Parse groups from string-based configuration.
-/// If parsing fails (= undefined), it falls back to `Unknown` selector.
-pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<GroupName>> {
-    let mut groups = Vec::with_capacity(string_groups.len());
-    for group in string_groups {
-        let mut parsed_group = Vec::with_capacity(group.len());
-        for name in group {
-            if let Some(group_name) = GroupName::parse(name) {
-                parsed_group.push(group_name);
-            }
-        }
-        groups.push(parsed_group);
-    }
-    groups
-}
-
 /// Represents a group name pattern for matching imports.
 /// A group name consists of 1 selector and N modifiers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -25,16 +9,6 @@ pub struct GroupName {
 }
 
 impl GroupName {
-    /// Create a new group name with no modifiers.
-    pub fn new(selector: ImportSelector) -> Self {
-        Self { selector, modifiers: vec![] }
-    }
-
-    /// Create a new group name with one modifier.
-    pub fn with_modifier(selector: ImportSelector, modifier: ImportModifier) -> Self {
-        Self { selector, modifiers: vec![modifier] }
-    }
-
     /// Check if this is a plain selector (no modifiers).
     pub fn is_plain_selector(&self, selector: ImportSelector) -> bool {
         self.selector == selector && self.modifiers.is_empty()
