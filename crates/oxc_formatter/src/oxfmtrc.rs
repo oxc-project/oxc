@@ -100,7 +100,7 @@ pub struct Oxfmtrc {
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
     /// (Default: disabled)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_tailwindcss: Option<TailwindcssConfig>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
@@ -245,37 +245,36 @@ pub enum SortOrderConfig {
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-#[expect(clippy::struct_field_names)] // Field names match the plugin's documented options
 pub struct TailwindcssConfig {
     /// Path to Tailwind config file (v3).
     /// e.g., `"./tailwind.config.js"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_config: Option<String>,
+    pub config: Option<String>,
 
     /// Path to Tailwind stylesheet (v4).
     /// e.g., `"./src/app.css"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_stylesheet: Option<String>,
+    pub stylesheet: Option<String>,
 
     /// List of custom function names whose arguments should be sorted.
     /// e.g., `["clsx", "cva", "tw"]`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_functions: Option<Vec<String>>,
+    pub functions: Option<Vec<String>>,
 
     /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
     /// e.g., `["myClassProp", ":class"]`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_attributes: Option<Vec<String>>,
+    pub attributes: Option<Vec<String>>,
 
     /// Preserve whitespace around classes.
     /// Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_preserve_whitespace: Option<bool>,
+    pub preserve_whitespace: Option<bool>,
 
     /// Preserve duplicate classes.
     /// Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tailwind_preserve_duplicates: Option<bool>,
+    pub preserve_duplicates: Option<bool>,
 }
 
 // ---
@@ -471,12 +470,12 @@ impl Oxfmtrc {
         // [Oxfmt] experimentalTailwindcss: object | null
         if let Some(config) = self.experimental_tailwindcss {
             format_options.experimental_tailwindcss = Some(TailwindcssOptions {
-                tailwind_config: config.tailwind_config,
-                tailwind_stylesheet: config.tailwind_stylesheet,
-                tailwind_functions: config.tailwind_functions,
-                tailwind_attributes: config.tailwind_attributes,
-                tailwind_preserve_whitespace: config.tailwind_preserve_whitespace.unwrap_or(false),
-                tailwind_preserve_duplicates: config.tailwind_preserve_duplicates.unwrap_or(false),
+                config: config.config,
+                stylesheet: config.stylesheet,
+                functions: config.functions,
+                attributes: config.attributes,
+                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
+                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
             });
         }
 

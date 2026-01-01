@@ -62,8 +62,8 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveWhitespace: false,
-        tailwindPreserveDuplicates: false,
+        preserveWhitespace: false,
+        preserveDuplicates: false,
       },
     });
 
@@ -72,34 +72,34 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should respect tailwindAttributes option for custom attributes", async () => {
+  test("should respect attributes option for custom attributes", async () => {
     // By default, only 'class' and 'className' are sorted
     const input = `const A = <div myClassProp="p-4 flex">Hello</div>;`;
 
-    // Without tailwindAttributes, custom attribute should NOT be sorted
+    // Without attributes, custom attribute should NOT be sorted
     const resultWithoutOption = await format("test.tsx", input, {
       experimentalTailwindcss: {},
     });
     expect(resultWithoutOption.code).toContain('myClassProp="p-4 flex"');
 
-    // With tailwindAttributes including 'myClassProp', it SHOULD be sorted
+    // With attributes including 'myClassProp', it SHOULD be sorted
     const resultWithOption = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindAttributes: ["myClassProp"],
+        attributes: ["myClassProp"],
       },
     });
     expect(resultWithOption.code).toContain('myClassProp="flex p-4"');
     expect(resultWithOption.errors).toStrictEqual([]);
   });
 
-  test("should respect tailwindFunctions option for custom functions", async () => {
+  test("should respect functions option for custom functions", async () => {
     // Test with clsx function call
     const input = `const A = <div className={clsx("p-4 flex")}>Hello</div>;`;
 
-    // With tailwindFunctions including 'clsx', the string argument should be sorted
+    // With functions including 'clsx', the string argument should be sorted
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 
@@ -108,7 +108,7 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should handle multiple tailwindFunctions", async () => {
+  test("should handle multiple functions", async () => {
     const input = `
 const A = (
   <div className={clsx("p-4 flex")}>
@@ -118,7 +118,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx", "cva"],
+        functions: ["clsx", "cva"],
       },
     });
 
@@ -132,7 +132,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 
@@ -145,7 +145,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["obj"],
+        functions: ["obj"],
       },
     });
 
@@ -158,7 +158,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["foo"],
+        functions: ["foo"],
       },
     });
 
@@ -171,7 +171,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["a"],
+        functions: ["a"],
       },
     });
 
@@ -184,7 +184,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["obj"],
+        functions: ["obj"],
       },
     });
 
@@ -192,20 +192,20 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should preserve whitespace when tailwindPreserveWhitespace is true", async () => {
+  test("should preserve whitespace when preserveWhitespace is true", async () => {
     // Input with leading/trailing whitespace in class string
     const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;
 
-    // Without tailwindPreserveWhitespace, whitespace should be trimmed
+    // Without preserveWhitespace, whitespace should be trimmed
     const resultWithoutOption = await format("test.tsx", input, {
       experimentalTailwindcss: {},
     });
     expect(resultWithoutOption.code).toContain('className="flex p-4"');
 
-    // With tailwindPreserveWhitespace: true, whitespace should be preserved
+    // With preserveWhitespace: true, whitespace should be preserved
     const resultWithOption = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveWhitespace: true,
+        preserveWhitespace: true,
       },
     });
     // Whitespace should be preserved around the sorted classes
@@ -227,14 +227,14 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should preserve duplicates when tailwindPreserveDuplicates is true", async () => {
+  test("should preserve duplicates when preserveDuplicates is true", async () => {
     // Input with duplicate class names
     const input = `const A = <div className="flex p-4 flex p-4">Hello</div>;`;
 
-    // With tailwindPreserveDuplicates: true, duplicates should be preserved
+    // With preserveDuplicates: true, duplicates should be preserved
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveDuplicates: true,
+        preserveDuplicates: true,
       },
     });
 
@@ -333,12 +333,12 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should handle template literal with tailwindFunctions", async () => {
+  test("should handle template literal with functions", async () => {
     const input = `const A = <div className={clsx(\`p-4 flex \${x} m-2 inline\`)}>Hello</div>;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 
@@ -419,7 +419,7 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should collapse whitespace in template literal with line breaks when tailwindPreserveWhitespace is false", async () => {
+  test("should collapse whitespace in template literal with line breaks when preserveWhitespace is false", async () => {
     // Template literal with line breaks - whitespace should be collapsed
     const input = `const A = <div className={\`
       p-4 flex
@@ -429,7 +429,7 @@ const A = (
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveWhitespace: false,
+        preserveWhitespace: false,
       },
     });
 
@@ -440,13 +440,13 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should preserve whitespace in template literal when tailwindPreserveWhitespace is true", async () => {
+  test("should preserve whitespace in template literal when preserveWhitespace is true", async () => {
     // Template literal with leading/trailing whitespace in first and last quasis
     const input = `const A = <div className={\`  p-4 flex \${x} m-2 inline  \`}>Hello</div>;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveWhitespace: true,
+        preserveWhitespace: true,
       },
     });
 
@@ -456,7 +456,7 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should collapse newlines to single space when tailwindPreserveWhitespace is false (default)", async () => {
+  test("should collapse newlines to single space when preserveWhitespace is false (default)", async () => {
     const input = `<div className={\`flex
 items-center
 bg-blue-500
@@ -481,7 +481,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.errors).toStrictEqual([]);
   });
 
-  test("should preserve newlines when tailwindPreserveWhitespace is true", async () => {
+  test("should preserve newlines when preserveWhitespace is true", async () => {
     const input = `<div className={\`flex
 items-center
 bg-blue-500
@@ -492,7 +492,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindPreserveWhitespace: true,
+        preserveWhitespace: true,
       },
     });
 
@@ -724,7 +724,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["classNames"],
+        functions: ["classNames"],
       },
     });
 
@@ -746,7 +746,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 
@@ -764,7 +764,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 
@@ -785,7 +785,7 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     const result = await format("test.tsx", input, {
       experimentalTailwindcss: {
-        tailwindFunctions: ["clsx"],
+        functions: ["clsx"],
       },
     });
 

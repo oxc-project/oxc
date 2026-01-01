@@ -294,9 +294,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
                 // If this IS a Tailwind function call, push the Tailwind context
                 let tailwind_ctx_to_push = if is_tailwind_call {
-                    f.options().experimental_tailwindcss.as_ref().map(|opts| {
-                        TailwindContextEntry::new(false, opts.tailwind_preserve_whitespace)
-                    })
+                    f.options()
+                        .experimental_tailwindcss
+                        .as_ref()
+                        .map(|opts| TailwindContextEntry::new(false, opts.preserve_whitespace))
                 } else {
                     None
                 };

@@ -41,7 +41,7 @@ pub fn is_tailwind_jsx_attribute(
     }
 
     // Custom attributes from options
-    options.tailwind_attributes.as_ref().is_some_and(|attrs| attrs.iter().any(|a| a == name))
+    options.attributes.as_ref().is_some_and(|attrs| attrs.iter().any(|a| a == name))
 }
 
 /// Checks if a callee expression is a Tailwind function.
@@ -57,7 +57,7 @@ pub fn is_tailwind_jsx_attribute(
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
 pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
-    let Some(functions) = &options.tailwind_functions else {
+    let Some(functions) = &options.functions else {
         return false;
     };
 

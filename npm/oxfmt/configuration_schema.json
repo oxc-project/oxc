@@ -1,209 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "allowComments": true,
-  "allowTrailingCommas": true,
-  "definitions": {
-    "ArrowParensConfig": {
-      "enum": [
-        "always",
-        "avoid"
-      ],
-      "type": "string"
-    },
-    "EmbeddedLanguageFormattingConfig": {
-      "enum": [
-        "auto",
-        "off"
-      ],
-      "type": "string"
-    },
-    "EndOfLineConfig": {
-      "enum": [
-        "lf",
-        "crlf",
-        "cr"
-      ],
-      "type": "string"
-    },
-    "ObjectWrapConfig": {
-      "enum": [
-        "preserve",
-        "collapse",
-        "always"
-      ],
-      "type": "string"
-    },
-    "QuotePropsConfig": {
-      "enum": [
-        "as-needed",
-        "consistent",
-        "preserve"
-      ],
-      "type": "string"
-    },
-    "SortImportsConfig": {
-      "properties": {
-        "groups": {
-          "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
-          "items": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "markdownDescription": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "ignoreCase": {
-          "description": "Ignore case when sorting. (Default: `true`)",
-          "markdownDescription": "Ignore case when sorting. (Default: `true`)",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "internalPattern": {
-          "description": "Glob patterns to identify internal imports.",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Glob patterns to identify internal imports.",
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "newlinesBetween": {
-          "description": "Add newlines between import groups. (Default: `true`)",
-          "markdownDescription": "Add newlines between import groups. (Default: `true`)",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "order": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SortOrderConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Sort order. (Default: `\"asc\"`)",
-          "markdownDescription": "Sort order. (Default: `\"asc\"`)"
-        },
-        "partitionByComment": {
-          "description": "Partition imports by comments. (Default: `false`)",
-          "markdownDescription": "Partition imports by comments. (Default: `false`)",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "partitionByNewline": {
-          "description": "Partition imports by newlines. (Default: `false`)",
-          "markdownDescription": "Partition imports by newlines. (Default: `false`)",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "sortSideEffects": {
-          "description": "Sort side-effect imports. (Default: `false`)",
-          "markdownDescription": "Sort side-effect imports. (Default: `false`)",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "SortOrderConfig": {
-      "enum": [
-        "asc",
-        "desc"
-      ],
-      "type": "string"
-    },
-    "TailwindcssConfig": {
-      "description": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
-      "markdownDescription": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
-      "properties": {
-        "tailwindAttributes": {
-          "description": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "tailwindConfig": {
-          "description": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
-          "markdownDescription": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "tailwindFunctions": {
-          "description": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "tailwindPreserveDuplicates": {
-          "description": "Preserve duplicate classes.\nDefaults to `false`.",
-          "markdownDescription": "Preserve duplicate classes.\nDefaults to `false`.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "tailwindPreserveWhitespace": {
-          "description": "Preserve whitespace around classes.\nDefaults to `false`.",
-          "markdownDescription": "Preserve whitespace around classes.\nDefaults to `false`.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "tailwindStylesheet": {
-          "description": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
-          "markdownDescription": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "TrailingCommaConfig": {
-      "enum": [
-        "all",
-        "es5",
-        "none"
-      ],
-      "type": "string"
-    }
-  },
+  "title": "Oxfmtrc",
   "description": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
-  "markdownDescription": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
+  "type": "object",
   "properties": {
     "arrowParens": {
+      "description": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)",
       "anyOf": [
         {
           "$ref": "#/definitions/ArrowParensConfig"
@@ -211,27 +13,18 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)",
-      "markdownDescription": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)"
+      ]
     },
     "bracketSameLine": {
       "description": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
-      "markdownDescription": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "bracketSpacing": {
       "description": "Print spaces between brackets in object literals. (Default: `true`)",
-      "markdownDescription": "Print spaces between brackets in object literals. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "embeddedLanguageFormatting": {
+      "description": "Control whether to format embedded parts in the file. (Default: `\"off\"`)",
       "anyOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -239,11 +32,10 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Control whether to format embedded parts in the file. (Default: `\"off\"`)",
-      "markdownDescription": "Control whether to format embedded parts in the file. (Default: `\"off\"`)"
+      ]
     },
     "endOfLine": {
+      "description": "Which end of line characters to apply. (Default: `\"lf\"`)",
       "anyOf": [
         {
           "$ref": "#/definitions/EndOfLineConfig"
@@ -251,11 +43,10 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Which end of line characters to apply. (Default: `\"lf\"`)",
-      "markdownDescription": "Which end of line characters to apply. (Default: `\"lf\"`)"
+      ]
     },
     "experimentalSortImports": {
+      "description": "Experimental: Sort import statements. Disabled by default.",
       "anyOf": [
         {
           "$ref": "#/definitions/SortImportsConfig"
@@ -263,19 +54,14 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Experimental: Sort import statements. Disabled by default.",
-      "markdownDescription": "Experimental: Sort import statements. Disabled by default."
+      ]
     },
     "experimentalSortPackageJson": {
       "description": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "experimentalTailwindcss": {
+      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
       "anyOf": [
         {
           "$ref": "#/definitions/TailwindcssConfig"
@@ -283,38 +69,25 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
-      "markdownDescription": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)"
+      ]
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
+      "type": ["array", "null"],
       "items": {
         "type": "string"
-      },
-      "markdownDescription": "Ignore files matching these glob patterns. Current working directory is used as the root.",
-      "type": [
-        "array",
-        "null"
-      ]
+      }
     },
     "insertFinalNewline": {
       "description": "Whether to insert a final newline at the end of the file. (Default: `true`)",
-      "markdownDescription": "Whether to insert a final newline at the end of the file. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
-      "markdownDescription": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "objectWrap": {
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`.",
       "anyOf": [
         {
           "$ref": "#/definitions/ObjectWrapConfig"
@@ -322,21 +95,16 @@
         {
           "type": "null"
         }
-      ],
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`.",
-      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`."
+      ]
     },
     "printWidth": {
       "description": "The line length that the printer will wrap on. (Default: `100`)",
+      "type": ["integer", "null"],
       "format": "uint16",
-      "markdownDescription": "The line length that the printer will wrap on. (Default: `100`)",
-      "minimum": 0.0,
-      "type": [
-        "integer",
-        "null"
-      ]
+      "minimum": 0.0
     },
     "quoteProps": {
+      "description": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)",
       "anyOf": [
         {
           "$ref": "#/definitions/QuotePropsConfig"
@@ -344,45 +112,28 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)",
-      "markdownDescription": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)"
+      ]
     },
     "semi": {
       "description": "Print semicolons at the ends of statements. (Default: `true`)",
-      "markdownDescription": "Print semicolons at the ends of statements. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "singleAttributePerLine": {
       "description": "Put each attribute on a new line in JSX. (Default: `false`)",
-      "markdownDescription": "Put each attribute on a new line in JSX. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "singleQuote": {
       "description": "Use single quotes instead of double quotes. (Default: `false`)",
-      "markdownDescription": "Use single quotes instead of double quotes. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     },
     "tabWidth": {
       "description": "Number of spaces per indentation level. (Default: `2`)",
+      "type": ["integer", "null"],
       "format": "uint8",
-      "markdownDescription": "Number of spaces per indentation level. (Default: `2`)",
-      "minimum": 0.0,
-      "type": [
-        "integer",
-        "null"
-      ]
+      "minimum": 0.0
     },
     "trailingComma": {
+      "description": "Print trailing commas wherever possible. (Default: `\"all\"`)",
       "anyOf": [
         {
           "$ref": "#/definitions/TrailingCommaConfig"
@@ -390,19 +141,130 @@
         {
           "type": "null"
         }
-      ],
-      "description": "Print trailing commas wherever possible. (Default: `\"all\"`)",
-      "markdownDescription": "Print trailing commas wherever possible. (Default: `\"all\"`)"
+      ]
     },
     "useTabs": {
       "description": "Use tabs for indentation or spaces. (Default: `false`)",
-      "markdownDescription": "Use tabs for indentation or spaces. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "type": ["boolean", "null"]
     }
   },
-  "title": "Oxfmtrc",
-  "type": "object"
+  "definitions": {
+    "ArrowParensConfig": {
+      "type": "string",
+      "enum": ["always", "avoid"]
+    },
+    "EmbeddedLanguageFormattingConfig": {
+      "type": "string",
+      "enum": ["auto", "off"]
+    },
+    "EndOfLineConfig": {
+      "type": "string",
+      "enum": ["lf", "crlf", "cr"]
+    },
+    "ObjectWrapConfig": {
+      "type": "string",
+      "enum": ["preserve", "collapse", "always"]
+    },
+    "QuotePropsConfig": {
+      "type": "string",
+      "enum": ["as-needed", "consistent", "preserve"]
+    },
+    "SortImportsConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
+          "type": ["array", "null"],
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "ignoreCase": {
+          "description": "Ignore case when sorting. (Default: `true`)",
+          "type": ["boolean", "null"]
+        },
+        "internalPattern": {
+          "description": "Glob patterns to identify internal imports.",
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "newlinesBetween": {
+          "description": "Add newlines between import groups. (Default: `true`)",
+          "type": ["boolean", "null"]
+        },
+        "order": {
+          "description": "Sort order. (Default: `\"asc\"`)",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SortOrderConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "partitionByComment": {
+          "description": "Partition imports by comments. (Default: `false`)",
+          "type": ["boolean", "null"]
+        },
+        "partitionByNewline": {
+          "description": "Partition imports by newlines. (Default: `false`)",
+          "type": ["boolean", "null"]
+        },
+        "sortSideEffects": {
+          "description": "Sort side-effect imports. (Default: `false`)",
+          "type": ["boolean", "null"]
+        }
+      }
+    },
+    "SortOrderConfig": {
+      "type": "string",
+      "enum": ["asc", "desc"]
+    },
+    "TailwindcssConfig": {
+      "description": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "description": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "config": {
+          "description": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
+          "type": ["string", "null"]
+        },
+        "functions": {
+          "description": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
+          "type": ["array", "null"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "preserveDuplicates": {
+          "description": "Preserve duplicate classes.\nDefaults to `false`.",
+          "type": ["boolean", "null"]
+        },
+        "preserveWhitespace": {
+          "description": "Preserve whitespace around classes.\nDefaults to `false`.",
+          "type": ["boolean", "null"]
+        },
+        "stylesheet": {
+          "description": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "TrailingCommaConfig": {
+      "type": "string",
+      "enum": ["all", "es5", "none"]
+    }
+  }
 }

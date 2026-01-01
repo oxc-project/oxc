@@ -85,31 +85,30 @@ pub struct FormatOptions {
 /// These options are passed to the `prettier-plugin-tailwindcss` for configuration.
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Default, Clone)]
-#[expect(clippy::struct_field_names)] // Field names match the plugin's documented options
 pub struct TailwindcssOptions {
     /// Path to Tailwind config file (v3).
     /// e.g., `"./tailwind.config.js"`
-    pub tailwind_config: Option<String>,
+    pub config: Option<String>,
 
     /// Path to Tailwind stylesheet (v4).
     /// e.g., `"./src/app.css"`
-    pub tailwind_stylesheet: Option<String>,
+    pub stylesheet: Option<String>,
 
     /// List of custom function names whose arguments should be sorted.
     /// e.g., `["clsx", "cva", "tw"]`
-    pub tailwind_functions: Option<Vec<String>>,
+    pub functions: Option<Vec<String>>,
 
     /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
     /// e.g., `["myClassProp", ":class"]`
-    pub tailwind_attributes: Option<Vec<String>>,
+    pub attributes: Option<Vec<String>>,
 
     /// Preserve whitespace around classes.
     /// Defaults to `false`.
-    pub tailwind_preserve_whitespace: bool,
+    pub preserve_whitespace: bool,
 
     /// Preserve duplicate classes.
     /// Defaults to `false`.
-    pub tailwind_preserve_duplicates: bool,
+    pub preserve_duplicates: bool,
 }
 
 impl FormatOptions {

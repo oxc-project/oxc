@@ -109,30 +109,17 @@ export async function formatFile({
 
 // Import types only to avoid runtime error if plugin is not installed
 import type { TransformerEnv } from "prettier-plugin-tailwindcss";
+import { TailwindcssOptions } from "..";
 
 // Cache tailwind plugin functions for tree-shaking support
 let cachedGetTailwindConfig: typeof import("prettier-plugin-tailwindcss").getTailwindConfig;
 let cachedSortClasses: typeof import("prettier-plugin-tailwindcss").sortClasses;
 let tailwindInitialized = false;
 
-/**
- * Configuration options for Tailwind CSS class sorting.
- * These are flattened at root level (like Prettier).
- * See https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
- */
-export interface TailwindOptions {
-  tailwindConfig?: string;
-  tailwindStylesheet?: string;
-  tailwindFunctions?: string[];
-  tailwindAttributes?: string[];
-  tailwindPreserveWhitespace?: boolean;
-  tailwindPreserveDuplicates?: boolean;
-}
-
 export interface ProcessTailwindClassesArgs {
   filepath: string;
   classes: string[];
-  options?: { experimentalTailwindcss?: TailwindOptions } & Record<string, unknown>;
+  options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
 }
 
 /**
@@ -158,12 +145,18 @@ export async function processTailwindClasses({
     }
   }
 
+  let tailwindcss = options.experimentalTailwindcss || {};
   // Options are flattened at root level (like Prettier)
   const configOptions = {
     filepath,
     ...options,
-    // Oxfmt puts all Tailwind options under `experimentalTailwindcss`
-    ...options?.experimentalTailwindcss,
+    // Oxfmt puts all Tailwind options under `experimentalTailwindcss`, and removed `tailwind` prefix
+    tailwindConfig: tailwindcss.config,
+    tailwindStylesheet: tailwindcss.stylesheet,
+    tailwindAttributes: tailwindcss.attributes,
+    tailwindFunctions: tailwindcss.functions,
+    tailwindPreserveWhitespace: tailwindcss.preserveWhitespace,
+    tailwindPreserveDuplicates: tailwindcss.preserveDuplicates,
   };
 
   // Load Tailwind context

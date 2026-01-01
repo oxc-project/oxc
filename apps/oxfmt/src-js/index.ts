@@ -137,15 +137,15 @@ export type SortImportsOptions = {
  */
 export type TailwindcssOptions = {
   /** Path to Tailwind config file (v3). e.g., `"./tailwind.config.js"` */
-  tailwindConfig?: string;
+  config?: string;
   /** Path to Tailwind stylesheet (v4). e.g., `"./src/app.css"` */
-  tailwindStylesheet?: string;
+  stylesheet?: string;
   /** List of custom function names whose arguments should be sorted. e.g., `["clsx", "cva", "tw"]` */
-  tailwindFunctions?: string[];
+  functions?: string[];
   /** List of additional HTML/JSX attributes to sort (beyond `class` and `className`). e.g., `["myClassProp", ":class"]` */
-  tailwindAttributes?: string[];
+  attributes?: string[];
   /** Preserve whitespace around classes. (Default: `false`) */
-  tailwindPreserveWhitespace?: boolean;
+  preserveWhitespace?: boolean;
   /** Preserve duplicate classes. (Default: `false`) */
-  tailwindPreserveDuplicates?: boolean;
+  preserveDuplicates?: boolean;
 };
