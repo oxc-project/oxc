@@ -188,9 +188,7 @@ impl<'a> PeepholeOptimizations {
             if !Self::can_case_be_inlined(first_case, ctx) {
                 return;
             }
-            let Some(mut case) = switch_stmt.cases.pop() else {
-                return;
-            };
+            let mut case = switch_stmt.cases.pop().unwrap();
 
             ctx.state.changed = true;
             let discriminant = switch_stmt.discriminant.take_in(ctx.ast);
@@ -230,6 +228,7 @@ impl<'a> PeepholeOptimizations {
             return stmt.is_empty();
         }
         match stmt.last() {
+            Some(Statement::EmptyStatement(_)) => true,
             Some(Statement::BlockStatement(block_stmt)) => {
                 Self::is_empty_switch_case(&block_stmt.body, allow_break)
             }
