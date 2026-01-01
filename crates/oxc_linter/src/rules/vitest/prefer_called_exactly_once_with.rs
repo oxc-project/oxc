@@ -19,15 +19,15 @@ use crate::{
     },
 };
 
-fn prefer_called_exactly_once_substitute_with_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.").with_label(span)
-}
-
-fn prefer_called_exactly_once_remove_with_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "Remove the expect and prefer `toHaveBeenCalledExactlyOnce` on the same target.",
-    )
-    .with_label(span)
+fn prefer_called_exactly_once_with_diagnostic(
+    substitute_span: Span,
+    remove_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.")
+        .with_labels([
+            substitute_span.label("Replace with `toHaveBeenCalledExactlyOnceWith`"),
+            remove_span.label("Remove this expect"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -335,16 +335,19 @@ impl PreferCalledExactlyOnceWith {
             }
 
             ctx.diagnostic_with_dangerous_fix(
-                prefer_called_exactly_once_substitute_with_diagnostic(expects.span_to_substitute),
+                prefer_called_exactly_once_with_diagnostic(
+                    expects.span_to_substitute,
+                    expects.span_to_remove,
+                ),
                 |fixer| {
+                    let fixer = fixer.for_multifix();
                     let substitute = expects.get_new_expect();
-                    fixer.replace(expects.span_to_substitute, substitute)
+                    fixer
+                        .new_fix_with_capacity(2)
+                        .extend(fixer.replace(expects.span_to_substitute, substitute))
+                        .extend(fixer.delete_range(expects.span_to_remove))
+                        .with_message("Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect")
                 },
-            );
-
-            ctx.diagnostic_with_dangerous_fix(
-                prefer_called_exactly_once_remove_with_diagnostic(expects.span_to_remove),
-                |fixer| fixer.delete_range(expects.span_to_remove),
             );
         }
     }
