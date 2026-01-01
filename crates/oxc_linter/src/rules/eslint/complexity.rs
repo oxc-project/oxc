@@ -1,7 +1,9 @@
+use oxc_ast::AstKind;
 use oxc_ast_visit::Visit;
 use oxc_ast_visit::walk;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
 use schemars::JsonSchema;
@@ -11,6 +13,7 @@ use std::ops::Deref;
 
 use crate::{
     AstNode,
+    ast_util::get_function_name_with_kind,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -106,13 +109,45 @@ impl Rule for Complexity {
         }
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
-        let mut visitor = ComplexityVisitor::new(self.max, self.variant);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let mut visitor = ComplexityVisitor::new(self.variant);
+        let (complexity, span, diagnostic_type) = match node.kind() {
+            AstKind::Function(func) => {
+                visitor.visit_function(func, ScopeFlags::Function);
+                (visitor.complexity, func.span, DiagnosticType::Function)
+            }
+            AstKind::ArrowFunctionExpression(func) => {
+                visitor.visit_arrow_function_expression(func);
+                (visitor.complexity, func.span, DiagnosticType::Function)
+            }
+            AstKind::StaticBlock(block) => {
+                visitor.visit_static_block(block);
+                (visitor.complexity, block.span, DiagnosticType::ClassStaticBlock)
+            }
+            AstKind::PropertyDefinition(prop_def) => {
+                if let Some(expr) = &prop_def.value {
+                    visitor.visit_property_definition(prop_def);
+                    (visitor.complexity, expr.span(), DiagnosticType::ClassPropertyInitializer)
+                } else {
+                    return;
+                }
+            }
+            _ => {
+                return;
+            }
+        };
 
-        visitor.visit_program(ctx.nodes().program());
+        if complexity > self.max {
+            let name = match diagnostic_type {
+                DiagnosticType::ClassStaticBlock => "class static block",
+                DiagnosticType::ClassPropertyInitializer => "class field initializer",
+                DiagnosticType::Function => {
+                    let parent_node = ctx.nodes().parent_node(node.id());
+                    &get_function_name_with_kind(node, parent_node)
+                }
+            };
 
-        for (diagnostic, complexity, span) in visitor.diagnostics {
-            ctx.diagnostic(complexity_diagnostic(span, "idk", complexity, self.max));
+            ctx.diagnostic(complexity_diagnostic(span, name, complexity, self.max));
         }
     }
 }
@@ -125,105 +160,85 @@ enum DiagnosticType {
 }
 
 struct ComplexityVisitor {
-    threshold: usize,
     variant: Variant,
-
-    complexity_stack: Vec<usize>,
-    diagnostics: Vec<(DiagnosticType, usize, Span)>,
+    complexity: usize,
+    has_entered_complexity_evaluation: bool,
 }
 
 impl ComplexityVisitor {
-    fn new(threshold: usize, variant: Variant) -> Self {
-        Self { threshold, variant, complexity_stack: Vec::new(), diagnostics: Vec::new() }
-    }
-
-    fn increase_complexity(&mut self) {
-        if let Some(complexity) = self.complexity_stack.last_mut() {
-            *complexity += 1;
-        }
-    }
-
-    fn start(&mut self) {
-        self.complexity_stack.push(1);
-    }
-
-    fn end(&mut self, diagnostic_type: DiagnosticType, span: Span) {
-        if let Some(complexity) = self.complexity_stack.pop() {
-            if complexity > self.threshold {
-                self.diagnostics.push((diagnostic_type, complexity, span));
-            }
-        }
+    fn new(variant: Variant) -> Self {
+        Self { variant, complexity: 1, has_entered_complexity_evaluation: false }
     }
 }
 
 impl Visit<'_> for ComplexityVisitor {
     fn visit_catch_clause(&mut self, it: &oxc_ast::ast::CatchClause<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_catch_clause(self, it);
     }
 
     fn visit_conditional_expression(&mut self, it: &oxc_ast::ast::ConditionalExpression<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_conditional_expression(self, it);
     }
 
     fn visit_logical_expression(&mut self, it: &oxc_ast::ast::LogicalExpression<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_logical_expression(self, it);
     }
 
     fn visit_for_statement(&mut self, it: &oxc_ast::ast::ForStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_for_statement(self, it);
     }
 
     fn visit_for_in_statement(&mut self, it: &oxc_ast::ast::ForInStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_for_in_statement(self, it);
     }
 
     fn visit_for_of_statement(&mut self, it: &oxc_ast::ast::ForOfStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_for_of_statement(self, it);
     }
 
     fn visit_if_statement(&mut self, it: &oxc_ast::ast::IfStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_if_statement(self, it);
     }
 
     fn visit_while_statement(&mut self, it: &oxc_ast::ast::WhileStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_while_statement(self, it);
     }
 
     fn visit_do_while_statement(&mut self, it: &oxc_ast::ast::DoWhileStatement<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_do_while_statement(self, it);
     }
 
     fn visit_assignment_pattern(&mut self, it: &oxc_ast::ast::AssignmentPattern<'_>) {
-        self.increase_complexity();
+        self.complexity += 1;
         walk::walk_assignment_pattern(self, it);
     }
 
     fn visit_formal_parameter(&mut self, it: &oxc_ast::ast::FormalParameter<'_>) {
         if let Some(_) = &it.initializer {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_formal_parameter(self, it);
     }
 
     fn visit_switch_case(&mut self, it: &oxc_ast::ast::SwitchCase<'_>) {
         if self.variant == Variant::Classic && it.test.is_some() {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_switch_case(self, it);
     }
 
     fn visit_switch_statement(&mut self, it: &oxc_ast::ast::SwitchStatement<'_>) {
         if self.variant == Variant::Modified {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_switch_statement(self, it);
     }
@@ -235,61 +250,76 @@ impl Visit<'_> for ComplexityVisitor {
                 | AssignmentOperator::LogicalOr
                 | AssignmentOperator::LogicalNullish
         ) {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_assignment_expression(self, it);
     }
 
     fn visit_member_expression(&mut self, it: &oxc_ast::ast::MemberExpression<'_>) {
         if it.optional() {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_member_expression(self, it);
     }
 
     fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'_>) {
         if it.optional {
-            self.increase_complexity();
+            self.complexity += 1;
         }
         walk::walk_call_expression(self, it);
     }
 
     fn visit_function(&mut self, it: &oxc_ast::ast::Function<'_>, flags: oxc_semantic::ScopeFlags) {
-        self.start();
-        walk::walk_function(self, it, flags);
-        // let report_span = Span::new(it.span.start, it.params.span.start);
-        self.end(DiagnosticType::Function, it.span);
+        if !self.has_entered_complexity_evaluation {
+            self.has_entered_complexity_evaluation = true;
+            walk::walk_function(self, it, flags);
+        }
+        // Do not enter function if we already started evaluating complexity
     }
 
     fn visit_arrow_function_expression(&mut self, it: &oxc_ast::ast::ArrowFunctionExpression<'_>) {
-        self.start();
-        walk::walk_arrow_function_expression(self, it);
-        // let report_span = Span::new(it.params.span.end + 1, it.body.span.start - 1);
-        self.end(DiagnosticType::Function, it.span);
+        if !self.has_entered_complexity_evaluation {
+            self.has_entered_complexity_evaluation = true;
+            walk::walk_arrow_function_expression(self, it);
+        }
+        // Do not enter function if we already started evaluating complexity
     }
 
     fn visit_static_block(&mut self, it: &oxc_ast::ast::StaticBlock<'_>) {
-        self.start();
-        walk::walk_static_block(self, it);
-        // let report_span = Span::new(it.span.start, it.span.start + 6);
-        self.end(DiagnosticType::ClassStaticBlock, it.span);
+        if !self.has_entered_complexity_evaluation {
+            self.has_entered_complexity_evaluation = true;
+            walk::walk_static_block(self, it);
+        }
+        // Do not enter static block if we already started evaluating complexity
     }
 
     fn visit_property_definition(&mut self, it: &oxc_ast::ast::PropertyDefinition<'_>) {
-        let kind = oxc_ast::AstKind::PropertyDefinition(self.alloc(it));
-        self.enter_node(kind);
-        self.visit_span(&it.span);
-        self.visit_decorators(&it.decorators);
-        self.visit_property_key(&it.key);
-        if let Some(type_annotation) = &it.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
+        if !self.has_entered_complexity_evaluation {
+            if let Some(value) = &it.value {
+                self.has_entered_complexity_evaluation = true;
+                self.visit_expression(value);
+            } else {
+                // Do not visit any other node if there is no value expression to
+                // evaluate - only visit all other nodes if it is part of another
+                // function / static block evaluation
+                unreachable!();
+            }
+        } else {
+            // Visit all other nodes except for value expression if part of another
+            // function / static block's complexity evaluation
+            let kind = oxc_ast::AstKind::PropertyDefinition(self.alloc(it));
+            self.enter_node(kind);
+            self.visit_span(&it.span);
+            self.visit_decorators(&it.decorators);
+            self.visit_property_key(&it.key);
+            if let Some(type_annotation) = &it.type_annotation {
+                self.visit_ts_type_annotation(type_annotation);
+            }
+            if let Some(value) = &it.value {
+                // Do not enter value expression if we already started evaluating complexity
+            }
+            self.leave_node(kind);
         }
-        if let Some(value) = &it.value {
-            self.start();
-            self.visit_expression(value);
-            self.end(DiagnosticType::ClassPropertyInitializer, value.span());
-        }
-        self.leave_node(kind);
     }
 }
 
