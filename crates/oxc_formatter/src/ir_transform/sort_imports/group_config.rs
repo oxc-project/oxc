@@ -79,6 +79,15 @@ impl GroupName {
 
         Some(Self { modifiers, selector })
     }
+
+    /// check if it represents a possible group name of the given import.
+    pub fn is_a_possible_name_of(
+        &self,
+        selectors: &Vec<ImportSelector>,
+        modifiers: &Vec<ImportModifier>,
+    ) -> bool {
+        selectors.contains(&self.selector) && self.modifiers.iter().all(|m| modifiers.contains(m))
+    }
 }
 
 impl PartialOrd for GroupName {
@@ -101,7 +110,7 @@ impl PartialOrd for GroupName {
 impl Ord for GroupName {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.selector.cmp(&other.selector) {
-            Ordering::Equal => {},
+            Ordering::Equal => {}
             ord => return ord,
         }
         let self_modifier_cnt = self.modifiers.len();
