@@ -14,8 +14,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, KnownMemberExpressionProperty, PossibleJestNode,
-        parse_expect_jest_fn_call, parse_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, KnownMemberExpressionProperty, ParsedExpectFnCall,
+        ParsedJestFnCallNew, PossibleJestNode, parse_expect_jest_fn_call, parse_jest_fn_call,
     },
 };
 
@@ -227,145 +227,135 @@ impl PreferCalledExactlyOnceWith {
                 continue;
             };
 
-            if is_mock_reset_call_expression(call_expr, &mock_reset_methods) {
-                let Some(Expression::Identifier(identify)) =
-                    call_expr.callee.as_member_expression().map(|member| member.object())
-                else {
+            let Some(parsed_call_expression_statement) =
+                parse_call_expression_statement(call_expr, &mock_reset_methods, node, ctx)
+            else {
+                continue;
+            };
+
+            match parsed_call_expression_statement {
+                TestCallExpression::MockResetFn => {
+                    let Some(Expression::Identifier(identify)) =
+                        call_expr.callee.as_member_expression().map(|member| member.object())
+                    else {
+                        continue;
+                    };
+
+                    variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
+                }
+                TestCallExpression::TestFn(statements) => {
+                    self.check_block_body(&statements, node, ctx);
                     continue;
-                };
-
-                variables_expected.remove(&CompactStr::new(identify.name.as_ref()));
-
-                continue;
-            }
-
-            let Some(parsed_vitest_fn) =
-                parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-            else {
-                continue;
-            };
-
-            if matches!(parsed_vitest_fn.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
-                let Some(callback) = get_test_callback(call_expr) else {
-                    return;
-                };
-
-                let Some(body) = get_callback_body(callback) else {
-                    return;
-                };
-
-                self.check_block_body(&body.statements, node, ctx);
-                continue;
-            }
-
-            let Some(expect_call) = parse_expect_jest_fn_call(
-                call_expr,
-                &PossibleJestNode { node, original: None },
-                ctx,
-            ) else {
-                continue;
-            };
-
-            if expect_call.members.iter().any(is_not_modifier_member) {
-                continue;
-            }
-
-            let Some(matcher_index) = expect_call.matcher_index else {
-                continue;
-            };
-
-            let Some(matcher) = expect_call
-                .members
-                .get(matcher_index)
-                .and_then(|matcher| matcher.name())
-                .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
-            else {
-                continue;
-            };
-
-            if !matchers_to_combine.contains(&matcher) {
-                continue;
-            };
-
-            let Some(arguments) = expect_call.expect_arguments else {
-                continue;
-            };
-
-            let arguments_key = arguments
-                .iter()
-                .map(|argument| ctx.source_range(GetSpan::span(argument)))
-                .join(", ");
-
-            let variable_expected_name = CompactStr::new(arguments_key.as_ref());
-
-            let duplicate_entry = variables_expected
-                .get(&variable_expected_name)
-                .map(|expects| expects.is_expected_matcher(&matcher))
-                .unwrap_or(false);
-
-            if duplicate_entry {
-                variables_expected.remove(&variable_expected_name);
-                continue;
-            }
-
-            match matcher {
-                MatcherKind::ToHaveBeenCalledOnce => {
-                    if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
-                        let statement_span = GetSpan::span(statement);
-
-                        expect.update_tracking_with_called_once_information(
-                            get_source_code_line_span(statement_span, ctx),
-                        );
-                    } else {
-                        variables_expected.insert(
-                            variable_expected_name.clone(),
-                            TrackingExpectPair::new_from_called_once(
-                                call_expr.span,
-                                variable_expected_name.clone(),
-                            ),
-                        );
-                    };
                 }
+                TestCallExpression::ExpectFn(expect_call) => {
+                    // Esto es otro metodo
+                    if expect_call.members.iter().any(is_not_modifier_member) {
+                        continue;
+                    }
 
-                MatcherKind::ToHaveBeenCalledWith => {
-                    let to_be_arguments = expect_call
-                        .matcher_arguments
-                        .map(|arguments| {
-                            arguments
-                                .iter()
-                                .map(|arg| ctx.source_range(GetSpan::span(arg)))
-                                .join(", ")
-                        })
-                        .map(|arg_str| CompactStr::new(arg_str.as_ref()))
-                        .unwrap_or(CompactStr::new(""));
-
-                    let type_notation = call_expr
-                        .type_arguments
-                        .as_ref()
-                        .map(|type_notation| CompactStr::new(ctx.source_range(type_notation.span)));
-
-                    if let Some(expect) = variables_expected.get_mut(&variable_expected_name) {
-                        let statement_span = GetSpan::span(statement);
-
-                        expect.update_tracking_with_called_with_information(
-                            get_source_code_line_span(statement_span, ctx),
-                            variable_expected_name,
-                            to_be_arguments,
-                            type_notation,
-                        );
-                    } else {
-                        variables_expected.insert(
-                            variable_expected_name.clone(),
-                            TrackingExpectPair::new_from_called_with(
-                                call_expr.span,
-                                variable_expected_name.clone(),
-                                to_be_arguments,
-                                type_notation,
-                            ),
-                        );
+                    let Some(matcher_index) = expect_call.matcher_index else {
+                        continue;
                     };
+
+                    let Some(matcher) = expect_call
+                        .members
+                        .get(matcher_index)
+                        .and_then(|matcher| matcher.name())
+                        .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
+                    else {
+                        continue;
+                    };
+
+                    if !matchers_to_combine.contains(&matcher) {
+                        continue;
+                    };
+
+                    // Esto es otro metodo.
+                    let Some(arguments) = expect_call.expect_arguments else {
+                        continue;
+                    };
+
+                    let arguments_key = arguments
+                        .iter()
+                        .map(|argument| ctx.source_range(GetSpan::span(argument)))
+                        .join(", ");
+
+                    let variable_expected_name = CompactStr::new(arguments_key.as_ref());
+
+                    let duplicate_entry = variables_expected
+                        .get(&variable_expected_name)
+                        .map(|expects| expects.is_expected_matcher(&matcher))
+                        .unwrap_or(false);
+
+                    if duplicate_entry {
+                        variables_expected.remove(&variable_expected_name);
+                        continue;
+                    }
+
+                    match matcher {
+                        MatcherKind::ToHaveBeenCalledOnce => {
+                            if let Some(expect) =
+                                variables_expected.get_mut(&variable_expected_name)
+                            {
+                                let statement_span = GetSpan::span(statement);
+
+                                expect.update_tracking_with_called_once_information(
+                                    get_source_code_line_span(statement_span, ctx),
+                                );
+                            } else {
+                                variables_expected.insert(
+                                    variable_expected_name.clone(),
+                                    TrackingExpectPair::new_from_called_once(
+                                        call_expr.span,
+                                        variable_expected_name.clone(),
+                                    ),
+                                );
+                            };
+                        }
+
+                        MatcherKind::ToHaveBeenCalledWith => {
+                            let to_be_arguments = expect_call
+                                .matcher_arguments
+                                .map(|arguments| {
+                                    arguments
+                                        .iter()
+                                        .map(|arg| ctx.source_range(GetSpan::span(arg)))
+                                        .join(", ")
+                                })
+                                .map(|arg_str| CompactStr::new(arg_str.as_ref()))
+                                .unwrap_or(CompactStr::new(""));
+
+                            let type_notation =
+                                call_expr.type_arguments.as_ref().map(|type_notation| {
+                                    CompactStr::new(ctx.source_range(type_notation.span))
+                                });
+
+                            if let Some(expect) =
+                                variables_expected.get_mut(&variable_expected_name)
+                            {
+                                let statement_span = GetSpan::span(statement);
+
+                                expect.update_tracking_with_called_with_information(
+                                    get_source_code_line_span(statement_span, ctx),
+                                    variable_expected_name,
+                                    to_be_arguments,
+                                    type_notation,
+                                );
+                            } else {
+                                variables_expected.insert(
+                                    variable_expected_name.clone(),
+                                    TrackingExpectPair::new_from_called_with(
+                                        call_expr.span,
+                                        variable_expected_name.clone(),
+                                        to_be_arguments,
+                                        type_notation,
+                                    ),
+                                );
+                            };
+                        }
+                        MatcherKind::Unknown => {}
+                    }
                 }
-                MatcherKind::Unknown => {}
             }
         }
 
@@ -387,6 +377,41 @@ impl PreferCalledExactlyOnceWith {
                 |fixer| fixer.delete_range(expects.span_to_remove),
             );
         }
+    }
+}
+
+enum TestCallExpression<'a> {
+    TestFn(&'a OxcVec<'a, Statement<'a>>),
+    MockResetFn,
+    ExpectFn(ParsedExpectFnCall<'a>),
+}
+
+fn parse_call_expression_statement<'a>(
+    call_expr: &'a CallExpression<'a>,
+    mock_reset_methods: &FxHashSet<CompactStr>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<TestCallExpression<'a>> {
+    if is_mock_reset_call_expression(call_expr, &mock_reset_methods) {
+        return Some(TestCallExpression::MockResetFn);
+    }
+
+    match parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx) {
+        Some(ParsedJestFnCallNew::GeneralJest(_)) => {
+            let Some(callback) = get_test_callback(call_expr) else {
+                return None;
+            };
+
+            let Some(body) = get_callback_body(callback) else {
+                return None;
+            };
+
+            Some(TestCallExpression::TestFn(&body.statements))
+        }
+        Some(ParsedJestFnCallNew::Expect(expect_vitest_call)) => {
+            Some(TestCallExpression::ExpectFn(expect_vitest_call))
+        }
+        _ => None,
     }
 }
 
