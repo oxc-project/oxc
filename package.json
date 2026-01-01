@@ -16,5 +16,5 @@
     "oxlint": "^1.35.0",
     "oxlint-tsgolint": "0.10.0"
   },
-  "packageManager": "pnpm@10.24.0"
+  "packageManager": "pnpm@10.26.2"
 }
