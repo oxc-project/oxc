@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+mod group_matcher;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
