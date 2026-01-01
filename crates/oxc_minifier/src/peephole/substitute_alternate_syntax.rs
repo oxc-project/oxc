@@ -2,10 +2,6 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
-use oxc_ast_visit::{
-    VisitMut,
-    walk_mut::{walk_call_expression, walk_new_expression},
-};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -17,7 +13,6 @@ use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
-    scope::ScopeFlags,
 };
 use oxc_traverse::Ancestor;
 
@@ -1643,15 +1638,13 @@ impl<'a> PeepholeOptimizations {
         {
             if f.expression {
                 // Replace "(() => foo())()" with "foo()"
-                let expr = f.get_expression_mut().unwrap();
                 if is_pure && Self::is_descendant_of_block(ctx) {
                     *e = ctx.ast.void_0(call_expr.span);
-                } else {
+                    ctx.state.changed = true;
+                } else if !is_pure {
+                    let expr = f.get_expression_mut().unwrap();
                     *e = expr.take_in(ctx.ast);
-                }
-                ctx.state.changed = true;
-                if is_pure {
-                    UpdatePureStatus.visit_expression(e);
+                    ctx.state.changed = true;
                 }
                 return;
             }
@@ -1660,31 +1653,26 @@ impl<'a> PeepholeOptimizations {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
                     if is_pure && Self::is_descendant_of_block(ctx) {
                         *e = ctx.ast.void_0(call_expr.span);
-                    } else {
+                        ctx.state.changed = true;
+                    } else if !is_pure {
                         *e = ctx.ast.expression_sequence(expr_stmt.span, {
                             let mut sequence = ctx.ast.vec();
                             sequence.push(expr_stmt.expression.take_in(ctx.ast));
                             sequence.push(ctx.ast.void_0(call_expr.span));
                             sequence
                         });
+                        ctx.state.changed = true;
                     }
-
-                    if is_pure {
-                        UpdatePureStatus.visit_expression(e);
-                    }
-                    ctx.state.changed = true;
                 }
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
                         if is_pure && Self::is_descendant_of_block(ctx) {
                             *e = ctx.ast.void_0(call_expr.span);
-                        } else {
+                            ctx.state.changed = true;
+                        } else if !is_pure {
                             *e = argument.take_in(ctx.ast);
-                        }
-                        ctx.state.changed = true;
-                        if is_pure {
-                            UpdatePureStatus.visit_expression(e);
+                            ctx.state.changed = true;
                         }
                     }
                 }
@@ -1753,25 +1741,6 @@ where
 {
     fn from(prop: &mut T) -> Self {
         (&*prop).into()
-    }
-}
-
-struct UpdatePureStatus;
-
-impl<'a> VisitMut<'a> for UpdatePureStatus {
-    fn visit_call_expression(&mut self, it: &mut CallExpression<'a>) {
-        it.pure = true;
-        walk_call_expression(self, it);
-    }
-    fn visit_new_expression(&mut self, it: &mut NewExpression<'a>) {
-        it.pure = true;
-        walk_new_expression(self, it);
-    }
-    fn visit_function(&mut self, it: &mut Function<'a>, _flags: ScopeFlags) {
-        it.pure = true;
-    }
-    fn visit_arrow_function_expression(&mut self, it: &mut ArrowFunctionExpression<'a>) {
-        it.pure = true;
     }
 }
 

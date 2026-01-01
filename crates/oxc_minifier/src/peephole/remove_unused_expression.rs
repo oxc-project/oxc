@@ -1033,9 +1033,9 @@ mod test {
         test("(() => { return x })()", "x;");
         test_same("(function () { return x })()");
 
-        test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
+        test_same("var a = /* @__PURE__ */ (() => x)()");
         test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
-        test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
+        test_same("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();");
         test("((() => !0)() ? () => /* @__PURE__ */ x() : () => {})();", "");
         test("/* @__PURE__ */ (() => x)()", "");
         test("/* @__PURE__ */ (() => { return x })()", "");
