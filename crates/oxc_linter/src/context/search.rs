@@ -71,10 +71,7 @@ impl Searcher<&str> for LintContext<'_> {
             };
         }
         #[expect(clippy::cast_possible_truncation)]
-        source
-            .rmatch_indices(*pattern)
-            .map(|(a, _)| a as u32)
-            .find(|a| !self.is_inside_comment(*a))
+        source.rmatch_indices(*pattern).map(|(a, _)| a as u32).find(|a| !self.is_inside_comment(*a))
     }
 }
 
@@ -155,7 +152,6 @@ impl<'a> LintContext<'a> {
     ) -> Option<u32> {
         // Note: memchr_iter gives indices from the start of the slice (0-based),
         // so we use rfind to get the last occurrence and return it directly as the absolute position
-        iter.rfind(|&index| !self.is_inside_comment(index as u32))
-            .map(|index| index as u32)
+        iter.rfind(|&index| !self.is_inside_comment(index as u32)).map(|index| index as u32)
     }
 }
