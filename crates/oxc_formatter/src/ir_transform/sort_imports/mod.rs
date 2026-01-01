@@ -12,8 +12,7 @@ use crate::{
     SortImportsOptions,
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
-        group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
-        source_line::SourceLine,
+        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine
     },
 };
 
@@ -40,7 +39,7 @@ impl SortImportsTransform {
         }
 
         // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&options.groups);
+        let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
@@ -182,7 +181,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&groups, options);
+                        chunk.into_sorted_import_units(&group_matcher, options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
