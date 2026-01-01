@@ -19,6 +19,7 @@ mod substitute_alternate_syntax;
 
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;
+use oxc_syntax::scope::ScopeId;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -150,23 +151,53 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
         ctx.state.changed = false;
+
+        if self.iteration == 0 {
+            ctx.state.reference_scopes.clear();
+            ctx.state.scope_to_defining_symbol.clear();
+            let root_scope_id = ctx.scoping().root_scope_id();
+
+            let mut collector = ReferenceCollector {
+                refs: FxHashSet::default(),
+                reference_scopes: &mut ctx.state.reference_scopes,
+                scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+                current_scope_id: root_scope_id,
+                scope_stack: vec![root_scope_id],
+            };
+            collector.visit_program(program);
+        }
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
-        if self.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
-            counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+
+        // Visit the AST to:
+        // 1. Collect current references (to diff and delete stale ones)
+        // 2. Rebuild reference scope maps for circular dependency DCE in next iteration
+        let refs_before =
+            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+
+        ctx.state.reference_scopes.clear();
+        ctx.state.scope_to_defining_symbol.clear();
+        let root_scope_id = ctx.scoping().root_scope_id();
+
+        let mut collector = ReferenceCollector {
+            refs: FxHashSet::default(),
+            reference_scopes: &mut ctx.state.reference_scopes,
+            scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+            current_scope_id: root_scope_id,
+            scope_stack: vec![root_scope_id],
+        };
+        collector.visit_program(program);
+
+        // Delete references that no longer exist in the AST
+        for reference_id_to_remove in refs_before.difference(&collector.refs) {
+            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
         }
+
         debug_assert!(ctx.state.class_symbols_stack.is_exhausted());
     }
 
@@ -495,15 +526,29 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
-        if self.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
-            counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+
+        // Visit the AST to:
+        // 1. Collect current references (to diff and delete stale ones)
+        // 2. Rebuild reference scope maps for circular dependency DCE in next iteration
+        let refs_before =
+            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+
+        ctx.state.reference_scopes.clear();
+        ctx.state.scope_to_defining_symbol.clear();
+        let root_scope_id = ctx.scoping().root_scope_id();
+
+        let mut collector = ReferenceCollector {
+            refs: FxHashSet::default(),
+            reference_scopes: &mut ctx.state.reference_scopes,
+            scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+            current_scope_id: root_scope_id,
+            scope_stack: vec![root_scope_id],
+        };
+        collector.visit_program(program);
+
+        // Delete references that no longer exist in the AST
+        for reference_id_to_remove in refs_before.difference(&collector.refs) {
+            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
         }
     }
 
@@ -584,14 +629,119 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 }
 
-#[derive(Default)]
-struct ReferencesCounter {
+/// Collects references and their scope information.
+/// Used in `exit_program` to:
+/// 1. Track which references still exist in the AST (for cleanup)
+/// 2. Build scope maps for circular dependency DCE in the next iteration
+struct ReferenceCollector<'b> {
+    /// Set of reference IDs that still exist in the AST
     refs: FxHashSet<ReferenceId>,
+    /// Maps each reference to the scope it appears in
+    reference_scopes: &'b mut rustc_hash::FxHashMap<ReferenceId, ScopeId>,
+    /// Maps function/class body scopes to their defining symbol
+    scope_to_defining_symbol: &'b mut rustc_hash::FxHashMap<ScopeId, oxc_syntax::symbol::SymbolId>,
+    current_scope_id: ScopeId,
+    scope_stack: std::vec::Vec<ScopeId>,
 }
 
-impl<'a> Visit<'a> for ReferencesCounter {
-    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        let reference_id = it.reference_id();
+impl ReferenceCollector<'_> {
+    fn enter_scope(&mut self, scope_id: ScopeId) {
+        self.scope_stack.push(scope_id);
+        self.current_scope_id = scope_id;
+    }
+
+    fn leave_scope(&mut self) {
+        self.scope_stack.pop();
+        if let Some(&scope_id) = self.scope_stack.last() {
+            self.current_scope_id = scope_id;
+        }
+    }
+}
+
+impl<'a> Visit<'a> for ReferenceCollector<'_> {
+    fn visit_program(&mut self, program: &Program<'a>) {
+        self.enter_scope(program.scope_id());
+        oxc_ast_visit::walk::walk_program(self, program);
+        self.leave_scope();
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
+        self.enter_scope(func.scope_id());
+
+        // Track which scope belongs to which function symbol
+        if let Some(id) = &func.id {
+            self.scope_to_defining_symbol.insert(self.current_scope_id, id.symbol_id());
+        }
+
+        oxc_ast_visit::walk::walk_function(self, func, flags);
+        self.leave_scope();
+    }
+
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        self.enter_scope(arrow.scope_id());
+        oxc_ast_visit::walk::walk_arrow_function_expression(self, arrow);
+        self.leave_scope();
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.enter_scope(class.scope_id());
+
+        // Track which scope belongs to which class symbol
+        if let Some(id) = &class.id {
+            self.scope_to_defining_symbol.insert(self.current_scope_id, id.symbol_id());
+        }
+
+        oxc_ast_visit::walk::walk_class(self, class);
+        self.leave_scope();
+    }
+
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
+        self.enter_scope(block.scope_id());
+        oxc_ast_visit::walk::walk_block_statement(self, block);
+        self.leave_scope();
+    }
+
+    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
+        self.enter_scope(stmt.scope_id());
+        oxc_ast_visit::walk::walk_for_statement(self, stmt);
+        self.leave_scope();
+    }
+
+    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
+        self.enter_scope(stmt.scope_id());
+        oxc_ast_visit::walk::walk_for_in_statement(self, stmt);
+        self.leave_scope();
+    }
+
+    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
+        self.enter_scope(stmt.scope_id());
+        oxc_ast_visit::walk::walk_for_of_statement(self, stmt);
+        self.leave_scope();
+    }
+
+    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
+        self.enter_scope(stmt.scope_id());
+        oxc_ast_visit::walk::walk_switch_statement(self, stmt);
+        self.leave_scope();
+    }
+
+    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
+        self.enter_scope(clause.scope_id());
+        oxc_ast_visit::walk::walk_catch_clause(self, clause);
+        self.leave_scope();
+    }
+
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        self.enter_scope(block.scope_id());
+        oxc_ast_visit::walk::walk_static_block(self, block);
+        self.leave_scope();
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let reference_id = ident.reference_id();
+        // Track that this reference exists in the AST
         self.refs.insert(reference_id);
+        // Track which scope this reference is in
+        self.reference_scopes.insert(reference_id, self.current_scope_id);
     }
 }

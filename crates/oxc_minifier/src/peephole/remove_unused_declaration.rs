@@ -1,7 +1,10 @@
+use rustc_hash::FxHashSet;
+
 use super::PeepholeOptimizations;
 use crate::{CompressOptionsUnused, ctx::Ctx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
     fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
@@ -80,6 +83,20 @@ impl<'a> PeepholeOptimizations {
         Some(stmt)
     }
 
+    /// Check if a symbol is effectively unused, handling circular dependencies.
+    /// A symbol is effectively unused if it has no references, or all its references
+    /// are inside the bodies of other symbols that are also effectively unused.
+    fn is_symbol_effectively_unused(symbol_id: SymbolId, ctx: &Ctx<'a, '_>) -> bool {
+        // Fast path: if truly unused (no references at all), return true
+        if ctx.scoping().symbol_is_unused(symbol_id) {
+            return true;
+        }
+
+        // Check for circular dependency case using the pre-computed maps
+        let mut visited = FxHashSet::default();
+        ctx.state.is_symbol_effectively_unused(symbol_id, ctx.scoping(), &mut visited)
+    }
+
     pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::FunctionDeclaration(f) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
@@ -92,7 +109,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if !Self::is_symbol_effectively_unused(symbol_id, ctx) {
             return;
         }
         *stmt = ctx.ast.statement_empty(f.span);
@@ -453,5 +470,123 @@ mod test {
         );
         test_same_options("import defer * as a from 'a'; foo(a);", &options);
         test_same_options("import defer * as a from 'a'; foo(a.bar);", &options);
+    }
+
+    /// Tests for circular dependency dead code elimination.
+    /// See `crates/oxc_minifier/docs/circular-dependency-dce.md` for details.
+    #[test]
+    fn circular_dependency_dce() {
+        let options = CompressOptions::smallest();
+
+        // The original failing case from rolldown/rolldown#7666 (simplified).
+        // `unused` and `caller` form a reference chain. After DCE removes the
+        // dead `if` branch, `caller` has no references, then `unused` has no
+        // references either. Both should be removed.
+        //
+        // Note: The minifier is more aggressive than Rollup - it also removes
+        // the dead if-branch and unused variables, which is correct behavior.
+        test_options(
+            r"
+let flag = false;
+function unused(n) {
+  if (!n) return null;
+  return unused(n - 1);
+}
+function caller(node) {
+  unused(node);
+}
+export class Foo {
+  init() {
+    flag = false;
+  }
+}
+let anchor;
+export function main() {
+  if (flag && anchor !== void 0) {
+    caller(anchor);
+  }
+}
+",
+            // After optimization: flag is inlined, if-branch is dead, caller/unused are removed
+            r"
+export class Foo {
+  init() {
+  }
+}
+export function main() {
+}
+",
+            &options,
+        );
+    }
+
+    /// Test that self-referential functions with no external callers are removed.
+    #[test]
+    fn remove_self_referential_function() {
+        let options = CompressOptions::smallest();
+
+        // Self-referential function with no external callers should be removed
+        test_options(
+            "function unused(n) { return unused(n - 1); } export function main() {}",
+            "export function main() {}",
+            &options,
+        );
+
+        // Self-referential function that IS called should be kept
+        test_same_options(
+            "function used(n) { return used(n - 1); } export function main() { used(5); }",
+            &options,
+        );
+    }
+
+    /// Test that mutually recursive functions with no external callers are removed.
+    #[test]
+    fn remove_mutually_recursive_functions() {
+        let options = CompressOptions::smallest();
+
+        // Two functions that only call each other should both be removed
+        test_options(
+            "function a() { return b(); } function b() { return a(); } export const x = 1;",
+            "export const x = 1;",
+            &options,
+        );
+
+        // Three-way cycle should be removed
+        test_options(
+            "function a() { b(); } function b() { c(); } function c() { a(); } export const x = 1;",
+            "export const x = 1;",
+            &options,
+        );
+
+        // Cycle with one function called externally - keep all
+        test_same_options(
+            "function a() { return b(); } function b() { return a(); } export function main() { a(); }",
+            &options,
+        );
+    }
+
+    /// Test that requires multiple iterations to fully remove circular dependencies.
+    /// First iteration removes dead code, second iteration can then remove the
+    /// now-unreferenced circular dependency.
+    #[test]
+    fn circular_dependency_multi_iteration() {
+        let options = CompressOptions::smallest();
+
+        // `wrapper` calls `unused`, which is self-referential.
+        // `wrapper` is only called in dead code (if false).
+        // First pass: remove the dead if-branch, `wrapper` now has no references.
+        // Second pass: `wrapper` is removed, `unused` only has self-references.
+        // Third pass: `unused` is removed.
+        test_options(
+            r"
+function unused() { return unused(); }
+function wrapper() { unused(); }
+export function main() {
+  if (false) { wrapper(); }
+}
+",
+            "export function main() {}",
+            &options,
+        );
     }
 }
