@@ -160,7 +160,8 @@ export class ConfigService implements IDisposable {
       const directPath = path.join(workspacePath, "node_modules", ".bin", defaultPattern);
       try {
         await fs.access(directPath);
-        return directPath;
+        // Convert to proper file system path format (handles Windows path normalization)
+        return Uri.file(directPath).fsPath;
       } catch {
         // File doesn't exist, continue to next workspace
       }
