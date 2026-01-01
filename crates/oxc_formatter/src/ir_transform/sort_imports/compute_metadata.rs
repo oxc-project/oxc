@@ -208,7 +208,7 @@ fn to_path_kind(source: &str, options: &SortImportsOptions) -> ImportPathKind {
         ) {
             return ImportPathKind::Index;
         }
-        if source.starts_with("../") {
+        if source.starts_with("..") {
             return ImportPathKind::Parent;
         }
         return ImportPathKind::Sibling;
