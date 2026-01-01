@@ -156,16 +156,20 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         ctx.state.changed = false;
 
         if self.iteration == 0 {
-            ctx.state.reference_scopes.clear();
-            ctx.state.scope_to_defining_symbol.clear();
-            let root_scope_id = ctx.scoping().root_scope_id();
+            ctx.state.reference_owning_symbol.clear();
+            ctx.state.named_function_expr_symbols.clear();
+            ctx.state.unused_symbol_cache.borrow_mut().clear();
+            let scoping = ctx.scoping.scoping();
+            let root_scope_id = scoping.root_scope_id();
 
             let mut collector = ReferenceCollector {
                 refs: FxHashSet::default(),
-                reference_scopes: &mut ctx.state.reference_scopes,
-                scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+                reference_owning_symbol: &mut ctx.state.reference_owning_symbol,
+                named_function_expr_symbols: &mut ctx.state.named_function_expr_symbols,
+                scoping,
                 current_scope_id: root_scope_id,
                 scope_stack: vec![root_scope_id],
+                owning_symbol_stack: vec![],
             };
             collector.visit_program(program);
         }
@@ -176,20 +180,24 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
         // Visit the AST to:
         // 1. Collect current references (to diff and delete stale ones)
-        // 2. Rebuild reference scope maps for circular dependency DCE in next iteration
+        // 2. Rebuild maps for circular dependency DCE in next iteration
         let refs_before =
             ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
 
-        ctx.state.reference_scopes.clear();
-        ctx.state.scope_to_defining_symbol.clear();
-        let root_scope_id = ctx.scoping().root_scope_id();
+        ctx.state.reference_owning_symbol.clear();
+        ctx.state.named_function_expr_symbols.clear();
+        ctx.state.unused_symbol_cache.borrow_mut().clear();
+        let scoping = ctx.scoping.scoping();
+        let root_scope_id = scoping.root_scope_id();
 
         let mut collector = ReferenceCollector {
             refs: FxHashSet::default(),
-            reference_scopes: &mut ctx.state.reference_scopes,
-            scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+            reference_owning_symbol: &mut ctx.state.reference_owning_symbol,
+            named_function_expr_symbols: &mut ctx.state.named_function_expr_symbols,
+            scoping,
             current_scope_id: root_scope_id,
             scope_stack: vec![root_scope_id],
+            owning_symbol_stack: vec![],
         };
         collector.visit_program(program);
 
@@ -529,20 +537,24 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 
         // Visit the AST to:
         // 1. Collect current references (to diff and delete stale ones)
-        // 2. Rebuild reference scope maps for circular dependency DCE in next iteration
+        // 2. Rebuild maps for circular dependency DCE in next iteration
         let refs_before =
             ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
 
-        ctx.state.reference_scopes.clear();
-        ctx.state.scope_to_defining_symbol.clear();
-        let root_scope_id = ctx.scoping().root_scope_id();
+        ctx.state.reference_owning_symbol.clear();
+        ctx.state.named_function_expr_symbols.clear();
+        ctx.state.unused_symbol_cache.borrow_mut().clear();
+        let scoping = ctx.scoping.scoping();
+        let root_scope_id = scoping.root_scope_id();
 
         let mut collector = ReferenceCollector {
             refs: FxHashSet::default(),
-            reference_scopes: &mut ctx.state.reference_scopes,
-            scope_to_defining_symbol: &mut ctx.state.scope_to_defining_symbol,
+            reference_owning_symbol: &mut ctx.state.reference_owning_symbol,
+            named_function_expr_symbols: &mut ctx.state.named_function_expr_symbols,
+            scoping,
             current_scope_id: root_scope_id,
             scope_stack: vec![root_scope_id],
+            owning_symbol_stack: vec![],
         };
         collector.visit_program(program);
 
@@ -632,16 +644,22 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 /// Collects references and their scope information.
 /// Used in `exit_program` to:
 /// 1. Track which references still exist in the AST (for cleanup)
-/// 2. Build scope maps for circular dependency DCE in the next iteration
+/// 2. Build maps for circular dependency DCE in the next iteration
 struct ReferenceCollector<'b> {
     /// Set of reference IDs that still exist in the AST
     refs: FxHashSet<ReferenceId>,
-    /// Maps each reference to the scope it appears in
-    reference_scopes: &'b mut rustc_hash::FxHashMap<ReferenceId, ScopeId>,
-    /// Maps function/class body scopes to their defining symbol
-    scope_to_defining_symbol: &'b mut rustc_hash::FxHashMap<ScopeId, oxc_syntax::symbol::SymbolId>,
+    /// Maps each reference directly to its innermost containing function/class symbol
+    reference_owning_symbol:
+        &'b mut rustc_hash::FxHashMap<ReferenceId, Option<oxc_syntax::symbol::SymbolId>>,
+    /// Set of symbols that are named function expression inner bindings
+    named_function_expr_symbols: &'b mut rustc_hash::FxHashSet<oxc_syntax::symbol::SymbolId>,
+    /// Reference to scoping for looking up symbol scope IDs
+    scoping: &'b oxc_semantic::Scoping,
     current_scope_id: ScopeId,
     scope_stack: std::vec::Vec<ScopeId>,
+    /// Stack of owning symbols. Top of stack is the innermost function/class we're inside.
+    /// Empty stack means we're at the top level.
+    owning_symbol_stack: std::vec::Vec<oxc_syntax::symbol::SymbolId>,
 }
 
 impl ReferenceCollector<'_> {
@@ -668,12 +686,28 @@ impl<'a> Visit<'a> for ReferenceCollector<'_> {
     fn visit_function(&mut self, func: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
         self.enter_scope(func.scope_id());
 
-        // Track which scope belongs to which function symbol
-        if let Some(id) = &func.id {
-            self.scope_to_defining_symbol.insert(self.current_scope_id, id.symbol_id());
-        }
+        // Track which function symbol we're inside for reference ownership
+        let has_symbol = if let Some(id) = &func.id {
+            let symbol_id = id.symbol_id();
+
+            // Check if this is a named function expression (symbol declared in own scope)
+            // For `var outer = function inner() { ... }`, inner's symbol_scope_id == func.scope_id()
+            let symbol_scope = self.scoping.symbol_scope_id(symbol_id);
+            if symbol_scope == self.current_scope_id {
+                self.named_function_expr_symbols.insert(symbol_id);
+            }
+
+            self.owning_symbol_stack.push(symbol_id);
+            true
+        } else {
+            false
+        };
 
         oxc_ast_visit::walk::walk_function(self, func, flags);
+
+        if has_symbol {
+            self.owning_symbol_stack.pop();
+        }
         self.leave_scope();
     }
 
@@ -686,12 +720,20 @@ impl<'a> Visit<'a> for ReferenceCollector<'_> {
     fn visit_class(&mut self, class: &Class<'a>) {
         self.enter_scope(class.scope_id());
 
-        // Track which scope belongs to which class symbol
-        if let Some(id) = &class.id {
-            self.scope_to_defining_symbol.insert(self.current_scope_id, id.symbol_id());
-        }
+        // Track which class symbol we're inside for reference ownership
+        let has_symbol = if let Some(id) = &class.id {
+            let symbol_id = id.symbol_id();
+            self.owning_symbol_stack.push(symbol_id);
+            true
+        } else {
+            false
+        };
 
         oxc_ast_visit::walk::walk_class(self, class);
+
+        if has_symbol {
+            self.owning_symbol_stack.pop();
+        }
         self.leave_scope();
     }
 
@@ -741,7 +783,7 @@ impl<'a> Visit<'a> for ReferenceCollector<'_> {
         let reference_id = ident.reference_id();
         // Track that this reference exists in the AST
         self.refs.insert(reference_id);
-        // Track which scope this reference is in
-        self.reference_scopes.insert(reference_id, self.current_scope_id);
+        // Track the innermost owning function/class symbol (None if at top level)
+        self.reference_owning_symbol.insert(reference_id, self.owning_symbol_stack.last().copied());
     }
 }

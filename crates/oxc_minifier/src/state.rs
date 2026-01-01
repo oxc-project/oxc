@@ -1,10 +1,12 @@
+use std::cell::RefCell;
+
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ReferenceId, Scoping};
 use oxc_span::{Atom, SourceType};
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
 
@@ -23,17 +25,26 @@ pub struct MinifierState<'a> {
 
     pub changed: bool,
 
-    /// Maps each reference to the scope it appears in.
-    /// Used for circular dependency dead code elimination.
-    pub reference_scopes: FxHashMap<ReferenceId, ScopeId>,
+    /// Maps each reference directly to its innermost containing function/class symbol.
+    /// `None` means the reference is at the top level (not inside any function/class body).
+    /// This is pre-computed during AST traversal to avoid walking up the scope chain
+    /// during analysis.
+    pub reference_owning_symbol: FxHashMap<ReferenceId, Option<SymbolId>>,
 
-    /// Maps body scopes (function/class bodies) to the symbol that defines them.
-    /// For example, if function `foo` creates scope S for its body,
-    /// this maps S -> foo's SymbolId.
-    pub scope_to_defining_symbol: FxHashMap<ScopeId, SymbolId>,
+    /// Set of symbols that are named function expression inner bindings.
+    /// For `var outer = function inner() { ... }`, `inner` is in this set.
+    /// These symbols are declared in their own scope and require conservative treatment.
+    pub named_function_expr_symbols: FxHashSet<SymbolId>,
+
+    /// Memoization cache for `is_symbol_effectively_unused()` results.
+    /// This avoids redundant computation when checking circular dependencies.
+    /// Cleared between minifier iterations.
+    /// Uses `RefCell` for interior mutability to allow caching during analysis
+    /// without requiring `&mut self`.
+    pub unused_symbol_cache: RefCell<FxHashMap<SymbolId, bool>>,
 }
 
-impl<'a> MinifierState<'a> {
+impl MinifierState<'_> {
     pub fn new(source_type: SourceType, options: CompressOptions) -> Self {
         Self {
             source_type,
@@ -42,8 +53,9 @@ impl<'a> MinifierState<'a> {
             symbol_values: SymbolValues::default(),
             class_symbols_stack: ClassSymbolsStack::new(),
             changed: false,
-            reference_scopes: FxHashMap::default(),
-            scope_to_defining_symbol: FxHashMap::default(),
+            reference_owning_symbol: FxHashMap::default(),
+            named_function_expr_symbols: FxHashSet::default(),
+            unused_symbol_cache: RefCell::new(FxHashMap::default()),
         }
     }
 
@@ -63,12 +75,41 @@ impl<'a> MinifierState<'a> {
         scoping: &Scoping,
         visited: &mut FxHashSet<SymbolId>,
     ) -> bool {
+        // Check cache first - but only if we're not in the middle of cycle detection.
+        // During cycle detection, cached results may be stale (computed with different
+        // assumptions about which symbols are in the cycle).
+        if visited.is_empty()
+            && let Some(&cached_result) = self.unused_symbol_cache.borrow().get(&symbol_id)
+        {
+            return cached_result;
+        }
+
         // Already checking this symbol - we're in a cycle, treat as unused for now.
         // If the cycle has no external entry point, all symbols in it are unused.
         if !visited.insert(symbol_id) {
             return true;
         }
 
+        let result = self.is_symbol_effectively_unused_inner(symbol_id, scoping, visited);
+
+        // Only cache results when we're at the top level (visited becomes empty after
+        // removing this symbol). Results computed during recursion may be incorrect
+        // due to cycle detection heuristics.
+        visited.remove(&symbol_id);
+        if visited.is_empty() {
+            self.unused_symbol_cache.borrow_mut().insert(symbol_id, result);
+        }
+
+        result
+    }
+
+    /// Inner implementation of `is_symbol_effectively_unused` without caching logic.
+    fn is_symbol_effectively_unused_inner(
+        &self,
+        symbol_id: SymbolId,
+        scoping: &Scoping,
+        visited: &mut FxHashSet<SymbolId>,
+    ) -> bool {
         let reference_ids = scoping.get_resolved_reference_ids(symbol_id);
 
         // If truly no references, this symbol might still be "live" (e.g., exported).
@@ -84,52 +125,39 @@ impl<'a> MinifierState<'a> {
         }
 
         for &reference_id in reference_ids {
-            // Get the scope where this reference appears
-            let Some(&ref_scope_id) = self.reference_scopes.get(&reference_id) else {
-                // If we don't have scope info for this reference, be conservative
+            // Look up the pre-computed owning symbol for this reference
+            let Some(owning_symbol_opt) = self.reference_owning_symbol.get(&reference_id) else {
+                // If we don't have owning symbol info, be conservative
                 return false;
             };
 
-            // Walk up scope chain to find if we're inside some symbol's body
-            let mut found_dead_containing_symbol = false;
-            for scope_id in scoping.scope_ancestors(ref_scope_id) {
-                if let Some(&containing_symbol) = self.scope_to_defining_symbol.get(&scope_id) {
-                    if containing_symbol == symbol_id {
-                        // Self-reference - this is fine, continue to next reference
-                        found_dead_containing_symbol = true;
-                        break;
-                    }
-
-                    // Check if the containing symbol is a named function expression's inner binding.
-                    // For named function expressions like `var outer = function inner() { ... }`,
-                    // the `inner` symbol is declared in the function's own scope, not the parent.
-                    // This inner binding typically only has self-references and appears unused,
-                    // but the function may still be live via the outer variable binding.
-                    // We must be conservative here and treat such containing symbols as LIVE.
-                    let containing_symbol_scope = scoping.symbol_scope_id(containing_symbol);
-                    if containing_symbol_scope == scope_id {
-                        // The containing symbol is declared in the same scope it defines.
-                        // This is a named function expression's inner binding - treat as LIVE.
-                        return false;
-                    }
-
-                    // Check if the containing symbol is also effectively unused
-                    if self.is_symbol_effectively_unused(containing_symbol, scoping, visited) {
-                        // This reference is in dead code, continue to next reference
-                        found_dead_containing_symbol = true;
-                        break;
-                    } else {
-                        // Reference is inside a LIVE function/class - symbol is used
-                        return false;
-                    }
-                }
-            }
-
-            if !found_dead_containing_symbol {
+            let Some(containing_symbol) = *owning_symbol_opt else {
                 // Reference is at top level (not inside any function/class body)
                 // This is a live reference.
                 return false;
+            };
+
+            if containing_symbol == symbol_id {
+                // Self-reference - this is fine, continue to next reference
+                continue;
             }
+
+            // Check if the containing symbol is a named function expression's inner binding.
+            // For named function expressions like `var outer = function inner() { ... }`,
+            // the `inner` symbol is declared in the function's own scope, not the parent.
+            // This inner binding typically only has self-references and appears unused,
+            // but the function may still be live via the outer variable binding.
+            // We must be conservative here and treat such containing symbols as LIVE.
+            if self.named_function_expr_symbols.contains(&containing_symbol) {
+                return false;
+            }
+
+            // Check if the containing symbol is also effectively unused
+            if !self.is_symbol_effectively_unused(containing_symbol, scoping, visited) {
+                // Reference is inside a LIVE function/class - symbol is used
+                return false;
+            }
+            // This reference is in dead code, continue to next reference
         }
 
         true
