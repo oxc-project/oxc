@@ -345,28 +345,39 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     if raw_len != lit.value.len() {
         if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
             let raw_bytes = raw.as_bytes();
+            // Exclude the last byte (closing quote) from the search haystack.
+            // This ensures any backslash found has at least one byte following it.
+            let haystack = &raw_bytes[..raw_len - 1];
             let mut skip_next_backslash = false;
-            for backslash_index in memchr_iter(b'\\', raw_bytes) {
+            for backslash_index in memchr_iter(b'\\', haystack) {
                 if skip_next_backslash {
                     skip_next_backslash = false;
                     continue;
                 }
-                let next_byte = raw_bytes.get(backslash_index + 1);
+                debug_assert!(
+                    backslash_index + 1 < raw_bytes.len(),
+                    "backslash at index {} has no following byte in string of length {}",
+                    backslash_index,
+                    raw_bytes.len()
+                );
+                // SAFETY: We search `haystack` which excludes the last byte, so any backslash
+                // found is at index < raw_len - 1, meaning backslash_index + 1 < raw_len.
+                let next_byte = unsafe { *raw_bytes.get_unchecked(backslash_index + 1) };
                 match next_byte {
-                    Some(b'\\') => {
+                    b'\\' => {
                         // Escaped backslash - skip the next backslash in memchr results
                         skip_next_backslash = true;
                     }
-                    Some(b'0') => {
+                    b'0' => {
                         let following_byte = raw_bytes.get(backslash_index + 2);
                         if following_byte.is_some_and(u8::is_ascii_digit) {
                             return ctx.error(diagnostics::legacy_octal(lit.span));
                         }
                     }
-                    Some(b'1'..=b'7') => {
+                    b'1'..=b'7' => {
                         return ctx.error(diagnostics::legacy_octal(lit.span));
                     }
-                    Some(b'8'..=b'9') => {
+                    b'8'..=b'9' => {
                         return ctx.error(diagnostics::non_octal_decimal_escape_sequence(lit.span));
                     }
                     _ => {}
