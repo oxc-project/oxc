@@ -14,17 +14,20 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        JestFnKind, JestGeneralFnKind, KnownMemberExpressionProperty, ParsedExpectFnCall,
-        ParsedJestFnCallNew, PossibleJestNode, parse_expect_jest_fn_call, parse_jest_fn_call,
+        KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        parse_jest_fn_call,
     },
 };
 
-fn prefer_called_exactly_once_substitue_with_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Substitute").with_label(span)
+fn prefer_called_exactly_once_substitute_with_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.").with_label(span)
 }
 
 fn prefer_called_exactly_once_remove_with_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Remove").with_label(span)
+    OxcDiagnostic::warn(
+        "Remove the expect and prefer `toHaveBeenCalledExactlyOnce` on the same target.",
+    )
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +59,7 @@ impl MatcherKind {
 
 #[derive(Debug)]
 struct TrackingExpectPair {
-    span_to_substitue: Span,
+    span_to_substitute: Span,
     span_to_remove: Span,
     identifier: CompactStr,
     args_to_be_expected: CompactStr,
@@ -67,7 +70,7 @@ struct TrackingExpectPair {
 impl TrackingExpectPair {
     fn new_from_called_once(matcher_span: Span, identifier: CompactStr) -> Self {
         Self {
-            span_to_substitue: matcher_span,
+            span_to_substitute: matcher_span,
             span_to_remove: Span::empty(0),
             identifier,
             args_to_be_expected: CompactStr::new(""),
@@ -83,7 +86,7 @@ impl TrackingExpectPair {
         type_parameters: Option<CompactStr>,
     ) -> Self {
         Self {
-            span_to_substitue: matcher_span,
+            span_to_substitute: matcher_span,
             span_to_remove: Span::empty(0),
             identifier,
             args_to_be_expected: arguments,
@@ -154,22 +157,32 @@ impl TrackingExpectPair {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// It checks when a target is expected with `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of
+    /// `toHaveBeenCalledExactlyOnceWith`.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// The user must deduct from both expects that the spy function is called once and with a specific arguments.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('foo', () => {
+    ///   const mock = vi.fn()
+    ///   mock('foo')
+    ///   expect(mock).toHaveBeenCalledOnce()
+    ///   expect(mock).toHaveBeenCalledWith('foo')
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('foo', () => {
+    ///   const mock = vi.fn()
+    ///   mock('foo')
+    ///   expect(mock).toHaveBeenCalledExactlyOnceWith('foo')
+    /// })
     /// ```
     PreferCalledExactlyOnceWith,
     vitest,
@@ -248,39 +261,15 @@ impl PreferCalledExactlyOnceWith {
                     continue;
                 }
                 TestCallExpression::ExpectFn(expect_call) => {
-                    // Esto es otro metodo
-                    if expect_call.members.iter().any(is_not_modifier_member) {
-                        continue;
-                    }
-
-                    let Some(matcher_index) = expect_call.matcher_index else {
-                        continue;
-                    };
-
-                    let Some(matcher) = expect_call
-                        .members
-                        .get(matcher_index)
-                        .and_then(|matcher| matcher.name())
-                        .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
+                    let Some((variable_expected_name, matcher)) =
+                        get_identifier_and_matcher_to_be_expected(
+                            &expect_call,
+                            &matchers_to_combine,
+                            ctx,
+                        )
                     else {
                         continue;
                     };
-
-                    if !matchers_to_combine.contains(&matcher) {
-                        continue;
-                    };
-
-                    // Esto es otro metodo.
-                    let Some(arguments) = expect_call.expect_arguments else {
-                        continue;
-                    };
-
-                    let arguments_key = arguments
-                        .iter()
-                        .map(|argument| ctx.source_range(GetSpan::span(argument)))
-                        .join(", ");
-
-                    let variable_expected_name = CompactStr::new(arguments_key.as_ref());
 
                     let duplicate_entry = variables_expected
                         .get(&variable_expected_name)
@@ -365,10 +354,10 @@ impl PreferCalledExactlyOnceWith {
             }
 
             ctx.diagnostic_with_dangerous_fix(
-                prefer_called_exactly_once_substitue_with_diagnostic(expects.span_to_substitue),
+                prefer_called_exactly_once_substitute_with_diagnostic(expects.span_to_substitute),
                 |fixer| {
                     let substitute = expects.get_new_expect();
-                    fixer.replace(expects.span_to_substitue, substitute)
+                    fixer.replace(expects.span_to_substitute, substitute)
                 },
             );
 
@@ -415,6 +404,42 @@ fn parse_call_expression_statement<'a>(
     }
 }
 
+fn get_identifier_and_matcher_to_be_expected<'a>(
+    expect_call: &ParsedExpectFnCall<'a>,
+    matchers_to_combine: &FxHashSet<MatcherKind>,
+    ctx: &LintContext<'a>,
+) -> Option<(CompactStr, MatcherKind)> {
+    if expect_call.members.iter().any(is_not_modifier_member) {
+        return None;
+    }
+
+    let Some(matcher_index) = expect_call.matcher_index else {
+        return None;
+    };
+
+    let Some(matcher) = expect_call
+        .members
+        .get(matcher_index)
+        .and_then(|matcher| matcher.name())
+        .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))
+    else {
+        return None;
+    };
+
+    if !matchers_to_combine.contains(&matcher) {
+        return None;
+    };
+
+    let Some(arguments) = expect_call.expect_arguments else {
+        return None;
+    };
+
+    let identifier_name =
+        arguments.iter().map(|argument| ctx.source_range(GetSpan::span(argument))).join(", ");
+
+    return Some((CompactStr::new(identifier_name.as_ref()), matcher));
+}
+
 fn is_not_modifier_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("not")
 }
@@ -437,8 +462,8 @@ fn is_mock_reset_call_expression<'a>(
 /**
  * Eslint fix is based on deleting the complete line of code. Span currently ignores the
  * whitespaces, so the test were failing due the trailing whitespaces not being removed.
- * Currently I'm asuming after the end of the statement, the next span position is the following line.
- * Even doing it safely the end check, this fix will remain dangerous as it remove code.
+ * Currently the method is asumming after the end of the statement, the next span position is the following line.
+ * Even doing it safely the end check, this fix will remain dangerous as it removes code.
  */
 fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
     let mut column_0_span_index = statement_span.start;
@@ -456,7 +481,6 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
 fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
     let args = &call_expr.arguments;
 
-    // Find the callback function (last function argument)
     for arg in args.iter().rev() {
         if let Some(expr) = arg.as_expression()
             && matches!(
