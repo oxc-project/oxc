@@ -344,18 +344,18 @@ impl NoUnusedVars {
                 ctx.diagnostic_with_suggestion(
                     diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
                     |fixer| {
-                        let source = fixer.source_text();
-                        let span = catch.span();
-                        // note: adding 1 will never cause the span to exceed the source text
-                        // because there must always be at least a `{}` after the catch binding
-                        // for source text to parse correctly
-                        let (Some(start), Some(end)) = (
-                            self.find_prev_token_pos(source, span, '('),
-                            self.find_next_token_pos(source, span, b')').map(|end| end + 1),
+                        let Span { start, end, .. } = catch.span();
+
+                        let (Some(paren_start), Some(paren_end_offset)) = (
+                            ctx.find_prev_token_from(start, "("),
+                            ctx.find_next_token_from(end, ")"),
                         ) else {
                             return fixer.noop();
                         };
-                        fixer.delete_range(Span::new(start, end))
+
+                        let paren_end = end + paren_end_offset;
+                        let delete_span = Span::new(paren_start, paren_end + 1);
+                        fixer.delete_range(delete_span)
                     },
                 );
             }

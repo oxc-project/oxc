@@ -521,12 +521,36 @@ fn test_vars_catch() {
     // these suggestion fixes are safe
     let fix = vec![
         ("try {} catch (error) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try { const x = (1 + 1); } catch (error) { }",
+            "try { const x = (1 + 1); } catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
         ("try {} catch ({ msg }) { }", "try {} catch  { }", None, FixKind::Suggestion),
         // spacing
         ("try {} catch (e) { }", "try {} catch  { }", None, FixKind::Suggestion),
         ("try {} catch(e){ }", "try {} catch{ }", None, FixKind::Suggestion),
         ("try {} catch (      e) { }", "try {} catch  { }", None, FixKind::Suggestion),
         ("try {} catch (      e \t\n ) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // comments
+        ("try {} catch (/* comment() */ e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch (e /* comment() */) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch /* comment */ (e) { }",
+            "try {} catch /* comment */  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r"try {} catch (
+            // comment
+            // ()
+            e) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
         // typescript
         ("try {} catch (error: Error) { }", "try {} catch  { }", None, FixKind::Suggestion),
         (
