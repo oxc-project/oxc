@@ -94,10 +94,10 @@ const ASYNC_LEN: u32 = 5;
 
 fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     // find the `async` keyword within the span and report on it
-    let Some(async_keyword_offset) = ctx.find_next_token_from(async_span.start, "async") else {
+    let Some(async_keyword_start) = ctx.find_next_token_from(async_span.start, "async") else {
         return;
     };
-    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset, ASYNC_LEN);
+    let async_keyword_span = Span::sized(async_keyword_start, ASYNC_LEN);
     ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 

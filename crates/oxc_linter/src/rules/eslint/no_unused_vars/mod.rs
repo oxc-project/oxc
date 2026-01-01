@@ -346,14 +346,13 @@ impl NoUnusedVars {
                     |fixer| {
                         let Span { start, end, .. } = catch.span();
 
-                        let (Some(paren_start), Some(paren_end_offset)) = (
-                            ctx.find_prev_token_from(start, "("),
-                            ctx.find_next_token_from(end, ")"),
+                        let (Some(paren_start), Some(paren_end)) = (
+                            ctx.find_prev_token_from(start, b'('),
+                            ctx.find_next_token_from(end, b')'),
                         ) else {
                             return fixer.noop();
                         };
 
-                        let paren_end = end + paren_end_offset;
                         let delete_span = Span::new(paren_start, paren_end + 1);
                         fixer.delete_range(delete_span)
                     },
