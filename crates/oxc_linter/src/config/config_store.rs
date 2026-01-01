@@ -354,30 +354,40 @@ impl ConfigStore {
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
         let dir = path.parent()?;
 
-        if let Ok(cache) = self.directory_cache.read()
-            && let Some(config_dir) = cache.get(dir)
+        if let Some(config_dir) = self.directory_cache.read().expect("cache lock poisoned").get(dir)
         {
             return config_dir.as_ref().and_then(|d| self.nested_configs.get(d));
         }
 
-        let nearest_config_dir = {
-            let mut current = Some(dir);
-            let mut found = None;
-            while let Some(d) = current {
-                if self.nested_configs.contains_key(d) {
-                    found = Some(d.to_path_buf());
-                    break;
-                }
-                current = d.parent();
-            }
-            found
-        };
-
-        if let Ok(mut cache) = self.directory_cache.write() {
-            cache.insert(dir.to_path_buf(), nearest_config_dir.clone());
+        let mut cache = self.directory_cache.write().expect("cache lock poisoned");
+        if let Some(config_dir) = cache.get(dir) {
+            return config_dir.as_ref().and_then(|d| self.nested_configs.get(d));
         }
 
-        nearest_config_dir.as_ref().and_then(|d| self.nested_configs.get(d))
+        let mut visited = Vec::new();
+        let mut current = Some(dir);
+        let mut found = None;
+
+        while let Some(d) = current {
+            if let Some(cached) = cache.get(d) {
+                found.clone_from(cached);
+                break;
+            }
+
+            visited.push(d.to_path_buf());
+
+            if self.nested_configs.contains_key(d) {
+                found = Some(d.to_path_buf());
+                break;
+            }
+            current = d.parent();
+        }
+
+        for visited_dir in visited {
+            cache.insert(visited_dir, found.clone());
+        }
+
+        found.as_ref().and_then(|d| self.nested_configs.get(d))
     }
 
     pub(crate) fn resolve_plugin_rule_names(
