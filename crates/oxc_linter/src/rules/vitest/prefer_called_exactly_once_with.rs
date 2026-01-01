@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::{
     AstNode,
@@ -54,6 +54,12 @@ impl MatcherKind {
             "toHaveBeenCalledWith" => Self::ToHaveBeenCalledWith,
             _ => Self::Unknown,
         }
+    }
+
+    /// Returns true if this matcher can be combined with its counterpart
+    /// to form `toHaveBeenCalledExactlyOnceWith`.
+    fn is_combinable(&self) -> bool {
+        matches!(self, Self::ToHaveBeenCalledOnce | Self::ToHaveBeenCalledWith)
     }
 }
 
@@ -203,29 +209,15 @@ impl Rule for PreferCalledExactlyOnceWith {
     }
 }
 
+/// Mock reset methods that clear the mock call history.
+const MOCK_RESET_METHODS: [&str; 3] = ["mockClear", "mockReset", "mockRestore"];
+
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
         statements: &'a OxcVec<'a, Statement<'_>>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let matchers_to_combine = {
-            let mut set_matchers = FxHashSet::with_capacity_and_hasher(2, FxBuildHasher);
-            set_matchers.insert(MatcherKind::ToHaveBeenCalledOnce);
-            set_matchers.insert(MatcherKind::ToHaveBeenCalledWith);
-
-            set_matchers
-        };
-
-        let mock_reset_methods = {
-            let mut mock_reset_methods_set = FxHashSet::with_capacity_and_hasher(3, FxBuildHasher);
-            mock_reset_methods_set.insert(CompactStr::new("mockClear"));
-            mock_reset_methods_set.insert(CompactStr::new("mockReset"));
-            mock_reset_methods_set.insert(CompactStr::new("mockRestore"));
-
-            mock_reset_methods_set
-        };
-
         let mut variables_expected: FxHashMap<CompactStr, TrackingExpectPair> =
             FxHashMap::default();
 
@@ -239,7 +231,7 @@ impl PreferCalledExactlyOnceWith {
             };
 
             let Some(parsed_call_expression_statement) =
-                parse_call_expression_statement(call_expr, &mock_reset_methods, node, ctx)
+                parse_call_expression_statement(call_expr, node, ctx)
             else {
                 continue;
             };
@@ -259,11 +251,7 @@ impl PreferCalledExactlyOnceWith {
                 }
                 TestCallExpression::ExpectFnCall(expect_call) => {
                     let Some((variable_expected_name, matcher)) =
-                        get_identifier_and_matcher_to_be_expected(
-                            &expect_call,
-                            &matchers_to_combine,
-                            ctx,
-                        )
+                        get_identifier_and_matcher_to_be_expected(&expect_call, ctx)
                     else {
                         continue;
                     };
@@ -373,11 +361,10 @@ enum TestCallExpression<'a> {
 
 fn parse_call_expression_statement<'a>(
     call_expr: &'a CallExpression<'a>,
-    mock_reset_methods: &FxHashSet<CompactStr>,
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<TestCallExpression<'a>> {
-    if is_mock_reset_call_expression(call_expr, mock_reset_methods) {
+    if is_mock_reset_call_expression(call_expr) {
         return Some(TestCallExpression::MockReset);
     }
 
@@ -398,7 +385,6 @@ fn parse_call_expression_statement<'a>(
 
 fn get_identifier_and_matcher_to_be_expected<'a>(
     expect_call: &ParsedExpectFnCall<'a>,
-    matchers_to_combine: &FxHashSet<MatcherKind>,
     ctx: &LintContext<'a>,
 ) -> Option<(CompactStr, MatcherKind)> {
     if expect_call.members.iter().any(is_not_modifier_member) {
@@ -413,7 +399,7 @@ fn get_identifier_and_matcher_to_be_expected<'a>(
         .and_then(KnownMemberExpressionProperty::name)
         .map(|matcher_name| MatcherKind::from(matcher_name.as_ref()))?;
 
-    if !matchers_to_combine.contains(&matcher) {
+    if !matcher.is_combinable() {
         return None;
     }
 
@@ -429,19 +415,8 @@ fn is_not_modifier_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("not")
 }
 
-fn is_mock_reset_call_expression<'a>(
-    call_expr: &'a CallExpression<'a>,
-    mock_reset_methods: &FxHashSet<CompactStr>,
-) -> bool {
-    let Some(callee) = call_expr.callee_name() else {
-        return false;
-    };
-
-    if !mock_reset_methods.contains(callee) {
-        return false;
-    }
-
-    true
+fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
+    call_expr.callee_name().is_some_and(|callee| MOCK_RESET_METHODS.contains(&callee))
 }
 
 /**
