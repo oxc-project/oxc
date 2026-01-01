@@ -188,8 +188,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for GroupedAccessorPairs {
-    fn from_configuration(value: Value) -> Self {
-        Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self {
             pair_order: value
                 .get(0)
                 .and_then(Value::as_str)
@@ -200,7 +200,7 @@ impl Rule for GroupedAccessorPairs {
                 .and_then(|v| v.get("enforceForTSTypes"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

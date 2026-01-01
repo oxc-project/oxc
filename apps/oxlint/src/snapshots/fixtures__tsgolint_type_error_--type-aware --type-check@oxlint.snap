@@ -13,7 +13,7 @@ working directory: fixtures/tsgolint_type_error
    `----
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

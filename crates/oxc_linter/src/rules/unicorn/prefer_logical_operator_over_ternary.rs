@@ -132,6 +132,10 @@ fn test() {
         "await a ? (await (a)) : (foo)",
         "(await a) ? await (a) : (foo)",
         "(await a) ? (await (a)) : (foo)",
+        "const foo = [];
+         !+a ? b : +a",
+        "const foo = [];
+         a && b ? a && b : 1",
     ];
 
     Tester::new(

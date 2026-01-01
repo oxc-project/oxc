@@ -13,7 +13,7 @@ const multiRootWorkspaceConfig = {
 writeFileSync(multiRootWorkspaceFile, JSON.stringify(multiRootWorkspaceConfig, null, 2));
 
 const baseTest = {
-  files: "out/**/*.spec.js",
+  files: "out_test/integration/**/*.spec.js",
   workspaceFolder: "./test_workspace",
   launchArgs: [
     // This disables all extensions except the one being tested
@@ -25,6 +25,13 @@ const baseTest = {
 };
 
 const allTestSuites = new Map([
+  [
+    "unit",
+    {
+      ...baseTest,
+      files: "out_test/unit/**/*.spec.js",
+    },
+  ],
   [
     "oxlint-lsp",
     {

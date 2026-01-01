@@ -409,6 +409,8 @@ fn test() {
 				);
 			}
 		",
+        // TODO: Fix this
+        // "Math.sqrt((( a ** 2 )) + (( b ** 2 + c ** 2 )) + (( d )) * (( d )) + (( e )) ** (( 2 )))",
     ];
 
     Tester::new(PreferModernMathApis::NAME, PreferModernMathApis::PLUGIN, pass, fail)

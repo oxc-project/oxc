@@ -90,29 +90,25 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafe {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoUnsafe>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MethodDefinition(method_def) => {
-                let react_version = ctx.settings().react.version.as_ref();
-
                 if let Some(name) = method_def.key.static_name()
-                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, ctx)
                     && get_parent_component(node, ctx).is_some()
                 {
                     ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), method_def.key.span()));
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
-                let react_version = ctx.settings().react.version.as_ref();
-
                 if let Some(name) = obj_prop.key.static_name()
-                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, react_version)
+                    && is_unsafe_method(name.as_ref(), self.0.check_aliases, ctx)
                 {
                     for ancestor in ctx.nodes().ancestors(node.id()) {
                         if is_es5_component(ancestor) {
@@ -135,10 +131,13 @@ impl Rule for NoUnsafe {
 }
 
 /// Check if a method name is an unsafe lifecycle method
-fn is_unsafe_method(name: &str, check_aliases: bool, react_version: Option<&ReactVersion>) -> bool {
-    // React 16.3 introduced the UNSAFE_ prefixed lifecycle methods
-    let check_unsafe_prefix =
-        react_version.is_none_or(|v| v.major() > 16 || (v.major() == 16 && v.minor() >= 3));
+fn is_unsafe_method(name: &str, check_aliases: bool, ctx: &LintContext) -> bool {
+    let check_unsafe_prefix = ctx
+        .settings()
+        .react
+        .version
+        .as_ref()
+        .is_none_or(ReactVersion::supports_unsafe_lifecycle_prefix);
 
     match name {
         "UNSAFE_componentWillMount"

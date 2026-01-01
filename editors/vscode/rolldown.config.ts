@@ -9,10 +9,13 @@ const output: RolldownOptions["output"] = {
   format: "cjs",
   banner: `"use strict";\n`,
   minify: true,
+  cleanDir: true,
 };
 
 if (process.env.TEST === "true") {
-  output.dir = "out";
+  output.dir = "out_test";
+  output.preserveModules = true;
+  output.preserveModulesRoot = "tests";
 } else {
   output.file = "out/main.js";
 }

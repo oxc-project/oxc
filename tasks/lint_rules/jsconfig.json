@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
     "checkJs": false,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
+    "module": "node20",
     "lib": ["esnext"],
     "target": "esnext",
+    "resolveJsonModule": true,
     "strict": true
   }
 }

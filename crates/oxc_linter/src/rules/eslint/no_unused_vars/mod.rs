@@ -202,8 +202,8 @@ impl Deref for NoUnusedVars {
 }
 
 impl Rule for NoUnusedVars {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap()))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap())))
     }
 
     fn run_once(&self, ctx: &LintContext) {

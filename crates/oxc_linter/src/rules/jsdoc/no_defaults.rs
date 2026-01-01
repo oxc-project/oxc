@@ -60,10 +60,10 @@ struct NoDefaultsConfig {
 }
 
 impl Rule for NoDefaults {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoDefaults>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -9,6 +9,8 @@ on:
     paths:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
+      - "apps/oxlint/src/lsp/**"
+      - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - "tasks/vscode_docs/**"
       - ".github/workflows/ci_vscode.yml"
@@ -18,7 +20,7 @@ on:
     paths:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"
-      - "apps/oxlint/src/lsp.rs"
+      - "apps/oxlint/src/lsp/**"
       - "apps/oxfmt/src/lsp/**"
       - "editors/vscode/**"
       - "tasks/vscode_docs/**"
@@ -47,11 +49,35 @@ jobs:
           pnpm fmt
           git diff --exit-code
 
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: oxlint
+        with:
+          filters: |
+            src:
+              - "pnpm-lock.yaml"
+              - "crates/oxc_language_server/**"
+              - "apps/oxlint/src/lsp/**"
+              - "editors/vscode/**"
+              - ".github/workflows/ci_vscode.yml"
+
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: oxfmt
+        with:
+          filters: |
+            src:
+              - "pnpm-lock.yaml"
+              - "crates/oxc_language_server/**"
+              - "apps/oxfmt/src/lsp/**"
+              - "editors/vscode/**"
+              - ".github/workflows/ci_vscode.yml"
+
       - name: Build oxlint (with napi)
+        if: steps.oxlint.outputs.src == 'true'
         working-directory: editors/vscode
         run: pnpm run oxlint:build:debug
 
       - name: Build oxfmt (with napi)
+        if: steps.oxfmt.outputs.src == 'true'
         working-directory: editors/vscode
         run: pnpm run oxfmt:build:debug
 
@@ -59,6 +85,16 @@ jobs:
         working-directory: editors/vscode
         run: pnpm run compile
 
-      - name: Test VSCode
+      - name: VSCode Unit Tests
         working-directory: editors/vscode
-        run: xvfb-run -a pnpm run test
+        run: xvfb-run -a pnpm run test:unit
+
+      - name: VSCode oxlint tests
+        if: steps.oxlint.outputs.src == 'true'
+        working-directory: editors/vscode
+        run: xvfb-run -a pnpm run test:oxlint && xvfb-run -a pnpm run test:oxlint-multi-root
+
+      - name: VSCode oxfmt tests
+        if: steps.oxfmt.outputs.src == 'true'
+        working-directory: editors/vscode
+        run: xvfb-run -a pnpm run test:oxfmt

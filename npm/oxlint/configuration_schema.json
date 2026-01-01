@@ -60,7 +60,7 @@
       "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
     },
     "jsPlugins": {
-      "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
+      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present.",
       "anyOf": [
         {
           "type": "null"
@@ -73,7 +73,7 @@
           "uniqueItems": true
         }
       ],
-      "markdownDescription": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
+      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present."
     },
     "overrides": {
       "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
@@ -246,9 +246,9 @@
           ],
           "properties": {
             "name": {
-              "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
+              "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript (includes @typescript-eslint)\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
               "type": "string",
-              "markdownDescription": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- regex\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts."
+              "markdownDescription": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript (includes @typescript-eslint)\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts."
             },
             "specifier": {
               "description": "Path or package name of the plugin",
@@ -518,7 +518,7 @@
           "markdownDescription": "Enabled or disabled specific global variables."
         },
         "jsPlugins": {
-          "description": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
+          "description": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present.",
           "anyOf": [
             {
               "type": "null"
@@ -531,7 +531,7 @@
               "uniqueItems": true
             }
           ],
-          "markdownDescription": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present."
+          "markdownDescription": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in the language server (and thus editor integrations) at present."
         },
         "plugins": {
           "description": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used.",

@@ -114,14 +114,14 @@ impl Rule for ConsistentGenericConstructors {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(ConsistentGenericConstructorsConfig {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(ConsistentGenericConstructorsConfig {
             option: value
                 .get(0)
                 .and_then(|v| v.as_str())
                 .and_then(|s| PreferGenericType::try_from(s).ok())
                 .unwrap_or_default(),
-        }))
+        })))
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {

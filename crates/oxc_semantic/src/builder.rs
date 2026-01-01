@@ -618,6 +618,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.create_ast_node(kind);
     }
 
+    /// Both this function and `checker::check` must be inlined. Each `visit_*` method calls
+    /// `leave_node` with a statically known `AstKind`, so inlining allows the compiler to
+    /// constant-fold `checker::check`'s match, eliminating all non-matching arms.
+    #[expect(
+        clippy::inline_always,
+        reason = "enables compile-time match elimination in checker::check"
+    )]
+    #[inline(always)]
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             checker::check(kind, self);

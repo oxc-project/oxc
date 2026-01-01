@@ -266,14 +266,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for Curly {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let curly_type =
             value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
 
         let consistent =
             value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
 
-        Self(CurlyConfig { curly_type, consistent })
+        Ok(Self(CurlyConfig { curly_type, consistent }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
