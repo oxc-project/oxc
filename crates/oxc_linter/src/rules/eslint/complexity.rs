@@ -33,7 +33,9 @@ const THRESHOLD_DEFAULT: usize = 20;
 #[serde(rename_all = "camelCase", default)]
 #[schemars(rename_all = "camelCase")]
 pub struct ComplexityConfig {
+    /// Maximum amount of cyclomatic complexity
     max: usize,
+    /// The cyclomatic complexity variant to use
     variant: Variant,
 }
 
@@ -47,7 +49,10 @@ impl Default for ComplexityConfig {
 #[serde(rename_all = "camelCase")]
 #[schemars(untagged, rename_all = "camelCase")]
 pub enum Variant {
+    /// Classic means McCabe cyclomatic complexity
     Classic,
+    /// Modified means classic cyclomatic complexity but a switch statement increases
+    /// complexity by 1 irrespective of the number of `case` statements
     Modified,
 }
 
@@ -345,7 +350,7 @@ impl Visit<'_> for ComplexityVisitor {
                 // Do not visit any other node if there is no value expression to
                 // evaluate - only visit all other nodes if it is part of another
                 // function / static block evaluation
-                unreachable!();
+                return;
             }
         } else {
             // Visit all other nodes except for value expression if part of another
