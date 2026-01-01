@@ -1,6 +1,7 @@
 use std::{
     env,
     ffi::OsStr,
+    fmt::Debug,
     fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
@@ -27,11 +28,35 @@ use crate::{
 };
 use oxc_linter::LintIgnoreMatcher;
 
-#[derive(Debug)]
+/// Callback type for loading JavaScript/TypeScript config files (experimental).
+#[cfg(feature = "napi")]
+pub type JsConfigLoaderCb =
+    Box<dyn Fn(Vec<String>) -> Result<Vec<crate::JsConfigResult>, String> + Send + Sync>;
+
 pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
+    /// Callback for loading JavaScript/TypeScript config files (experimental).
+    /// This is only available when running via Node.js with NAPI.
+    #[cfg(feature = "napi")]
+    js_config_loader: Option<JsConfigLoaderCb>,
+}
+
+impl Debug for CliRunner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = f.debug_struct("CliRunner");
+        s.field("options", &self.options).field("cwd", &self.cwd).field(
+            "external_linter",
+            if self.external_linter.is_some() { &"Some(ExternalLinter)" } else { &"None" },
+        );
+        #[cfg(feature = "napi")]
+        s.field(
+            "js_config_loader",
+            if self.js_config_loader.is_some() { &"Some(JsConfigLoaderCb)" } else { &"None" },
+        );
+        s.finish()
+    }
 }
 
 impl CliRunner {
@@ -41,6 +66,8 @@ impl CliRunner {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             external_linter,
+            #[cfg(feature = "napi")]
+            js_config_loader: None,
         }
     }
 
@@ -183,12 +210,16 @@ impl CliRunner {
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
             // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
+            basic_options.config.is_none() &&
+            // Skip nested config search for --init and --print-config since we're not actually linting
+            !basic_options.init &&
+            !misc_options.print_config;
 
         let mut nested_ignore_patterns = Vec::new();
 
         let nested_configs = if search_for_nested_configs {
-            match Self::get_nested_configs(
+            #[cfg(feature = "napi")]
+            let result = Self::get_nested_configs(
                 stdout,
                 &handler,
                 &filters,
@@ -196,7 +227,19 @@ impl CliRunner {
                 external_linter,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
-            ) {
+                self.js_config_loader.as_ref(),
+            );
+            #[cfg(not(feature = "napi"))]
+            let result = Self::get_nested_configs(
+                stdout,
+                &handler,
+                &filters,
+                &paths,
+                external_linter,
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+            );
+            match result {
                 Ok(v) => v,
                 Err(v) => return v,
             }
@@ -463,12 +506,29 @@ impl CliRunner {
     }
 }
 
+/// Represents the type of config file found in a directory.
+#[derive(Debug, Clone)]
+pub enum ConfigFile {
+    /// A JSON config file (`.oxlintrc.json`)
+    Json(PathBuf),
+    /// A TypeScript config file (`oxlint.config.ts`) - experimental feature
+    TypeScript(PathBuf),
+}
+
 impl CliRunner {
     const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
+    /// TypeScript config file name (experimental)
+    const TS_CONFIG_NAME: &'static str = "oxlint.config.ts";
 
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
+        self
+    }
+
+    #[cfg(feature = "napi")]
+    pub fn with_config_loader(mut self, config_loader: Option<JsConfigLoaderCb>) -> Self {
+        self.js_config_loader = config_loader;
         self
     }
 
@@ -527,6 +587,7 @@ impl CliRunner {
         Ok(filters)
     }
 
+    #[cfg_attr(feature = "napi", expect(clippy::too_many_arguments))]
     fn get_nested_configs(
         stdout: &mut dyn Write,
         handler: &GraphicalReportHandler,
@@ -535,11 +596,14 @@ impl CliRunner {
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
+        let mut nested_oxlintrc = FxHashMap::<PathBuf, Oxlintrc>::default();
         let mut nested_configs = FxHashMap::<PathBuf, Config>::default();
+        let mut js_config_paths: Vec<PathBuf> = Vec::new();
+
         // get all of the unique directories among the paths to use for search for
         // oxlint config files in those directories and their ancestors
         // e.g. `/some/file.js` will check `/some` and `/`
@@ -559,17 +623,74 @@ impl CliRunner {
                 current = dir.parent();
             }
         }
-        for directory in directories {
-            #[expect(clippy::match_same_arms)]
+
+        // First pass: find all config files and separate JSON from TypeScript
+        for directory in &directories {
             match Self::find_oxlint_config_in_directory(directory) {
-                Ok(Some(v)) => {
-                    nested_oxlintrc.insert(directory, v);
+                Ok(Some(ConfigFile::Json(path))) => {
+                    if let Ok(config) = Oxlintrc::from_file(&path) {
+                        nested_oxlintrc.insert(directory.to_path_buf(), config);
+                    }
+                    // else: TODO(camc314): report parse errors
+                    // Skip malformed configs in nested config discovery
                 }
-                Ok(None) => {}
-                Err(_) => {
-                    // TODO(camc314): report this error
+                Ok(Some(ConfigFile::TypeScript(path))) => {
+                    js_config_paths.push(path);
+                }
+                Ok(None) | Err(_) => {
+                    // Ok(None): No config found in this directory
+                    // Err(_): Error finding config (e.g., both JSON and TS exist in same directory)
+                    // For nested config discovery, skip directories with config conflicts
+                    // TODO: Consider logging a warning for Err cases
                 }
             }
+        }
+
+        // Load JavaScript/TypeScript configs if any were found
+        #[cfg(feature = "napi")]
+        if !js_config_paths.is_empty() {
+            let Some(loader) = js_config_loader else {
+                print_and_flush_stdout(
+                    stdout,
+                    "Error: TypeScript config files (oxlint.config.ts) found but JS runtime not available.\n\
+                     This is an experimental feature that requires running oxlint via Node.js.\n\
+                     Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n",
+                );
+                return Err(CliRunResult::InvalidOptionConfig);
+            };
+
+            let paths_as_strings: Vec<String> =
+                js_config_paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
+
+            match loader(paths_as_strings) {
+                Ok(results) => {
+                    for result in results {
+                        let dir = result.path.parent().unwrap().to_path_buf();
+                        nested_oxlintrc.insert(dir, result.config);
+                    }
+                }
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to load TypeScript config files.\n{}\n",
+                            render_report(handler, &OxcDiagnostic::error(e))
+                        ),
+                    );
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            }
+        }
+
+        #[cfg(not(feature = "napi"))]
+        if !js_config_paths.is_empty() {
+            print_and_flush_stdout(
+                stdout,
+                "Error: TypeScript config files (oxlint.config.ts) found but JS runtime not available.\n\
+                 This is an experimental feature that requires running oxlint via Node.js.\n\
+                 Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n",
+            );
+            return Err(CliRunResult::InvalidOptionConfig);
         }
 
         // iterate over each config and build the ConfigStore
@@ -613,7 +734,7 @@ impl CliRunner {
                     return Err(CliRunResult::InvalidOptionConfig);
                 }
             };
-            nested_configs.insert(dir.to_path_buf(), config);
+            nested_configs.insert(dir, config);
         }
 
         Ok(nested_configs)
@@ -624,25 +745,70 @@ impl CliRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
-        let full_path = cwd.join(path);
-
-        if config.is_some() || full_path.exists() {
+        // If explicit config is provided, use it
+        if let Some(config_path) = config {
+            let full_path = cwd.join(config_path);
             return Oxlintrc::from_file(&full_path);
         }
+
+        // Check for config conflict in cwd (both JSON and TS configs)
+        let json_path = cwd.join(Self::DEFAULT_OXLINTRC);
+        let ts_path = cwd.join(Self::TS_CONFIG_NAME);
+
+        let json_exists = json_path.is_file();
+        let ts_exists = ts_path.is_file();
+
+        if json_exists && ts_exists {
+            return Err(OxcDiagnostic::error(format!(
+                "Both '{}' and '{}' found in {}. Please use only one config file.",
+                Self::DEFAULT_OXLINTRC,
+                Self::TS_CONFIG_NAME,
+                cwd.display()
+            )));
+        }
+
+        // Prefer TS config over JSON config (experimental feature)
+        // Note: TS config loading happens later in the flow via JS callback
+        if ts_exists {
+            // Return default config - TS config will be loaded during nested config discovery
+            // This is a bit awkward but necessary since we can't load TS configs here
+            // TODO: Consider restructuring to handle this better
+            return Ok(Oxlintrc::default());
+        }
+
+        if json_exists {
+            return Oxlintrc::from_file(&json_path);
+        }
+
         Ok(Oxlintrc::default())
     }
 
-    /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
-    /// and returns `Err` if none exists or the file is invalid. Does not apply the default
-    /// config file.
-    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
-        if possible_config_path.is_file() {
-            Oxlintrc::from_file(&possible_config_path).map(Some)
-        } else {
-            Ok(None)
+    /// Looks in a directory for an oxlint config file, returns the config file type if it exists.
+    /// Returns `Err` if both JSON and TypeScript configs exist in the same directory,
+    /// or if the config file is invalid. Does not apply the default config file.
+    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<ConfigFile>, OxcDiagnostic> {
+        let json_path = dir.join(Self::DEFAULT_OXLINTRC);
+        let ts_path = dir.join(Self::TS_CONFIG_NAME);
+
+        let json_exists = json_path.is_file();
+        let ts_exists = ts_path.is_file();
+
+        if json_exists && ts_exists {
+            return Err(OxcDiagnostic::error(format!(
+                "Both '{}' and '{}' found in {}. Please use only one config file.",
+                Self::DEFAULT_OXLINTRC,
+                Self::TS_CONFIG_NAME,
+                dir.display()
+            )));
         }
+
+        if ts_exists {
+            return Ok(Some(ConfigFile::TypeScript(ts_path)));
+        }
+        if json_exists {
+            return Ok(Some(ConfigFile::Json(json_path)));
+        }
+        Ok(None)
     }
 }
 
@@ -670,7 +836,7 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 mod test {
     use std::{fs, path::PathBuf};
 
-    use super::CliRunner;
+    use super::{CliRunner, ConfigFile};
     use crate::tester::Tester;
 
     // lints the full directory of fixtures,
@@ -1467,5 +1633,227 @@ export { redundant };
 ",
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
+    }
+
+    // Tests for experimental JavaScript/TypeScript config file support (oxlint.config.ts)
+
+    #[test]
+    fn test_js_config_conflict_error() {
+        use tempfile::TempDir;
+
+        // Create a temp directory with both .oxlintrc.json and oxlint.config.ts
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Create both config files
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+        fs::write(temp_path.join("test.js"), "var x = 1;").unwrap();
+
+        // When both .oxlintrc.json and oxlint.config.ts exist in the same directory,
+        // oxlint should error out
+        let args = &["test.js"];
+        let output = Tester::new().with_cwd(temp_path.to_path_buf()).test_output(args);
+
+        assert!(
+            output.contains("Please use only one config file"),
+            "Expected conflict error message, got: {output}"
+        );
+    }
+
+    #[test]
+    fn test_find_oxlint_config_in_directory_json_only() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path);
+        assert!(result.is_ok());
+        let config = result.unwrap();
+        assert!(matches!(config, Some(ConfigFile::Json(_))));
+    }
+
+    #[test]
+    fn test_find_oxlint_config_in_directory_ts_only() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path);
+        assert!(result.is_ok());
+        let config = result.unwrap();
+        assert!(matches!(config, Some(ConfigFile::TypeScript(_))));
+    }
+
+    #[test]
+    fn test_find_oxlint_config_in_directory_none() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[test]
+    fn test_find_oxlint_config_in_directory_conflict() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err.to_string().contains("Please use only one config file"));
+    }
+
+    #[test]
+    fn test_find_oxlint_config_ts_returns_default() {
+        use tempfile::TempDir;
+
+        // When only oxlint.config.ts exists, find_oxlint_config returns default
+        // because TS config loading happens later via JS callback
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+
+        let result = CliRunner::find_oxlint_config(temp_path, None);
+        assert!(result.is_ok());
+        // Should return default config (TS config loaded later)
+        let config = result.unwrap();
+        assert!(config.rules.is_empty());
+    }
+
+    #[test]
+    fn test_find_oxlint_config_json() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {"no-debugger": "error"}}"#)
+            .unwrap();
+
+        let result = CliRunner::find_oxlint_config(temp_path, None);
+        assert!(result.is_ok());
+        let config = result.unwrap();
+        assert!(!config.rules.is_empty());
+    }
+
+    #[test]
+    fn test_find_oxlint_config_conflict() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+
+        let result = CliRunner::find_oxlint_config(temp_path, None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_find_oxlint_config_explicit_path() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Create a custom config file
+        fs::write(temp_path.join("custom.json"), r#"{"rules": {"no-debugger": "error"}}"#).unwrap();
+
+        let config_path = PathBuf::from("custom.json");
+        let result = CliRunner::find_oxlint_config(temp_path, Some(&config_path));
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_ts_config_standalone_binary_error() {
+        use tempfile::TempDir;
+
+        // When running as standalone binary (no JS runtime), TS configs should error
+        // This test verifies the error message is shown
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join("oxlint.config.ts"), "export default { rules: {} };").unwrap();
+        fs::write(temp_path.join("test.js"), "var x = 1;").unwrap();
+
+        let args = &["test.js"];
+        let output = Tester::new().with_cwd(temp_path.to_path_buf()).test_output(args);
+
+        // When running without NAPI (standalone binary), should show error about JS runtime
+        // Note: In tests with napi feature, this will try to load via JS but fail differently
+        // The important thing is that the TS config is detected
+        assert!(
+            output.contains("oxlint.config.ts") || output.contains("JS runtime"),
+            "Expected TS config to be detected, got: {output}"
+        );
+    }
+
+    #[test]
+    fn test_nested_ts_config_conflict_is_skipped() {
+        use tempfile::TempDir;
+
+        // Nested directories with both config types are silently skipped
+        // (the conflicting config is ignored, not an error)
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Create nested directory with conflict
+        let nested = temp_path.join("nested");
+        fs::create_dir(&nested).unwrap();
+        fs::write(nested.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+        fs::write(nested.join("oxlint.config.ts"), "export default {};").unwrap();
+        fs::write(nested.join("test.js"), "var x = 1;").unwrap();
+
+        // Lint the nested file - should succeed (config conflict is skipped)
+        let args = &["nested/test.js"];
+        let output = Tester::new().with_cwd(temp_path.to_path_buf()).test_output(args);
+
+        // Should complete without error (using default config since nested is skipped)
+        assert!(output.contains("Finished"), "Expected linting to complete, got: {output}");
+    }
+
+    #[test]
+    fn test_config_file_enum_variants() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Test JSON variant
+        fs::write(temp_path.join(".oxlintrc.json"), r#"{"rules": {}}"#).unwrap();
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path).unwrap();
+        if let Some(ConfigFile::Json(path)) = result {
+            assert!(path.ends_with(".oxlintrc.json"));
+        } else {
+            panic!("Expected ConfigFile::Json");
+        }
+
+        // Clean up and test TypeScript variant
+        fs::remove_file(temp_path.join(".oxlintrc.json")).unwrap();
+        fs::write(temp_path.join("oxlint.config.ts"), "export default {};").unwrap();
+        let result = CliRunner::find_oxlint_config_in_directory(temp_path).unwrap();
+        if let Some(ConfigFile::TypeScript(path)) = result {
+            assert!(path.ends_with("oxlint.config.ts"));
+        } else {
+            panic!("Expected ConfigFile::TypeScript");
+        }
     }
 }

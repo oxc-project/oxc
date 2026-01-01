@@ -21,7 +21,11 @@ pub mod cli {
 // Without this, `tasks/website` will not compile on Linux or Windows.
 // `tasks/website` depends on `oxlint` as a normal library, which causes linker errors if NAPI is enabled.
 #[cfg(feature = "napi")]
+mod js_config;
+#[cfg(feature = "napi")]
 mod run;
+#[cfg(feature = "napi")]
+pub use js_config::JsConfigResult;
 #[cfg(feature = "napi")]
 pub use run::*;
 
