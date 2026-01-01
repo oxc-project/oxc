@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use rustc_hash::FxHashMap;
+use std::collections::BTreeMap;
 
 use crate::{
     AstNode,
@@ -137,24 +137,22 @@ impl TrackingExpectPair {
         CompactStr::new(expect.as_ref())
     }
 
-    fn is_expected_matcher(&self, matcher: &MatcherKind) -> bool {
+    /// Returns true if this tracking pair can be completed by pairing with the given matcher.
+    /// This is used to detect when we have both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith`
+    /// on the same target, which can be combined into `toHaveBeenCalledExactlyOnceWith`.
+    fn can_pair_with(&self, matcher: &MatcherKind) -> bool {
         if self.is_paired() {
             return false;
         }
 
-        if self.current_state == ExpectPairStates::WaitingOnce
-            && matcher == &MatcherKind::ToHaveBeenCalledOnce
-        {
-            return false;
+        // If we're waiting for `toHaveBeenCalledOnce` and get it, we can pair
+        // If we're waiting for `toHaveBeenCalledWith` and get it, we can pair
+        // Otherwise, we can't pair (e.g., getting the same matcher type we already have)
+        match (&self.current_state, matcher) {
+            (ExpectPairStates::WaitingOnce, MatcherKind::ToHaveBeenCalledOnce) => true,
+            (ExpectPairStates::WaitingWith, MatcherKind::ToHaveBeenCalledWith) => true,
+            _ => false,
         }
-
-        if self.current_state == ExpectPairStates::WaitingWith
-            && matcher == &MatcherKind::ToHaveBeenCalledWith
-        {
-            return false;
-        }
-
-        true
     }
 }
 
@@ -218,8 +216,7 @@ impl PreferCalledExactlyOnceWith {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let mut variables_expected: FxHashMap<CompactStr, TrackingExpectPair> =
-            FxHashMap::default();
+        let mut variables_expected: BTreeMap<CompactStr, TrackingExpectPair> = BTreeMap::default();
 
         for statement in statements {
             let Statement::ExpressionStatement(statement_expression) = statement else {
@@ -258,7 +255,7 @@ impl PreferCalledExactlyOnceWith {
 
                     let duplicate_entry = variables_expected
                         .get(&variable_expected_name)
-                        .is_some_and(|expects| expects.is_expected_matcher(&matcher));
+                        .is_some_and(|expects| !expects.can_pair_with(&matcher));
 
                     if duplicate_entry {
                         variables_expected.remove(&variable_expected_name);
@@ -428,9 +425,11 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
 fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
     let mut column_0_span_index = statement_span.start;
 
-    while !ctx
-        .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
-        .starts_with('\n')
+    // Guard against underflow when statement is at the beginning of the file
+    while column_0_span_index > 0
+        && !ctx
+            .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
+            .starts_with('\n')
     {
         column_0_span_index -= 1;
     }
@@ -750,6 +749,7 @@ fn test() {
         ),
     ];
     Tester::new(PreferCalledExactlyOnceWith::NAME, PreferCalledExactlyOnceWith::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
