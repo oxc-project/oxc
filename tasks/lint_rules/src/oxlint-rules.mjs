@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import unsupportedRules from "./unsupported-rules.json" with { type: "json" };
+import { typescriptTypeCheckRules } from "./eslint-rules.mjs";
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(resolve("crates/oxc_linter/src/rules.rs"), "utf8");
@@ -172,6 +173,14 @@ export const updateImplementedStatus = async (ruleEntries) => {
     if (rule) {
       rule.isImplemented = true;
     } else {
+      // Don't print the warning for rules that are type-check only and thus implemented via tsgolint.
+      if (name.startsWith("typescript/")) {
+        const tsRuleName = name.split("/").at(1);
+        if (tsRuleName && typescriptTypeCheckRules.has(`@typescript-eslint/${tsRuleName}`)) {
+          continue;
+        }
+      }
+
       // oxlint-disable-next-line no-console
       console.log(`👀 ${name} is implemented but not found in their rules`);
     }

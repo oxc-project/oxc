@@ -7,9 +7,11 @@
   // "oxc.path.oxfmt": "apps/oxfmt/dist/cli.js", // debug with local oxfmt build
   "oxc.fmt.configPath": "oxfmtrc.jsonc",
   "[javascript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
   },
   "[typescript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
   }
 }

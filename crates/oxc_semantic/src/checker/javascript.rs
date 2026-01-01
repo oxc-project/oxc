@@ -1,7 +1,6 @@
 use std::ptr;
 
 use memchr::memchr_iter;
-use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::GetAddress;
@@ -79,18 +78,6 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     });
 }
 
-pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
-    "implements",
-    "interface",
-    "let",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "static",
-    "yield",
-};
-
 pub fn check_identifier(
     name: &str,
     span: Span,
@@ -102,20 +89,28 @@ pub fn check_identifier(
     {
         return;
     }
-    if name == "await" {
-        // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
-        if ctx.source_type.is_module() {
-            return ctx.error(diagnostics::reserved_keyword(name, span));
-        }
-        // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
-            return ctx.error(diagnostics::class_static_block_await(span));
-        }
-    }
 
-    // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
-    if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name) {
-        ctx.error(diagnostics::reserved_keyword(name, span));
+    match name {
+        "await" => {
+            // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
+            if ctx.source_type.is_module() {
+                ctx.error(diagnostics::reserved_keyword(name, span));
+            }
+            // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
+            else if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+                ctx.error(diagnostics::class_static_block_await(span));
+            }
+        }
+        // TODO: Revisit this match arm when we add `Ident` and pre-hash the identifier names and see if a HashSet
+        // becomes better for performance again.
+        "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
+        | "static" | "yield"
+            if ctx.strict_mode() =>
+        {
+            // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
+            ctx.error(diagnostics::reserved_keyword(name, span));
+        }
+        _ => {}
     }
 }
 
@@ -345,28 +340,39 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     if raw_len != lit.value.len() {
         if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
             let raw_bytes = raw.as_bytes();
+            // Exclude the last byte (closing quote) from the search haystack.
+            // This ensures any backslash found has at least one byte following it.
+            let haystack = &raw_bytes[..raw_len - 1];
             let mut skip_next_backslash = false;
-            for backslash_index in memchr_iter(b'\\', raw_bytes) {
+            for backslash_index in memchr_iter(b'\\', haystack) {
                 if skip_next_backslash {
                     skip_next_backslash = false;
                     continue;
                 }
-                let next_byte = raw_bytes.get(backslash_index + 1);
+                debug_assert!(
+                    backslash_index + 1 < raw_bytes.len(),
+                    "backslash at index {} has no following byte in string of length {}",
+                    backslash_index,
+                    raw_bytes.len()
+                );
+                // SAFETY: We search `haystack` which excludes the last byte, so any backslash
+                // found is at index < raw_len - 1, meaning backslash_index + 1 < raw_len.
+                let next_byte = unsafe { *raw_bytes.get_unchecked(backslash_index + 1) };
                 match next_byte {
-                    Some(b'\\') => {
+                    b'\\' => {
                         // Escaped backslash - skip the next backslash in memchr results
                         skip_next_backslash = true;
                     }
-                    Some(b'0') => {
+                    b'0' => {
                         let following_byte = raw_bytes.get(backslash_index + 2);
                         if following_byte.is_some_and(u8::is_ascii_digit) {
                             return ctx.error(diagnostics::legacy_octal(lit.span));
                         }
                     }
-                    Some(b'1'..=b'7') => {
+                    b'1'..=b'7' => {
                         return ctx.error(diagnostics::legacy_octal(lit.span));
                     }
-                    Some(b'8'..=b'9') => {
+                    b'8'..=b'9' => {
                         return ctx.error(diagnostics::non_octal_decimal_escape_sequence(lit.span));
                     }
                     _ => {}
