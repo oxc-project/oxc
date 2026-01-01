@@ -138,7 +138,7 @@ expression: json
       "description": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
       "markdownDescription": "Configuration for Tailwind CSS class sorting.\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
       "properties": {
-        "tailwindAttributes": {
+        "attributes": {
           "description": "List of additional HTML/JSX attributes to sort (beyond `class` and `className`).\ne.g., `[\"myClassProp\", \":class\"]`",
           "items": {
             "type": "string"
@@ -149,7 +149,7 @@ expression: json
             "null"
           ]
         },
-        "tailwindConfig": {
+        "config": {
           "description": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
           "markdownDescription": "Path to Tailwind config file (v3).\ne.g., `\"./tailwind.config.js\"`",
           "type": [
@@ -157,7 +157,7 @@ expression: json
             "null"
           ]
         },
-        "tailwindFunctions": {
+        "functions": {
           "description": "List of custom function names whose arguments should be sorted.\ne.g., `[\"clsx\", \"cva\", \"tw\"]`",
           "items": {
             "type": "string"
@@ -168,7 +168,7 @@ expression: json
             "null"
           ]
         },
-        "tailwindPreserveDuplicates": {
+        "preserveDuplicates": {
           "description": "Preserve duplicate classes.\nDefaults to `false`.",
           "markdownDescription": "Preserve duplicate classes.\nDefaults to `false`.",
           "type": [
@@ -176,7 +176,7 @@ expression: json
             "null"
           ]
         },
-        "tailwindPreserveWhitespace": {
+        "preserveWhitespace": {
           "description": "Preserve whitespace around classes.\nDefaults to `false`.",
           "markdownDescription": "Preserve whitespace around classes.\nDefaults to `false`.",
           "type": [
@@ -184,7 +184,7 @@ expression: json
             "null"
           ]
         },
-        "tailwindStylesheet": {
+        "stylesheet": {
           "description": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
           "markdownDescription": "Path to Tailwind stylesheet (v4).\ne.g., `\"./src/app.css\"`",
           "type": [
