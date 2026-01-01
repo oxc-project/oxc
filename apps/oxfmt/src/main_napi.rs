@@ -10,7 +10,7 @@ use crate::{
     cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
     core::{
         ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsTailwindCb,
+        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
         SourceFormatter,
     },
     lsp::run_lsp,
@@ -25,7 +25,7 @@ use crate::{
 /// 2. `init_external_formatter_cb`: Callback to initialize external formatter
 /// 3. `format_embedded_cb`: Callback to format embedded code in templates
 /// 4. `format_file_cb`: Callback to format files
-/// 5. `tailwind_cb`: Callback to process Tailwind CSS classes
+/// 5. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
 ///
 /// Returns a tuple of `[mode, exitCode]`:
 /// - `mode`: If main logic will run in JS side, use this to indicate which mode
@@ -48,7 +48,7 @@ pub async fn run_cli(
     #[napi(
         ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
     )]
-    tailwind_cb: JsTailwindCb,
+    sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
@@ -81,7 +81,7 @@ pub async fn run_cli(
                     init_external_formatter_cb,
                     format_embedded_cb,
                     format_file_cb,
-                    tailwind_cb,
+                    sort_tailwindcss_classes_cb,
                 )))
                 .run();
 
@@ -98,7 +98,7 @@ pub async fn run_cli(
                     init_external_formatter_cb,
                     format_embedded_cb,
                     format_file_cb,
-                    tailwind_cb,
+                    sort_tailwindcss_classes_cb,
                 )))
                 .run();
 
@@ -140,7 +140,7 @@ pub async fn format(
     #[napi(
         ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
     )]
-    tailwind_cb: JsTailwindCb,
+    tailwind_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
     let num_of_threads = 1;
 

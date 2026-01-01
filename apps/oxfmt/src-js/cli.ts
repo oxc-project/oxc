@@ -3,7 +3,7 @@ import {
   initExternalFormatter,
   formatEmbeddedCode,
   formatFile,
-  processTailwindClasses,
+  sortTailwindClasses,
 } from "./cli/worker-proxy";
 
 // napi-JS `oxfmt` CLI entry point
@@ -19,7 +19,7 @@ void (async () => {
     initExternalFormatter,
     formatEmbeddedCode,
     formatFile,
-    processTailwindClasses,
+    sortTailwindClasses,
   );
 
   // Migration modes are handled by JS

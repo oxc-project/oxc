@@ -3,7 +3,7 @@ import {
   resolvePlugins,
   formatEmbeddedCode,
   formatFile,
-  processTailwindClasses,
+  sortTailwindClasses,
 } from "./libs/prettier";
 
 // napi-JS `oxfmt` API entry point
@@ -23,7 +23,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
-    (filepath, options, classes) => processTailwindClasses({ filepath, classes, options }),
+    (filepath, options, classes) => sortTailwindClasses({ filepath, classes, options }),
   );
 }
 

@@ -56,7 +56,7 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 
 /// Type alias for Tailwind class processing callback.
 /// Takes (filepath, options, classes) and returns sorted array.
-pub type JsTailwindCb = ThreadsafeFunction<
+pub type JsSortTailwindClassesCb = ThreadsafeFunction<
     FnArgs<(String, Value, Vec<String>)>, // Input: (filepath, options, classes)
     Promise<Vec<String>>,                 // Return: promise of sorted array
     FnArgs<(String, Value, Vec<String>)>,
@@ -90,7 +90,7 @@ pub struct ExternalFormatter {
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
-    process_tailwind: TailwindWithConfigCallback,
+    pub sort_tailwindcss_classes: TailwindWithConfigCallback,
 }
 
 impl std::fmt::Debug for ExternalFormatter {
@@ -99,7 +99,7 @@ impl std::fmt::Debug for ExternalFormatter {
             .field("init", &"<callback>")
             .field("format_embedded", &"<callback>")
             .field("format_file", &"<callback>")
-            .field("process_tailwind", &"<callback>")
+            .field("sort_tailwindcss_classes", &"<callback>")
             .finish()
     }
 }
@@ -110,17 +110,17 @@ impl ExternalFormatter {
         init_cb: JsInitExternalFormatterCb,
         format_embedded_cb: JsFormatEmbeddedCb,
         format_file_cb: JsFormatFileCb,
-        tailwind_cb: JsTailwindCb,
+        sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
     ) -> Self {
         let rust_init = wrap_init_external_formatter(init_cb);
         let rust_format_embedded = wrap_format_embedded(format_embedded_cb);
         let rust_format_file = wrap_format_file(format_file_cb);
-        let rust_tailwind = wrap_tailwind(tailwind_cb);
+        let rust_tailwind = wrap_sort_tailwind_classes(sort_tailwindcss_classes_cb);
         Self {
             init: rust_init,
             format_embedded: rust_format_embedded,
             format_file: rust_format_file,
-            process_tailwind: rust_tailwind,
+            sort_tailwindcss_classes: rust_tailwind,
         }
     }
 
@@ -139,9 +139,10 @@ impl ExternalFormatter {
         });
 
         let file_path = filepath.to_string_lossy().to_string();
-        let process_tailwind = Arc::clone(&self.process_tailwind);
-        let tailwind_callback =
-            Arc::new(move |classes: Vec<String>| (process_tailwind)(&file_path, &options, classes));
+        let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
+        let tailwind_callback = Arc::new(move |classes: Vec<String>| {
+            (sort_tailwindcss_classes)(&file_path, &options, classes)
+        });
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)
@@ -240,8 +241,8 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
     })
 }
 
-/// Wrap JS `processTailwindClasses` callback as a normal Rust function.
-fn wrap_tailwind(cb: JsTailwindCb) -> TailwindWithConfigCallback {
+/// Wrap JS `sortTailwindClasses` callback as a normal Rust function.
+fn wrap_sort_tailwind_classes(cb: JsSortTailwindClassesCb) -> TailwindWithConfigCallback {
     Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
         block_on(async {
             let args = FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));

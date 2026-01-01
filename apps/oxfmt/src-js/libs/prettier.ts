@@ -116,7 +116,7 @@ let cachedGetTailwindConfig: typeof import("prettier-plugin-tailwindcss").getTai
 let cachedSortClasses: typeof import("prettier-plugin-tailwindcss").sortClasses;
 let tailwindInitialized = false;
 
-export interface ProcessTailwindClassesArgs {
+export interface SortTailwindClassesArgs {
   filepath: string;
   classes: string[];
   options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
@@ -127,11 +127,11 @@ export interface ProcessTailwindClassesArgs {
  * @param args - Object containing filepath, classes, and options
  * @returns Array of sorted class strings (same order/length as input)
  */
-export async function processTailwindClasses({
+export async function sortTailwindClasses({
   filepath,
   classes,
   options = {},
-}: ProcessTailwindClassesArgs): Promise<string[]> {
+}: SortTailwindClassesArgs): Promise<string[]> {
   // Initialize tailwind plugin lazily on first call
   if (!tailwindInitialized) {
     tailwindInitialized = true;
