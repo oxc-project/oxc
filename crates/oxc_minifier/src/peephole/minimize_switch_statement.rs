@@ -28,7 +28,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         if let Some(last_case) = switch_stmt.cases.last_mut()
-            && Self::remove_last_break(&mut last_case.consequent)
+            && Self::remove_last_break(&mut last_case.consequent, ctx)
         {
             ctx.state.changed = true;
         }
@@ -141,8 +141,8 @@ impl<'a> PeepholeOptimizations {
 
         let mut first = switch_stmt.cases.pop().unwrap();
         let mut second = switch_stmt.cases.pop().unwrap();
-        Self::remove_last_break(&mut first.consequent);
-        Self::remove_last_break(&mut second.consequent);
+        Self::remove_last_break(&mut first.consequent, ctx);
+        Self::remove_last_break(&mut second.consequent, ctx);
 
         let (test, consequent, alternate) = if first.test.is_some() {
             (first.test.unwrap(), first.consequent, second.consequent)
@@ -192,7 +192,7 @@ impl<'a> PeepholeOptimizations {
 
             ctx.state.changed = true;
             let discriminant = switch_stmt.discriminant.take_in(ctx.ast);
-            Self::remove_last_break(&mut case.consequent);
+            Self::remove_last_break(&mut case.consequent, ctx);
 
             if let Some(test) = case.test {
                 *stmt = ctx.ast.statement_if(
@@ -239,7 +239,31 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>) -> bool {
+    fn remove_break_from_statement(stmt: &mut Statement<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        match stmt {
+            Statement::BreakStatement(break_stmt) => {
+                if break_stmt.label.is_none() {
+                    *stmt = ctx.ast.statement_empty(break_stmt.span);
+                    true
+                } else {
+                    false
+                }
+            }
+            Statement::BlockStatement(block_stmt) => {
+                Self::remove_last_break(&mut block_stmt.body, ctx)
+            }
+            Statement::IfStatement(if_stmt) => {
+                let mut changed = Self::remove_break_from_statement(&mut if_stmt.consequent, ctx);
+                if let Some(alternate) = &mut if_stmt.alternate {
+                    changed |= Self::remove_break_from_statement(alternate, ctx);
+                }
+                changed
+            }
+            _ => false,
+        }
+    }
+
+    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>, ctx: &Ctx<'a, '_>) -> bool {
         if stmt.is_empty() {
             return false;
         }
@@ -254,9 +278,7 @@ impl<'a> PeepholeOptimizations {
                     false
                 }
             }
-            Some(Statement::BlockStatement(block_stmt)) => {
-                Self::remove_last_break(&mut block_stmt.body)
-            }
+            Some(stmt) => Self::remove_break_from_statement(stmt, ctx),
             _ => false,
         }
     }
@@ -384,11 +406,12 @@ mod test {
         test("switch(a){case 2: case 1: break; default: break;}", "a;");
         test("switch(a){case 3: b(); case 2: case 1: break;}", "a === 3 && b()");
         test("switch(a){case 3: b(); case 2: case 1: }", "a === 3 && b()");
-        test_same("switch(a){case 3: if (b) break }");
-        test("switch(a){case 3: { if (b) break } }", "switch(a){case 3: if (b) break;}");
+        test("switch(a){case 3: if (b) break }", "a === 3 && b");
+        test("switch(a){case 3: { if (b) break } }", "a === 3 && b");
+        test("switch(a){case 3: { if(b) {c()} else {break;} }}", "a === 3 && b && c()");
         test(
-            "switch(a){case 3: {if(b) {c()} else {break;}}}",
-            "switch(a){case 3: if (b) c();else break;}",
+            "switch(a){case 3: { if(b) {c(); break;} else { d(); break;} }}",
+            "a === 3 && (b ? c() : d())",
         );
         test("switch(a){case 3: { for (;;) break } }", "if(a === 3) for (;;) break;");
         test("switch(a){case 3: { for (b of c) break } }", "if (a === 3) for (b of c) break;");
