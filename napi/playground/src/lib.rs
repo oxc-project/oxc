@@ -529,6 +529,7 @@ impl Oxc {
                     .clone()
                     .unwrap_or_else(default_internal_patterns),
                 groups: sort_imports_config.groups.clone().unwrap_or_else(default_groups),
+                custom_groups: vec![],
             });
         }
 
