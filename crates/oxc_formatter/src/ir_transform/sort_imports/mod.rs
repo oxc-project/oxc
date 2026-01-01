@@ -12,7 +12,7 @@ use crate::{
     SortImportsOptions,
     formatter::format_element::{FormatElement, LineMode, document::Document},
     ir_transform::sort_imports::{
-        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine
+        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
 };
 
