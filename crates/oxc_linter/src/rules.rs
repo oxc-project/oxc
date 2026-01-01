@@ -390,9 +390,11 @@ pub(crate) mod react {
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
+    pub mod no_this_in_sfc;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
+    pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
@@ -561,6 +563,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_distracting_elements;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
+    pub mod no_static_element_interactions;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
     pub mod role_supports_aria_props;
@@ -690,6 +693,7 @@ pub(crate) mod vue {
     pub mod no_import_compiler_macros;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
+    pub mod no_this_in_before_route_enter;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
     pub mod require_typed_ref;
@@ -982,6 +986,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_noninteractive_tabindex,
+    jsx_a11y::no_static_element_interactions,
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
@@ -1096,9 +1101,11 @@ oxc_macros::declare_all_lint_rules! {
     react::no_render_return_value,
     react::no_set_state,
     react::no_string_refs,
+    react::no_this_in_sfc,
     react::no_unescaped_entities,
     react::no_unknown_property,
     react::no_unsafe,
+    react::no_will_update_set_state,
     react::only_export_components,
     react::prefer_es6_class,
     react::react_in_jsx_scope,
@@ -1338,6 +1345,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::no_import_compiler_macros,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
+    vue::no_this_in_before_route_enter,
     vue::prefer_import_from_vue,
     vue::require_default_export,
     vue::require_typed_ref,

@@ -107,7 +107,7 @@
    `----
 
 Found 1 warning and 16 errors.
-Finished in Xms on 1 file using X threads.
+Finished in Xms on 1 file with 17 rules using X threads.
 ```
 
 # stderr

@@ -319,6 +319,12 @@ fn test() {
         (r"(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
     ];
 
+    // TODO: Implement autofix and use these tests.
+    // let _fix = vec![(
+    //     "(el as HTMLElement).onmouseenter = onAnchorMouseEnter;",
+    //     "(el as HTMLElement).addEventListener('mouseenter', onAnchorMouseEnter);",
+    // )];
+
     Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

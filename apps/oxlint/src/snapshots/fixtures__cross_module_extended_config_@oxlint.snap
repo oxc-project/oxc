@@ -29,7 +29,7 @@ working directory: fixtures/cross_module_extended_config
         -> ./dep-b.ts - fixtures/cross_module_extended_config/dep-b.ts
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

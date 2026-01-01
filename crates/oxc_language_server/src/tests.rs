@@ -53,13 +53,14 @@ impl Tool for FakeTool {
 
     fn handle_configuration_change(
         &self,
+        builder: &dyn ToolBuilder,
         root_uri: &Uri,
         _old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
             return ToolRestartChanges {
-                tool: Some(FakeToolBuilder.build_boxed(root_uri, new_options_json)),
+                tool: Some(builder.build_boxed(root_uri, new_options_json)),
                 watch_patterns: None,
             };
         }
@@ -84,13 +85,14 @@ impl Tool for FakeTool {
 
     fn handle_watched_file_change(
         &self,
+        builder: &dyn ToolBuilder,
         changed_uri: &Uri,
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         if changed_uri.as_str().ends_with("tool.config") {
             return ToolRestartChanges {
-                tool: Some(FakeToolBuilder.build_boxed(root_uri, options)),
+                tool: Some(builder.build_boxed(root_uri, options)),
                 watch_patterns: None,
             };
         }

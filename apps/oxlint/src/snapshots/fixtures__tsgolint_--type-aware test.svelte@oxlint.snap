@@ -16,7 +16,7 @@ working directory: fixtures/tsgolint
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file using 1 threads.
+Finished in <variable>ms on 1 file with 44 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

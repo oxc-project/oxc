@@ -27,7 +27,7 @@ working directory: fixtures
         -> ./b - fixtures/issue_10054/b.ts
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

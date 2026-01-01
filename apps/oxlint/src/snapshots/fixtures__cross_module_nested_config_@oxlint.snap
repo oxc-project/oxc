@@ -29,7 +29,7 @@ working directory: fixtures/cross_module_nested_config
         -> ./folder-dep-b.ts - fixtures/cross_module_nested_config/folder/folder-dep-b.ts
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 4 files using 1 threads.
+Finished in <variable>ms on 4 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
