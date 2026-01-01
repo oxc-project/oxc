@@ -53,7 +53,7 @@ impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUs
 
 impl RuleRunner for crate::rules::eslint::complexity::Complexity {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::constructor_super::ConstructorSuper {
