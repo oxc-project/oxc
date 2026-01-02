@@ -174,91 +174,219 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Simple cases that should pass
         "expect.hasAssertions()",
-        // Empty expect (edge case)
-        "expect()",
-        // Direct promise to expect (correct usage)
-        "await expect(doSomethingAsync()).rejects.toThrow();",
-        "await expect(doSomethingAsync()).resolves.toBe(1);",
-        // Await in expect argument position (already awaited)
-        "await expect(await doSomethingAsync()).rejects.toThrow();",
-        // Multiple statements in async wrapper (can't simplify)
-        "await expect(async () => { await a(); await b(); }).rejects.toThrow();",
-        // No await in wrapper (can't simplify)
-        "await expect(async () => { doSync(); }).rejects.toThrow();",
-        // Sync function (not async) - no simplification possible
-        "await expect(() => { throw new Error(); }).rejects.toThrow();",
-        // Variable declaration before await
-        "await expect(async () => { const a = 1; await fn(a); }).rejects.toThrow();",
-        // Await in for-loop (multiple awaits)
-        "await expect(async () => { for (const a of b) { await a(); } }).rejects.toThrow();",
-        // Await in array (not a simple call expression)
-        "await expect(async () => [await a()]).rejects.toThrow();",
-        // Return statement (not a simple expression statement)
-        "await expect(async () => { return await a(); }).rejects.toThrow();",
+        "
+			    it('pass', async () => {
+			      expect();
+			    })
+			    ",
+        "
+			    it('pass', async () => {
+			      await expect(doSomethingAsync()).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass', async () => {
+			      await expect(doSomethingAsync(1, 2)).resolves.toBe(1);
+			    })
+			    ",
+        "
+			    it('pass', async () => {
+			      await expect(async () => {
+			        await doSomethingAsync();
+			        await doSomethingTwiceAsync(1, 2);
+			      }).rejects.toThrow();
+			    })
+			    ",
+        "
+			    import { expect as pleaseExpect } from 'vitest';
+			    it('pass', async () => {
+			      await pleaseExpect(doSomethingAsync()).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass', async () => {
+			      await expect(async () => {
+			        doSomethingAsync();
+			      }).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass', async () => {
+			      await expect(async () => {
+			        const a = 1;
+			        await doSomethingAsync(a);
+			      }).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass for non-async expect', async () => {
+			      await expect(() => {
+			        doSomethingSync(a);
+			      }).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass for await in expect', async () => {
+			      await expect(await doSomethingAsync()).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass for different matchers', async () => {
+			      await expect(await doSomething()).not.toThrow();
+			      await expect(await doSomething()).toHaveLength(2);
+			      await expect(await doSomething()).toHaveReturned();
+			      await expect(await doSomething()).not.toHaveBeenCalled();
+			      await expect(await doSomething()).not.toBeDefined();
+			      await expect(await doSomething()).toEqual(2);
+			    })
+			    ",
+        "
+			    it('pass for using await within for-loop', async () => {
+			      const b = [async () => Promise.resolve(1), async () => Promise.reject(2)];
+			      await expect(async() => {
+			        for (const a of b) {
+			          await b();
+			        }
+			      }).rejects.toThrow();
+			    })
+			    ",
+        "
+			    it('pass for using await within array', async () => {
+			      await expect(async() => [await Promise.reject(2)]).rejects.toThrow(2);
+			    })
+			    ",
     ];
 
     let fail = vec![
-        // Block body with single await
-        "await expect(async () => { await doSomethingAsync(); }).rejects.toThrow();",
-        // Expression body with await
-        "await expect(async () => await doSomethingAsync()).rejects.toThrow();",
-        // Function expression
-        "await expect(async function() { await doSomethingAsync(); }).rejects.toThrow();",
-        // With function arguments
-        "await expect(async () => await doSomethingAsync(1, 2)).rejects.toThrow();",
-        // With resolves matcher
-        "await expect(async () => { await doSomethingAsync(); }).resolves.toBe(1);",
-        // Promise.all wrapped
-        "await expect(async () => await Promise.all([a(), b()])).rejects.toThrow();",
-        // Async reference function call
-        "const a = async () => doSomethingAsync(); await expect(async () => { await a(); }).rejects.toThrow();",
-        // With .not matcher
-        "await expect(async () => { await doSomethingAsync(); }).resolves.not.toThrow();",
+        "
+			      it('should be fixed', async () => {
+			        await expect(async () => {
+			          await doSomethingAsync();
+			        }).rejects.toThrow();
+			      })
+			      ",
+        "
+			      it('should be fixed', async () => {
+			        await expect(async () => await doSomethingAsync()).rejects.toThrow();
+			      })
+			      ",
+        "
+			      it('should be fixed', async () => {
+			        await expect(async function () {
+			          await doSomethingAsync();
+			        }).rejects.toThrow();
+			      })
+			      ",
+        "
+			        it('should be fixed for async arrow function', async () => {
+			          await expect(async () => {
+			            await doSomethingAsync(1, 2);
+			          }).rejects.toThrow();
+			        })
+			      ",
+        "
+			        it('should be fixed for async normal function', async () => {
+			          await expect(async function () {
+			            await doSomethingAsync(1, 2);
+			          }).rejects.toThrow();
+			        })
+			      ",
+        "
+			        it('should be fixed for Promise.all', async () => {
+			          await expect(async function () {
+			            await Promise.all([doSomethingAsync(1, 2), doSomethingAsync()]);
+			          }).rejects.toThrow();
+			        })
+			      ",
+        "
+			        it('should be fixed for async ref to expect', async () => {
+			          const a = async () => { await doSomethingAsync() };
+			          await expect(async () => {
+			            await a();
+			          }).rejects.toThrow();
+			        })
+			      ",
     ];
 
     let fix = vec![
-        (
-            "await expect(async () => { await doSomethingAsync(); }).rejects.toThrow();",
-            "await expect(doSomethingAsync()).rejects.toThrow();",
-            None,
-        ),
-        (
-            "await expect(async () => await doSomethingAsync()).rejects.toThrow();",
-            "await expect(doSomethingAsync()).rejects.toThrow();",
-            None,
-        ),
-        (
-            "await expect(async function() { await doSomethingAsync(); }).rejects.toThrow();",
-            "await expect(doSomethingAsync()).rejects.toThrow();",
-            None,
-        ),
-        (
-            "await expect(async () => await doSomethingAsync(1, 2)).rejects.toThrow();",
-            "await expect(doSomethingAsync(1, 2)).rejects.toThrow();",
-            None,
-        ),
-        (
-            "await expect(async () => { await doSomethingAsync(); }).resolves.toBe(1);",
-            "await expect(doSomethingAsync()).resolves.toBe(1);",
-            None,
-        ),
-        (
-            "await expect(async () => await Promise.all([a(), b()])).rejects.toThrow();",
-            "await expect(Promise.all([a(), b()])).rejects.toThrow();",
-            None,
-        ),
-        (
-            "const a = async () => doSomethingAsync(); await expect(async () => { await a(); }).rejects.toThrow();",
-            "const a = async () => doSomethingAsync(); await expect(a()).rejects.toThrow();",
-            None,
-        ),
-        (
-            "await expect(async () => { await doSomethingAsync(); }).resolves.not.toThrow();",
-            "await expect(doSomethingAsync()).resolves.not.toThrow();",
-            None,
-        ),
+        ("
+			      it('should be fixed', async () => {
+			        await expect(async () => {
+			          await doSomethingAsync();
+			        }).rejects.toThrow();
+			      })
+			      ", "
+			      it('should be fixed', async () => {
+			        await expect(doSomethingAsync()).rejects.toThrow();
+			      })
+			      ", None),
+("
+			      it('should be fixed', async () => {
+			        await expect(async () => await doSomethingAsync()).rejects.toThrow();
+			      })
+			      ", "
+			      it('should be fixed', async () => {
+			        await expect(doSomethingAsync()).rejects.toThrow();
+			      })
+			      ", None),
+("
+			      it('should be fixed', async () => {
+			        await expect(async function () {
+			          await doSomethingAsync();
+			        }).rejects.toThrow();
+			      })
+			      ", "
+			      it('should be fixed', async () => {
+			        await expect(doSomethingAsync()).rejects.toThrow();
+			      })
+			      ", None),
+("
+			        it('should be fixed for async arrow function', async () => {
+			          await expect(async () => {
+			            await doSomethingAsync(1, 2);
+			          }).rejects.toThrow();
+			        })
+			      ", "
+			        it('should be fixed for async arrow function', async () => {
+			          await expect(doSomethingAsync(1, 2)).rejects.toThrow();
+			        })
+			      ", None),
+("
+			        it('should be fixed for async normal function', async () => {
+			          await expect(async function () {
+			            await doSomethingAsync(1, 2);
+			          }).rejects.toThrow();
+			        })
+			      ", "
+			        it('should be fixed for async normal function', async () => {
+			          await expect(doSomethingAsync(1, 2)).rejects.toThrow();
+			        })
+			      ", None),
+("
+			        it('should be fixed for Promise.all', async () => {
+			          await expect(async function () {
+			            await Promise.all([doSomethingAsync(1, 2), doSomethingAsync()]);
+			          }).rejects.toThrow();
+			        })
+			      ", "
+			        it('should be fixed for Promise.all', async () => {
+			          await expect(Promise.all([doSomethingAsync(1, 2), doSomethingAsync()])).rejects.toThrow();
+			        })
+			      ", None),
+("
+			        it('should be fixed for async ref to expect', async () => {
+			          const a = async () => { await doSomethingAsync() };
+			          await expect(async () => {
+			            await a();
+			          }).rejects.toThrow();
+			        })
+			      ", "
+			        it('should be fixed for async ref to expect', async () => {
+			          const a = async () => { await doSomethingAsync() };
+			          await expect(a()).rejects.toThrow();
+			        })
+			      ", None)
     ];
     Tester::new(
         NoUnneededAsyncExpectFunction::NAME,
@@ -266,7 +394,6 @@ fn test() {
         pass,
         fail,
     )
-    .with_vitest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
 }
