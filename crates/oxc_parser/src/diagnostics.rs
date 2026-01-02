@@ -701,6 +701,11 @@ pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDiagnostic {
+    ts_error("2528", "A module cannot have multiple default exports.").with_labels(spans)
+}
+
+#[cold]
 pub fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
 }

@@ -5,7 +5,8 @@
     "noEmit": true,
     "target": "ESNext",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUnusedLocals": true
   },
   "include": ["src-js", "test/**/*.ts"],
   "exclude": ["test/fixtures"]

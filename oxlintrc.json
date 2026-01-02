@@ -32,7 +32,7 @@
   },
   "overrides": [
     {
-      "files": ["**/editors/vscode/tests/*.spec.ts"],
+      "files": ["**/editors/vscode/tests/**/*.spec.ts"],
       "rules": {
         // VSCode uses `vscode-test-cli`, which uses `mocha`.
         // Ignore specific rules, instead of copying the plugins array.

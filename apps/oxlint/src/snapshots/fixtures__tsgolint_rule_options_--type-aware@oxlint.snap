@@ -39,7 +39,7 @@ working directory: fixtures/tsgolint_rule_options
     `----
 
 Found 0 warnings and 4 errors.
-Finished in <variable>ms on 1 file using 1 threads.
+Finished in <variable>ms on 1 file with 7 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
