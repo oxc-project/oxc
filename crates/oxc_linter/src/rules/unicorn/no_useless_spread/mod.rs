@@ -472,7 +472,7 @@ fn fix_by_removing_object_spread<'a>(
     outer_obj: &ObjectExpression<'a>,
 ) -> RuleFix {
     let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
+    let mut ast = AstBuilder::new(&alloc);
     let mut new_properties = ast.vec();
     for prop in &outer_obj.properties {
         match prop {
@@ -486,7 +486,8 @@ fn fix_by_removing_object_spread<'a>(
             }
         }
     }
-    let new_obj = ast.expression_object(SPAN, new_properties);
+    let properties = new_properties;
+    let new_obj = ast.expression_object(SPAN, properties);
     let mut codegen = fixer.codegen();
     codegen.print_expression(&new_obj);
     fixer.replace(outer_obj.span, codegen.into_source_text())

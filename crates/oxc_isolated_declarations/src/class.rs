@@ -93,7 +93,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn transform_class_property_definition(
-        &self,
+        &mut self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
         let mut type_annotation = None;
@@ -121,7 +121,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.infer_type_from_expression(expr)
                 };
 
-                type_annotation = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
+                type_annotation = if let Some(t) = ts_type {
+                    Some(self.ast.alloc_ts_type_annotation(SPAN, t))
+                } else {
+                    None
+                };
             }
 
             if type_annotation.is_none() && value.is_none() {
@@ -148,7 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn transform_class_method_definition(
-        &self,
+        &mut self,
         definition: &MethodDefinition<'a>,
         params: ArenaBox<'a, FormalParameters<'a>>,
         return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
@@ -185,7 +189,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn create_class_property(
-        &self,
+        &mut self,
         r#type: PropertyDefinitionType,
         span: Span,
         key: PropertyKey<'a>,
@@ -212,7 +216,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn transform_formal_parameter_to_class_property(
-        &self,
+        &mut self,
         param: &FormalParameter<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ) -> Option<ClassElement<'a>> {
@@ -239,7 +243,10 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    fn transform_private_modifier_method(&self, method: &MethodDefinition<'a>) -> ClassElement<'a> {
+    fn transform_private_modifier_method(
+        &mut self,
+        method: &MethodDefinition<'a>,
+    ) -> ClassElement<'a> {
         match method.kind {
             MethodDefinitionKind::Method => {
                 let r#type = match method.r#type {
@@ -269,9 +276,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
-                let params = self.create_formal_parameters(
-                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
-                );
+                let kind = self.ast.binding_pattern_binding_identifier(SPAN, "value");
+                let params = self.create_formal_parameters(kind);
                 self.transform_class_method_definition(method, params, None)
             }
         }
@@ -287,34 +293,38 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// `class C { public x: string; constructor(x: string) {} }`
     fn transform_constructor_parameter_properties(
-        &self,
+        &mut self,
         function: &Function<'a>,
         typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
-        self.ast.vec_from_iter(
-            function
-                .params
-                .items
-                .iter()
-                .filter(|param| {
-                    // To follow up `transform_formal_parameters`'s behavior
-                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
-                })
-                .enumerate()
-                .filter_map(|(index, param)| {
-                    if !param.has_modifier() {
-                        return None;
-                    }
-                    let type_annotation =
-                        if param.accessibility.is_some_and(TSAccessibility::is_private) {
-                            None
-                        } else {
-                            // transformed params will definitely have type annotation
-                            typed_params.items[index].type_annotation.clone_in(self.ast.allocator)
-                        };
-                    self.transform_formal_parameter_to_class_property(param, type_annotation)
-                }),
-        )
+        let mut elements = self.ast.vec();
+        let params_len_match = typed_params.items.len() == function.params.items.len();
+
+        for (index, param) in function.params.items.iter().enumerate() {
+            // To follow up `transform_formal_parameters`'s behavior
+            if !params_len_match && !param.has_modifier() {
+                continue;
+            }
+
+            if !param.has_modifier() {
+                continue;
+            }
+
+            let type_annotation = if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                None
+            } else {
+                // transformed params will definitely have type annotation
+                typed_params.items[index].type_annotation.clone_in(self.ast.allocator)
+            };
+
+            if let Some(element) =
+                self.transform_formal_parameter_to_class_property(param, type_annotation)
+            {
+                elements.push(element);
+            }
+        }
+
+        elements
     }
 
     /// Collect return_type of getter and first parma type of setter
@@ -328,7 +338,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// 1. If it has no parameter type, infer it from the getter method's return type
     fn collect_accessor_annotations(
-        &self,
+        &mut self,
         decl: &Class<'a>,
     ) -> Vec<(PropertyKey<'a>, AccessorAnnotation<'a>)> {
         let mut method_annotations: Vec<(PropertyKey<'_>, AccessorAnnotation<'_>)> = Vec::new();
@@ -387,7 +397,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_class(
-        &self,
+        &mut self,
         decl: &Class<'a>,
         declare: Option<bool>,
     ) -> ArenaBox<'a, Class<'a>> {
@@ -445,13 +455,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                             let params = &method.value.params;
                             if params.items.is_empty() {
-                                self.create_formal_parameters(
-                                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
-                                )
+                                let kind =
+                                    self.ast.binding_pattern_binding_identifier(SPAN, "value");
+                                self.create_formal_parameters(kind)
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
-                                if let Some(param) = params.items.first_mut()
-                                    && let Some(annotation) =
+                                if let Some(param) = params.items.first_mut() {
+                                    if let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
                                                 Some(
@@ -462,8 +472,9 @@ impl<'a> IsolatedDeclarations<'a> {
                                                 None
                                             }
                                         })
-                                {
-                                    param.type_annotation = annotation;
+                                    {
+                                        param.type_annotation = annotation;
+                                    }
                                 }
                                 params
                             }
@@ -632,7 +643,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn create_formal_parameters(
-        &self,
+        &mut self,
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         let parameter = self.ast.formal_parameter(

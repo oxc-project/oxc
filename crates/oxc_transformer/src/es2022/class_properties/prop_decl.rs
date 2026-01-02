@@ -199,16 +199,19 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // `_prop = {_: value}`
+        let underscore_ident = create_underscore_ident_name(ctx);
+        let key = PropertyKey::StaticIdentifier(ctx.ast.alloc(underscore_ident));
         let property = ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
-            PropertyKey::StaticIdentifier(ctx.ast.alloc(create_underscore_ident_name(ctx))),
+            key,
             value,
             false,
             false,
             false,
         );
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property));
+        let props = ctx.ast.vec1(property);
+        let obj = ctx.ast.expression_object(SPAN, props);
 
         // Insert after class
         let class_details = self.current_class();
@@ -355,29 +358,29 @@ impl<'a> ClassProperties<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
 
         // `{writable: true, value: <value>}`
-        let prop_def = ctx.ast.expression_object(
+        let writable_key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable"));
+        let writable_value = ctx.ast.expression_boolean_literal(SPAN, true);
+        let writable_prop = ctx.ast.object_property_kind_object_property(
             SPAN,
-            ctx.ast.vec_from_array([
-                ctx.ast.object_property_kind_object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable")),
-                    ctx.ast.expression_boolean_literal(SPAN, true),
-                    false,
-                    false,
-                    false,
-                ),
-                ctx.ast.object_property_kind_object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("value")),
-                    value,
-                    false,
-                    false,
-                    false,
-                ),
-            ]),
+            PropertyKind::Init,
+            writable_key,
+            writable_value,
+            false,
+            false,
+            false,
         );
+        let value_key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("value"));
+        let value_prop = ctx.ast.object_property_kind_object_property(
+            SPAN,
+            PropertyKind::Init,
+            value_key,
+            value,
+            false,
+            false,
+            false,
+        );
+        let props = ctx.ast.vec_from_array([writable_prop, value_prop]);
+        let prop_def = ctx.ast.expression_object(SPAN, props);
 
         let private_props = self.current_class().private_props.as_ref().unwrap();
         let prop_binding = &private_props[&ident.name].binding;

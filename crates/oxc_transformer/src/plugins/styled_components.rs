@@ -351,7 +351,7 @@ impl<'a> StyledComponents<'a, '_> {
     fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::TaggedTemplateExpression(tagged) = expr else {
             unreachable!();
@@ -401,7 +401,7 @@ impl<'a> StyledComponents<'a, '_> {
 
     fn transpile_template_literals(
         expr: &mut TaggedTemplateExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let TaggedTemplateExpression {
             span,
@@ -410,13 +410,15 @@ impl<'a> StyledComponents<'a, '_> {
             type_arguments,
         } = expr.take_in(&ctx.ast);
 
-        let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
-            ArrayExpressionElement::from(ctx.ast.expression_string_literal(
+        let mut quasis_elements = ctx.ast.vec_with_capacity(quasis.len());
+        for quasi in quasis {
+            let elem = ArrayExpressionElement::from(ctx.ast.expression_string_literal(
                 quasi.span,
                 quasi.value.raw,
                 None,
-            ))
-        }));
+            ));
+            quasis_elements.push(elem);
+        }
 
         let quasis = Argument::from(ctx.ast.expression_array(quasi_span, quasis_elements));
         let arguments =
@@ -430,7 +432,7 @@ impl<'a> StyledComponents<'a, '_> {
     fn add_display_name_and_component_id(
         &mut self,
         expr: &mut Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if let Some(call) = Self::get_with_config(expr) {
             if let Expression::StaticMemberExpression(member) = &call.callee
@@ -526,7 +528,7 @@ impl<'a> StyledComponents<'a, '_> {
     fn add_properties(
         &mut self,
         properties: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if self.options.display_name {
             let value = self.get_display_name(ctx);
@@ -791,11 +793,11 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// `{ key: value }`
-    //     ^^^^^^^^^^
+    //     ^^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
         value: Atom<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
         let value = ctx.ast.expression_string_literal(SPAN, value, None);

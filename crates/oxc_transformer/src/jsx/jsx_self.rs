@@ -87,7 +87,7 @@ impl<'a> JsxSelf<'a, '_> {
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
         let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
@@ -100,8 +100,8 @@ impl<'a> JsxSelf<'a, '_> {
     }
 
     /// `<div __self={this} />`
-    ///       ^^^^^^^^^^^^^
-    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &TraverseCtx<'a>) {
+    ///       ^^^^^^^^^^^^^^
+    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Check if `__self` attribute already exists
         for item in &elem.attributes {
             if let JSXAttributeItem::Attribute(attribute) = item

@@ -179,13 +179,14 @@ impl<'a> JsxSource<'a, '_> {
         ctx.ast.expression_object(SPAN, properties)
     }
 
-    pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
+    pub fn get_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
         let decl = self.get_filename_var_declarator(ctx)?;
 
+        let decls = ctx.ast.vec1(decl);
         let var_decl = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(decl),
+            decls,
             false,
         ));
         Some(var_decl)
@@ -193,7 +194,7 @@ impl<'a> JsxSource<'a, '_> {
 
     pub fn get_filename_var_declarator(
         &self,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 

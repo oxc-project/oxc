@@ -429,15 +429,19 @@ impl<'a> ModuleRunnerTransform<'a> {
                 self.deps.insert(source.value.to_string());
                 let binding = self.generate_import_binding(ctx);
                 let pattern = binding.create_binding_pattern(ctx);
-                let imported_names = ctx.ast.vec_from_iter(specifiers.iter().map(|specifier| {
-                    let local_name = specifier.local.name();
-                    let local_name_expr = ctx.ast.expression_string_literal(SPAN, local_name, None);
-                    ArrayExpressionElement::from(local_name_expr)
-                }));
-                let arguments = ctx.ast.vec_from_array([
-                    Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
-                    Self::create_imported_names_object(imported_names, ctx),
-                ]);
+                let imported_names: Vec<_> = specifiers
+                    .iter()
+                    .map(|specifier| {
+                        let local_name = specifier.local.name();
+                        let local_name_expr =
+                            ctx.ast.expression_string_literal(SPAN, local_name, None);
+                        ArrayExpressionElement::from(local_name_expr)
+                    })
+                    .collect();
+                let imported_names = ctx.ast.vec_from_iter(imported_names);
+                let imported_names_obj = Self::create_imported_names_object(imported_names, ctx);
+                let source_arg = Argument::from(Expression::StringLiteral(ctx.ast.alloc(source)));
+                let arguments = ctx.ast.vec_from_array([source_arg, imported_names_obj]);
                 hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
                 binding
             });
@@ -667,7 +671,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     // { importedNames: ['foo', 'bar'] }
     fn create_imported_names_object(
         elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Argument<'a> {
         let value = ctx.ast.expression_array(SPAN, elements);
         let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
@@ -680,7 +684,8 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             false,
         );
-        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names)))
+        let properties = ctx.ast.vec1(imported_names);
+        Argument::from(ctx.ast.expression_object(SPAN, properties))
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -715,14 +720,16 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_object_property(
         key: &'static str,
         value: Option<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let is_method = value.is_some();
+        let key_prop = ctx.ast.property_key_static_identifier(SPAN, key);
+        let value_expr = value.unwrap_or_else(|| ctx.ast.expression_boolean_literal(SPAN, true));
         ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
-            ctx.ast.property_key_static_identifier(SPAN, key),
-            value.unwrap_or_else(|| ctx.ast.expression_boolean_literal(SPAN, true)),
+            key_prop,
+            value_expr,
             is_method,
             false,
             false,
@@ -766,20 +773,18 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
-        let object = ctx.ast.expression_object(
-            SPAN,
-            ctx.ast.vec_from_array([
-                Self::create_object_property("enumerable", None, ctx),
-                Self::create_object_property("configurable", None, ctx),
-                Self::create_object_property("get", Some(getter), ctx),
-            ]),
-        );
+        let enumerable_prop = Self::create_object_property("enumerable", None, ctx);
+        let configurable_prop = Self::create_object_property("configurable", None, ctx);
+        let get_prop = Self::create_object_property("get", Some(getter), ctx);
+        let properties = ctx.ast.vec_from_array([enumerable_prop, configurable_prop, get_prop]);
+        let object = ctx.ast.expression_object(SPAN, properties);
 
         let ident_expr =
             ctx.create_unbound_ident_expr(SPAN, SSR_MODULE_EXPORTS_KEY, ReferenceFlags::Read);
+        let exported_name_expr = ctx.ast.expression_string_literal(SPAN, exported_name, None);
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ident_expr),
-            Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
+            Argument::from(exported_name_expr),
             Argument::from(object),
         ]);
 
@@ -819,9 +824,10 @@ fn create_compute_property_access<'a>(
     span: Span,
     object: Expression<'a>,
     property: &str,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    let atom = ctx.ast.atom(property);
+    let expression = ctx.ast.expression_string_literal(SPAN, atom, None);
     Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }
 
@@ -829,7 +835,7 @@ fn create_compute_property_access<'a>(
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
     property: &'static str,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
@@ -840,9 +846,10 @@ pub fn create_property_access<'a>(
     span: Span,
     object: Expression<'a>,
     property: &str,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let atom = ctx.ast.atom(property);
+    let property = ctx.ast.identifier_name(SPAN, atom);
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 

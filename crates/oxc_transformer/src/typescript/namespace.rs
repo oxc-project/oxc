@@ -311,7 +311,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
@@ -335,11 +335,11 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
-            let params = {
-                let pattern = param_binding.create_binding_pattern(ctx);
-                let items = ctx.ast.vec1(ctx.ast.plain_formal_parameter(SPAN, pattern));
-                ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
-            };
+            let pattern = param_binding.create_binding_pattern(ctx);
+            let formal_param = ctx.ast.plain_formal_parameter(SPAN, pattern);
+            let items = ctx.ast.vec1(formal_param);
+            let params =
+                ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE);
             let function_expr =
                 Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
                     FunctionType::FunctionExpression,
@@ -480,10 +480,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             ));
         });
 
-        ctx.ast.vec_from_array([
-            Statement::VariableDeclaration(var_decl),
-            ctx.ast.statement_expression(SPAN, ctx.ast.expression_sequence(SPAN, assignments)),
-        ])
+        let sequence = ctx.ast.expression_sequence(SPAN, assignments);
+        let expr_stmt = ctx.ast.statement_expression(SPAN, sequence);
+        ctx.ast.vec_from_array([Statement::VariableDeclaration(var_decl), expr_stmt])
     }
 
     /// Check the namespace binding identifier if it is a redeclaration

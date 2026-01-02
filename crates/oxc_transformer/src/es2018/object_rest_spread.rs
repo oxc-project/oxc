@@ -223,19 +223,21 @@ impl<'a> ObjectRestSpread<'a, '_> {
 
         // Insert `var _foo` before this statement.
         if !new_decls.is_empty() {
+            // Find the address first without holding a borrow on ctx
+            let mut address = None;
             for node in ctx.ancestors() {
                 if let Ancestor::ExpressionStatementExpression(decl) = node {
-                    let kind = VariableDeclarationKind::Var;
-                    let declaration = ctx.ast.alloc_variable_declaration(
-                        SPAN,
-                        kind,
-                        ctx.ast.vec_from_iter(new_decls),
-                        false,
-                    );
-                    let statement = Statement::VariableDeclaration(declaration);
-                    self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                    address = Some(decl.address());
                     break;
                 }
+            }
+            if let Some(addr) = address {
+                let kind = VariableDeclarationKind::Var;
+                let declarations = ctx.ast.vec_from_iter(new_decls);
+                let declaration =
+                    ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
+                let statement = Statement::VariableDeclaration(declaration);
+                self.ctx.statement_injector.insert_before(&addr, statement);
             }
         }
 
@@ -387,19 +389,20 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let mut decls = vec![];
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
+        // Find the address first without holding a borrow on ctx
+        let mut address = None;
         for node in ctx.ancestors() {
             if let Ancestor::ExpressionStatementExpression(decl) = node {
-                let kind = VariableDeclarationKind::Var;
-                let declaration = ctx.ast.alloc_variable_declaration(
-                    SPAN,
-                    kind,
-                    ctx.ast.vec_from_iter(decls),
-                    false,
-                );
-                let statement = Statement::VariableDeclaration(declaration);
-                self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                address = Some(decl.address());
                 break;
             }
+        }
+        if let Some(addr) = address {
+            let kind = VariableDeclarationKind::Var;
+            let declarations = ctx.ast.vec_from_iter(decls);
+            let declaration = ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
+            let statement = Statement::VariableDeclaration(declaration);
+            self.ctx.statement_injector.insert_before(&addr, statement);
         }
         let mut expressions = ctx.ast.vec1(expr.take_in(&ctx.ast));
         expressions.extend(exprs);
@@ -657,8 +660,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let id = bound_identifier.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Var;
-        let declarations =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, None, false));
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, id, NONE, None, false);
+        let declarations = ctx.ast.vec1(declarator);
         let decl = ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
         *left = ForStatementLeft::VariableDeclaration(decl);
         Self::try_replace_statement_with_block(body, scope_id, ctx);
@@ -773,8 +776,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let kind = VariableDeclarationKind::Let;
         let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
         let init = bound_identifier.create_read_expression(ctx);
-        let declarations =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false));
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, id, NONE, Some(init), false);
+        let declarations = ctx.ast.vec1(declarator);
         let decl = ctx.ast.variable_declaration(SPAN, kind, declarations, false);
         decl.bound_names(&mut |ident| {
             *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =

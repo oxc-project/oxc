@@ -1,5 +1,3 @@
-use std::iter::repeat_with;
-
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
@@ -66,10 +64,9 @@ impl<'a> PeepholeOptimizations {
                 return;
             };
             if prop_name == ident.name {
+                let id = ident.take_in(&ctx.ast);
                 *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
-                    ident.span,
-                    ident.take_in(&ctx.ast),
-                    None,
+                    ident.span, id, None,
                 );
                 ctx.state.changed = true;
             }
@@ -212,13 +209,11 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.expression_binary(e.span, left, new_comp_op, right)
         } else {
             let span = e.span;
+            let right_span = e.right.span();
             let Expression::UnaryExpression(unary_expr) = &mut e.left else { return };
-            ctx.ast.expression_binary(
-                span,
-                unary_expr.take_in(&ctx.ast).argument,
-                new_eq_op,
-                ctx.ast.void_0(e.right.span()),
-            )
+            let arg = unary_expr.take_in(&ctx.ast).argument;
+            let void_expr = ctx.ast.void_0(right_span);
+            ctx.ast.expression_binary(span, arg, new_eq_op, void_expr)
         };
         ctx.state.changed = true;
     }
@@ -300,15 +295,12 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Expression::LogicalExpression(mut right) = e.right.take_in(&ctx.ast) else { return };
-        let mut new_left = ctx.ast.expression_logical(
-            e.span,
-            e.left.take_in(&ctx.ast),
-            e.operator,
-            right.left.take_in(&ctx.ast),
-        );
+        let left = e.left.take_in(&ctx.ast);
+        let right_left = right.left.take_in(&ctx.ast);
+        let mut new_left = ctx.ast.expression_logical(e.span, left, e.operator, right_left);
         Self::substitute_rotate_logical_expression(&mut new_left, ctx);
-        *expr =
-            ctx.ast.expression_logical(e.span, new_left, e.operator, right.right.take_in(&ctx.ast));
+        let right_right = right.right.take_in(&ctx.ast);
+        *expr = ctx.ast.expression_logical(e.span, new_left, e.operator, right_right);
         ctx.state.changed = true;
     }
 
@@ -334,19 +326,12 @@ impl<'a> PeepholeOptimizations {
             let Expression::BinaryExpression(mut right) = e.right.take_in(&ctx.ast) else {
                 return;
             };
-            let mut new_left = ctx.ast.expression_binary(
-                e.span,
-                e.left.take_in(&ctx.ast),
-                e.operator,
-                right.left.take_in(&ctx.ast),
-            );
+            let left = e.left.take_in(&ctx.ast);
+            let right_left = right.left.take_in(&ctx.ast);
+            let mut new_left = ctx.ast.expression_binary(e.span, left, e.operator, right_left);
             Self::substitute_rotate_binary_expression(&mut new_left, ctx);
-            *expr = ctx.ast.expression_binary(
-                e.span,
-                new_left,
-                e.operator,
-                right.right.take_in(&ctx.ast),
-            );
+            let right_right = right.right.take_in(&ctx.ast);
+            *expr = ctx.ast.expression_binary(e.span, new_left, e.operator, right_right);
             ctx.state.changed = true;
             return;
         }
@@ -423,7 +408,8 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(left) = &mut e.left else {
             return;
         };
-        *expr = ctx.ast.expression_logical(span, left.left.take_in(&ctx.ast), e.operator, new_expr);
+        let left_left = left.left.take_in(&ctx.ast);
+        *expr = ctx.ast.expression_logical(span, left_left, e.operator, new_expr);
         ctx.state.changed = true;
     }
 
@@ -431,7 +417,7 @@ impl<'a> PeepholeOptimizations {
         left: &Expression<'a>,
         right: &Expression<'a>,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
         inversed: bool,
     ) -> Option<Expression<'a>> {
         let pair = Self::commutative_pair(
@@ -516,11 +502,8 @@ impl<'a> PeepholeOptimizations {
         let new_right_expr = if inversed {
             ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref)
         } else {
-            ctx.ast.expression_unary(
-                SPAN,
-                UnaryOperator::LogicalNot,
-                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref),
-            )
+            let inner = ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref);
+            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, inner)
         };
         Some(ctx.ast.expression_logical(
             span,
@@ -873,35 +856,24 @@ impl<'a> PeepholeOptimizations {
                 .then(|| r_id.take_in(&ctx.ast))
         };
 
-        let base_arr = ctx.ast.expression_array(
+        let arguments_id_box = arguments_id.take_in_box(&ctx.ast);
+        let spread_el = ctx.ast.array_expression_element_spread_element(
             SPAN,
-            ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
-                SPAN,
-                Expression::Identifier(arguments_id.take_in_box(&ctx.ast)),
-            )),
+            Expression::Identifier(arguments_id_box),
         );
+        let elements = ctx.ast.vec1(spread_el);
+        let base_arr = ctx.ast.expression_array(SPAN, elements);
         // wrap with `.slice(offset)`
         let arr = if offset > 0.0 {
             let obj = base_arr;
-            let callee =
-                Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
-                    SPAN,
-                    obj,
-                    ctx.ast.identifier_name(SPAN, "slice"),
-                    false,
-                ));
-            ctx.ast.expression_call(
-                SPAN,
-                callee,
-                NONE,
-                ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
-                    SPAN,
-                    offset,
-                    None,
-                    NumberBase::Decimal,
-                ))),
-                false,
-            )
+            let slice_name = ctx.ast.identifier_name(SPAN, "slice");
+            let callee = Expression::StaticMemberExpression(
+                ctx.ast.alloc_static_member_expression(SPAN, obj, slice_name, false),
+            );
+            let num_lit =
+                ctx.ast.expression_numeric_literal(SPAN, offset, None, NumberBase::Decimal);
+            let args = ctx.ast.vec1(Argument::from(num_lit));
+            ctx.ast.expression_call(SPAN, callee, NONE, args, false)
         } else {
             base_arr
         };
@@ -1013,18 +985,16 @@ impl<'a> PeepholeOptimizations {
                         .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s))),
                 }
             }
-            "Number" => Some(ctx.ast.expression_numeric_literal(
-                span,
-                match arg {
+            "Number" => {
+                let value = match arg {
                     None => 0.0,
                     Some(arg) => match arg.to_number(ctx) {
                         Some(n) => n,
                         None => return,
                     },
-                },
-                None,
-                NumberBase::Decimal,
-            )),
+                };
+                Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
+            }
             // `BigInt(1n)` -> `1n`
             "BigInt" => match arg {
                 None => None,
@@ -1041,7 +1011,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Fold `Object` or `Array` constructor
-    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: &Ctx<'a, '_>) -> Option<&'a str> {
+    fn get_fold_constructor_name(
+        callee: &Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
                 if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
@@ -1088,19 +1061,22 @@ impl<'a> PeepholeOptimizations {
         };
         match name {
             "Object" if args.is_empty() => {
-                *expr = ctx.ast.expression_object(*span, ctx.ast.vec());
+                let properties = ctx.ast.vec();
+                *expr = ctx.ast.expression_object(*span, properties);
                 ctx.state.changed = true;
             }
             "Array" => {
                 // `new Array` -> `[]`
                 if args.is_empty() {
-                    *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
+                    let elements = ctx.ast.vec();
+                    *expr = ctx.ast.expression_array(*span, elements);
                     ctx.state.changed = true;
                 } else if args.len() == 1 {
                     let Some(arg) = args[0].as_expression_mut() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
+                        let elements = ctx.ast.vec();
+                        *expr = ctx.ast.expression_array(*span, elements);
                         ctx.state.changed = true;
                     }
                     // `new Array(8)` -> `Array(8)`
@@ -1112,13 +1088,13 @@ impl<'a> PeepholeOptimizations {
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                let elisions = repeat_with(|| {
-                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
-                                })
-                                .take(n_int);
-                                *expr = ctx
-                                    .ast
-                                    .expression_array(*span, ctx.ast.vec_from_iter(elisions));
+                                let mut elisions = ctx.ast.vec_with_capacity(n_int);
+                                for _ in 0..n_int {
+                                    elisions.push(ArrayExpressionElement::Elision(
+                                        ctx.ast.elision(n.span),
+                                    ));
+                                }
+                                *expr = ctx.ast.expression_array(*span, elisions);
                                 ctx.state.changed = true;
                                 return;
                             }
@@ -1189,14 +1165,10 @@ impl<'a> PeepholeOptimizations {
             _ if Self::is_native_error_name(name) => true,
             _ => unreachable!(),
         } {
-            *expr = ctx.ast.expression_call_with_pure(
-                e.span,
-                e.callee.take_in(&ctx.ast),
-                NONE,
-                e.arguments.take_in(&ctx.ast),
-                false,
-                e.pure,
-            );
+            let callee = e.callee.take_in(&ctx.ast);
+            let arguments = e.arguments.take_in(&ctx.ast);
+            *expr =
+                ctx.ast.expression_call_with_pure(e.span, callee, NONE, arguments, false, e.pure);
             ctx.state.changed = true;
         }
     }
@@ -1239,7 +1211,8 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
+        let atom = ctx.ast.atom_from_cow(&val);
+        *expr = ctx.ast.expression_string_literal(t.span(), atom, None);
         ctx.state.changed = true;
     }
 
@@ -1317,10 +1290,8 @@ impl<'a> PeepholeOptimizations {
                     for el in &mut array_expr.elements {
                         match el {
                             ArrayExpressionElement::SpreadElement(spread_el) => {
-                                new_args.push(ctx.ast.argument_spread_element(
-                                    spread_el.span,
-                                    spread_el.argument.take_in(&ctx.ast),
-                                ));
+                                let arg = spread_el.argument.take_in(&ctx.ast);
+                                new_args.push(ctx.ast.argument_spread_element(spread_el.span, arg));
                             }
                             ArrayExpressionElement::Elision(elision) => {
                                 new_args.push(ctx.ast.void_0(elision.span).into());
@@ -1331,10 +1302,8 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 } else {
-                    new_args.push(ctx.ast.argument_spread_element(
-                        spread_el.span,
-                        spread_el.argument.take_in(&ctx.ast),
-                    ));
+                    let arg = spread_el.argument.take_in(&ctx.ast);
+                    new_args.push(ctx.ast.argument_spread_element(spread_el.span, arg));
                 }
             } else {
                 new_args.push(arg);
@@ -1412,13 +1381,10 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        let new_callee = ctx.ast.expression_sequence(
-            span,
-            ctx.ast.vec_from_array([
-                ctx.ast.expression_numeric_literal(span, 0.0, None, NumberBase::Decimal),
-                arg_expr.take_in(&ctx.ast),
-            ]),
-        );
+        let num_lit = ctx.ast.expression_numeric_literal(span, 0.0, None, NumberBase::Decimal);
+        let arg_taken = arg_expr.take_in(&ctx.ast);
+        let exprs = ctx.ast.vec_from_array([num_lit, arg_taken]);
+        let new_callee = ctx.ast.expression_sequence(span, exprs);
         expr.callee = new_callee;
         ctx.state.changed = true;
     }
@@ -1455,7 +1421,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    pub fn substitute_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &Ctx<'a, '_>) {
+    pub fn substitute_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
@@ -1514,27 +1480,17 @@ impl<'a> PeepholeOptimizations {
         let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
-        *expr = ctx.ast.expression_call_with_pure(
-            expr.span(),
-            Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
-                expr.span(),
-                ctx.ast.expression_string_literal(
-                    expr.span(),
-                    ctx.ast.atom(&concatenated_string),
-                    None,
-                ),
-                ctx.ast.identifier_name(expr.span(), "split"),
-                false,
-            )),
-            NONE,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
-                expr.span(),
-                ctx.ast.atom(delimiter),
-                None,
-            ))),
-            false,
-            true,
+        let span = expr.span();
+        let concat_atom = ctx.ast.atom(&concatenated_string);
+        let obj = ctx.ast.expression_string_literal(span, concat_atom, None);
+        let prop = ctx.ast.identifier_name(span, "split");
+        let callee = Expression::StaticMemberExpression(
+            ctx.ast.alloc_static_member_expression(span, obj, prop, false),
         );
+        let delim_atom = ctx.ast.atom(delimiter);
+        let delim_lit = ctx.ast.expression_string_literal(span, delim_atom, None);
+        let args = ctx.ast.vec1(Argument::from(delim_lit));
+        *expr = ctx.ast.expression_call_with_pure(span, callee, NONE, args, false, true);
         ctx.state.changed = true;
     }
 
@@ -1553,7 +1509,7 @@ impl<'a> PeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
         if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding)
             && let Some(param) = &catch.param
             && let BindingPattern::BindingIdentifier(ident) = &param.pattern
@@ -1585,7 +1541,7 @@ impl<'a> PeepholeOptimizations {
 
     /// This function checks if the first ancestor in the hierarchy of the given context exists
     /// and satisfies the condition of being a parent of a statement
-    fn is_descendant_of_block(ctx: &Ctx<'a, '_>) -> bool {
+    fn is_descendant_of_block(ctx: &mut Ctx<'a, '_>) -> bool {
         ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_statement)
     }
 
@@ -1631,6 +1587,7 @@ impl<'a> PeepholeOptimizations {
         let is_pure =
             (call_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&call_expr.callee);
 
+        let call_expr_span = call_expr.span;
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
@@ -1640,7 +1597,7 @@ impl<'a> PeepholeOptimizations {
                 // Replace "(() => foo())()" with "foo()"
                 let expr = f.get_expression_mut().unwrap();
                 if is_pure && Self::is_descendant_of_block(ctx) {
-                    *e = ctx.ast.void_0(call_expr.span);
+                    *e = ctx.ast.void_0(call_expr_span);
                 } else {
                     *e = expr.take_in(&ctx.ast);
                 }
@@ -1651,14 +1608,12 @@ impl<'a> PeepholeOptimizations {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
                     if is_pure && Self::is_descendant_of_block(ctx) {
-                        *e = ctx.ast.void_0(call_expr.span);
+                        *e = ctx.ast.void_0(call_expr_span);
                     } else {
-                        *e = ctx.ast.expression_sequence(expr_stmt.span, {
-                            let mut sequence = ctx.ast.vec();
-                            sequence.push(expr_stmt.expression.take_in(&ctx.ast));
-                            sequence.push(ctx.ast.void_0(call_expr.span));
-                            sequence
-                        });
+                        let mut sequence = ctx.ast.vec();
+                        sequence.push(expr_stmt.expression.take_in(&ctx.ast));
+                        sequence.push(ctx.ast.void_0(call_expr_span));
+                        *e = ctx.ast.expression_sequence(expr_stmt.span, sequence);
                     }
 
                     ctx.state.changed = true;
@@ -1667,7 +1622,7 @@ impl<'a> PeepholeOptimizations {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
                         if is_pure && Self::is_descendant_of_block(ctx) {
-                            *e = ctx.ast.void_0(call_expr.span);
+                            *e = ctx.ast.void_0(call_expr_span);
                         } else {
                             *e = argument.take_in(&ctx.ast);
                         }

@@ -213,7 +213,7 @@ fn gen_value_import_declaration<'c, 'a: 'c>(
     let mut codegen = fixer.codegen();
 
     let alloc = Allocator::default();
-    let ast_builder = AstBuilder::new(&alloc);
+    let mut ast_builder = AstBuilder::new(&alloc);
 
     let specifiers: Vec<_> = specifiers.iter().map(|it| it.clone_in(&alloc)).collect();
     let import_declaration = ast_builder.alloc_import_declaration(
@@ -237,7 +237,7 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
     let mut codegen = fixer.codegen();
 
     let alloc = Allocator::default();
-    let ast_builder = AstBuilder::new(&alloc);
+    let mut ast_builder = AstBuilder::new(&alloc);
 
     let specifiers: Vec<_> = specifiers
         .iter()

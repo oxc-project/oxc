@@ -1413,11 +1413,13 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
 
         if has_range_field {
             // Insert `__proto__: NodeProto` as first field
+            let key = self.ast.property_key_static_identifier(SPAN, "__proto__");
+            let value = self.ast.expression_identifier(SPAN, "NodeProto");
             let prop = self.ast.object_property_kind_object_property(
                 SPAN,
                 PropertyKind::Init,
-                self.ast.property_key_static_identifier(SPAN, "__proto__"),
-                self.ast.expression_identifier(SPAN, "NodeProto"),
+                key,
+                value,
                 false,
                 false,
                 false,

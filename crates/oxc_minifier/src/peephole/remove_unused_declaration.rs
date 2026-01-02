@@ -4,13 +4,13 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
-    fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
+    fn can_remove_unused_declarators(ctx: &mut Ctx<'a, '_>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
             && !Self::keep_top_level_var_in_script_mode(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
-    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         match expr {
             Expression::ArrayExpression(_)
             | Expression::StringLiteral(_)
@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
@@ -67,7 +67,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Do remove top level vars in script mode.
-    pub fn keep_top_level_var_in_script_mode(ctx: &Ctx<'a, '_>) -> bool {
+    pub fn keep_top_level_var_in_script_mode(ctx: &mut Ctx<'a, '_>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()
             && ctx.source_type().is_script()
     }

@@ -204,12 +204,12 @@ impl<'a> ParserImpl<'a> {
                 match identifier_after_import {
                     Some(identifier_after_import) => {
                         // Special case: `import type from 'source'` where we already consumed `type` and `from`
-                        Some(self.ast.vec1(
+                        let specifier =
                             self.ast.import_declaration_specifier_import_default_specifier(
                                 identifier_after_import.span,
                                 identifier_after_import,
-                            ),
-                        ))
+                            );
+                        Some(self.ast.vec1(specifier))
                     }
                     None => unreachable!(),
                 }
@@ -916,10 +916,11 @@ impl<'a> ParserImpl<'a> {
                     ));
                 }
 
+                let binding = self.ast.binding_identifier(name.span(), name.name());
                 ImportOrExportSpecifier::Import(self.ast.import_specifier(
                     self.end_span(specifier_span),
                     property_name.unwrap_or_else(|| name.clone()),
-                    self.ast.binding_identifier(name.span(), name.name()),
+                    binding,
                     kind,
                 ))
             }

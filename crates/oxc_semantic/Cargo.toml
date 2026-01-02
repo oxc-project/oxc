@@ -28,6 +28,7 @@ oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
+oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
@@ -38,7 +39,6 @@ self_cell = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
-oxc_parser = { workspace = true }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
 

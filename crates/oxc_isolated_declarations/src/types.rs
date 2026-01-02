@@ -21,7 +21,10 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub(crate) fn transform_function_to_ts_type(&self, func: &Function<'a>) -> Option<TSType<'a>> {
+    pub(crate) fn transform_function_to_ts_type(
+        &mut self,
+        func: &Function<'a>,
+    ) -> Option<TSType<'a>> {
         let return_type = self.infer_function_return_type(func);
         if return_type.is_none() {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
@@ -29,19 +32,21 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let params = self.transform_formal_parameters(&func.params, false);
 
-        return_type.map(|return_type| {
-            self.ast.ts_type_function_type(
+        if let Some(return_type) = return_type {
+            Some(self.ast.ts_type_function_type(
                 func.span,
                 func.type_parameters.clone_in(self.ast.allocator),
                 func.this_param.clone_in(self.ast.allocator),
                 params,
                 return_type,
-            )
-        })
+            ))
+        } else {
+            None
+        }
     }
 
     pub(crate) fn transform_arrow_function_to_ts_type(
-        &self,
+        &mut self,
         func: &ArrowFunctionExpression<'a>,
     ) -> Option<TSType<'a>> {
         let return_type = self.infer_arrow_function_return_type(func);
@@ -55,19 +60,21 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let params = self.transform_formal_parameters(&func.params, false);
 
-        return_type.map(|return_type| {
-            self.ast.ts_type_function_type(
+        if let Some(return_type) = return_type {
+            Some(self.ast.ts_type_function_type(
                 func.span,
                 func.type_parameters.clone_in(self.ast.allocator),
                 NONE,
                 params,
                 return_type,
-            )
-        })
+            ))
+        } else {
+            None
+        }
     }
 
     /// Convert a computed property key to a static property key when possible
-    fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
+    fn transform_property_key(&mut self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
             // ["string"] -> string
             PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
@@ -98,7 +105,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// };
     /// ```
     pub fn transform_object_expression_to_ts_type(
-        &self,
+        &mut self,
         expr: &ObjectExpression<'a>,
         is_const: bool,
     ) -> TSType<'a> {
@@ -107,18 +114,19 @@ impl<'a> IsolatedDeclarations<'a> {
         // If either a setter or getter is inferred, the PropertyKey will be added.
         // Use `Vec` rather than `HashSet` because the `PropertyKey` doesn't support
         // `Hash` trait, fortunately, the number of accessors is small.
-        let mut accessor_inferred: Vec<&PropertyKey<'a>> = Vec::new();
+        let mut accessor_inferred: Vec<PropertyKey<'a>> = Vec::new();
 
-        let members =
-            self.ast.vec_from_iter(expr.properties.iter().filter_map(|property| match property {
+        let mut members = self.ast.vec();
+        for property in &expr.properties {
+            match property {
                 ObjectPropertyKind::ObjectProperty(object) => {
                     if object.computed && self.report_property_key(&object.key) {
-                        return None;
+                        continue;
                     }
 
                     if object.shorthand {
                         self.error(shorthand_property(object.span));
-                        return None;
+                        continue;
                     }
 
                     let key = &object.key;
@@ -139,7 +147,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .as_expression()
                             .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal());
 
-                        return Some(self.ast.ts_signature_method_signature(
+                        let signature = self.ast.ts_signature_method_signature(
                             object.span,
                             key,
                             computed,
@@ -149,13 +157,15 @@ impl<'a> IsolatedDeclarations<'a> {
                             function.this_param.clone_in(self.ast.allocator),
                             params,
                             return_type,
-                        ));
+                        );
+                        members.push(signature);
+                        continue;
                     }
 
                     let type_annotation = match object.kind {
                         PropertyKind::Get => {
                             if accessor_inferred.iter().any(|k| k.content_eq(key)) {
-                                return None;
+                                continue;
                             }
 
                             let Expression::FunctionExpression(function) = &object.value else {
@@ -166,16 +176,16 @@ impl<'a> IsolatedDeclarations<'a> {
 
                             let annotation = self.infer_function_return_type(function);
                             if annotation.is_none() {
-                                accessor_spans.push((key, key.span()));
-                                return None;
+                                accessor_spans.push((key.clone_in(self.ast.allocator), key.span()));
+                                continue;
                             }
 
-                            accessor_inferred.push(key);
+                            accessor_inferred.push(key.clone_in(self.ast.allocator));
                             annotation
                         }
                         PropertyKind::Set => {
                             if accessor_inferred.iter().any(|k| k.content_eq(key)) {
-                                return None;
+                                continue;
                             }
 
                             let Expression::FunctionExpression(function) = &object.value else {
@@ -187,11 +197,12 @@ impl<'a> IsolatedDeclarations<'a> {
                                 param.type_annotation.clone_in(self.ast.allocator)
                             });
                             if annotation.is_none() {
-                                accessor_spans.push((key, function.params.span));
-                                return None;
+                                accessor_spans
+                                    .push((key.clone_in(self.ast.allocator), function.params.span));
+                                continue;
                             }
 
-                            accessor_inferred.push(key);
+                            accessor_inferred.push(key.clone_in(self.ast.allocator));
                             annotation
                         }
                         PropertyKind::Init => {
@@ -203,12 +214,14 @@ impl<'a> IsolatedDeclarations<'a> {
 
                             if type_annotation.is_none() {
                                 self.error(inferred_type_of_expression(object.value.span()));
-                                return None;
+                                continue;
                             }
 
-                            type_annotation.map(|type_annotation| {
-                                self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
-                            })
+                            if let Some(ta) = type_annotation {
+                                Some(self.ast.alloc_ts_type_annotation(SPAN, ta))
+                            } else {
+                                None
+                            }
                         }
                     };
 
@@ -222,17 +235,17 @@ impl<'a> IsolatedDeclarations<'a> {
                         key,
                         type_annotation,
                     );
-                    Some(property_signature)
+                    members.push(property_signature);
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     self.error(object_with_spread_assignments(spread.span));
-                    None
                 }
-            }));
+            }
+        }
 
         // Report an error if the type of neither the setter nor the getter is inferred.
         for (key, span) in accessor_spans {
-            if !accessor_inferred.iter().any(|k| k.content_eq(key)) {
+            if !accessor_inferred.iter().any(|k| k.content_eq(&key)) {
                 self.error(inferred_type_of_expression(span));
             }
         }
@@ -241,28 +254,32 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_array_expression_to_ts_type(
-        &self,
+        &mut self,
         expr: &ArrayExpression<'a>,
         is_const: bool,
     ) -> TSType<'a> {
-        let element_types = self.ast.vec_from_iter(expr.elements.iter().filter_map(|element| {
+        let mut element_types = self.ast.vec();
+        for element in &expr.elements {
             match element {
                 ArrayExpressionElement::SpreadElement(spread) => {
                     self.error(arrays_with_spread_elements(spread.span));
-                    None
                 }
                 ArrayExpressionElement::Elision(elision) => {
-                    Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
+                    element_types.push(TSTupleElement::from(
+                        self.ast.ts_type_undefined_keyword(elision.span),
+                    ));
                 }
-                _ => self
-                    .transform_expression_to_ts_type(element.to_expression())
-                    .map(TSTupleElement::from)
-                    .or_else(|| {
+                _ => {
+                    if let Some(ts_type) =
+                        self.transform_expression_to_ts_type(element.to_expression())
+                    {
+                        element_types.push(TSTupleElement::from(ts_type));
+                    } else {
                         self.error(inferred_type_of_expression(element.span()));
-                        None
-                    }),
+                    }
+                }
             }
-        }));
+        }
 
         let ts_type = self.ast.ts_type_tuple_type(SPAN, element_types);
         if is_const {
@@ -274,7 +291,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
     pub(crate) fn transform_expression_to_ts_type(
-        &self,
+        &mut self,
         expr: &Expression<'a>,
     ) -> Option<TSType<'a>> {
         match expr {
@@ -300,9 +317,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 _ => None,
             },
             Expression::TemplateLiteral(lit) => {
-                self.transform_template_to_string(lit).map(|string| {
-                    self.ast.ts_type_literal_type(lit.span, TSLiteral::StringLiteral(string))
-                })
+                if let Some(string) = self.transform_template_to_string(lit) {
+                    Some(self.ast.ts_type_literal_type(lit.span, TSLiteral::StringLiteral(string)))
+                } else {
+                    None
+                }
             }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {

@@ -265,7 +265,8 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             *stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
+                let vec = ctx.ast.vec();
+                let mut block = ctx.ast.block_statement(finalizer.span, vec);
                 std::mem::swap(&mut **finalizer, &mut block);
                 Statement::BlockStatement(ctx.ast.alloc(block))
             } else {
@@ -450,7 +451,10 @@ impl<'a> PeepholeOptimizations {
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
-    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    pub fn should_keep_indirect_access(
+        access_value: &Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {

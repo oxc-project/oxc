@@ -89,12 +89,10 @@ impl Rule for PreferStringReplaceAll {
                             ..Default::default()
                         });
                         let alloc = Allocator::default();
-                        let ast = AstBuilder::new(&alloc);
-                        codegen.print_expression(&ast.expression_string_literal(
-                            SPAN,
-                            ast.atom(&k),
-                            None,
-                        ));
+                        let mut ast = AstBuilder::new(&alloc);
+                        let atom = ast.atom(&k);
+                        let expr = ast.expression_string_literal(SPAN, atom, None);
+                        codegen.print_expression(&expr);
                         fixer.replace(pattern.span(), codegen.into_source_text())
                     });
                 }

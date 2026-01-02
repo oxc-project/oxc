@@ -175,11 +175,12 @@ impl<'a> AsyncToGenerator<'a, '_> {
     /// Ignores top-level await expressions.
     fn transform_await_expression(
         expr: &mut AwaitExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(&ctx.ast))))
+            let argument = expr.argument.take_in(&ctx.ast);
+            Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
         } else {
             None
         }
@@ -620,7 +621,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, Function<'a>> {
         let r#type = if id.is_some() {
             FunctionType::FunctionDeclaration
@@ -666,10 +667,11 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let arguments = ctx.ast.vec_from_array([this, arguments_ident]);
         // _ref.apply
         let read_expr = bound_ident.create_read_expression(ctx);
+        let identifier_name = ctx.ast.identifier_name(SPAN, "apply");
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             read_expr,
-            ctx.ast.identifier_name(SPAN, "apply"),
+            identifier_name,
             false,
         ));
         let argument = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -717,14 +719,16 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let init = self.create_async_to_generator_call(params, body, scope_id, ctx);
-        let declarations = ctx.ast.vec1(ctx.ast.variable_declarator(
+        let pattern = bound_ident.create_binding_pattern(ctx);
+        let declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            bound_ident.create_binding_pattern(ctx),
+            pattern,
             NONE,
             Some(init),
             false,
-        ));
+        );
+        let declarations = ctx.ast.vec1(declarator);
         Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
@@ -769,9 +773,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 break;
             }
             let binding = ctx.generate_uid("x", scope_id, SymbolFlags::FunctionScopedVariable);
-            parameters.push(
-                ctx.ast.plain_formal_parameter(param.span(), binding.create_binding_pattern(ctx)),
-            );
+            let pattern = binding.create_binding_pattern(ctx);
+            parameters.push(ctx.ast.plain_formal_parameter(param.span(), pattern));
         }
 
         ctx.ast.alloc_formal_parameters(
@@ -784,13 +787,9 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].
     #[inline]
-    fn create_empty_params(ctx: &TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
-        ctx.ast.alloc_formal_parameters(
-            SPAN,
-            FormalParameterKind::FormalParameter,
-            ctx.ast.vec(),
-            NONE,
-        )
+    fn create_empty_params(ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
+        let items = ctx.ast.vec();
+        ctx.ast.alloc_formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
     }
 
     /// Creates a [`BoundIdentifier`] for the id of the function.

@@ -90,7 +90,7 @@ impl<'a> VarDeclarationsStore<'a> {
     /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
     #[inline]
-    pub fn insert_var(&self, binding: &BoundIdentifier<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn insert_var(&self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
         let pattern = binding.create_binding_pattern(ctx);
         self.insert_var_binding_pattern(pattern, None, ctx);
     }
@@ -102,7 +102,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         binding: &BoundIdentifier<'a>,
         init: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let pattern = binding.create_binding_pattern(ctx);
         self.insert_var_binding_pattern(pattern, Some(init), ctx);
@@ -151,7 +151,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         binding: &BoundIdentifier<'a>,
         init: Option<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let pattern = binding.create_binding_pattern(ctx);
         self.insert_let_binding_pattern(pattern, init, ctx);
@@ -163,7 +163,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let declarator = ctx.ast.variable_declarator(
             SPAN,
@@ -182,7 +182,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let declarator = ctx.ast.variable_declarator(
             SPAN,
@@ -196,14 +196,22 @@ impl<'a> VarDeclarationsStore<'a> {
     }
 
     /// Add a `var` declaration to be inserted at top of current enclosing statement block.
-    pub fn insert_var_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn insert_var_declarator(
+        &self,
+        declarator: VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut stack = self.stack.borrow_mut();
         let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
         declarators.var_declarators.push(declarator);
     }
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block.
-    pub fn insert_let_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn insert_let_declarator(
+        &self,
+        declarator: VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut stack = self.stack.borrow_mut();
         let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
         declarators.let_declarators.push(declarator);
@@ -220,7 +228,7 @@ impl<'a> VarDeclarationsStore<'a> {
     fn insert_into_statements(
         &self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if matches!(ctx.parent(), Ancestor::ProgramBody(_)) {
             // Handle in `insert_into_program` instead
@@ -245,7 +253,7 @@ impl<'a> VarDeclarationsStore<'a> {
         }
     }
 
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some((var_statement, let_statement)) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
             transform_ctx
@@ -262,7 +270,7 @@ impl<'a> VarDeclarationsStore<'a> {
     #[inline]
     fn get_var_statement(
         &self,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<(Option<Statement<'a>>, Option<Statement<'a>>)> {
         let mut stack = self.stack.borrow_mut();
         let Declarators { var_declarators, let_declarators } = stack.pop()?;
@@ -278,7 +286,7 @@ impl<'a> VarDeclarationsStore<'a> {
     fn create_declaration(
         kind: VariableDeclarationKind,
         declarators: ArenaVec<'a, VariableDeclarator<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,

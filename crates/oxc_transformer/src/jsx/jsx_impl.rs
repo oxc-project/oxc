@@ -367,10 +367,11 @@ impl<'a> Pragma<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
                 let object = get_read_identifier_reference(SPAN, *first, ctx);
+                let identifier_name = ctx.ast.identifier_name(SPAN, *second);
                 return Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     object,
-                    ctx.ast.identifier_name(SPAN, *second),
+                    identifier_name,
                     false,
                 ));
             }
@@ -388,11 +389,9 @@ impl<'a> Pragma<'a> {
                 (object, parts.iter())
             }
             Self::ImportMeta(parts) => {
-                let object = ctx.ast.expression_meta_property(
-                    SPAN,
-                    ctx.ast.identifier_name(SPAN, Atom::from("import")),
-                    ctx.ast.identifier_name(SPAN, Atom::from("meta")),
-                );
+                let ident_import = ctx.ast.identifier_name(SPAN, Atom::from("import"));
+                let ident_meta = ctx.ast.identifier_name(SPAN, Atom::from("meta"));
+                let object = ctx.ast.expression_meta_property(SPAN, ident_import, ident_meta);
                 (object, parts.iter())
             }
         };
@@ -513,7 +512,7 @@ impl<'a> JsxImpl<'a, '_> {
         self.ctx.source_type.is_script()
     }
 
-    fn insert_filename_var_statement(&self, ctx: &TraverseCtx<'a>) {
+    fn insert_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) {
         let Some(declarator) = self.jsx_source.get_filename_var_declarator(ctx) else { return };
 
         // If is a module, add filename statements before `import`s. If script, then after `require`s.
@@ -522,10 +521,11 @@ impl<'a> JsxImpl<'a, '_> {
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
         if self.bindings.is_classic() || !self.is_script() {
             // Insert before imports - add to `top_level_statements` immediately
+            let decls = ctx.ast.vec1(declarator);
             let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
-                ctx.ast.vec1(declarator),
+                decls,
                 false,
             ));
             self.ctx.top_level_statements.insert_statement(stmt);
@@ -780,7 +780,7 @@ impl<'a> JsxImpl<'a, '_> {
     fn transform_element_name(
         &self,
         name: JSXElementName<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
@@ -858,7 +858,7 @@ impl<'a> JsxImpl<'a, '_> {
 
     fn transform_jsx_member_expression(
         expr: ArenaBox<'a, JSXMemberExpression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let JSXMemberExpression { span, object, property } = expr.unbox();
         let object = match object {
@@ -958,7 +958,10 @@ impl<'a> JsxImpl<'a, '_> {
         }
     }
 
-    fn get_attribute_name(name: JSXAttributeName<'a>, ctx: &TraverseCtx<'a>) -> PropertyKey<'a> {
+    fn get_attribute_name(
+        name: JSXAttributeName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> PropertyKey<'a> {
         match name {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
@@ -975,9 +978,9 @@ impl<'a> JsxImpl<'a, '_> {
         }
     }
 
-    fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value, ctx)
-            .map(|value| ctx.ast.expression_string_literal(text.span, value, None))
+    fn transform_jsx_text(text: &JSXText<'a>, ctx: &mut TraverseCtx<'a>) -> Option<Expression<'a>> {
+        let value = Self::fixup_whitespace_and_decode_entities(text.value, ctx)?;
+        Some(ctx.ast.expression_string_literal(text.span, value, None))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the
@@ -1209,7 +1212,7 @@ fn get_read_identifier_reference<'a>(
 fn create_static_member_expression<'a>(
     object_ident: IdentifierReference<'a>,
     property_name: Atom<'a>,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let object = Expression::Identifier(ctx.alloc(object_ident));
     let property = ctx.ast.identifier_name(SPAN, property_name);

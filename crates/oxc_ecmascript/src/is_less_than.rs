@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub fn is_less_than<'a>(
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
     x: &Expression<'a>,
     y: &Expression<'a>,
 ) -> Option<ConstantValue<'a>> {

@@ -167,14 +167,11 @@ impl<'a> RegExp<'a, '_> {
             ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_text, None)),
-            Argument::from(ctx.ast.expression_string_literal(
-                SPAN,
-                ctx.ast.atom(flags.to_inline_string().as_str()),
-                None,
-            )),
-        ]);
+        let pattern_arg =
+            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_text, None));
+        let flags_atom = ctx.ast.atom(flags.to_inline_string().as_str());
+        let flags_arg = Argument::from(ctx.ast.expression_string_literal(SPAN, flags_atom, None));
+        let arguments = ctx.ast.vec_from_array([pattern_arg, flags_arg]);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, NONE, arguments);
     }

@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -64,12 +64,8 @@ impl<'a> PeepholeOptimizations {
             ctx,
         )
         .map(|new_expr| {
-            ctx.ast.expression_logical(
-                expr.span,
-                left.left.take_in(&ctx.ast),
-                expr.operator,
-                new_expr,
-            )
+            let left_val = left.left.take_in(&ctx.ast);
+            ctx.ast.expression_logical(expr.span, left_val, expr.operator, new_expr)
         })
     }
 
@@ -78,7 +74,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -141,12 +137,9 @@ impl<'a> PeepholeOptimizations {
             LeftPairValueResult::Null(span) => span,
             LeftPairValueResult::Undefined => right_value.unwrap(),
         };
-        Some(ctx.ast.expression_binary(
-            span,
-            left_non_value_expr.take_in(&ctx.ast),
-            replace_op,
-            ctx.ast.expression_null_literal(null_expr_span),
-        ))
+        let left_expr = left_non_value_expr.take_in(&ctx.ast);
+        let right_expr = ctx.ast.expression_null_literal(null_expr_span);
+        Some(ctx.ast.expression_binary(span, left_expr, replace_op, right_expr))
     }
 
     /// Returns `true` if the assignment target and expression have no side effect for *evaluation* and points to the same reference.
@@ -163,7 +156,7 @@ impl<'a> PeepholeOptimizations {
     pub fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget<'a>,
         expr: &Expression,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -248,11 +241,13 @@ impl<'a> PeepholeOptimizations {
 
             let assign_value = assignment_expr.right.take_in(&ctx.ast);
             sequence_expr.expressions.push(assign_value);
+            let left = assignment_expr.left.take_in(&ctx.ast);
+            let right = e.right.take_in(&ctx.ast);
             *expr = ctx.ast.expression_assignment(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(&ctx.ast),
-                e.right.take_in(&ctx.ast),
+                left,
+                right,
             );
             ctx.state.changed = true;
             return;

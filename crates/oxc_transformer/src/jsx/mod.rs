@@ -46,7 +46,7 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
     pub fn new(
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
-        ast: &AstBuilder<'a>,
+        ast: &mut AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         if options.jsx_plugin || options.development {

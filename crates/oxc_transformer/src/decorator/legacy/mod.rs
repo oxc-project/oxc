@@ -729,20 +729,18 @@ impl<'a> LegacyDecorator<'a, '_> {
             alias_binding,
             ctx,
         );
+        let pattern = binding.create_binding_pattern(ctx);
         let declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Let,
-            binding.create_binding_pattern(ctx),
+            pattern,
             NONE,
             Some(initializer),
             false,
         );
-        let var_declaration = ctx.ast.declaration_variable(
-            span,
-            VariableDeclarationKind::Let,
-            ctx.ast.vec1(declarator),
-            false,
-        );
+        let decls = ctx.ast.vec1(declarator);
+        let var_declaration =
+            ctx.ast.declaration_variable(span, VariableDeclarationKind::Let, decls, false);
         Statement::from(var_declaration)
     }
 
@@ -925,7 +923,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Converts a vec of [`Decorator`] to [`Expression::ArrayExpression`].
     fn convert_decorators_to_array_expression(
         decorators_iter: impl Iterator<Item = Decorator<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let decorations = ctx.ast.vec_from_iter(
             decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
@@ -1156,7 +1154,8 @@ impl<'a> LegacyDecorator<'a, '_> {
         let kind = ImportOrExportKind::Value;
         let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
         let exported = ctx.ast.module_export_name_identifier_name(SPAN, class_binding.name);
-        let specifiers = ctx.ast.vec1(ctx.ast.export_specifier(SPAN, local, exported, kind));
+        let specifier = ctx.ast.export_specifier(SPAN, local, exported, kind);
+        let specifiers = ctx.ast.vec1(specifier);
         let export_class_reference = ctx
             .ast
             .module_declaration_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);

@@ -75,7 +75,6 @@ impl Generator for AstBuilderGenerator {
             #![expect(
                 clippy::default_trait_access,
                 clippy::inconsistent_struct_constructor,
-                clippy::unused_self,
             )]
 
             ///@@line_break
@@ -262,12 +261,15 @@ fn generate_builder_methods_for_struct_impl(
 
     let params_docs = generate_doc_comment_for_params(params);
 
+    let stats = generate_stats_for_struct(struct_def);
+
     let method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (&self, #fn_params) -> #struct_ty #where_clause {
+        pub fn #fn_name #generic_params (&mut self, #fn_params) -> #struct_ty #where_clause {
+            #stats
             #struct_ident { #fields }
         }
     };
@@ -291,7 +293,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]
-        pub fn #alloc_fn_name #generic_params (&self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
+        pub fn #alloc_fn_name #generic_params (&mut self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
             Box::new_in(self.#fn_name(#(#args),*), self.allocator)
         }
     }
@@ -591,7 +593,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params(&self, #(#fn_params),*) -> #enum_ty #where_clause {
+        pub fn #fn_name #generic_params(&mut self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
         }
     }
@@ -677,6 +679,247 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
         ///
         /// ## Parameters
         #(#lines)*
+    }
+}
+
+fn generate_stats_for_struct(struct_def: &StructDef) -> TokenStream {
+    let (nodes, scopes, symbols, references) = estimate_stats_for_ast_node(struct_def);
+
+    let nodes = if nodes > 0 {
+        quote! { self.nodes += #nodes; }
+    } else {
+        quote! {}
+    };
+    let scopes = if scopes > 0 {
+        quote! { self.scopes += #scopes; }
+    } else {
+        quote! {}
+    };
+    let symbols = if symbols > 0 {
+        quote! { self.symbols += #symbols; }
+    } else {
+        quote! {}
+    };
+    let references = if references > 0 {
+        quote! { self.references += #references; }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        #nodes
+        #scopes
+        #symbols
+        #references
+    }
+}
+
+/// Returns estimated (nodes, scopes, symbols, references) for an AST node.
+fn estimate_stats_for_ast_node(struct_def: &StructDef) -> (u32, u32, u32, u32) {
+    match struct_def.name() {
+        // Types with enter_node only (no scope, no symbols, no references)
+        "IdentifierName"
+        | "LabelIdentifier"
+        | "ThisExpression"
+        | "ArrayExpression"
+        | "Elision"
+        | "ObjectExpression"
+        | "ObjectProperty"
+        | "TemplateLiteral"
+        | "TaggedTemplateExpression"
+        | "TemplateElement"
+        | "ComputedMemberExpression"
+        | "StaticMemberExpression"
+        | "PrivateFieldExpression"
+        | "CallExpression"
+        | "NewExpression"
+        | "MetaProperty"
+        | "SpreadElement"
+        | "UpdateExpression"
+        | "UnaryExpression"
+        | "BinaryExpression"
+        | "PrivateInExpression"
+        | "LogicalExpression"
+        | "ConditionalExpression"
+        | "AssignmentExpression"
+        | "ArrayAssignmentTarget"
+        | "ObjectAssignmentTarget"
+        | "AssignmentTargetRest"
+        | "AssignmentTargetWithDefault"
+        | "AssignmentTargetPropertyIdentifier"
+        | "AssignmentTargetPropertyProperty"
+        | "SequenceExpression"
+        | "Super"
+        | "AwaitExpression"
+        | "ChainExpression"
+        | "ParenthesizedExpression"
+        | "Directive"
+        | "Hashbang"
+        | "VariableDeclaration"
+        | "VariableDeclarator"
+        | "EmptyStatement"
+        | "ExpressionStatement"
+        | "IfStatement"
+        | "DoWhileStatement"
+        | "WhileStatement"
+        | "ContinueStatement"
+        | "BreakStatement"
+        | "ReturnStatement"
+        | "SwitchCase"
+        | "LabeledStatement"
+        | "ThrowStatement"
+        | "TryStatement"
+        | "CatchParameter"
+        | "DebuggerStatement"
+        | "AssignmentPattern"
+        | "ObjectPattern"
+        | "BindingProperty"
+        | "ArrayPattern"
+        | "BindingRestElement"
+        | "FormalParameters"
+        | "FormalParameter"
+        | "FormalParameterRest"
+        | "FunctionBody"
+        | "YieldExpression"
+        | "ClassBody"
+        | "MethodDefinition"
+        | "PropertyDefinition"
+        | "PrivateIdentifier"
+        | "AccessorProperty"
+        | "ImportExpression"
+        | "ImportDeclaration"
+        | "ImportDefaultSpecifier"
+        | "ImportNamespaceSpecifier"
+        | "WithClause"
+        | "ImportAttribute"
+        | "ExportNamedDeclaration"
+        | "ExportDefaultDeclaration"
+        | "ExportAllDeclaration"
+        | "V8IntrinsicExpression"
+        | "BooleanLiteral"
+        | "NullLiteral"
+        | "NumericLiteral"
+        | "StringLiteral"
+        | "BigIntLiteral"
+        | "RegExpLiteral"
+        | "JSXElement"
+        | "JSXOpeningElement"
+        | "JSXClosingElement"
+        | "JSXFragment"
+        | "JSXOpeningFragment"
+        | "JSXClosingFragment"
+        | "JSXNamespacedName"
+        | "JSXMemberExpression"
+        | "JSXExpressionContainer"
+        | "JSXEmptyExpression"
+        | "JSXAttribute"
+        | "JSXSpreadAttribute"
+        | "JSXIdentifier"
+        | "JSXSpreadChild"
+        | "JSXText"
+        | "TSThisParameter"
+        | "TSEnumBody"
+        | "TSTypeAnnotation"
+        | "TSLiteralType"
+        | "TSUnionType"
+        | "TSIntersectionType"
+        | "TSParenthesizedType"
+        | "TSTypeOperator"
+        | "TSArrayType"
+        | "TSIndexedAccessType"
+        | "TSTupleType"
+        | "TSNamedTupleMember"
+        | "TSOptionalType"
+        | "TSRestType"
+        | "TSAnyKeyword"
+        | "TSStringKeyword"
+        | "TSBooleanKeyword"
+        | "TSNumberKeyword"
+        | "TSNeverKeyword"
+        | "TSIntrinsicKeyword"
+        | "TSUnknownKeyword"
+        | "TSNullKeyword"
+        | "TSUndefinedKeyword"
+        | "TSVoidKeyword"
+        | "TSSymbolKeyword"
+        | "TSThisType"
+        | "TSObjectKeyword"
+        | "TSBigIntKeyword"
+        | "TSTypeReference"
+        | "TSQualifiedName"
+        | "TSTypeParameterInstantiation"
+        | "TSTypeParameter"
+        | "TSTypeParameterDeclaration"
+        | "TSClassImplements"
+        | "TSInterfaceBody"
+        | "TSPropertySignature"
+        | "TSIndexSignature"
+        | "TSIndexSignatureName"
+        | "TSInterfaceHeritage"
+        | "TSTypePredicate"
+        | "TSModuleBlock"
+        | "TSTypeLiteral"
+        | "TSInferType"
+        | "TSTypeQuery"
+        | "TSImportType"
+        | "TSImportTypeQualifiedName"
+        | "TSTemplateLiteralType"
+        | "TSAsExpression"
+        | "TSSatisfiesExpression"
+        | "TSTypeAssertion"
+        | "TSImportEqualsDeclaration"
+        | "TSExternalModuleReference"
+        | "TSNonNullExpression"
+        | "Decorator"
+        | "TSExportAssignment"
+        | "TSNamespaceExportDeclaration"
+        | "TSInstantiationExpression"
+        | "JSDocNullableType"
+        | "JSDocNonNullableType"
+        | "JSDocUnknownType" => (1, 0, 0, 0),
+
+        // Types with enter_node + enter_scope
+        "Program"
+        | "BlockStatement"
+        | "ForStatement"
+        | "ForInStatement"
+        | "ForOfStatement"
+        | "WithStatement"
+        | "SwitchStatement"
+        | "CatchClause"
+        | "Function"
+        | "ArrowFunctionExpression"
+        | "Class"
+        | "StaticBlock"
+        | "TSEnumDeclaration"
+        | "TSTypeAliasDeclaration"
+        | "TSCallSignatureDeclaration"
+        | "TSMethodSignature"
+        | "TSConstructSignatureDeclaration"
+        | "TSModuleDeclaration"
+        | "TSGlobalDeclaration"
+        | "TSFunctionType"
+        | "TSConstructorType"
+        | "TSMappedType"
+        | "TSConditionalType" => (1, 1, 0, 0),
+
+        // TSInterfaceDeclaration: extra nodes to account for TSInterfaceHeritage
+        // which is constructed directly (not via builder) in parse_ts_interface_declaration.
+        // We overcount by 8 to cover common cases of multiple extends.
+        "TSInterfaceDeclaration" => (9, 1, 0, 0),
+
+        // IdentifierReference: enter_node + reference
+        "IdentifierReference" => (1, 0, 0, 1),
+
+        // BindingIdentifier: enter_node + symbol
+        // TSEnumMember: enter_node + symbol (binds the member name)
+        "BindingIdentifier" | "TSEnumMember" => (1, 0, 1, 0),
+
+        // ImportSpecifier/ExportSpecifier: overcount by 1 node to account for
+        // cloned ModuleExportName when there's no 'as' clause
+        "ImportSpecifier" | "ExportSpecifier" => (2, 0, 0, 0),
+
+        _ => (0, 0, 0, 0),
     }
 }
 

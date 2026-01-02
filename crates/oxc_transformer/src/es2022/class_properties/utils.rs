@@ -13,33 +13,25 @@ use crate::context::TraverseCtx;
 pub(super) fn create_variable_declaration<'a>(
     binding: &BoundIdentifier<'a>,
     init: Expression<'a>,
-    ctx: &TraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) -> Statement<'a> {
     let kind = VariableDeclarationKind::Var;
-    let declarator = ctx.ast.variable_declarator(
-        SPAN,
-        kind,
-        binding.create_binding_pattern(ctx),
-        NONE,
-        Some(init),
-        false,
-    );
-    Statement::from(ctx.ast.declaration_variable(SPAN, kind, ctx.ast.vec1(declarator), false))
+    let pattern = binding.create_binding_pattern(ctx);
+    let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, Some(init), false);
+    let declarators = ctx.ast.vec1(declarator);
+    Statement::from(ctx.ast.declaration_variable(SPAN, kind, declarators, false))
 }
 
-/// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.
-pub(super) fn exprs_into_stmts<'a, E>(
-    exprs: E,
-    ctx: &TraverseCtx<'a>,
-) -> impl Iterator<Item = Statement<'a>>
+/// Convert an iterator of `Expression`s into a Vec of `Statement::ExpressionStatement`s.
+pub(super) fn exprs_into_stmts<'a, E>(exprs: E, ctx: &mut TraverseCtx<'a>) -> Vec<Statement<'a>>
 where
     E: IntoIterator<Item = Expression<'a>>,
 {
-    exprs.into_iter().map(|expr| ctx.ast.statement_expression(SPAN, expr))
+    exprs.into_iter().map(|expr| ctx.ast.statement_expression(SPAN, expr)).collect()
 }
 
 /// Create `IdentifierName` for `_`.
-pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
+pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> IdentifierName<'a> {
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
 

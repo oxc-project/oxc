@@ -1,5 +1,3 @@
-use std::iter;
-
 use crate::{CompressOptionsUnused, ctx::Ctx};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
@@ -155,11 +153,13 @@ impl<'a> PeepholeOptimizations {
                                     return false;
                                 }
 
+                                let left = new_left_hand_expr.take_in(&ctx.ast);
+                                let right = logical_right.take_in(&ctx.ast);
                                 *e = ctx.ast.expression_logical(
                                     *logical_span,
-                                    new_left_hand_expr.take_in(&ctx.ast),
+                                    left,
                                     LogicalOperator::Coalesce,
-                                    logical_right.take_in(&ctx.ast),
+                                    right,
                                 );
                                 ctx.state.changed = true;
                                 return false;
@@ -267,16 +267,16 @@ impl<'a> PeepholeOptimizations {
                     // flush pending to string required expressions
                     let expressions =
                         ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-                    let mut quasis = ctx.ast.vec_from_iter(
-                        iter::repeat_with(|| {
-                            ctx.ast.template_element(
-                                e.span(),
-                                TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
-                                false,
-                            )
-                        })
-                        .take(expressions.len() + 1),
-                    );
+                    let count = expressions.len() + 1;
+                    let span = e.span();
+                    let mut quasis = ctx.ast.vec_with_capacity(count);
+                    for _ in 0..count {
+                        quasis.push(ctx.ast.template_element(
+                            span,
+                            TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                            false,
+                        ));
+                    }
                     quasis
                         .last_mut()
                         .expect("template literal must have at least one quasi")
@@ -293,16 +293,15 @@ impl<'a> PeepholeOptimizations {
 
         if !pending_to_string_required_exprs.is_empty() {
             let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-            let mut quasis = ctx.ast.vec_from_iter(
-                iter::repeat_with(|| {
-                    ctx.ast.template_element(
-                        temp_lit.span,
-                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
-                        false,
-                    )
-                })
-                .take(expressions.len() + 1),
-            );
+            let count = expressions.len() + 1;
+            let mut quasis = ctx.ast.vec_with_capacity(count);
+            for _ in 0..count {
+                quasis.push(ctx.ast.template_element(
+                    temp_lit.span,
+                    TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                    false,
+                ));
+            }
             quasis.last_mut().expect("template literal must have at least one quasi").tail = true;
             transformed_elements.push(ctx.ast.expression_template_literal(
                 temp_lit.span,
@@ -470,13 +469,10 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        *e = ctx.ast.expression_sequence(
-                            binary_expr.span,
-                            ctx.ast.vec_from_array([
-                                binary_expr.left.take_in(&ctx.ast),
-                                binary_expr.right.take_in(&ctx.ast),
-                            ]),
-                        );
+                        let left = binary_expr.left.take_in(&ctx.ast);
+                        let right = binary_expr.right.take_in(&ctx.ast);
+                        let vec = ctx.ast.vec_from_array([left, right]);
+                        *e = ctx.ast.expression_sequence(binary_expr.span, vec);
                         ctx.state.changed = true;
                         false
                     }
@@ -572,20 +568,22 @@ impl<'a> PeepholeOptimizations {
         args: &mut Vec<'a, Argument<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Vec<'a, Expression<'a>> {
-        let exprs: std::vec::Vec<_> = args
-            .drain(..)
-            .filter_map(|arg| {
-                let mut expr = match arg {
-                    Argument::SpreadElement(e) => ctx.ast.expression_array(
-                        e.span,
-                        ctx.ast.vec1(ArrayExpressionElement::SpreadElement(e)),
-                    ),
-                    match_expression!(Argument) => arg.into_expression(),
-                };
-                (!Self::remove_unused_expression(&mut expr, ctx)).then_some(expr)
-            })
-            .collect();
-        ctx.ast.vec_from_iter(exprs)
+        let mut result = ctx.ast.vec();
+        for arg in args.drain(..) {
+            let mut expr = match arg {
+                Argument::SpreadElement(e) => {
+                    let span = e.span;
+                    let spread = ArrayExpressionElement::SpreadElement(e);
+                    let vec = ctx.ast.vec1(spread);
+                    ctx.ast.expression_array(span, vec)
+                }
+                match_expression!(Argument) => arg.into_expression(),
+            };
+            if !Self::remove_unused_expression(&mut expr, ctx) {
+                result.push(expr);
+            }
+        }
+        result
     }
 
     pub fn remove_unused_assignment_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {

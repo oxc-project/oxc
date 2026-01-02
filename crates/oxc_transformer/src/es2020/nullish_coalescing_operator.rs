@@ -162,17 +162,17 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 false,
                 false,
             );
+            let items = ctx.ast.vec1(param);
             let params = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
-                ctx.ast.vec1(param),
+                items,
                 NONE,
             );
-            let body = ctx.ast.function_body(
-                SPAN,
-                ctx.ast.vec(),
-                ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
-            );
+            let directives = ctx.ast.vec();
+            let stmt = ctx.ast.statement_expression(SPAN, new_expr);
+            let stmts = ctx.ast.vec1(stmt);
+            let body = ctx.ast.function_body(SPAN, directives, stmts);
             let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
                 SPAN,
                 true,
@@ -186,7 +186,8 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 false,
             );
             // `(x) => x;` -> `((x) => x)();`
-            new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
+            let arguments = ctx.ast.vec();
+            new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, arguments, false);
         } else {
             self.ctx.var_declarations.insert_var(&binding, ctx);
         }
@@ -221,12 +222,13 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
         reference2: Expression<'a>,
         default: Expression<'a>,
         span: Span,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);
         let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(SPAN, reference1, op, ctx.ast.void_0(SPAN));
+        let void_0 = ctx.ast.void_0(SPAN);
+        let right = ctx.ast.expression_binary(SPAN, reference1, op, void_0);
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 
         ctx.ast.expression_conditional(span, test, reference2, default)

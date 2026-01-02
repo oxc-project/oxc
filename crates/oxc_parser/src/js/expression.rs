@@ -481,8 +481,9 @@ impl<'a> ParserImpl<'a> {
     /// Elision :
     ///     ,
     ///    Elision ,
-    pub(crate) fn parse_elision(&self) -> ArrayExpressionElement<'a> {
-        self.ast.array_expression_element_elision(self.cur_token().span())
+    pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
+        let span = self.cur_token().span();
+        self.ast.array_expression_element_elision(span)
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
@@ -700,7 +701,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
+    fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
         match expr {
             match_member_expression!(Expression) => {
                 let member_expr = expr.into_member_expression();

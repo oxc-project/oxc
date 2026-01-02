@@ -49,7 +49,7 @@ pub struct FunctionReturnType<'a> {
 
 impl<'a> FunctionReturnType<'a> {
     pub fn infer(
-        transformer: &IsolatedDeclarations<'a>,
+        transformer: &mut IsolatedDeclarations<'a>,
         body: &FunctionBody<'a>,
     ) -> Option<TSType<'a>> {
         let mut visitor = FunctionReturnType {
@@ -113,9 +113,8 @@ impl<'a> FunctionReturnType<'a> {
                 expr_type = transformer.ast.ts_type_parenthesized_type(SPAN, expr_type);
             }
 
-            let types = transformer
-                .ast
-                .vec_from_array([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+            let undefined = transformer.ast.ts_type_undefined_keyword(SPAN);
+            let types = transformer.ast.vec_from_array([expr_type, undefined]);
             expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)

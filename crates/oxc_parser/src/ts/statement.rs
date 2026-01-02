@@ -182,14 +182,16 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters();
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
-        let extends = extends.map_or_else(
-            || self.ast.vec(),
-            |e| {
-                self.ast.vec_from_iter(e.into_iter().map(|(expression, type_parameters, span)| {
-                    TSInterfaceHeritage { span, expression, type_arguments: type_parameters }
-                }))
-            },
-        );
+        let extends: std::vec::Vec<TSInterfaceHeritage<'a>> = match extends {
+            Some(e) => e
+                .into_iter()
+                .map(|(expression, type_parameters, span)| {
+                    self.ast.ts_interface_heritage(span, expression, type_parameters)
+                })
+                .collect(),
+            None => std::vec::Vec::new(),
+        };
+        let extends = self.ast.vec_from_iter(extends);
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,

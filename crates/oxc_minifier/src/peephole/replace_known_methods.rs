@@ -66,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         arguments: &mut Arguments<'a>,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
             return None;
@@ -82,20 +82,20 @@ impl<'a> PeepholeOptimizations {
         let mut first_arg = arguments.pop().expect("checked len above");
         let first_arg = first_arg.to_expression_mut(); // checked above
 
-        let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
-            if expr.value_type(ctx).is_number() {
-                expr.take_in(&ctx.ast)
-            } else {
-                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(&ctx.ast))
-            }
+        let second_arg_expr = if second_arg.value_type(ctx).is_number() {
+            second_arg.take_in(&ctx.ast)
+        } else {
+            let arg = second_arg.take_in(&ctx.ast);
+            ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, arg)
         };
 
+        let first_arg_expr = first_arg.take_in(&ctx.ast);
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(&ctx.ast),
+            first_arg_expr,
             BinaryOperator::Exponential,
-            wrap_with_unary_plus_if_needed(second_arg),
+            second_arg_expr,
         ))
     }
 
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         arguments: &mut Arguments<'a>,
         name: &str,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !Self::validate_global_reference(object, "Array", ctx) {
             return None;
@@ -112,10 +112,8 @@ impl<'a> PeepholeOptimizations {
         if name != "of" {
             return None;
         }
-        Some(ctx.ast.expression_array(
-            span,
-            ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
-        ))
+        let vec = ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from));
+        Some(ctx.ast.expression_array(span, vec))
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
@@ -188,15 +186,11 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        *node = ctx.ast.expression_call(
-            original_span,
-            new_root_callee.take_in(&ctx.ast),
-            NONE,
-            ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(&ctx.ast)),
-            ),
-            false,
+        let callee = new_root_callee.take_in(&ctx.ast);
+        let args = ctx.ast.vec_from_iter(
+            collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(&ctx.ast)),
         );
+        *node = ctx.ast.expression_call(original_span, callee, NONE, args, false);
         ctx.state.changed = true;
     }
 
@@ -206,7 +200,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -256,13 +250,9 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() {
                     Some(object.take_in(&ctx.ast))
                 } else if can_merge_until.is_some() {
-                    Some(ctx.ast.expression_call(
-                        span,
-                        callee.take_in(&ctx.ast),
-                        NONE,
-                        args.take_in(&ctx.ast),
-                        false,
-                    ))
+                    let callee_expr = callee.take_in(&ctx.ast);
+                    let arguments = args.take_in(&ctx.ast);
+                    Some(ctx.ast.expression_call(span, callee_expr, NONE, arguments, false))
                 } else {
                     None
                 }
@@ -317,24 +307,20 @@ impl<'a> PeepholeOptimizations {
 
                 if expressions.is_empty() {
                     debug_assert_eq!(quasi_strs.len(), 1);
-                    return Some(ctx.ast.expression_string_literal(
-                        span,
-                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
-                        None,
-                    ));
+                    let atom = ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap());
+                    return Some(ctx.ast.expression_string_literal(span, atom, None));
                 }
 
-                let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
+                let mut quasis = ctx.ast.vec_with_capacity(quasi_strs.len());
+                for s in quasi_strs {
                     let cooked = ctx.ast.atom_from_cow(&s);
-                    ctx.ast.template_element(
+                    let raw = ctx.ast.atom(&Self::escape_string_for_template_literal(&s));
+                    quasis.push(ctx.ast.template_element(
                         SPAN,
-                        TemplateElementValue {
-                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
-                            cooked: Some(cooked),
-                        },
+                        TemplateElementValue { raw, cooked: Some(cooked) },
                         false,
-                    )
-                }));
+                    ));
+                }
                 if let Some(last_quasi) = quasis.last_mut() {
                     last_quasi.tail = true;
                 }
@@ -483,49 +469,61 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_number_constants(
         name: &str,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let num = |span: Span, n: f64| {
-            ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
-        };
-        // [neg] base ** exponent [op] a
-        let pow_with_expr =
-            |span: Span, base: f64, exponent: f64, op: BinaryOperator, a: f64| -> Expression<'a> {
-                ctx.ast.expression_binary(
-                    span,
-                    ctx.ast.expression_binary(
-                        SPAN,
-                        num(SPAN, base),
-                        BinaryOperator::Exponential,
-                        num(SPAN, exponent),
-                    ),
-                    op,
-                    num(SPAN, a),
-                )
-            };
-
         Some(match name {
-            "POSITIVE_INFINITY" => num(span, f64::INFINITY),
-            "NEGATIVE_INFINITY" => num(span, f64::NEG_INFINITY),
-            "NaN" => num(span, f64::NAN),
+            "POSITIVE_INFINITY" => {
+                ctx.ast.expression_numeric_literal(span, f64::INFINITY, None, NumberBase::Decimal)
+            }
+            "NEGATIVE_INFINITY" => ctx.ast.expression_numeric_literal(
+                span,
+                f64::NEG_INFINITY,
+                None,
+                NumberBase::Decimal,
+            ),
+            "NaN" => ctx.ast.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal),
             "MAX_SAFE_INTEGER" => {
                 if ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     // 2**53 - 1
-                    pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
+                    let base =
+                        ctx.ast.expression_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal);
+                    let exp =
+                        ctx.ast.expression_numeric_literal(SPAN, 53.0, None, NumberBase::Decimal);
+                    let pow =
+                        ctx.ast.expression_binary(SPAN, base, BinaryOperator::Exponential, exp);
+                    let one =
+                        ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal);
+                    ctx.ast.expression_binary(span, pow, BinaryOperator::Subtraction, one)
                 } else {
-                    num(span, 2.0f64.powi(53) - 1.0)
+                    ctx.ast.expression_numeric_literal(
+                        span,
+                        2.0f64.powi(53) - 1.0,
+                        None,
+                        NumberBase::Decimal,
+                    )
                 }
             }
             "MIN_SAFE_INTEGER" => {
                 if ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     // -(2**53 - 1)
-                    ctx.ast.expression_unary(
-                        span,
-                        UnaryOperator::UnaryNegation,
-                        pow_with_expr(SPAN, 2.0, 53.0, BinaryOperator::Subtraction, 1.0),
-                    )
+                    let base =
+                        ctx.ast.expression_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal);
+                    let exp =
+                        ctx.ast.expression_numeric_literal(SPAN, 53.0, None, NumberBase::Decimal);
+                    let pow =
+                        ctx.ast.expression_binary(SPAN, base, BinaryOperator::Exponential, exp);
+                    let one =
+                        ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal);
+                    let inner =
+                        ctx.ast.expression_binary(SPAN, pow, BinaryOperator::Subtraction, one);
+                    ctx.ast.expression_unary(span, UnaryOperator::UnaryNegation, inner)
                 } else {
-                    num(span, -(2.0f64.powi(53) - 1.0))
+                    ctx.ast.expression_numeric_literal(
+                        span,
+                        -(2.0f64.powi(53) - 1.0),
+                        None,
+                        NumberBase::Decimal,
+                    )
                 }
             }
             "EPSILON" => {
@@ -533,12 +531,10 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
                 // 2**-52
-                ctx.ast.expression_binary(
-                    span,
-                    num(SPAN, 2.0),
-                    BinaryOperator::Exponential,
-                    num(SPAN, -52.0),
-                )
+                let base = ctx.ast.expression_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal);
+                let exp =
+                    ctx.ast.expression_numeric_literal(SPAN, -52.0, None, NumberBase::Decimal);
+                ctx.ast.expression_binary(span, base, BinaryOperator::Exponential, exp)
             }
             _ => return None,
         })
@@ -549,7 +545,7 @@ impl<'a> PeepholeOptimizations {
         object: &mut Expression<'a>,
         property: u32,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if object.may_have_side_effects(ctx) {
             return None;
@@ -588,7 +584,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: &Ctx<'a, '_>) -> bool {
+    fn validate_global_reference(
+        expr: &Expression<'a>,
+        target: &str,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }

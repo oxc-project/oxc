@@ -624,7 +624,7 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let mut ast_builder = AstBuilder::new(&alloc);
 
         let str = match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
@@ -641,11 +641,8 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_expression(&ast_builder.expression_string_literal(
-            Span::default(),
-            str.as_str(),
-            None,
-        ));
+        let expr = ast_builder.expression_string_literal(Span::default(), str.as_str(), None);
+        fix.print_expression(&expr);
 
         fixer.replace(container.span, fix.into_source_text())
     });
@@ -669,13 +666,10 @@ fn report_missing_curly_for_string_attribute_value(
         let mut replace = fixer.codegen().with_options(CodegenOptions::default());
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let mut ast_builder = AstBuilder::new(&alloc);
 
-        replace.print_expression(&ast_builder.expression_string_literal(
-            Span::default(),
-            string_value,
-            None,
-        ));
+        let expr = ast_builder.expression_string_literal(Span::default(), string_value, None);
+        replace.print_expression(&expr);
 
         let mut fix = fixer.new_fix_with_capacity(3);
         fix.push(fixer.insert_text_before(&span, "{"));
@@ -688,7 +682,7 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(span), |fixer| {
         let fixer = fixer.for_multifix();
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let mut ast_builder = AstBuilder::new(&alloc);
         let line_matches =
             string_value.match_indices('\n').map(|(i, _)| i).collect::<std::vec::Vec<_>>();
         let fix_contexts = if line_matches.is_empty() {
@@ -712,11 +706,8 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
         let mut fix = fixer.new_fix_with_capacity(fix_contexts.len() * 3);
         for (span_from_first_char, text) in fix_contexts {
             let mut replace = fixer.codegen().with_options(CodegenOptions::default());
-            replace.print_expression(&ast_builder.expression_string_literal(
-                Span::default(),
-                text,
-                None,
-            ));
+            let expr = ast_builder.expression_string_literal(Span::default(), text, None);
+            replace.print_expression(&expr);
             fix.push(fixer.replace(span_from_first_char, replace.into_source_text()));
             fix.push(fixer.insert_text_before(&span_from_first_char, "{"));
             fix.push(fixer.insert_text_after(&span_from_first_char, "}"));

@@ -145,7 +145,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// [A, B, C] -> [[A, B, C]]
     fn transform_super_call_expression_arguments(
         arguments: &mut ArenaVec<'a, Argument<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let elements = arguments.drain(..).map(ArrayExpressionElement::from);
         let elements = ctx.ast.vec_from_iter(elements);
@@ -577,17 +577,13 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let (class, receiver) = self.get_class_binding_arguments(ctx);
+        let one = ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal);
         let arguments = ctx.ast.vec_from_array([
             class,
             Argument::from(property),
             Argument::from(value),
             receiver,
-            Argument::from(ctx.ast.expression_numeric_literal(
-                SPAN,
-                1.0,
-                None,
-                NumberBase::Decimal,
-            )),
+            Argument::from(one),
         ]);
         self.class_properties.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
     }

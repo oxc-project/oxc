@@ -151,8 +151,8 @@ impl<'a> TypeScriptModule<'a, '_> {
                 )
             }
         };
-        let decls =
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, NONE, Some(init), false));
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, binding, NONE, Some(init), false);
+        let decls = ctx.ast.vec1(declarator);
 
         Some(ctx.ast.declaration_variable(SPAN, kind, decls, false))
     }

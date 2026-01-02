@@ -76,11 +76,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
                     );
 
                     // Create `import * as _ns from "mod"`
+                    let binding_identifier = binding.create_binding_identifier(ctx);
                     let import_specifier = ImportDeclarationSpecifier::ImportNamespaceSpecifier(
-                        ctx.ast.alloc_import_namespace_specifier(
-                            SPAN,
-                            binding.create_binding_identifier(ctx),
-                        ),
+                        ctx.ast.alloc_import_namespace_specifier(SPAN, binding_identifier),
                     );
 
                     let import_decl = ctx.ast.alloc_import_declaration(

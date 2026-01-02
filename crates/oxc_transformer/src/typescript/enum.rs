@@ -79,7 +79,7 @@ impl<'a> TypeScriptEnum<'a> {
             return None;
         }
 
-        let ast = ctx.ast.clone();
+        let mut ast = ctx.ast.clone();
 
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
@@ -212,7 +212,7 @@ impl<'a> TypeScriptEnum<'a> {
         param_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let ast = ctx.ast.clone();
+        let mut ast = ctx.ast.clone();
 
         let mut statements = ast.vec();
 
@@ -319,7 +319,7 @@ impl<'a> TypeScriptEnum<'a> {
         statements
     }
 
-    fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn get_number_literal_expression(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         ctx.ast.expression_numeric_literal(SPAN, value, None, NumberBase::Decimal)
     }
 
@@ -563,7 +563,7 @@ struct IdentifierReferenceRename<'a, 'ctx, 'members> {
     enum_name: Atom<'a>,
     previous_enum_members: &'members PrevMembers<'a>,
     scope_stack: NonEmptyStack<ScopeId>,
-    ctx: &'ctx TraverseCtx<'a>,
+    ctx: &'ctx mut TraverseCtx<'a>,
 }
 
 impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
@@ -571,7 +571,7 @@ impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
         enum_name: Atom<'a>,
         enum_scope_id: ScopeId,
         previous_enum_members: &'members PrevMembers<'a>,
-        ctx: &'ctx TraverseCtx<'a>,
+        ctx: &'ctx mut TraverseCtx<'a>,
     ) -> Self {
         IdentifierReferenceRename {
             enum_name,

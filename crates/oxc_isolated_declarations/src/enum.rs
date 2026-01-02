@@ -18,7 +18,10 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
+    pub fn transform_ts_enum_declaration(
+        &mut self,
+        decl: &TSEnumDeclaration<'a>,
+    ) -> Declaration<'a> {
         let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
@@ -45,10 +48,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 prev_members.insert(member_name, value.clone());
             }
 
-            let member = self.ast.ts_enum_member(
-                member.span,
-                member.id.clone_in(self.ast.allocator),
-                value.map(|v| match v {
+            let initializer = if let Some(v) = value {
+                Some(match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
 
@@ -74,16 +75,25 @@ impl<'a> IsolatedDeclarations<'a> {
                     ConstantValue::String(v) => {
                         self.ast.expression_string_literal(SPAN, self.ast.atom(&v), None)
                     }
-                }),
+                })
+            } else {
+                None
+            };
+
+            let member = self.ast.ts_enum_member(
+                member.span,
+                member.id.clone_in(self.ast.allocator),
+                initializer,
             );
 
             members.push(member);
         }
 
+        let body = self.ast.ts_enum_body(decl.body.span, members);
         self.ast.declaration_ts_enum(
             decl.span,
             decl.id.clone_in(self.ast.allocator),
-            self.ast.ts_enum_body(decl.body.span, members),
+            body,
             decl.r#const,
             self.is_declare(),
         )

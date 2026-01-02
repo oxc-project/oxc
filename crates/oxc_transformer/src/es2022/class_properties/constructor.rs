@@ -234,8 +234,8 @@ impl<'a> ClassProperties<'a, '_> {
         if has_super_class {
             let args_binding =
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
-            let rest_element =
-                ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
+            let pattern = args_binding.create_binding_pattern(ctx);
+            let rest_element = ctx.ast.binding_rest_element(SPAN, pattern);
             params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
             let super_call = create_super_call(&args_binding, ctx);
             stmts.push(ctx.ast.statement_expression(SPAN, super_call));
@@ -297,48 +297,53 @@ impl<'a> ClassProperties<'a, '_> {
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
         let super_call = create_super_call(&args_binding, ctx);
         let this_expr = ctx.ast.expression_this(SPAN);
-        let body_exprs = ctx.ast.expression_sequence(
-            SPAN,
-            ctx.ast.vec_from_iter(iter::once(super_call).chain(inits).chain(iter::once(this_expr))),
-        );
-        let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
+        let exprs_vec =
+            ctx.ast.vec_from_iter(iter::once(super_call).chain(inits).chain(iter::once(this_expr)));
+        let body_exprs = ctx.ast.expression_sequence(SPAN, exprs_vec);
+        let body_stmt = ctx.ast.statement_expression(SPAN, body_exprs);
+        let body = ctx.ast.vec1(body_stmt);
 
         // `(..._args) => (super(..._args), <inits>, this)`
+        let pattern = args_binding.create_binding_pattern(ctx);
+        let rest_element = ctx.ast.binding_rest_element(SPAN, pattern);
+        let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
+        let params_vec = ctx.ast.vec();
+        let params = ctx.ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params_vec,
+            Some(rest),
+        );
+        let directives = ctx.ast.vec();
+        let func_body = ctx.ast.alloc_function_body(SPAN, directives, body);
         let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
             SPAN,
             true,
             false,
             NONE,
-            {
-                let rest_element =
-                    ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-                let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
-                ctx.ast.alloc_formal_parameters(
-                    SPAN,
-                    FormalParameterKind::ArrowFormalParameters,
-                    ctx.ast.vec(),
-                    Some(rest),
-                )
-            },
+            params,
             NONE,
-            ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
+            func_body,
             super_func_scope_id,
             false,
             false,
         );
 
         // `var _super = (..._args) => ( ... );`
+        let super_pattern = super_binding.create_binding_pattern(ctx);
+        let declarator = ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            super_pattern,
+            NONE,
+            Some(super_func),
+            false,
+        );
+        let declarators = ctx.ast.vec1(declarator);
         let super_func_decl = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                super_binding.create_binding_pattern(ctx),
-                NONE,
-                Some(super_func),
-                false,
-            )),
+            declarators,
             false,
         ));
 
@@ -363,14 +368,25 @@ impl<'a> ClassProperties<'a, '_> {
         let directives = if ctx.scoping().scope_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
-            ctx.ast.vec1(ctx.ast.use_strict_directive())
+            let directive = ctx.ast.use_strict_directive();
+            ctx.ast.vec1(directive)
         };
 
         // `return this;`
-        let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
+        let this_expr = ctx.ast.expression_this(SPAN);
+        let return_stmt = ctx.ast.statement_return(SPAN, Some(this_expr));
         // `<inits>; return this;`
-        let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
+        let init_stmts = exprs_into_stmts(inits, ctx);
+        let body_stmts = ctx.ast.vec_from_iter(init_stmts.into_iter().chain([return_stmt]));
         // `function() { <inits>; return this; }`
+        let params_vec = ctx.ast.vec();
+        let params = ctx.ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::FormalParameter,
+            params_vec,
+            NONE,
+        );
+        let func_body = ctx.ast.alloc_function_body(SPAN, directives, body_stmts);
         let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
@@ -380,14 +396,9 @@ impl<'a> ClassProperties<'a, '_> {
             false,
             NONE,
             NONE,
-            ctx.ast.alloc_formal_parameters(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
-                NONE,
-            ),
+            params,
             NONE,
-            Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
+            Some(func_body),
             super_func_scope_id,
             false,
             false,
@@ -576,10 +587,11 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         let ctx = &mut *self.ctx;
         let super_call = expr.take_in(&ctx.ast);
         let callee_object = super_binding.create_read_expression(ctx);
+        let ident_name = ctx.ast.identifier_name(SPAN, Atom::from("call"));
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee_object,
-            ctx.ast.identifier_name(SPAN, Atom::from("call")),
+            ident_name,
             false,
         ));
         let arguments = ctx.ast.vec1(Argument::from(super_call));

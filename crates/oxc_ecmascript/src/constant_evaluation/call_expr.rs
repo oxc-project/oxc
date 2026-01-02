@@ -28,7 +28,7 @@ use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 fn try_fold_global_functions<'a>(
     ident: &IdentifierReference<'a>,
     arguments: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     match ident.name.as_str() {
         "encodeURI" if ctx.is_global_reference(ident) => try_fold_encode_uri(arguments, ctx),
@@ -52,7 +52,7 @@ fn try_fold_global_functions<'a>(
 pub fn try_fold_known_global_methods<'a>(
     callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Expression::Identifier(ident) = callee {
         if let Some(result) = try_fold_global_functions(ident, arguments, ctx) {
@@ -101,7 +101,7 @@ fn try_fold_string_casing<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !args.is_empty() {
         return None;
@@ -132,7 +132,7 @@ fn try_fold_string_index_of<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() >= 3 {
         return None;
@@ -166,7 +166,7 @@ fn try_fold_string_index_of<'a>(
 fn try_fold_string_substring_or_slice<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() > 2 {
         return None;
@@ -203,7 +203,7 @@ fn try_fold_string_substring_or_slice<'a>(
 fn try_fold_string_char_at<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() > 1 {
         return None;
@@ -228,7 +228,7 @@ fn try_fold_string_char_at<'a>(
 fn try_fold_string_char_code_at<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     let Expression::StringLiteral(s) = object else { return None };
     let char_at_index = match args.first() {
@@ -246,7 +246,7 @@ fn try_fold_string_char_code_at<'a>(
 fn try_fold_starts_with<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    _ctx: &impl ConstantEvaluationCtx<'a>,
+    _ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() != 1 {
         return None;
@@ -260,7 +260,7 @@ fn try_fold_string_replace<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() != 2 {
         return None;
@@ -298,7 +298,7 @@ fn try_fold_string_replace<'a>(
 fn try_fold_string_from_char_code<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !ctx.is_global_expr("String", object) {
         return None;
@@ -317,7 +317,7 @@ fn try_fold_string_from_char_code<'a>(
 fn try_fold_to_string<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     match object {
         // Number.prototype.toString()
@@ -394,7 +394,7 @@ fn try_fold_number_methods<'a>(
     args: &Vec<'a, Argument<'a>>,
     object: &Expression<'a>,
     name: &str,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !ctx.is_global_expr("Number", object) {
         return None;
@@ -425,7 +425,7 @@ fn try_fold_roots<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
         return None;
@@ -449,7 +449,7 @@ fn try_fold_math_unary<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
         return None;
@@ -491,7 +491,7 @@ fn try_fold_math_variadic<'a>(
     args: &Vec<'a, Argument<'a>>,
     name: &str,
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if !ctx.is_global_expr("Math", object) {
         return None;
@@ -540,7 +540,7 @@ fn try_fold_math_variadic<'a>(
 
 fn try_fold_encode_uri<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::String(Cow::Borrowed("undefined")));
@@ -569,7 +569,7 @@ fn try_fold_encode_uri<'a>(
 
 fn try_fold_encode_uri_component<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::String(Cow::Borrowed("undefined")));
@@ -594,7 +594,7 @@ fn try_fold_encode_uri_component<'a>(
 
 fn try_fold_decode_uri<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::String(Cow::Borrowed("undefined")));
@@ -616,7 +616,7 @@ fn try_fold_decode_uri<'a>(
 
 fn try_fold_decode_uri_component<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::String(Cow::Borrowed("undefined")));
@@ -639,7 +639,7 @@ fn try_fold_decode_uri_component<'a>(
 
 fn try_fold_global_is_nan<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::Boolean(true));
@@ -655,7 +655,7 @@ fn try_fold_global_is_nan<'a>(
 
 fn try_fold_global_is_finite<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::Boolean(false));
@@ -671,7 +671,7 @@ fn try_fold_global_is_finite<'a>(
 
 fn try_fold_global_parse_float<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::Number(f64::NAN));
@@ -795,7 +795,7 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
 
 fn try_fold_global_parse_int<'a>(
     args: &Vec<'a, Argument<'a>>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
         return Some(ConstantValue::Number(f64::NAN));

@@ -84,8 +84,8 @@ impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a,
 }
 
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
-    fn ast(&self) -> &AstBuilder<'a> {
-        &self.ast
+    fn ast(&mut self) -> &mut AstBuilder<'a> {
+        &mut self.ast
     }
 }
 
@@ -117,7 +117,7 @@ impl<'a> Ctx<'a, '_> {
         ident.is_global_reference(self.0.scoping())
     }
 
-    pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+    pub fn eval_binary(&mut self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
         if e.may_have_side_effects(self) {
             None
         } else {
@@ -126,7 +126,7 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn eval_binary_operation(
-        &self,
+        &mut self,
         operator: BinaryOperator,
         left: &Expression<'a>,
         right: &Expression<'a>,
@@ -134,7 +134,7 @@ impl<'a> Ctx<'a, '_> {
         binary_operation_evaluate_value(operator, left, right, self)
     }
 
-    pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
+    pub fn value_to_expr(&mut self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
                 let number_base =
@@ -146,7 +146,8 @@ impl<'a> Ctx<'a, '_> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)
+                let atom = self.ast.atom_from_cow(&s);
+                self.ast.expression_string_literal(span, atom, None)
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),

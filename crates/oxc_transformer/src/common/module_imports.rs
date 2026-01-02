@@ -166,9 +166,16 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    fn insert_import_statements(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_import_statements(
+        &self,
+        transform_ctx: &TransformCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut imports = self.imports.borrow_mut();
-        let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
+        let mut stmts = Vec::with_capacity(imports.len());
+        for (source, names) in imports.drain(..) {
+            stmts.push(Self::get_import(source, names, ctx));
+        }
         transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
@@ -183,37 +190,48 @@ impl<'a> ModuleImportsStore<'a> {
         }
 
         let require_symbol_id = ctx.scoping().get_root_binding("require");
-        let stmts = imports
-            .drain(..)
-            .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
+        let mut stmts = Vec::with_capacity(imports.len());
+        for (source, names) in imports.drain(..) {
+            stmts.push(Self::get_require(source, names, require_symbol_id, ctx));
+        }
         transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
     fn get_import(
         source: Atom<'a>,
         names: Vec<Import<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
-            Import::Named(import) => {
-                ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
-                    SPAN,
-                    ModuleExportName::IdentifierName(
+        let mut specifiers = ctx.ast.vec_with_capacity(names.len());
+        for import in names {
+            let specifier = match import {
+                Import::Named(import) => {
+                    let module_export_name = ModuleExportName::IdentifierName(
                         ctx.ast.identifier_name(SPAN, import.imported),
-                    ),
-                    import.local.create_binding_identifier(ctx),
-                    ImportOrExportKind::Value,
-                ))
-            }
-            Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
-            ),
-        }));
+                    );
+                    let local = import.local.create_binding_identifier(ctx);
+                    ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
+                        SPAN,
+                        module_export_name,
+                        local,
+                        ImportOrExportKind::Value,
+                    ))
+                }
+                Import::Default(local) => {
+                    let local = local.create_binding_identifier(ctx);
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(
+                        ctx.ast.alloc_import_default_specifier(SPAN, local),
+                    )
+                }
+            };
+            specifiers.push(specifier);
+        }
 
+        let string_literal = ctx.ast.string_literal(SPAN, source, None);
         Statement::from(ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            ctx.ast.string_literal(SPAN, source, None),
+            string_literal,
             None,
             NONE,
             ImportOrExportKind::Value,
