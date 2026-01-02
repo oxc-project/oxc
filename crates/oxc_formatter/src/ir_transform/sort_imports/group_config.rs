@@ -45,20 +45,20 @@ impl GroupName {
         // The trade-off is that this approach may tolerate invalid input,
         // as unmatched or malformed segments are not strictly rejected.
         let mut modifiers = Vec::with_capacity(ImportModifier::ALL_MODIFIERS.len());
-        for m in ImportModifier::ALL_MODIFIERS.iter() {
+        for m in ImportModifier::ALL_MODIFIERS {
             if s.contains(m.name()) {
                 modifiers.push(*m);
             }
         }
 
-        Some(Self { modifiers, selector })
+        Some(Self { selector, modifiers })
     }
 
     /// check if it represents a possible group name of the given import.
     pub fn is_a_possible_name_of(
         &self,
-        selectors: &Vec<ImportSelector>,
-        modifiers: &Vec<ImportModifier>,
+        selectors: &[ImportSelector],
+        modifiers: &[ImportModifier],
     ) -> bool {
         selectors.contains(&self.selector) && self.modifiers.iter().all(|m| modifiers.contains(m))
     }
@@ -66,18 +66,7 @@ impl GroupName {
 
 impl PartialOrd for GroupName {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.selector.partial_cmp(&other.selector) {
-            Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
-        }
-        let self_modifier_cnt = self.modifiers.len();
-        let other_modifier_cnt = self.modifiers.len();
-        if self_modifier_cnt > other_modifier_cnt {
-            return Some(Ordering::Less);
-        } else if self_modifier_cnt < other_modifier_cnt {
-            return Some(Ordering::Greater);
-        }
-        self.modifiers.partial_cmp(&other.modifiers)
+        Some(self.cmp(other))
     }
 }
 

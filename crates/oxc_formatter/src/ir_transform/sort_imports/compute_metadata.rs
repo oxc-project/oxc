@@ -184,7 +184,7 @@ fn is_builtin(source: &str) -> bool {
     source.starts_with("node:") || source.starts_with("bun:") || NODE_BUILTINS.contains(source)
 }
 
-#[derive(Debug, PartialEq, Eq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 enum ImportPathKind {
     /// Node.js builtin module (e.g., `node:fs`, `fs`)
     Builtin,
