@@ -17,8 +17,8 @@ fn prefer_importing_vitest_globals_diagnostic(span: Span, globals: &str) -> OxcD
         .with_label(span)
 }
 
-/// List of vitest globals that should be imported
-const VITEST_GLOBALS: [&str; 18] = [
+/// Vitest globals that should be imported explicitly.
+const VITEST_GLOBALS: phf::Set<&'static str> = phf::phf_set![
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -30,6 +30,7 @@ const VITEST_GLOBALS: [&str; 18] = [
     "fdescribe",
     "fit",
     "it",
+    // Vitest provides a `jest` global for migration compatibility
     "jest",
     "pending",
     "test",
@@ -101,7 +102,11 @@ impl Rule for PreferImportingVitestGlobals {
         }
 
         unimported_globals.sort_by_key(|(name, _)| *name);
-        let first_span = unimported_globals.first().map_or(Span::empty(0), |(_, span)| *span);
+        // Use the first occurrence in source order for the diagnostic label
+        let first_span = unimported_globals
+            .iter()
+            .min_by_key(|(_, span)| span.start)
+            .map_or(Span::empty(0), |(_, span)| *span);
         let globals_list: Vec<&str> = unimported_globals.iter().map(|(name, _)| *name).collect();
         let globals_str = globals_list.join(", ");
 
@@ -109,10 +114,11 @@ impl Rule for PreferImportingVitestGlobals {
             prefer_importing_vitest_globals_diagnostic(first_span, &globals_str),
             |fixer| {
                 let module_record = ctx.module_record();
+                // Filter out type-only imports since they don't create runtime bindings
                 let vitest_imports: Vec<_> = module_record
                     .import_entries
                     .iter()
-                    .filter(|entry| entry.module_request.name() == "vitest")
+                    .filter(|entry| entry.module_request.name() == "vitest" && !entry.is_type)
                     .collect();
 
                 let vitest_import = vitest_imports
@@ -379,6 +385,12 @@ fn test() {
         (
             "const {\n  it,\n} = require('vitest');\ndescribe('suite', () => {});",
             "const {\n  it, describe } = require('vitest');\ndescribe('suite', () => {});",
+            None,
+        ),
+        // Type-only imports should not be modified; a new runtime import is inserted instead
+        (
+            "import type { describe } from 'vitest';\ndescribe('suite', () => {});",
+            "import { describe } from 'vitest';\nimport type { describe } from 'vitest';\ndescribe('suite', () => {});",
             None,
         ),
     ];
