@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:16]
+ 1 │ const x = 1, { describe } = require('vitest');
+   ·                ────┬───
+   ·                    ╰── Remove this global vitest import
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
