@@ -702,7 +702,7 @@ pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDiagnostic {
-    OxcDiagnostic::error("Duplicated default export").with_labels(spans)
+    ts_error("2528", "A module cannot have multiple default exports.").with_labels(spans)
 }
 
 #[cold]

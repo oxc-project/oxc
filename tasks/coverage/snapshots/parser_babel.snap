@@ -3331,7 +3331,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                    ───────────
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/duplicate-export-default/input.js:1:8]
  1 │ export default {};
    ·        ───────
@@ -3339,7 +3339,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ───────
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/duplicate-export-default-and-export-as-default/input.js:1:8]
  1 │ export default function() {};
    ·        ───────

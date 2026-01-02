@@ -25195,7 +25195,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                  ╰── It can not be redeclared here
     ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
     ╭─[test262/test/language/module-code/early-dup-export-dflt-id.js:18:8]
  17 │ var x, y;
  18 │ export default x;
@@ -25234,7 +25234,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·          ╰── It cannot be redeclared here
     ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
     ╭─[test262/test/language/module-code/early-dup-export-star-as-dflt.js:18:8]
  17 │ var x;
  18 │ export default x;
