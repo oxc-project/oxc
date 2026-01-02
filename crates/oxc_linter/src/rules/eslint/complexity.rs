@@ -134,7 +134,7 @@ declare_oxc_lint!(
     /// ```
     Complexity,
     eslint,
-    style,
+    restriction
     config = ComplexityConfig,
 );
 
