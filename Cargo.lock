@@ -1684,8 +1684,7 @@ dependencies = [
 [[package]]
 name = "oxc-miette"
 version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f02105a875f3751a0b44b4c822b01177728dd9049ae6fb419e9b04887d730ed1"
+source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#8fc3ee36b7b28eea518b043e2ec1ac1dcc9ecff3"
 dependencies = [
  "cfg-if",
  "owo-colors",
@@ -1699,8 +1698,7 @@ dependencies = [
 [[package]]
 name = "oxc-miette-derive"
 version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "003b4612827f6501183873fb0735da92157e3c7daa71c40921c7d2758fec2229"
+source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#8fc3ee36b7b28eea518b043e2ec1ac1dcc9ecff3"
 dependencies = [
  "proc-macro2",
  "quote",
