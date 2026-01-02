@@ -312,6 +312,7 @@ impl ConfigStore {
         Some(builtin_count + self.base.base.external_rules.len())
     }
 
+    // TODO: fix this to return rules based on whether type_aware is enabled
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.base.rules
     }
