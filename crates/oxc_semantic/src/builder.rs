@@ -2470,6 +2470,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_export_default_declaration_kind(&it.declaration);
         self.leave_node(kind);
     }
+
+    #[inline(always)]
+    fn visit_span(&mut self, _: &Span) {}
 }
 
 impl<'a> SemanticBuilder<'a> {
