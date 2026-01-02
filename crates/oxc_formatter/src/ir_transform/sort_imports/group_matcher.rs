@@ -28,16 +28,16 @@ pub struct GroupMatcher {
 }
 
 impl GroupMatcher {
-    pub fn new(groups: &Vec<Vec<String>>, custom_groups: &Vec<CustomGroupDefinition>) -> Self {
+    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroupDefinition]) -> Self {
         let custom_group_name_set =
-            FxHashSet::from_iter(custom_groups.iter().map(|g| g.name.clone()));
+            custom_groups.iter().map(|g| g.name.clone()).collect::<FxHashSet<_>>();
 
         let mut unknown_group_index: Option<usize> = None;
 
         let mut used_custom_group_index_map = FxHashMap::default();
         let mut predefined_groups = Vec::new();
         for (index, group_union) in groups.iter().enumerate() {
-            for group in group_union.iter() {
+            for group in group_union {
                 if group == "unknown" {
                     unknown_group_index = Some(index);
                 } else if custom_group_name_set.contains(group) {
@@ -50,7 +50,7 @@ impl GroupMatcher {
 
         let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
-        for custom_group in custom_groups.iter() {
+        for custom_group in custom_groups {
             if let Some(index) = used_custom_group_index_map.get(&custom_group.name) {
                 used_custom_groups.push((custom_group.clone(), *index));
             }
@@ -66,13 +66,13 @@ impl GroupMatcher {
     }
 
     pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
-        for (custom_group, index) in self.custom_groups.iter() {
+        for (custom_group, index) in &self.custom_groups {
             if custom_group.does_match(import_metadata) {
                 return *index;
             }
         }
 
-        for (group_name, index) in self.predefined_groups.iter() {
+        for (group_name, index) in &self.predefined_groups {
             if group_name
                 .is_a_possible_name_of(&import_metadata.selectors, &import_metadata.modifiers)
             {
@@ -98,9 +98,9 @@ impl GroupMatcher {
 
 impl CustomGroupDefinition {
     pub fn does_match(&self, import_metadata: &ImportMetadata) -> bool {
-        for rule in self.any_of.iter() {
+        for rule in &self.any_of {
             if rule.selector.as_ref().is_some_and(|s| {
-                ImportSelector::parse(&s)
+                ImportSelector::parse(s)
                     .is_some_and(|selector| !import_metadata.selectors.contains(&selector))
             }) {
                 continue;
