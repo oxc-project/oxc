@@ -224,13 +224,6 @@ impl Rule for Complexity {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum DiagnosticType {
-    ClassPropertyInitializer,
-    ClassStaticBlock,
-    Function,
-}
-
 struct ComplexityVisitor {
     variant: Variant,
     complexity: usize,
