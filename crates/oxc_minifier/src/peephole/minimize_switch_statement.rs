@@ -83,7 +83,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         // nothing removable
-        if start >= case_count - 1 {
+        if start >= end {
             return;
         }
 
@@ -404,6 +404,9 @@ mod test {
 
         test_same("switch(a){case b(): default:}");
         test("switch(a){case 2: case 1: break; default: break;}", "a;");
+        test("switch(a){case 3: b(); break; case 2: break;}", "a === 3 && b()");
+        test("switch(a){case 3: b(); case 2: break;}", "a === 3 && b()");
+        test("switch(a){case 3: b(); case 2: c(); break;}", "switch(a){case 3: b(); case 2: c();}");
         test("switch(a){case 3: b(); case 2: case 1: break;}", "a === 3 && b()");
         test("switch(a){case 3: b(); case 2: case 1: }", "a === 3 && b()");
         test("switch(a){case 3: if (b) break }", "a === 3 && b");
@@ -427,7 +430,7 @@ mod test {
         test("switch(a()) { default: {let y;} }", "a();{let y;}");
         test(
             "function f(){switch('x'){case 'x': var x = 1;break; case 'y': break; }}",
-            "function f(){switch('x'){case 'x': var x = 1;break; case 'y': }}",
+            "function f(){var x = 1;}",
         );
         test("switch(a){default: if(a) {break;}c();}", "switch(a){default: if(a) break;c();}");
         test("switch(a){case 1: if(a) {b();}c();}", "a === 1 && (a && b(), c())");
