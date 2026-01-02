@@ -13687,27 +13687,27 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × TS(2804): Duplicate identifier `#m`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticfield.js:25:10]
  24 │ var C = class {
  25 │   static #m;
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── first declared here
  26 │   #m() {}
     ·   ─┬
-    ·    ╰── It can not be redeclared here
+    ·    ╰── redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × TS(2804): Duplicate identifier `#m`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticmeth.js:25:10]
  24 │ var C = class {
  25 │   static #m() {}
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── first declared here
  26 │   #m() {}
     ·   ─┬
-    ·    ╰── It can not be redeclared here
+    ·    ╰── redeclared here
  27 │ };
     ╰────
 
@@ -32790,27 +32790,27 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × TS(2804): Duplicate identifier `#m`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticfield.js:25:10]
  24 │ class C {
  25 │   static #m;
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── first declared here
  26 │   #m() {}
     ·   ─┬
-    ·    ╰── It can not be redeclared here
+    ·    ╰── redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × TS(2804): Duplicate identifier `#m`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticmeth.js:25:10]
  24 │ class C {
  25 │   static #m() {}
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── first declared here
  26 │   #m() {}
     ·   ─┬
-    ·    ╰── It can not be redeclared here
+    ·    ╰── redeclared here
  27 │ }
     ╰────
 
@@ -34110,51 +34110,51 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Remove the trailing comma here
 
-  × Identifier `f` has already been declared
+  × TS(2804): Duplicate identifier `#f`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/private-non-static-getter-static-setter-early-error.js:17:7]
  16 │ class C {
  17 │   get #f() {}
     ·       ─┬
-    ·        ╰── `f` has already been declared here
+    ·        ╰── first declared here
  18 │   static set #f(v) {}
     ·              ─┬
-    ·               ╰── It can not be redeclared here
+    ·               ╰── redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × TS(2804): Duplicate identifier `#f`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/private-non-static-setter-static-getter-early-error.js:17:7]
  16 │ class C {
  17 │   set #f(v) {}
     ·       ─┬
-    ·        ╰── `f` has already been declared here
+    ·        ╰── first declared here
  18 │   static get #f() {}
     ·              ─┬
-    ·               ╰── It can not be redeclared here
+    ·               ╰── redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × TS(2804): Duplicate identifier `#f`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/private-static-getter-non-static-setter-early-error.js:17:14]
  16 │ class C {
  17 │   static get #f() {}
     ·              ─┬
-    ·               ╰── `f` has already been declared here
+    ·               ╰── first declared here
  18 │   set #f(v) {}
     ·       ─┬
-    ·        ╰── It can not be redeclared here
+    ·        ╰── redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × TS(2804): Duplicate identifier `#f`. Static and instance elements cannot share the same private name.
     ╭─[test262/test/language/statements/class/private-static-setter-non-static-getter-early-error.js:17:14]
  16 │ class C {
  17 │   static set #f(v) {}
     ·              ─┬
-    ·               ╰── `f` has already been declared here
+    ·               ╰── first declared here
  18 │   get #f() {}
     ·       ─┬
-    ·        ╰── It can not be redeclared here
+    ·        ╰── redeclared here
  19 │ }
     ╰────
 
