@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast_visit::Visit;
-use oxc_ast_visit::walk;
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -19,7 +18,6 @@ use crate::{
 };
 
 fn complexity_diagnostic(span: Span, name: &str, complexity: usize, max: usize) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!(
         "{name} has a complexity of {complexity}. Maximum allowed is {max}."
     ))
@@ -44,11 +42,12 @@ impl Default for ComplexityConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[schemars(untagged, rename_all = "camelCase")]
 pub enum Variant {
     /// Classic means McCabe cyclomatic complexity
+    #[default]
     Classic,
     /// Modified means classic cyclomatic complexity but a switch statement increases
     /// complexity by 1 irrespective of the number of `case` statements
@@ -66,7 +65,6 @@ impl Deref for Complexity {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -370,9 +368,8 @@ impl Visit<'_> for ComplexityVisitor {
             if let Some(type_annotation) = &it.type_annotation {
                 self.visit_ts_type_annotation(type_annotation);
             }
-            if it.value.is_some() {
-                // Do not enter value expression if we already started evaluating complexity
-            }
+            // Intentionally skip `it.value` - do not enter value expression
+            // if we already started evaluating complexity
             self.leave_node(kind);
         } else if let Some(value) = &it.value {
             self.has_entered_complexity_evaluation = true;
