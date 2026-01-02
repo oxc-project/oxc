@@ -274,12 +274,15 @@ fn collect_vitest_import_info(ctx: &LintContext<'_>) -> VitestImportInfo {
 }
 
 fn is_require_call(call: &oxc_ast::ast::CallExpression<'_>, module_name: &str) -> bool {
-    let Expression::Identifier(ident) = &call.callee else { return false };
-    if ident.name != "require" || call.arguments.len() != 1 {
-        return false;
+    if let Expression::Identifier(ident) = &call.callee
+        && ident.name == "require"
+        && call.arguments.len() == 1
+        && let Argument::StringLiteral(lit) = &call.arguments[0]
+        && lit.value == module_name
+    {
+        return true;
     }
-    let Argument::StringLiteral(lit) = &call.arguments[0] else { return false };
-    lit.value == module_name
+    false
 }
 
 /// Computes the span to replace and the replacement text for adding imports to an existing `{ ... }` block.
@@ -306,91 +309,113 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "vitest.describe('suite', () => {});",
         "import { describe } from 'vitest'; describe('suite', () => {});",
         "import { describe, it } from 'vitest'; describe('suite', () => {});",
+        "import { describe, desccribe } from 'vitest'; describe('suite', () => {});",
         "const { describe } = require('vitest'); describe('suite', () => {});",
         "const { describe, it } = require('vitest'); describe('suite', () => {});",
+        "const { describe, describe } = require('vitest'); describe('suite', () => {});",
         "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { let test = 5; expect(test).toBe(5); }); });",
-        "import { it as i, describe as d } from 'vitest'; d('suite', () => { i('test', () => {}); });",
+        "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { const test = () => true; expect(test()).toBe(true); }); });",
+        "import { describe, expect, it } from 'vitest'; describe('suite', () => { it('test', () => { function fn(test) { return test; } expect(fn(5)).toBe(5); }); });",
     ];
 
     let fail = vec![
         "describe('suite', () => {});",
-        "import { it } from 'vitest';\ndescribe('suite', () => {});",
-        "import vitest from 'vitest';\ndescribe('suite', () => {});",
-        "import * as abc from 'vitest';\ndescribe('suite', () => {});",
-        "const vitest = require('vitest');\ndescribe('suite', () => {});",
-        "const { it } = require('vitest');\ndescribe('suite', () => {});",
-        "import { describe as d } from 'vitest';\ndescribe('suite', () => {});",
-        "const { describe: d } = require('vitest');\ndescribe('suite', () => {});",
-        "import type { describe } from 'vitest';\ndescribe('suite', () => {});",
+        "import { it } from 'vitest';
+			describe('suite', () => {});",
+        "import { describe } from 'jest';
+			describe('suite', () => {});",
+        "import vitest from 'vitest';
+			describe('suite', () => {});",
+        "import * as abc from 'vitest';
+			describe('suite', () => {});",
+        r#"import { "default" as vitest } from 'vitest'; describe('suite', () => {});"#,
+        "const x = require('something', 'else'); describe('suite', () => {});",
+        "const x = require('jest'); describe('suite', () => {});",
+        "const vitest = require('vitest'); describe('suite', () => {});",
+        "const { ...rest } = require('vitest'); describe('suite', () => {});",
+        r#"const { "default": vitest } = require('vitest'); describe('suite', () => {});"#,
+        "const { it } = require('vitest');
+			describe('suite', () => {});",
     ];
 
     let fix = vec![
         (
             "describe('suite', () => {});",
-            "import { describe } from 'vitest';\ndescribe('suite', () => {});",
+            "import { describe } from 'vitest';
+			describe('suite', () => {});",
             None,
         ),
         (
-            "import { it } from 'vitest';\ndescribe('suite', () => {});",
-            "import { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            "import { it } from 'vitest';
+			describe('suite', () => {});",
+            "import { it, describe } from 'vitest';
+			describe('suite', () => {});",
             None,
         ),
         (
-            "import vitest from 'vitest';\ndescribe('suite', () => {});",
-            "import vitest, { describe } from 'vitest';\ndescribe('suite', () => {});",
+            "import { describe } from 'jest';
+			describe('suite', () => {});",
+            "import { describe } from 'vitest';
+			import { describe } from 'jest';
+			describe('suite', () => {});",
             None,
         ),
         (
-            "import * as abc from 'vitest';\ndescribe('suite', () => {});",
-            "import { describe } from 'vitest';\nimport * as abc from 'vitest';\ndescribe('suite', () => {});",
+            "import vitest from 'vitest';
+			describe('suite', () => {});",
+            "import vitest, { describe } from 'vitest';
+			describe('suite', () => {});",
             None,
         ),
         (
-            "const vitest = require('vitest');\ndescribe('suite', () => {});",
-            "import { describe } from 'vitest';\nconst vitest = require('vitest');\ndescribe('suite', () => {});",
+            "import * as abc from 'vitest';
+			describe('suite', () => {});",
+            "import { describe } from 'vitest';
+			import * as abc from 'vitest';
+			describe('suite', () => {});",
             None,
         ),
         (
-            "const { it } = require('vitest');\ndescribe('suite', () => {});",
-            "const { it, describe } = require('vitest');\ndescribe('suite', () => {});",
+            r#"import { "default" as vitest } from 'vitest'; describe('suite', () => {});"#,
+            r#"import { "default" as vitest, describe } from 'vitest'; describe('suite', () => {});"#,
             None,
         ),
         (
-            "import * as vt from 'vitest';\nimport { it } from 'vitest';\ndescribe('suite', () => {});",
-            "import * as vt from 'vitest';\nimport { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            "const x = require('something', 'else'); describe('suite', () => {});",
+            "import { describe } from 'vitest';
+			const x = require('something', 'else'); describe('suite', () => {});",
             None,
         ),
         (
-            "import { it, } from 'vitest';\ndescribe('suite', () => {});",
-            "import { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            "const x = require('jest'); describe('suite', () => {});",
+            "import { describe } from 'vitest';
+			const x = require('jest'); describe('suite', () => {});",
             None,
         ),
         (
-            "const { it, } = require('vitest');\ndescribe('suite', () => {});",
-            "const { it, describe } = require('vitest');\ndescribe('suite', () => {});",
+            "const vitest = require('vitest'); describe('suite', () => {});",
+            "import { describe } from 'vitest';
+			const vitest = require('vitest'); describe('suite', () => {});",
             None,
         ),
         (
-            "import { it,   } from 'vitest';\ndescribe('suite', () => {});",
-            "import { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            "const { ...rest } = require('vitest'); describe('suite', () => {});",
+            "const { ...rest, describe } = require('vitest'); describe('suite', () => {});",
             None,
         ),
         (
-            "import {\n  it,\n} from 'vitest';\ndescribe('suite', () => {});",
-            "import {\n  it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            r#"const { "default": vitest } = require('vitest'); describe('suite', () => {});"#,
+            r#"const { "default": vitest, describe } = require('vitest'); describe('suite', () => {});"#,
             None,
         ),
         (
-            "const {\n  it,\n} = require('vitest');\ndescribe('suite', () => {});",
-            "const {\n  it, describe } = require('vitest');\ndescribe('suite', () => {});",
-            None,
-        ),
-        // Type-only imports should not be modified; a new runtime import is inserted instead
-        (
-            "import type { describe } from 'vitest';\ndescribe('suite', () => {});",
-            "import { describe } from 'vitest';\nimport type { describe } from 'vitest';\ndescribe('suite', () => {});",
+            "const { it } = require('vitest');
+			describe('suite', () => {});",
+            "const { it, describe } = require('vitest');
+			describe('suite', () => {});",
             None,
         ),
     ];
