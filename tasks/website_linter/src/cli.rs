@@ -25,5 +25,5 @@ pub fn print_cli() {
 
 fn generate_cli() -> String {
     let markdown = lint_command().render_markdown("oxlint");
-    generate_cli_docs(&markdown, "oxlint", Some("Handle Warnings"))
+    generate_cli_docs(&markdown, "oxlint")
 }

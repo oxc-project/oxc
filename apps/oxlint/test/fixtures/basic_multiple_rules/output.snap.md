@@ -32,16 +32,8 @@
    : ^^^
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
-   ,-[files/index.js:3:1]
- 2 | 
- 3 | foo;
-   : ^^^^
-   `----
-  help: Consider using this expression or removing it
-
-Found 2 warnings and 3 errors.
-Finished in Xms on 1 file using X threads.
+Found 1 warning and 3 errors.
+Finished in Xms on 1 file with 4 rules using X threads.
 ```
 
 # stderr

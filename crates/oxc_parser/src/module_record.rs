@@ -57,9 +57,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
             );
         if default_exports.clone().count() > 1 {
-            errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
-            );
+            errors.push(diagnostics::duplicate_default_export(default_exports));
         }
         errors
     }

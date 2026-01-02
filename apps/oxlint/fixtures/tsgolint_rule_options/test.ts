@@ -62,4 +62,12 @@ declare const unknownValue: unknown;
 // This SHOULD error because checkUnknown is true
 const unknownStr = unknownValue.toString();
 
+// Test only-throw-error with allowRethrowing option
+// When allowRethrowing is false, rethrowing a caught error SHOULD error
+try {
+  throw new Error('test');
+} catch (e) {
+  throw e; // This SHOULD error because allowRethrowing is false
+}
+
 export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optionalAccess, unsafeAccess, unknownStr };

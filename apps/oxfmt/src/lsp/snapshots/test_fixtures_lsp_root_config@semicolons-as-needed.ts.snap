@@ -1,0 +1,16 @@
+---
+source: apps/oxfmt/src/lsp/tester.rs
+---
+========================================
+File: test/fixtures/lsp/root_config/semicolons-as-needed.ts
+========================================
+Range: Range {
+    start: Position {
+        line: 1,
+        character: 8,
+    },
+    end: Position {
+        line: 1,
+        character: 9,
+    },
+}

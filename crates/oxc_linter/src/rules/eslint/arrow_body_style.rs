@@ -16,12 +16,28 @@ use crate::{
     rule::Rule,
 };
 
-fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(msg.to_string()).with_label(span)
+fn expected_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected block statement surrounding arrow body.")
+        .with_help("Surround the arrow body with braces and use a return statement.")
+        .with_label(span)
 }
 
-const EXPECTED_BLOCK_MSG: &str = "Expected block statement surrounding arrow body.";
-const UNEXPECTED_BLOCK_SINGLE_MSG: &str = "Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.";
+fn unexpected_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected block statement surrounding arrow body.")
+        .with_help("Move the returned value to be immediately after the `=>`.")
+        .with_label(span)
+}
+
+fn unexpected_empty_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected empty block statement surrounding arrow body.")
+        .with_help("Put a value of `undefined` immediately after the `=>`.")
+        .with_label(span)
+}
+
+/// Diagnostic that is emitted when we don't have a specific help message to provide
+fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected block statement surrounding arrow body.").with_label(span)
+}
 
 #[derive(Debug, Default, PartialEq, Clone)]
 enum Mode {
@@ -88,7 +104,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// #### `"never"` (default)
+    /// #### `"never"`
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
@@ -129,7 +145,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// #### `"as-needed"`
+    /// #### `"as-needed"` (default)
     ///
     /// Examples of **incorrect** code for this rule with the `as-needed` option:
     /// ```js
@@ -184,7 +200,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ArrowBodyStyle {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
 
         let require_return_for_object_literal = value
@@ -193,7 +209,7 @@ impl Rule for ArrowBodyStyle {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        Self { mode, require_return_for_object_literal }
+        Ok(Self { mode, require_return_for_object_literal })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -218,7 +234,6 @@ impl ArrowBodyStyle {
         arrow_func_expr: &ArrowFunctionExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let body = &arrow_func_expr.body;
         let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
         let should_report = self.mode == Mode::Always
@@ -230,10 +245,9 @@ impl ArrowBodyStyle {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            arrow_body_style_diagnostic(body.span, EXPECTED_BLOCK_MSG),
-            |fixer| Self::fix_concise_to_block(arrow_func_expr, fixer, ctx),
-        );
+        ctx.diagnostic_with_fix(expected_block_diagnostic(arrow_func_expr.body.span), |fixer| {
+            Self::fix_concise_to_block(arrow_func_expr, fixer, ctx)
+        });
     }
 
     /// Handle block arrow body: `() => { ... }`
@@ -253,10 +267,7 @@ impl ArrowBodyStyle {
                 // Mode::Never: report any block body
                 if body.statements.is_empty() {
                     // TODO: implement a fix for empty block bodies
-                    ctx.diagnostic(arrow_body_style_diagnostic(
-                        body.span,
-                        "Unexpected block statement surrounding arrow body; put a value of `undefined` immediately after the `=>`.",
-                    ));
+                    ctx.diagnostic(unexpected_empty_block_diagnostic(body.span));
                     return;
                 }
 
@@ -265,26 +276,14 @@ impl ArrowBodyStyle {
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
-                    ctx.diagnostic_with_fix(
-                        arrow_body_style_diagnostic(body.span, UNEXPECTED_BLOCK_SINGLE_MSG),
-                        |fixer| {
-                            Self::fix_block_to_concise(
-                                arrow_func_expr,
-                                return_arg,
-                                node,
-                                fixer,
-                                ctx,
-                            )
-                        },
-                    );
+                    ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
+                        Self::fix_block_to_concise(arrow_func_expr, return_arg, node, fixer, ctx)
+                    });
                     return;
                 }
 
                 // Cannot auto-fix other cases
-                ctx.diagnostic(arrow_body_style_diagnostic(
-                    body.span,
-                    "Unexpected block statement surrounding arrow body.",
-                ));
+                ctx.diagnostic(unexpected_block_with_unknown_help_diagnostic(body.span));
             }
             Mode::AsNeeded if body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
@@ -301,25 +300,13 @@ impl ArrowBodyStyle {
                     // Cannot fix if return has no argument (undefined return)
                     let Some(return_arg) = &return_statement.argument else {
                         // TODO: implement a fix for undefined return
-                        ctx.diagnostic(arrow_body_style_diagnostic(
-                            body.span,
-                            UNEXPECTED_BLOCK_SINGLE_MSG,
-                        ));
+                        ctx.diagnostic(unexpected_block_diagnostic(body.span));
                         return;
                     };
 
-                    ctx.diagnostic_with_fix(
-                        arrow_body_style_diagnostic(body.span, UNEXPECTED_BLOCK_SINGLE_MSG),
-                        |fixer| {
-                            Self::fix_block_to_concise(
-                                arrow_func_expr,
-                                return_arg,
-                                node,
-                                fixer,
-                                ctx,
-                            )
-                        },
-                    );
+                    ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
+                        Self::fix_block_to_concise(arrow_func_expr, return_arg, node, fixer, ctx)
+                    });
                 }
             }
             _ => {}

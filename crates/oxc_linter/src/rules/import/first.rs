@@ -90,8 +90,10 @@ fn is_relative_path(path: &str) -> bool {
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/first.md>
 impl Rule for First {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<First>>(value).unwrap_or_default().into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

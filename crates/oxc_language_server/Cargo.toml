@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "1.35.0"
+version = "1.36.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,24 +16,12 @@ description.workspace = true
 [lints]
 workspace = true
 
-[[bin]]
-name = "oxc_language_server"
-test = true
+[lib]
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true, optional = true }
-oxc_data_structures = { workspace = true, features = ["rope"], optional = true }
-oxc_diagnostics = { workspace = true, optional = true }
-oxc_formatter = { workspace = true, optional = true }
-oxc_linter = { workspace = true, optional = true }
-oxc_parser = { workspace = true, optional = true }
-
-#
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
-ignore = { workspace = true, features = ["simd-accel"], optional = true }
-json-strip-comments = { workspace = true }
 log = { workspace = true }
 papaya = { workspace = true }
 rustc-hash = { workspace = true }
@@ -43,24 +31,4 @@ tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
-insta = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros"] }
-
-[features]
-default = ["linter", "formatter"]
-linter = [
-  "dep:oxc_allocator",
-  "dep:oxc_data_structures",
-  "dep:oxc_diagnostics",
-  "dep:oxc_linter",
-  #
-  "dep:ignore",
-]
-formatter = [
-  "dep:oxc_allocator",
-  "dep:oxc_data_structures",
-  "dep:oxc_formatter",
-  "dep:oxc_parser",
-  #
-  "dep:ignore",
-]

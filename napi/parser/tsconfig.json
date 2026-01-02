@@ -4,6 +4,7 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true
   }
 }

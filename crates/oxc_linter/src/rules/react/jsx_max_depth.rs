@@ -101,10 +101,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxMaxDepth {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxMaxDepth>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .map(DefaultRuleConfig::into_inner)
-            .unwrap_or_default()
+            .unwrap_or_default())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

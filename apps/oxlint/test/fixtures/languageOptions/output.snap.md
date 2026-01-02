@@ -814,7 +814,7 @@
    `----
 
 Found 0 warnings and 4 errors.
-Finished in Xms on 3 files using X threads.
+Finished in Xms on 3 files with 1 rules using X threads.
 ```
 
 # stderr

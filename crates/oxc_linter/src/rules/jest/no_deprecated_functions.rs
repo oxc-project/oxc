@@ -111,7 +111,7 @@ fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)
 }
 
 impl Rule for NoDeprecatedFunctions {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let version = value
             .get(0)
             .and_then(|v| v.get("jest"))
@@ -125,9 +125,9 @@ impl Rule for NoDeprecatedFunctions {
 
         let major: Vec<&str> = version.split('.').collect();
 
-        Self(Box::new(NoDeprecatedFunctionsConfig {
+        Ok(Self(Box::new(NoDeprecatedFunctionsConfig {
             jest: JestConfig { version: major[0].to_string() },
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {

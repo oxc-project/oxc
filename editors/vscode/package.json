@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "displayName": "Oxc",
-  "version": "1.35.0",
+  "version": "1.36.0",
   "description": "Oxlint and Oxfmt editor integration",
   "categories": [
     "Formatters",
@@ -30,8 +30,8 @@
   "main": "./out/main.js",
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
-    "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
-    "build:dev": "pnpm run server:build:debug && pnpm run compile && pnpm run package",
+    "build": "pnpm run oxlint:build:release && pnpm run oxfmt:build:release && pnpm run compile && pnpm run package",
+    "build:dev": "pnpm run oxlint:build:debug && pnpm run oxfmt:build:debug && pnpm run compile && pnpm run package",
     "compile": "rolldown -c rolldown.config.ts",
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
@@ -40,9 +40,8 @@
     "oxlint:build:release": "pnpm -C ../../apps/oxlint build-napi && pnpm -C ../../apps/oxlint build-js",
     "oxfmt:build:debug": "pnpm -C ../../apps/oxfmt build-napi-test && pnpm -C ../../apps/oxfmt build-js",
     "oxfmt:build:release": "pnpm -C ../../apps/oxfmt build-napi && pnpm -C ../../apps/oxfmt build-js",
-    "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
-    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
+    "test:unit": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=unit vscode-test",
     "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
     "test:oxlint-multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp-multi-root vscode-test",
     "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"

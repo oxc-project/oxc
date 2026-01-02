@@ -1,6 +1,6 @@
 {
   "name": "oxlint-app",
-  "version": "1.35.0",
+  "version": "1.36.0",
   "private": true,
   "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
   "license": "MIT",
@@ -37,9 +37,8 @@
     "eslint": "catalog:",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
-    "jiti": "^2.6.0",
     "json-stable-stringify-without-jsonify": "^1.0.1",
-    "oxc-parser": "^0.105.0",
+    "oxc-parser": "^0.106.0",
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "type-fest": "^5.2.0",

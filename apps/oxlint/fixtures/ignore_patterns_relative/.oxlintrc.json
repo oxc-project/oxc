@@ -1,3 +1,9 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-debugger": "warn"
+  },
   "ignorePatterns": ["nested/*.ts"]
 }

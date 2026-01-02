@@ -100,13 +100,13 @@ export async function loadFixture(fixture: string, workspaceDir: Uri = fixturesW
   await workspace.fs.copy(Uri.file(absolutePath), Uri.joinPath(workspaceDir, 'fixtures'), { overwrite: true });
 }
 
-export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 250): Promise<Diagnostic[]> {
+export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 0): Promise<Diagnostic[]> {
   const diagnostics = await getDiagnosticsWithoutClose(file, workspaceDir, sleepDuration);
   await commands.executeCommand('workbench.action.closeActiveEditor');
   return diagnostics;
 }
 
-export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 250): Promise<Diagnostic[]> {
+export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri(), sleepDuration = 0): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
   await sleep(sleepDuration);

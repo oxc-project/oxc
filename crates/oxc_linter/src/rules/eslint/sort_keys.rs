@@ -101,9 +101,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortKeys {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(config_array) = value.as_array() else {
-            return Self::default();
+            return Ok(Self::default());
         };
 
         let sort_order = if config_array.is_empty() {
@@ -133,10 +133,10 @@ impl Rule for SortKeys {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(SortKeysConfig(
+        Ok(Self(Box::new(SortKeysConfig(
             sort_order,
             SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
-        )))
+        ))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

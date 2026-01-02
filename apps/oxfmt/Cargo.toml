@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.20.0"
+version = "0.21.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,9 +28,10 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
+oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
-oxc_language_server = { workspace = true, default-features = false, features = ["formatter"] }
+oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
@@ -40,16 +41,19 @@ cow-utils = { workspace = true }
 editorconfig-parser = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
+log = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = [] }                           # Omit the `regex` feature
+tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }
@@ -57,6 +61,9 @@ napi-derive = { workspace = true, optional = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }

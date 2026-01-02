@@ -83,10 +83,10 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for NoNamespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoNamespace>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

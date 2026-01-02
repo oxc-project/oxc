@@ -1,8 +1,12 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "jsPlugins": ["./plugin.ts"],
   "rules": {
     "basic-custom-plugin/no-debugger": "error",
     "basic-custom-plugin/no-debugger-2": "error",
-    "basic-custom-plugin/no-identifiers-named-foo": "error"
+    "basic-custom-plugin/no-identifiers-named-foo": "error",
+    "eslint/no-debugger": "warn"
   }
 }

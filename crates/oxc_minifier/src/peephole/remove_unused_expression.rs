@@ -143,6 +143,10 @@ impl<'a> PeepholeOptimizations {
                                         new_left_hand_expr,
                                         ctx,
                                     )
+                                    // Don't transform `x.y != null || (x = {}, x.y = 3)` to `x.y ??= (x = {}, 3)` because
+                                    // `??=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
+                                    // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
+                                    && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
                                 {
                                     assignment_expr.span = *logical_span;
                                     assignment_expr.operator = AssignmentOperator::LogicalNullish;
@@ -860,6 +864,36 @@ mod test {
         test_same("v = a == null && (a = b)");
         test_same("v = a != null || (a = b)");
         test("void (x == null && y)", "x ?? y");
+
+        // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
+        // Don't transform to ??= when base object may be mutated, but ?? is safe
+        test(
+            "var x = {}; x.y != null || (x = {}, x.y = 3)",
+            "var x = {}; x.y ?? (x = {}, x.y = 3)",
+        );
+        test(
+            "var x = {}; x.y == null && (x = {}, x.y = 3)",
+            "var x = {}; x.y ?? (x = {}, x.y = 3)",
+        );
+        test(
+            "var x = {}; x.y != null || (a, x = {}, x.y = 3)",
+            "var x = {}; x.y ?? (a, x = {}, x.y = 3)",
+        );
+        test(
+            "var x = { y: {} }; x.y.z != null || (x.y = {}, x.y.z = 3)",
+            "var x = { y: {} }; x.y.z ?? (x.y = {}, x.y.z = 3)",
+        );
+        // Safe to transform to ??= when base object is not mutated
+        test("var x = {}; x.y != null || (foo(), x.y = 3)", "var x = {}; x.y ??= (foo(), 3)");
+        test(
+            "var x = {}; x.y != null || (new Foo(), x.y = 3)",
+            "var x = {}; x.y ??= (new Foo(), 3)",
+        );
+        // x is not mutated, only x.y.z is assigned (doesn't affect x)
+        test(
+            "var x = {}; x.y != null || (x.y.z = {}, x.y = 3)",
+            "var x = {}; x.y ??= (x.y.z = {}, 3)",
+        );
 
         test("typeof x != 'undefined' && x", "");
         test("typeof x == 'undefined' || x", "");

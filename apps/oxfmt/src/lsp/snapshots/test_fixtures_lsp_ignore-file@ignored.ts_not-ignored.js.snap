@@ -1,0 +1,20 @@
+---
+source: apps/oxfmt/src/lsp/tester.rs
+---
+========================================
+File: test/fixtures/lsp/ignore-file/ignored.ts
+========================================
+File is ignored
+========================================
+File: test/fixtures/lsp/ignore-file/not-ignored.js
+========================================
+Range: Range {
+    start: Position {
+        line: 1,
+        character: 8,
+    },
+    end: Position {
+        line: 1,
+        character: 9,
+    },
+}
