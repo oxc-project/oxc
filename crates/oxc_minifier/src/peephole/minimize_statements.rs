@@ -665,7 +665,7 @@ impl<'a> PeepholeOptimizations {
     fn simplify_destructuring_assignment(
         _kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         let mut changed = false;
         let mut i = declarations.len();
