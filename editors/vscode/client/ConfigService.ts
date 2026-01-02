@@ -135,6 +135,8 @@ export class ConfigService implements IDisposable {
    * Searches for a binary in node_modules/.bin directories using file system operations.
    * This is much faster than workspace.findFiles in large monorepos.
    * Limits search depth and scope to avoid timeouts.
+   * Note: This method searches upward from the start path toward the filesystem root.
+   * For nested subdirectories within the workspace, the findFiles fallback handles those cases.
    */
   private async searchBinaryInNodeModules(
     startPath: string,
@@ -149,6 +151,17 @@ export class ConfigService implements IDisposable {
 
     try {
       const nodeModulesPath = path.join(startPath, "node_modules", ".bin");
+      
+      // Skip .pnpm directories to avoid traversing into pnpm's internal structure
+      // Check if we're inside a .pnpm directory path
+      if (startPath.includes(path.sep + ".pnpm" + path.sep) || startPath.endsWith(path.sep + ".pnpm")) {
+        // Skip traversing into .pnpm directories - go directly to parent
+        const parentPath = path.dirname(startPath);
+        if (parentPath === startPath || parentPath === "/" || parentPath.match(/^[A-Za-z]:\\?$/i)) {
+          return undefined;
+        }
+        return this.searchBinaryInNodeModules(parentPath, binaryName, maxDepth, currentDepth + 1);
+      }
 
       // Check if this .bin directory exists
       if (fs.existsSync(nodeModulesPath)) {
@@ -166,11 +179,11 @@ export class ConfigService implements IDisposable {
         }
       }
 
-      // Search in parent directories up to workspace root
+      // Search in parent directories starting at the workspace root toward the filesystem root
       const parentPath = path.dirname(startPath);
 
       // Stop if we've reached the filesystem root or if parent is same as current
-      if (parentPath === startPath || parentPath === "/" || parentPath.match(/^[A-Z]:\\?$/)) {
+      if (parentPath === startPath || parentPath === "/" || parentPath.match(/^[A-Za-z]:\\?$/i)) {
         return undefined;
       }
 
@@ -184,7 +197,7 @@ export class ConfigService implements IDisposable {
 
   /**
    * Wraps workspace.findFiles with a timeout to prevent indefinite hanging.
-   * Returns undefined if the search times out or fails.
+   * Returns empty array if the search times out or fails.
    */
   private async findFilesWithTimeout(
     pattern: RelativePattern,
@@ -192,17 +205,23 @@ export class ConfigService implements IDisposable {
     maxResults: number,
     timeoutMs: number = 5000,
   ): Promise<Uri[]> {
-    try {
-      const searchPromise = workspace.findFiles(pattern, exclude, maxResults);
-      const timeoutPromise = new Promise<Uri[]>((_, reject) => {
-        setTimeout(() => reject(new Error("Binary search timeout")), timeoutMs);
-      });
+    const searchPromise = workspace.findFiles(pattern, exclude, maxResults);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<Uri[]>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Binary search timeout")), timeoutMs);
+    });
 
+    try {
       return await Promise.race([searchPromise, timeoutPromise]);
     } catch {
       // Timeout or other error - return empty array to indicate failure
       // This allows graceful degradation without throwing
       return [];
+    } finally {
+      // Clear timeout to prevent resource leak
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -218,9 +237,8 @@ export class ConfigService implements IDisposable {
     if (!settingsBinary) {
       // Check cache first
       const cacheKey = `auto:${defaultPattern}`;
-      const cached = this.binaryPathCache.get(cacheKey);
-      if (cached !== undefined) {
-        return cached;
+      if (this.binaryPathCache.has(cacheKey)) {
+        return this.binaryPathCache.get(cacheKey);
       }
 
       // Fast path: Check common locations first using file system operations
@@ -245,8 +263,8 @@ export class ConfigService implements IDisposable {
         }
       }
 
-      // Step 2: Search parent directories up to workspace root using file system operations
-      // This handles cases where binaries are in nested packages
+      // Step 2: Search parent directories starting at the workspace root toward the filesystem root using file system operations
+      // This handles cases where binaries are in nested or ancestor packages
       // Search all workspace folders in parallel for better performance
       const searchPromises = workspaceFolders.map((workspacePath) =>
         this.searchBinaryInNodeModules(workspacePath, defaultPattern, 3),
@@ -259,7 +277,7 @@ export class ConfigService implements IDisposable {
       }
 
       // Step 3: Last resort - use findFiles with timeout protection
-      // Only search in workspace folders, not deep recursion
+      // Search recursively within workspace folders, excluding .pnpm-related directories
       // Use Promise.race to add timeout protection
       try {
         const excludePattern = "**/{.pnpm,node_modules/.pnpm}/**";
@@ -273,8 +291,13 @@ export class ConfigService implements IDisposable {
         const result = files.length > 0 ? files[0].fsPath : undefined;
         this.binaryPathCache.set(cacheKey, result);
         return result;
-      } catch {
-        // Timeout or other error - cache undefined to avoid retrying
+      } catch (error) {
+        // Timeout or other error - log and cache undefined to avoid retrying
+        // Note: Error logging is intentionally minimal to avoid noise in production
+        // but helps with debugging when needed
+        if (error instanceof Error && error.message === "Binary search timeout") {
+          // Timeout is expected in large monorepos, no need to log
+        }
         this.binaryPathCache.set(cacheKey, undefined);
         return undefined;
       }
@@ -307,6 +330,13 @@ export class ConfigService implements IDisposable {
     if (event.affectsConfiguration(ConfigService.namespace)) {
       this.vsCodeConfig.refresh();
       isConfigChanged = true;
+      
+      // Clear cache when binary path settings change, as they affect binary resolution
+      if (event.affectsConfiguration(`${ConfigService.namespace}.path.oxlint`) ||
+          event.affectsConfiguration(`${ConfigService.namespace}.path.oxfmt`) ||
+          event.affectsConfiguration(`${ConfigService.namespace}.path.server`)) {
+        this.binaryPathCache.clear();
+      }
     }
 
     for (const workspaceConfig of this.workspaceConfigs.values()) {
