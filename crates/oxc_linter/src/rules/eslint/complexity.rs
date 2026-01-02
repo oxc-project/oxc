@@ -31,6 +31,7 @@ const THRESHOLD_DEFAULT: usize = 20;
 #[schemars(rename_all = "camelCase")]
 pub struct ComplexityConfig {
     /// Maximum amount of cyclomatic complexity
+    #[serde(alias = "maximum")]
     max: usize,
     /// The cyclomatic complexity variant to use
     variant: Variant,
@@ -503,6 +504,8 @@ fn test() {
         ("class C { static { a || b; c || d; } }", Some(serde_json::json!([3]))), // { "ecmaVersion": 2022 },
         ("class C { static { if (a || b) c = d || e; } }", Some(serde_json::json!([4]))), // { "ecmaVersion": 2022 },
         ("function b(x) {}", Some(serde_json::json!([{ "max": 1 }]))),
+        ("function b(x) {}", Some(serde_json::json!([{ "maximum": 1 }]))),
+        ("function a(x) {if (true) {return x;}}", Some(serde_json::json!([{ "maximum": 2 }]))),
         ("function a(b) { b?.c; }", Some(serde_json::json!([{ "max": 2 }]))),
         ("function a(b = '') {}", Some(serde_json::json!([{ "max": 2 }]))),
         ("function a(b) { const { c = '' } = b; }", Some(serde_json::json!([{ "max": 2 }]))),
@@ -671,6 +674,8 @@ fn test() {
         ), // { "ecmaVersion": 2022 },
         ("class C { x = () => a || b || c; y = f || g || h; }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
         ("function a(x) {}", Some(serde_json::json!([{ "max": 0 }]))),
+        ("function a(x) {}", Some(serde_json::json!([{ "maximum": 0 }]))),
+        ("function a(x) {if (true) {return x;}}", Some(serde_json::json!([{ "maximum": 1 }]))),
         (
             "const obj = { b: (a) => a?.b?.c, c: function (a) { return a?.b?.c; } };",
             Some(serde_json::json!([{ "max": 2 }])),

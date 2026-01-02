@@ -517,6 +517,18 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
 
+  ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {}
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {if (true) {return x;}}
+   · ─────────────────────────────────────
+   ╰────
+
   ⚠ eslint(complexity): function `b` has a complexity of 3. Maximum allowed is 2.
    ╭─[complexity.tsx:1:18]
  1 │ const obj = { b: (a) => a?.b?.c, c: function (a) { return a?.b?.c; } };
