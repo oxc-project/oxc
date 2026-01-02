@@ -493,19 +493,15 @@ impl<'a> PeepholeOptimizations {
             if !binding_identifiers.is_empty() {
                 return !init_expr.elements.iter().any(|e| {
                     match e.as_expression() {
-                        Some(Expression::NewExpression(_))
-                        | Some(Expression::CallExpression(_)) => true,
                         Some(Expression::Identifier(ident)) => {
                             let Some(ref_symbol) =
                                 &ctx.scoping().get_reference(ident.reference_id()).symbol_id()
                             else {
-                                // global reference
-                                return false;
+                                return false; // global reference
                             };
-                            // check whathever id is present in init [a] = [b]
+                            // check whatever id is present in init [a] = [b]
                             binding_identifiers.iter().any(|id| id.symbol_id().eq(ref_symbol))
                         }
-                        None => e.is_spread(), // do not allow spread
                         _ => !e.is_literal_value(false, ctx),
                     }
                 });
@@ -518,7 +514,7 @@ impl<'a> PeepholeOptimizations {
     fn simplify_array_destruction_assignment(
         decl: &mut VariableDeclarator<'a>,
         result: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         let BindingPattern::ArrayPattern(id_pattern) = &mut decl.id else {
             return false;
