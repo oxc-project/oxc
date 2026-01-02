@@ -149,15 +149,13 @@ impl Rule for PreferImportingVitestGlobals {
                         }
                         ImportImportName::Name(_) => {
                             let source = ctx.source_range(import_entry.statement_span);
-                            if let Some(close_brace_pos) = source.rfind('}') {
-                                let before_brace = &source[..close_brace_pos];
-                                let trimmed_len = before_brace.trim_end().len();
-
-                                #[expect(clippy::cast_possible_truncation)]
-                                let insert_pos =
-                                    import_entry.statement_span.start + trimmed_len as u32;
-                                let insert_text = format!(", {}", globals_list.join(", "));
-                                fixer.insert_text_before_range(Span::empty(insert_pos), insert_text)
+                            let new_items = globals_list.join(", ");
+                            if let Some((replace_span, replace_text)) = compute_brace_insert(
+                                source,
+                                import_entry.statement_span.start,
+                                &new_items,
+                            ) {
+                                fixer.replace(replace_span, replace_text)
                             } else {
                                 fixer.noop()
                             }
@@ -167,14 +165,11 @@ impl Rule for PreferImportingVitestGlobals {
                     match cjs_info {
                         CommonJSVitestRequire::Destructured { pattern_span } => {
                             let source = ctx.source_range(*pattern_span);
-                            if let Some(close_brace_pos) = source.rfind('}') {
-                                let before_brace = &source[..close_brace_pos];
-                                let trimmed_len = before_brace.trim_end().len();
-
-                                #[expect(clippy::cast_possible_truncation)]
-                                let insert_pos = pattern_span.start + trimmed_len as u32;
-                                let insert_text = format!(", {}", globals_list.join(", "));
-                                fixer.insert_text_before_range(Span::empty(insert_pos), insert_text)
+                            let new_items = globals_list.join(", ");
+                            if let Some((replace_span, replace_text)) =
+                                compute_brace_insert(source, pattern_span.start, &new_items)
+                            {
+                                fixer.replace(replace_span, replace_text)
                             } else {
                                 fixer.noop()
                             }
@@ -281,6 +276,25 @@ fn is_require_call(call: &oxc_ast::ast::CallExpression<'_>, module_name: &str) -
     lit.value == module_name
 }
 
+/// Computes the span to replace and the replacement text for adding imports to an existing `{ ... }` block.
+/// Returns `None` if no closing brace is found.
+/// Handles trailing commas to avoid producing `{ foo,, bar }`.
+/// Also removes any trailing whitespace before the closing brace.
+#[expect(clippy::cast_possible_truncation)]
+fn compute_brace_insert(source: &str, span_start: u32, new_items: &str) -> Option<(Span, String)> {
+    let close_brace_pos = source.rfind('}')?;
+    let before_brace = &source[..close_brace_pos];
+    let trimmed = before_brace.trim_end();
+
+    let replace_start = span_start + trimmed.len() as u32;
+    let replace_end = span_start + close_brace_pos as u32;
+    let needs_comma = !trimmed.ends_with(',');
+    let replace_text =
+        if needs_comma { format!(", {new_items} }}") } else { format!(" {new_items} }}") };
+
+    Some((Span::new(replace_start, replace_end + 1), replace_text))
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -340,6 +354,31 @@ fn test() {
         (
             "import * as vt from 'vitest';\nimport { it } from 'vitest';\ndescribe('suite', () => {});",
             "import * as vt from 'vitest';\nimport { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            None,
+        ),
+        (
+            "import { it, } from 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            None,
+        ),
+        (
+            "const { it, } = require('vitest');\ndescribe('suite', () => {});",
+            "const { it, describe } = require('vitest');\ndescribe('suite', () => {});",
+            None,
+        ),
+        (
+            "import { it,   } from 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            None,
+        ),
+        (
+            "import {\n  it,\n} from 'vitest';\ndescribe('suite', () => {});",
+            "import {\n  it, describe } from 'vitest';\ndescribe('suite', () => {});",
+            None,
+        ),
+        (
+            "const {\n  it,\n} = require('vitest');\ndescribe('suite', () => {});",
+            "const {\n  it, describe } = require('vitest');\ndescribe('suite', () => {});",
             None,
         ),
     ];
