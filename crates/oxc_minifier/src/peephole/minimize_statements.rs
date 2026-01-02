@@ -9,7 +9,6 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
-use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::Ancestor;
 use std::{cmp::min, iter, ops::ControlFlow};
 
@@ -489,6 +488,30 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        if decl.kind.is_var() && init_len > 1 {
+            let binding_identifiers = decl.id.get_binding_identifiers();
+            if !binding_identifiers.is_empty() {
+                return !init_expr.elements.iter().any(|e| {
+                    match e.as_expression() {
+                        Some(Expression::NewExpression(_))
+                        | Some(Expression::CallExpression(_)) => true,
+                        Some(Expression::Identifier(ident)) => {
+                            let Some(ref_symbol) =
+                                &ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                            else {
+                                // global reference
+                                return false;
+                            };
+                            // check whathever id is present in init [a] = [b]
+                            binding_identifiers.iter().any(|id| id.symbol_id().eq(ref_symbol))
+                        }
+                        None => e.is_spread(), // do not allow spread
+                        _ => !e.is_literal_value(false, ctx),
+                    }
+                });
+            }
+        }
+
         true
     }
 
@@ -513,43 +536,6 @@ impl<'a> PeepholeOptimizations {
         } else {
             id_pattern.elements.len()
         };
-
-        // create tmp variables only for vars when:
-        // - there is more than one init
-        // - it's not `[...a] = [a, b]`
-        // - there is more than one value
-        if decl.kind.is_var() && index > 0 && init_expr.elements.len() > 1 {
-            for init_expr in &mut init_expr.elements {
-                if !init_expr.is_literal_value(false, ctx) {
-                    // create intermediate declarations to avoid issues with hoisting
-                    // `var [a] = [b]` => `var _a = b, a = _a`
-                    let ident =
-                        ctx.generate_uid_in_current_scope("_", SymbolFlags::FunctionScopedVariable);
-                    result.push(ctx.ast.variable_declarator(
-                        init_expr.span(),
-                        decl.kind,
-                        ident.create_binding_pattern(ctx),
-                        NONE,
-                        Some(match init_expr {
-                            ArrayExpressionElement::Elision(_) => ctx.ast.void_0(SPAN),
-                            ArrayExpressionElement::SpreadElement(expr) => {
-                                expr.argument.take_in(ctx.ast)
-                            }
-                            _ => init_expr.take_in(ctx.ast).into_expression(),
-                        }),
-                        decl.definite,
-                    ));
-                    *init_expr = if init_expr.is_spread() {
-                        ctx.ast.array_expression_element_spread_element(
-                            init_expr.span(),
-                            ident.create_read_expression(ctx),
-                        )
-                    } else {
-                        ArrayExpressionElement::from(ident.create_read_expression(ctx))
-                    };
-                }
-            }
-        }
 
         let mut init_iter = init_expr.elements.drain(..);
 
@@ -2209,20 +2195,18 @@ mod test {
         // vars
         test("var [a] = [a]", "var a = a");
         test("var [...a] = [b, c]", "var a = [b, c]");
-        test("var [a, b] = [1, ...[2, 3]]", "var _ = [2, 3], a = 1, [b] = [..._]");
-        test("var [a, b] = [c, ...[d, e]]", "var _ = c, _2 = [d, e], a = _, [b] = [..._2]");
-        test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [, ...t] = [...a, 2, , 4]");
+        test_same("var [a, b] = [1, ...[2, 3]]");
+        test_same("var [a, b] = [c, ...[d, e]]");
+        test_same("var [ , , ...t] = [1, ...a, 2, , 4]");
         test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
         test("var [c, ...d] = [6]", "var c = 6, d = []");
         test("var [c, d] = [6]", "var c = 6, d = void 0");
         test("var [a, b] = [1, 2]", "var a = 1, b = 2");
-        test("var [a, b] = [!d, !a]", "var _ = !d, _2 = !a, a = _, b = _2");
+        test("var [a, b] = [d, c]", "var a = d, b = c");
+        test_same("var [a, b] = [!d, !a]");
         test("var [a, ...b] = [1, 2]", "var a = 1, b = [2]");
-        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 1, _ = 2, _2 = a, a = _, b = _2");
-        test("var [a, b] = [b, a]", "var _ = b, _2 = a, a = _, b = _2;");
-        test(
-            "var [a, b] = [b, a], [a, b] = [b, a]",
-            "var _3 = b, _4 = a, a = _3, b = _4, _ = b, _2 = a, a = _, b = _2",
-        );
+        test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 2, b = 1");
+        test_same("var [a, b] = [b, a]");
+        test_same("var [a, b] = [b, a], [a, b] = [b, a]");
     }
 }
