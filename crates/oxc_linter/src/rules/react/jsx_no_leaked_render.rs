@@ -147,11 +147,7 @@ impl JsxNoLeakedRender {
     }
 
     /// Check LogicalExpression (&&) in JSX
-    fn check_logical_expression<'a>(
-        &self,
-        logical: &LogicalExpression<'a>,
-        ctx: &LintContext<'a>,
-    ) {
+    fn check_logical_expression<'a>(&self, logical: &LogicalExpression<'a>, ctx: &LintContext<'a>) {
         if logical.operator != LogicalOperator::And {
             return;
         }
@@ -176,7 +172,8 @@ impl JsxNoLeakedRender {
         }
 
         // Find invalid parts in the && chain for surgical coercion
-        let invalid_parts = self.find_invalid_parts_in_chain_with_react_version(logical, is_react_18_or_later);
+        let invalid_parts =
+            self.find_invalid_parts_in_chain_with_react_version(logical, is_react_18_or_later);
         if invalid_parts.is_empty() {
             return;
         }
@@ -310,16 +307,26 @@ impl JsxNoLeakedRender {
             }
 
             // Check right side
-            if let Expression::LogicalExpression(right_logical) = logical.right.without_parentheses()
+            if let Expression::LogicalExpression(right_logical) =
+                logical.right.without_parentheses()
             {
                 if right_logical.operator == LogicalOperator::And {
                     // Right is another && chain - recurse
-                    self.collect_invalid_in_logical(right_logical, invalid, is_outermost, is_react_18);
-                } else if !is_outermost && !self.is_valid_left_side_with_react_version(&logical.right, is_react_18) {
+                    self.collect_invalid_in_logical(
+                        right_logical,
+                        invalid,
+                        is_outermost,
+                        is_react_18,
+                    );
+                } else if !is_outermost
+                    && !self.is_valid_left_side_with_react_version(&logical.right, is_react_18)
+                {
                     // Right is non-&& LogicalExpression and we're nested - check it
                     invalid.push(logical.right.span());
                 }
-            } else if !is_outermost && !self.is_valid_left_side_with_react_version(&logical.right, is_react_18) {
+            } else if !is_outermost
+                && !self.is_valid_left_side_with_react_version(&logical.right, is_react_18)
+            {
                 // Right is not a LogicalExpression and we're nested - check it
                 invalid.push(logical.right.span());
             }
@@ -541,11 +548,7 @@ fn trim_double_negation(text: &str) -> &str {
     if let Some(rest) = trimmed.strip_prefix("!!") {
         let rest = rest.trim_start();
         // If the result starts with ( and ends with ), strip them too
-        if rest.starts_with('(') && rest.ends_with(')') {
-            &rest[1..rest.len() - 1]
-        } else {
-            rest
-        }
+        if rest.starts_with('(') && rest.ends_with(')') { &rest[1..rest.len() - 1] } else { rest }
     } else {
         text
     }
