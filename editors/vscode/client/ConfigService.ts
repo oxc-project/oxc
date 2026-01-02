@@ -151,10 +151,13 @@ export class ConfigService implements IDisposable {
 
     try {
       const nodeModulesPath = path.join(startPath, "node_modules", ".bin");
-      
+
       // Skip .pnpm directories to avoid traversing into pnpm's internal structure
       // Check if we're inside a .pnpm directory path
-      if (startPath.includes(path.sep + ".pnpm" + path.sep) || startPath.endsWith(path.sep + ".pnpm")) {
+      if (
+        startPath.includes(path.sep + ".pnpm" + path.sep) ||
+        startPath.endsWith(path.sep + ".pnpm")
+      ) {
         // Skip traversing into .pnpm directories - go directly to parent
         const parentPath = path.dirname(startPath);
         if (parentPath === startPath || parentPath === "/" || parentPath.match(/^[A-Za-z]:\\?$/i)) {
@@ -330,11 +333,13 @@ export class ConfigService implements IDisposable {
     if (event.affectsConfiguration(ConfigService.namespace)) {
       this.vsCodeConfig.refresh();
       isConfigChanged = true;
-      
+
       // Clear cache when binary path settings change, as they affect binary resolution
-      if (event.affectsConfiguration(`${ConfigService.namespace}.path.oxlint`) ||
-          event.affectsConfiguration(`${ConfigService.namespace}.path.oxfmt`) ||
-          event.affectsConfiguration(`${ConfigService.namespace}.path.server`)) {
+      if (
+        event.affectsConfiguration(`${ConfigService.namespace}.path.oxlint`) ||
+        event.affectsConfiguration(`${ConfigService.namespace}.path.oxfmt`) ||
+        event.affectsConfiguration(`${ConfigService.namespace}.path.server`)
+      ) {
         this.binaryPathCache.clear();
       }
     }
