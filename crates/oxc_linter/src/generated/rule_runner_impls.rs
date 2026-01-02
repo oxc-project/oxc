@@ -4053,6 +4053,11 @@ impl RuleRunner for crate::rules::vitest::require_local_test_context_for_concurr
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
 
+impl RuleRunner for crate::rules::vitest::warn_todo::WarnTodo {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
 impl RuleRunner for crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
