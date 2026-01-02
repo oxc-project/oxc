@@ -91,7 +91,7 @@ pub fn print_rules(mut args: Arguments) {
     }
 
     if let Some(rule_count_dir) = &rule_count_dir {
-        eprintln!("Rendering rule doc pages...");
+        eprintln!("Generating rule count data...");
         let rule_count_dir = pwd.join(rule_count_dir).canonicalize().unwrap();
 
         write_rule_count_data(&rule_count_dir, &table.total);
