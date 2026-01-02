@@ -102,12 +102,24 @@ impl Rule for PreferImportingVitestGlobals {
 
                 if let Some(entry) = vitest_import {
                     let source = ctx.source_range(entry.statement_span);
-                    if let Some((span, text)) = compute_brace_insert(
-                        source,
-                        entry.statement_span.start,
-                        ident.name.as_str(),
-                    ) {
-                        return fixer.replace(span, text);
+                    if let Some(close_brace_pos) = source.rfind('}') {
+                        let before_brace = &source[..close_brace_pos];
+                        let trimmed = before_brace.trim_end();
+                        let needs_comma = !trimmed.ends_with(',');
+
+                        #[expect(clippy::cast_possible_truncation)]
+                        let replace_start = entry.statement_span.start + trimmed.len() as u32;
+                        #[expect(clippy::cast_possible_truncation)]
+                        let replace_end = entry.statement_span.start + close_brace_pos as u32;
+
+                        let new_import = ident.name.as_str();
+                        let text = if needs_comma {
+                            format!(", {new_import} }}")
+                        } else {
+                            format!(" {new_import} }}")
+                        };
+
+                        return fixer.replace(Span::new(replace_start, replace_end + 1), text);
                     }
                 }
 
@@ -127,25 +139,6 @@ impl Rule for PreferImportingVitestGlobals {
             },
         );
     }
-}
-
-/// Computes the span to replace and the replacement text for adding imports to an existing `{ ... }` block.
-/// Returns `None` if no closing brace is found.
-/// Handles trailing commas to avoid producing `{ foo,, bar }`.
-/// Also removes any trailing whitespace before the closing brace.
-#[expect(clippy::cast_possible_truncation)]
-fn compute_brace_insert(source: &str, span_start: u32, new_items: &str) -> Option<(Span, String)> {
-    let close_brace_pos = source.rfind('}')?;
-    let before_brace = &source[..close_brace_pos];
-    let trimmed = before_brace.trim_end();
-
-    let replace_start = span_start + trimmed.len() as u32;
-    let replace_end = span_start + close_brace_pos as u32;
-    let needs_comma = !trimmed.ends_with(',');
-    let replace_text =
-        if needs_comma { format!(", {new_items} }}") } else { format!(" {new_items} }}") };
-
-    Some((Span::new(replace_start, replace_end + 1), replace_text))
 }
 
 #[test]
