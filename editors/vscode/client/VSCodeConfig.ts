@@ -6,7 +6,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
   private _trace!: TraceLevel;
   private _binPathOxlint: string | undefined;
   private _binPathOxfmt: string | undefined;
-  private _binPathTsGoLint: string | undefined;
+  private _binPathTsgolint: string | undefined;
   private _nodePath: string | undefined;
   private _requireConfig!: boolean;
 
@@ -28,7 +28,7 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     this._trace = this.configuration.get<TraceLevel>("trace.server") || "off";
     this._binPathOxlint = binPathOxlint;
     this._binPathOxfmt = this.configuration.get<string>("path.oxfmt");
-    this._binPathTsGoLint = this.configuration.get<string>("path.tsgolint");
+    this._binPathTsgolint = this.configuration.get<string>("path.tsgolint");
     this._nodePath = this.configuration.get<string>("path.node");
     this._requireConfig = this.configuration.get<boolean>("requireConfig") ?? false;
   }
@@ -69,12 +69,12 @@ export class VSCodeConfig implements VSCodeConfigInterface {
     return this.configuration.update("path.oxfmt", value);
   }
 
-  get binPathTsGoLint(): string | undefined {
-    return this._binPathTsGoLint;
+  get binPathTsgolint(): string | undefined {
+    return this._binPathTsgolint;
   }
 
-  updateBinPathTsGoLint(value: string | undefined): PromiseLike<void> {
-    this._binPathTsGoLint = value;
+  updateBinPathTsgolint(value: string | undefined): PromiseLike<void> {
+    this._binPathTsgolint = value;
     return this.configuration.update("path.tsgolint", value);
   }
 
@@ -128,7 +128,7 @@ interface VSCodeConfigInterface {
    * `oxc.path.tsgolint`
    * @default undefined
    */
-  binPathTsGoLint: string | undefined;
+  binPathTsgolint: string | undefined;
 
   /**
    * Path to Node.js

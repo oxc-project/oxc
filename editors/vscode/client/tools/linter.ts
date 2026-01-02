@@ -117,7 +117,7 @@ export default class LinterTool implements ToolInterface {
     const run: Executable = runExecutable(
       binaryPath,
       configService.vsCodeConfig.nodePath,
-      configService.vsCodeConfig.binPathTsGoLint,
+      configService.vsCodeConfig.binPathTsgolint,
     );
     const serverOptions: ServerOptions = {
       run,

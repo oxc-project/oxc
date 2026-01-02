@@ -22,7 +22,7 @@ suite('VSCodeConfig', () => {
     strictEqual(config.trace, 'off');
     strictEqual(config.binPathOxlint, '');
     strictEqual(config.binPathOxfmt, '');
-    strictEqual(config.binPathTsGoLint, '');
+    strictEqual(config.binPathTsgolint, '');
     strictEqual(config.nodePath, '');
   });
 
@@ -42,7 +42,7 @@ suite('VSCodeConfig', () => {
       config.updateTrace('messages'),
       config.updateBinPathOxlint('./binary'),
       config.updateBinPathOxfmt('./formatter'),
-      config.updateBinPathTsGoLint('./tsgolint'),
+      config.updateBinPathTsgolint('./tsgolint'),
       config.updateNodePath('./node'),
     ]);
 
