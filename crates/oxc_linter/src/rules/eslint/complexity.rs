@@ -157,44 +157,69 @@ impl Rule for Complexity {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let mut visitor = ComplexityVisitor::new(self.variant);
-        let (span, diagnostic_type) = match node.kind() {
+        match node.kind() {
             AstKind::Function(func) => {
+                let mut visitor = ComplexityVisitor::new(self.variant);
                 visitor.visit_function(func, ScopeFlags::Function);
-                (func.span, DiagnosticType::Function)
+                if visitor.complexity > self.max {
+                    let name = {
+                        let parent_node = ctx.nodes().parent_node(node.id());
+                        &get_function_name_with_kind(node, parent_node)
+                    };
+                    ctx.diagnostic(complexity_diagnostic(
+                        func.span,
+                        name,
+                        visitor.complexity,
+                        self.max,
+                    ));
+                }
             }
             AstKind::ArrowFunctionExpression(func) => {
+                let mut visitor = ComplexityVisitor::new(self.variant);
                 visitor.visit_arrow_function_expression(func);
-                (func.span, DiagnosticType::Function)
+                if visitor.complexity > self.max {
+                    let name = {
+                        let parent_node = ctx.nodes().parent_node(node.id());
+                        &get_function_name_with_kind(node, parent_node)
+                    };
+                    ctx.diagnostic(complexity_diagnostic(
+                        func.span,
+                        name,
+                        visitor.complexity,
+                        self.max,
+                    ));
+                }
             }
             AstKind::StaticBlock(block) => {
+                let mut visitor = ComplexityVisitor::new(self.variant);
                 visitor.visit_static_block(block);
-                (block.span, DiagnosticType::ClassStaticBlock)
+                if visitor.complexity > self.max {
+                    let name = "class static block";
+                    ctx.diagnostic(complexity_diagnostic(
+                        block.span,
+                        name,
+                        visitor.complexity,
+                        self.max,
+                    ));
+                }
             }
             AstKind::PropertyDefinition(prop_def) => {
-                if let Some(expr) = &prop_def.value {
-                    visitor.visit_property_definition(prop_def);
-                    (expr.span(), DiagnosticType::ClassPropertyInitializer)
-                } else {
+                let mut visitor = ComplexityVisitor::new(self.variant);
+                let Some(expr) = &prop_def.value else {
                     return;
+                };
+                visitor.visit_property_definition(prop_def);
+                if visitor.complexity > self.max {
+                    let name = "class field initializer";
+                    ctx.diagnostic(complexity_diagnostic(
+                        expr.span(),
+                        name,
+                        visitor.complexity,
+                        self.max,
+                    ));
                 }
             }
-            _ => {
-                return;
-            }
-        };
-
-        if visitor.complexity > self.max {
-            let name = match diagnostic_type {
-                DiagnosticType::ClassStaticBlock => "class static block",
-                DiagnosticType::ClassPropertyInitializer => "class field initializer",
-                DiagnosticType::Function => {
-                    let parent_node = ctx.nodes().parent_node(node.id());
-                    &get_function_name_with_kind(node, parent_node)
-                }
-            };
-
-            ctx.diagnostic(complexity_diagnostic(span, name, visitor.complexity, self.max));
+            _ => {}
         }
     }
 }
