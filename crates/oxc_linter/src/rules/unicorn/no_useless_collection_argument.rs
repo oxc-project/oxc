@@ -144,8 +144,11 @@ fn remove_argument(fixer: RuleFixer, new_expr: &NewExpression) -> RuleFix {
 
     // remove trailing comma
     if trimmed.starts_with(',') {
-        let comma_offset = after_arg.len() - trimmed.len();
-        delete_end = arg_end + comma_offset as u32 + 1;
+        let Ok(comma_offset) = u32::try_from(after_arg.len() - trimmed.len()) else {
+            return fixer.noop();
+        };
+
+        delete_end = arg_end + comma_offset + 1;
     }
 
     fixer.delete_range(Span::new(first_arg.span().start, delete_end))
