@@ -677,6 +677,7 @@ pub(crate) mod vitest {
     pub mod prefer_called_once;
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
+    pub mod prefer_importing_vitest_globals;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
