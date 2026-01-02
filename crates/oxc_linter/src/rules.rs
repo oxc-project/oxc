@@ -371,6 +371,7 @@ pub(crate) mod react {
     pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_leaked_render;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
@@ -1084,6 +1085,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_max_depth,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
+    react::jsx_no_leaked_render,
     react::jsx_no_script_url,
     react::jsx_no_target_blank,
     react::jsx_no_undef,

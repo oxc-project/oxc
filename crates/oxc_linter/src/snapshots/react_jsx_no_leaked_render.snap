@@ -1,0 +1,381 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:4:8]
+ 3 │     <>
+ 4 │       {0 && <Something/>}
+   ·        ─
+ 5 │       {'' && <Something/>}
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:5:8]
+ 4 │       {0 && <Something/>}
+ 5 │       {'' && <Something/>}
+   ·        ──
+ 6 │       {NaN && <Something/>}
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:6:8]
+ 5 │       {'' && <Something/>}
+ 6 │       {NaN && <Something/>}
+   ·        ───
+ 7 │     </>
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:4:8]
+ 3 │     <>
+ 4 │       {0 && <Something/>}
+   ·        ─
+ 5 │       {'' && <Something/>}
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:6:8]
+ 5 │       {'' && <Something/>}
+ 6 │       {NaN && <Something/>}
+   ·        ───
+ 7 │     </>
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{count && title}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count }) => {
+ 2 │   return <div>{count && <span>There are {count} results</span>}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements.length && <List elements={elements}/>}</div>
+   ·                ───────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ nestedCollection }) => {
+ 2 │   return <div>{nestedCollection.elements.length && <List elements={nestedCollection.elements}/>}</div>
+   ·                ────────────────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements[0] && <List elements={elements}/>}</div>
+   ·                ───────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ numberA, numberB }) => {
+ 2 │   return <div>{(numberA || numberB) && <Results>{numberA+numberB}</Results>}</div>
+   ·                ────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ numberA, numberB }) => {
+ 2 │   return <div>{(numberA || numberB) && <Results>{numberA+numberB}</Results>}</div>
+   ·                ────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{count && title}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count }) => {
+ 2 │   return <div>{count && <span>There are {count} results</span>}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements.length && <List elements={elements}/>}</div>
+   ·                ───────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ nestedCollection }) => {
+ 2 │   return <div>{nestedCollection.elements.length && <List elements={nestedCollection.elements}/>}</div>
+   ·                ────────────────────────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements[0] && <List elements={elements}/>}</div>
+   ·                ───────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ numberA, numberB }) => {
+ 2 │   return <div>{(numberA || numberB) && <Results>{numberA+numberB}</Results>}</div>
+   ·                ────────────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ someCondition, title }) => {
+ 2 │   return <div>{!someCondition && title}</div>
+   ·                ──────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{!!count && title}</div>
+   ·                ───────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{count > 0 && title}</div>
+   ·                ─────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{0 != count && title}</div>
+   ·                ──────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, total, title }) => {
+ 2 │   return <div>{count < total && title}</div>
+   ·                ─────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title, somethingElse }) => {
+ 2 │   return <div>{!!(count && somethingElse) && title}</div>
+   ·                ──────────────────────────
+ 3 │ }
+   ╰────
+  help: Use a ternary expression: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{count && title}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count }) => {
+ 2 │   return <div>{count && <span>There are {count} results</span>}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements.length && <List elements={elements}/>}</div>
+   ·                ───────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ nestedCollection }) => {
+ 2 │   return <div>{nestedCollection.elements.length && <List elements={nestedCollection.elements}/>}</div>
+   ·                ────────────────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ elements }) => {
+ 2 │   return <div>{elements[0] && <List elements={elements}/>}</div>
+   ·                ───────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ numberA, numberB }) => {
+ 2 │   return <div>{(numberA || numberB) && <Results>{numberA+numberB}</Results>}</div>
+   ·                ────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ connection, hasError, hasErrorUpdate}) => {
+ 2 │   return <div>{connection && (hasError || hasErrorUpdate)}</div>
+   ·                ──────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{count ? title : null}</div>
+   ·                ─────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, title }) => {
+ 2 │   return <div>{!count ? title : null}</div>
+   ·                ──────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const Component = ({ count, somethingElse, title }) => {
+ 2 │   return <div>{count && somethingElse ? title : null}</div>
+   ·                ──────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:36]
+ 1 │ const Component = ({ items, somethingElse, title }) => {
+ 2 │   return <div>{items.length > 0 && somethingElse && title}</div>
+   ·                                    ─────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:5:36]
+ 4 │ 
+ 5 │   return <div>{items.length > 0 && breakpoint.phones && <span />}</div>
+   ·                                    ─────────────────
+ 6 │ }
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:16]
+ 1 │ const MyComponent = () => {
+ 2 │   return <div>{maybeObject && (isFoo ? <Aaa /> : <Bbb />)}</div>
+   ·                ───────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:30]
+ 1 │ const MyComponent = () => {
+ 2 │   return <Something checked={isIndeterminate ? false : isChecked} />
+   ·                              ───────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:2:30]
+ 1 │ const MyComponent = () => {
+ 2 │   return <Something checked={cond && isIndeterminate ? false : isChecked} />
+   ·                              ───────────────────────
+ 3 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:4:8]
+ 3 │     <>
+ 4 │       {someCondition && (
+   ·        ─────────────
+ 5 │         <div>
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:4:8]
+ 3 │     <>
+ 4 │       {someCondition && (
+   ·        ─────────────
+ 5 │         <SomeComponent
+   ╰────
+  help: Coerce the condition with `!!` or use a ternary: `condition ? <Element /> : null`
+
+  ⚠ eslint-plugin-react(jsx-no-leaked-render): Potential leaked value that might cause unintentionally rendered values or rendering crashes
+   ╭─[jsx_no_leaked_render.tsx:3:25]
+ 2 │ const Component = () => {
+ 3 │   return <Popover open={isOpen && items.length > 0} />
+   ·                         ──────
+ 4 │ }
+   ╰────
+  help: Coerce the condition to boolean with `!!` or `Boolean()`
