@@ -63,8 +63,7 @@ impl Rule for WarnTodo {
 
 impl WarnTodo {
     fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-        if let AstKind::CallExpression(call_expr) = node.kind() {
+        if let AstKind::CallExpression(call_expr) = possible_jest_node.node.kind() {
             if !is_type_of_jest_fn_call(
                 call_expr,
                 possible_jest_node,
