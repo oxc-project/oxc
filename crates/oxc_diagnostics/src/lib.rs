@@ -290,7 +290,7 @@ impl OxcDiagnostic {
     /// let config_file_path = Path::from("config.json");
     /// if !config_file_path.exists() {
     ///     return Err(OxcDiagnostic::error("No config file found")
-    ///         .with_help("Run my_tool --init to set up a new config file"));
+    ///         .with_help("Run my_tool --init to set up a new config file")
     ///         .with_note("Some useful information or suggestion"));
     /// }
     /// ```
