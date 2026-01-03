@@ -684,6 +684,70 @@ mod test {
     }
 
     #[test]
+    fn test_override_rules_errors_single() {
+        let rules_config = OxlintRules::deserialize(&json!({
+            "jest/no-hooks": ["error", { "foo": "bar" }],
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        let mut store = ExternalPluginStore::default();
+
+        match rules_config.override_rules(
+            &mut builtin_rules,
+            &mut external_rules,
+            &RULES,
+            &mut store,
+        ) {
+            Err(errors) => {
+                assert!(errors.len() == 1, "expected one error, got {errors:#?}");
+                assert!(matches!(
+                    &errors[0],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "jest/no-hooks" && message.contains("unknown field")
+                ));
+            }
+            Ok(()) => panic!("expected errors from invalid config"),
+        }
+    }
+
+    #[test]
+    fn test_override_rules_errors_multiple() {
+        let rules_config = OxlintRules::deserialize(&json!({
+            "jest/no-hooks": ["error", { "foo": "bar" }],
+            "eslint/no-return-assign": ["error", "foobar"]
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        let mut store = ExternalPluginStore::default();
+
+        match rules_config.override_rules(
+            &mut builtin_rules,
+            &mut external_rules,
+            &RULES,
+            &mut store,
+        ) {
+            Err(errors) => {
+                assert!(errors.len() == 2, "expected two errors, got {errors:#?}");
+                assert!(matches!(
+                    &errors[0],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "jest/no-hooks" && message.contains("unknown field")
+                ));
+                assert!(matches!(
+                    &errors[1],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "no-return-assign" && message.contains("unknown variant `foo`")
+                ));
+            }
+            Ok(()) => panic!("expected errors from invalid config"),
+        }
+    }
+
+    #[test]
     fn test_override_rules_errors_sorted() {
         let rules_config = OxlintRules::deserialize(&json!({
             "jest/no-hooks": ["error", { "foo": "bar" }],
