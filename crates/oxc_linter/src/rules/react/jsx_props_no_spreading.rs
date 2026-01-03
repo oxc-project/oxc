@@ -29,7 +29,7 @@ enum IgnoreEnforceOption {
 }
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPropsNoSpreadingConfig {
     /// `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
     html: IgnoreEnforceOption,

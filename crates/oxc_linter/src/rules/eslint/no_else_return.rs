@@ -22,7 +22,7 @@ fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagno
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoElseReturn {
     /// Whether to allow `else if` blocks after a return statement.
     ///

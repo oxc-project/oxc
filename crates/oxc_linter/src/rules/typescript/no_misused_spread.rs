@@ -11,7 +11,7 @@ use crate::{
 pub struct NoMisusedSpread(Box<NoMisusedSpreadConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMisusedSpreadConfig {
     /// An array of type or value specifiers that are allowed to be spread
     /// even if they would normally be flagged as misused.

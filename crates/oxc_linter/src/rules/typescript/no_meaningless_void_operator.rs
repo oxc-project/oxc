@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct NoMeaninglessVoidOperator(Box<NoMeaninglessVoidOperatorConfig>);
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMeaninglessVoidOperatorConfig {
     /// Whether to check `void` applied to expressions of type `never`.
     pub check_never: bool,

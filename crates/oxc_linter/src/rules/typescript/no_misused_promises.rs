@@ -12,7 +12,7 @@ fn default_checks_void_return() -> ChecksVoidReturn {
 pub struct NoMisusedPromises(Box<NoMisusedPromisesConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
 pub struct NoMisusedPromisesConfig {
     /// Whether to check if Promises are used in conditionals.
@@ -45,7 +45,7 @@ pub enum ChecksVoidReturn {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ChecksVoidReturnOptions {
     /// Whether to check Promise-returning functions passed as arguments to void-returning functions.
     pub arguments: bool,

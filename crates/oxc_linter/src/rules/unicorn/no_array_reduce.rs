@@ -25,7 +25,7 @@ fn no_array_reduce_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoArrayReduce {
     /// When set to `true`, allows simple operations (like summing numbers) in `reduce` and `reduceRight` calls.
     pub allow_simple_operations: bool,

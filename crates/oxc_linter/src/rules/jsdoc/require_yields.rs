@@ -49,7 +49,7 @@ impl Deref for RequireYields {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireYieldsConfig {
     /// Functions with these tags will be exempted from the lint rule.
     exempted_by: Vec<String>,

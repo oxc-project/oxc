@@ -14,7 +14,7 @@ fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoSequences {
     /// If this option is set to `false`, this rule disallows the comma operator
     /// even when the expression sequence is explicitly wrapped in parentheses.

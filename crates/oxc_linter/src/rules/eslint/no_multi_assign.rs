@@ -18,7 +18,7 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMultiAssign {
     /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
     ///

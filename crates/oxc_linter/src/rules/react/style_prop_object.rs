@@ -27,7 +27,7 @@ fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct StylePropObject(Box<StylePropObjectConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct StylePropObjectConfig {
     /// List of component names on which to allow `style` prop values of any type.
     allow: Vec<CompactStr>,

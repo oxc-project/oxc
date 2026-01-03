@@ -42,7 +42,7 @@ impl std::ops::Deref for NoStaticElementInteractions {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStaticElementInteractionsConfig {
     /// An array of event handler names that should trigger this rule (e.g., `onClick`, `onKeyDown`).
     handlers: Option<Vec<CompactStr>>,

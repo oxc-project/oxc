@@ -30,7 +30,7 @@ fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ValidTypeof {
     /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
     /// expressions with only string literals or other `typeof` expressions, and disallows

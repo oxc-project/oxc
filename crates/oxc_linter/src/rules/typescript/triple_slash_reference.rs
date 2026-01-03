@@ -21,7 +21,7 @@ fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnosti
 pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct TripleSlashReferenceConfig {
     /// What to enforce for `/// <reference lib="..." />` references.
     lib: LibOption,

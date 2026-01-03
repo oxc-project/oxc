@@ -85,7 +85,7 @@ declare_oxc_lint!(
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct CheckTagNamesConfig {
     /// Additional tag names to allow.
     defined_tags: Vec<String>,

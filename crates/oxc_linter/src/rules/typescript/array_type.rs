@@ -22,7 +22,7 @@ use crate::{
 pub struct ArrayType(Box<ArrayTypeConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ArrayTypeConfig {
     /// The array type expected for mutable cases.
     default: ArrayOption,

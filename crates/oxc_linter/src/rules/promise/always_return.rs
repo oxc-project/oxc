@@ -33,7 +33,7 @@ fn always_return_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct AlwaysReturn(Box<AlwaysReturnConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AlwaysReturnConfig {
     /// You can pass an `{ ignoreLastCallback: true }` as an option to this rule so that
     /// the last `then()` callback in a promise chain does not warn if it does not have

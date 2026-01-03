@@ -54,7 +54,7 @@ fn consistent_function_scoping(
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentFunctionScoping {
     /// Whether to check scoping with arrow functions.
     check_arrow_functions: bool,

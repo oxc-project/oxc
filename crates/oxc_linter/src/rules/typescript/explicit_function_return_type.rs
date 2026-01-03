@@ -27,7 +27,7 @@ use crate::{
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExplicitFunctionReturnTypeConfig {
     /// Whether to allow expressions as function return types. When `true`, allows functions that immediately return an expression without a return type annotation.
     allow_expressions: bool,

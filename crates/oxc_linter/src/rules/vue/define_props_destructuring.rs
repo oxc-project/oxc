@@ -35,7 +35,7 @@ enum Destructure {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct DefinePropsDestructuring {
     /// Require or prohibit destructuring.
     destructure: Destructure,

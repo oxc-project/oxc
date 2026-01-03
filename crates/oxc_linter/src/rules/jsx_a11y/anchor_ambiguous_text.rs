@@ -32,7 +32,7 @@ fn anchor_has_ambiguous_text(span: Span, text: &CompactStr) -> OxcDiagnostic {
 pub struct AnchorAmbiguousText(Box<AnchorAmbiguousTextConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AnchorAmbiguousTextConfig {
     /// List of ambiguous words or phrases that should be flagged in anchor text.
     words: Vec<CompactStr>,

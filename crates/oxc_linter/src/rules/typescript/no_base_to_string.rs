@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoBaseToString(Box<NoBaseToStringConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBaseToStringConfig {
     /// Whether to also check values of type `unknown`.
     /// When `true`, calling toString on `unknown` values will be flagged.

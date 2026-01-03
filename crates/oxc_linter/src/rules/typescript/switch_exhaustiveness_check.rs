@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.

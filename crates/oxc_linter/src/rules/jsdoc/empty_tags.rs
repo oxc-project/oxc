@@ -88,7 +88,7 @@ const EMPTY_TAGS: [&str; 18] = [
 ];
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct EmptyTagsConfig {
     /// Additional tags to check for their descriptions.
     tags: Vec<String>,

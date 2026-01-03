@@ -21,7 +21,7 @@ fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCommonjs {
     /// If `allowPrimitiveModules` option is set to true, the following is valid:
     ///

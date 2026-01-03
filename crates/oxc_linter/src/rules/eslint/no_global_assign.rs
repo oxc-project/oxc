@@ -19,7 +19,7 @@ fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
 pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoGlobalAssignConfig {
     /// List of global variable names to exclude from this rule.
     /// Globals listed here can be assigned to without triggering warnings.

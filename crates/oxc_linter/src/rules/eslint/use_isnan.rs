@@ -42,7 +42,7 @@ fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UseIsnan {
     /// Whether to disallow NaN in switch cases and discriminants
     enforce_for_switch_case: bool,

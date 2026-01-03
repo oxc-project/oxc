@@ -24,7 +24,7 @@ fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnosti
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRedeclare {
     /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     builtin_globals: bool,

@@ -26,7 +26,7 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
 pub struct NoConsole(Box<NoConsoleConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConsoleConfig {
     /// The `allow` option permits the given list of console methods to be used as exceptions to
     /// this rule.

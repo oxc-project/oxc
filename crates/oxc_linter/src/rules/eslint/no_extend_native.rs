@@ -18,7 +18,7 @@ use crate::{
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtendNativeConfig {
     /// A list of objects which are allowed to be exceptions to the rule.
     exceptions: Vec<CompactStr>,

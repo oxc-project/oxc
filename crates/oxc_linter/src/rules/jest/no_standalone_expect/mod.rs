@@ -32,7 +32,7 @@ fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStandaloneExpectConfig {
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,

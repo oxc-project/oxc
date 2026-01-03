@@ -18,7 +18,7 @@ fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmpty {
     /// If set to `true`, allows an empty `catch` block without triggering the linter.
     allow_empty_catch: bool,

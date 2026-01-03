@@ -9,7 +9,7 @@ pub struct PreferNullishCoalescing(Box<PreferNullishCoalescingConfig>);
 
 /// Options for ignoring specific primitive types.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct IgnorePrimitivesOptions {
     /// Ignore bigint primitive types.
     pub bigint: bool,
@@ -41,7 +41,7 @@ impl Default for IgnorePrimitives {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferNullishCoalescingConfig {
     /// Unless this is set to `true`, the rule will error on every file whose
     /// `tsconfig.json` does _not_ have the `strictNullChecks` compiler option

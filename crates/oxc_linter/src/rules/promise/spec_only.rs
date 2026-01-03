@@ -21,7 +21,7 @@ fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
 pub struct SpecOnly(Box<SpecOnlyConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SpecOnlyConfig {
     /// List of Promise static methods that are allowed to be used.
     allowed_methods: Option<FxHashSet<CompactStr>>,

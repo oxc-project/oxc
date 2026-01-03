@@ -26,7 +26,7 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnneededTernary {
     /// Whether to allow the default assignment pattern `x ? x : y`.
     ///

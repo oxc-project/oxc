@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoDuplicateTypeConstituents(Box<NoDuplicateTypeConstituentsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicateTypeConstituentsConfig {
     /// Whether to ignore duplicate types in intersection types.
     /// When true, allows `type T = A & A`.

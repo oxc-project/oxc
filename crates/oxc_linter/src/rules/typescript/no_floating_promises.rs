@@ -11,7 +11,7 @@ use crate::{
 pub struct NoFloatingPromises(Box<NoFloatingPromisesConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoFloatingPromisesConfig {
     /// Allows specific calls to be ignored, specified as type or value specifiers.
     pub allow_for_known_safe_calls: Vec<TypeOrValueSpecifier>,

@@ -39,7 +39,7 @@ fn no_duplicate_exports_diagnostic(
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicateImports {
     /// When `true` this rule will also look at exports to see if there is both a re-export of a
     /// module as in `export ... from 'module'` and also a standard import statement for the same

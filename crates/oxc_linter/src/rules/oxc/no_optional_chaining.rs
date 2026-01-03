@@ -24,7 +24,7 @@ fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
 pub struct NoOptionalChaining(Box<NoOptionalChainingConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoOptionalChainingConfig {
     /// A custom help message to display when optional chaining is found.
     /// For example, "Our output target is ES2016, and optional chaining results in verbose

@@ -20,7 +20,7 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxExpects {
     /// Maximum number of `expect()` assertion calls allowed within a single test.
     pub max: usize,

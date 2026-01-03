@@ -27,7 +27,7 @@ fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoRequireImports(Box<NoRequireImportsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRequireImportsConfig {
     /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
     /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,

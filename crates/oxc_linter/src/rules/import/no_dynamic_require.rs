@@ -18,7 +18,7 @@ fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDynamicRequire {
     /// When `true`, also check `import()` expressions for dynamic module specifiers.
     esmodule: bool,
