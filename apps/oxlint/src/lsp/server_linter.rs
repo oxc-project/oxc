@@ -356,6 +356,7 @@ impl Tool for ServerLinter {
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
+        builder.shutdown(root_uri);
         let new_linter = builder.build_boxed(root_uri, new_options_json.clone());
 
         let patterns = {
@@ -414,6 +415,7 @@ impl Tool for ServerLinter {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
+        builder.shutdown(root_uri);
         let new_linter = builder.build_boxed(root_uri, options);
 
         ToolRestartChanges {
