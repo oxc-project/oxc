@@ -16,7 +16,7 @@ fn consistent_each_for_diagnostic(
     span: Span,
     fn_kind: &str,
     method_used: &str,
-    method_name: CompactStr,
+    method_name: &CompactStr,
 ) -> OxcDiagnostic {
     let message =
         format!("`{fn_kind}` can not be used with `.{method_used}` to create parameterized test.");
@@ -101,19 +101,19 @@ impl ConsistentEachForJson {
 
         if let Some(describe) = self.describe {
             members.insert(MatchKind::Describe, describe);
-        };
+        }
 
         if let Some(it) = self.it {
             members.insert(MatchKind::It, it);
-        };
+        }
 
         if let Some(suite) = self.suite {
             members.insert(MatchKind::Suite, suite);
-        };
+        }
 
         if let Some(test) = self.test {
             members.insert(MatchKind::Test, test);
-        };
+        }
 
         ConsistentEachForConfig { methods: members }
     }
@@ -221,7 +221,7 @@ impl ConsistentEachFor {
                 last_method.span,
                 jest_fn_call.name.as_ref(),
                 method_name.as_ref(),
-                member_to_check.allowed_method_from_disallowed_method(),
+                &member_to_check.allowed_method_from_disallowed_method(),
             ));
         }
     }
