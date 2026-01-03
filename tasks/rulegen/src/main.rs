@@ -1548,7 +1548,10 @@ fn main() {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, element)| {
-                    let element_name = format!("{pascal_rule_name}Config{index}");
+                    let element_name = format!(
+                        "{pascal_rule_name}Config{}",
+                        if index == 0 { "".to_string() } else { index.to_string() }
+                    );
                     rule_config_output.extract_output(element, element_name.as_str())
                 })
                 .collect::<Vec<_>>();
