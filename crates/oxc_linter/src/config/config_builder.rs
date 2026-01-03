@@ -18,6 +18,7 @@ use crate::{
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
+        rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
@@ -234,8 +235,7 @@ impl ConfigStoreBuilder {
                     &mut builder.external_rules,
                     &all_rules,
                     external_plugin_store,
-                )
-                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+                )?;
         }
 
         Ok(builder)
@@ -402,9 +402,7 @@ impl ConfigStoreBuilder {
         }
 
         let overrides = std::mem::take(&mut self.overrides);
-        let resolved_overrides = self
-            .resolve_overrides(overrides, external_plugin_store)
-            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+        let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -432,7 +430,7 @@ impl ConfigStoreBuilder {
         &self,
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+    ) -> Result<ResolvedOxlintOverrides, OverrideRulesError> {
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -459,7 +457,7 @@ impl ConfigStoreBuilder {
                         .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
                 );
 
-                Ok(ResolvedOxlintOverride {
+                Ok::<_, OverrideRulesError>(ResolvedOxlintOverride {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
@@ -643,6 +641,13 @@ pub enum ConfigBuilderError {
     ReservedExternalPluginName {
         plugin_name: String,
     },
+    /// Error parsing rule configuration options
+    RuleConfigurationError {
+        /// The fully qualified rule name (e.g., "jest/no-hooks")
+        rule_name: String,
+        /// The error message from parsing
+        message: String,
+    },
 }
 
 impl Display for ConfigBuilderError {
@@ -694,11 +699,25 @@ impl Display for ConfigBuilderError {
                 Ok(())
             }
             ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
+            ConfigBuilderError::RuleConfigurationError { rule_name, message } => {
+                write!(f, "Failed to parse configuration for rule `{rule_name}`: {message}")
+            }
         }
     }
 }
 
 impl std::error::Error for ConfigBuilderError {}
+
+impl From<OverrideRulesError> for ConfigBuilderError {
+    fn from(err: OverrideRulesError) -> Self {
+        match err {
+            OverrideRulesError::ExternalRuleLookup(e) => ConfigBuilderError::ExternalRuleLookupError(e),
+            OverrideRulesError::RuleConfiguration { rule_name, message } => {
+                ConfigBuilderError::RuleConfigurationError { rule_name, message }
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod test {
