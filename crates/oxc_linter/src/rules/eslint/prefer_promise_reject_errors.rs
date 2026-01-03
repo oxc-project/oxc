@@ -22,7 +22,7 @@ fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferPromiseRejectErrors {
     /// Whether to allow calls to `Promise.reject()` with no arguments.
     allow_empty_reject: bool,

@@ -22,7 +22,7 @@ fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyInterface {
     /// When set to `true`, allows empty interfaces that extend a single interface.
     #[serde(alias = "allow_single_extends")]

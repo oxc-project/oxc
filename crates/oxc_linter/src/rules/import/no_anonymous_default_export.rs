@@ -21,7 +21,7 @@ fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcD
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAnonymousDefaultExport {
     /// Allow anonymous array as default export.
     allow_array: bool,

@@ -23,7 +23,7 @@ fn no_bitwise_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
 pub struct NoBitwise(Box<NoBitwiseConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBitwiseConfig {
     /// The `allow` option permits the given list of bitwise operators to be used
     /// as exceptions to this rule.

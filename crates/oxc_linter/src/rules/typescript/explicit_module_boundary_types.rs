@@ -46,7 +46,7 @@ impl Deref for ExplicitModuleBoundaryTypes {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExplicitModuleBoundaryTypesConfig {
     /// Whether to ignore arguments that are explicitly typed as `any`.
     allow_arguments_explicitly_typed_as_any: bool,

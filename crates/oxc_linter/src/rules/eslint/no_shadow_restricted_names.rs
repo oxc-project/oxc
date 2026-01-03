@@ -22,7 +22,7 @@ fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> Oxc
 pub struct NoShadowRestrictedNames(Box<NoShadowRestrictedNamesConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoShadowRestrictedNamesConfig {
     /// If true, also report shadowing of `globalThis`.
     report_global_this: bool,

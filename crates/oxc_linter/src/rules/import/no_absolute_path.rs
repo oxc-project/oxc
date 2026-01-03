@@ -24,7 +24,7 @@ fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for ES module import statements will be resolved:
     ///
