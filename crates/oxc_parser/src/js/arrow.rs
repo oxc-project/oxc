@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{ParserConfig, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -14,7 +14,7 @@ struct ArrowFunctionHead<'a> {
     span: u32,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
