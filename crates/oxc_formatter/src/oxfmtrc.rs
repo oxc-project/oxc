@@ -242,37 +242,56 @@ pub enum SortOrderConfig {
 }
 
 /// Configuration for Tailwind CSS class sorting.
+/// Based on options from `prettier-plugin-tailwindcss`.
+///
+/// Note: All `tailwind` prefixes have been removed from option names.
+/// For example, use `config` instead of `tailwindConfig`.
+///
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TailwindcssConfig {
-    /// Path to Tailwind config file (v3).
-    /// e.g., `"./tailwind.config.js"`
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Default: `"./tailwind.config.js"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<String>,
 
-    /// Path to Tailwind stylesheet (v4).
-    /// e.g., `"./src/app.css"`
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Example: `"./src/app.css"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stylesheet: Option<String>,
 
-    /// List of custom function names whose arguments should be sorted.
-    /// e.g., `["clsx", "cva", "tw"]`
+    /// List of custom function names that contain Tailwind CSS classes.
+    ///
+    /// Example: `["clsx", "cn", "cva", "tw"]`
+    ///
+    /// Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub functions: Option<Vec<String>>,
 
-    /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
-    /// e.g., `["myClassProp", ":class"]`
+    /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Example: `["myClassProp", ":class"]`
+    ///
+    /// Default: `["class", "className"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attributes: Option<Vec<String>>,
 
     /// Preserve whitespace around classes.
-    /// Defaults to `false`.
+    ///
+    /// Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_whitespace: Option<bool>,
 
     /// Preserve duplicate classes.
-    /// Defaults to `false`.
+    ///
+    /// Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
 }

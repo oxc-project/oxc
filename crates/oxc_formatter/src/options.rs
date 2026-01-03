@@ -82,32 +82,47 @@ pub struct FormatOptions {
 }
 
 /// Options for Tailwind CSS class sorting.
-/// These options are passed to the `prettier-plugin-tailwindcss` for configuration.
+/// Based on options from `prettier-plugin-tailwindcss`.
+///
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Default, Clone)]
 pub struct TailwindcssOptions {
-    /// Path to Tailwind config file (v3).
-    /// e.g., `"./tailwind.config.js"`
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Default: `"./tailwind.config.js"`
     pub config: Option<String>,
 
-    /// Path to Tailwind stylesheet (v4).
-    /// e.g., `"./src/app.css"`
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Example: `"./src/app.css"`
     pub stylesheet: Option<String>,
 
-    /// List of custom function names whose arguments should be sorted.
-    /// e.g., `["clsx", "cva", "tw"]`
+    /// List of custom function names that contain Tailwind CSS classes.
+    ///
+    /// Example: `["clsx", "cn", "cva", "tw"]`
+    ///
+    /// Default: `[]`
     pub functions: Vec<String>,
 
-    /// List of additional HTML/JSX attributes to sort (beyond `class` and `className`).
-    /// e.g., `["myClassProp", ":class"]`
+    /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Example: `["myClassProp", ":class"]`
+    ///
+    /// Default: `["class", "className"]`
     pub attributes: Vec<String>,
 
     /// Preserve whitespace around classes.
-    /// Defaults to `false`.
+    ///
+    /// Default: `false`
     pub preserve_whitespace: bool,
 
     /// Preserve duplicate classes.
-    /// Defaults to `false`.
+    ///
+    /// Default: `false`
     pub preserve_duplicates: bool,
 }
 
