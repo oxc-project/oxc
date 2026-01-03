@@ -92,7 +92,7 @@ mod test {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.errors.is_empty());
-            let semantic = SemanticBuilder::new().build(&ret.program).semantic;
+            let semantic = SemanticBuilder::new().build(&ret.program, ret.stats).semantic;
             let comments = semantic.comments();
 
             assert_eq!(

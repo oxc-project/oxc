@@ -97,7 +97,7 @@ fn minify(
         mangle: mangle.then(MangleOptions::default),
         compress: Some(CompressOptions { max_iterations, ..CompressOptions::smallest() }),
     };
-    let ret = Minifier::new(options).minify(allocator, &mut program);
+    let ret = Minifier::new(options).minify(allocator, &mut program, ret.stats);
     Codegen::new()
         .with_options(CodegenOptions {
             source_map_path,

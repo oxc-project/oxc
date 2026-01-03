@@ -61,11 +61,12 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
+    let stats = ret.stats;
 
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
-        .build(&program);
+        .build(&program, stats);
 
     if !ret.errors.is_empty() {
         println!("Semantic Errors:");

@@ -103,6 +103,7 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
+        self.stats.add_node();
         self.ast.alloc_class(
             self.end_span(start_span),
             r#type,
@@ -193,6 +194,8 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_body(&mut self) -> Box<'a, ClassBody<'a>> {
         let span = self.start_span();
+        // Class body creates a scope
+        self.stats.add_scope();
         let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
             // Skip empty class element `;`
             if p.eat(Kind::Semicolon) {
@@ -203,6 +206,7 @@ impl<'a> ParserImpl<'a> {
             }
             Some(Self::parse_class_element(p))
         });
+        self.stats.add_node();
         self.ast.alloc_class_body(self.end_span(span), class_elements)
     }
 
@@ -375,6 +379,8 @@ impl<'a> ParserImpl<'a> {
     /// `ClassStaticBlockStatementList` :
     ///    `StatementList`[~Yield, +Await, ~Return]
     fn parse_class_static_block(&mut self, span: u32) -> ClassElement<'a> {
+        // Static blocks create a scope
+        self.stats.add_scope();
         self.bump_any(); // bump `static`
         let block =
             self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block);
@@ -409,6 +415,7 @@ impl<'a> ParserImpl<'a> {
             true,
             diagnostics::accessor_modifier,
         );
+        self.stats.add_node(); // AccessorProperty
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
@@ -438,6 +445,7 @@ impl<'a> ParserImpl<'a> {
             false,
             FunctionKind::ClassMethod,
         );
+        self.stats.add_node(); // MethodDefinition
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,
@@ -474,6 +482,7 @@ impl<'a> ParserImpl<'a> {
             false,
             FunctionKind::Constructor,
         );
+        self.stats.add_node(); // MethodDefinition (constructor)
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,
@@ -608,6 +617,7 @@ impl<'a> ParserImpl<'a> {
             generator,
             FunctionKind::ClassMethod,
         );
+        self.stats.add_node(); // MethodDefinition (method)
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,
@@ -672,6 +682,7 @@ impl<'a> ParserImpl<'a> {
             });
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
+        self.stats.add_node(); // PropertyDefinition
         self.ast.class_element_property_definition(
             self.end_span(span),
             r#type,

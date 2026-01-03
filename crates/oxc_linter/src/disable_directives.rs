@@ -1091,7 +1091,8 @@ mod tests {
         let source_type = SourceType::default();
         let parser_ret = Parser::new(allocator, source_text, source_type).parse();
         assert!(parser_ret.errors.is_empty());
-        let semantic_ret = SemanticBuilder::new().build(allocator.alloc(parser_ret.program));
+        let semantic_ret =
+            SemanticBuilder::new().build(allocator.alloc(parser_ret.program), parser_ret.stats);
         semantic_ret.semantic
     }
 

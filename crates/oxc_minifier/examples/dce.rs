@@ -70,6 +70,7 @@ fn dce(
     let mut program = ret.program;
     Compressor::new(allocator).dead_code_elimination(
         &mut program,
+        ret.stats,
         CompressOptions { max_iterations, ..CompressOptions::dce() },
     );
     Codegen::new()
