@@ -83,13 +83,12 @@ declare_oxc_lint!(
     config = NoNoninteractiveElementInteractionsConfig
 );
 
-const NON_INTERACTIVE_ELEMENTS: [&str; 36] = [
+const NON_INTERACTIVE_ELEMENTS: [&str; 35] = [
     "article",
     "aside",
     "blockquote",
     "caption",
     "dd",
-    "details",
     "dialog",
     "dl",
     "dt",
