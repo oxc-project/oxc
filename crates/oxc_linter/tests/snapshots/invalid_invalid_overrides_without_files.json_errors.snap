@@ -1,0 +1,22 @@
+---
+source: crates/oxc_linter/tests/schema_validation_test.rs
+expression: snapshot_body
+---
+File: invalid_overrides_without_files.json
+
+.oxlintrc.json:
+{
+  "rules": {
+    "curly": "off"
+  },
+  "overrides": [
+    {
+      "rules": {
+        "no-console": "error"
+      }
+    }
+  ]
+}
+
+Errors:
+- "files" is a required property

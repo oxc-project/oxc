@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "curly": "off"
+  },
+  "overrides": [
+    {
+      "rules": {
+        "no-console": "error"
+      }
+    }
+  ]
+}

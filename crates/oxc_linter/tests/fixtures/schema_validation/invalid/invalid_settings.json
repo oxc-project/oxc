@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../../../../npm/oxlint/configuration_schema.json",
+  "plugins": [
+    "react"
+  ],
+  "settings": {
+    "react": {
+      "version": "invalid"
+    }
+  }
+}
