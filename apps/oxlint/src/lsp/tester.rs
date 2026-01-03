@@ -185,10 +185,8 @@ impl Tester<'_> {
     }
 
     fn create_linter(&self) -> ServerLinter {
-        ServerLinterBuilder::build(
-            &Self::get_root_uri(self.relative_root_dir),
-            self.options.clone(),
-        )
+        ServerLinterBuilder::default()
+            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
@@ -246,7 +244,7 @@ impl Tester<'_> {
         &self,
         new_options: serde_json::Value,
     ) -> ToolRestartChanges {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         self.create_linter().handle_configuration_change(
             &builder,
             &Self::get_root_uri(self.relative_root_dir),
