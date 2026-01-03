@@ -301,25 +301,25 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        let mut break_finder = BreakFinder::new();
+        let mut break_finder = FindNestedBreak::new();
         break_finder.visit_switch_case(case);
         !break_finder.nested_unlabelled_break
     }
 }
 
-struct BreakFinder {
+struct FindNestedBreak {
     top_level: bool,
     nested_unlabelled_break: bool,
 }
 
-impl BreakFinder {
+impl FindNestedBreak {
     pub fn new() -> Self {
         Self { top_level: true, nested_unlabelled_break: false }
     }
 }
 
 // TODO: This is to aggressive, we should allow `break` for last elements in statements
-impl<'a> Visit<'a> for BreakFinder {
+impl<'a> Visit<'a> for FindNestedBreak {
     fn visit_expression(&mut self, _it: &Expression<'a>) {
         // do nothing
     }
@@ -330,6 +330,7 @@ impl<'a> Visit<'a> for BreakFinder {
         }
         match it {
             Statement::ThrowStatement(_)
+            | Statement::SwitchStatement(_)
             | Statement::ContinueStatement(_)
             | Statement::ReturnStatement(_)
             | Statement::ExpressionStatement(_) => {}
@@ -485,5 +486,10 @@ mod test {
         );
         test("let x = 1; switch('x') { case 'x': let x = 2; break;}", "let x = 1; { let x = 2 }");
         test("switch(1){case 2: var x=0;}", "if (0) var x;");
+        test(
+            "switch(b){case 2: switch(a){case 2: a();break;case 3: foo();break;}}",
+            "if (b === 2) switch (a) {case 2: a(); break;	case 3: foo();}",
+        );
+        test("switch(b){case 2: switch(a){case 2: foo()}}", "b === 2 && a === 2 && foo();");
     }
 }
