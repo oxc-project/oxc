@@ -121,7 +121,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("module.exports = {'a': 1};", None), // {                "sourceType": "module"            },
+        ("module.exports = {'a': 1};", None), // {  "sourceType": "module" },
         ("var result = a * b;", None),
         ("function x() { var result = a * b; return result; }", None),
         ("function x() { return (result = a * b); }", None),
@@ -218,10 +218,7 @@ fn test() {
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
-    let valid_configs = vec![
-        serde_json::json!(["except-parens"]),
-        serde_json::json!(["always"]),
-    ];
+    let valid_configs = vec![serde_json::json!(["except-parens"]), serde_json::json!(["always"])];
 
     let invalid_configs = vec![
         // An array with an object should produce an error, since the rule only accepts a string.
