@@ -46,6 +46,7 @@ pub(crate) mod eslint {
     pub mod block_scoped_var;
     pub mod capitalized_comments;
     pub mod class_methods_use_this;
+    pub mod complexity;
     pub mod constructor_super;
     pub mod curly;
     pub mod default_case;
@@ -667,6 +668,7 @@ pub(crate) mod promise {
 
 pub(crate) mod vitest {
     pub mod consistent_test_filename;
+    pub mod consistent_vitest_vi;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_called_times;
@@ -674,6 +676,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod warn_todo;
 }
 
 pub(crate) mod node {
@@ -708,6 +711,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::block_scoped_var,
     eslint::capitalized_comments,
     eslint::class_methods_use_this,
+    eslint::complexity,
     eslint::constructor_super,
     eslint::curly,
     eslint::default_case,
@@ -1329,6 +1333,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
     vitest::consistent_test_filename,
+    vitest::consistent_vitest_vi,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::prefer_called_times,
@@ -1336,6 +1341,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vitest::warn_todo,
     vue::define_emits_declaration,
     vue::define_props_declaration,
     vue::define_props_destructuring,

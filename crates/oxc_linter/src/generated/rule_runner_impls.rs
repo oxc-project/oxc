@@ -51,6 +51,16 @@ impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUs
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::complexity::Complexity {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::Function,
+        AstType::PropertyDefinition,
+        AstType::StaticBlock,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::constructor_super::ConstructorSuper {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Class]));
@@ -4002,6 +4012,12 @@ impl RuleRunner for crate::rules::vitest::consistent_test_filename::ConsistentTe
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::vitest::consistent_vitest_vi::ConsistentVitestVi {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ImportDeclaration]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::vitest::no_conditional_tests::NoConditionalTests {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
@@ -4033,6 +4049,11 @@ impl RuleRunner for crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy 
 }
 
 impl RuleRunner for crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
+impl RuleRunner for crate::rules::vitest::warn_todo::WarnTodo {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }

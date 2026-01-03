@@ -22,16 +22,20 @@ pub struct NoThisInBeforeRouteEnter;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow this usage in a beforeRouteEnter method.
+    /// Disallow `this` usage in a `beforeRouteEnter` method.
+    ///
+    /// This rule is only relevant when using `vue-router`.
     ///
     /// ### Why is this bad?
     ///
-    /// Because lack of this in the beforeRouteEnter.
-    /// This behavior isn't obvious, so it's pretty easy to make a TypeError. Especially while refactoring.
+    /// Inside a `beforeRouteEnter` method, there is no access to `this`.
+    /// See [the vue-router docs](https://router.vuejs.org/guide/advanced/navigation-guards.html#in-component-guards).
+    /// This behavior isn't obvious, and so this lint rule can help prevent runtime errors in some cases.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
     /// ```js
     /// export default {
     ///   beforeRouteEnter(to, from, next) {
@@ -42,10 +46,11 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
+    ///
     /// ```js
     /// export default {
     ///   beforeRouteEnter(to, from, next) {
-    ///     // anything without this
+    ///     // anything without `this`
     ///   }
     /// }
     /// ```
