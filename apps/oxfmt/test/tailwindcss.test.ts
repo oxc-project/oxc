@@ -793,4 +793,102 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.code).toContain('includes("\\t")');
     expect(result.errors).toStrictEqual([]);
   });
+
+  test("should handle empty class string", async () => {
+    const input = `const A = <div className="">Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Empty string should remain empty
+    expect(result.code).toContain('className=""');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle whitespace-only class string", async () => {
+    const input = `const A = <div className="   ">Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Whitespace-only should be normalized to single space
+    expect(result.code).toContain('className=" "');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle deeply nested template literals (3 levels)", async () => {
+    const input = `const A = <div className={\`p-4 flex \${a ? \`m-2 grid \${b ? \`inline-block\` : ""}\` : ""}\`}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // All levels should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.code).toContain("inline-block");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle template literal inside function inside template literal", async () => {
+    const input = `const A = <div className={\`p-4 flex \${clsx(\`m-2 grid\`)}\`}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    // Both template literals should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle multiple function calls with template literals", async () => {
+    const input = `const A = <div className={clsx(\`p-4 flex\`, cva(\`m-2 grid\`))}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx", "cva"],
+      },
+    });
+
+    // Both template literals should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle array of template literals in function call", async () => {
+    const input = `const A = <div className={clsx([\`p-4 flex\`, \`m-2 grid\`])}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    // Both template literals should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should handle object with template literal values", async () => {
+    const input = `const A = <div className={clsx({[\`p-4 flex\`]: true, [\`m-2 grid\`]: false})}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    // Template literals should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.errors).toStrictEqual([]);
+  });
 });
