@@ -1342,4 +1342,57 @@ mod test {
         .build(&mut external_plugin_store)
         .unwrap()
     }
+
+    #[test]
+    fn test_extends_env_merge() {
+        // Test that env is merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/env_parent.json"],
+                "env": {
+                    "node": true,
+                    "es6": false
+                }
+            }
+            "#,
+        );
+
+        let env = config.env();
+
+        // Parent values should be preserved
+        assert!(env.contains("browser"), "browser from parent should be preserved");
+        // Child values should be added
+        assert!(env.contains("node"), "node from child should be added");
+        // Child should override parent
+        assert!(!env.contains("es6"), "es6 should be false (child overrides parent's true)");
+    }
+
+    #[test]
+    fn test_extends_globals_merge() {
+        // Test that globals are merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/globals_parent.json"],
+                "globals": {
+                    "ChildGlobal": "writable",
+                    "SharedGlobal": "off"
+                }
+            }
+            "#,
+        );
+
+        let globals = config.globals();
+
+        // Parent values should be preserved
+        assert!(globals.is_enabled("ParentGlobal"), "ParentGlobal from parent should be preserved");
+        // Child values should be added
+        assert!(globals.is_enabled("ChildGlobal"), "ChildGlobal from child should be added");
+        // Child should override parent
+        assert!(
+            !globals.is_enabled("SharedGlobal"),
+            "SharedGlobal should be off (child overrides parent's writable)"
+        );
+    }
 }
