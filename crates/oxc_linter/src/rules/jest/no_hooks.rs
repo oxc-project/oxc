@@ -206,21 +206,24 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
+    let valid_configs = vec![
+        serde_json::json!([{ "allow": [] }]),
+        serde_json::json!([{ "allow": ["beforeAll"] }]),
+        serde_json::json!([{ "allow": ["beforeEach"] }]),
+        serde_json::json!([{ "allow": ["beforeAll", "beforeEach", "afterAll", "afterEach"] }]),
+    ];
+
+    let invalid_configs = vec![
+        serde_json::json!([{ "foo": ["bar"] }]),
+        serde_json::json!([{ "allow": true }]),
+        serde_json::json!([{ "allow": [true] }]),
+        serde_json::json!([{ "allow": [false] }]),
+        serde_json::json!([{ "allow": "undefined" }]),
+        serde_json::json!([{ "allow": null }]),
+    ];
+
     Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .expect_configs(valid_configs, invalid_configs)
         .test_and_snapshot();
-}
-
-#[test]
-fn invalid_configs_error_in_from_configuration() {
-    // An array with an object that has unknown keys should produce an error
-    let invalid = serde_json::json!([{ "foo": "bar" }]);
-    assert!(NoHooks::from_configuration(invalid).is_err());
-
-    // Configs containing `null` or the string "undefined" should be rejected under strict validation
-    let undefined_allow = serde_json::json!([{ "allow": "undefined" }]);
-    assert!(NoHooks::from_configuration(undefined_allow).is_err());
-
-    let null_allow = serde_json::json!([{ "allow": null }]);
-    assert!(NoHooks::from_configuration(null_allow).is_err());
 }
