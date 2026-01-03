@@ -19,6 +19,39 @@ use crate::{
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
+/// Errors that can occur when overriding rules
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OverrideRulesError {
+    /// Error looking up an external rule
+    ExternalRuleLookup(ExternalRuleLookupError),
+    /// Error parsing rule configuration
+    RuleConfiguration {
+        /// The fully qualified rule name (e.g., "jest/no-hooks")
+        rule_name: String,
+        /// The error message from parsing
+        message: String,
+    },
+}
+
+impl fmt::Display for OverrideRulesError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OverrideRulesError::ExternalRuleLookup(e) => write!(f, "{e}"),
+            OverrideRulesError::RuleConfiguration { rule_name, message } => {
+                write!(f, "Failed to parse configuration for rule `{rule_name}`: {message}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for OverrideRulesError {}
+
+impl From<ExternalRuleLookupError> for OverrideRulesError {
+    fn from(e: ExternalRuleLookupError) -> Self {
+        OverrideRulesError::ExternalRuleLookup(e)
+    }
+}
+
 type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
 
 // TS type is `Record<string, RuleConf>`
@@ -71,7 +104,7 @@ impl OxlintRules {
         >,
         all_rules: &[RuleEnum],
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<(), ExternalRuleLookupError> {
+    ) -> Result<(), OverrideRulesError> {
         let mut rules_to_replace = vec![];
 
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -104,11 +137,14 @@ impl OxlintRules {
                         } else {
                             serde_json::Value::Array(rule_config.config.to_vec())
                         };
-                        rules_to_replace.push((
-                            rule.from_configuration(config)
-                                .expect("failed to parse rule configuration"),
-                            severity,
-                        ));
+                        let configured_rule =
+                            rule.from_configuration(config).map_err(|e| {
+                                OverrideRulesError::RuleConfiguration {
+                                    rule_name: rule_config.full_name().into_owned(),
+                                    message: e.to_string(),
+                                }
+                            })?;
+                        rules_to_replace.push((configured_rule, severity));
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
