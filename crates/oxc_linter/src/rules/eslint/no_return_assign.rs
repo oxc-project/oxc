@@ -218,24 +218,21 @@ fn test() {
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
-    Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();
-}
+    let valid_configs = vec![
+        serde_json::json!(["except-parens"]),
+        serde_json::json!(["always"]),
+    ];
 
-#[test]
-fn invalid_configs_error_in_from_configuration() {
-    // An array with an object should produce an error, since the rule only accepts a string.
-    let invalid = serde_json::json!([{ "foo": "bar" }]);
-    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+    let invalid_configs = vec![
+        // An array with an object should produce an error, since the rule only accepts a string.
+        serde_json::json!([{ "foo": "bar" }]),
+        // String that isn't one of the allowed options should produce an error
+        serde_json::json!(["foobar"]),
+        serde_json::json!(["ExceptParens"]),
+        serde_json::json!(["Always"]),
+    ];
 
-    // String that isn't one of the allowed options should produce an error
-    let invalid = serde_json::json!(["foobar"]);
-    assert!(NoReturnAssign::from_configuration(invalid).is_err());
-    let invalid = serde_json::json!(["ExceptParens"]);
-    assert!(NoReturnAssign::from_configuration(invalid).is_err());
-    let invalid = serde_json::json!(["Always"]);
-    assert!(NoReturnAssign::from_configuration(invalid).is_err());
-
-    // Valid configs should not produce an error
-    let valid = serde_json::json!(["except-parens"]);
-    assert!(NoReturnAssign::from_configuration(valid).is_ok());
+    Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail)
+        .expect_configs(valid_configs, invalid_configs)
+        .test_and_snapshot();
 }
