@@ -268,7 +268,10 @@ impl Linter {
                     }
 
                     if should_run_on_jest_node {
-                        for jest_node in iter_possible_jest_call_node(semantic) {
+                        for jest_node in iter_possible_jest_call_node(
+                            semantic,
+                            &ctx_host.settings().vitest.vitest_imports,
+                        ) {
                             for (rule, ctx) in &rules {
                                 if !with_runtime_optimization
                                     || rule.run_info().is_run_on_jest_node_implemented()
@@ -306,7 +309,10 @@ impl Linter {
                             && (!with_runtime_optimization
                                 || run_info.is_run_on_jest_node_implemented())
                         {
-                            for jest_node in iter_possible_jest_call_node(semantic) {
+                            for jest_node in iter_possible_jest_call_node(
+                                semantic,
+                                &ctx.settings().vitest.vitest_imports,
+                            ) {
                                 rule.run_on_jest_node(&jest_node, ctx);
                             }
                         }

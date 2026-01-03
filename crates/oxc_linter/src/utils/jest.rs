@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use lazy_regex::Regex;
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
@@ -156,14 +157,30 @@ pub struct PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx.semantic(), &[]).collect()
+}
+
+fn compile_pattern(matcher_pattern: &CompactStr) -> Option<lazy_regex::Regex> {
+    if let Some(stripped) = matcher_pattern.strip_prefix('/')
+        && let Some(end) = stripped.rfind('/')
+    {
+        let (pat, _flags) = stripped.split_at(end);
+        // For now, ignore flags and just use the pattern
+        return Regex::new(pat).ok();
+    }
+
+    let reg_str = format!("(?u){matcher_pattern}");
+    Regex::new(&reg_str).ok()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    import_alias: &'c [CompactStr],
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    let alias_as_regex =
+        import_alias.iter().map(compile_pattern).collect::<Vec<Option<lazy_regex::Regex>>>();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -172,11 +189,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list =
+        collect_ids_referenced_to_import(semantic, alias_as_regex).chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
@@ -207,12 +225,13 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    import_alias: Vec<Option<lazy_regex::Regex>>,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
         .resolved_references()
         .enumerate()
-        .filter_map(|(symbol_id, reference_ids)| {
+        .filter_map(move |(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
             if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
@@ -222,7 +241,16 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                let import_declaration_source = import_decl.source.value.as_str();
+                let contains_import = import_alias.iter().any(|alias| {
+                    let Some(regex) = alias else { return false };
+
+                    regex.is_match(import_declaration_source)
+                });
+
+                if contains_import
+                    || matches!(import_declaration_source, "@jest/globals" | "vitest")
+                {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
