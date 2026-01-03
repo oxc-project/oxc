@@ -119,7 +119,8 @@ where
 
         if let serde_json::Value::Array(arr) = value {
             let config = match arr.into_iter().next() {
-                Some(v) => serde_json::from_value::<T>(v).map_err(|e| D::Error::custom(format!("Invalid rule configuration: {e}")))?,
+                Some(v) => serde_json::from_value::<T>(v)
+                    .map_err(|e| D::Error::custom(format!("Invalid rule configuration: {e}")))?,
                 None => T::default(),
             };
 
