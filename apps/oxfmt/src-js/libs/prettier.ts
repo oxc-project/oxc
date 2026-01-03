@@ -102,3 +102,84 @@ export async function formatFile({
   options.filepath = fileName;
   return prettierCache.format(code, options);
 }
+
+// ---
+// Tailwind CSS class sorting support
+// ---
+
+// Import types only to avoid runtime error if plugin is not installed
+import type { TransformerEnv } from "prettier-plugin-tailwindcss";
+import { TailwindcssOptions } from "..";
+
+// Cache tailwind plugin functions for tree-shaking support
+let cachedGetTailwindConfig: typeof import("prettier-plugin-tailwindcss").getTailwindConfig;
+let cachedSortClasses: typeof import("prettier-plugin-tailwindcss").sortClasses;
+let tailwindInitialized = false;
+
+export interface SortTailwindClassesArgs {
+  filepath: string;
+  classes: string[];
+  options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
+}
+
+/**
+ * Process Tailwind CSS classes found in JSX attributes.
+ * @param args - Object containing filepath, classes, and options
+ * @returns Array of sorted class strings (same order/length as input)
+ */
+export async function sortTailwindClasses({
+  filepath,
+  classes,
+  options = {},
+}: SortTailwindClassesArgs): Promise<string[]> {
+  // Initialize tailwind plugin lazily on first call
+  if (!tailwindInitialized) {
+    tailwindInitialized = true;
+    try {
+      // Dynamic import with destructuring for tree-shaking
+      ({ getTailwindConfig: cachedGetTailwindConfig, sortClasses: cachedSortClasses } =
+        await import("prettier-plugin-tailwindcss"));
+    } catch {
+      // Plugin not installed or failed to initialize - sorting will be skipped
+      return classes;
+    }
+  }
+
+  const tailwindcss = options.experimentalTailwindcss || {};
+  // Options are flattened at root level (like Prettier)
+  const configOptions = {
+    filepath,
+    ...options,
+    // Oxfmt puts all Tailwind options under `experimentalTailwindcss`, and removed `tailwind` prefix
+    tailwindConfig: tailwindcss.config,
+    tailwindStylesheet: tailwindcss.stylesheet,
+    tailwindAttributes: tailwindcss.attributes,
+    tailwindFunctions: tailwindcss.functions,
+    tailwindPreserveWhitespace: tailwindcss.preserveWhitespace,
+    tailwindPreserveDuplicates: tailwindcss.preserveDuplicates,
+  };
+
+  // Load Tailwind context
+  const tailwindContext = await cachedGetTailwindConfig(configOptions);
+
+  // If context not available, return original classes
+  if (!tailwindContext) {
+    return classes;
+  }
+
+  // Create transformer env with options
+  const env: TransformerEnv = {
+    context: tailwindContext,
+    options: configOptions,
+  };
+
+  // Sort all classes
+  return classes.map((classStr) => {
+    try {
+      return cachedSortClasses(classStr, { env });
+    } catch {
+      // Failed to sort, return original
+      return classStr;
+    }
+  });
+}

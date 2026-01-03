@@ -125,6 +125,7 @@ pub enum TagKind {
     Entry,
     LineSuffix,
     Labelled,
+    TailwindClass,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]
