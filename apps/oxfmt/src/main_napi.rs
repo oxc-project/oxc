@@ -140,7 +140,7 @@ pub async fn format(
     #[napi(
         ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
     )]
-    tailwind_cb: JsSortTailwindClassesCb,
+    sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
     let num_of_threads = 1;
 
@@ -148,7 +148,7 @@ pub async fn format(
         init_external_formatter_cb,
         format_embedded_cb,
         format_file_cb,
-        tailwind_cb,
+        sort_tailwind_classes_cb,
     );
 
     // Create resolver from options and resolve format options
