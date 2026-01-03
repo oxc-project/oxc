@@ -428,7 +428,7 @@ impl ConfigStoreBuilder {
         &self,
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<ResolvedOxlintOverrides, OverrideRulesError> {
+    ) -> Result<ResolvedOxlintOverrides, Vec<OverrideRulesError>> {
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -455,7 +455,7 @@ impl ConfigStoreBuilder {
                         .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
                 );
 
-                Ok::<_, OverrideRulesError>(ResolvedOxlintOverride {
+                Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
@@ -639,12 +639,10 @@ pub enum ConfigBuilderError {
     ReservedExternalPluginName {
         plugin_name: String,
     },
-    /// Error parsing rule configuration options
-    RuleConfigurationError {
-        /// The fully qualified rule name (e.g., "jest/no-hooks")
-        rule_name: String,
-        /// The error message from parsing
-        message: String,
+    /// Multiple errors parsing rule configuration options
+    RuleConfigurationErrors {
+        /// The errors that occurred
+        errors: Vec<OverrideRulesError>,
     },
 }
 
@@ -697,8 +695,14 @@ impl Display for ConfigBuilderError {
                 Ok(())
             }
             ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
-            ConfigBuilderError::RuleConfigurationError { rule_name, message } => {
-                write!(f, "Failed to parse configuration for rule `{rule_name}`: {message}")
+            ConfigBuilderError::RuleConfigurationErrors { errors } => {
+                for (i, error) in errors.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str("\n")?;
+                    }
+                    write!(f, "{error}")?;
+                }
+                Ok(())
             }
         }
     }
@@ -706,16 +710,9 @@ impl Display for ConfigBuilderError {
 
 impl std::error::Error for ConfigBuilderError {}
 
-impl From<OverrideRulesError> for ConfigBuilderError {
-    fn from(err: OverrideRulesError) -> Self {
-        match err {
-            OverrideRulesError::ExternalRuleLookup(e) => {
-                ConfigBuilderError::ExternalRuleLookupError(e)
-            }
-            OverrideRulesError::RuleConfiguration { rule_name, message } => {
-                ConfigBuilderError::RuleConfigurationError { rule_name, message }
-            }
-        }
+impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
+    fn from(errors: Vec<OverrideRulesError>) -> Self {
+        ConfigBuilderError::RuleConfigurationErrors { errors }
     }
 }
 
