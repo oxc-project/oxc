@@ -44,6 +44,8 @@ impl fmt::Display for OverrideRulesError {
     }
 }
 
+impl std::error::Error for OverrideRulesError {}
+
 impl From<ExternalRuleLookupError> for OverrideRulesError {
     fn from(e: ExternalRuleLookupError) -> Self {
         OverrideRulesError::ExternalRuleLookup(e)
