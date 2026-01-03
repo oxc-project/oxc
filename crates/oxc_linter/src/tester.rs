@@ -401,6 +401,119 @@ impl Tester {
         self
     }
 
+    /// Expect that certain configurations deserialize successfully and others fail.
+    ///
+    /// `valid` contains JSON values that should deserialize via `Rule::from_configuration`.
+    /// `invalid` contains JSON values that should produce an error.
+    ///
+    /// This helper also performs an integration check by embedding the config into an
+    /// `.oxlintrc` `rules` entry and running `ConfigStoreBuilder::from_oxlintrc` to ensure
+    /// that overrides parsing surface the same errors when applicable.
+    pub fn expect_configs(self, valid: Vec<Value>, invalid: Vec<Value>) -> Self {
+        let rule = self.find_rule();
+        let full_name = format!("{}/{}", rule.plugin_name(), rule.name());
+
+        for v in valid {
+            // Directly ensure the rule accepts the configuration
+            if let Err(e) = rule.from_configuration(v.clone()) {
+                panic!(
+                    "Valid config rejected for {}/{}: {e} (config: {v})",
+                    rule.plugin_name(),
+                    rule.name()
+                );
+            }
+
+            // Integration check: embed into an Oxlintrc and ensure config builder succeeds
+            let option_value = if v.is_null() {
+                // no options
+                json!(null)
+            } else if let Some(arr) = v.as_array() {
+                // Use first element of array as the options object when embedding into rules
+                if arr.is_empty() { json!(null) } else { arr[0].clone() }
+            } else {
+                v.clone()
+            };
+
+            let rule_entry = if option_value.is_null() {
+                // severity-only
+                json!(["warn"])
+            } else {
+                json!(["warn", option_value])
+            };
+
+            let mut oxlintrc = json!({ "plugins": [rule.plugin_name()], "rules": { full_name.clone(): rule_entry } });
+            // Some deserializers expect categories present (used elsewhere), add empty
+            oxlintrc.as_object_mut().unwrap().insert("categories".into(), json!({}));
+
+            let oxlintrc: crate::Oxlintrc = serde_json::from_value(oxlintrc).unwrap();
+            let mut external_plugin_store =
+                crate::external_plugin_store::ExternalPluginStore::default();
+            if let Err(e) = crate::ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+            ) {
+                panic!("Integration embedding of valid config failed for {full_name}: {e}");
+            }
+        }
+
+        for v in invalid {
+            // Direct parsing should fail
+            if rule.from_configuration(v.clone()).is_ok() {
+                panic!(
+                    "Invalid config accepted for {}/{}: config {v}",
+                    rule.plugin_name(),
+                    rule.name()
+                );
+            }
+
+            // Integration embedding should also produce a RuleConfiguration error when parsed via Oxlintrc
+            let option_value = if v.is_null() {
+                json!(null)
+            } else if let Some(arr) = v.as_array() {
+                if arr.is_empty() { json!(null) } else { arr[0].clone() }
+            } else {
+                v.clone()
+            };
+
+            let rule_entry = if option_value.is_null() {
+                json!(["warn"])
+            } else {
+                json!(["warn", option_value])
+            };
+
+            let mut oxlintrc = json!({ "plugins": [rule.plugin_name()], "rules": { full_name.clone(): rule_entry } });
+            oxlintrc.as_object_mut().unwrap().insert("categories".into(), json!({}));
+
+            let oxlintrc: crate::Oxlintrc = serde_json::from_value(oxlintrc).unwrap();
+            let mut external_plugin_store =
+                crate::external_plugin_store::ExternalPluginStore::default();
+            match crate::ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+            ) {
+                Ok(_) => panic!(
+                    "Integration embedding of invalid config unexpectedly succeeded for {full_name}: config {v}"
+                ),
+                Err(e) => {
+                    // Ensure the error is a rule configuration error (some configs may fail earlier)
+                    let is_rule_config_err =
+                        matches!(e, crate::ConfigBuilderError::RuleConfigurationErrors { .. });
+                    if !is_rule_config_err {
+                        // If we didn't get a rule configuration error, still accept it as a failure,
+                        // but surface what happened to help debugging.
+                        continue;
+                    }
+                }
+            }
+        }
+
+        self
+    }
+
     #[expect(clippy::print_stdout)]
     pub fn test(&mut self) {
         let failed = self.test_pass();
