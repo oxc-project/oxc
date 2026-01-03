@@ -370,7 +370,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         if self.options.minify {
-            minify_template_literal(&mut tagged.quasi, ctx.ast);
+            minify_template_literal(&mut tagged.quasi, &ctx.ast);
         }
 
         if self.options.transpile_template_literals {
@@ -408,7 +408,7 @@ impl<'a> StyledComponents<'a, '_> {
             tag,
             quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
             type_arguments,
-        } = expr.take_in(ctx.ast);
+        } = expr.take_in(&ctx.ast);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
             ArrayExpressionElement::from(ctx.ast.expression_string_literal(
@@ -452,7 +452,7 @@ impl<'a> StyledComponents<'a, '_> {
             self.add_properties(&mut properties, ctx);
             let object = ctx.ast.alloc_object_expression(SPAN, properties);
             let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
-            let object = expr.take_in(ctx.ast);
+            let object = expr.take_in(&ctx.ast);
             let property = ctx.ast.identifier_name(SPAN, "withConfig");
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
@@ -863,7 +863,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 /// quasis = ["width:", "px;color:red;height:100px;"]
 /// expressions = [width]
 /// ```
-fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a>) {
+fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: &AstBuilder<'a>) {
     const NOT_IN_STRING: u8 = 0;
     /// `Span` used as a sentinel indicating quasi should be removed.
     /// Source text is limited to max `u32::MAX` bytes, so it's impossible for a `TemplateElement`
@@ -1159,7 +1159,7 @@ mod tests {
             ast.vec(),
         );
 
-        minify_template_literal(&mut lit, ast);
+        minify_template_literal(&mut lit, &ast);
 
         assert!(lit.quasis.len() == 1);
 

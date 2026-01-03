@@ -46,9 +46,9 @@ impl<'a> PeepholeOptimizations {
             if let Expression::LogicalExpression(logical_expr) = &mut b
                 && logical_expr.operator == op
             {
-                let right = logical_expr.left.take_in(ctx.ast);
+                let right = logical_expr.left.take_in(&ctx.ast);
                 a = Self::join_with_left_associative_op(span, op, a, right, ctx);
-                b = logical_expr.right.take_in(ctx.ast);
+                b = logical_expr.right.take_in(&ctx.ast);
                 continue;
             }
             break;
@@ -109,9 +109,9 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         }
         *expr = if b {
-            e.left.take_in(ctx.ast)
+            e.left.take_in(&ctx.ast)
         } else {
-            let argument = e.left.take_in(ctx.ast);
+            let argument = e.left.take_in(&ctx.ast);
             ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
         };
         ctx.state.changed = true;
@@ -205,7 +205,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = logical_expr.right.take_in(ctx.ast);
+        expr.right = logical_expr.right.take_in(&ctx.ast);
         ctx.state.changed = true;
     }
 
@@ -227,7 +227,7 @@ impl<'a> PeepholeOptimizations {
         Self::mark_assignment_target_as_read(&expr.left, ctx);
 
         expr.operator = new_op;
-        expr.right = binary_expr.right.take_in(ctx.ast);
+        expr.right = binary_expr.right.take_in(&ctx.ast);
         ctx.state.changed = true;
     }
 
@@ -253,7 +253,7 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
-        let target = target.take_in(ctx.ast);
+        let target = target.take_in(&ctx.ast);
         *expr = ctx.ast.expression_update(e.span, operator, true, target);
         ctx.state.changed = true;
     }

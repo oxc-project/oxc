@@ -35,7 +35,7 @@ impl<'a> ClassProperties<'a, '_> {
         // 3. At least one property satisfying the above is after this method,
         //    or class contains a static block which is being transformed
         //    (static blocks are always evaluated after computed keys, regardless of order)
-        let original_key = key.take_in(ctx.ast);
+        let original_key = key.take_in(&ctx.ast);
         let (assignment, temp_var) = self.ctx.create_computed_key_temp_var(original_key, ctx);
         self.insert_before.push(assignment);
         method.key = PropertyKey::from(temp_var);
@@ -63,7 +63,7 @@ impl<'a> ClassProperties<'a, '_> {
         is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let original_key = key.take_in(ctx.ast);
+        let original_key = key.take_in(&ctx.ast);
         if self.ctx.key_needs_temp_var(&original_key, ctx) {
             let (assignment, ident) = self.ctx.create_computed_key_temp_var(original_key, ctx);
             if is_static {
@@ -102,7 +102,7 @@ impl<'a> ClassProperties<'a, '_> {
         };
 
         if self.ctx.key_needs_temp_var(key, ctx) {
-            self.insert_before.push(key.take_in(ctx.ast));
+            self.insert_before.push(key.take_in(&ctx.ast));
         }
     }
 
@@ -157,7 +157,7 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         // Extract assignment from computed key and insert before class
-        let assignment = prop.key.take_in(ctx.ast).into_expression();
+        let assignment = prop.key.take_in(&ctx.ast).into_expression();
         self.insert_before.push(assignment);
     }
 }

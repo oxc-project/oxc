@@ -124,12 +124,8 @@ pub fn create_assignment<'a>(
     value: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    ctx.ast.expression_assignment(
-        SPAN,
-        AssignmentOperator::Assign,
-        binding.create_target(ReferenceFlags::Write, ctx),
-        value,
-    )
+    let target = binding.create_target(ReferenceFlags::Write, ctx);
+    ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value)
 }
 
 /// `super(...args);`
@@ -137,14 +133,11 @@ pub fn create_super_call<'a>(
     args_binding: &BoundIdentifier<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    ctx.ast.expression_call(
-        SPAN,
-        ctx.ast.expression_super(SPAN),
-        NONE,
-        ctx.ast
-            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
-        false,
-    )
+    let read_expr = args_binding.create_read_expression(ctx);
+    let spread_element = ctx.ast.argument_spread_element(SPAN, read_expr);
+    let arguments = ctx.ast.vec1(spread_element);
+    let callee = ctx.ast.expression_super(SPAN);
+    ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
 }
 
 /// * With super class:
@@ -166,10 +159,9 @@ pub fn create_class_constructor<'a, 'c>(
         let rest_element =
             ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
         params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
-        ctx.ast.vec_from_iter(
-            iter::once(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)))
-                .chain(stmts_iter),
-        )
+        let super_call_expr = create_super_call(&args_binding, ctx);
+        let super_call_stmt = ctx.ast.statement_expression(SPAN, super_call_expr);
+        ctx.ast.vec_from_iter(iter::once(super_call_stmt).chain(stmts_iter))
     } else {
         ctx.ast.vec_from_iter(stmts_iter)
     };

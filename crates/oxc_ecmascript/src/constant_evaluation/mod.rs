@@ -27,7 +27,7 @@ use crate::{
 };
 
 pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
-    fn ast(&self) -> AstBuilder<'a>;
+    fn ast(&self) -> &AstBuilder<'a>;
 }
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {

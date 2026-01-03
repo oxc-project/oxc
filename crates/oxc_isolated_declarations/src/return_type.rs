@@ -53,7 +53,7 @@ impl<'a> FunctionReturnType<'a> {
         body: &FunctionBody<'a>,
     ) -> Option<TSType<'a>> {
         let mut visitor = FunctionReturnType {
-            ast: transformer.ast,
+            ast: transformer.ast.clone(),
             return_expression: None,
             return_statement_count: 0,
             scope_depth: 0,

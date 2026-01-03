@@ -109,7 +109,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(&ctx.ast) else {
             unreachable!();
         };
 
@@ -199,12 +199,9 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let left = binding.create_read_expression(ctx);
-        let right = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            binding.create_write_target(ctx),
-            expr,
-        );
+        let write_target = binding.create_write_target(ctx);
+        let right =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, write_target, expr);
         ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
     }
 

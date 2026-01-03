@@ -41,7 +41,7 @@ enum RefreshIdentifierResolver<'a> {
 
 impl<'a> RefreshIdentifierResolver<'a> {
     /// Parses a string into a RefreshIdentifierResolver
-    pub fn parse(input: &str, ast: AstBuilder<'a>) -> Self {
+    pub fn parse(input: &str, ast: &AstBuilder<'a>) -> Self {
         let mut parts = input.split('.');
 
         let first_part = parts.next().unwrap();
@@ -132,7 +132,7 @@ pub struct ReactRefresh<'a, 'ctx> {
 impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     pub fn new(
         options: &ReactRefreshOptions,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         Self {
@@ -154,7 +154,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
-        for mut statement in program.body.take_in(ctx.ast) {
+        for mut statement in program.body.take_in(&ctx.ast) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -188,10 +188,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             ));
 
             let callee = self.refresh_reg.to_expression(ctx);
-            let arguments = ctx.ast.vec_from_array([
-                Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
-            ]);
+            let read_expr = binding.create_read_expression(ctx);
+            let string_literal = ctx.ast.expression_string_literal(SPAN, *persistent_id, None);
+            let arguments =
+                ctx.ast.vec_from_array([Argument::from(read_expr), Argument::from(string_literal)]);
             ctx.ast.statement_expression(
                 SPAN,
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
@@ -263,14 +263,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
-        *expr = ctx.ast.expression_call(
-            SPAN,
-            binding.create_read_expression(ctx),
-            NONE,
-            arguments,
-            false,
-        );
+        arguments.insert(0, Argument::from(expr.take_in(&ctx.ast)));
+        let callee = binding.create_read_expression(ctx);
+        *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -512,11 +507,14 @@ impl<'a> ReactRefresh<'a, '_> {
         }
 
         if !is_variable_declarator {
+            let name_atom = ctx.ast.atom(inferred_name);
+            let registration = self.create_registration(name_atom, ctx);
+            let taken_expr = expr.take_in(&ctx.ast);
             *expr = ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                expr.take_in(ctx.ast),
+                registration,
+                taken_expr,
             );
         }
 
@@ -638,26 +636,16 @@ impl<'a> ReactRefresh<'a, '_> {
         }
 
         // _s = refresh_sig();
-        let init = ctx.ast.expression_call(
-            SPAN,
-            self.refresh_sig.to_expression(ctx),
-            NONE,
-            ctx.ast.vec(),
-            false,
-        );
+        let callee = self.refresh_sig.to_expression(ctx);
+        let empty_args = ctx.ast.vec();
+        let init = ctx.ast.expression_call(SPAN, callee, NONE, empty_args, false);
         let binding = self.ctx.var_declarations.create_uid_var_with_init("s", init, ctx);
 
         // _s();
-        let call_expression = ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
-                SPAN,
-                binding.create_read_expression(ctx),
-                NONE,
-                ctx.ast.vec(),
-                false,
-            ),
-        );
+        let callee = binding.create_read_expression(ctx);
+        let empty_args = ctx.ast.vec();
+        let inner_call = ctx.ast.expression_call(SPAN, callee, NONE, empty_args, false);
+        let call_expression = ctx.ast.statement_expression(SPAN, inner_call);
 
         body.statements.insert(0, call_expression);
 
@@ -838,17 +826,11 @@ impl<'a> ReactRefresh<'a, '_> {
         // we don't mess up the inferred 'Foo' function name.
 
         // Result: let Foo = () => {}; __signature(Foo, ...);
-        arguments.insert(0, Argument::from(id_binding.create_read_expression(ctx)));
-        let statement = ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
-                SPAN,
-                binding.create_read_expression(ctx),
-                NONE,
-                arguments,
-                false,
-            ),
-        );
+        let id_read_expr = id_binding.create_read_expression(ctx);
+        arguments.insert(0, Argument::from(id_read_expr));
+        let callee = binding.create_read_expression(ctx);
+        let call_expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let statement = ctx.ast.statement_expression(SPAN, call_expr);
 
         // Get the address of the statement containing this `VariableDeclarator`
         let address =

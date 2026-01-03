@@ -252,7 +252,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
     fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ImportExpression(import_expr) = expr.take_in(ctx.ast) else {
+        let Expression::ImportExpression(import_expr) = expr.take_in(&ctx.ast) else {
             unreachable!();
         };
 
@@ -595,8 +595,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Argument<'a> {
-        let elements =
-            ctx.ast.vec_from_iter(specifiers.into_iter().map(|specifier| match specifier {
+        let elements: Vec<_> = specifiers
+            .into_iter()
+            .map(|specifier| match specifier {
                 ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                     let ImportSpecifier { span, local, imported, .. } = specifier.unbox();
                     self.insert_import_binding(span, binding, local, imported.name(), ctx)
@@ -608,7 +609,9 @@ impl<'a> ModuleRunnerTransform<'a> {
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     unreachable!()
                 }
-            }));
+            })
+            .collect();
+        let elements = ctx.ast.vec_from_iter(elements);
         Self::create_imported_names_object(elements, ctx)
     }
 
@@ -772,17 +775,16 @@ impl<'a> ModuleRunnerTransform<'a> {
             ]),
         );
 
+        let ident_expr =
+            ctx.create_unbound_ident_expr(SPAN, SSR_MODULE_EXPORTS_KEY, ReferenceFlags::Read);
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.create_unbound_ident_expr(
-                SPAN,
-                SSR_MODULE_EXPORTS_KEY,
-                ReferenceFlags::Read,
-            )),
+            Argument::from(ident_expr),
             Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
             Argument::from(object),
         ]);
 
-        ctx.ast.statement_expression(span, Self::create_define_property(arguments, ctx))
+        let define_property = Self::create_define_property(arguments, ctx);
+        ctx.ast.statement_expression(span, define_property)
     }
 
     fn create_export_default(span: Span, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {

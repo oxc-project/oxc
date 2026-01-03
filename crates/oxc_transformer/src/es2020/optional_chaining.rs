@@ -260,7 +260,9 @@ impl<'a> OptionalChaining<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ChainExpression(chain_expr) = expr.take_in(ctx.ast) else { unreachable!() };
+        let Expression::ChainExpression(chain_expr) = expr.take_in(&ctx.ast) else {
+            unreachable!()
+        };
         match chain_expr.unbox().expression {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
@@ -285,7 +287,7 @@ impl<'a> OptionalChaining<'a, '_> {
             // To insert the temp binding in the correct scope, we wrap the expression with
             // an arrow function. During the chain expression transformation, the temp binding
             // will be inserted into the arrow function's body.
-            wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx)
+            wrap_expression_in_arrow_function_iife(expr.take_in(&ctx.ast), ctx)
         } else {
             self.transform_chain_expression_impl(false, expr, ctx)
         }
@@ -299,7 +301,7 @@ impl<'a> OptionalChaining<'a, '_> {
     ) {
         *expr = if self.is_inside_function_parameter {
             // Same as the above `transform_chain_expression` explanation
-            wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx)
+            wrap_expression_in_arrow_function_iife(expr.take_in(&ctx.ast), ctx)
         } else {
             // Unfortunately no way to get compiler to see that this branch is provably unreachable.
             // We don't want to inline this function, to keep `enter_expression` as small as possible.
@@ -376,7 +378,7 @@ impl<'a> OptionalChaining<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
-                    object.take_in(ctx.ast),
+                    object.take_in(&ctx.ast),
                     ctx,
                 );
                 binding.create_read_expression(ctx)
@@ -491,7 +493,7 @@ impl<'a> OptionalChaining<'a, '_> {
                             && self.should_specify_context(ident, ctx)
                         {
                             // `foo$bar(...)` -> `foo$bar.call(context, ...)`
-                            let callee = callee.take_in(ctx.ast);
+                            let callee = callee.take_in(&ctx.ast);
                             let property = ctx.ast.identifier_name(SPAN, "call");
                             let member =
                                 ctx.ast.member_expression_static(SPAN, callee, property, false);
@@ -537,7 +539,7 @@ impl<'a> OptionalChaining<'a, '_> {
             if ident.name == "eval" {
                 // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                 let zero = ctx.ast.number_0();
-                let original_callee = expr.take_in(ctx.ast);
+                let original_callee = expr.take_in(&ctx.ast);
                 let expressions = ctx.ast.vec_from_array([zero, original_callee]);
                 *expr = ctx.ast.expression_sequence(SPAN, expressions);
             }
@@ -653,7 +655,7 @@ impl<'a> OptionalChaining<'a, '_> {
                         // `(_foo = foo)`
                         *object = Self::create_assignment_expression(
                             binding.create_write_target(ctx),
-                            object.take_in(ctx.ast),
+                            object.take_in(&ctx.ast),
                             ctx,
                         );
                         binding.to_maybe_bound_identifier()

@@ -179,7 +179,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(ctx.ast))))
+            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(&ctx.ast))))
         } else {
             None
         }
@@ -304,7 +304,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
-        let params = wrapper_function.params.take_in_box(ctx.ast);
+        let params = wrapper_function.params.take_in_box(&ctx.ast);
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -344,7 +344,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
-            let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
+            let apply_call_stmt = Self::create_apply_call_statement(&bound_ident, ctx);
+            let statements = ctx.ast.vec1(apply_call_stmt);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let id = id.or_else(|| Self::infer_function_id_from_parent_node(wrapper_scope_id, ctx));
             Self::create_function(id, params, body, scope_id, ctx)
@@ -391,7 +392,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         // Construct the IIFE
-        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
+        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(&ctx.ast));
         ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -425,7 +426,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         {
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
-            let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
+            let apply_call_stmt = Self::create_apply_call_statement(&bound_ident, ctx);
+            let statements = ctx.ast.vec1(apply_call_stmt);
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.body.replace(ctx.ast.alloc_function_body(
                 SPAN,
@@ -436,16 +438,15 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         // function _name() { _ref.apply(this, arguments); }
         {
-            let statements = ctx.ast.vec_from_array([
-                self.create_async_to_generator_assignment(
-                    &bound_ident,
-                    params,
-                    body,
-                    generator_scope_id,
-                    ctx,
-                ),
-                Self::create_apply_call_statement(&bound_ident, ctx),
-            ]);
+            let async_to_gen_assignment = self.create_async_to_generator_assignment(
+                &bound_ident,
+                params,
+                body,
+                generator_scope_id,
+                ctx,
+            );
+            let apply_call_stmt = Self::create_apply_call_statement(&bound_ident, ctx);
+            let statements = ctx.ast.vec_from_array([async_to_gen_assignment, apply_call_stmt]);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
 
             let scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -466,19 +467,19 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = arrow.body.take_in_box(ctx.ast);
+        let mut body = arrow.body.take_in_box(&ctx.ast);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
+                Statement::ExpressionStatement(es) => es.expression.take_in(&ctx.ast),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = arrow.params.take_in_box(ctx.ast);
+        let params = arrow.params.take_in_box(&ctx.ast);
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
@@ -503,7 +504,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
-            let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
+            let apply_call_stmt = Self::create_apply_call_statement(&bound_ident, ctx);
+            let statements = ctx.ast.vec1(apply_call_stmt);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let id = function_name.map(|name| {
                 ctx.generate_binding(name, wrapper_scope_id, SymbolFlags::Function)
@@ -663,9 +665,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let this = Argument::from(ctx.ast.expression_this(SPAN));
         let arguments = ctx.ast.vec_from_array([this, arguments_ident]);
         // _ref.apply
+        let read_expr = bound_ident.create_read_expression(ctx);
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
-            bound_ident.create_read_expression(ctx),
+            read_expr,
             ctx.ast.identifier_name(SPAN, "apply"),
             false,
         ));
@@ -747,12 +750,9 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let right = self.create_async_to_generator_call(params, body, scope_id, ctx);
-        let expression = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            bound.create_write_target(ctx),
-            right,
-        );
+        let target = bound.create_write_target(ctx);
+        let expression =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
         ctx.ast.statement_expression(SPAN, expression)
     }
 
