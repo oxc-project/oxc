@@ -245,21 +245,14 @@ impl<'a> ObjectRestSpread<'a, '_> {
 
         // Insert `_foo = rhs`
         if let Some(expr) = reference_builder.expr.take() {
-            expressions.push(ctx.ast.expression_assignment(
-                SPAN,
-                op,
-                reference_builder.maybe_bound_identifier.create_write_target(ctx),
-                expr,
-            ));
+            let write_target = reference_builder.maybe_bound_identifier.create_write_target(ctx);
+            expressions.push(ctx.ast.expression_assignment(SPAN, op, write_target, expr));
         }
 
         // Insert `{} = _foo`
-        expressions.push(ctx.ast.expression_assignment(
-            SPAN,
-            op,
-            assign_expr.left.take_in(ctx.ast),
-            reference_builder.create_read_expression(ctx),
-        ));
+        let left = assign_expr.left.take_in(&ctx.ast);
+        let right = reference_builder.create_read_expression(ctx);
+        expressions.push(ctx.ast.expression_assignment(SPAN, op, left, right));
 
         // Insert all `rest = _extends({}, (_objectDestructuringEmpty(_foo), _foo))`
         for datum in data {
@@ -326,25 +319,27 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let rest = object_assignment_target.rest.take()?;
         let rest_target = rest.unbox().target;
         let mut all_primitives = true;
-        let keys =
-            ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
-                match e {
-                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        let name = ident.binding.name;
-                        let expr = ctx.ast.expression_string_literal(SPAN, name, None);
-                        Some(ArrayExpressionElement::from(expr))
-                    }
-                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        Self::transform_property_key(
-                            &mut p.name,
-                            new_decls,
-                            &mut all_primitives,
-                            state,
-                            ctx,
-                        )
-                    }
+        let collected_keys: Vec<_> = object_assignment_target
+            .properties
+            .iter_mut()
+            .filter_map(|e| match e {
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                    let name = ident.binding.name;
+                    let expr = ctx.ast.expression_string_literal(SPAN, name, None);
+                    Some(ArrayExpressionElement::from(expr))
                 }
-            }));
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                    Self::transform_property_key(
+                        &mut p.name,
+                        new_decls,
+                        &mut all_primitives,
+                        state,
+                        ctx,
+                    )
+                }
+            })
+            .collect();
+        let keys = ctx.ast.vec_from_iter(collected_keys);
         Some(SpreadPair {
             lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest_target),
             keys,
@@ -406,7 +401,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 break;
             }
         }
-        let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
+        let mut expressions = ctx.ast.vec1(expr.take_in(&ctx.ast));
         expressions.extend(exprs);
         *expr = ctx.ast.expression_sequence(SPAN, expressions);
     }
@@ -443,11 +438,13 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 let id = bound_identifier.create_binding_pattern(ctx);
                 let kind = VariableDeclarationKind::Var;
                 decls.push(ctx.ast.variable_declarator(SPAN, kind, id, NONE, None, false));
+                let left = pat.take_in(&ctx.ast);
+                let right = bound_identifier.create_read_expression(ctx);
                 exprs.push(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    pat.take_in(ctx.ast),
-                    bound_identifier.create_read_expression(ctx),
+                    left,
+                    right,
                 ));
                 *pat = bound_identifier.create_spanned_write_target(SPAN, ctx);
             }
@@ -496,7 +493,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
                 Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
-                let arg = spread_prop.argument.take_in(ctx.ast);
+                let arg = spread_prop.argument.take_in(&ctx.ast);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
                 props.push(prop);
@@ -655,7 +652,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             return;
         }
         let target = left.to_assignment_target_mut();
-        let assign_left = target.take_in(ctx.ast);
+        let assign_left = target.take_in(&ctx.ast);
         let flags = SymbolFlags::FunctionScopedVariable;
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let id = bound_identifier.create_binding_pattern(ctx);
@@ -688,7 +685,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             (empty_stmt.span, ctx.ast.vec())
         } else {
             let span = stmt.span();
-            (span, ctx.ast.vec1(stmt.take_in(ctx.ast)))
+            (span, ctx.ast.vec1(stmt.take_in(&ctx.ast)))
         };
         *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
@@ -842,14 +839,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
 
         // Add `_foo = foo()`
         if let Some(id) = reference_builder.binding.take() {
-            let decl = ctx.ast.variable_declarator(
-                SPAN,
-                state.kind,
-                id,
-                NONE,
-                Some(reference_builder.create_read_expression(ctx)),
-                false,
-            );
+            let init_expr = reference_builder.create_read_expression(ctx);
+            let decl =
+                ctx.ast.variable_declarator(SPAN, state.kind, id, NONE, Some(init_expr), false);
             new_decls.push(decl);
         }
 
@@ -872,8 +864,10 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 let mut all_primitives = true;
                 // Create the access keys.
                 // `let { a, b, ...c } = foo` -> `["a", "b"]`
-                let keys = ctx.ast.vec_from_iter(pat.properties.iter_mut().filter_map(
-                    |binding_property| {
+                let collected_keys: Vec<_> = pat
+                    .properties
+                    .iter_mut()
+                    .filter_map(|binding_property| {
                         Self::transform_property_key(
                             &mut binding_property.key,
                             &mut temp_keys,
@@ -881,8 +875,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
                             state,
                             ctx,
                         )
-                    },
-                ));
+                    })
+                    .collect();
+                let keys = ctx.ast.vec_from_iter(collected_keys);
                 let datum = SpreadPair {
                     lhs,
                     keys,
@@ -922,12 +917,13 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let mut binding_pattern =
                 ctx.ast.binding_pattern_object_pattern(decl.span, ctx.ast.vec(), NONE);
             mem::swap(&mut binding_pattern, &mut decl.id);
+            let init_expr = reference_builder.create_read_expression(ctx);
             let decl = ctx.ast.variable_declarator(
                 decl.span,
                 decl.kind,
                 binding_pattern,
                 NONE,
-                Some(reference_builder.create_read_expression(ctx)),
+                Some(init_expr),
                 false,
             );
             new_decls.push(decl);
@@ -1107,26 +1103,26 @@ impl<'a> SpreadPair<'a> {
                 ctx.ast.alloc_object_expression(SPAN, ctx.ast.vec()),
             ));
             // Add `(_objectDestructuringEmpty(b), b);`
-            arguments.push(Argument::SequenceExpression(ctx.ast.alloc_sequence_expression(
+            let ref_read1 = reference_builder.create_read_expression(ctx);
+            let helper_arg = ctx.ast.vec1(Argument::from(ref_read1));
+            let helper_call = transform_ctx.helper_call_expr(
+                Helper::ObjectDestructuringEmpty,
                 SPAN,
-                {
-                    let mut sequence = ctx.ast.vec();
-                    sequence.push(transform_ctx.helper_call_expr(
-                        Helper::ObjectDestructuringEmpty,
-                        SPAN,
-                        ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx))),
-                        ctx,
-                    ));
-                    sequence.push(reference_builder.create_read_expression(ctx));
-                    sequence
-                },
-            )));
+                helper_arg,
+                ctx,
+            );
+            let ref_read2 = reference_builder.create_read_expression(ctx);
+            let mut sequence = ctx.ast.vec();
+            sequence.push(helper_call);
+            sequence.push(ref_read2);
+            let seq_expr = ctx.ast.alloc_sequence_expression(SPAN, sequence);
+            arguments.push(Argument::SequenceExpression(seq_expr));
             transform_ctx.helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
-            let mut arguments =
-                ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx)));
+            let ref_read = reference_builder.create_read_expression(ctx);
+            let mut arguments = ctx.ast.vec1(Argument::from(ref_read));
             let key_expression = ctx.ast.expression_array(SPAN, self.keys);
 
             let key_expression = if self.all_primitives
@@ -1138,10 +1134,11 @@ impl<'a> SpreadPair<'a> {
                     SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 );
                 let kind = VariableDeclarationKind::Const;
+                let binding_pattern = bound_identifier.create_binding_pattern(ctx);
                 let declarator = ctx.ast.variable_declarator(
                     SPAN,
                     kind,
-                    bound_identifier.create_binding_pattern(ctx),
+                    binding_pattern,
                     NONE,
                     Some(key_expression),
                     false,
@@ -1155,10 +1152,9 @@ impl<'a> SpreadPair<'a> {
                 let callee = Expression::StaticMemberExpression(
                     ctx.ast.alloc_static_member_expression(SPAN, key_expression, property, false),
                 );
-                let arguments = ctx
-                    .ast
-                    .vec1(Argument::from(transform_ctx.helper_load(Helper::ToPropertyKey, ctx)));
-                ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+                let helper_load = transform_ctx.helper_load(Helper::ToPropertyKey, ctx);
+                let call_arguments = ctx.ast.vec1(Argument::from(helper_load));
+                ctx.ast.expression_call(SPAN, callee, NONE, call_arguments, false)
             } else {
                 key_expression
             };
@@ -1184,7 +1180,7 @@ impl<'a> ReferenceBuilder<'a> {
         force_create_binding: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
-        let expr = expr.take_in(ctx.ast);
+        let expr = expr.take_in(&ctx.ast);
         let binding;
         let maybe_bound_identifier;
         match &expr {

@@ -84,8 +84,8 @@ impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a,
 }
 
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
-    fn ast(&self) -> AstBuilder<'a> {
-        self.ast
+    fn ast(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 
