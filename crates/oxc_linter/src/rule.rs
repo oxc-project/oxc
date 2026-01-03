@@ -118,12 +118,15 @@ where
         let value = serde_json::Value::deserialize(deserializer)?;
 
         if let serde_json::Value::Array(arr) = value {
-            let config = arr
-                .into_iter()
-                .next()
-                .and_then(|v| serde_json::from_value(v).ok())
-                .unwrap_or_else(T::default);
+            let config = match arr.into_iter().next() {
+                Some(v) => serde_json::from_value::<T>(v).map_err(|e| D::Error::custom(format!("Invalid rule configuration: {e}")))?,
+                None => T::default(),
+            };
+
             Ok(DefaultRuleConfig(config))
+        } else if value == serde_json::Value::Null {
+            // Missing configuration (null) is treated as default (no rule options provided)
+            Ok(DefaultRuleConfig(T::default()))
         } else {
             Err(D::Error::custom("Expected array for rule configuration"))
         }
