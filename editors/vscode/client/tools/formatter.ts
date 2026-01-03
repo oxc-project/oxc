@@ -109,10 +109,6 @@ export default class FormatterTool implements ToolInterface {
       // allow `*.start.frag` and `*.end.frag`,
       "frag",
       // https://github.com/oxc-project/oxc/pull/16524/
-      // JSON stringify filenames
-      "package.json",
-      "package-lock.json",
-      "composer.json",
       // JSON
       "json",
       "4DForm",
@@ -205,6 +201,9 @@ export default class FormatterTool implements ToolInterface {
 
       // https://github.com/oxc-project/oxc/pull/16524/
       // JSON stringify filenames
+      "package.json",
+      "package-lock.json",
+      "composer.json",
       // JSON filenames
       ".all-contributorsrc",
       ".arcconfig",
