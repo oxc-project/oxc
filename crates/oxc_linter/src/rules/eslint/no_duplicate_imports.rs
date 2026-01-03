@@ -39,7 +39,7 @@ fn no_duplicate_exports_diagnostic(
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicateImports {
     /// When `true` this rule will also look at exports to see if there is both a re-export of a
     /// module as in `export ... from 'module'` and also a standard import statement for the same
@@ -140,9 +140,7 @@ enum ModuleType {
 
 impl Rule for NoDuplicateImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

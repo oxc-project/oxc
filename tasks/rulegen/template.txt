@@ -60,14 +60,14 @@ declare_oxc_lint!(
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 {{#if rule_config}}
-    config = {{pascal_rule_name}},
+    config = {{pascal_rule_name}}Config,
 {{/if}}
 );
 
 impl Rule for {{pascal_rule_name}} {
 {{#if rule_config}}
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
 {{/if}}

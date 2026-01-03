@@ -32,7 +32,7 @@ fn no_extra_boolean_cast_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtraBooleanCast {
     /// when set to `true`, in addition to checking default contexts, checks
     /// whether extra boolean casts are present in expressions whose result is
@@ -87,9 +87,7 @@ declare_oxc_lint!(
 
 impl Rule for NoExtraBooleanCast {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

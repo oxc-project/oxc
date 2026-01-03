@@ -37,7 +37,7 @@ fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMisleadingCharacterClass {
     /// When set to `true`, the rule allows any grouping of code points
     /// inside a character class as long as they are written using escape sequences.
@@ -150,9 +150,7 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
 
 impl Rule for NoMisleadingCharacterClass {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

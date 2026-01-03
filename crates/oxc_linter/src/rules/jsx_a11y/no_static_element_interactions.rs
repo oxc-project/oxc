@@ -42,7 +42,7 @@ impl std::ops::Deref for NoStaticElementInteractions {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStaticElementInteractionsConfig {
     /// An array of event handler names that should trigger this rule (e.g., `onClick`, `onKeyDown`).
     handlers: Option<Vec<CompactStr>>,
@@ -159,9 +159,7 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
 
 impl Rule for NoStaticElementInteractions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

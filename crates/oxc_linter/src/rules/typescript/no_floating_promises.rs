@@ -11,7 +11,7 @@ use crate::{
 pub struct NoFloatingPromises(Box<NoFloatingPromisesConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoFloatingPromisesConfig {
     /// Allows specific calls to be ignored, specified as type or value specifiers.
     pub allow_for_known_safe_calls: Vec<TypeOrValueSpecifier>,
@@ -112,9 +112,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFloatingPromises {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

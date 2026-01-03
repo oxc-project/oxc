@@ -18,7 +18,7 @@ use crate::{
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtendNativeConfig {
     /// A list of objects which are allowed to be exceptions to the rule.
     exceptions: Vec<CompactStr>,
@@ -80,9 +80,7 @@ declare_oxc_lint!(
 
 impl Rule for NoExtendNative {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

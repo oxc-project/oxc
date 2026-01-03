@@ -36,7 +36,7 @@ fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct RequireReturnsConfig {
     /// Tags that exempt functions from requiring `@returns`.
     exempted_by: Vec<String>,
@@ -99,9 +99,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireReturns {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
