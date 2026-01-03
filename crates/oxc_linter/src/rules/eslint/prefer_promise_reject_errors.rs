@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -141,7 +141,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
 
 #[expect(clippy::float_cmp, clippy::cast_precision_loss)]
 fn check_reject_in_function(
-    params: &Box<'_, FormalParameters<'_>>,
+    params: &OBox<'_, FormalParameters<'_>>,
     ctx: &LintContext,
     allow_empty_reject: bool,
 ) {
