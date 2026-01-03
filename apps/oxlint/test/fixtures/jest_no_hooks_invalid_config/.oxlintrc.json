@@ -1,0 +1,9 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "jest/no-hooks": ["error", { "foo": "bar" }]
+  }
+}
