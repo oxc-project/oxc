@@ -186,18 +186,25 @@ impl SourceFormatter {
 
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
-    #[expect(clippy::needless_pass_by_value)]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
         path: &Path,
         parser_name: &str,
-        external_options: Value,
+        mut external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let external_formatter = self
             .external_formatter
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
+
+        // Remove `embeddedLanguageFormatting` from options when calling external formatter.
+        // This option is for oxc's embedded language handling in JS/TS files, not for Prettier.
+        // Passing `"off"` to Prettier's Vue parser triggers a formatting instability bug.
+        // See: https://github.com/oxc-project/oxc/issues/17604
+        if let Some(obj) = external_options.as_object_mut() {
+            obj.remove("embeddedLanguageFormatting");
+        }
 
         // NOTE: To call Prettier, we need to either:
         // - let Prettier infer the parser from `filepath`
