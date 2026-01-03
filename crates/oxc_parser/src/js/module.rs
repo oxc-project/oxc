@@ -1274,17 +1274,6 @@ mod test {
             assert_eq!(specifiers[0].name(), "defer");
         });
 
-        let src = "import type foo, { bar } from 'bar';";
-        parse_and_assert_import_declarations(src, |declarations| {
-            assert_eq!(declarations.len(), 1);
-            let decl = declarations[0];
-            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
-            let specifiers = decl.specifiers.as_ref().unwrap();
-            assert_eq!(specifiers.len(), 2);
-            assert_eq!(specifiers[0].name(), "foo");
-            assert_eq!(specifiers[1].name(), "bar");
-        });
-
         let src = "import foo = bar";
         parse_and_assert_statements(src, |statements| {
             if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
