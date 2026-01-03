@@ -229,8 +229,9 @@ impl WorkspaceWorker {
         let uris_to_clear_diagnostics =
             self.published_diagnostics.lock().await.drain().collect::<Vec<Uri>>();
         let mut watchers_to_unregister = Vec::new();
-        for tool in self.tools.read().await.iter() {
-            tool.shutdown();
+        for (tool, builder) in self.tools.read().await.iter().zip(self.builders.iter()) {
+            builder.shutdown(&self.root_uri);
+
             watchers_to_unregister
                 .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
         }
