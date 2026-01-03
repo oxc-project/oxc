@@ -565,5 +565,6 @@ fn test() {
 
     Tester::new(MaxExpects::NAME, MaxExpects::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

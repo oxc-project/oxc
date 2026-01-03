@@ -224,6 +224,7 @@ fn test() {
 
     Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_configs(valid_configs, invalid_configs)
         .test_and_snapshot();
 }
