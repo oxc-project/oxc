@@ -137,13 +137,12 @@ impl OxlintRules {
                         } else {
                             serde_json::Value::Array(rule_config.config.to_vec())
                         };
-                        let configured_rule =
-                            rule.from_configuration(config).map_err(|e| {
-                                OverrideRulesError::RuleConfiguration {
-                                    rule_name: rule_config.full_name().into_owned(),
-                                    message: e.to_string(),
-                                }
-                            })?;
+                        let configured_rule = rule.from_configuration(config).map_err(|e| {
+                            OverrideRulesError::RuleConfiguration {
+                                rule_name: rule_config.full_name().into_owned(),
+                                message: e.to_string(),
+                            }
+                        })?;
                         rules_to_replace.push((configured_rule, severity));
                     }
                 } else {

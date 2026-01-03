@@ -228,14 +228,12 @@ impl ConfigStoreBuilder {
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc
-                .rules
-                .override_rules(
-                    &mut builder.rules,
-                    &mut builder.external_rules,
-                    &all_rules,
-                    external_plugin_store,
-                )?;
+            oxlintrc.rules.override_rules(
+                &mut builder.rules,
+                &mut builder.external_rules,
+                &all_rules,
+                external_plugin_store,
+            )?;
         }
 
         Ok(builder)
@@ -711,7 +709,9 @@ impl std::error::Error for ConfigBuilderError {}
 impl From<OverrideRulesError> for ConfigBuilderError {
     fn from(err: OverrideRulesError) -> Self {
         match err {
-            OverrideRulesError::ExternalRuleLookup(e) => ConfigBuilderError::ExternalRuleLookupError(e),
+            OverrideRulesError::ExternalRuleLookup(e) => {
+                ConfigBuilderError::ExternalRuleLookupError(e)
+            }
             OverrideRulesError::RuleConfiguration { rule_name, message } => {
                 ConfigBuilderError::RuleConfigurationError { rule_name, message }
             }
