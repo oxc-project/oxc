@@ -149,10 +149,8 @@ impl<'a> ParserImpl<'a> {
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
                     } else {
-                        implements = Some((
-                            implements_kw_span,
-                            self.ast.vec_from_iter(self.parse_ts_implements_clause()),
-                        ));
+                        let implements_vec = self.parse_ts_implements_clause();
+                        implements = Some((implements_kw_span, implements_vec));
                     }
                 }
                 _ => break,

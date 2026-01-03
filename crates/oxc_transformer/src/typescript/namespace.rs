@@ -45,7 +45,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in program.body.take_in(ctx.ast) {
+        for stmt in program.body.take_in(&ctx.ast) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -365,12 +365,11 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             let mut logical_right = {
                 // _N.M
                 let assign_left = if let Some(parent_binding) = parent_binding {
-                    AssignmentTarget::from(ctx.ast.member_expression_static(
-                        SPAN,
-                        parent_binding.create_read_expression(ctx),
-                        ctx.ast.identifier_name(SPAN, binding.name),
-                        false,
-                    ))
+                    let object = parent_binding.create_read_expression(ctx);
+                    let property = ctx.ast.identifier_name(SPAN, binding.name);
+                    AssignmentTarget::from(
+                        ctx.ast.member_expression_static(SPAN, object, property, false),
+                    )
                 } else {
                     // _N
                     binding.create_write_target(ctx)
@@ -388,12 +387,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 let assign_left = binding.create_write_target(ctx);
                 let assign_right = {
                     let property = ctx.ast.identifier_name(SPAN, binding.name);
-                    let logical_left = ctx.ast.member_expression_static(
-                        SPAN,
-                        parent_binding.create_read_expression(ctx),
-                        property,
-                        false,
-                    );
+                    let object = parent_binding.create_read_expression(ctx);
+                    let logical_left =
+                        ctx.ast.member_expression_static(SPAN, object, property, false);
                     let op = LogicalOperator::Or;
                     ctx.ast.expression_logical(SPAN, logical_left.into(), op, logical_right)
                 };
@@ -457,20 +453,17 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     return;
                 };
                 if let Some(init) = &mut declarator.init {
-                    declarator.init = Some(
-                        ctx.ast.expression_assignment(
-                            SPAN,
-                            AssignmentOperator::Assign,
-                            SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
-                                SPAN,
-                                binding.create_read_expression(ctx),
-                                ctx.ast.identifier_name(SPAN, property_name),
-                                false,
-                            ))
-                            .into(),
-                            init.take_in(ctx.ast),
-                        ),
-                    );
+                    let object = binding.create_read_expression(ctx);
+                    let property = ctx.ast.identifier_name(SPAN, property_name);
+                    let member_expr =
+                        ctx.ast.member_expression_static(SPAN, object, property, false);
+                    let taken_init = init.take_in(&ctx.ast);
+                    declarator.init = Some(ctx.ast.expression_assignment(
+                        SPAN,
+                        AssignmentOperator::Assign,
+                        SimpleAssignmentTarget::from(member_expr).into(),
+                        taken_init,
+                    ));
                 }
             });
             return ctx.ast.vec1(Statement::VariableDeclaration(var_decl));

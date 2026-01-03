@@ -156,13 +156,18 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Self::remove_function_overloads_implementation(&mut stmts);
 
-        self.ast.vec_from_iter(stmts.iter().map(|stmt| {
-            if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
-                Statement::from(new_decl)
-            } else {
-                stmt.clone_in(self.ast.allocator)
-            }
-        }))
+        let allocator = self.ast.allocator;
+        let transformed: Vec<Statement<'a>> = stmts
+            .iter()
+            .map(|stmt| {
+                if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
+                    Statement::from(new_decl)
+                } else {
+                    stmt.clone_in(allocator)
+                }
+            })
+            .collect();
+        self.ast.vec_from_iter(transformed)
     }
 
     fn transform_statements_on_demand(

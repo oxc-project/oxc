@@ -46,7 +46,7 @@ impl<'a> ClassProperties<'a, '_> {
             return None;
         };
 
-        let mut function = value.take_in_box(ctx.ast);
+        let mut function = value.take_in_box(&ctx.ast);
 
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writable_private_prop(ident)
@@ -85,10 +85,10 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let brand = self.classes_stack.last().bindings.brand.as_ref().unwrap();
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(brand.create_read_expression(ctx)),
-        ]);
+        let this_expr = ctx.ast.expression_this(SPAN);
+        let brand_read = brand.create_read_expression(ctx);
+        let arguments =
+            ctx.ast.vec_from_array([Argument::from(this_expr), Argument::from(brand_read)]);
         self.ctx.helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
     }
 }

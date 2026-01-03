@@ -98,9 +98,10 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         let step_key =
             ctx.generate_uid("step", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
         // step.value
+        let step_read_expr = step_key.create_read_expression(ctx);
         let step_value = Expression::from(ctx.ast.member_expression_static(
             SPAN,
-            step_key.create_read_expression(ctx),
+            step_read_expr,
             ctx.ast.identifier_name(SPAN, "value"),
             false,
         ));
@@ -119,7 +120,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
-                let target = left.to_assignment_target_mut().take_in(ctx.ast);
+                let target = left.to_assignment_target_mut().take_in(&ctx.ast);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -140,13 +141,13 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // instead, we need to remove the useless scope.
                     ctx.scoping_mut().delete_scope(block.scope_id());
                 } else {
-                    statements.push(stmt_body.take_in(ctx.ast));
+                    statements.push(stmt_body.take_in(&ctx.ast));
                 }
             }
             statements
         };
 
-        let iterator = stmt.right.take_in(ctx.ast);
+        let iterator = stmt.right.take_in(&ctx.ast);
         let iterator = self.ctx.helper_call_expr(
             Helper::AsyncIterator,
             SPAN,
@@ -257,86 +258,98 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
+            // Build the for-init declarators
+            let iterator_key_binding = iterator_key.create_binding_pattern(ctx);
+            let step_key_binding = step_key.create_binding_pattern(ctx);
+            let for_init = ctx.ast.for_statement_init_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Var,
+                ctx.ast.vec_from_array([
+                    ctx.ast.variable_declarator(
+                        SPAN,
+                        VariableDeclarationKind::Var,
+                        iterator_key_binding,
+                        NONE,
+                        Some(iterator),
+                        false,
+                    ),
+                    ctx.ast.variable_declarator(
+                        SPAN,
+                        VariableDeclarationKind::Var,
+                        step_key_binding,
+                        NONE,
+                        None,
+                        false,
+                    ),
+                ]),
+                false,
+            );
+
+            // Build the test expression: !(STEP_KEY = await ITERATOR_KEY.next()).done
+            let iterator_key_read = iterator_key.create_read_expression(ctx);
+            let next_member = ctx.ast.member_expression_static(
+                SPAN,
+                iterator_key_read,
+                ctx.ast.identifier_name(SPAN, "next"),
+                false,
+            );
+            let next_call = ctx.ast.expression_call(
+                SPAN,
+                Expression::from(next_member),
+                NONE,
+                ctx.ast.vec(),
+                false,
+            );
+            let await_expr = ctx.ast.expression_await(SPAN, next_call);
+            let step_key_write = step_key.create_write_target(ctx);
+            let inner_assign = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                step_key_write,
+                await_expr,
+            );
+            let paren_expr = ctx.ast.expression_parenthesized(SPAN, inner_assign);
+            let done_member = ctx.ast.member_expression_static(
+                SPAN,
+                paren_expr,
+                ctx.ast.identifier_name(SPAN, "done"),
+                false,
+            );
+            let not_done = ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::LogicalNot,
+                Expression::from(done_member),
+            );
+            let iterator_abrupt_write = iterator_abrupt_completion.create_write_target(ctx);
+            let for_test = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                iterator_abrupt_write,
+                not_done,
+            );
+
+            // Build the update expression
+            let iterator_abrupt_write2 = iterator_abrupt_completion.create_write_target(ctx);
+            let for_update = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                iterator_abrupt_write2,
+                ctx.ast.expression_boolean_literal(SPAN, false),
+            );
+
+            // Build the for body
+            // Handle the for-of statement move to the body of new for-statement
+            let for_statement_body_scope_id = for_of_scope_id;
+            ctx.scoping_mut()
+                .change_scope_parent_id(for_statement_body_scope_id, Some(for_statement_scope_id));
+            let for_body = ctx.ast.statement_block_with_scope_id(SPAN, body, for_of_scope_id);
+
             let for_statement = ctx.ast.statement_for_with_scope_id(
                 SPAN,
-                Some(ctx.ast.for_statement_init_variable_declaration(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    ctx.ast.vec_from_array([
-                        ctx.ast.variable_declarator(
-                            SPAN,
-                            VariableDeclarationKind::Var,
-                            iterator_key.create_binding_pattern(ctx),
-                            NONE,
-                            Some(iterator),
-                            false,
-                        ),
-                        ctx.ast.variable_declarator(
-                            SPAN,
-                            VariableDeclarationKind::Var,
-                            step_key.create_binding_pattern(ctx),
-                            NONE,
-                            None,
-                            false,
-                        ),
-                    ]),
-                    false,
-                )),
-                Some(ctx.ast.expression_assignment(
-                    SPAN,
-                    AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_write_target(ctx),
-                    ctx.ast.expression_unary(
-                        SPAN,
-                        UnaryOperator::LogicalNot,
-                        Expression::from(ctx.ast.member_expression_static(
-                            SPAN,
-                            ctx.ast.expression_parenthesized(
-                                SPAN,
-                                ctx.ast.expression_assignment(
-                                    SPAN,
-                                    AssignmentOperator::Assign,
-                                    step_key.create_write_target(ctx),
-                                    ctx.ast.expression_await(
-                                        SPAN,
-                                        ctx.ast.expression_call(
-                                            SPAN,
-                                            Expression::from(ctx.ast.member_expression_static(
-                                                SPAN,
-                                                iterator_key.create_read_expression(ctx),
-                                                ctx.ast.identifier_name(SPAN, "next"),
-                                                false,
-                                            )),
-                                            NONE,
-                                            ctx.ast.vec(),
-                                            false,
-                                        ),
-                                    ),
-                                ),
-                            ),
-                            ctx.ast.identifier_name(SPAN, "done"),
-                            false,
-                        )),
-                    ),
-                )),
-                Some(ctx.ast.expression_assignment(
-                    SPAN,
-                    AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_write_target(ctx),
-                    ctx.ast.expression_boolean_literal(SPAN, false),
-                )),
-                {
-                    // Handle the for-of statement move to the body of new for-statement
-                    let for_statement_body_scope_id = for_of_scope_id;
-                    {
-                        ctx.scoping_mut().change_scope_parent_id(
-                            for_statement_body_scope_id,
-                            Some(for_statement_scope_id),
-                        );
-                    }
-
-                    ctx.ast.statement_block_with_scope_id(SPAN, body, for_of_scope_id)
-                },
+                Some(for_init),
+                Some(for_test),
+                Some(for_update),
+                for_body,
                 for_statement_scope_id,
             );
 
@@ -351,35 +364,38 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
+            let err_binding = err_ident.create_binding_pattern(ctx);
+            let catch_param = ctx.ast.catch_parameter(SPAN, err_binding, NONE);
+            let iterator_had_error_write = iterator_had_error_key.create_write_target(ctx);
+            let stmt1 = ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_assignment(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    iterator_had_error_write,
+                    ctx.ast.expression_boolean_literal(SPAN, true),
+                ),
+            );
+            let iterator_error_write = iterator_error_key.create_write_target(ctx);
+            let err_read = err_ident.create_read_expression(ctx);
+            let stmt2 = ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_assignment(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    iterator_error_write,
+                    err_read,
+                ),
+            );
+            let catch_body = ctx.ast.block_statement_with_scope_id(
+                SPAN,
+                ctx.ast.vec_from_array([stmt1, stmt2]),
+                block_scope_id,
+            );
             Some(ctx.ast.catch_clause_with_scope_id(
                 SPAN,
-                Some(ctx.ast.catch_parameter(SPAN, err_ident.create_binding_pattern(ctx), NONE)),
-                {
-                    ctx.ast.block_statement_with_scope_id(
-                        SPAN,
-                        ctx.ast.vec_from_array([
-                            ctx.ast.statement_expression(
-                                SPAN,
-                                ctx.ast.expression_assignment(
-                                    SPAN,
-                                    AssignmentOperator::Assign,
-                                    iterator_had_error_key.create_write_target(ctx),
-                                    ctx.ast.expression_boolean_literal(SPAN, true),
-                                ),
-                            ),
-                            ctx.ast.statement_expression(
-                                SPAN,
-                                ctx.ast.expression_assignment(
-                                    SPAN,
-                                    AssignmentOperator::Assign,
-                                    iterator_error_key.create_write_target(ctx),
-                                    err_ident.create_read_expression(ctx),
-                                ),
-                            ),
-                        ]),
-                        block_scope_id,
-                    )
-                },
+                Some(catch_param),
+                catch_body,
                 catch_scope_id,
             ))
         };
@@ -392,48 +408,49 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 let if_statement = {
                     let if_block_scope_id =
                         ctx.create_child_scope(try_block_scope_id, ScopeFlags::empty());
-                    ctx.ast.statement_if(
+
+                    // Build test: iterator_abrupt_completion && iterator_key.return != null
+                    let abrupt_read = iterator_abrupt_completion.create_read_expression(ctx);
+                    let iterator_key_read = iterator_key.create_read_expression(ctx);
+                    let return_member = ctx.ast.member_expression_static(
                         SPAN,
-                        ctx.ast.expression_logical(
-                            SPAN,
-                            iterator_abrupt_completion.create_read_expression(ctx),
-                            LogicalOperator::And,
-                            ctx.ast.expression_binary(
-                                SPAN,
-                                Expression::from(ctx.ast.member_expression_static(
-                                    SPAN,
-                                    iterator_key.create_read_expression(ctx),
-                                    ctx.ast.identifier_name(SPAN, "return"),
-                                    false,
-                                )),
-                                BinaryOperator::Inequality,
-                                ctx.ast.expression_null_literal(SPAN),
-                            ),
-                        ),
-                        ctx.ast.statement_block_with_scope_id(
-                            SPAN,
-                            ctx.ast.vec1(ctx.ast.statement_expression(
-                                SPAN,
-                                ctx.ast.expression_await(
-                                    SPAN,
-                                    ctx.ast.expression_call(
-                                        SPAN,
-                                        Expression::from(ctx.ast.member_expression_static(
-                                            SPAN,
-                                            iterator_key.create_read_expression(ctx),
-                                            ctx.ast.identifier_name(SPAN, "return"),
-                                            false,
-                                        )),
-                                        NONE,
-                                        ctx.ast.vec(),
-                                        false,
-                                    ),
-                                ),
-                            )),
-                            if_block_scope_id,
-                        ),
-                        None,
-                    )
+                        iterator_key_read,
+                        ctx.ast.identifier_name(SPAN, "return"),
+                        false,
+                    );
+                    let binary = ctx.ast.expression_binary(
+                        SPAN,
+                        Expression::from(return_member),
+                        BinaryOperator::Inequality,
+                        ctx.ast.expression_null_literal(SPAN),
+                    );
+                    let test =
+                        ctx.ast.expression_logical(SPAN, abrupt_read, LogicalOperator::And, binary);
+
+                    // Build consequent: await iterator_key.return()
+                    let iterator_key_read2 = iterator_key.create_read_expression(ctx);
+                    let return_member2 = ctx.ast.member_expression_static(
+                        SPAN,
+                        iterator_key_read2,
+                        ctx.ast.identifier_name(SPAN, "return"),
+                        false,
+                    );
+                    let return_call = ctx.ast.expression_call(
+                        SPAN,
+                        Expression::from(return_member2),
+                        NONE,
+                        ctx.ast.vec(),
+                        false,
+                    );
+                    let await_call = ctx.ast.expression_await(SPAN, return_call);
+                    let stmt = ctx.ast.statement_expression(SPAN, await_call);
+                    let consequent = ctx.ast.statement_block_with_scope_id(
+                        SPAN,
+                        ctx.ast.vec1(stmt),
+                        if_block_scope_id,
+                    );
+
+                    ctx.ast.statement_if(SPAN, test, consequent, None)
                 };
                 let block = ctx.ast.block_statement_with_scope_id(
                     SPAN,
@@ -446,19 +463,15 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     let if_statement = {
                         let if_block_scope_id =
                             ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
-                        ctx.ast.statement_if(
+                        let had_error_read = iterator_had_error_key.create_read_expression(ctx);
+                        let error_read = iterator_error_key.create_read_expression(ctx);
+                        let throw_stmt = ctx.ast.statement_throw(SPAN, error_read);
+                        let consequent = ctx.ast.statement_block_with_scope_id(
                             SPAN,
-                            iterator_had_error_key.create_read_expression(ctx),
-                            ctx.ast.statement_block_with_scope_id(
-                                SPAN,
-                                ctx.ast.vec1(ctx.ast.statement_throw(
-                                    SPAN,
-                                    iterator_error_key.create_read_expression(ctx),
-                                )),
-                                if_block_scope_id,
-                            ),
-                            None,
-                        )
+                            ctx.ast.vec1(throw_stmt),
+                            if_block_scope_id,
+                        );
+                        ctx.ast.statement_if(SPAN, had_error_read, consequent, None)
                     };
                     ctx.ast.block_statement_with_scope_id(
                         SPAN,

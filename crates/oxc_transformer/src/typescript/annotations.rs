@@ -196,7 +196,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let ChainElement::TSNonNullExpression(e) = element {
-            *element = match e.expression.get_inner_expression_mut().take_in(ctx.ast) {
+            *element = match e.expression.get_inner_expression_mut().take_in(&ctx.ast) {
                 Expression::CallExpression(call_expr) => ChainElement::CallExpression(call_expr),
                 expr @ match_member_expression!(Expression) => {
                     ChainElement::from(expr.into_member_expression())
@@ -255,7 +255,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             let inner_expr = expr.get_inner_expression_mut();
-            *expr = inner_expr.take_in(ctx.ast);
+            *expr = inner_expr.take_in(&ctx.ast);
         }
     }
 
@@ -268,7 +268,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
             match expr.get_inner_expression_mut() {
                 // `foo!++` to `foo++`
                 inner_expr @ Expression::Identifier(_) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
+                    let inner_expr = inner_expr.take_in(&ctx.ast);
                     let Expression::Identifier(ident) = inner_expr else {
                         unreachable!();
                     };
@@ -276,7 +276,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 }
                 // `foo.bar!++` to `foo.bar++`
                 inner_expr @ match_member_expression!(Expression) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
+                    let inner_expr = inner_expr.take_in(&ctx.ast);
                     let member_expr = inner_expr.into_member_expression();
                     *target = SimpleAssignmentTarget::from(member_expr);
                 }
@@ -296,7 +296,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         if let Some(expr) = target.get_expression_mut() {
             let inner_expr = expr.get_inner_expression_mut();
             if inner_expr.is_member_expression() {
-                let inner_expr = inner_expr.take_in(ctx.ast);
+                let inner_expr = inner_expr.take_in(&ctx.ast);
                 let member_expr = inner_expr.into_member_expression();
                 *target = AssignmentTarget::from(member_expr);
             }
@@ -456,7 +456,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 _ => None,
             };
             if let Some(span) = consequent_span {
-                let consequent = stmt.consequent.take_in(ctx.ast);
+                let consequent = stmt.consequent.take_in(&ctx.ast);
                 stmt.consequent = Self::create_block_with_statement(consequent, span, ctx);
             }
 

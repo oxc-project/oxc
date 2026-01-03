@@ -662,10 +662,10 @@ impl<'a> LegacyDecorator<'a, '_> {
 
                 if has_static_field_or_block {
                     // `_Class = this`;
-                    let class_alias_with_this_assignment = ctx.ast.statement_expression(
-                        SPAN,
-                        create_assignment(class_alias_binding, ctx.ast.expression_this(SPAN), ctx),
-                    );
+                    let this_expr = ctx.ast.expression_this(SPAN);
+                    let assignment = create_assignment(class_alias_binding, this_expr, ctx);
+                    let class_alias_with_this_assignment =
+                        ctx.ast.statement_expression(SPAN, assignment);
                     let body = ctx.ast.vec1(class_alias_with_this_assignment);
                     let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
                     let element =
@@ -725,7 +725,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(class.take_in_box(ctx.ast)),
+            Expression::ClassExpression(class.take_in_box(&ctx.ast)),
             alias_binding,
             ctx,
         );
@@ -834,10 +834,9 @@ impl<'a> LegacyDecorator<'a, '_> {
         };
 
         // `Class = _decorate(decorations, Class)`
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(decorations),
-            Argument::from(class_binding.create_read_expression(ctx)),
-        ]);
+        let class_read_expr = class_binding.create_read_expression(ctx);
+        let arguments =
+            ctx.ast.vec_from_array([Argument::from(decorations), Argument::from(class_read_expr)]);
         let helper = self.ctx.helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
@@ -983,7 +982,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         decorations.extend(
             method
                 .decorators
-                .take_in(ctx.ast)
+                .take_in(&ctx.ast)
                 .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
@@ -1109,7 +1108,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
-                let right = key.to_expression_mut().take_in(ctx.ast);
+                let right = key.to_expression_mut().take_in(&ctx.ast);
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)
@@ -1141,11 +1140,10 @@ impl<'a> LegacyDecorator<'a, '_> {
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
+        let read_ref = class_binding.create_read_reference(ctx);
         let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
             SPAN,
-            ExportDefaultDeclarationKind::Identifier(
-                ctx.ast.alloc(class_binding.create_read_reference(ctx)),
-            ),
+            ExportDefaultDeclarationKind::Identifier(ctx.ast.alloc(read_ref)),
         );
         Statement::from(export_default_class_reference)
     }
