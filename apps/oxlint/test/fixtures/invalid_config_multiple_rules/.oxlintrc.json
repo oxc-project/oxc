@@ -1,0 +1,15 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // First invalid rule: unknown option field `foo`
+    "jest/no-hooks": ["error", { "foo": "bar" }],
+
+    // Second invalid rule: invalid enum value
+    // Right now, this does not get reported because
+    // we stop processing after the first error.
+    "eslint/no-return-assign": ["error", "foobar"]
+  }
+}
