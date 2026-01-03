@@ -270,8 +270,10 @@ pub fn write_tailwind_template_element<'a>(
         return;
     }
 
-    // Check if this is first/last quasi (affects prefix/suffix handling)
-    let (is_first, is_last) = get_template_boundary(element);
+    // Get quasi position from context (set when the quasi was written in template.rs)
+    let ctx = f.context().tailwind_context().expect("should be in Tailwind context");
+    let is_first = ctx.is_first_quasi;
+    let is_last = ctx.is_last_quasi;
 
     // Check if binary expression context requires preserving boundary whitespace
     let collapse = can_collapse_whitespace_template(element, is_first, is_last, f);
@@ -383,19 +385,5 @@ fn split_template_content(content: &str, is_first: bool, is_last: bool) -> (&str
         (None, Some(ss)) => ("", &content[..ss], &content[ss..]),
         // Neither
         (None, None) => ("", content, ""),
-    }
-}
-
-/// Returns (is_first, is_last) for a template element by comparing with first/last quasis.
-fn get_template_boundary(element: &AstNode<'_, TemplateElement<'_>>) -> (bool, bool) {
-    let span = element.span;
-    match element.parent {
-        AstNodes::TemplateLiteral(tl) => {
-            let is_first = tl.quasis.first().is_some_and(|q| q.span == span);
-            let is_last = tl.quasis.last().is_some_and(|q| q.span == span);
-            (is_first, is_last)
-        }
-
-        _ => (true, true), // Default: treat as standalone (no prefix/suffix needed)
     }
 }

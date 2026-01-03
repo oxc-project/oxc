@@ -227,8 +227,22 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
         // When in Tailwind context with preserve_whitespace false, newlines are collapsed
         let tailwind_collapses_newlines = tailwind_ctx.is_some_and(|ctx| !ctx.preserve_whitespace);
 
+        let quasis_len = quasis.len();
+
         for (i, quasi) in quasis.iter().enumerate() {
+            // If in Tailwind context, push context with quasi position for boundary detection
+            if let Some(ctx) = tailwind_ctx {
+                let is_first = i == 0;
+                let is_last = i == quasis_len - 1;
+                f.context_mut().push_tailwind_context(ctx.with_quasi_position(is_first, is_last));
+            }
+
             write!(f, *quasi);
+
+            // Pop quasi position context
+            if tailwind_ctx.is_some() {
+                f.context_mut().pop_tailwind_context();
+            }
 
             let quasi_text = quasi.value.raw.as_str();
 

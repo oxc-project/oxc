@@ -27,6 +27,12 @@ pub struct TailwindContextEntry {
     /// Whether the quasi after this expression starts with whitespace.
     /// Only relevant when `in_template_expression` is true.
     pub quasi_after_has_leading_ws: bool,
+    /// Whether this is the first quasi in a template literal.
+    /// Used for template element boundary detection.
+    pub is_first_quasi: bool,
+    /// Whether this is the last quasi in a template literal.
+    /// Used for template element boundary detection.
+    pub is_last_quasi: bool,
     /// Whether Tailwind sorting is disabled in this context.
     /// Used to prevent sorting strings inside nested non-Tailwind call expressions.
     /// For example, in `classNames("a", x.includes("\n") ? "b" : "c")`, the `"\n"`
@@ -43,6 +49,8 @@ impl TailwindContextEntry {
             in_template_expression: false,
             quasi_before_has_trailing_ws: true, // Default: can collapse
             quasi_after_has_leading_ws: true,   // Default: can collapse
+            is_first_quasi: true,
+            is_last_quasi: true,
             disabled: false,
         }
     }
@@ -60,8 +68,18 @@ impl TailwindContextEntry {
             in_template_expression: true,
             quasi_before_has_trailing_ws,
             quasi_after_has_leading_ws,
+            is_first_quasi: true,
+            is_last_quasi: true,
             disabled: false,
         }
+    }
+
+    /// Create a new context entry with updated quasi position.
+    /// Used when formatting individual quasis to track their position in the template.
+    pub fn with_quasi_position(mut self, is_first: bool, is_last: bool) -> Self {
+        self.is_first_quasi = is_first;
+        self.is_last_quasi = is_last;
+        self
     }
 }
 
