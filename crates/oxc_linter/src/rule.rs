@@ -119,8 +119,16 @@ where
 
         if let serde_json::Value::Array(arr) = value {
             let config = match arr.into_iter().next() {
-                Some(v) => serde_json::from_value::<T>(v)
-                    .map_err(|e| D::Error::custom(format!("Invalid rule configuration: {e}")))?,
+                Some(v) => serde_json::from_value::<T>(v.clone()).map_err(|e| {
+                    // Try to include the config object in the error message if we can.
+                    // Collapse any whitespace so we emit a single-line message.
+                    if let Some(value_str) = serde_json::to_string_pretty(&v).ok() {
+                        let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
+                        D::Error::custom(format!("Invalid rule configuration `{}`: {}", compact, e))
+                    } else {
+                        D::Error::custom(format!("Invalid rule configuration: {}", e))
+                    }
+                })?,
                 None => T::default(),
             };
 
