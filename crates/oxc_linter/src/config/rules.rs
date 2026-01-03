@@ -740,7 +740,7 @@ mod test {
                 assert!(matches!(
                     &errors[1],
                     super::OverrideRulesError::RuleConfiguration { rule_name, message }
-                    if rule_name == "no-return-assign" && message.contains("unknown variant `foo`")
+                    if rule_name == "no-return-assign" && message.contains("unknown variant `foobar`")
                 ));
             }
             Ok(()) => panic!("expected errors from invalid config"),
