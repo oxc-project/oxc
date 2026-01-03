@@ -92,12 +92,12 @@ mod tests {
         .with_rule_config(
             r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase", default)]
-struct ConfigObject {
+struct MyRuleConfig {
     pub foo: String,
     pub bar: Option<i32>,
 }"#
             .to_string(),
-            "(ConfigObject)".to_string(),
+            "(MyRuleConfig)".to_string(),
             false,
             false,
         );
@@ -109,5 +109,38 @@ struct ConfigObject {
             .expect("Failed to render template");
 
         insta::assert_snapshot!("rulegen_template_render", rendered);
+    }
+
+    #[test]
+    fn template_render_snapshot_with_enum_config() {
+        // Construct a representative Context
+        let ctx = Context::new(
+            RuleKind::ESLint,
+            "my-rule",
+            // simple pass and fail cases
+            "(\"a\")".to_string(),
+            "(\"b\")".to_string(),
+        )
+        .with_rule_config(
+            r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(untagged, rename_all = "camelCase")]
+enum MyRuleConfig {
+    OptionA,
+    #[default]
+    OptionB,
+}"#
+            .to_string(),
+            "(MyRuleConfig)".to_string(),
+            false,
+            false,
+        );
+
+        let mut registry = Handlebars::new();
+        registry.register_escape_fn(handlebars::no_escape);
+        let rendered = registry
+            .render_template(RULE_TEMPLATE, &handlebars::to_json(&ctx))
+            .expect("Failed to render template");
+
+        insta::assert_snapshot!("rulegen_template_render_with_enum_config", rendered);
     }
 }

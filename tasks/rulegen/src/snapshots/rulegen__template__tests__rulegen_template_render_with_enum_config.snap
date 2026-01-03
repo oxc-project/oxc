@@ -23,10 +23,11 @@ fn my_rule_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
-struct MyRuleConfig {
-    pub foo: String,
-    pub bar: Option<i32>,
+#[schemars(untagged, rename_all = "camelCase")]
+enum MyRuleConfig {
+    OptionA,
+    #[default]
+    OptionB,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -45,12 +46,12 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```ts
+    /// ```js
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```ts
+    /// ```js
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     MyRule,
@@ -76,7 +77,6 @@ impl Rule for MyRule {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use std::path::PathBuf;
 
     let pass = vec![
         ("a")
@@ -86,9 +86,5 @@ fn test() {
         ("b")
     ];
 
-    let fix = vec![
-        ("fixed")
-    ];
-
-    Tester::new(MyRule::NAME, MyRule::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(MyRule::NAME, MyRule::PLUGIN, pass, fail).test_and_snapshot();
 }
