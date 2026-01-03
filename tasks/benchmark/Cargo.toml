@@ -82,6 +82,9 @@ criterion2 = { workspace = true }
 # Only for lexer benchmark
 cow-utils = { workspace = true, optional = true }
 
+# Only for linter benchmark
+ignore = { workspace = true, optional = true }
+
 # Only for NAPI benchmark
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
@@ -117,6 +120,7 @@ linter = [
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "dep:ignore",
   "oxc_semantic/cfg",
 ]
 
