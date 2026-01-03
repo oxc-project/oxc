@@ -299,11 +299,6 @@ impl<'t> Mangler<'t> {
 
         assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
 
-        // TODO: implement opt-out of direct-eval in a branch of scopes.
-        if scoping.root_scope_flags().contains_direct_eval() {
-            return;
-        }
-
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
@@ -331,6 +326,9 @@ impl<'t> Mangler<'t> {
         // but walking down the scope tree seems to generate a better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
             if bindings.is_empty() {
+                continue;
+            }
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
                 continue;
             }
 
@@ -539,9 +537,13 @@ impl<'t> Mangler<'t> {
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if scoping.symbol_scope_id(symbol_id) == root_scope_id
+            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            if symbol_scope_id == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
+                continue;
+            }
+            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
                 continue;
             }
             if is_special_name(scoping.symbol_name(symbol_id)) {
