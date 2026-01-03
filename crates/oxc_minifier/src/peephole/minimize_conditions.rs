@@ -637,13 +637,21 @@ mod test {
         if (!x) {
           for (;;) foo();
           for (;;) bar();
-        } else if (y) for (;;) f();",
+        } else for (;;) f();",
             "
-        if (x) {
-          if (y) for (; ; ) f();
-        } else {
-          for (; ; ) foo();
-          for (; ; ) bar();}",
+        if (x) for (;;) f();
+        else {
+          for (;;) foo();
+          for (;;) bar();
+        }
+            ",
+        );
+        test_same(
+            "
+        if (!x) {
+          for (;;) foo();
+          for (;;) bar();
+        } else if (y) for (;;) f();",
         );
         test_same("if(!a&&!b) {for(;;)foo(); for(;;)bar()} else if(y) for(;;) f()");
     }
