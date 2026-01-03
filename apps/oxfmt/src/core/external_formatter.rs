@@ -109,7 +109,15 @@ impl ExternalFormatter {
 
     /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type.
     /// The options is captured in the closure and passed to JS on each call.
-    pub fn to_embedded_formatter(&self, options: Value) -> oxc_formatter::EmbeddedFormatter {
+    pub fn to_embedded_formatter(&self, mut options: Value) -> oxc_formatter::EmbeddedFormatter {
+        // Remove `embeddedLanguageFormatting` from options when calling external formatter.
+        // This option is for oxc's embedded language handling in JS/TS files, not for Prettier.
+        // Passing `"off"` to Prettier's Vue parser triggers a formatting instability bug.
+        // See: https://github.com/oxc-project/oxc/issues/17604
+        if let Some(obj) = options.as_object_mut() {
+            obj.remove("embeddedLanguageFormatting");
+        }
+
         let format_embedded = Arc::clone(&self.format_embedded);
         let callback =
             Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));

@@ -64,10 +64,23 @@ describe("API Tests", () => {
       `
 <template><div>Vue</div></template>
 <style>
-  div{color:red;}
+  div {
+    color: red;
+  }
 </style>
 `.trimStart(),
     );
     expect(result3.errors).toStrictEqual([]);
+  });
+
+  // Regression test for https://github.com/oxc-project/oxc/issues/17604
+  test("should format Vue file with interpolations idempotently", async () => {
+    const vueCode = `<template><div>{{ msg }}</div></template>`;
+    const result1 = await format("test.vue", vueCode);
+    const result2 = await format("test.vue", result1.code);
+    const result3 = await format("test.vue", result2.code);
+    expect(result1.code).toBe(result2.code);
+    expect(result2.code).toBe(result3.code);
+    expect(result1.errors).toStrictEqual([]);
   });
 });
