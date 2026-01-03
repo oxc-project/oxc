@@ -646,9 +646,18 @@ impl<'a> Codegen<'a> {
             first.print(self, ctx);
         }
 
-        for stmt in rest {
+        // Print trailing comments for the first statement
+        let first_end = first.span().end;
+        let next_start = rest.first().map_or(u32::MAX, |s| s.span().start);
+        self.print_trailing_comments_after(first_end, next_start);
+
+        for (i, stmt) in rest.iter().enumerate() {
             self.print_semicolon_if_needed();
             stmt.print(self, ctx);
+            // Print trailing comments for this statement
+            let stmt_end = stmt.span().end;
+            let next_start = rest.get(i + 1).map_or(u32::MAX, |s| s.span().start);
+            self.print_trailing_comments_after(stmt_end, next_start);
         }
     }
 
