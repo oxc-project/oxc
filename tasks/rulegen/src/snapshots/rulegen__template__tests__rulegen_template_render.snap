@@ -23,14 +23,14 @@ fn my_rule_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
-struct ConfigObject {
+#[schemars(rename_all = "camelCase", default, deny_unknown_fields)]
+struct MyRuleConfig {
     pub foo: String,
     pub bar: Option<i32>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct MyRule(ConfigObject);
+pub struct MyRule(MyRuleConfig);
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -60,7 +60,7 @@ declare_oxc_lint!(
     pending, // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
-    config = MyRule,
+    config = MyRuleConfig,
 );
 
 impl Rule for MyRule {

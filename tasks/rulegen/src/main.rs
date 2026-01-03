@@ -1392,6 +1392,7 @@ fn main() {
     });
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
+    let pascal_rule_name = rule_name.to_case(Case::Pascal);
 
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
@@ -1547,7 +1548,7 @@ fn main() {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, element)| {
-                    let element_name = format!("ConfigElement{index}");
+                    let element_name = format!("{pascal_rule_name}Config{index}");
                     rule_config_output.extract_output(element, element_name.as_str())
                 })
                 .collect::<Vec<_>>();

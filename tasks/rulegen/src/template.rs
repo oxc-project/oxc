@@ -91,13 +91,13 @@ mod tests {
         .with_fix_cases("(\"fixed\")".to_string())
         .with_rule_config(
             r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
-struct ConfigObject {
+#[schemars(rename_all = "camelCase", default, deny_unknown_fields)]
+struct MyRuleConfig {
     pub foo: String,
     pub bar: Option<i32>,
 }"#
             .to_string(),
-            "(ConfigObject)".to_string(),
+            "(MyRuleConfig)".to_string(),
             false,
             false,
         );
