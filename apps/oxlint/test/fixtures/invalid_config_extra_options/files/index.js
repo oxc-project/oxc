@@ -1,2 +1,0 @@
-// Example test file
-beforeEach(() => {});
