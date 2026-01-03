@@ -161,7 +161,11 @@ impl Renderer {
                 .properties
                 .iter()
                 .flat_map(|(key, schema)| {
-                    let key = parent_key.map_or_else(|| key.clone(), |k| format!("{k}.{key}"));
+                    // This is necessary to handle config options added via serde(flatten).
+                    let key = match parent_key {
+                        Some(parent) if !parent.is_empty() => format!("{parent}.{key}"),
+                        _ => key.clone(),
+                    };
                     let schema_object = Self::get_schema_object(schema);
 
                     if let Some(subschemas) = &schema_object.subschemas {
