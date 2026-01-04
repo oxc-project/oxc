@@ -642,7 +642,8 @@ fn find_parser_arguments<'a, 'b>(
 #[derive(Debug, Serialize, PartialEq)]
 enum RuleConfigElement {
     Enum(Vec<RuleConfigElement>),
-    Object(FxHashMap<String, RuleConfigElement>),
+    /// Object maps property name -> (element, optional default literal string)
+    Object(FxHashMap<String, (RuleConfigElement, Option<String>)>),
     Map(Box<RuleConfigElement>),
     Array(Box<RuleConfigElement>),
     Set(Box<RuleConfigElement>),
@@ -852,27 +853,89 @@ impl RuleConfigOutput {
                     field_name.to_case(Case::Pascal)
                 };
                 self.seen_names.insert(struct_name.clone());
-                let mut output = String::from(
-                    "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
-                );
-                output.push_str("#[serde(rename_all = \"camelCase\")]\n");
-                let _ = writeln!(output, "struct {struct_name} {{");
                 let mut fields_output = String::new();
-                for (raw_key, value) in hash_map {
-                    let key = &raw_key.to_case(Case::Pascal);
-                    let Some((value_label, value_output)) = self.extract_output_inner(value, key)
+                let mut field_entries: Vec<(String, String, String, Option<String>)> = Vec::new();
+                for (raw_key, (value, default)) in hash_map {
+                    let key_pascal = raw_key.to_case(Case::Pascal);
+                    let key_snake = key_pascal.to_case(Case::Snake);
+                    let Some((value_label, value_output)) =
+                        self.extract_output_inner(&value, &key_pascal)
                     else {
                         continue;
                     };
-                    if key.to_case(Case::Camel) != *raw_key {
-                        let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
-                    }
-                    let _ = writeln!(output, "    {}: {value_label},", key.to_case(Case::Snake));
+                    field_entries.push((
+                        raw_key.clone(),
+                        key_snake,
+                        value_label.clone(),
+                        default.clone(),
+                    ));
                     if let Some(value_output) = value_output {
                         let _ = writeln!(fields_output, "{value_output}\n");
                     }
                 }
+                let has_defaults = field_entries.iter().any(|(_, _, _, default)| default.is_some());
+                let mut output = String::new();
+                if has_defaults {
+                    output
+                        .push_str("#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]\n");
+                    output.push_str("#[serde(default)]\n");
+                } else {
+                    output.push_str(
+                        "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
+                    );
+                }
+                output.push_str("#[serde(rename_all = \"camelCase\")]\n");
+                let _ = writeln!(output, "struct {struct_name} {{");
+                for (raw_key, key_snake, value_label, _) in &field_entries {
+                    if key_snake.to_case(Case::Camel) != *raw_key {
+                        let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
+                    }
+                    let _ = writeln!(output, "    {}: {value_label},", key_snake);
+                }
                 let _ = writeln!(output, "}}\n{fields_output}");
+
+                if has_defaults {
+                    let mut impl_output = String::new();
+                    let _ = writeln!(impl_output, "impl Default for {struct_name} {{");
+                    let _ = writeln!(impl_output, "    fn default() -> Self {{");
+                    let _ = writeln!(impl_output, "        Self {{");
+                    for (raw_key, key_snake, value_label, default) in &field_entries {
+                        let field_value = if let Some(default_json) = default {
+                            if value_label.starts_with("Option<") {
+                                let inner = &value_label[7..value_label.len() - 1];
+                                let s = default_json.trim();
+                                if s == "null" {
+                                    "None".to_string()
+                                } else {
+                                    match self.render_default_literal(default_json, inner) {
+                                        Some(lit) => format!("Some({})", lit),
+                                        None => {
+                                            self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                            "Default::default()".to_string()
+                                        }
+                                    }
+                                }
+                            } else {
+                                match self.render_default_literal(default_json, value_label) {
+                                    Some(lit) => lit,
+                                    None => {
+                                        self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                        "Default::default()".to_string()
+                                    }
+                                }
+                            }
+                        } else {
+                            "Default::default()".to_string()
+                        };
+                        let _ = writeln!(impl_output, "            {key_snake}: {field_value},");
+                    }
+                    let _ = writeln!(impl_output, "        }}");
+                    let _ = writeln!(impl_output, "    }}");
+                    let _ = writeln!(impl_output, "}}\n");
+
+                    output.push_str(&impl_output);
+                }
+
                 Some((struct_name, Some(output)))
             }
             RuleConfigElement::Array(element) => {
@@ -910,19 +973,56 @@ impl RuleConfigOutput {
             }
         }
     }
+
+    fn render_default_literal(&mut self, default_json: &str, typ: &str) -> Option<String> {
+        let s = default_json.trim();
+        if s.starts_with('"') && s.ends_with('"') {
+            // JSON string literal - use as Rust String literal
+            return Some(format!("String::from({})", s));
+        }
+        if s == "true" || s == "false" {
+            return Some(s.to_string());
+        }
+        if s == "null" {
+            if typ.starts_with("Option<") {
+                return Some("None".to_string());
+            }
+            return Some("Default::default()".to_string());
+        }
+        // Simple number check (integer or float)
+        if s.chars().all(|c| c.is_ascii_digit() || c == '.' || c == '-') {
+            if typ == "i32" {
+                return Some(s.to_string());
+            }
+            if typ == "f32" {
+                return Some(format!("{}f32", s));
+            }
+            return Some(s.to_string());
+        }
+        // Complex structures (arrays/objects) are unsupported for now
+        None
+    }
 }
 
 struct RuleConfig<'a> {
     elements: Vec<RuleConfigElement>,
     next_element: Option<RuleConfigElement>,
     source_text: &'a str,
+    property_default: Option<String>,
     has_errors: bool,
     log_errors: bool,
 }
 
 impl<'a> RuleConfig<'a> {
     fn new(source_text: &'a str, log_errors: bool) -> Self {
-        Self { elements: vec![], next_element: None, source_text, has_errors: false, log_errors }
+        Self {
+            elements: vec![],
+            next_element: None,
+            source_text,
+            property_default: None,
+            has_errors: false,
+            log_errors,
+        }
     }
 
     fn log_error(&mut self, message: &str) {
@@ -1021,8 +1121,9 @@ impl<'a> RuleConfig<'a> {
     fn extract_properties(
         &mut self,
         object_expression: &ObjectExpression<'a>,
-    ) -> FxHashMap<String, RuleConfigElement> {
-        let mut properties: FxHashMap<String, RuleConfigElement> = FxHashMap::default();
+    ) -> FxHashMap<String, (RuleConfigElement, Option<String>)> {
+        let mut properties: FxHashMap<String, (RuleConfigElement, Option<String>)> =
+            FxHashMap::default();
         for object_property_kind in &object_expression.properties {
             let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
                 self.log_error(&format!(
@@ -1045,12 +1146,15 @@ impl<'a> RuleConfig<'a> {
                 ));
                 continue;
             };
+            // reset property_default before parsing
+            self.property_default = None;
             self.visit_object_expression(object_expression);
             let Some(element) = self.next_element.take() else {
                 self.log_error(&String::from("Cannot find next element"));
                 continue;
             };
-            properties.insert(identifier.name.into(), element);
+            let default = self.property_default.take();
+            properties.insert(identifier.name.into(), (element, default));
         }
         properties
     }
@@ -1819,7 +1923,7 @@ mod tests {
     fn test_enum_with_non_string_includes_untagged() {
         let mut out = RuleConfigOutput::new(false);
         let mut hm = FxHashMap::default();
-        hm.insert("a".to_string(), RuleConfigElement::String);
+        hm.insert("a".to_string(), (RuleConfigElement::String, None));
         let element = RuleConfigElement::Enum(vec![
             RuleConfigElement::StringLiteral("foo".to_string()),
             RuleConfigElement::Object(hm),
@@ -1843,5 +1947,85 @@ mod tests {
         let output = out.output;
         // all-string variants should NOT cause `untagged` to be present in the serde attribute.
         assert!(!output.contains("untagged"), "output contained untagged: {}", output);
+    }
+
+    #[test]
+    fn test_struct_with_defaults() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("maxItems".to_string(), (RuleConfigElement::Integer, Some("2".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("#[serde(default)]"));
+        assert!(output.contains("impl Default for MyConfig"));
+        assert!(output.contains("max_items: 2,"));
+        assert!(!output.contains("derive(Debug, Default"));
+    }
+
+    #[test]
+    fn test_struct_default_literal_types() {
+        // string default
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("name".to_string(), (RuleConfigElement::String, Some(r#""bar""#.to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("name: String::from(\"bar\"),"));
+
+        // boolean default
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("enabled".to_string(), (RuleConfigElement::Boolean, Some("true".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("enabled: true,"));
+
+        // float/default number
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("threshold".to_string(), (RuleConfigElement::Number, Some("1.5".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("threshold: 1.5f32,"));
+
+        // Option null default -> None
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "maybeValue".to_string(),
+            (
+                RuleConfigElement::Nullable(Box::new(RuleConfigElement::Integer)),
+                Some("null".to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("maybe_value: None,"));
+
+        // Option string default -> Some(String::from("x"))
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "s".to_string(),
+            (
+                RuleConfigElement::Nullable(Box::new(RuleConfigElement::String)),
+                Some(r#""x""#.to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("s: Some(String::from(\"x\")),"));
     }
 }
