@@ -325,8 +325,8 @@ const z = 3;
         let source_text = SourceText::new(source);
         let comments = empty_comments(source_text);
 
-        let beta_start = source.find("const β").unwrap() as u32;
-        let gamma_start = source.find("const γ").unwrap() as u32;
+        let beta_start = u32::try_from(source.find("const β").unwrap()).unwrap();
+        let gamma_start = u32::try_from(source.find("const γ").unwrap()).unwrap();
 
         assert_eq!(
             source_text.get_lines_before(Span::new(beta_start, beta_start + 6), &comments),
@@ -344,18 +344,12 @@ const z = 3;
         let source_text = SourceText::new(source);
         let comments = empty_comments(source_text);
 
-        let foo_start = source.find("foo").unwrap() as u32;
-        let bar_start = source.find("bar").unwrap() as u32;
+        let foo_start = u32::try_from(source.find("foo").unwrap()).unwrap();
+        let bar_start = u32::try_from(source.find("bar").unwrap()).unwrap();
 
         // The node wrapped inside parentheses should not inherit the blank lines from within.
-        assert_eq!(
-            source_text.get_lines_before(Span::new(foo_start, foo_start + 3), &comments),
-            0
-        );
+        assert_eq!(source_text.get_lines_before(Span::new(foo_start, foo_start + 3), &comments), 0);
         // The node outside the parentheses should still see the two preceding blank lines.
-        assert_eq!(
-            source_text.get_lines_before(Span::new(bar_start, bar_start + 3), &comments),
-            2
-        );
+        assert_eq!(source_text.get_lines_before(Span::new(bar_start, bar_start + 3), &comments), 2);
     }
 }
