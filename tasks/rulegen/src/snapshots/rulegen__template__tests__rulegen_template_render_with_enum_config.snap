@@ -23,7 +23,7 @@ fn my_rule_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(untagged, rename_all = "camelCase")]
+#[serde(untagged, rename_all = "camelCase")]
 enum MyRuleConfig {
     OptionA,
     #[default]

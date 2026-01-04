@@ -91,7 +91,7 @@ mod tests {
         .with_fix_cases("(\"fixed\")".to_string())
         .with_rule_config(
             r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default)]
 struct MyRuleConfig {
     pub foo: String,
     pub bar: Option<i32>,
@@ -123,7 +123,7 @@ struct MyRuleConfig {
         )
         .with_rule_config(
             r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(untagged, rename_all = "camelCase")]
+#[serde(untagged, rename_all = "camelCase")]
 enum MyRuleConfig {
     OptionA,
     #[default]
