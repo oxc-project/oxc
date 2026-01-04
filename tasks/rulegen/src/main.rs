@@ -767,9 +767,7 @@ impl RuleConfigOutput {
                                 // If using kebab-case for all variants, we can omit per-variant
                                 // rename attributes (they're covered by rename_all). Otherwise
                                 // fall back to the existing per-variant rename behavior.
-                                let rename = if use_kebab {
-                                    None
-                                } else if formatted_string_literal.to_case(Case::Camel)
+                                let rename = if use_kebab || formatted_string_literal.to_case(Case::Camel)
                                     == *string_literal
                                 {
                                     None
@@ -924,15 +922,13 @@ impl RuleConfigOutput {
                                 let s = default_json.trim();
                                 if s == "null" {
                                     "None".to_string()
+                                } else if let Some(lit) =
+                                    self.render_default_literal(default_json, inner)
+                                {
+                                    format!("Some({lit})")
                                 } else {
-                                    if let Some(lit) =
-                                        self.render_default_literal(default_json, inner)
-                                    {
-                                        format!("Some({lit})")
-                                    } else {
-                                        self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
-                                        "Default::default()".to_string()
-                                    }
+                                    self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                    "Default::default()".to_string()
                                 }
                             } else if let Some(lit) =
                                 self.render_default_literal(default_json, value_label)
@@ -995,7 +991,7 @@ impl RuleConfigOutput {
         }
     }
 
-    fn render_default_literal(&mut self, default_json: &str, typ: &str) -> Option<String> {
+    fn render_default_literal(&self, default_json: &str, typ: &str) -> Option<String> {
         let s = default_json.trim();
         if s.starts_with('"') && s.ends_with('"') {
             // JSON string literal - use as Rust String literal
@@ -2208,7 +2204,7 @@ mod tests {
         assert!(label.is_some());
         let output = out.output;
         // non-string variants should cause `untagged` to be present in the serde attribute.
-        assert!(output.contains("untagged"), "output did not contain untagged: {}", output);
+        assert!(output.contains("untagged"), "output did not contain untagged: {output}");
     }
 
     #[test]
@@ -2222,7 +2218,7 @@ mod tests {
         assert!(label.is_some());
         let output = out.output;
         // all-string variants should NOT cause `untagged` to be present in the serde attribute.
-        assert!(!output.contains("untagged"), "output contained untagged: {}", output);
+        assert!(!output.contains("untagged"), "output contained untagged: {output}");
     }
 
     #[test]
