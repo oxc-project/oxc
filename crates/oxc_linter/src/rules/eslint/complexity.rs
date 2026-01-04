@@ -28,7 +28,6 @@ const THRESHOLD_DEFAULT: usize = 20;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-#[schemars(rename_all = "camelCase")]
 pub struct ComplexityConfig {
     /// Maximum amount of cyclomatic complexity
     #[serde(alias = "maximum")]
@@ -44,8 +43,7 @@ impl Default for ComplexityConfig {
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-#[schemars(untagged, rename_all = "camelCase")]
+#[serde(rename_all = "kebab-case")]
 pub enum Variant {
     /// Classic means McCabe cyclomatic complexity
     #[default]

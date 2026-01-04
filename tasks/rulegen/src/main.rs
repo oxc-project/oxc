@@ -9,10 +9,10 @@ use convert_case::{Case, Casing};
 use lazy_regex::regex;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, BindingPattern,
+    CallExpression, Declaration, Expression, ExpressionStatement, IdentifierName, ObjectExpression,
+    ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression,
+    StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
@@ -642,7 +642,8 @@ fn find_parser_arguments<'a, 'b>(
 #[derive(Debug, Serialize, PartialEq)]
 enum RuleConfigElement {
     Enum(Vec<RuleConfigElement>),
-    Object(FxHashMap<String, RuleConfigElement>),
+    /// Object maps property name -> (element, optional default literal string)
+    Object(FxHashMap<String, (RuleConfigElement, Option<String>)>),
     Map(Box<RuleConfigElement>),
     Array(Box<RuleConfigElement>),
     Set(Box<RuleConfigElement>),
@@ -685,6 +686,19 @@ impl RuleConfigOutput {
         self.has_errors = true;
     }
 
+    fn escape_rust_identifier(ident: &str) -> String {
+        // List of Rust reserved keywords that cannot be used as identifiers directly.
+        // We use raw identifiers `r#foo` for those.
+        const RUST_KEYWORDS: [&str; 41] = [
+            "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn",
+            "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
+            "return", "self", "Self", "static", "struct", "super", "trait", "true", "type",
+            "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become",
+            "box",
+        ];
+        if RUST_KEYWORDS.contains(&ident) { format!("r#{ident}") } else { ident.to_string() }
+    }
+
     fn extract_output(&mut self, element: &RuleConfigElement, field_name: &str) -> Option<String> {
         let (element_label, element_output) = self.extract_output_inner(element, field_name)?;
         if let Some(element_output) = element_output {
@@ -718,7 +732,26 @@ impl RuleConfigOutput {
                 output.push_str(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(untagged, rename_all = \"camelCase\")]\n");
+                // Determine if all enum string values are kebab-case. If so, prefer
+                // using `rename_all = "kebab-case"` instead of per-variant renames.
+                let string_values: Vec<&String> = elements
+                    .iter()
+                    .filter_map(|e| {
+                        if let RuleConfigElement::StringLiteral(s) = e { Some(s) } else { None }
+                    })
+                    .collect();
+                let all_strings =
+                    !string_values.is_empty() && string_values.len() == elements.len();
+                let use_kebab =
+                    all_strings && string_values.iter().all(|s| *s == &s.to_case(Case::Kebab));
+                let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
+                if all_strings {
+                    // When all variants are string literals, `untagged` is unnecessary
+                    let _ = writeln!(output, "#[serde(rename_all = \"{rename_style}\")]");
+                } else {
+                    // Non-string variants require `untagged` to allow multiple shapes
+                    let _ = writeln!(output, "#[serde(untagged, rename_all = \"{rename_style}\")]");
+                }
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
@@ -729,7 +762,10 @@ impl RuleConfigOutput {
                             let is_valid_identifier_regex = regex!(r"^[a-zA-Z_]\w*$");
                             let formatted_string_literal = string_literal.to_case(Case::Pascal);
                             if is_valid_identifier_regex.is_match(&formatted_string_literal) {
-                                let rename = if formatted_string_literal.to_case(Case::Camel)
+                                // If using kebab-case for all variants, we can omit per-variant
+                                // rename attributes (they're covered by rename_all). Otherwise
+                                // fall back to the existing per-variant rename behavior.
+                                let rename = if use_kebab || formatted_string_literal.to_case(Case::Camel)
                                     == *string_literal
                                 {
                                     None
@@ -738,6 +774,7 @@ impl RuleConfigOutput {
                                 };
                                 Some((rename, Some(formatted_string_literal), None, None))
                             } else {
+                                // Non-identifier variant names always need an explicit rename
                                 Some((
                                     Some(format!("rename = \"{string_literal}\"")),
                                     None,
@@ -783,7 +820,7 @@ impl RuleConfigOutput {
                             if !schemars_tags.is_empty() {
                                 let _ = writeln!(
                                     enum_fields,
-                                    "    #[schemars({})]",
+                                    "    #[serde({})]",
                                     schemars_tags.join(", ")
                                 );
                             }
@@ -824,27 +861,95 @@ impl RuleConfigOutput {
                     field_name.to_case(Case::Pascal)
                 };
                 self.seen_names.insert(struct_name.clone());
-                let mut output = String::from(
-                    "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
-                );
-                output.push_str("#[schemars(rename_all = \"camelCase\")]\n");
-                let _ = writeln!(output, "struct {struct_name} {{");
                 let mut fields_output = String::new();
-                for (raw_key, value) in hash_map {
-                    let key = &raw_key.to_case(Case::Pascal);
-                    let Some((value_label, value_output)) = self.extract_output_inner(value, key)
+                let mut field_entries: Vec<(String, String, String, Option<String>)> = Vec::new();
+                for (raw_key, (value, default)) in hash_map {
+                    let key_pascal = raw_key.to_case(Case::Pascal);
+                    let key_snake = key_pascal.to_case(Case::Snake);
+                    let Some((value_label, value_output)) =
+                        self.extract_output_inner(value, &key_pascal)
                     else {
                         continue;
                     };
-                    if key.to_case(Case::Camel) != *raw_key {
-                        let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
-                    }
-                    let _ = writeln!(output, "    {}: {value_label},", key.to_case(Case::Snake));
+                    field_entries.push((
+                        raw_key.clone(),
+                        key_snake,
+                        value_label.clone(),
+                        default.clone(),
+                    ));
                     if let Some(value_output) = value_output {
                         let _ = writeln!(fields_output, "{value_output}\n");
                     }
                 }
+                let has_defaults = field_entries.iter().any(|(_, _, _, default)| default.is_some());
+                let mut output = String::new();
+                if has_defaults {
+                    output
+                        .push_str("#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]\n");
+                } else {
+                    output.push_str(
+                        "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
+                    );
+                }
+                // Add a default in serde.
+                output.push_str("#[serde(rename_all = \"camelCase\", default)]\n");
+                let _ = writeln!(output, "struct {struct_name} {{");
+                for (raw_key, key_snake, value_label, _) in &field_entries {
+                    if key_snake.to_case(Case::Camel) != *raw_key {
+                        let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
+                    }
+                    // Add a placeholder documentation comment for the field so maintainers remember to
+                    // describe the purpose of each generated config field.
+                    let _ = writeln!(output, "    /// FIXME: Describe the purpose of this field.");
+                    let escaped_key_snake = Self::escape_rust_identifier(key_snake);
+                    let _ = writeln!(output, "    {escaped_key_snake}: {value_label},");
+                }
                 let _ = writeln!(output, "}}\n{fields_output}");
+
+                if has_defaults {
+                    let mut impl_output = String::new();
+                    let _ = writeln!(impl_output, "impl Default for {struct_name} {{");
+                    let _ = writeln!(impl_output, "    fn default() -> Self {{");
+                    let _ = writeln!(impl_output, "        Self {{");
+                    for (raw_key, key_snake, value_label, default) in &field_entries {
+                        let escaped_key_snake = Self::escape_rust_identifier(key_snake);
+                        let field_value = if let Some(default_json) = default {
+                            if value_label.starts_with("Option<") {
+                                let inner = &value_label[7..value_label.len() - 1];
+                                let s = default_json.trim();
+                                if s == "null" {
+                                    "None".to_string()
+                                } else if let Some(lit) =
+                                    Self::render_default_literal(default_json, inner)
+                                {
+                                    format!("Some({lit})")
+                                } else {
+                                    self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                    "Default::default()".to_string()
+                                }
+                            } else if let Some(lit) =
+                                Self::render_default_literal(default_json, value_label)
+                            {
+                                lit
+                            } else {
+                                self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                "Default::default()".to_string()
+                            }
+                        } else {
+                            "Default::default()".to_string()
+                        };
+                        let _ = writeln!(
+                            impl_output,
+                            "            {escaped_key_snake}: {field_value},"
+                        );
+                    }
+                    let _ = writeln!(impl_output, "        }}");
+                    let _ = writeln!(impl_output, "    }}");
+                    let _ = writeln!(impl_output, "}}\n");
+
+                    output.push_str(&impl_output);
+                }
+
                 Some((struct_name, Some(output)))
             }
             RuleConfigElement::Array(element) => {
@@ -882,19 +987,81 @@ impl RuleConfigOutput {
             }
         }
     }
+
+    fn render_default_literal(default_json: &str, typ: &str) -> Option<String> {
+        let s = default_json.trim();
+        if s.starts_with('"') && s.ends_with('"') {
+            // JSON string literal - use as Rust String literal
+            return Some(format!("String::from({s})"));
+        }
+        if s == "true" || s == "false" {
+            return Some(s.to_string());
+        }
+        if s == "null" {
+            if typ.starts_with("Option<") {
+                return Some("None".to_string());
+            }
+            return Some("Default::default()".to_string());
+        }
+        // Simple number check (integer or float)
+        if s.chars().all(|c| c.is_ascii_digit() || c == '.' || c == '-') {
+            if typ == "i32" {
+                return Some(s.to_string());
+            }
+            if typ == "f32" {
+                return Some(format!("{s}f32"));
+            }
+            return Some(s.to_string());
+        }
+        // Array default handling
+        if s.starts_with('[') && s.ends_with(']') {
+            // Only support arrays when expected type is Vec<...>
+            if let Some(inner) = typ.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
+                // Convert possible JS-like literal to JSON
+                let json_text = json::convert_config_to_json_literal(s);
+                if let Ok(value) = serde_json::from_str::<serde_json::Value>(&json_text)
+                    && let Some(arr) = value.as_array()
+                {
+                    let mut elems = Vec::new();
+                    for item in arr {
+                        if let Ok(item_json) = serde_json::to_string(item)
+                            && let Some(lit) = Self::render_default_literal(&item_json, inner)
+                        {
+                            elems.push(lit);
+                            continue;
+                        }
+                        // failed to render an element -> unsupported
+                        return None;
+                    }
+                    return Some(format!("vec![{}]", elems.join(", ")));
+                }
+            }
+        }
+
+        // Complex structures (objects) are unsupported for now
+        None
+    }
 }
 
 struct RuleConfig<'a> {
     elements: Vec<RuleConfigElement>,
     next_element: Option<RuleConfigElement>,
     source_text: &'a str,
+    property_default: Option<String>,
     has_errors: bool,
     log_errors: bool,
 }
 
 impl<'a> RuleConfig<'a> {
     fn new(source_text: &'a str, log_errors: bool) -> Self {
-        Self { elements: vec![], next_element: None, source_text, has_errors: false, log_errors }
+        Self {
+            elements: vec![],
+            next_element: None,
+            source_text,
+            property_default: None,
+            has_errors: false,
+            log_errors,
+        }
     }
 
     fn log_error(&mut self, message: &str) {
@@ -928,7 +1095,10 @@ impl<'a> RuleConfig<'a> {
             "boolean" => Some(RuleConfigElement::Boolean),
             "number" => Some(RuleConfigElement::Number),
             "integer" => Some(RuleConfigElement::Integer),
-            "array" | "object" => None,
+            // For loose schemas without `items`/`properties`, treat `array` as array of strings
+            // and `object` as a map of string values so we can still generate a usable config.
+            "array" => Some(RuleConfigElement::Array(Box::new(RuleConfigElement::String))),
+            "object" => Some(RuleConfigElement::Map(Box::new(RuleConfigElement::String))),
             _ => {
                 self.log_error(&format!("Unhandled `type` value: {}", lit.value));
                 None
@@ -993,8 +1163,9 @@ impl<'a> RuleConfig<'a> {
     fn extract_properties(
         &mut self,
         object_expression: &ObjectExpression<'a>,
-    ) -> FxHashMap<String, RuleConfigElement> {
-        let mut properties: FxHashMap<String, RuleConfigElement> = FxHashMap::default();
+    ) -> FxHashMap<String, (RuleConfigElement, Option<String>)> {
+        let mut properties: FxHashMap<String, (RuleConfigElement, Option<String>)> =
+            FxHashMap::default();
         for object_property_kind in &object_expression.properties {
             let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
                 self.log_error(&format!(
@@ -1017,12 +1188,15 @@ impl<'a> RuleConfig<'a> {
                 ));
                 continue;
             };
+            // reset property_default before parsing
+            self.property_default = None;
             self.visit_object_expression(object_expression);
             let Some(element) = self.next_element.take() else {
                 self.log_error(&String::from("Cannot find next element"));
                 continue;
             };
-            properties.insert(identifier.name.into(), element);
+            let default = self.property_default.take();
+            properties.insert(identifier.name.into(), (element, default));
         }
         properties
     }
@@ -1099,6 +1273,215 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
+        // handle `export default { meta: { schema: ... } }` (ESM/TS)
+        if let Statement::ExportDefaultDeclaration(export_decl) = stmt {
+            // First, handle the simple case: `export default { meta: { schema: ... } }`
+            if let Some(Expression::ObjectExpression(object_expression)) = &export_decl
+                .declaration
+                .as_expression()
+                .map(oxc_ast::ast::Expression::get_inner_expression)
+            {
+                for object_property_kind in &object_expression.properties {
+                    let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind
+                    else {
+                        continue;
+                    };
+                    let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                        continue;
+                    };
+                    if identifier.name != "meta" {
+                        continue;
+                    }
+                    let Expression::ObjectExpression(meta_obj) = &object_property.value else {
+                        continue;
+                    };
+                    for object_property_kind in &meta_obj.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "schema" {
+                            continue;
+                        }
+                        match &object_property.value {
+                            Expression::ArrayExpression(array_expression) => {
+                                self.elements = array_expression
+                                    .elements
+                                    .iter()
+                                    .filter_map(|element| {
+                                        let ArrayExpressionElement::ObjectExpression(
+                                            object_expression,
+                                        ) = element
+                                        else {
+                                            return None;
+                                        };
+                                        self.next_element = None;
+                                        self.visit_object_expression(object_expression);
+                                        self.next_element.take()
+                                    })
+                                    .collect::<Vec<_>>();
+                            }
+                            Expression::ObjectExpression(object_expression) => {
+                                self.visit_object_expression(object_expression);
+                                let Some(element) = self.next_element.take() else { return };
+                                self.elements = vec![element];
+                            }
+                            _ => {
+                                self.log_error(&format!(
+                                    "Cannot parse `schema` value: {}",
+                                    object_property.value.span().source_text(self.source_text)
+                                ));
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Otherwise: handle `export default createRule({ meta: { schema: ... } })` style
+            if let Some(Expression::CallExpression(call_expr)) = &export_decl
+                .declaration
+                .as_expression()
+                .map(oxc_ast::ast::Expression::get_inner_expression)
+            {
+                for arg in &call_expr.arguments {
+                    if !arg.is_expression() {
+                        continue;
+                    }
+                    let Some(expr) = arg.as_expression() else { continue };
+                    let Expression::ObjectExpression(object_expression) = expr else { continue };
+                    for object_property_kind in &object_expression.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "meta" {
+                            continue;
+                        }
+                        let Expression::ObjectExpression(meta_obj) = &object_property.value else {
+                            continue;
+                        };
+                        for object_property_kind in &meta_obj.properties {
+                            let ObjectPropertyKind::ObjectProperty(object_property) =
+                                &object_property_kind
+                            else {
+                                continue;
+                            };
+                            let PropertyKey::StaticIdentifier(identifier) = &object_property.key
+                            else {
+                                continue;
+                            };
+                            if identifier.name != "schema" {
+                                continue;
+                            }
+                            match &object_property.value {
+                                Expression::ArrayExpression(array_expression) => {
+                                    self.elements = array_expression
+                                        .elements
+                                        .iter()
+                                        .filter_map(|element| {
+                                            let ArrayExpressionElement::ObjectExpression(
+                                                object_expression,
+                                            ) = element
+                                            else {
+                                                return None;
+                                            };
+                                            self.next_element = None;
+                                            self.visit_object_expression(object_expression);
+                                            self.next_element.take()
+                                        })
+                                        .collect::<Vec<_>>();
+                                }
+                                Expression::ObjectExpression(object_expression) => {
+                                    self.visit_object_expression(object_expression);
+                                    let Some(element) = self.next_element.take() else { return };
+                                    self.elements = vec![element];
+                                }
+                                _ => {
+                                    self.log_error(&format!(
+                                        "Cannot parse `schema` value: {}",
+                                        object_property.value.span().source_text(self.source_text)
+                                    ));
+                                }
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // handle `export const meta = { schema: ... }` (named export)
+        if let Statement::ExportNamedDeclaration(export_decl) = stmt
+            && let Some(Declaration::VariableDeclaration(var_decl)) =
+                export_decl.declaration.as_ref()
+        {
+            for declarator in &var_decl.declarations {
+                let BindingPattern::BindingIdentifier(binding_ident) = &declarator.id else {
+                    continue;
+                };
+                if binding_ident.name != "meta" {
+                    continue;
+                }
+                let Some(init) = &declarator.init else { continue };
+                if let Expression::ObjectExpression(object_expression) = init {
+                    for object_property_kind in &object_expression.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "schema" {
+                            continue;
+                        }
+                        match &object_property.value {
+                            Expression::ArrayExpression(array_expression) => {
+                                self.elements = array_expression
+                                    .elements
+                                    .iter()
+                                    .filter_map(|element| {
+                                        let ArrayExpressionElement::ObjectExpression(
+                                            object_expression,
+                                        ) = element
+                                        else {
+                                            return None;
+                                        };
+                                        self.next_element = None;
+                                        self.visit_object_expression(object_expression);
+                                        self.next_element.take()
+                                    })
+                                    .collect::<Vec<_>>();
+                            }
+                            Expression::ObjectExpression(object_expression) => {
+                                self.visit_object_expression(object_expression);
+                                let Some(element) = self.next_element.take() else { return };
+                                self.elements = vec![element];
+                            }
+                            _ => {
+                                self.log_error(&format!(
+                                    "Cannot parse `schema` value: {}",
+                                    object_property.value.span().source_text(self.source_text)
+                                ));
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        // fall back to CommonJS `module.exports = { meta: { schema: ... } }`
         let Statement::ExpressionStatement(expression_statement) = stmt else {
             return;
         };
@@ -1304,7 +1687,13 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                         ));
                     }
                 },
-                "default" | "required" | "minItems" | "minimum" | "minLength" | "maxItems"
+                "default" => {
+                    // Capture default literal (JSON text) for later use when generating Default impl
+                    self.property_default = Some(
+                        object_property.value.span().source_text(self.source_text).to_string(),
+                    );
+                }
+                "required" | "minItems" | "minimum" | "minLength" | "maxItems"
                 | "minProperties" | "maximum" | "pattern" => {}
                 _ => {
                     self.log_error(&format!("Unhandled key `{}`", identifier.name));
@@ -1392,6 +1781,7 @@ fn main() {
     });
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
+    let pascal_rule_name = rule_name.to_case(Case::Pascal);
 
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
@@ -1445,7 +1835,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty());
+            assert!(ret.errors.is_empty(), "errors: {:?}", ret.errors);
 
             let mut state = State::new(&body);
             state.visit_program(&ret.program);
@@ -1547,7 +1937,10 @@ fn main() {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, element)| {
-                    let element_name = format!("ConfigElement{index}");
+                    let element_name = format!(
+                        "{pascal_rule_name}Config{}",
+                        if index == 0 { String::new() } else { index.to_string() }
+                    );
                     rule_config_output.extract_output(element, element_name.as_str())
                 })
                 .collect::<Vec<_>>();
@@ -1609,6 +2002,10 @@ fn generate_rule_runner_impl() -> Result<(), Box<dyn std::error::Error>> {
     if !output.status.success() {
         return Err("Failed to run oxc_linter_codegen".into());
     }
+
+    println!("Formatting generated RuleRunner impl...");
+    // format the generated code
+    Command::new("cargo").args(["fmt", "--package", "oxc_linter"]).status()?;
 
     Ok(())
 }
@@ -1747,4 +2144,305 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parsing_configs() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("maxItems".to_string(), (RuleConfigElement::Integer, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("max_items: i32,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
+    }
+
+    #[test]
+    fn test_parsing_more_configs() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("enabled".to_string(), (RuleConfigElement::Boolean, None));
+        hm.insert("threshold".to_string(), (RuleConfigElement::Number, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "another_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("enabled: bool,"));
+        assert!(output.contains("threshold: f32,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
+    }
+
+    #[test]
+    fn test_struct_with_reserved_name_in_fields() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("type".to_string(), (RuleConfigElement::String, None));
+        hm.insert("match".to_string(), (RuleConfigElement::String, None));
+        hm.insert("fn".to_string(), (RuleConfigElement::String, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "reserved_names_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("r#type: String,"));
+        assert!(output.contains("r#match: String,"));
+        assert!(output.contains("r#fn: String,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
+    }
+
+    #[test]
+    fn test_enum_rename_all_kebab() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("type-based".to_string()),
+            RuleConfigElement::StringLiteral("type-literal".to_string()),
+        ]);
+        let label = out.extract_output(&element, "define_emits_declaration_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("rename_all = \"kebab-case\""));
+        assert!(!output.contains("rename = \""));
+    }
+
+    #[test]
+    fn test_enum_mixed_case_keeps_per_variant() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("beforeAll".to_string()),
+            RuleConfigElement::StringLiteral("after-each".to_string()),
+        ]);
+        let label = out.extract_output(&element, "no_hooks_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // mixed case shouldn't set kebab-case rename_all
+        assert!(!output.contains("rename_all = \"kebab-case\""));
+        // but should have explicit per-variant rename for kebab one
+        assert!(output.contains("rename = \"after-each\""));
+    }
+
+    #[test]
+    fn test_enum_with_non_string_includes_untagged() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("a".to_string(), (RuleConfigElement::String, None));
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("foo".to_string()),
+            RuleConfigElement::Object(hm),
+        ]);
+        let label = out.extract_output(&element, "mixed_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // non-string variants should cause `untagged` to be present in the serde attribute.
+        assert!(output.contains("untagged"), "output did not contain untagged: {output}");
+    }
+
+    #[test]
+    fn test_enum_with_strings_does_not_include_untagged() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("foo".to_string()),
+            RuleConfigElement::StringLiteral("bar".to_string()),
+        ]);
+        let label = out.extract_output(&element, "string_only_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // all-string variants should NOT cause `untagged` to be present in the serde attribute.
+        assert!(!output.contains("untagged"), "output contained untagged: {output}");
+    }
+
+    #[test]
+    fn test_struct_with_defaults() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("maxItems".to_string(), (RuleConfigElement::Integer, Some("2".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // match serde(rename_all = "camelCase", default)""
+        assert!(output.contains("#[serde(rename_all = \"camelCase\", default)]"));
+        assert!(output.contains("impl Default for MyConfig"));
+        assert!(output.contains("max_items: 2,"));
+        assert!(!output.contains("derive(Debug, Default"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
+    }
+
+    #[test]
+    fn test_struct_default_literal_types() {
+        // string default
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("name".to_string(), (RuleConfigElement::String, Some(r#""bar""#.to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("name: String::from(\"bar\"),"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
+
+        // boolean default
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("enabled".to_string(), (RuleConfigElement::Boolean, Some("true".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("enabled: true,"));
+
+        // float/default number
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("threshold".to_string(), (RuleConfigElement::Number, Some("1.5".to_string())));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("threshold: 1.5f32,"));
+
+        // Option null default -> None
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "maybeValue".to_string(),
+            (
+                RuleConfigElement::Nullable(Box::new(RuleConfigElement::Integer)),
+                Some("null".to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("maybe_value: None,"));
+
+        // Option string default -> Some(String::from("x"))
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "s".to_string(),
+            (
+                RuleConfigElement::Nullable(Box::new(RuleConfigElement::String)),
+                Some(r#""x""#.to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("s: Some(String::from(\"x\")),"));
+    }
+
+    #[test]
+    fn test_struct_default_array_and_object_unsupported() {
+        // array default (supported)
+        let mut out = RuleConfigOutput::new(true);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "items".to_string(),
+            (
+                RuleConfigElement::Array(Box::new(RuleConfigElement::Integer)),
+                Some("[1, 2]".to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // Array default should render to vec![...] and not error
+        assert!(output.contains("items: vec![1, 2],"));
+        assert!(!out.has_errors, "did not expect errors for supported array default");
+
+        // array of strings default (supported)
+        let mut out_str = RuleConfigOutput::new(true);
+        let mut hm_str = FxHashMap::default();
+        hm_str.insert(
+            "tags".to_string(),
+            (
+                RuleConfigElement::Array(Box::new(RuleConfigElement::String)),
+                Some("['a', 'b']".to_string()),
+            ),
+        );
+        let element_str = RuleConfigElement::Object(hm_str);
+        let label_str = out_str.extract_output(&element_str, "my_config");
+        assert!(label_str.is_some());
+        let output_str = out_str.output;
+        assert!(output_str.contains("tags: vec![String::from(\"a\"), String::from(\"b\")],"));
+        assert!(!out_str.has_errors, "did not expect errors for supported string array default");
+
+        // object default (unsupported)
+        let mut out2 = RuleConfigOutput::new(true);
+        let mut hm2 = FxHashMap::default();
+        hm2.insert(
+            "map".to_string(),
+            (
+                RuleConfigElement::Map(Box::new(RuleConfigElement::String)),
+                Some("{ \"a\": 1 }".to_string()),
+            ),
+        );
+        let element2 = RuleConfigElement::Object(hm2);
+        let label2 = out2.extract_output(&element2, "my_config2");
+        assert!(label2.is_some());
+        let output2 = out2.output;
+        assert!(output2.contains("map: Default::default(),"));
+        assert!(out2.has_errors, "expected error logged for unsupported default on object");
+    }
+
+    #[test]
+    fn test_parsing_default_from_rule_file() {
+        let source = r#"
+            export default {
+                meta: {
+                    schema: {
+                        type: "object",
+                        properties: {
+                            name: { type: "string", default: "bar" },
+                            count: { type: "integer", default: 5 }
+                        }
+                    }
+                }
+            };
+        "#;
+
+        let allocator = Allocator::default();
+        let ret =
+            Parser::new(&allocator, source, SourceType::from_path("rule.js").unwrap()).parse();
+        assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+
+        let mut rc = RuleConfig::new(source, false);
+        rc.visit_program(&ret.program);
+        let element = rc
+            .next_element
+            .as_ref()
+            .or_else(|| rc.elements.first())
+            .expect("expected schema element");
+
+        let mut out = RuleConfigOutput::new(false);
+        let label = out.extract_output(element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("name: String::from(\"bar\"),"));
+        assert!(output.contains("count: 5,"));
+        assert!(output.contains("impl Default for MyConfig"));
+    }
 }

@@ -26,6 +26,7 @@ handlebars = { workspace = true }
 lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

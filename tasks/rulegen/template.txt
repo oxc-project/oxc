@@ -60,7 +60,7 @@ declare_oxc_lint!(
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 {{#if rule_config}}
-    config = {{pascal_rule_name}},
+    config = {{pascal_rule_name}}Config,
 {{/if}}
 );
 
@@ -95,6 +95,7 @@ fn test() {
     let fix = vec![
         {{fix_cases}}
     ];
+
     Tester::new({{pascal_rule_name}}::NAME, {{pascal_rule_name}}::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
     {{else}}
     Tester::new({{pascal_rule_name}}::NAME, {{pascal_rule_name}}::PLUGIN, pass, fail).test_and_snapshot();
