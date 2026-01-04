@@ -1,0 +1,100 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: /* comment */ a}
+   ·          ──────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a /* comment */: a}
+   ·          ──────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {a: (a /* comment */)}
+   ·          ────────────────────
+   ╰────
+  help: Replace `a: (a /* comment */)` with `a`.
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a': /* comment */ a}
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a' /* comment */: a}
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:10]
+ 1 │ var x = {'a': (a /* comment */)}
+   ·          ──────────────────────
+   ╰────
+  help: Replace `'a': (a /* comment */)` with `a`.
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:27]
+ 1 │ var x = {f: /* comment */ function() {}}
+   ·                           ─────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected method shorthand.
+   ╭─[object_shorthand.tsx:1:27]
+ 1 │ var x = {f /* comment */: function() {}}
+   ·                           ─────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {a: a, b}
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {b, c: d, f: g}
+   ·         ───────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {foo, bar: baz, ...qux}
+   ·         ───────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected shorthand for all properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {a: a, b: b}
+   ·         ────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {a, z: function z(){}}
+   ·         ──────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected shorthand for all properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {foo: function() {}}
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Expected shorthand for all properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {a: a, b: b, ...baz}
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:9]
+ 1 │ var x = {foo, bar: bar, ...qux}
+   ·         ───────────────────────
+   ╰────
