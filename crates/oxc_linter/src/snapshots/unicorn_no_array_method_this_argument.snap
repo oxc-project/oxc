@@ -65,6 +65,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
 
   ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array?.map(() => {}, thisArgument)
+   ·            ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
    ╭─[no_array_method_this_argument.tsx:1:43]
  1 │ Array.from(iterableOrArrayLike, () => {}, thisArgument)
    ·                                           ────────────
@@ -110,6 +117,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_array_method_this_argument.tsx:1:11]
  1 │ array.map(() => {}, thisArgumentHasSideEffect())
    ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array?.map(() => {}, thisArgumentHasSideEffect())
+   ·            ────────
    ╰────
   help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
 

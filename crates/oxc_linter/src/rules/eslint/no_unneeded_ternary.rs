@@ -278,7 +278,6 @@ fn test() {
         ("foo ? foo : bar as any", Some(serde_json::json!([{ "defaultAssignment": false }]))), // {                "parser": require(parser("typescript-parsers/unneeded-ternary-2")),                "ecmaVersion": 6            }
     ];
 
-    // I keep the fix tets commented until they are implemented
     let fix = vec![
         ("var a = x === 2 ? true : false;", "var a = x === 2;", None),
         ("var a = x >= 2 ? true : false;", "var a = x >= 2;", None),
@@ -377,6 +376,7 @@ fn test() {
         ),
         ("let a = {} satisfies User ? true : false", "let a = !!({} satisfies User)", None),
     ];
+
     Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
