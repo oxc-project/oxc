@@ -5,6 +5,7 @@ mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
+mod minimize_functions;
 mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
@@ -294,6 +295,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::remove_dead_code_call_expression(expr, ctx);
                 Self::replace_concat_chain(expr, ctx);
                 Self::replace_known_global_methods(expr, ctx);
+                Self::substitute_function_call_this_for_arrow_function(expr, ctx);
                 Self::substitute_simple_function_call(expr, ctx);
                 Self::substitute_object_or_array_constructor(expr, ctx);
             }
