@@ -1,11 +1,13 @@
 use std::fmt::Debug;
 
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
 };
 use oxc_codegen::Gen;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::StringCharAt;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
@@ -186,7 +188,12 @@ impl Rule for ObjectShorthand {
 
 impl ObjectShorthand {
     fn check_longform_methods(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
-        // TODO: self.ignore_constructors
+        if self.ignore_constructors
+            && property.key.is_identifier()
+            && property.key.name().map(is_constructor).unwrap_or(false)
+        {
+            return;
+        }
         // TODO: self.methods_ignore_pattern
 
         if self.avoid_quotes && is_property_key_string_literal(property) {
@@ -339,6 +346,25 @@ impl ShorthandType {
             _ => Self::Always,
         }
     }
+}
+
+static NONOCTAL_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])");
+
+static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
+static JSDOC_COMMENT_REGEX: Lazy<Regex> = lazy_regex!(r"^\s*\*");
+
+/// Determines if the first character of the name
+/// is a capital letter.
+/// @param name The name of the node to evaluate.
+/// @returns True if the first character of the property name is a capital letter, false if not.
+fn is_constructor<N: AsRef<str>>(name: N) -> bool {
+    // Not a constructor if name has no characters apart from '_', '$' and digits e.g. '_', '$$', '_8'
+    let Some(matched) = CTOR_PREFIX_REGEX.find(name.as_ref()) else {
+        return false;
+    };
+
+    name.as_ref().chars().nth(matched.start()).map(|ch| ch.is_uppercase()).unwrap_or(false)
 }
 
 fn is_property_value_function(property: &ObjectProperty) -> bool {
