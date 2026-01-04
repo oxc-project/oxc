@@ -160,63 +160,80 @@ impl<'a> SourceText<'a> {
     /// Count line breaks between syntax nodes, considering comments and parentheses
     pub fn get_lines_before(&self, span: Span, comments: &Comments) -> usize {
         let mut start = span.start;
-
         let comments = comments.unprinted_comments();
 
-        // Should skip the leading comments of the node.
         if let Some(comment) = comments.first()
             && comment.span.end <= start
         {
             start = comment.span.start;
         } else if start != 0 && matches!(self.byte_at(start - 1), Some(b';')) {
-            // Skip leading semicolon if present
-            // `;(function() {});`
             start -= 1;
         }
 
-        // Count the newlines in the leading trivia of the next node
-        let mut count = 0;
         let mut following_source = self.bytes_from(span.end);
-        let mut chars = self.slice_to(start).chars().rev().peekable();
-        while let Some(c) = chars.next() {
-            if is_white_space_single_line(c) {
+        let mut cursor = start as usize;
+        let mut skip_cr = false;
+        let mut count = 0;
+
+        while cursor > 0 {
+            let (ch, next_cursor) = char_before(self.text, cursor);
+            cursor = next_cursor;
+
+            if skip_cr && ch == CR {
+                skip_cr = false;
                 continue;
             }
 
-            if c == '(' {
-                // We don't have a parenthesis node when `preserveParens` is turned off,
-                // but we will find the `(` and `)` around the node if it exists.
-                // If we find a `(`, we try to find the matching `)` and reset the count.
-                // This is necessary to avoid counting the newlines inside the parenthesis.
+            if is_white_space_single_line(ch) {
+                skip_cr = false;
+                continue;
+            }
 
-                for c in following_source.by_ref() {
-                    if c.is_ascii_whitespace() {
-                        continue;
-                    }
+            if is_line_terminator(ch) {
+                count += 1;
+                skip_cr = ch == LF;
+                continue;
+            }
 
-                    if c == b')' {
-                        break;
-                    }
-
-                    return count;
+            if ch == '(' {
+                if skip_wrapping_parenthesis(&mut following_source) {
+                    count = 0;
+                    skip_cr = false;
+                    continue;
                 }
-
-                count = 0;
-                continue;
-            }
-
-            if !is_line_terminator(c) {
                 return count;
             }
 
-            count += 1;
-            if c == LF && chars.peek() == Some(&CR) {
-                chars.next();
-            }
+            return count;
         }
 
         0
     }
+}
+
+fn char_before(text: &str, mut index: usize) -> (char, usize) {
+    debug_assert!(index > 0);
+    let bytes = text.as_bytes();
+
+    index -= 1;
+    while bytes[index] & 0b1100_0000 == 0b1000_0000 {
+        index -= 1;
+    }
+
+    // SAFETY: `index` always points to the start of a character boundary.
+    let ch = unsafe { text.get_unchecked(index..) }.chars().next().unwrap();
+    (ch, index)
+}
+
+fn skip_wrapping_parenthesis(iter: &mut impl Iterator<Item = u8>) -> bool {
+    for c in iter.by_ref() {
+        if c.is_ascii_whitespace() {
+            continue;
+        }
+
+        return c == b')';
+    }
+    false
 }
 
 // NOTE: Our test fixtures are managed under `.gitattributes` to enforce LF line endings.
