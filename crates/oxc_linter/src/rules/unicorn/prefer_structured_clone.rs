@@ -28,7 +28,7 @@ fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferStructuredClone(Box<PreferStructuredCloneConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferStructuredCloneConfig {
     /// List of functions that are allowed to be used for deep cloning instead of structuredClone.
     functions: Vec<String>,
@@ -79,9 +79,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferStructuredClone {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

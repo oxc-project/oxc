@@ -73,9 +73,7 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 
 impl Rule for NoReturnAssign {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -123,7 +121,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("module.exports = {'a': 1};", None), // {                "sourceType": "module"            },
+        ("module.exports = {'a': 1};", None), // {  "sourceType": "module" },
         ("var result = a * b;", None),
         ("function x() { var result = a * b; return result; }", None),
         ("function x() { return (result = a * b); }", None),
@@ -220,5 +218,18 @@ fn test() {
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
-    Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();
+    let valid_configs = vec![serde_json::json!(["except-parens"]), serde_json::json!(["always"])];
+
+    let invalid_configs = vec![
+        // An array with an object should produce an error, since the rule only accepts a string.
+        serde_json::json!([{ "foo": "bar" }]),
+        // String that isn't one of the allowed options should produce an error
+        serde_json::json!(["foobar"]),
+        serde_json::json!(["ExceptParens"]),
+        serde_json::json!(["Always"]),
+    ];
+
+    Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail)
+        .expect_configs(valid_configs, invalid_configs)
+        .test_and_snapshot();
 }

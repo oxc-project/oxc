@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SwitchExhaustivenessCheckConfig {
     /// Whether to allow default cases on switches that are not exhaustive.
     /// When false, requires exhaustive switch statements without default cases.
@@ -139,9 +139,7 @@ declare_oxc_lint!(
 
 impl Rule for SwitchExhaustivenessCheck {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

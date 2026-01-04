@@ -22,7 +22,7 @@ fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoArraySort {
     /// When set to `true` (default), allows `array.sort()` as an expression statement.
     /// Set to `false` to forbid `Array#sort()` even if it's an expression statement.
@@ -70,9 +70,7 @@ declare_oxc_lint!(
 
 impl Rule for NoArraySort {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
