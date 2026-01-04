@@ -689,12 +689,12 @@ impl RuleConfigOutput {
     fn escape_rust_identifier(ident: &str) -> String {
         // List of Rust reserved keywords that cannot be used as identifiers directly.
         // We use raw identifiers `r#foo` for those.
-        const RUST_KEYWORDS: [&str; 41] = [
+        const RUST_KEYWORDS: [&str; 42] = [
             "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn",
             "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
             "return", "self", "Self", "static", "struct", "super", "trait", "true", "type",
             "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become",
-            "box",
+            "box", "typeof",
         ];
         if RUST_KEYWORDS.contains(&ident) { format!("r#{ident}") } else { ident.to_string() }
     }
