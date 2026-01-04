@@ -686,7 +686,7 @@ impl RuleConfigOutput {
         self.has_errors = true;
     }
 
-    fn escape_rust_identifier(&self, ident: &str) -> String {
+    fn escape_rust_identifier(ident: &str) -> String {
         // List of Rust reserved keywords that cannot be used as identifiers directly.
         // We use raw identifiers `r#foo` for those.
         const RUST_KEYWORDS: [&str; 41] = [
@@ -747,12 +747,10 @@ impl RuleConfigOutput {
                 let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
                 if all_strings {
                     // When all variants are string literals, `untagged` is unnecessary
-                    output.push_str(&format!("#[serde(rename_all = \"{rename_style}\")]\n"));
+                    let _ = writeln!(output, "#[serde(rename_all = \"{rename_style}\")]");
                 } else {
                     // Non-string variants require `untagged` to allow multiple shapes
-                    output.push_str(&format!(
-                        "#[serde(untagged, rename_all = \"{rename_style}\")]\n"
-                    ));
+                    let _ = writeln!(output, "#[serde(untagged, rename_all = \"{rename_style}\")]");
                 }
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
@@ -904,7 +902,7 @@ impl RuleConfigOutput {
                     if key_snake.to_case(Case::Camel) != *raw_key {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
-                    let escaped_key_snake = self.escape_rust_identifier(key_snake);
+                    let escaped_key_snake = Self::escape_rust_identifier(key_snake);
                     let _ = writeln!(output, "    {escaped_key_snake}: {value_label},");
                 }
                 let _ = writeln!(output, "}}\n{fields_output}");
@@ -915,7 +913,7 @@ impl RuleConfigOutput {
                     let _ = writeln!(impl_output, "    fn default() -> Self {{");
                     let _ = writeln!(impl_output, "        Self {{");
                     for (raw_key, key_snake, value_label, default) in &field_entries {
-                        let escaped_key_snake = self.escape_rust_identifier(key_snake);
+                        let escaped_key_snake = Self::escape_rust_identifier(key_snake);
                         let field_value = if let Some(default_json) = default {
                             if value_label.starts_with("Option<") {
                                 let inner = &value_label[7..value_label.len() - 1];
@@ -923,7 +921,7 @@ impl RuleConfigOutput {
                                 if s == "null" {
                                     "None".to_string()
                                 } else if let Some(lit) =
-                                    self.render_default_literal(default_json, inner)
+                                    Self::render_default_literal(default_json, inner)
                                 {
                                     format!("Some({lit})")
                                 } else {
@@ -931,7 +929,7 @@ impl RuleConfigOutput {
                                     "Default::default()".to_string()
                                 }
                             } else if let Some(lit) =
-                                self.render_default_literal(default_json, value_label)
+                                Self::render_default_literal(default_json, value_label)
                             {
                                 lit
                             } else {
@@ -991,7 +989,7 @@ impl RuleConfigOutput {
         }
     }
 
-    fn render_default_literal(&self, default_json: &str, typ: &str) -> Option<String> {
+    fn render_default_literal(default_json: &str, typ: &str) -> Option<String> {
         let s = default_json.trim();
         if s.starts_with('"') && s.ends_with('"') {
             // JSON string literal - use as Rust String literal
@@ -1403,9 +1401,8 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                 export_decl.declaration.as_ref()
         {
             for declarator in &var_decl.declarations {
-                let binding_ident = match &declarator.id {
-                    BindingPattern::BindingIdentifier(b) => b,
-                    _ => continue,
+                let BindingPattern::BindingIdentifier(binding_ident) = &declarator.id else {
+                    continue;
                 };
                 if binding_ident.name != "meta" {
                     continue;
