@@ -726,12 +726,21 @@ impl RuleConfigOutput {
                         if let RuleConfigElement::StringLiteral(s) = e { Some(s) } else { None }
                     })
                     .collect();
-                let use_kebab = !string_values.is_empty()
-                    && string_values.len() == elements.len()
-                    && string_values.iter().all(|s| *s == &s.to_case(Case::Kebab));
+                let all_strings =
+                    !string_values.is_empty() && string_values.len() == elements.len();
+                let use_kebab =
+                    all_strings && string_values.iter().all(|s| *s == &s.to_case(Case::Kebab));
                 let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
-                output
-                    .push_str(&format!("#[serde(untagged, rename_all = \"{}\")]\n", rename_style));
+                if all_strings {
+                    // When all variants are string literals, `untagged` is unnecessary
+                    output.push_str(&format!("#[serde(rename_all = \"{}\")]\n", rename_style));
+                } else {
+                    // Non-string variants require `untagged` to allow multiple shapes
+                    output.push_str(&format!(
+                        "#[serde(untagged, rename_all = \"{}\")]\n",
+                        rename_style
+                    ));
+                }
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
