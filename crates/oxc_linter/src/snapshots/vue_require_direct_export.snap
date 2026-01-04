@@ -1,0 +1,185 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                   const A = {};
+ 4 │                   export default A
+   ·                   ────────────────
+ 5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                   const A = {};
+ 4 │                   export default (A)
+   ·                   ──────────────────
+ 5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:5:10]
+ 4 │                   };
+ 5 │                   export default A
+   ·                   ────────────────
+ 6 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:1:9]
+ 1 │ <script>export default function NoReturn() {} </script>
+   ·         ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:1:9]
+ 1 │ <script>export default function () {} </script>
+   ·         ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:1:9]
+ 1 │ <script>export default () => {} </script>
+   ·         ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:1:9]
+ 1 │ ╭─▶ <script>export default () => {
+ 2 │ │                       const foo = () => {
+ 3 │ │                         return b
+ 4 │ │                       }
+ 5 │ ╰─▶                   }</script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:2:17]
+ 1 │     <script>
+ 2 │ ╭─▶                 export default () => {
+ 3 │ │                       return
+ 4 │ ╰─▶                 }
+ 5 │                 </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:5:10]
+ 4 │                   };
+ 5 │                   export default A
+   ·                   ────────────────
+ 6 │             </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                       import { h } from 'vue'
+ 4 │ ╭─▶                   export default function (props) {
+ 5 │ │                       return h('div', `Hello! ${props.name}`)
+ 6 │ ╰─▶                   }
+ 7 │                       </script>
+   ╰────
+  help: Export a component object directly instead of using a functional component function.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                       import { h } from 'vue'
+ 3 │ ╭─▶                   export default function Component () {
+ 4 │ │                       return h('div')
+ 5 │ ╰─▶                   }
+ 6 │                       </script>
+   ╰────
+  help: Export a component object directly instead of using a functional component function.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                       import { h } from 'vue'
+ 3 │ ╭─▶                   export default (props) => {
+ 4 │ │                       return h('div', `Hello! ${props.name}`)
+ 5 │ ╰─▶                   }
+ 6 │                       </script>
+   ╰────
+  help: Export a component object directly instead of using a functional component function.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import { h } from 'vue'
+ 3 │                   export default props => h('div', props.msg)
+   ·                   ───────────────────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export a component object directly instead of using a functional component function.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import Vue from 'vue'
+ 3 │                   export default Vue.extend()
+   ·                   ───────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                   const A = {}
+ 4 │                   export default Vue.extend(A)
+   ·                   ────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import Vue from 'vue'
+ 3 │                   export default Vue.extend(2)
+   ·                   ────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import { defineComponent } from 'vue'
+ 3 │                   export default defineComponent()
+   ·                   ────────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import { defineComponent } from 'vue'
+ 3 │                   export default defineComponent(2)
+   ·                   ─────────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                   import { defineComponent } from 'vue'
+ 3 │                   export default (defineComponent())
+   ·                   ──────────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                   const A = {}
+ 4 │                   export default defineComponent(A)
+   ·                   ─────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ eslint-plugin-vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                   const A = {}
+ 4 │                   export default (defineComponent(A))
+   ·                   ───────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
