@@ -686,6 +686,19 @@ impl RuleConfigOutput {
         self.has_errors = true;
     }
 
+    fn escape_rust_identifier(&self, ident: &str) -> String {
+        // List of Rust reserved keywords that cannot be used as identifiers directly.
+        // We use raw identifiers `r#foo` for those.
+        const RUST_KEYWORDS: [&str; 41] = [
+            "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn",
+            "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
+            "return", "self", "Self", "static", "struct", "super", "trait", "true", "type",
+            "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become",
+            "box",
+        ];
+        if RUST_KEYWORDS.contains(&ident) { format!("r#{}", ident) } else { ident.to_string() }
+    }
+
     fn extract_output(&mut self, element: &RuleConfigElement, field_name: &str) -> Option<String> {
         let (element_label, element_output) = self.extract_output_inner(element, field_name)?;
         if let Some(element_output) = element_output {
@@ -894,7 +907,8 @@ impl RuleConfigOutput {
                     if key_snake.to_case(Case::Camel) != *raw_key {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
-                    let _ = writeln!(output, "    {}: {value_label},", key_snake);
+                    let escaped_key_snake = self.escape_rust_identifier(&key_snake);
+                    let _ = writeln!(output, "    {}: {value_label},", escaped_key_snake);
                 }
                 let _ = writeln!(output, "}}\n{fields_output}");
 
@@ -904,6 +918,7 @@ impl RuleConfigOutput {
                     let _ = writeln!(impl_output, "    fn default() -> Self {{");
                     let _ = writeln!(impl_output, "        Self {{");
                     for (raw_key, key_snake, value_label, default) in &field_entries {
+                        let escaped_key_snake = self.escape_rust_identifier(&key_snake);
                         let field_value = if let Some(default_json) = default {
                             if value_label.starts_with("Option<") {
                                 let inner = &value_label[7..value_label.len() - 1];
@@ -931,7 +946,10 @@ impl RuleConfigOutput {
                         } else {
                             "Default::default()".to_string()
                         };
-                        let _ = writeln!(impl_output, "            {key_snake}: {field_value},");
+                        let _ = writeln!(
+                            impl_output,
+                            "            {escaped_key_snake}: {field_value},"
+                        );
                     }
                     let _ = writeln!(impl_output, "        }}");
                     let _ = writeln!(impl_output, "    }}");
@@ -2132,6 +2150,22 @@ mod tests {
         let output = out.output;
         assert!(output.contains("enabled: bool,"));
         assert!(output.contains("threshold: f32,"));
+    }
+
+    #[test]
+    fn test_struct_with_reserved_name_in_fields() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("type".to_string(), (RuleConfigElement::String, None));
+        hm.insert("match".to_string(), (RuleConfigElement::String, None));
+        hm.insert("fn".to_string(), (RuleConfigElement::String, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "reserved_names_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("r#type: String,"));
+        assert!(output.contains("r#match: String,"));
+        assert!(output.contains("r#fn: String,"));
     }
 
     #[test]
