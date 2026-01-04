@@ -730,10 +730,8 @@ impl RuleConfigOutput {
                     && string_values.len() == elements.len()
                     && string_values.iter().all(|s| *s == &s.to_case(Case::Kebab));
                 let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
-                output.push_str(&format!(
-                    "#[schemars(untagged, rename_all = \"{}\")]\n",
-                    rename_style
-                ));
+                output
+                    .push_str(&format!("#[serde(untagged, rename_all = \"{}\")]\n", rename_style));
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
@@ -804,7 +802,7 @@ impl RuleConfigOutput {
                             if !schemars_tags.is_empty() {
                                 let _ = writeln!(
                                     enum_fields,
-                                    "    #[schemars({})]",
+                                    "    #[serde({})]",
                                     schemars_tags.join(", ")
                                 );
                             }
@@ -848,7 +846,7 @@ impl RuleConfigOutput {
                 let mut output = String::from(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(rename_all = \"camelCase\")]\n");
+                output.push_str("#[serde(rename_all = \"camelCase\")]\n");
                 let _ = writeln!(output, "struct {struct_name} {{");
                 let mut fields_output = String::new();
                 for (raw_key, value) in hash_map {
