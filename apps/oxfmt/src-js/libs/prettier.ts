@@ -53,8 +53,10 @@ export async function formatEmbeddedCode({
   tagName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
+  // Extract the base tag name from member expressions
+  // e.g., "styled" from "styled.div"
+  const baseTag = tagName.split(".")[0];
+  const parserName = TAG_TO_PARSER[baseTag];
 
   // Unknown tag, return original code
   if (!parserName) return code;
