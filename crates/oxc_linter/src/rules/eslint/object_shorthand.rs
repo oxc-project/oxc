@@ -1,10 +1,13 @@
+use std::fmt::Debug;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
 };
+use oxc_codegen::Gen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule};
 
@@ -191,8 +194,52 @@ impl ObjectShorthand {
         }
 
         if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
-            // TODO: fixer
-            ctx.diagnostic(expected_method_shorthand(func.span));
+            ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
+                let has_comment = ctx.semantic().has_comments_between(Span::new(
+                    property.key.span().start,
+                    property.value.span().start,
+                ));
+                if has_comment {
+                    return fixer.noop();
+                }
+
+                let key_prefix: CompactStr = match (func.r#async, func.generator) {
+                    (true, true) => "async *",
+                    (true, false) => "async ",
+                    (false, true) => "*",
+                    (false, false) => "",
+                }
+                .into();
+                let property_key_span = property.key.span();
+                let key_text = if property.computed {
+                    let (Some(paren_start), Some(paren_end_offset)) = (
+                        ctx.find_prev_token_from(property_key_span.start, "["),
+                        ctx.find_next_token_from(property_key_span.end, "]"),
+                    ) else {
+                        return fixer.noop();
+                    };
+                    ctx.source_range(Span::new(
+                        paren_start,
+                        property_key_span.end + paren_end_offset + 1,
+                    ))
+                } else {
+                    ctx.source_range(property_key_span)
+                };
+                let next_token = if func.generator {
+                    ctx.find_next_token_from(property_key_span.end, "*")
+                        .map(|offset| offset + "*".len() as u32)
+                } else {
+                    ctx.find_next_token_from(property_key_span.end, "function")
+                        .map(|offset| offset + "function".len() as u32)
+                };
+                let Some(func_token) = next_token else {
+                    return fixer.noop();
+                };
+                let body =
+                    ctx.source_range(Span::new(property_key_span.end + func_token, func.span.end));
+                let ret = format!("{key_prefix}{key_text}{body}");
+                fixer.replace(property.span, ret)
+            });
         }
 
         if self.avoid_explicit_return_arrows {
@@ -302,7 +349,7 @@ fn is_property_value_function(property: &ObjectProperty) -> bool {
 }
 
 fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
-    match &property.value {
+    match &property.value.without_parentheses() {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::ArrowFunctionExpression(_) => true,
         _ => false,
