@@ -402,10 +402,9 @@ impl Linter {
             }
             DeserializeResult::Error(err) => {
                 // Deserialization error - this is unexpected, create a diagnostic
-                let diagnostic = OxcDiagnostic::error(format!(
-                    "Failed to deserialize custom parser AST: {err}"
-                ))
-                .with_label(Span::new(0, 0));
+                let diagnostic =
+                    OxcDiagnostic::error(format!("Failed to deserialize custom parser AST: {err}"))
+                        .with_label(Span::new(0, 0));
                 all_messages.push(Message::new(diagnostic, PossibleFixes::None));
             }
         }

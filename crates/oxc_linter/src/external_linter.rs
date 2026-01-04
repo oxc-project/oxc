@@ -1617,7 +1617,8 @@ mod test {
         assert!(result.is_err());
 
         // Mapping missing required fields
-        let json = r#"{"source": "const x = 1;", "mappings": [{"strippedStart": 0, "strippedEnd": 10}]}"#;
+        let json =
+            r#"{"source": "const x = 1;", "mappings": [{"strippedStart": 0, "strippedEnd": 10}]}"#;
         let result: Result<StripFileResult, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
