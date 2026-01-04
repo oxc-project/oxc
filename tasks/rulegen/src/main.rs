@@ -2603,32 +2603,61 @@ mod tests {
         assert_eq!(format_code_snippet(code), expected);
     }
 
-    #[test]
-    fn test_jest_no_large_snapshots_rulegen() {
-        // Load and parse test fixtures (rule tests)
-        let test_path = "tests/fixtures/jest/__tests__/no-large-snapshots.test.ts";
+    /// Generate the rendered template for a rule using test and source fixtures.
+    fn generate_rule_template_from_fixtures(
+        rule_kind: RuleKind,
+        kebab_rule_name: &str,
+        test_path: &str,
+        src_path: &str,
+        language: &str,
+        pascal_rule_name: &str,
+    ) -> String {
+        // Load and parse test fixtures
         let test_body = std::fs::read_to_string(test_path).expect("fixture test file");
         let parsed = parse_test_file(&test_body, test_path).expect("failed to parse test file");
 
         // Build context from parsed test
-        let mut ctx =
-            build_context_from_parsed_test(parsed, RuleKind::Jest, "no_large_snapshots", "ts");
+        let mut ctx = build_context_from_parsed_test(parsed, rule_kind, kebab_rule_name, language);
 
-        // Parse rule source for config
-        let src_path = "tests/fixtures/jest/no-large-snapshots.ts";
+        // Load and parse rule source for config
         let src_body = std::fs::read_to_string(src_path).expect("fixture rule source file");
         let elements =
             parse_rule_source(&src_body, src_path, false).expect("failed to parse rule source");
 
         // Apply rule config to context
-        ctx = apply_rule_config_to_context(ctx, &elements, "NoLargeSnapshots", false);
+        ctx = apply_rule_config_to_context(ctx, &elements, pascal_rule_name, false);
 
-        // Render template and snapshot
+        // Render template and return
         let mut registry = handlebars::Handlebars::new();
         registry.register_escape_fn(handlebars::no_escape);
-        let rendered = registry
+        registry
             .render_template(include_str!("../template.txt"), &handlebars::to_json(&ctx))
-            .expect("Failed to render template");
+            .expect("Failed to render template")
+    }
+
+    #[test]
+    fn test_jest_no_large_snapshots_rulegen() {
+        let rendered = generate_rule_template_from_fixtures(
+            RuleKind::Jest,
+            "no_large_snapshots",
+            "tests/fixtures/jest/__tests__/no-large-snapshots.test.ts",
+            "tests/fixtures/jest/no-large-snapshots.ts",
+            "ts",
+            "NoLargeSnapshots",
+        );
         insta::assert_snapshot!("rulegen_jest_no_large_snapshots", rendered);
+    }
+
+    #[test]
+    fn test_vue_define_emits_declaration_rulegen() {
+        let rendered = generate_rule_template_from_fixtures(
+            RuleKind::Vue,
+            "define-emits-declaration",
+            "tests/fixtures/vue/__tests__/define-emits-declaration.test.js",
+            "tests/fixtures/vue/define-emits-declaration.js",
+            "js",
+            "DefineEmitsDeclaration",
+        );
+        insta::assert_snapshot!("rulegen_vue_define_emits_declaration", rendered);
     }
 }

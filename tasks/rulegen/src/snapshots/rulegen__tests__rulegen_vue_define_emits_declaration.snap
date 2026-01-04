@@ -1,0 +1,201 @@
+---
+source: tasks/rulegen/src/main.rs
+expression: rendered
+---
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::{DefaultRuleConfig, Rule},
+    AstNode,
+};
+
+fn define_emits_declaration_diagnostic(span: Span) -> OxcDiagnostic {
+    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+        .with_label(span)
+}
+
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum DefineEmitsDeclarationConfig {
+    #[default]
+    TypeBased,
+    TypeLiteral,
+    Runtime,
+
+}
+
+
+
+
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct DefineEmitsDeclaration(DefineEmitsDeclarationConfig);
+
+// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Briefly describe the rule's purpose.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Explain why violating this rule is problematic.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```
+    DefineEmitsDeclaration,
+    vue,
+    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
+             // keep at 'pending' if you think one could be added but don't know how.
+             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    config = DefineEmitsDeclarationConfig,
+);
+
+impl Rule for DefineEmitsDeclaration {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    let pass = vec![
+        ("
+			        <script setup>
+			          const emit = defineEmits(['change', 'update'])
+			        </script>
+			       ", None, None, Some(PathBuf::from("test.vue"))),
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          (e: 'change', id: number): void
+			          (e: 'update', value: string): void
+			        }>()
+			        </script>
+			       "#, None, None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          (e: 'change', id: number): void
+			          (e: 'update', value: string): void
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["type-based"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			       <script setup lang="ts">
+			       const emit = defineEmits(['change', 'update'])
+			       </script>
+			       "#, Some(serde_json::json!(["runtime"])), None, Some(PathBuf::from("test.vue"))),
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          change: [id: number]
+			          update: [value: string]
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["type-based"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          change: [id: number]
+			          update: [value: string]
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["type-literal"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const props = defineProps({
+			          kind: { type: String },
+			        })
+			        </script>
+			       "#, None, None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			         <script lang="ts">
+			         import { PropType } from 'vue'
+			
+			         export default {
+			           props: {
+			             kind: { type: String as PropType<'primary' | 'secondary'> },
+			           },
+			           emits: ['check']
+			         }
+			         </script>
+			       "#, None, None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  }
+    ];
+
+    let fail = vec![
+        (r#"
+			       <script setup lang="ts">
+			       const emit = defineEmits(['change', 'update'])
+			       </script>
+			       "#, None, None, Some(PathBuf::from("test.vue"))),
+(r#"
+			       <script setup lang="ts">
+			       const emit = defineEmits(['change', 'update'])
+			       </script>
+			       "#, Some(serde_json::json!(["type-based"])), None, Some(PathBuf::from("test.vue"))),
+(r#"
+			       <script setup lang="ts">
+			       const emit = defineEmits(['change', 'update'])
+			       </script>
+			       "#, Some(serde_json::json!(["type-literal"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          (e: 'change', id: number): void
+			          (e: 'update', value: string): void
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["runtime"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          (e: 'change', id: number): void
+			          (e: 'update', value: string): void
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["type-literal"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<{
+			          'change': [id: number]
+			          (e: 'update', value: string): void
+			        }>()
+			        </script>
+			       "#, Some(serde_json::json!(["type-literal"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  },
+(r#"
+			        <script setup lang="ts">
+			        const emit = defineEmits<(e: 'change', id: number) => void>()
+			        </script>
+			        "#, Some(serde_json::json!(["type-literal"])), None, Some(PathBuf::from("test.vue"))), // {  "parserOptions": {  "parser": require.resolve("@typescript-eslint/parser")  }  }
+    ];
+
+    Tester::new(DefineEmitsDeclaration::NAME, DefineEmitsDeclaration::PLUGIN, pass, fail).test_and_snapshot();
+}
