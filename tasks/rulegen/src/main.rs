@@ -696,7 +696,7 @@ impl RuleConfigOutput {
             "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become",
             "box",
         ];
-        if RUST_KEYWORDS.contains(&ident) { format!("r#{}", ident) } else { ident.to_string() }
+        if RUST_KEYWORDS.contains(&ident) { format!("r#{ident}") } else { ident.to_string() }
     }
 
     fn extract_output(&mut self, element: &RuleConfigElement, field_name: &str) -> Option<String> {
@@ -747,12 +747,11 @@ impl RuleConfigOutput {
                 let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
                 if all_strings {
                     // When all variants are string literals, `untagged` is unnecessary
-                    output.push_str(&format!("#[serde(rename_all = \"{}\")]\n", rename_style));
+                    output.push_str(&format!("#[serde(rename_all = \"{rename_style}\")]\n"));
                 } else {
                     // Non-string variants require `untagged` to allow multiple shapes
                     output.push_str(&format!(
-                        "#[serde(untagged, rename_all = \"{}\")]\n",
-                        rename_style
+                        "#[serde(untagged, rename_all = \"{rename_style}\")]\n"
                     ));
                 }
                 let _ = writeln!(output, "enum {enum_name} {{");
@@ -872,7 +871,7 @@ impl RuleConfigOutput {
                     let key_pascal = raw_key.to_case(Case::Pascal);
                     let key_snake = key_pascal.to_case(Case::Snake);
                     let Some((value_label, value_output)) =
-                        self.extract_output_inner(&value, &key_pascal)
+                        self.extract_output_inner(value, &key_pascal)
                     else {
                         continue;
                     };
@@ -907,8 +906,8 @@ impl RuleConfigOutput {
                     if key_snake.to_case(Case::Camel) != *raw_key {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
-                    let escaped_key_snake = self.escape_rust_identifier(&key_snake);
-                    let _ = writeln!(output, "    {}: {value_label},", escaped_key_snake);
+                    let escaped_key_snake = self.escape_rust_identifier(key_snake);
+                    let _ = writeln!(output, "    {escaped_key_snake}: {value_label},");
                 }
                 let _ = writeln!(output, "}}\n{fields_output}");
 
@@ -918,7 +917,7 @@ impl RuleConfigOutput {
                     let _ = writeln!(impl_output, "    fn default() -> Self {{");
                     let _ = writeln!(impl_output, "        Self {{");
                     for (raw_key, key_snake, value_label, default) in &field_entries {
-                        let escaped_key_snake = self.escape_rust_identifier(&key_snake);
+                        let escaped_key_snake = self.escape_rust_identifier(key_snake);
                         let field_value = if let Some(default_json) = default {
                             if value_label.starts_with("Option<") {
                                 let inner = &value_label[7..value_label.len() - 1];
@@ -926,22 +925,22 @@ impl RuleConfigOutput {
                                 if s == "null" {
                                     "None".to_string()
                                 } else {
-                                    match self.render_default_literal(default_json, inner) {
-                                        Some(lit) => format!("Some({})", lit),
-                                        None => {
-                                            self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
-                                            "Default::default()".to_string()
-                                        }
-                                    }
-                                }
-                            } else {
-                                match self.render_default_literal(default_json, value_label) {
-                                    Some(lit) => lit,
-                                    None => {
+                                    if let Some(lit) =
+                                        self.render_default_literal(default_json, inner)
+                                    {
+                                        format!("Some({lit})")
+                                    } else {
                                         self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
                                         "Default::default()".to_string()
                                     }
                                 }
+                            } else if let Some(lit) =
+                                self.render_default_literal(default_json, value_label)
+                            {
+                                lit
+                            } else {
+                                self.log_error(&format!("Failed to render default for field {raw_key} - using Default::default()"));
+                                "Default::default()".to_string()
                             }
                         } else {
                             "Default::default()".to_string()
@@ -1000,7 +999,7 @@ impl RuleConfigOutput {
         let s = default_json.trim();
         if s.starts_with('"') && s.ends_with('"') {
             // JSON string literal - use as Rust String literal
-            return Some(format!("String::from({})", s));
+            return Some(format!("String::from({s})"));
         }
         if s == "true" || s == "false" {
             return Some(s.to_string());
@@ -1017,7 +1016,7 @@ impl RuleConfigOutput {
                 return Some(s.to_string());
             }
             if typ == "f32" {
-                return Some(format!("{}f32", s));
+                return Some(format!("{s}f32"));
             }
             return Some(s.to_string());
         }
@@ -1403,65 +1402,63 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
         }
 
         // handle `export const meta = { schema: ... }` (named export)
-        if let Statement::ExportNamedDeclaration(export_decl) = stmt {
-            if let Some(Declaration::VariableDeclaration(var_decl)) =
+        if let Statement::ExportNamedDeclaration(export_decl) = stmt
+            && let Some(Declaration::VariableDeclaration(var_decl)) =
                 export_decl.declaration.as_ref()
-            {
-                for declarator in &var_decl.declarations {
-                    let binding_ident = match &declarator.id {
-                        BindingPattern::BindingIdentifier(b) => b,
-                        _ => continue,
-                    };
-                    if binding_ident.name != "meta" {
-                        continue;
-                    }
-                    let Some(init) = &declarator.init else { continue };
-                    if let Expression::ObjectExpression(object_expression) = init {
-                        for object_property_kind in &object_expression.properties {
-                            let ObjectPropertyKind::ObjectProperty(object_property) =
-                                &object_property_kind
-                            else {
-                                continue;
-                            };
-                            let PropertyKey::StaticIdentifier(identifier) = &object_property.key
-                            else {
-                                continue;
-                            };
-                            if identifier.name != "schema" {
-                                continue;
-                            }
-                            match &object_property.value {
-                                Expression::ArrayExpression(array_expression) => {
-                                    self.elements = array_expression
-                                        .elements
-                                        .iter()
-                                        .filter_map(|element| {
-                                            let ArrayExpressionElement::ObjectExpression(
-                                                object_expression,
-                                            ) = element
-                                            else {
-                                                return None;
-                                            };
-                                            self.next_element = None;
-                                            self.visit_object_expression(object_expression);
-                                            self.next_element.take()
-                                        })
-                                        .collect::<Vec<_>>();
-                                }
-                                Expression::ObjectExpression(object_expression) => {
-                                    self.visit_object_expression(object_expression);
-                                    let Some(element) = self.next_element.take() else { return };
-                                    self.elements = vec![element];
-                                }
-                                _ => {
-                                    self.log_error(&format!(
-                                        "Cannot parse `schema` value: {}",
-                                        object_property.value.span().source_text(self.source_text)
-                                    ));
-                                }
-                            }
-                            return;
+        {
+            for declarator in &var_decl.declarations {
+                let binding_ident = match &declarator.id {
+                    BindingPattern::BindingIdentifier(b) => b,
+                    _ => continue,
+                };
+                if binding_ident.name != "meta" {
+                    continue;
+                }
+                let Some(init) = &declarator.init else { continue };
+                if let Expression::ObjectExpression(object_expression) = init {
+                    for object_property_kind in &object_expression.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "schema" {
+                            continue;
                         }
+                        match &object_property.value {
+                            Expression::ArrayExpression(array_expression) => {
+                                self.elements = array_expression
+                                    .elements
+                                    .iter()
+                                    .filter_map(|element| {
+                                        let ArrayExpressionElement::ObjectExpression(
+                                            object_expression,
+                                        ) = element
+                                        else {
+                                            return None;
+                                        };
+                                        self.next_element = None;
+                                        self.visit_object_expression(object_expression);
+                                        self.next_element.take()
+                                    })
+                                    .collect::<Vec<_>>();
+                            }
+                            Expression::ObjectExpression(object_expression) => {
+                                self.visit_object_expression(object_expression);
+                                let Some(element) = self.next_element.take() else { return };
+                                self.elements = vec![element];
+                            }
+                            _ => {
+                                self.log_error(&format!(
+                                    "Cannot parse `schema` value: {}",
+                                    object_property.value.span().source_text(self.source_text)
+                                ));
+                            }
+                        }
+                        return;
                     }
                 }
             }
@@ -1919,7 +1916,7 @@ fn main() {
                 .filter_map(|(index, element)| {
                     let element_name = format!(
                         "{pascal_rule_name}Config{}",
-                        if index == 0 { "".to_string() } else { index.to_string() }
+                        if index == 0 { String::new() } else { index.to_string() }
                     );
                     rule_config_output.extract_output(element, element_name.as_str())
                 })
