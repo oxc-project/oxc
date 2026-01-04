@@ -2434,7 +2434,7 @@ mod tests {
         let element = rc
             .next_element
             .as_ref()
-            .or_else(|| rc.elements.get(0))
+            .or_else(|| rc.elements.first())
             .expect("expected schema element");
 
         let mut out = RuleConfigOutput::new(false);
