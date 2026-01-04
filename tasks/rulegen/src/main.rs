@@ -2445,4 +2445,43 @@ mod tests {
         assert!(output.contains("count: 5,"));
         assert!(output.contains("impl Default for MyConfig"));
     }
+
+    #[test]
+    fn test_format_code_snippet_simple() {
+        assert_eq!(format_code_snippet("debugger"), "\"debugger\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_quotes() {
+        let code = r#"import foo from "foo";"#;
+        let expected = format!("r#\"{}\"#", code);
+        assert_eq!(format_code_snippet(code), expected);
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_hash_in_quote() {
+        let code = r##"document.querySelector("#foo");"##;
+        let expected = format!("r##\"{}\"##", code);
+        assert_eq!(format_code_snippet(code), expected);
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_preserved() {
+        let raw = r#"r"foo""#;
+        assert_eq!(format_code_snippet(raw), raw);
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_backslash() {
+        let code = "\\u1234";
+        let expected = format!("r#\"{}\"#", code);
+        assert_eq!(format_code_snippet(code), expected);
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline() {
+        let code = "a\nb";
+        let expected = "\"a\n\t\t\tb\"";
+        assert_eq!(format_code_snippet(code), expected);
+    }
 }
