@@ -152,14 +152,44 @@ impl HoistedApisOnTop {
             rule_fixes.with_message("Moving hoisted methods")
         };
 
-        let suggestion_do_mock = {
-            if member_name == "mock" {
-                let mock_member = vitest_fn.members.first().unwrap();
-                fixer.replace(mock_member.span, "doMock")
-            } else {
-                fixer.noop()
-            }
-        };
+        let suggestion_do_mock =
+            {
+                if member_name == "mock" {
+                    let mock_member = vitest_fn.members.first().unwrap();
+                    fixer.replace(mock_member.span, "doMock")
+                } else {
+                    let multi_fixer = fixer.for_multifix();
+                    let mut rule_fixes = multi_fixer.new_fix_with_capacity(2);
+
+                    if matches!(
+                        ctx.nodes().parent_node(node.id()).kind(),
+                        AstKind::ExpressionStatement(_)
+                    ) {
+                        rule_fixes.push(fixer.delete(node));
+                    } else {
+                        rule_fixes.push(fixer.replace(GetSpan::span(node), "undefined"));
+                    }
+
+                    if ctx.module_record().import_entries.is_empty() {
+                        let new_code = format!("{};\n", ctx.source_range(GetSpan::span(node)));
+
+                        rule_fixes.push(fixer.insert_text_after(&Span::empty(0), new_code));
+                    } else {
+                        let Some(last_import) = ctx.module_record().import_entries.last() else {
+                            unreachable!()
+                        };
+
+                        let new_code = format!("\n{};\n", ctx.source_range(GetSpan::span(node)));
+
+                        rule_fixes.push(fixer.insert_text_after(
+                            &Span::empty(last_import.statement_span.end),
+                            new_code,
+                        ));
+                    }
+
+                    rule_fixes.with_message("Moving hoisted methods")
+                }
+            };
 
         ctx.diagnostic_with_suggestions(
             hoisted_apis_on_top_diagnostic(call_expr.span),
@@ -268,7 +298,15 @@ vi.hoisted();
 			  ;
 			}
 			    ",
-                "No suggestion",
+                "
+			import foo from 'bar';
+vi.hoisted();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
             ),
         ),
         (
@@ -289,7 +327,15 @@ vi.unmock();
 			  ;
 			}
 			    ",
-                "No suggestion",
+                "
+			import foo from 'bar';
+vi.unmock();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
             ),
         ),
         (
@@ -337,7 +383,13 @@ vi.mock();
 vi.mock(import('something'), () => bar);
 
 			    ",
-                "No suggestion",
+                "
+			if (shouldMock) {
+			  vi.doMock(import('something'), () => bar);
+			}
+
+			import something from 'something';
+			    ",
             ),
         ),
     ];
