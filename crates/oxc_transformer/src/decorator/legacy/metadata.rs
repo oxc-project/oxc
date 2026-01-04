@@ -564,11 +564,12 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                         right,
                     );
                     // `(_a = A.B) !== void 0`
+                    let void_0 = ctx.ast.void_0(SPAN);
                     logical.right = ctx.ast.expression_binary(
                         SPAN,
                         right,
                         BinaryOperator::StrictInequality,
-                        ctx.ast.void_0(SPAN),
+                        void_0,
                     );
 
                     let object = binding.create_read_expression(ctx);
@@ -758,7 +759,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     fn create_checked_value(
         left: Expression<'a>,
         right: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let operator = BinaryOperator::StrictInequality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
@@ -774,10 +775,8 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
-            Argument::from(value),
-        ]);
+        let key_arg = Argument::from(ctx.ast.expression_string_literal(SPAN, key, None));
+        let arguments = ctx.ast.vec_from_array([key_arg, Argument::from(value)]);
         self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
     }
 

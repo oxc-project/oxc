@@ -473,7 +473,7 @@ fn fix_spread_to_object_assign<'a>(
     }
 
     let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
+    let mut ast = AstBuilder::new(&alloc);
 
     // almost always overshoots, but will not re-alloc, so it's more performant
     // than creating an empty vec.
@@ -491,7 +491,8 @@ fn fix_spread_to_object_assign<'a>(
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
                 if !curr_obj_properties.is_empty() {
-                    let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
+                    let empty_vec = ast.vec();
+                    let properties = std::mem::replace(&mut curr_obj_properties, empty_vec);
                     let obj_arg = ast.expression_object(SPAN, properties);
                     if is_first {
                         is_first = false;
@@ -514,7 +515,8 @@ fn fix_spread_to_object_assign<'a>(
         if !is_first {
             codegen.print_str(", ");
         }
-        let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
+        let empty_vec = ast.vec();
+        let properties = std::mem::replace(&mut curr_obj_properties, empty_vec);
         let obj_arg = ast.expression_object(SPAN, properties);
         codegen.print_expression(&obj_arg);
     }

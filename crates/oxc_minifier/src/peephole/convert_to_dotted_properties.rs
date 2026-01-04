@@ -13,18 +13,15 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &Ctx<'a, '_>) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if Ctx::is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
-            *expr =
-                MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
-                    e.span,
-                    e.object.take_in(&ctx.ast),
-                    property,
-                    e.optional,
-                ));
+            let obj = e.object.take_in(&ctx.ast);
+            *expr = MemberExpression::StaticMemberExpression(
+                ctx.ast.alloc_static_member_expression(e.span, obj, property, e.optional),
+            );
             return;
         }
         let v = s.value.as_str();

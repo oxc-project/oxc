@@ -116,9 +116,11 @@ fn do_fix<'a>(
     let Some(argument) = argument else { return fixer.noop() };
     let mut content = fixer.codegen();
     let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
+    let mut ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
+    let atom = ast.atom(&argument);
+    let expr = ast.expression_string_literal(SPAN, atom, None);
+    content.print_expression(&expr);
     content.print_str(r")");
     fixer.replace(call_expr.span, content.into_source_text())
 }

@@ -59,22 +59,21 @@ impl<'a> KeepVar<'a> {
         Self { ast, vars: std::vec![], all_hoisted: true }
     }
 
-    pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
+    pub fn get_variable_declaration(mut self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
 
         let kind = VariableDeclarationKind::Var;
-        let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span, symbol_id)| {
-            let id = symbol_id.map_or_else(
-                || self.ast.binding_pattern_binding_identifier(span, name),
-                |symbol_id| {
-                    self.ast
-                        .binding_pattern_binding_identifier_with_symbol_id(span, name, symbol_id)
-                },
-            );
-            self.ast.variable_declarator(span, kind, id, NONE, None, false)
-        }));
+        let mut decls = self.ast.vec_with_capacity(self.vars.len());
+        for (name, span, symbol_id) in self.vars {
+            let id = if let Some(symbol_id) = symbol_id {
+                self.ast.binding_pattern_binding_identifier_with_symbol_id(span, name, symbol_id)
+            } else {
+                self.ast.binding_pattern_binding_identifier(span, name)
+            };
+            decls.push(self.ast.variable_declarator(span, kind, id, NONE, None, false));
+        }
 
         Some(self.ast.alloc_variable_declaration(SPAN, kind, decls, false))
     }

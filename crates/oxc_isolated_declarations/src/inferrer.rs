@@ -16,7 +16,10 @@ impl<'a> IsolatedDeclarations<'a> {
         expr.operator.is_arithmetic() && expr.argument.is_number_literal()
     }
 
-    pub(crate) fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
+    pub(crate) fn infer_type_from_expression(
+        &mut self,
+        expr: &Expression<'a>,
+    ) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
             Expression::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
@@ -77,7 +80,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn infer_type_from_formal_parameter(
-        &self,
+        &mut self,
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
         if let Some(init) = &param.initializer {
@@ -88,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn infer_function_return_type(
-        &self,
+        &mut self,
         function: &Function<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
@@ -99,14 +102,16 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        function.body.as_ref().and_then(|body| {
-            FunctionReturnType::infer(self, body)
-                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
-        })
+        if let Some(body) = function.body.as_ref() {
+            if let Some(type_annotation) = FunctionReturnType::infer(self, body) {
+                return Some(self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
+            }
+        }
+        None
     }
 
     pub(crate) fn infer_arrow_function_return_type(
-        &self,
+        &mut self,
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
@@ -117,16 +122,18 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.expression
-            && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
-        {
-            return self
-                .infer_type_from_expression(&stmt.expression)
-                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
+        if function.expression {
+            if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
+                if let Some(type_annotation) = self.infer_type_from_expression(&stmt.expression) {
+                    return Some(self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
+                }
+            }
         }
 
-        FunctionReturnType::infer(self, &function.body)
-            .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
+        if let Some(type_annotation) = FunctionReturnType::infer(self, &function.body) {
+            return Some(self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
+        }
+        None
     }
 
     pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {

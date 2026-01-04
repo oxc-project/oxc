@@ -32,7 +32,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_export_default_declaration(
-        &self,
+        &mut self,
         decl: &ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         let declaration = match &decl.declaration {
@@ -56,7 +56,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|(var_decl, expr)| (var_decl, ExportDefaultDeclarationKind::from(expr))),
         };
 
-        declaration.map(|(var_decl, declaration)| {
+        if let Some((var_decl, declaration)) = declaration {
             // When `var_decl` is Some, the comments are moved to the variable declaration, otherwise
             // keep the comments on the export default declaration to avoid losing them.
             // ```ts
@@ -81,12 +81,14 @@ impl<'a> IsolatedDeclarations<'a> {
             let span = if var_decl.is_some() { SPAN } else { decl.span };
             let declaration =
                 self.ast.module_declaration_export_default_declaration(span, declaration);
-            (var_decl, Statement::from(declaration))
-        })
+            Some((var_decl, Statement::from(declaration)))
+        } else {
+            None
+        }
     }
 
     fn transform_export_expression(
-        &self,
+        &mut self,
         decl_span: Span,
         expr: &Expression<'a>,
     ) -> Option<(Option<Statement<'a>>, Expression<'a>)> {
@@ -97,22 +99,19 @@ impl<'a> IsolatedDeclarations<'a> {
             let kind = VariableDeclarationKind::Const;
             let name = self.create_unique_name("_default");
             let id = self.ast.binding_pattern_binding_identifier(SPAN, name);
-            let type_annotation = self
-                .infer_type_from_expression(expr)
-                .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+            let type_annotation = if let Some(ts_type) = self.infer_type_from_expression(expr) {
+                Some(self.ast.ts_type_annotation(SPAN, ts_type))
+            } else {
+                None
+            };
 
             if type_annotation.is_none() {
                 self.error(default_export_inferred(expr.span()));
             }
 
-            let declarations = self.ast.vec1(self.ast.variable_declarator(
-                SPAN,
-                kind,
-                id,
-                type_annotation,
-                None,
-                false,
-            ));
+            let declarator =
+                self.ast.variable_declarator(SPAN, kind, id, type_annotation, None, false);
+            let declarations = self.ast.vec1(declarator);
 
             let variable_statement = Statement::from(self.ast.declaration_variable(
                 decl_span,
@@ -125,19 +124,21 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_ts_export_assignment(
-        &self,
+        &mut self,
         decl: &TSExportAssignment<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
-        self.transform_export_expression(decl.span, &decl.expression).map(|(var_decl, expr)| {
-            (
-                var_decl,
-                Statement::from(self.ast.module_declaration_ts_export_assignment(SPAN, expr)),
-            )
-        })
+        if let Some((var_decl, expr)) =
+            self.transform_export_expression(decl.span, &decl.expression)
+        {
+            let stmt = self.ast.module_declaration_ts_export_assignment(SPAN, expr);
+            Some((var_decl, Statement::from(stmt)))
+        } else {
+            None
+        }
     }
 
     pub(crate) fn transform_import_declaration(
-        &self,
+        &mut self,
         decl: &ImportDeclaration<'a>,
     ) -> Option<ArenaBox<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
@@ -186,13 +187,13 @@ impl<'a> IsolatedDeclarations<'a> {
     /// const a = 1;
     /// function b() {}
     /// ```
-    pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
-        stmts.iter_mut().for_each(|stmt| {
-            if let Statement::ExportNamedDeclaration(decl) = stmt
-                && let Some(declaration) = &mut decl.declaration
-            {
-                *stmt = Statement::from(declaration.take_in(&self.ast));
+    pub(crate) fn strip_export_keyword(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        for stmt in stmts.iter_mut() {
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                if let Some(declaration) = &mut decl.declaration {
+                    *stmt = Statement::from(declaration.take_in(&self.ast));
+                }
             }
-        });
+        }
     }
 }

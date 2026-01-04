@@ -158,9 +158,8 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             );
             let right = expr.consequent.take_in(&ctx.ast);
-            return Some(
-                ctx.ast.expression_sequence(expr.span, ctx.ast.vec_from_array([left, right])),
-            );
+            let vec = ctx.ast.vec_from_array([left, right]);
+            return Some(ctx.ast.expression_sequence(expr.span, vec));
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
@@ -176,9 +175,8 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             );
             let right = expr.alternate.take_in(&ctx.ast);
-            return Some(
-                ctx.ast.expression_sequence(expr.span, ctx.ast.vec_from_array([left, right])),
-            );
+            let vec = ctx.ast.vec_from_array([left, right]);
+            return Some(ctx.ast.expression_sequence(expr.span, vec));
         }
 
         // "a ? b || c : c" => "(a && b) || c"
@@ -251,15 +249,14 @@ impl<'a> PeepholeOptimizations {
                         el.argument.take_in(&ctx.ast)
                     };
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    args[0] = ctx.ast.argument_spread_element(
-                        expr.span,
-                        ctx.ast.expression_conditional(
-                            expr.test.span(),
-                            expr.test.take_in(&ctx.ast),
-                            consequent_first_arg,
-                            alternate_first_arg,
-                        ),
+                    let test = expr.test.take_in(&ctx.ast);
+                    let cond_expr = ctx.ast.expression_conditional(
+                        expr.test.span(),
+                        test,
+                        consequent_first_arg,
+                        alternate_first_arg,
                     );
+                    args[0] = ctx.ast.argument_spread_element(expr.span, cond_expr);
                     return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
                 }
                 // `a ? b(c) : b(e)` -> `b(a ? c : e)`
@@ -330,15 +327,17 @@ impl<'a> PeepholeOptimizations {
                     let maybe_same_id_expr =
                         if is_negate { &mut expr.consequent } else { &mut expr.alternate };
                     if maybe_same_id_expr.is_specific_id(&target_id_name) {
+                        let left = value_expr.take_in(&ctx.ast);
+                        let right = if is_negate {
+                            expr.alternate.take_in(&ctx.ast)
+                        } else {
+                            expr.consequent.take_in(&ctx.ast)
+                        };
                         return Some(ctx.ast.expression_logical(
                             expr.span,
-                            value_expr.take_in(&ctx.ast),
+                            left,
                             LogicalOperator::Coalesce,
-                            if is_negate {
-                                expr.alternate.take_in(&ctx.ast)
-                            } else {
-                                expr.consequent.take_in(&ctx.ast)
-                            },
+                            right,
                         ));
                     }
                 }
@@ -442,12 +441,8 @@ impl<'a> PeepholeOptimizations {
             alternate.right.take_in(&ctx.ast),
             ctx,
         );
-        Some(ctx.ast.expression_assignment(
-            expr.span,
-            consequent.operator,
-            alternate.left.take_in(&ctx.ast),
-            cond_expr,
-        ))
+        let left = alternate.left.take_in(&ctx.ast);
+        Some(ctx.ast.expression_assignment(expr.span, consequent.operator, left, cond_expr))
     }
 
     /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
@@ -466,10 +461,8 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
-                    expr.span(),
-                    expr.take_in(&ctx.ast).into_chain_element().unwrap(),
-                );
+                let chain_element = expr.take_in(&ctx.ast).into_chain_element().unwrap();
+                *expr = ctx.ast.expression_chain(expr.span(), chain_element);
             }
             true
         } else {

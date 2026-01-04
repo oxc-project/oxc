@@ -297,12 +297,8 @@ impl<'a> TypeScript<'a, '_> {
                     key.take_in(&ctx.ast)
                 };
 
-                ctx.ast.member_expression_computed(
-                    SPAN,
-                    ctx.ast.expression_this(SPAN),
-                    new_key,
-                    false,
-                )
+                let this_expr = ctx.ast.expression_this(SPAN);
+                ctx.ast.member_expression_computed(SPAN, this_expr, new_key, false)
             }
         };
         let target = AssignmentTarget::from(member);
@@ -355,7 +351,7 @@ impl<'a> TypeScript<'a, '_> {
     fn convert_computed_key(
         key: &mut PropertyKey<'a>,
         assignments: &mut Vec<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if assignments.is_empty() {
             return;
@@ -364,12 +360,10 @@ impl<'a> TypeScript<'a, '_> {
             // If the key is already an expression, we need to create a new expression sequence
             // to insert the assignments into.
             let original_key = key.take_in(&ctx.ast);
-            let new_key = ctx.ast.expression_sequence(
-                SPAN,
-                ctx.ast.vec_from_iter(
-                    assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
-                ),
+            let elements = ctx.ast.vec_from_iter(
+                assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
             );
+            let new_key = ctx.ast.expression_sequence(SPAN, elements);
             *key = new_key;
         }
     }
@@ -394,12 +388,11 @@ impl<'a> TypeScript<'a, '_> {
     fn create_assignment(
         target: AssignmentTarget<'a>,
         value: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value),
-        )
+        let assignment =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value);
+        ctx.ast.statement_expression(SPAN, assignment)
     }
 
     /// Create `static { body }`

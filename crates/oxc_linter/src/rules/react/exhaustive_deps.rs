@@ -1540,19 +1540,18 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let mut ast_builder = AstBuilder::new(&alloc);
 
         let mut vec = deps.elements.clone_in(&alloc);
 
         for name in names {
-            vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
-                    .into(),
-            );
+            let ident =
+                ast_builder.expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc));
+            vec.push(ident.into());
         }
 
-        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        let array_expr = ast_builder.expression_array(SPAN, vec);
+        codegen.print_expression(&array_expr);
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -1564,7 +1563,7 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let mut ast_builder = AstBuilder::new(&alloc);
 
         let new_deps = deps
             .elements
@@ -1572,10 +1571,10 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
-            deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+        let deps_vec = oxc_allocator::Vec::from_iter_in(new_deps, &alloc);
+        let array_expr =
+            Expression::ArrayExpression(ast_builder.alloc_array_expression(deps.span, deps_vec));
+        codegen.print_expression(&array_expr);
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }

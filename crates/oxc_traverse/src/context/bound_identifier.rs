@@ -61,7 +61,7 @@ impl<'a> BoundIdentifier<'a> {
     /// Create `BindingIdentifier` for this binding
     pub fn create_binding_identifier<State>(
         &self,
-        ctx: &TraverseCtx<'a, State>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> BindingIdentifier<'a> {
         ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name, self.symbol_id)
     }
@@ -69,7 +69,7 @@ impl<'a> BoundIdentifier<'a> {
     /// Create `BindingPattern` for this binding
     pub fn create_binding_pattern<State>(
         &self,
-        ctx: &TraverseCtx<'a, State>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier(ctx);
         BindingPattern::BindingIdentifier(ctx.alloc(ident))

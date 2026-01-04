@@ -114,7 +114,7 @@ impl<'a> PeepholeOptimizations {
     /// which would change the semantics.
     pub fn member_object_may_be_mutated(
         assignment_target: &AssignmentTarget<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let object = match assignment_target {
             AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
@@ -132,7 +132,7 @@ impl<'a> PeepholeOptimizations {
     /// or if the expression is not a simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
@@ -406,8 +406,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ctx = Ctx::new(ctx);
-        Self::convert_to_dotted_properties(expr, &ctx);
+        let mut ctx = Ctx::new(ctx);
+        Self::convert_to_dotted_properties(expr, &mut ctx);
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -422,8 +422,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = Ctx::new(ctx);
-        Self::substitute_catch_clause(catch, &ctx);
+        let mut ctx = Ctx::new(ctx);
+        Self::substitute_catch_clause(catch, &mut ctx);
     }
 
     fn exit_private_field_expression(

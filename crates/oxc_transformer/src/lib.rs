@@ -125,7 +125,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-        let ast_builder = AstBuilder::new(allocator);
+        let mut ast_builder = AstBuilder::new(allocator);
 
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
@@ -147,7 +147,12 @@ impl<'a> Transformer<'a> {
                 .source_type
                 .is_typescript()
                 .then(|| TypeScript::new(&self.typescript, &self.ctx)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, &ast_builder, &self.ctx),
+            x1_jsx: Jsx::new(
+                self.jsx,
+                self.env.es2018.object_rest_spread,
+                &mut ast_builder,
+                &self.ctx,
+            ),
             x2_es2026: ES2026::new(self.env.es2026, &self.ctx),
             x2_es2022: ES2022::new(
                 self.env.es2022,

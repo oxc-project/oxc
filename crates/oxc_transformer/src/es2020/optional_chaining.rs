@@ -192,19 +192,21 @@ impl<'a> OptionalChaining<'a, '_> {
     }
 
     /// Return `left === null`
-    fn wrap_null_check(&self, left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn wrap_null_check(&self, left: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let operator = if self.ctx.assumptions.no_document_all {
             BinaryOperator::Equality
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        let null_literal = ctx.ast.expression_null_literal(SPAN);
+        ctx.ast.expression_binary(SPAN, left, operator, null_literal)
     }
 
     /// Return `left === void 0`
-    fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn wrap_void0_check(left: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        let void_0 = ctx.ast.void_0(SPAN);
+        ctx.ast.expression_binary(SPAN, left, operator, void_0)
     }
 
     /// Return `left1 === null || left2 === void 0`
@@ -212,7 +214,7 @@ impl<'a> OptionalChaining<'a, '_> {
         &self,
         left1: Expression<'a>,
         left2: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
         let void0_check = Self::wrap_void0_check(left2, ctx);
@@ -223,7 +225,7 @@ impl<'a> OptionalChaining<'a, '_> {
     fn create_logical_expression(
         left: Expression<'a>,
         right: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
     }
@@ -236,7 +238,7 @@ impl<'a> OptionalChaining<'a, '_> {
         is_delete: bool,
         test: Expression<'a>,
         alternate: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let consequent = if is_delete {
             ctx.ast.expression_boolean_literal(SPAN, true)
@@ -258,7 +260,7 @@ impl<'a> OptionalChaining<'a, '_> {
     #[inline]
     fn convert_chain_expression_to_expression(
         expr: &mut Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Expression::ChainExpression(chain_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
@@ -276,7 +278,7 @@ impl<'a> OptionalChaining<'a, '_> {
     fn create_assignment_expression(
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right)
     }

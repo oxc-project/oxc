@@ -35,7 +35,7 @@ use crate::{
     label::UnusedLabels,
     node::AstNodes,
     scoping::{Bindings, Scoping},
-    stats::Stats,
+    stats::{Stats, count_stats},
     unresolved_stack::UnresolvedReferencesStack,
 };
 
@@ -252,9 +252,9 @@ impl<'a> SemanticBuilder<'a> {
         // If user did not provide existing `Stats`, calculate them by visiting AST.
         #[cfg_attr(not(debug_assertions), expect(unused_variables))]
         let (stats, check_stats) = if let Some(stats) = self.stats {
-            (stats, None)
+            (stats, Some(stats))
         } else {
-            let stats = Stats::count(program);
+            let stats = count_stats(program);
             let stats_with_excess = stats.increase_by(self.excess_capacity);
             (stats_with_excess, Some(stats))
         };

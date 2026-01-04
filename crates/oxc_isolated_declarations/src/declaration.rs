@@ -18,23 +18,25 @@ use crate::{
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_variable_declaration(
-        &self,
+        &mut self,
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if decl.declare {
             None
         } else {
-            let declarations =
-                self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
-                    self.transform_variable_declarator(declarator, check_binding)
-                }));
+            let mut declarations = self.ast.vec();
+            for declarator in &decl.declarations {
+                if let Some(d) = self.transform_variable_declarator(declarator, check_binding) {
+                    declarations.push(d);
+                }
+            }
             Some(self.transform_variable_declaration_with_new_declarations(decl, declarations))
         }
     }
 
     pub(crate) fn transform_variable_declaration_with_new_declarations(
-        &self,
+        &mut self,
         decl: &VariableDeclaration<'a>,
         declarations: ArenaVec<'a, VariableDeclarator<'a>>,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
@@ -42,7 +44,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_variable_declarator(
-        &self,
+        &mut self,
         decl: &VariableDeclarator<'a>,
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
@@ -96,8 +98,11 @@ impl<'a> IsolatedDeclarations<'a> {
             binding_type = Some(ts_type.type_annotation.clone_in(self.ast.allocator));
         }
 
-        let type_annotation =
-            binding_type.map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+        let type_annotation = if let Some(ts_type) = binding_type {
+            Some(self.ast.ts_type_annotation(SPAN, ts_type))
+        } else {
+            None
+        };
 
         Some(self.ast.variable_declarator(
             decl.span,

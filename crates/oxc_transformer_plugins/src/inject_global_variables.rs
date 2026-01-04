@@ -210,20 +210,28 @@ impl<'a> InjectGlobalVariables<'a> {
     }
 
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
-        let imports = injects.iter().map(|inject| {
-            let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
-            let kind = ImportOrExportKind::Value;
-            let import_decl = self
-                .ast
-                .module_declaration_import_declaration(SPAN, specifiers, source, None, NONE, kind);
-            Statement::from(import_decl)
-        });
+        let imports: Vec<Statement<'a>> = injects
+            .iter()
+            .map(|inject| {
+                let specifier = self.inject_import_to_specifier(inject);
+                let specifiers = Some(self.ast.vec1(specifier));
+                let source_atom = self.ast.atom(&inject.source);
+                let source = self.ast.string_literal(SPAN, source_atom, None);
+                let kind = ImportOrExportKind::Value;
+                let import_decl = self.ast.module_declaration_import_declaration(
+                    SPAN, specifiers, source, None, NONE, kind,
+                );
+                Statement::from(import_decl)
+            })
+            .collect();
         program.body.splice(0..0, imports);
         self.mark_as_changed();
     }
 
-    fn inject_import_to_specifier(&self, inject: &InjectImport) -> ImportDeclarationSpecifier<'a> {
+    fn inject_import_to_specifier(
+        &mut self,
+        inject: &InjectImport,
+    ) -> ImportDeclarationSpecifier<'a> {
         match &inject.specifier {
             InjectImportSpecifier::Specifier { imported, local } => {
                 let imported = match imported {
@@ -239,22 +247,26 @@ impl<'a> InjectGlobalVariables<'a> {
                 };
 
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
+                let local_atom = self.ast.atom(local);
+                let local_binding = self.ast.binding_identifier(SPAN, local_atom);
 
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, self.ast.atom(local)),
+                    local_binding,
                     ImportOrExportKind::Value,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local_atom = self.ast.atom(local);
+                let local = self.ast.binding_identifier(SPAN, local_atom);
                 self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local_atom = self.ast.atom(local);
+                let local = self.ast.binding_identifier(SPAN, local_atom);
                 self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
             }
         }

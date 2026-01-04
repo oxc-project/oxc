@@ -532,7 +532,7 @@ impl<'a> StaticVisitor<'a, '_, '_> {
     }
 
     /// Replace `delete this` with `true`.
-    fn replace_delete_this_with_true(&self, expr: &mut Expression<'a>, span: Span) {
+    fn replace_delete_this_with_true(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
             *expr = self.ctx.ast.expression_boolean_literal(span, true);
         }

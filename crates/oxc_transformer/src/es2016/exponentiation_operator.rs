@@ -258,13 +258,11 @@ impl<'a> ExponentiationOperator<'a, '_> {
         // obj["prop"] = Math.pow(obj["prop"], right)
         // ^^^^^^^^^^^
         // ```
-        let replacement_left =
-            AssignmentTarget::ComputedMemberExpression(ctx.ast.alloc_computed_member_expression(
-                member_expr.span,
-                member_expr.object.take_in(&ctx.ast),
-                ctx.ast.expression_string_literal(prop_span, prop_name, None),
-                false,
-            ));
+        let object = member_expr.object.take_in(&ctx.ast);
+        let property = ctx.ast.expression_string_literal(prop_span, prop_name, None);
+        let replacement_left = AssignmentTarget::ComputedMemberExpression(
+            ctx.ast.alloc_computed_member_expression(member_expr.span, object, property, false),
+        );
 
         (replacement_left, pow_left, temp_var_inits)
     }
@@ -521,7 +519,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     fn revise_expression(
         expr: &mut Expression<'a>,
         mut temp_var_inits: ArenaVec<'a, Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !temp_var_inits.is_empty() {
             temp_var_inits.reserve_exact(1);

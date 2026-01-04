@@ -157,23 +157,27 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
         // Create cooked array: `[cooked0, cooked1, ...]`
         // Use `void 0` for elements with invalid escape sequences (where cooked is None)
-        let cooked_elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
-            let expr = match &quasi.value.cooked {
+        let mut cooked_elements = ctx.ast.vec_with_capacity(quasi.quasis.len());
+        for q in &quasi.quasis {
+            let expr = match &q.value.cooked {
                 Some(cooked) => ctx.ast.expression_string_literal(SPAN, *cooked, None),
                 None => ctx.ast.void_0(SPAN),
             };
-            ArrayExpressionElement::from(expr)
-        }));
+            cooked_elements.push(ArrayExpressionElement::from(expr));
+        }
         let cooked_argument = Argument::from(ctx.ast.expression_array(SPAN, cooked_elements));
 
         // Add raw array if needed: `[raw0, raw1, ...]`
-        let raws_argument = needs_raw_array.then(|| {
-            let elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
-                let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
-                ArrayExpressionElement::from(string)
-            }));
-            Argument::from(ctx.ast.expression_array(SPAN, elements))
-        });
+        let raws_argument = if needs_raw_array {
+            let mut elements = ctx.ast.vec_with_capacity(quasi.quasis.len());
+            for q in &quasi.quasis {
+                let string = ctx.ast.expression_string_literal(SPAN, q.value.raw, None);
+                elements.push(ArrayExpressionElement::from(string));
+            }
+            Some(Argument::from(ctx.ast.expression_array(SPAN, elements)))
+        } else {
+            None
+        };
 
         let template_arguments =
             ctx.ast.vec_from_iter(iter::once(cooked_argument).chain(raws_argument));
@@ -213,19 +217,21 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             SymbolFlags::FunctionScopedVariable,
         );
 
+        let pattern = binding.create_binding_pattern(ctx);
         let variable = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            binding.create_binding_pattern(ctx),
+            pattern,
             NONE,
             None,
             false,
         );
 
+        let decl = ctx.ast.vec1(variable);
         let stmt = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec1(variable),
+            decl,
             false,
         ));
 

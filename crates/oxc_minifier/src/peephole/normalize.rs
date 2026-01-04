@@ -137,9 +137,12 @@ impl<'a> Normalize {
         matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
     }
 
-    fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
+    fn compress_console(
+        expr: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
         debug_assert!(ctx.state.options.drop_console);
-        Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
+        if Self::is_console(expr) { Some(ctx.ast.void_0(expr.span())) } else { None }
     }
 
     fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
@@ -206,7 +209,7 @@ impl<'a> Normalize {
     /// So subsequent passes don't need to look up whether these variables are shadowed or not.
     fn try_compress_identifier(
         ident: &IdentifierReference<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match ident.name.as_str() {
             "undefined" if ident.is_global_reference(ctx.scoping()) => {
@@ -256,7 +259,7 @@ impl<'a> Normalize {
         false
     }
 
-    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
+    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
         if ident.is_global_reference(ctx.scoping()) {
@@ -317,7 +320,7 @@ impl<'a> Normalize {
             return;
         }
         // callee is a global reference.
-        let ctx = Ctx::new(ctx);
+        let mut ctx = Ctx::new(ctx);
         let len = new_expr.arguments.len();
 
         let (zero_arg_throws_error, one_arg_array_throws_error, one_arg_throws_error): (
@@ -370,7 +373,7 @@ impl<'a> Normalize {
             _ => return,
         };
 
-        if !Self::can_set_pure(ident, &ctx) {
+        if !Self::can_set_pure(ident, &mut ctx) {
             return;
         }
 
@@ -400,7 +403,7 @@ impl<'a> Normalize {
         }
     }
 
-    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))

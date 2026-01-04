@@ -72,6 +72,7 @@ mod error_handler;
 mod modifiers;
 mod module_record;
 mod state;
+mod stats;
 
 mod js;
 mod jsx;
@@ -102,6 +103,8 @@ use crate::{
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
+
+pub use crate::stats::Stats;
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
@@ -180,6 +183,9 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+
+    /// Estimated node count, scope count, symbol count and reference count.
+    pub stats: Stats,
 }
 
 /// Parse options
@@ -486,6 +492,13 @@ impl<'a> ParserImpl<'a> {
             };
         }
 
+        let stats = Stats {
+            nodes: self.ast.nodes,
+            scopes: self.ast.scopes,
+            symbols: self.ast.symbols,
+            references: self.ast.references,
+        };
+
         ParserReturn {
             program,
             module_record,
@@ -493,6 +506,7 @@ impl<'a> ParserImpl<'a> {
             irregular_whitespaces,
             panicked,
             is_flow_language,
+            stats,
         }
     }
 

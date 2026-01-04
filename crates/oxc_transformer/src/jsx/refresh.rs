@@ -1,4 +1,4 @@
-use std::{collections::hash_map::Entry, iter, str};
+use std::{collections::hash_map::Entry, str};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -41,27 +41,29 @@ enum RefreshIdentifierResolver<'a> {
 
 impl<'a> RefreshIdentifierResolver<'a> {
     /// Parses a string into a RefreshIdentifierResolver
-    pub fn parse(input: &str, ast: &AstBuilder<'a>) -> Self {
+    pub fn parse(input: &str, ast: &mut AstBuilder<'a>) -> Self {
         let mut parts = input.split('.');
 
         let first_part = parts.next().unwrap();
         let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, ast.atom(input)));
+            let atom = ast.atom(input);
+            return Self::Identifier(ast.identifier_reference(SPAN, atom));
         };
 
         if first_part == "import" {
             // Handle `import.meta.$RefreshReg$` expression
-            let mut expr = ast.expression_meta_property(
-                SPAN,
-                ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, ast.atom(second_part)),
-            );
+            let ident_import = ast.identifier_name(SPAN, "import");
+            let atom_second = ast.atom(second_part);
+            let ident_second = ast.identifier_name(SPAN, atom_second);
+            let mut expr = ast.expression_meta_property(SPAN, ident_import, ident_second);
             if let Some(property) = parts.next() {
+                let atom_property = ast.atom(property);
+                let ident_property = ast.identifier_name(SPAN, atom_property);
                 expr = Expression::from(ast.member_expression_static(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, ast.atom(property)),
+                    ident_property,
                     false,
                 ));
             }
@@ -69,8 +71,10 @@ impl<'a> RefreshIdentifierResolver<'a> {
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, ast.atom(first_part));
-        let property = ast.identifier_name(SPAN, ast.atom(second_part));
+        let atom_first = ast.atom(first_part);
+        let object = ast.identifier_reference(SPAN, atom_first);
+        let atom_second = ast.atom(second_part);
+        let property = ast.identifier_name(SPAN, atom_second);
         Self::Member((object, property))
     }
 
@@ -132,7 +136,7 @@ pub struct ReactRefresh<'a, 'ctx> {
 impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     pub fn new(
         options: &ReactRefreshOptions,
-        ast: &AstBuilder<'a>,
+        ast: &mut AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         Self {
@@ -169,19 +173,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             return;
         }
 
+        let empty_decls = ctx.ast.vec();
         let var_decl = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.vec(), // This is replaced at the end
+            empty_decls, // This is replaced at the end
             false,
         ));
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let calls = self.registrations.iter().map(|(binding, persistent_id)| {
+        let mut calls = Vec::with_capacity(self.registrations.len());
+        for (binding, persistent_id) in &self.registrations {
+            let pattern = binding.create_binding_pattern(ctx);
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
-                binding.create_binding_pattern(ctx),
+                pattern,
                 NONE,
                 None,
                 false,
@@ -192,14 +199,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             let string_literal = ctx.ast.expression_string_literal(SPAN, *persistent_id, None);
             let arguments =
                 ctx.ast.vec_from_array([Argument::from(read_expr), Argument::from(string_literal)]);
-            ctx.ast.statement_expression(
-                SPAN,
-                ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
-            )
-        });
+            let call_expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+            calls.push(ctx.ast.statement_expression(SPAN, call_expr));
+        }
 
         let var_decl_index = program.body.len();
-        program.body.extend(iter::once(var_decl).chain(calls));
+        program.body.push(var_decl);
+        program.body.extend(calls);
 
         let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
             unreachable!()
@@ -344,32 +350,36 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             };
 
             if let Some(binding_name) = binding_name {
-                self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
-                    ctx.scoping()
-                        .find_binding(
-                            ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
-                            binding_name.as_str(),
-                        )
-                        .map(|symbol_id| {
-                            let mut expr = ctx.create_bound_ident_expr(
-                                SPAN,
-                                binding_name,
-                                symbol_id,
-                                ReferenceFlags::Read,
-                            );
+                let callee_expr = ctx
+                    .scoping()
+                    .find_binding(
+                        ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
+                        binding_name.as_str(),
+                    )
+                    .map(|symbol_id| {
+                        let mut expr = ctx.create_bound_ident_expr(
+                            SPAN,
+                            binding_name,
+                            symbol_id,
+                            ReferenceFlags::Read,
+                        );
 
-                            if is_member_expression {
-                                // binding_name.hook_name
-                                expr = Expression::from(ctx.ast.member_expression_static(
-                                    SPAN,
-                                    expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name),
-                                    false,
-                                ));
-                            }
-                            expr
-                        }),
-                );
+                        if is_member_expression {
+                            // binding_name.hook_name
+                            let identifier_name = ctx.ast.identifier_name(SPAN, hook_name);
+                            expr = Expression::from(ctx.ast.member_expression_static(
+                                SPAN,
+                                expr,
+                                identifier_name,
+                                false,
+                            ));
+                        }
+                        expr
+                    });
+                self.non_builtin_hooks_callee
+                    .entry(current_scope_id)
+                    .or_default()
+                    .push(callee_expr);
             }
         }
 
@@ -600,20 +610,18 @@ impl<'a> ReactRefresh<'a, '_> {
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
+            let params_items = ctx.ast.vec();
             let formal_parameters = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
+                params_items,
                 NONE,
             );
-            let function_body = ctx.ast.function_body(
-                SPAN,
-                ctx.ast.vec(),
-                ctx.ast.vec1(ctx.ast.statement_return(
-                    SPAN,
-                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope)),
-                )),
-            );
+            let array_expr = ctx.ast.expression_array(SPAN, custom_hooks_in_scope);
+            let return_stmt = ctx.ast.statement_return(SPAN, Some(array_expr));
+            let stmts = ctx.ast.vec1(return_stmt);
+            let directives = ctx.ast.vec();
+            let function_body = ctx.ast.function_body(SPAN, directives, stmts);
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
             let function =
                 Argument::from(ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
@@ -858,7 +866,7 @@ impl<'a> ReactRefresh<'a, '_> {
     /// ```
     fn transform_arrow_function_to_block(
         arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !arrow.expression {
             return;

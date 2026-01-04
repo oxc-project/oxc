@@ -349,7 +349,7 @@ impl<'a> PeepholeOptimizations {
     fn join_sequence(
         a: &mut Expression<'a>,
         b: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         let a = a.take_in(&ctx.ast);
         let b = b.take_in(&ctx.ast);
@@ -523,7 +523,7 @@ impl<'a> PeepholeOptimizations {
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
@@ -786,9 +786,9 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result.push(
-                        ctx.ast.statement_expression(argument.span(), argument.take_in(&ctx.ast)),
-                    );
+                    let span = argument.span();
+                    let arg = argument.take_in(&ctx.ast);
+                    result.push(ctx.ast.statement_expression(span, arg));
                 }
             }
             ret_stmt.argument = None;
@@ -1128,7 +1128,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
         non_scoped_literal_only: bool,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
@@ -1166,7 +1166,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -1202,7 +1202,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
         non_scoped_literal_only: bool,
     ) -> usize {
         let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
@@ -1259,7 +1259,7 @@ impl<'a> PeepholeOptimizations {
         search_for: &str,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {

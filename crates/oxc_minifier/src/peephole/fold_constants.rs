@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -122,18 +122,15 @@ impl<'a> PeepholeOptimizations {
                     Self::should_keep_indirect_access(&logical_expr.right, ctx);
                 // (true && o.f) => (0, o.f)
                 if should_keep_indirect_access {
-                    return Some(ctx.ast.expression_sequence(
-                        logical_expr.span,
-                        ctx.ast.vec_from_array([
-                            ctx.ast.expression_numeric_literal(
-                                logical_expr.left.span(),
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                            ),
-                            logical_expr.right.take_in(&ctx.ast),
-                        ]),
-                    ));
+                    let right = logical_expr.right.take_in(&ctx.ast);
+                    let num = ctx.ast.expression_numeric_literal(
+                        logical_expr.left.span(),
+                        0.0,
+                        None,
+                        NumberBase::Decimal,
+                    );
+                    let vec = ctx.ast.vec_from_array([num, right]);
+                    return Some(ctx.ast.expression_sequence(logical_expr.span, vec));
                 }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
@@ -174,7 +171,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -193,18 +190,15 @@ impl<'a> PeepholeOptimizations {
                         Self::should_keep_indirect_access(&logical_expr.right, ctx);
                     // (null ?? o.f) => (0, o.f)
                     if should_keep_indirect_access {
-                        return Some(ctx.ast.expression_sequence(
-                            logical_expr.span,
-                            ctx.ast.vec_from_array([
-                                ctx.ast.expression_numeric_literal(
-                                    logical_expr.left.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                ),
-                                logical_expr.right.take_in(&ctx.ast),
-                            ]),
-                        ));
+                        let right = logical_expr.right.take_in(&ctx.ast);
+                        let num = ctx.ast.expression_numeric_literal(
+                            logical_expr.left.span(),
+                            0.0,
+                            None,
+                            NumberBase::Decimal,
+                        );
+                        let vec = ctx.ast.vec_from_array([num, right]);
+                        return Some(ctx.ast.expression_sequence(logical_expr.span, vec));
                     }
                     // nullish condition => this expression evaluates to the right side.
                     logical_expr.right.take_in(&ctx.ast)
@@ -219,18 +213,15 @@ impl<'a> PeepholeOptimizations {
                     Self::should_keep_indirect_access(&logical_expr.left, ctx);
                 // (o.f ?? something) => (0, o.f)
                 if should_keep_indirect_access {
-                    return Some(ctx.ast.expression_sequence(
-                        logical_expr.span,
-                        ctx.ast.vec_from_array([
-                            ctx.ast.expression_numeric_literal(
-                                logical_expr.right.span(),
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                            ),
-                            logical_expr.left.take_in(&ctx.ast),
-                        ]),
-                    ));
+                    let left = logical_expr.left.take_in(&ctx.ast);
+                    let num = ctx.ast.expression_numeric_literal(
+                        logical_expr.right.span(),
+                        0.0,
+                        None,
+                        NumberBase::Decimal,
+                    );
+                    let vec = ctx.ast.vec_from_array([num, left]);
+                    return Some(ctx.ast.expression_sequence(logical_expr.span, vec));
                 }
                 // non-nullish condition => this expression evaluates to the left side.
                 Some(logical_expr.left.take_in(&ctx.ast))
@@ -353,7 +344,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
@@ -399,7 +390,7 @@ impl<'a> PeepholeOptimizations {
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
         parent_span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
@@ -486,7 +477,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_left_child_op(
         e: &mut BinaryExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = e.operator;
         debug_assert!(matches!(
@@ -510,15 +501,12 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        Some(ctx.ast.expression_binary(
-            e.span,
-            expr_to_move.take_in(&ctx.ast),
-            op,
-            ctx.value_to_expr(
-                left.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN),
-                v,
-            ),
-        ))
+        let expr = expr_to_move.take_in(&ctx.ast);
+        let value_expr = ctx.value_to_expr(
+            left.right.span().merge_within(e.right.span(), e.span).unwrap_or(SPAN),
+            v,
+        );
+        Some(ctx.ast.expression_binary(e.span, expr, op, value_expr))
     }
 
     pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
@@ -545,11 +533,8 @@ impl<'a> PeepholeOptimizations {
                 if let Some(n) = arg.evaluate_value_to_number(ctx) {
                     n
                 } else {
-                    *expr = ctx.ast.expression_unary(
-                        e.span,
-                        UnaryOperator::UnaryPlus,
-                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
-                    );
+                    let string_lit = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
+                    *expr = ctx.ast.expression_unary(e.span, UnaryOperator::UnaryPlus, string_lit);
                     ctx.state.changed = true;
                     return;
                 }
@@ -621,7 +606,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
                 Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
@@ -692,7 +677,10 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_spread_inlineable_object_literal(
+        e: &ObjectExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {

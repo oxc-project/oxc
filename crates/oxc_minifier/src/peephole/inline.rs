@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
         ctx.init_value(symbol_id, value);
     }
 
-    fn is_for_statement_init(ctx: &Ctx<'a, '_>) -> bool {
+    fn is_for_statement_init(ctx: &mut Ctx<'a, '_>) -> bool {
         ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_for_statement_left)
     }
 

@@ -13,7 +13,7 @@ use crate::{
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_function(
-        &self,
+        &mut self,
         func: &Function<'a>,
         declare: Option<bool>,
     ) -> ArenaBox<'a, Function<'a>> {
@@ -38,7 +38,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_formal_parameter(
-        &self,
+        &mut self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
     ) -> Option<FormalParameter<'a>> {
@@ -64,42 +64,41 @@ impl<'a> IsolatedDeclarations<'a> {
             || param.type_annotation.is_none()
             || (param.optional && param.has_modifier())
         {
-            let type_annotation = param
-                .type_annotation
-                .as_ref()
-                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
-                .or_else(|| {
-                    // report error for has no type annotation
-                    let new_type = self.infer_type_from_formal_parameter(param);
-                    if new_type.is_none() {
-                        self.error(parameter_must_have_explicit_type(param.span));
-                    }
-                    new_type
-                })
-                .map(|ts_type| {
-                    // jf next param is not optional and current param is assignment pattern
-                    // we need to add undefined to it's type
-                    if is_remaining_params_have_required || (param.optional && param.has_modifier())
-                    {
-                        if matches!(ts_type, TSType::TSTypeReference(_)) {
-                            self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if !ts_type.is_maybe_undefined() {
-                            // union with `undefined`
-                            return self.ast.ts_type_annotation(
-                                SPAN,
-                                self.ast.ts_type_union_type(
-                                    SPAN,
-                                    self.ast.vec_from_array([
-                                        ts_type,
-                                        self.ast.ts_type_undefined_keyword(SPAN),
-                                    ]),
-                                ),
-                            );
-                        }
-                    }
+            // Get the base type annotation
+            let ts_type = if let Some(type_annotation) = &param.type_annotation {
+                Some(type_annotation.type_annotation.clone_in(self.ast.allocator))
+            } else {
+                // report error for has no type annotation
+                let new_type = self.infer_type_from_formal_parameter(param);
+                if new_type.is_none() {
+                    self.error(parameter_must_have_explicit_type(param.span));
+                }
+                new_type
+            };
 
-                    self.ast.ts_type_annotation(SPAN, ts_type)
-                });
+            // Build the type_annotation
+            let type_annotation = if let Some(ts_type) = ts_type {
+                // If next param is not optional and current param is assignment pattern
+                // we need to add undefined to its type
+                if is_remaining_params_have_required || (param.optional && param.has_modifier()) {
+                    if matches!(ts_type, TSType::TSTypeReference(_)) {
+                        self.error(implicitly_adding_undefined_to_type(param.span));
+                        Some(self.ast.ts_type_annotation(SPAN, ts_type))
+                    } else if !ts_type.is_maybe_undefined() {
+                        // union with `undefined`
+                        let undefined = self.ast.ts_type_undefined_keyword(SPAN);
+                        let types = self.ast.vec_from_array([ts_type, undefined]);
+                        let union = self.ast.ts_type_union_type(SPAN, types);
+                        Some(self.ast.ts_type_annotation(SPAN, union))
+                    } else {
+                        Some(self.ast.ts_type_annotation(SPAN, ts_type))
+                    }
+                } else {
+                    Some(self.ast.ts_type_annotation(SPAN, ts_type))
+                }
+            } else {
+                None
+            };
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
@@ -130,7 +129,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_formal_parameters(
-        &self,
+        &mut self,
         params: &FormalParameters<'a>,
         skip_no_accessibility_param: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
@@ -138,21 +137,22 @@ impl<'a> IsolatedDeclarations<'a> {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
         }
 
-        let items = self.ast.vec_from_iter(
-            params
+        let mut items = self.ast.vec();
+        for (index, item) in params.items.iter().enumerate() {
+            if skip_no_accessibility_param && !item.has_modifier() {
+                continue;
+            }
+            let is_remaining_params_have_required = params
                 .items
                 .iter()
-                .enumerate()
-                .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
-                .filter_map(|(index, item)| {
-                    let is_remaining_params_have_required = params
-                        .items
-                        .iter()
-                        .skip(index)
-                        .any(|item| !(item.optional || item.initializer.is_some()));
-                    self.transform_formal_parameter(item, is_remaining_params_have_required)
-                }),
-        );
+                .skip(index)
+                .any(|item| !(item.optional || item.initializer.is_some()));
+            if let Some(param) =
+                self.transform_formal_parameter(item, is_remaining_params_have_required)
+            {
+                items.push(param);
+            }
+        }
 
         if let Some(rest) = &params.rest
             && rest.type_annotation.is_none()
@@ -160,14 +160,16 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(parameter_must_have_explicit_type(rest.span));
         }
 
-        let rest = params.rest.as_ref().map(|rest| {
+        let rest = if let Some(rest) = &params.rest {
             let mut rest = rest.clone_in(self.ast.allocator);
             FormalParameterBindingPattern::remove_assignments_from_kind(
                 &self.ast,
                 &mut rest.rest.argument,
             );
-            rest
-        });
+            Some(rest)
+        } else {
+            None
+        };
 
         self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
     }

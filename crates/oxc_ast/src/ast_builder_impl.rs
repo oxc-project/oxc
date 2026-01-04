@@ -40,13 +40,21 @@ impl<'a> AllocatorAccessor<'a> for &AstBuilder<'a> {
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
+    /// Number of nodes created by this builder. This may overcount.
+    pub nodes: u32,
+    /// Number of nodes created that may create new scopes. This may overcount.
+    pub scopes: u32,
+    /// Number of symbols created by this builder. This may overcount.
+    pub symbols: u32,
+    /// Number of references created by this builder. This may overcount.
+    pub references: u32,
 }
 
 impl<'a> AstBuilder<'a> {
     /// Create a new AST builder that will allocate nodes in the given allocator.
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
+        Self { allocator, nodes: 0, scopes: 0, symbols: 0, references: 0 }
     }
 
     /// Create [`CommentNodeId`] for an AST node.
@@ -54,6 +62,30 @@ impl<'a> AstBuilder<'a> {
     pub(crate) fn get_comment_node_id(&self) -> CommentNodeId {
         // TODO: Generate a real ID
         CommentNodeId::DUMMY
+    }
+
+    /// Get the number of nodes created by this builder.
+    #[inline]
+    pub fn get_node_count(&self) -> u32 {
+        self.nodes
+    }
+
+    /// Get the number of scopes created by this builder.
+    #[inline]
+    pub fn get_scope_count(&self) -> u32 {
+        self.scopes
+    }
+
+    /// Get the number of symbols created by this builder.
+    #[inline]
+    pub fn get_symbol_count(&self) -> u32 {
+        self.symbols
+    }
+
+    /// Get the number of references created by this builder.
+    #[inline]
+    pub fn get_reference_count(&self) -> u32 {
+        self.references
     }
 
     /// Move a value into the memory arena.
@@ -130,31 +162,29 @@ impl<'a> AstBuilder<'a> {
 
     /// `0`
     #[inline]
-    pub fn number_0(&self) -> Expression<'a> {
+    pub fn number_0(&mut self) -> Expression<'a> {
         self.expression_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal)
     }
 
     /// `void 0`
     #[inline]
-    pub fn void_0(&self, span: Span) -> Expression<'a> {
+    pub fn void_0(&mut self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
-            span,
-            UnaryOperator::Void,
-            num,
-        )))
+        let expr = self.unary_expression(span, UnaryOperator::Void, num);
+        Expression::UnaryExpression(self.alloc(expr))
     }
     /// `NaN`
     #[inline]
-    pub fn nan(&self, span: Span) -> Expression<'a> {
+    pub fn nan(&mut self, span: Span) -> Expression<'a> {
         self.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal)
     }
 
     /// `"use strict"` directive
     #[inline]
-    pub fn use_strict_directive(&self) -> Directive<'a> {
+    pub fn use_strict_directive(&mut self) -> Directive<'a> {
         let use_strict = Atom::from("use strict");
-        self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
+        let lit = self.string_literal(SPAN, use_strict, None);
+        self.directive(SPAN, lit, use_strict)
     }
 
     /* ---------- Functions ---------- */
@@ -163,7 +193,7 @@ impl<'a> AstBuilder<'a> {
     /// decorators, or initializer.
     #[inline]
     pub fn plain_formal_parameter(
-        &self,
+        &mut self,
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
@@ -174,7 +204,7 @@ impl<'a> AstBuilder<'a> {
     /// i.e. no decorators, type annotations, accessibility modifiers, etc.
     #[inline]
     pub fn alloc_plain_function_with_scope_id(
-        &self,
+        &mut self,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -203,7 +233,7 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`Function`] with `scope_id`.
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
-        &self,
+        &mut self,
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
@@ -247,36 +277,38 @@ impl<'a> AstBuilder<'a> {
     /// Create an empty [`ExportNamedDeclaration`] with no modifiers
     #[inline]
     pub fn plain_export_named_declaration_declaration(
-        &self,
+        &mut self,
         span: Span,
         declaration: Declaration<'a>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        let decl = self.export_named_declaration(
             span,
             Some(declaration),
             self.vec(),
             None,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        );
+        self.alloc(decl)
     }
 
     /// Create an [`ExportNamedDeclaration`] with no modifiers that contains a
     /// set of [exported symbol names](ExportSpecifier).
     #[inline]
     pub fn plain_export_named_declaration(
-        &self,
+        &mut self,
         span: Span,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        let decl = self.export_named_declaration(
             span,
             None,
             specifiers,
             source,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        );
+        self.alloc(decl)
     }
 }

@@ -607,7 +607,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier();
         self.expect(Kind::In);
         let constraint = self.parse_ts_type();
-        let type_parameter = self.alloc(self.ast.ts_type_parameter(
+        let ts_type_param = self.ast.ts_type_parameter(
             self.end_span(type_parameter_span),
             name,
             Some(constraint),
@@ -615,7 +615,8 @@ impl<'a> ParserImpl<'a> {
             false,
             false,
             false,
-        ));
+        );
+        let type_parameter = self.alloc(ts_type_param);
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()) } else { None };
         self.expect(Kind::RBrack);
@@ -962,7 +963,7 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::Colon)
     }
 
-    fn convert_type_to_tuple_element(&self, ty: TSType<'a>) -> TSTupleElement<'a> {
+    fn convert_type_to_tuple_element(&mut self, ty: TSType<'a>) -> TSTupleElement<'a> {
         if let TSType::JSDocNullableType(ty) = ty {
             if ty.postfix {
                 self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation)

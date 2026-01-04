@@ -855,16 +855,17 @@ impl<'a> ClassProperties<'a, '_> {
         transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        transform_ctx.helper_call_expr(
-            Helper::ClassPrivateFieldLooseKey,
-            SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
-            ctx,
-        )
+        let string_literal = ctx.ast.expression_string_literal(SPAN, name, None);
+        let arguments = ctx.ast.vec1(Argument::from(string_literal));
+        transform_ctx.helper_call_expr(Helper::ClassPrivateFieldLooseKey, SPAN, arguments, ctx)
     }
 
     /// Insert an expression after the class.
-    pub(super) fn insert_expr_after_class(&mut self, expr: Expression<'a>, ctx: &TraverseCtx<'a>) {
+    pub(super) fn insert_expr_after_class(
+        &mut self,
+        expr: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.current_class().is_declaration {
             self.insert_after_stmts.push(ctx.ast.statement_expression(SPAN, expr));
         } else {

@@ -74,57 +74,73 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
             return;
         };
 
-        let mut ancestors = ctx.ancestors();
-        let name = loop {
-            let Some(ancestor) = ancestors.next() else {
-                return;
-            };
+        // Find the display name from ancestors.
+        // We need to find the name first, then drop the iterator before calling add_display_name.
+        enum NameSource<'a> {
+            Atom(Atom<'a>),
+            StaticName(String),
+            Filename,
+        }
+        let name_source = {
+            let mut ancestors = ctx.ancestors();
+            loop {
+                let Some(ancestor) = ancestors.next() else {
+                    return;
+                };
 
-            match ancestor {
-                // `foo = React.createClass({})`
-                Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
-                    AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        break ident.name;
-                    }
-                    AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name;
-                    }
-                    // Babel does not handle computed member expressions e.g. `foo["bar"]`,
-                    // so we diverge from Babel here, but that's probably an improvement
-                    AssignmentTarget::ComputedMemberExpression(expr) => {
-                        if let Some(name) = expr.static_property_name() {
-                            break name;
+                match ancestor {
+                    // `foo = React.createClass({})`
+                    Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
+                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            break NameSource::Atom(ident.name);
+                        }
+                        AssignmentTarget::StaticMemberExpression(expr) => {
+                            break NameSource::Atom(expr.property.name);
+                        }
+                        // Babel does not handle computed member expressions e.g. `foo["bar"]`,
+                        // so we diverge from Babel here, but that's probably an improvement
+                        AssignmentTarget::ComputedMemberExpression(expr) => {
+                            if let Some(name) = expr.static_property_name() {
+                                break NameSource::Atom(name);
+                            }
+                            return;
+                        }
+                        _ => return,
+                    },
+                    // `let foo = React.createClass({})`
+                    Ancestor::VariableDeclaratorInit(declarator) => {
+                        if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
+                            break NameSource::Atom(ident.name);
                         }
                         return;
                     }
-                    _ => return,
-                },
-                // `let foo = React.createClass({})`
-                Ancestor::VariableDeclaratorInit(declarator) => {
-                    if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
-                        break ident.name;
+                    // `{foo: React.createClass({})}`
+                    Ancestor::ObjectPropertyValue(prop) => {
+                        // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
+                        // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
+                        // so we diverge from Babel here, but that's probably an improvement
+                        if let Some(name) = prop.key().static_name() {
+                            break NameSource::StaticName(name.to_string());
+                        }
+                        return;
                     }
-                    return;
-                }
-                // `{foo: React.createClass({})}`
-                Ancestor::ObjectPropertyValue(prop) => {
-                    // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
-                    // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
-                    // so we diverge from Babel here, but that's probably an improvement
-                    if let Some(name) = prop.key().static_name() {
-                        break ctx.ast.atom(&name);
+                    // `export default React.createClass({})`
+                    // Uses the current file name as the display name.
+                    Ancestor::ExportDefaultDeclarationDeclaration(_) => {
+                        break NameSource::Filename;
                     }
-                    return;
+                    // Stop crawling up when hit a statement
+                    _ if ancestor.is_parent_of_statement() => return,
+                    _ => {}
                 }
-                // `export default React.createClass({})`
-                // Uses the current file name as the display name.
-                Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break ctx.ast.atom(&self.ctx.filename);
-                }
-                // Stop crawling up when hit a statement
-                _ if ancestor.is_parent_of_statement() => return,
-                _ => {}
             }
+        };
+
+        // Now ancestors iterator is dropped, we can borrow ctx mutably
+        let name = match name_source {
+            NameSource::Atom(atom) => atom,
+            NameSource::StaticName(s) => ctx.ast.atom(&s),
+            NameSource::Filename => ctx.ast.atom(&self.ctx.filename),
         };
 
         Self::add_display_name(obj_expr, name, ctx);
@@ -160,7 +176,7 @@ impl<'a> ReactDisplayName<'a, '_> {
     fn add_display_name(
         obj_expr: &mut ObjectExpression<'a>,
         name: Atom<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         const DISPLAY_NAME: &str = "displayName";
         // Not safe with existing display name.
@@ -170,17 +186,17 @@ impl<'a> ReactDisplayName<'a, '_> {
         if not_safe {
             return;
         }
-        obj_expr.properties.insert(
-            0,
-            ctx.ast.object_property_kind_object_property(
-                SPAN,
-                PropertyKind::Init,
-                ctx.ast.property_key_static_identifier(SPAN, DISPLAY_NAME),
-                ctx.ast.expression_string_literal(SPAN, name, None),
-                false,
-                false,
-                false,
-            ),
+        let key = ctx.ast.property_key_static_identifier(SPAN, DISPLAY_NAME);
+        let value = ctx.ast.expression_string_literal(SPAN, name, None);
+        let property = ctx.ast.object_property_kind_object_property(
+            SPAN,
+            PropertyKind::Init,
+            key,
+            value,
+            false,
+            false,
+            false,
         );
+        obj_expr.properties.insert(0, property);
     }
 }

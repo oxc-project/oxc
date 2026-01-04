@@ -626,20 +626,13 @@ impl<'a> Assignment<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
         let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
 
-        ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_assignment(
-                SPAN,
-                AssignmentOperator::Assign,
-                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
-                    SPAN,
-                    ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, self.name),
-                    false,
-                ))
-                .into(),
-                Expression::Identifier(ctx.alloc(id)),
-            ),
-        )
+        let this_expr = ctx.ast.expression_this(SPAN);
+        let property = ctx.ast.identifier_name(self.span, self.name);
+        let member = ctx.ast.member_expression_static(SPAN, this_expr, property, false);
+        let target = SimpleAssignmentTarget::from(member).into();
+        let value = Expression::Identifier(ctx.alloc(id));
+        let assignment =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value);
+        ctx.ast.statement_expression(SPAN, assignment)
     }
 }

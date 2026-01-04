@@ -4,7 +4,7 @@ use super::{ConstantEvaluation, ConstantEvaluationCtx, DetermineValueType, Value
 
 /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
 pub(super) fn abstract_equality_comparison<'a>(
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
@@ -79,7 +79,7 @@ pub(super) fn abstract_equality_comparison<'a>(
 /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
 #[expect(clippy::float_cmp)]
 pub(super) fn strict_equality_comparison<'a>(
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {

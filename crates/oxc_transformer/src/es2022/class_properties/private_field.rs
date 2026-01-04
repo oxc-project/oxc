@@ -289,13 +289,14 @@ impl<'a> ClassProperties<'a, '_> {
         call_expr: &mut CallExpression<'a>,
         callee: Expression<'a>,
         context: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         // Substitute `<callee>.call` as callee of call expression
+        let ident_name = ctx.ast.identifier_name(SPAN, Atom::from("call"));
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("call")),
+            ident_name,
             // Make sure the `callee` can access `call` safely. i.e `callee?.()` -> `callee?.call()`
             mem::replace(&mut call_expr.optional, false),
         ));
@@ -1027,9 +1028,8 @@ impl<'a> ClassProperties<'a, '_> {
                 // Source = `++object.#prop` (prefix `++`)
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)`
-                let mut value = ctx
-                    .ast
-                    .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
+                let seq_exprs = ctx.ast.vec_from_array([assignment, update_expr]);
+                let mut value = ctx.ast.expression_sequence(SPAN, seq_exprs);
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                 if let Some(class_ident) = class_ident {
@@ -1037,12 +1037,9 @@ impl<'a> ClassProperties<'a, '_> {
                 }
 
                 // `_prop._ = <value>`
-                *expr = ctx.ast.expression_assignment(
-                    span,
-                    AssignmentOperator::Assign,
-                    Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
-                    value,
-                );
+                let target = Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx);
+                *expr =
+                    ctx.ast.expression_assignment(span, AssignmentOperator::Assign, target, value);
             } else {
                 // Source = `object.#prop++` (postfix `++`)
 
@@ -1053,10 +1050,8 @@ impl<'a> ClassProperties<'a, '_> {
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
                 let temp_read = temp_binding.create_read_expression(ctx);
-                let mut value = ctx.ast.expression_sequence(
-                    SPAN,
-                    ctx.ast.vec_from_array([assignment, assignment2, temp_read]),
-                );
+                let seq_exprs = ctx.ast.vec_from_array([assignment, assignment2, temp_read]);
+                let mut value = ctx.ast.expression_sequence(SPAN, seq_exprs);
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                 if let Some(class_ident) = class_ident {
@@ -1064,20 +1059,16 @@ impl<'a> ClassProperties<'a, '_> {
                 }
 
                 // `_prop._ = <value>`
-                let assignment3 = ctx.ast.expression_assignment(
-                    SPAN,
-                    AssignmentOperator::Assign,
-                    Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
-                    value,
-                );
+                let target = Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx);
+                let assignment3 =
+                    ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value);
 
                 // `(_prop._ = <value>, _object$prop2)`
                 // TODO(improve-on-babel): Final `_object$prop2` is only needed if this expression
                 // is consumed (i.e. not in an `ExpressionStatement`)
                 let temp_read2 = temp_binding2.create_read_expression(ctx);
-                *expr = ctx
-                    .ast
-                    .expression_sequence(span, ctx.ast.vec_from_array([assignment3, temp_read2]));
+                let seq_exprs = ctx.ast.vec_from_array([assignment3, temp_read2]);
+                *expr = ctx.ast.expression_sequence(span, seq_exprs);
             }
         } else {
             // Clone as borrow restrictions.
@@ -1477,7 +1468,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// be handled by optional-chaining plugin correctly.
     fn ensure_optional_expression_wrapped_by_chain_expression(
         expr: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if Self::has_optional_expression(&expr) {
             let chain_element = match expr {
@@ -1595,19 +1586,21 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// Returns `left === null`
-    fn wrap_null_check(&self, left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn wrap_null_check(&self, left: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let operator = if self.ctx.assumptions.no_document_all {
             BinaryOperator::Equality
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        let null_literal = ctx.ast.expression_null_literal(SPAN);
+        ctx.ast.expression_binary(SPAN, left, operator, null_literal)
     }
 
     /// Returns `left === void 0`
-    fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn wrap_void0_check(left: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        let void_0 = ctx.ast.void_0(SPAN);
+        ctx.ast.expression_binary(SPAN, left, operator, void_0)
     }
 
     /// Returns `left1 === null || left2 === void 0`
@@ -1615,7 +1608,7 @@ impl<'a> ClassProperties<'a, '_> {
         &self,
         left1: Expression<'a>,
         left2: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
         if self.ctx.assumptions.no_document_all {
@@ -1630,9 +1623,10 @@ impl<'a> ClassProperties<'a, '_> {
     fn wrap_conditional_check(
         test: Expression<'a>,
         alternative: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), alternative)
+        let void_0 = ctx.ast.void_0(SPAN);
+        ctx.ast.expression_conditional(SPAN, test, void_0, alternative)
     }
 
     /// Transform chain expression inside unary expression.
@@ -1679,16 +1673,12 @@ impl<'a> ClassProperties<'a, '_> {
         if let Some((result, chain_expr)) =
             self.transform_chain_expression_impl(&mut unary_expr.argument, ctx)
         {
-            *expr = ctx.ast.expression_conditional(
-                unary_expr.span,
-                result,
-                ctx.ast.expression_boolean_literal(SPAN, true),
-                {
-                    // We still need this unary expr, but it needs to be used as the alternative of the conditional
-                    unary_expr.argument = chain_expr;
-                    expr.take_in(&ctx.ast)
-                },
-            );
+            let span = unary_expr.span;
+            let consequent = ctx.ast.expression_boolean_literal(SPAN, true);
+            // We still need this unary expr, but it needs to be used as the alternative of the conditional
+            unary_expr.argument = chain_expr;
+            let alternate = expr.take_in(&ctx.ast);
+            *expr = ctx.ast.expression_conditional(span, result, consequent, alternate);
         }
     }
 
@@ -1768,12 +1758,9 @@ impl<'a> ClassProperties<'a, '_> {
         let (callee, context) = self.transform_private_field_callee(field_expr, ctx);
 
         // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
-        let callee = Expression::from(ctx.ast.member_expression_static(
-            SPAN,
-            callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("bind")),
-            false,
-        ));
+        let ident_name = ctx.ast.identifier_name(SPAN, Atom::from("bind"));
+        let callee =
+            Expression::from(ctx.ast.member_expression_static(SPAN, callee, ident_name, false));
         let arguments = ctx.ast.vec1(Argument::from(context));
         ctx.ast.expression_call(field_expr.span, callee, NONE, arguments, false)
     }
@@ -2058,7 +2045,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr_target(
         object: Expression<'a>,
         span: Span,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         AssignmentTarget::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2067,7 +2054,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expression(
         object: Expression<'a>,
         span: Span,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2076,9 +2063,10 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr(
         object: Expression<'a>,
         span: Span,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
-        ctx.ast.member_expression_static(span, object, create_underscore_ident_name(ctx), false)
+        let ident_name = create_underscore_ident_name(ctx);
+        ctx.ast.member_expression_static(span, object, ident_name, false)
     }
 
     /// * Getter: `_prop.call(_assertClassBrand(Class, object))`

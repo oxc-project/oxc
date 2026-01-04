@@ -27,7 +27,7 @@ use crate::{
 };
 
 pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
-    fn ast(&self) -> &AstBuilder<'a>;
+    fn ast(&mut self) -> &mut AstBuilder<'a>;
 }
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
@@ -40,41 +40,44 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     ///   passing `Some(ValueType::Boolean)` will allow us to utilize that information.
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>>;
 
     /// Evaluate the expression to a constant value.
     ///
     /// If you know the result will be converted to a specific type, use other functions (e.g. [`ConstantEvaluation::evaluate_value_to_boolean`]).
-    fn evaluate_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<ConstantValue<'a>> {
+    fn evaluate_value(
+        &self,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
         self.evaluate_value_to(ctx, None)
     }
 
     /// Evaluate the expression to a constant value and convert it to a number.
-    fn evaluate_value_to_number(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<f64> {
+    fn evaluate_value_to_number(&self, ctx: &mut impl ConstantEvaluationCtx<'a>) -> Option<f64> {
         self.evaluate_value_to(ctx, Some(ValueType::Number))?.to_number(ctx)
     }
 
     /// Evaluate the expression to a constant value and convert it to a bigint.
-    fn evaluate_value_to_bigint(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<BigInt> {
+    fn evaluate_value_to_bigint(&self, ctx: &mut impl ConstantEvaluationCtx<'a>) -> Option<BigInt> {
         self.evaluate_value_to(ctx, Some(ValueType::BigInt))?.into_bigint()
     }
 
     /// Evaluate the expression to a constant value and convert it to a boolean.
-    fn evaluate_value_to_boolean(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<bool> {
+    fn evaluate_value_to_boolean(&self, ctx: &mut impl ConstantEvaluationCtx<'a>) -> Option<bool> {
         self.evaluate_value_to(ctx, Some(ValueType::Boolean))?.to_boolean(ctx)
     }
 
     /// Evaluate the expression to a constant value and convert it to a string.
     fn evaluate_value_to_string(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
     ) -> Option<Cow<'a, str>> {
         self.evaluate_value_to(ctx, Some(ValueType::String))?.to_js_string(ctx)
     }
 
-    fn get_side_free_number_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<f64> {
+    fn get_side_free_number_value(&self, ctx: &mut impl ConstantEvaluationCtx<'a>) -> Option<f64> {
         let value = self.evaluate_value_to_number(ctx)?;
         // Calculating the number value, if any, is likely to be faster than calculating side effects,
         // and there are only a very few cases where we can compute a number value, but there could
@@ -83,19 +86,25 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
         (!self.may_have_side_effects(ctx)).then_some(value)
     }
 
-    fn get_side_free_bigint_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<BigInt> {
+    fn get_side_free_bigint_value(
+        &self,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
+    ) -> Option<BigInt> {
         let value = self.evaluate_value_to_bigint(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
     }
 
-    fn get_side_free_boolean_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<bool> {
+    fn get_side_free_boolean_value(
+        &self,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
+    ) -> Option<bool> {
         let value = self.evaluate_value_to_boolean(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
     }
 
     fn get_side_free_string_value(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
     ) -> Option<Cow<'a, str>> {
         let value = self.evaluate_value_to_string(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
@@ -103,13 +112,16 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
 }
 
 impl<'a, T: ConstantEvaluation<'a>> ConstantEvaluation<'a> for Option<T> {
-    fn evaluate_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<ConstantValue<'a>> {
+    fn evaluate_value(
+        &self,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
         self.as_ref().and_then(|t| t.evaluate_value(ctx))
     }
 
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         self.as_ref().and_then(|t| t.evaluate_value_to(ctx, target_ty))
@@ -119,7 +131,7 @@ impl<'a, T: ConstantEvaluation<'a>> ConstantEvaluation<'a> for Option<T> {
 impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match self.name.as_str() {
@@ -139,7 +151,7 @@ impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
 impl<'a> ConstantEvaluation<'a> for Expression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         let result = match target_ty {
@@ -180,7 +192,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
 impl<'a> ConstantEvaluation<'a> for BinaryExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         // FIXME: skipped for now to avoid performance regression, can be removed
@@ -196,7 +208,7 @@ pub fn binary_operation_evaluate_value<'a, Ctx: ConstantEvaluationCtx<'a>>(
     operator: BinaryOperator,
     left: &Expression<'a>,
     right: &Expression<'a>,
-    ctx: &Ctx,
+    ctx: &mut Ctx,
 ) -> Option<ConstantValue<'a>> {
     binary_operation_evaluate_value_to(operator, left, right, ctx, None)
 }
@@ -205,7 +217,7 @@ fn binary_operation_evaluate_value_to<'a>(
     operator: BinaryOperator,
     left: &Expression<'a>,
     right: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
     _target_ty: Option<ValueType>,
 ) -> Option<ConstantValue<'a>> {
     match operator {
@@ -396,7 +408,7 @@ fn binary_operation_evaluate_value_to<'a>(
 impl<'a> ConstantEvaluation<'a> for LogicalExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match self.operator {
@@ -436,7 +448,7 @@ impl<'a> ConstantEvaluation<'a> for LogicalExpression<'a> {
 impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match self.operator {
@@ -504,7 +516,7 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
 impl<'a> ConstantEvaluation<'a> for StaticMemberExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match self.property.name.as_str() {
@@ -517,7 +529,7 @@ impl<'a> ConstantEvaluation<'a> for StaticMemberExpression<'a> {
 impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match &self.expression {
@@ -531,7 +543,7 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
 
 fn evaluate_value_length<'a>(
     object: &Expression<'a>,
-    ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &mut impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
         Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
@@ -549,7 +561,7 @@ fn evaluate_value_length<'a>(
 impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
     fn evaluate_value_to(
         &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
+        ctx: &mut impl ConstantEvaluationCtx<'a>,
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         call_expr::try_fold_known_global_methods(&self.callee, &self.arguments, ctx)

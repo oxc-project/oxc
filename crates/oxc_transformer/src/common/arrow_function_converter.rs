@@ -906,17 +906,11 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `prop => super[prop]` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = ctx.ast.formal_parameter(
-                SPAN,
-                ctx.ast.vec(),
-                param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
-                false,
-                None,
-                false,
-                false,
-            );
+            let decorators = ctx.ast.vec();
+            let pattern = param_binding.create_binding_pattern(ctx);
+            let param = ctx
+                .ast
+                .formal_parameter(SPAN, decorators, pattern, NONE, NONE, false, None, false, false);
             items.push(param);
 
             // `super` -> `super[prop]`
@@ -931,17 +925,11 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `value => super.prop = value` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = ctx.ast.formal_parameter(
-                SPAN,
-                ctx.ast.vec(),
-                param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
-                false,
-                None,
-                false,
-                false,
-            );
+            let decorators = ctx.ast.vec();
+            let pattern = param_binding.create_binding_pattern(ctx);
+            let param = ctx
+                .ast
+                .formal_parameter(SPAN, decorators, pattern, NONE, NONE, false, None, false, false);
             items.push(param);
 
             // `super[prop]` -> `super[prop] = value`
@@ -957,15 +945,18 @@ impl<'a> ArrowFunctionConverter<'a> {
             items,
             NONE,
         );
-        let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
+        let stmt = ctx.ast.statement_expression(SPAN, init);
+        let statements = ctx.ast.vec1(stmt);
+        let directives = ctx.ast.vec();
+        let body = ctx.ast.function_body(SPAN, directives, statements);
         let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
             SPAN, true, false, NONE, params, NONE, body, scope_id, false, false,
         );
+        let pattern = binding.create_binding_pattern(ctx);
         ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            binding.create_binding_pattern(ctx),
+            pattern,
             NONE,
             Some(init),
             false,
@@ -1124,13 +1115,15 @@ impl<'a> ArrowFunctionConverter<'a> {
                 BinaryOperator::StrictEquality,
                 undefined_literal,
             );
-            init = ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), init);
+            let void_0 = ctx.ast.void_0(SPAN);
+            init = ctx.ast.expression_conditional(SPAN, test, void_0, init);
         }
 
+        let pattern = arguments_var.create_binding_pattern(ctx);
         Some(ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            arguments_var.create_binding_pattern(ctx),
+            pattern,
             NONE,
             Some(init),
             false,
@@ -1169,9 +1162,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         // `_superprop_setSomething = _value => super.something = _value;`
         // `_superprop_set = (_prop, _value) => super[_prop] = _value;`
         if let Some(super_methods) = super_methods {
-            declarations.extend(super_methods.into_iter().map(|(key, super_method)| {
-                Self::generate_super_method(target_scope_id, super_method, key.is_assignment, ctx)
-            }));
+            for (key, super_method) in super_methods {
+                declarations.push(Self::generate_super_method(
+                    target_scope_id,
+                    super_method,
+                    key.is_assignment,
+                    ctx,
+                ));
+            }
         }
 
         // `_this = this;`
@@ -1187,10 +1185,11 @@ impl<'a> ArrowFunctionConverter<'a> {
                 Some(ctx.ast.expression_this(SPAN))
             };
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
+            let pattern = this_var.create_binding_pattern(ctx);
             let variable_declarator = ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
-                this_var.create_binding_pattern(ctx),
+                pattern,
                 NONE,
                 init,
                 false,
