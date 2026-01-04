@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:9]
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:9]
@@ -109,7 +109,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:9]
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:13]
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -172,7 +172,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -212,7 +212,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -222,7 +222,7 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]
@@ -232,7 +232,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
-        Using spreads within accumulators leads to `O(n^2)` time complexity.
+  note: Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:5]

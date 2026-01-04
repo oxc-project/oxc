@@ -19,7 +19,8 @@ use crate::{
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             spread_span.label("From this spread"),
             reduce_span.label("For this reduce")

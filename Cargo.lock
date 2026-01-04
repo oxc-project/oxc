@@ -1684,7 +1684,7 @@ dependencies = [
 [[package]]
 name = "oxc-miette"
 version = "2.6.0"
-source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#8fc3ee36b7b28eea518b043e2ec1ac1dcc9ecff3"
+source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#6d4eb736f149b738e97317e0d6486e79690c3361"
 dependencies = [
  "cfg-if",
  "owo-colors",
@@ -1698,7 +1698,7 @@ dependencies = [
 [[package]]
 name = "oxc-miette-derive"
 version = "2.6.0"
-source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#8fc3ee36b7b28eea518b043e2ec1ac1dcc9ecff3"
+source = "git+https://github.com/spanishpear/oxc-miette.git?branch=ssomaiya%2F17443-add-note#6d4eb736f149b738e97317e0d6486e79690c3361"
 dependencies = [
  "proc-macro2",
  "quote",
