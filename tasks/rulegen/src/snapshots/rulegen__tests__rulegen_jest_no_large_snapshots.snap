@@ -10,10 +10,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
-    AstNode,
 };
 
 fn no_large_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
@@ -22,7 +22,6 @@ fn no_large_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
         .with_help("Should be a command-like statement that tells the user how to fix the issue.")
         .with_label(span)
 }
-
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -34,9 +33,6 @@ struct NoLargeSnapshotsConfig {
     /// FIXME: Describe the purpose of this field.
     allowed_snapshots: FxHashMap<String, Vec<String>>,
 }
-
-
-
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct NoLargeSnapshots(NoLargeSnapshotsConfig);
@@ -74,12 +70,12 @@ declare_oxc_lint!(
 
 impl Rule for NoLargeSnapshots {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-
-    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 }
 
 #[test]
@@ -89,21 +85,24 @@ fn test() {
 
     let pass = vec![
         ("expect(something)", None, None, None),
-("expect(something).toBe(1)", None, None, None),
-("expect(something).toMatchInlineSnapshot", None, None, None),
-("expect(something).toMatchInlineSnapshot()", None, None, None),
-("expect(
+        ("expect(something).toBe(1)", None, None, None),
+        ("expect(something).toMatchInlineSnapshot", None, None, None),
+        ("expect(something).toMatchInlineSnapshot()", None, None, None),
+        (
+            "expect(
 			  functionUnderTest(
 			    arg1,
 			    arg2,
 			    arg3
 			  )
-			).toMatchInlineSnapshot(", Some(serde_json::json!([  {  "maxSize": 61,  },  ])), None, Some(PathBuf::from("mock.jsx")))
+			).toMatchInlineSnapshot(",
+            Some(serde_json::json!([  {  "maxSize": 61,  },  ])),
+            None,
+            Some(PathBuf::from("mock.jsx")),
+        ),
     ];
 
-    let fail = vec![
-        
-    ];
+    let fail = vec![];
 
     Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -2627,12 +2627,13 @@ mod tests {
         // Apply rule config to context
         ctx = apply_rule_config_to_context(ctx, &elements, pascal_rule_name, false);
 
-        // Render template and return
+        // Render template and return (formatted with rustfmt)
         let mut registry = handlebars::Handlebars::new();
         registry.register_escape_fn(handlebars::no_escape);
-        registry
+        let rendered = registry
             .render_template(include_str!("../template.txt"), &handlebars::to_json(&ctx))
-            .expect("Failed to render template")
+            .expect("Failed to render template");
+        util::rust_fmt(&rendered)
     }
 
     #[test]
