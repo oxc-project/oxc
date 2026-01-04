@@ -1013,7 +1013,32 @@ impl RuleConfigOutput {
             }
             return Some(s.to_string());
         }
-        // Complex structures (arrays/objects) are unsupported for now
+        // Array default handling
+        if s.starts_with('[') && s.ends_with(']') {
+            // Only support arrays when expected type is Vec<...>
+            if let Some(inner) = typ.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
+                // Convert possible JS-like literal to JSON
+                let json_text = json::convert_config_to_json_literal(s);
+                if let Ok(value) = serde_json::from_str::<serde_json::Value>(&json_text)
+                    && let Some(arr) = value.as_array()
+                {
+                    let mut elems = Vec::new();
+                    for item in arr {
+                        if let Ok(item_json) = serde_json::to_string(item)
+                            && let Some(lit) = Self::render_default_literal(&item_json, inner)
+                        {
+                            elems.push(lit);
+                            continue;
+                        }
+                        // failed to render an element -> unsupported
+                        return None;
+                    }
+                    return Some(format!("vec![{}]", elems.join(", ")));
+                }
+            }
+        }
+
+        // Complex structures (objects) are unsupported for now
         None
     }
 }
@@ -1662,7 +1687,13 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                         ));
                     }
                 },
-                "default" | "required" | "minItems" | "minimum" | "minLength" | "maxItems"
+                "default" => {
+                    // Capture default literal (JSON text) for later use when generating Default impl
+                    self.property_default = Some(
+                        object_property.value.span().source_text(self.source_text).to_string(),
+                    );
+                }
+                "required" | "minItems" | "minimum" | "minLength" | "maxItems"
                 | "minProperties" | "maximum" | "pattern" => {}
                 _ => {
                     self.log_error(&format!("Unhandled key `{}`", identifier.name));
@@ -2320,5 +2351,98 @@ mod tests {
         assert!(label.is_some());
         let output = out.output;
         assert!(output.contains("s: Some(String::from(\"x\")),"));
+    }
+
+    #[test]
+    fn test_struct_default_array_and_object_unsupported() {
+        // array default (supported)
+        let mut out = RuleConfigOutput::new(true);
+        let mut hm = FxHashMap::default();
+        hm.insert(
+            "items".to_string(),
+            (
+                RuleConfigElement::Array(Box::new(RuleConfigElement::Integer)),
+                Some("[1, 2]".to_string()),
+            ),
+        );
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // Array default should render to vec![...] and not error
+        assert!(output.contains("items: vec![1, 2],"));
+        assert!(!out.has_errors, "did not expect errors for supported array default");
+
+        // array of strings default (supported)
+        let mut out_str = RuleConfigOutput::new(true);
+        let mut hm_str = FxHashMap::default();
+        hm_str.insert(
+            "tags".to_string(),
+            (
+                RuleConfigElement::Array(Box::new(RuleConfigElement::String)),
+                Some("['a', 'b']".to_string()),
+            ),
+        );
+        let element_str = RuleConfigElement::Object(hm_str);
+        let label_str = out_str.extract_output(&element_str, "my_config");
+        assert!(label_str.is_some());
+        let output_str = out_str.output;
+        assert!(output_str.contains("tags: vec![String::from(\"a\"), String::from(\"b\")],"));
+        assert!(!out_str.has_errors, "did not expect errors for supported string array default");
+
+        // object default (unsupported)
+        let mut out2 = RuleConfigOutput::new(true);
+        let mut hm2 = FxHashMap::default();
+        hm2.insert(
+            "map".to_string(),
+            (
+                RuleConfigElement::Map(Box::new(RuleConfigElement::String)),
+                Some("{ \"a\": 1 }".to_string()),
+            ),
+        );
+        let element2 = RuleConfigElement::Object(hm2);
+        let label2 = out2.extract_output(&element2, "my_config2");
+        assert!(label2.is_some());
+        let output2 = out2.output;
+        assert!(output2.contains("map: Default::default(),"));
+        assert!(out2.has_errors, "expected error logged for unsupported default on object");
+    }
+
+    #[test]
+    fn test_parsing_default_from_rule_file() {
+        let source = r#"
+            export default {
+                meta: {
+                    schema: {
+                        type: "object",
+                        properties: {
+                            name: { type: "string", default: "bar" },
+                            count: { type: "integer", default: 5 }
+                        }
+                    }
+                }
+            };
+        "#;
+
+        let allocator = Allocator::default();
+        let ret =
+            Parser::new(&allocator, source, SourceType::from_path("rule.js").unwrap()).parse();
+        assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+
+        let mut rc = RuleConfig::new(source, false);
+        rc.visit_program(&ret.program);
+        let element = rc
+            .next_element
+            .as_ref()
+            .or_else(|| rc.elements.get(0))
+            .expect("expected schema element");
+
+        let mut out = RuleConfigOutput::new(false);
+        let label = out.extract_output(element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("name: String::from(\"bar\"),"));
+        assert!(output.contains("count: 5,"));
+        assert!(output.contains("impl Default for MyConfig"));
     }
 }
