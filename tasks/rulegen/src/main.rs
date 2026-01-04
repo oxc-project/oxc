@@ -9,10 +9,10 @@ use convert_case::{Case, Casing};
 use lazy_regex::regex;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, BindingPattern,
+    CallExpression, Declaration, Expression, ExpressionStatement, IdentifierName, ObjectExpression,
+    ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression,
+    StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
@@ -1056,7 +1056,10 @@ impl<'a> RuleConfig<'a> {
             "boolean" => Some(RuleConfigElement::Boolean),
             "number" => Some(RuleConfigElement::Number),
             "integer" => Some(RuleConfigElement::Integer),
-            "array" | "object" => None,
+            // For loose schemas without `items`/`properties`, treat `array` as array of strings
+            // and `object` as a map of string values so we can still generate a usable config.
+            "array" => Some(RuleConfigElement::Array(Box::new(RuleConfigElement::String))),
+            "object" => Some(RuleConfigElement::Map(Box::new(RuleConfigElement::String))),
             _ => {
                 self.log_error(&format!("Unhandled `type` value: {}", lit.value));
                 None
@@ -1231,6 +1234,218 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
+        // handle `export default { meta: { schema: ... } }` (ESM/TS)
+        if let Statement::ExportDefaultDeclaration(export_decl) = stmt {
+            // First, handle the simple case: `export default { meta: { schema: ... } }`
+            if let Some(Expression::ObjectExpression(object_expression)) = &export_decl
+                .declaration
+                .as_expression()
+                .map(oxc_ast::ast::Expression::get_inner_expression)
+            {
+                for object_property_kind in &object_expression.properties {
+                    let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind
+                    else {
+                        continue;
+                    };
+                    let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                        continue;
+                    };
+                    if identifier.name != "meta" {
+                        continue;
+                    }
+                    let Expression::ObjectExpression(meta_obj) = &object_property.value else {
+                        continue;
+                    };
+                    for object_property_kind in &meta_obj.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "schema" {
+                            continue;
+                        }
+                        match &object_property.value {
+                            Expression::ArrayExpression(array_expression) => {
+                                self.elements = array_expression
+                                    .elements
+                                    .iter()
+                                    .filter_map(|element| {
+                                        let ArrayExpressionElement::ObjectExpression(
+                                            object_expression,
+                                        ) = element
+                                        else {
+                                            return None;
+                                        };
+                                        self.next_element = None;
+                                        self.visit_object_expression(object_expression);
+                                        self.next_element.take()
+                                    })
+                                    .collect::<Vec<_>>();
+                            }
+                            Expression::ObjectExpression(object_expression) => {
+                                self.visit_object_expression(object_expression);
+                                let Some(element) = self.next_element.take() else { return };
+                                self.elements = vec![element];
+                            }
+                            _ => {
+                                self.log_error(&format!(
+                                    "Cannot parse `schema` value: {}",
+                                    object_property.value.span().source_text(self.source_text)
+                                ));
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Otherwise: handle `export default createRule({ meta: { schema: ... } })` style
+            if let Some(Expression::CallExpression(call_expr)) = &export_decl
+                .declaration
+                .as_expression()
+                .map(oxc_ast::ast::Expression::get_inner_expression)
+            {
+                for arg in &call_expr.arguments {
+                    if !arg.is_expression() {
+                        continue;
+                    }
+                    let Some(expr) = arg.as_expression() else { continue };
+                    let Expression::ObjectExpression(object_expression) = expr else { continue };
+                    for object_property_kind in &object_expression.properties {
+                        let ObjectPropertyKind::ObjectProperty(object_property) =
+                            &object_property_kind
+                        else {
+                            continue;
+                        };
+                        let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                            continue;
+                        };
+                        if identifier.name != "meta" {
+                            continue;
+                        }
+                        let Expression::ObjectExpression(meta_obj) = &object_property.value else {
+                            continue;
+                        };
+                        for object_property_kind in &meta_obj.properties {
+                            let ObjectPropertyKind::ObjectProperty(object_property) =
+                                &object_property_kind
+                            else {
+                                continue;
+                            };
+                            let PropertyKey::StaticIdentifier(identifier) = &object_property.key
+                            else {
+                                continue;
+                            };
+                            if identifier.name != "schema" {
+                                continue;
+                            }
+                            match &object_property.value {
+                                Expression::ArrayExpression(array_expression) => {
+                                    self.elements = array_expression
+                                        .elements
+                                        .iter()
+                                        .filter_map(|element| {
+                                            let ArrayExpressionElement::ObjectExpression(
+                                                object_expression,
+                                            ) = element
+                                            else {
+                                                return None;
+                                            };
+                                            self.next_element = None;
+                                            self.visit_object_expression(object_expression);
+                                            self.next_element.take()
+                                        })
+                                        .collect::<Vec<_>>();
+                                }
+                                Expression::ObjectExpression(object_expression) => {
+                                    self.visit_object_expression(object_expression);
+                                    let Some(element) = self.next_element.take() else { return };
+                                    self.elements = vec![element];
+                                }
+                                _ => {
+                                    self.log_error(&format!(
+                                        "Cannot parse `schema` value: {}",
+                                        object_property.value.span().source_text(self.source_text)
+                                    ));
+                                }
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // handle `export const meta = { schema: ... }` (named export)
+        if let Statement::ExportNamedDeclaration(export_decl) = stmt {
+            if let Some(Declaration::VariableDeclaration(var_decl)) =
+                export_decl.declaration.as_ref()
+            {
+                for declarator in &var_decl.declarations {
+                    let binding_ident = match &declarator.id {
+                        BindingPattern::BindingIdentifier(b) => b,
+                        _ => continue,
+                    };
+                    if binding_ident.name != "meta" {
+                        continue;
+                    }
+                    let Some(init) = &declarator.init else { continue };
+                    if let Expression::ObjectExpression(object_expression) = init {
+                        for object_property_kind in &object_expression.properties {
+                            let ObjectPropertyKind::ObjectProperty(object_property) =
+                                &object_property_kind
+                            else {
+                                continue;
+                            };
+                            let PropertyKey::StaticIdentifier(identifier) = &object_property.key
+                            else {
+                                continue;
+                            };
+                            if identifier.name != "schema" {
+                                continue;
+                            }
+                            match &object_property.value {
+                                Expression::ArrayExpression(array_expression) => {
+                                    self.elements = array_expression
+                                        .elements
+                                        .iter()
+                                        .filter_map(|element| {
+                                            let ArrayExpressionElement::ObjectExpression(
+                                                object_expression,
+                                            ) = element
+                                            else {
+                                                return None;
+                                            };
+                                            self.next_element = None;
+                                            self.visit_object_expression(object_expression);
+                                            self.next_element.take()
+                                        })
+                                        .collect::<Vec<_>>();
+                                }
+                                Expression::ObjectExpression(object_expression) => {
+                                    self.visit_object_expression(object_expression);
+                                    let Some(element) = self.next_element.take() else { return };
+                                    self.elements = vec![element];
+                                }
+                                _ => {
+                                    self.log_error(&format!(
+                                        "Cannot parse `schema` value: {}",
+                                        object_property.value.span().source_text(self.source_text)
+                                    ));
+                                }
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // fall back to CommonJS `module.exports = { meta: { schema: ... } }`
         let Statement::ExpressionStatement(expression_statement) = stmt else {
             return;
         };
