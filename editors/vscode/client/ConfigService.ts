@@ -144,7 +144,30 @@ export class ConfigService implements IDisposable {
       settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
     }
 
-    return settingsBinary;
+    if (process.platform !== "win32" && settingsBinary.endsWith(".exe")) {
+      // on non-Windows, remove `.exe` extension if present
+      settingsBinary = settingsBinary.slice(0, -4);
+    }
+
+    try {
+      await workspace.fs.stat(Uri.file(settingsBinary));
+      return settingsBinary;
+    } catch {}
+
+    // on Windows, also check for `.exe` extension (bun uses `.exe` for its binaries)
+    if (process.platform === "win32") {
+      if (!settingsBinary.endsWith(".exe")) {
+        settingsBinary += ".exe";
+      }
+
+      try {
+        await workspace.fs.stat(Uri.file(settingsBinary));
+        return settingsBinary;
+      } catch {}
+    }
+
+    // no valid binary found
+    return undefined;
   }
 
   /**
@@ -178,15 +201,32 @@ export class ConfigService implements IDisposable {
       // not found, continue to glob search
     }
 
+    // on Windows, also check for `.exe` extension
+    if (process.platform === "win32") {
+      const binPathExe = `${binPath}.exe`;
+      try {
+        await workspace.fs.stat(Uri.file(binPathExe));
+        return binPathExe;
+      } catch {
+        // not found, continue to glob search
+      }
+    }
+
     const cts = new CancellationTokenSource();
     setTimeout(() => cts.cancel(), 10000); // cancel after 10 seconds
 
     try {
+      // bun package manager uses `.exe` extension on Windows
+      // search for both with and without `.exe` extension
+      const extension = process.platform === "win32" ? "{,.exe}" : "";
       // fallback: search with glob
       // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
       const files = await workspace.findFiles(
-        // search up to 3 levels deep
-        new RelativePattern(workspacePath, `{*/,*/*,*/*/*}/node_modules/.bin/${binaryName}`),
+        // search up to 3 levels deep for the binary path
+        new RelativePattern(
+          workspacePath,
+          `{*/,*/*,*/*/*}/node_modules/.bin/${binaryName}${extension}`,
+        ),
         undefined,
         1,
         cts.token,
