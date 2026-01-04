@@ -1,4 +1,4 @@
-// eslint-plugin-jest code: https://github.com/jest-community/eslint-plugin-jest/blob/45edad2158305d3d5907c00ed698b592379b4490/src/rules/no-large-snapshots.ts
+// eslint-plugin-jest code: https://github.com/jest-community/eslint-plugin-jest/blob/45edad2158305d3d5907c00ed698b592379b4490/src/rules/__tests__/no-large-snapshots.test.ts
 // eslint-plugin-jest license (MIT): https://github.com/jest-community/eslint-plugin-jest/blob/45edad2158305d3d5907c00ed698b592379b4490/LICENSE
 import { TSESLint } from '@typescript-eslint/utils';
 import dedent from 'dedent';
