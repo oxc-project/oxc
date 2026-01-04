@@ -2081,8 +2081,8 @@ mod test {
 
         #[test]
         fn test_object_bigint_comparison() {
-            fold_same("{ valueOf: function() { return 0n; } } != 0n");
-            fold_same("{ toString: function() { return '0'; } } != 0n");
+            fold_same("{ valueOf() { return 0n; } } != 0n");
+            fold_same("{ toString() { return '0'; } } != 0n");
         }
 
         #[test]
