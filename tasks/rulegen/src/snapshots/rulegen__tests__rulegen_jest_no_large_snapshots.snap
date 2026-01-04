@@ -98,7 +98,7 @@ fn test() {
 			    arg2,
 			    arg3
 			  )
-			).toMatchInlineSnapshot(", Some(serde_json::json!([  {  "maxSize": 61,  },  ])), None, Some(PathBuf::from("mock.jsx")))
+			).toMatchInlineSnapshot(", Some(serde_json::json!([ { "maxSize": 61, }, ])), None, Some(PathBuf::from("mock.jsx")))
     ];
 
     let fail = vec![
