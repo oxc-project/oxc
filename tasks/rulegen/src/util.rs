@@ -22,7 +22,10 @@ pub fn dedent(s: &str) -> String {
 /// Panics if `rustfmt` is not installed or fails to run. Panics if any I/O operation fails.
 #[cfg(test)]
 pub fn rust_fmt(source_text: &str) -> String {
-    use std::{io::Write, process::{Command, Stdio}};
+    use std::{
+        io::Write,
+        process::{Command, Stdio},
+    };
 
     let mut rustfmt = Command::new("rustfmt")
         .stdin(Stdio::piped())
