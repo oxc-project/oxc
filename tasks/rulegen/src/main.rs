@@ -1814,4 +1814,34 @@ mod tests {
         // but should have explicit per-variant rename for kebab one
         assert!(output.contains("rename = \"after-each\""));
     }
+
+    #[test]
+    fn test_enum_with_non_string_includes_untagged() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("a".to_string(), RuleConfigElement::String);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("foo".to_string()),
+            RuleConfigElement::Object(hm),
+        ]);
+        let label = out.extract_output(&element, "mixed_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // non-string variants should cause `untagged` to be present in the serde attribute.
+        assert!(output.contains("untagged"), "output did not contain untagged: {}", output);
+    }
+
+    #[test]
+    fn test_enum_with_strings_does_not_include_untagged() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("foo".to_string()),
+            RuleConfigElement::StringLiteral("bar".to_string()),
+        ]);
+        let label = out.extract_output(&element, "string_only_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // all-string variants should NOT cause `untagged` to be present in the serde attribute.
+        assert!(!output.contains("untagged"), "output contained untagged: {}", output);
+    }
 }
