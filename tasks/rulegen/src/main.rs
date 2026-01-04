@@ -1704,6 +1704,209 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
     }
 }
 
+/// Result of parsing a test file containing pass/fail test cases.
+struct ParsedTestFile {
+    pass_cases: Vec<TestCase>,
+    fail_cases: Vec<TestCase>,
+}
+
+impl ParsedTestFile {
+    /// Returns whether any test cases have a config.
+    fn has_config(&self) -> bool {
+        self.pass_cases.iter().any(|case| case.config.is_some())
+            || self.fail_cases.iter().any(|case| case.config.is_some())
+    }
+
+    /// Returns whether any test cases have settings.
+    fn has_settings(&self) -> bool {
+        self.pass_cases.iter().any(|case| case.settings.is_some())
+            || self.fail_cases.iter().any(|case| case.settings.is_some())
+    }
+
+    /// Returns whether any test cases have a filename.
+    fn has_filename(&self) -> bool {
+        self.pass_cases.iter().any(|case| case.filename.is_some())
+            || self.fail_cases.iter().any(|case| case.filename.is_some())
+    }
+}
+
+/// Parses a test file and extracts pass/fail test cases.
+///
+/// # Arguments
+/// * `source_text` - The source code of the test file
+/// * `file_path` - The path to the test file (used to determine source type)
+///
+/// # Returns
+/// A `ParsedTestFile` containing the extracted test cases, or an error message.
+fn parse_test_file(source_text: &str, file_path: &str) -> Result<ParsedTestFile, String> {
+    let allocator = Allocator::default();
+    let source_type =
+        SourceType::from_path(file_path).map_err(|e| format!("Invalid file path: {e:?}"))?;
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    if !ret.errors.is_empty() {
+        return Err(format!("Parse errors: {:?}", ret.errors));
+    }
+
+    let mut state = State::new(source_text);
+    state.visit_program(&ret.program);
+
+    Ok(ParsedTestFile { pass_cases: state.pass_cases(), fail_cases: state.fail_cases() })
+}
+
+/// Generates case strings from test cases for use in the template.
+fn gen_cases_string(
+    cases: Vec<TestCase>,
+    has_config: bool,
+    has_settings: bool,
+    has_filename: bool,
+) -> (String, String) {
+    let mut codes = vec![];
+    let mut fix_codes = vec![];
+    let mut last_comment = String::new();
+    for case in cases {
+        let current_comment = case.group_comment();
+        let mut code = case.code(has_config, has_settings, has_filename);
+        if code.is_empty() {
+            continue;
+        }
+        if let Some(current_comment) = current_comment
+            && current_comment != last_comment
+        {
+            last_comment = current_comment.to_string();
+            code = format!(
+                "// {}\n{}",
+                &last_comment,
+                case.code(has_config, has_settings, has_filename)
+            );
+        }
+
+        if let Some(output) = case.output() {
+            fix_codes.push(output);
+        }
+
+        codes.push(code);
+    }
+
+    (codes.join(",\n"), fix_codes.join(",\n"))
+}
+
+/// Builds a `Context` from a parsed test file.
+///
+/// # Arguments
+/// * `parsed` - The parsed test file
+/// * `rule_kind` - The kind of rule (e.g., ESLint, Jest, etc.)
+/// * `rule_name` - The name of the rule in snake_case
+/// * `language` - The language of the test cases (e.g., "js", "ts", "jsx", "tsx")
+fn build_context_from_parsed_test(
+    parsed: ParsedTestFile,
+    rule_kind: RuleKind,
+    rule_name: &str,
+    language: &str,
+) -> Context {
+    let has_config = parsed.has_config();
+    let has_settings = parsed.has_settings();
+    let has_filename = parsed.has_filename();
+
+    let (pass_cases, _) =
+        gen_cases_string(parsed.pass_cases, has_config, has_settings, has_filename);
+    let (fail_cases, fix_cases) =
+        gen_cases_string(parsed.fail_cases, has_config, has_settings, has_filename);
+
+    Context::new(rule_kind, rule_name, pass_cases, fail_cases)
+        .with_language(language.to_string())
+        .with_filename(has_filename)
+        .with_fix_cases(fix_cases)
+}
+
+/// Parses a rule source file and extracts the configuration schema.
+///
+/// # Arguments
+/// * `source_text` - The source code of the rule file
+/// * `file_path` - The path to the rule file (used to determine source type)
+/// * `debug_mode` - Whether to enable debug logging
+///
+/// # Returns
+/// The parsed rule configuration elements, or an error message.
+fn parse_rule_source(
+    source_text: &str,
+    file_path: &str,
+    debug_mode: bool,
+) -> Result<Vec<RuleConfigElement>, String> {
+    let allocator = Allocator::default();
+    let source_type =
+        SourceType::from_path(file_path).map_err(|e| format!("Invalid file path: {e:?}"))?;
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    if !ret.errors.is_empty() {
+        return Err(format!("Parse errors: {:?}", ret.errors));
+    }
+
+    let mut config = RuleConfig::new(source_text, debug_mode);
+
+    // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript
+    // and parse it here to resolve values of expressions.
+    config.visit_program(&ret.program);
+
+    if debug_mode {
+        println!("Rule config: {:?}", config.elements);
+    }
+
+    Ok(config.elements)
+}
+
+/// Applies parsed rule configuration to a context.
+///
+/// # Arguments
+/// * `context` - The context to update
+/// * `elements` - The parsed rule configuration elements
+/// * `pascal_rule_name` - The Pascal case name of the rule (e.g., "NoLargeSnapshots")
+/// * `debug_mode` - Whether to enable debug logging
+///
+/// # Returns
+/// The updated context with rule configuration applied.
+fn apply_rule_config_to_context(
+    context: Context,
+    elements: &[RuleConfigElement],
+    pascal_rule_name: &str,
+    debug_mode: bool,
+) -> Context {
+    let mut rule_config_output = RuleConfigOutput::new(debug_mode);
+    let config_names = elements
+        .iter()
+        .enumerate()
+        .filter_map(|(index, element)| {
+            let element_name = format!(
+                "{pascal_rule_name}Config{}",
+                if index == 0 { String::new() } else { index.to_string() }
+            );
+            rule_config_output.extract_output(element, element_name.as_str())
+        })
+        .collect::<Vec<_>>();
+
+    if debug_mode {
+        println!("Rule config names: {config_names:?}");
+        println!("Rule Output:\n{}", rule_config_output.output);
+    }
+
+    if rule_config_output.has_errors {
+        if debug_mode {
+            println!("Rule config parsed, but with fatal errors. Not writing config.");
+        }
+        return context;
+    }
+
+    if config_names.is_empty() {
+        context
+    } else {
+        let rule_config_tuple = format!("({})", config_names.join(", "));
+        context.with_rule_config(
+            rule_config_output.output,
+            rule_config_tuple,
+            rule_config_output.has_hash_map,
+            rule_config_output.has_hash_set,
+        )
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum RuleKind {
     ESLint,
@@ -1831,75 +2034,20 @@ fn main() {
         .call()
         .map(|mut res| res.body_mut().read_to_string());
     let mut context = match test_body {
-        Ok(Ok(body)) => {
-            let allocator = Allocator::default();
-            let source_type = SourceType::from_path(rule_test_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty(), "errors: {:?}", ret.errors);
-
-            let mut state = State::new(&body);
-            state.visit_program(&ret.program);
-
-            let pass_cases = state.pass_cases();
-            let fail_cases = state.fail_cases();
-            println!(
-                "File parsed and {} pass cases, {} fail cases are found",
-                pass_cases.len(),
-                fail_cases.len()
-            );
-
-            let pass_has_config = pass_cases.iter().any(|case| case.config.is_some());
-            let fail_has_config = fail_cases.iter().any(|case| case.config.is_some());
-            let has_config = pass_has_config || fail_has_config;
-
-            let pass_has_settings = pass_cases.iter().any(|case| case.settings.is_some());
-            let fail_has_settings = fail_cases.iter().any(|case| case.settings.is_some());
-            let has_settings = pass_has_settings || fail_has_settings;
-
-            let pass_has_filename = pass_cases.iter().any(|case| case.filename.is_some());
-            let fail_has_filename = fail_cases.iter().any(|case| case.filename.is_some());
-            let has_filename = pass_has_filename || fail_has_filename;
-
-            let gen_cases_string = |cases: Vec<TestCase>| {
-                let mut codes = vec![];
-                let mut fix_codes = vec![];
-                let mut last_comment = String::new();
-                for case in cases {
-                    let current_comment = case.group_comment();
-                    let mut code = case.code(has_config, has_settings, has_filename);
-                    if code.is_empty() {
-                        continue;
-                    }
-                    if let Some(current_comment) = current_comment
-                        && current_comment != last_comment
-                    {
-                        last_comment = current_comment.to_string();
-                        code = format!(
-                            "// {}\n{}",
-                            &last_comment,
-                            case.code(has_config, has_settings, has_filename)
-                        );
-                    }
-
-                    if let Some(output) = case.output() {
-                        fix_codes.push(output);
-                    }
-
-                    codes.push(code);
-                }
-
-                (codes.join(",\n"), fix_codes.join(",\n"))
-            };
-
-            // pass cases don't need to be fixed
-            let (pass_cases, _) = gen_cases_string(pass_cases);
-            let (fail_cases, fix_cases) = gen_cases_string(fail_cases);
-
-            Context::new(rule_kind, &rule_name, pass_cases, fail_cases)
-                .with_language(language)
-                .with_filename(has_filename)
-                .with_fix_cases(fix_cases)
-        }
+        Ok(Ok(body)) => match parse_test_file(&body, &rule_test_path) {
+            Ok(parsed) => {
+                println!(
+                    "File parsed and {} pass cases, {} fail cases are found",
+                    parsed.pass_cases.len(),
+                    parsed.fail_cases.len()
+                );
+                build_context_from_parsed_test(parsed, rule_kind, &rule_name, language)
+            }
+            Err(err) => {
+                eprintln!("Failed to parse test file: {err}");
+                Context::new(rule_kind, &rule_name, String::new(), String::new())
+            }
+        },
         Err(err) => {
             println!("Rule tests {rule_name} cannot be found in {rule_kind}, use empty template.");
             println!("Error: {err}");
@@ -1919,50 +2067,20 @@ fn main() {
         .map(|mut res| res.body_mut().read_to_string());
     match rule_src_body {
         Ok(Ok(body)) => {
-            let allocator = Allocator::default();
-            let source_type = SourceType::from_path(rule_src_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty());
             let debug_mode = false;
-            let mut config = RuleConfig::new(&body, debug_mode);
-            // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript
-            // and parse it here to resolve values of expressions.
-            config.visit_program(&ret.program);
-            if debug_mode {
-                println!("Rule config: {:?}", config.elements);
-            }
-            let mut rule_config_output = RuleConfigOutput::new(debug_mode);
-            let config_names = config
-                .elements
-                .iter()
-                .enumerate()
-                .filter_map(|(index, element)| {
-                    let element_name = format!(
-                        "{pascal_rule_name}Config{}",
-                        if index == 0 { String::new() } else { index.to_string() }
+            match parse_rule_source(&body, &rule_src_path, debug_mode) {
+                Ok(elements) => {
+                    println!("Rule config parsed.");
+                    context = apply_rule_config_to_context(
+                        context,
+                        &elements,
+                        &pascal_rule_name,
+                        debug_mode,
                     );
-                    rule_config_output.extract_output(element, element_name.as_str())
-                })
-                .collect::<Vec<_>>();
-            if debug_mode {
-                println!("Rule config names: {config_names:?}");
-                println!("Rule Output:\n{}", rule_config_output.output);
-            }
-            if rule_config_output.has_errors {
-                println!("Rule config parsed, but with fatal errors. Not writing config.");
-            } else if config.has_errors {
-                println!("Rule config parsed, but with errors.");
-            } else {
-                println!("Rule config parsed.");
-            }
-            if !config_names.is_empty() && !rule_config_output.has_errors {
-                let rule_config_tuple = format!("({})", config_names.join(", "));
-                context = context.with_rule_config(
-                    rule_config_output.output,
-                    rule_config_tuple,
-                    rule_config_output.has_hash_map,
-                    rule_config_output.has_hash_set,
-                );
+                }
+                Err(err) => {
+                    eprintln!("Failed to parse rule source: {err}");
+                }
             }
         }
         Ok(Err(err)) => {
@@ -2454,14 +2572,14 @@ mod tests {
     #[test]
     fn test_format_code_snippet_with_quotes() {
         let code = r#"import foo from "foo";"#;
-        let expected = format!("r#\"{}\"#", code);
+        let expected = format!("r#\"{code}\"#");
         assert_eq!(format_code_snippet(code), expected);
     }
 
     #[test]
     fn test_format_code_snippet_with_hash_in_quote() {
         let code = r##"document.querySelector("#foo");"##;
-        let expected = format!("r##\"{}\"##", code);
+        let expected = format!("r##\"{code}\"##");
         assert_eq!(format_code_snippet(code), expected);
     }
 
@@ -2474,7 +2592,7 @@ mod tests {
     #[test]
     fn test_format_code_snippet_with_backslash() {
         let code = "\\u1234";
-        let expected = format!("r#\"{}\"#", code);
+        let expected = format!("r#\"{code}\"#");
         assert_eq!(format_code_snippet(code), expected);
     }
 
@@ -2483,5 +2601,34 @@ mod tests {
         let code = "a\nb";
         let expected = "\"a\n\t\t\tb\"";
         assert_eq!(format_code_snippet(code), expected);
+    }
+
+    #[test]
+    fn test_jest_no_large_snapshots_rulegen() {
+        // Load and parse test fixtures (rule tests)
+        let test_path = "tests/fixtures/jest/__tests__/no-large-snapshots.test.ts";
+        let test_body = std::fs::read_to_string(test_path).expect("fixture test file");
+        let parsed = parse_test_file(&test_body, test_path).expect("failed to parse test file");
+
+        // Build context from parsed test
+        let mut ctx =
+            build_context_from_parsed_test(parsed, RuleKind::Jest, "no_large_snapshots", "ts");
+
+        // Parse rule source for config
+        let src_path = "tests/fixtures/jest/no-large-snapshots.ts";
+        let src_body = std::fs::read_to_string(src_path).expect("fixture rule source file");
+        let elements =
+            parse_rule_source(&src_body, src_path, false).expect("failed to parse rule source");
+
+        // Apply rule config to context
+        ctx = apply_rule_config_to_context(ctx, &elements, "NoLargeSnapshots", false);
+
+        // Render template and snapshot
+        let mut registry = handlebars::Handlebars::new();
+        registry.register_escape_fn(handlebars::no_escape);
+        let rendered = registry
+            .render_template(include_str!("../template.txt"), &handlebars::to_json(&ctx))
+            .expect("Failed to render template");
+        insta::assert_snapshot!("rulegen_jest_no_large_snapshots", rendered);
     }
 }
