@@ -2630,10 +2630,9 @@ mod tests {
         // Render template and return (formatted with rustfmt)
         let mut registry = handlebars::Handlebars::new();
         registry.register_escape_fn(handlebars::no_escape);
-        let rendered = registry
+        registry
             .render_template(include_str!("../template.txt"), &handlebars::to_json(&ctx))
-            .expect("Failed to render template");
-        util::rust_fmt(&rendered)
+            .expect("Failed to render template")
     }
 
     #[test]

@@ -14,42 +14,6 @@ pub fn dedent(s: &str) -> String {
         .join("\n")
 }
 
-/// Format Rust code with `rustfmt`.
-///
-/// Does not format on disk - interfaces with `rustfmt` via stdin/stdout.
-///
-/// # Panics
-/// Panics if `rustfmt` is not installed or fails to run. Panics if any I/O operation fails.
-#[cfg_attr(not(test), expect(dead_code))]
-pub fn rust_fmt(source_text: &str) -> String {
-    use std::{
-        io::Write,
-        process::{Command, Stdio},
-    };
-
-    let mut rustfmt = Command::new("rustfmt")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to run rustfmt (is it installed?)");
-
-    let stdin = rustfmt.stdin.as_mut().unwrap();
-    stdin.write_all(source_text.as_bytes()).unwrap();
-    stdin.flush().unwrap();
-
-    let output = rustfmt.wait_with_output().unwrap();
-    if output.status.success() {
-        String::from_utf8(output.stdout).unwrap()
-    } else {
-        // Formatting failed. Return unformatted code, to aid debugging.
-        let error =
-            String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
-        println!("FAILED TO FORMAT Rust code:\n{error}");
-        source_text.to_string()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
