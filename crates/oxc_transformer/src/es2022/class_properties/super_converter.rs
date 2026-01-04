@@ -91,7 +91,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = member.expression.take_in(ctx.ast);
+        let property = member.expression.take_in(&ctx.ast);
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -206,7 +206,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
@@ -234,7 +234,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Expression::AssignmentExpression(assign_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
@@ -369,7 +369,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
@@ -432,7 +432,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::UpdateExpression(mut update_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
@@ -442,7 +442,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
 
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = member.expression.get_inner_expression_mut().take_in(ctx.ast);
+        let property = member.expression.get_inner_expression_mut().take_in(&ctx.ast);
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,
@@ -526,22 +526,17 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
             let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
+            let temp_read = temp_binding.create_read_expression(ctx);
             let value = ctx.ast.expression_sequence(
                 SPAN,
-                ctx.ast.vec_from_array([
-                    assignment,
-                    assignment2,
-                    temp_binding.create_read_expression(ctx),
-                ]),
+                ctx.ast.vec_from_array([assignment, assignment2, temp_read]),
             );
 
             // `_superPropSet(_Class, prop, value, _Class, 1)`
             let set_call = self.create_super_prop_set(span, property1, value, ctx);
             // `(_superPropSet(_Class, prop, value, _Class, 1), _super$prop2)`
-            ctx.ast.expression_sequence(
-                span,
-                ctx.ast.vec_from_array([set_call, temp_binding2.create_read_expression(ctx)]),
-            )
+            let temp_read2 = temp_binding2.create_read_expression(ctx);
+            ctx.ast.expression_sequence(span, ctx.ast.vec_from_array([set_call, temp_read2]))
         }
     }
 

@@ -494,7 +494,8 @@ impl<'a> ParserImpl<'a> {
 
         let (quasis, expressions) = match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                let quasis = self.ast.vec1(self.parse_template_element(tagged));
+                let template_element = self.parse_template_element(tagged);
+                let quasis = self.ast.vec1(template_element);
                 (quasis, self.ast.vec())
             }
             Kind::TemplateHead => {
@@ -688,8 +689,10 @@ impl<'a> ParserImpl<'a> {
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression = self
-                .map_to_chain_expression(expr.expression.span(), expr.expression.take_in(self.ast));
+            expr.expression = self.map_to_chain_expression(
+                expr.expression.span(),
+                expr.expression.take_in(&self.ast),
+            );
             Expression::TSInstantiationExpression(expr)
         } else {
             let span = self.end_span(span);

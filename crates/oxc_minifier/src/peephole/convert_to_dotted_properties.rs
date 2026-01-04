@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     e.span,
-                    e.object.take_in(ctx.ast),
+                    e.object.take_in(&ctx.ast),
                     property,
                     e.optional,
                 ));
