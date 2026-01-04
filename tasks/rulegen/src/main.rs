@@ -718,7 +718,22 @@ impl RuleConfigOutput {
                 output.push_str(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(untagged, rename_all = \"camelCase\")]\n");
+                // Determine if all enum string values are kebab-case. If so, prefer
+                // using `rename_all = "kebab-case"` instead of per-variant renames.
+                let string_values: Vec<&String> = elements
+                    .iter()
+                    .filter_map(|e| {
+                        if let RuleConfigElement::StringLiteral(s) = e { Some(s) } else { None }
+                    })
+                    .collect();
+                let use_kebab = !string_values.is_empty()
+                    && string_values.len() == elements.len()
+                    && string_values.iter().all(|s| *s == &s.to_case(Case::Kebab));
+                let rename_style = if use_kebab { "kebab-case" } else { "camelCase" };
+                output.push_str(&format!(
+                    "#[schemars(untagged, rename_all = \"{}\")]\n",
+                    rename_style
+                ));
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
@@ -729,7 +744,12 @@ impl RuleConfigOutput {
                             let is_valid_identifier_regex = regex!(r"^[a-zA-Z_]\w*$");
                             let formatted_string_literal = string_literal.to_case(Case::Pascal);
                             if is_valid_identifier_regex.is_match(&formatted_string_literal) {
-                                let rename = if formatted_string_literal.to_case(Case::Camel)
+                                // If using kebab-case for all variants, we can omit per-variant
+                                // rename attributes (they're covered by rename_all). Otherwise
+                                // fall back to the existing per-variant rename behavior.
+                                let rename = if use_kebab {
+                                    None
+                                } else if formatted_string_literal.to_case(Case::Camel)
                                     == *string_literal
                                 {
                                     None
@@ -738,6 +758,7 @@ impl RuleConfigOutput {
                                 };
                                 Some((rename, Some(formatted_string_literal), None, None))
                             } else {
+                                // Non-identifier variant names always need an explicit rename
                                 Some((
                                     Some(format!("rename = \"{string_literal}\"")),
                                     None,
@@ -1751,4 +1772,39 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_enum_rename_all_kebab() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("type-based".to_string()),
+            RuleConfigElement::StringLiteral("type-literal".to_string()),
+        ]);
+        let label = out.extract_output(&element, "define_emits_declaration_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("rename_all = \"kebab-case\""));
+        assert!(!output.contains("rename = \""));
+    }
+
+    #[test]
+    fn test_enum_mixed_case_keeps_per_variant() {
+        let mut out = RuleConfigOutput::new(false);
+        let element = RuleConfigElement::Enum(vec![
+            RuleConfigElement::StringLiteral("beforeAll".to_string()),
+            RuleConfigElement::StringLiteral("after-each".to_string()),
+        ]);
+        let label = out.extract_output(&element, "no_hooks_config");
+        assert!(label.is_some());
+        let output = out.output;
+        // mixed case shouldn't set kebab-case rename_all
+        assert!(!output.contains("rename_all = \"kebab-case\""));
+        // but should have explicit per-variant rename for kebab one
+        assert!(output.contains("rename = \"after-each\""));
+    }
 }
