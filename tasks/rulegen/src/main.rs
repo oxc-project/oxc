@@ -902,6 +902,9 @@ impl RuleConfigOutput {
                     if key_snake.to_case(Case::Camel) != *raw_key {
                         let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
                     }
+                    // Add a placeholder documentation comment for the field so maintainers remember to
+                    // describe the purpose of each generated config field.
+                    let _ = writeln!(output, "    /// FIXME: Describe the purpose of this field.");
                     let escaped_key_snake = Self::escape_rust_identifier(key_snake);
                     let _ = writeln!(output, "    {escaped_key_snake}: {value_label},");
                 }
@@ -2126,6 +2129,10 @@ mod tests {
         assert!(label.is_some());
         let output = out.output;
         assert!(output.contains("max_items: i32,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
     }
 
     #[test]
@@ -2140,6 +2147,10 @@ mod tests {
         let output = out.output;
         assert!(output.contains("enabled: bool,"));
         assert!(output.contains("threshold: f32,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
     }
 
     #[test]
@@ -2156,6 +2167,10 @@ mod tests {
         assert!(output.contains("r#type: String,"));
         assert!(output.contains("r#match: String,"));
         assert!(output.contains("r#fn: String,"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
     }
 
     #[test]
@@ -2232,6 +2247,10 @@ mod tests {
         assert!(output.contains("impl Default for MyConfig"));
         assert!(output.contains("max_items: 2,"));
         assert!(!output.contains("derive(Debug, Default"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
     }
 
     #[test]
@@ -2245,6 +2264,10 @@ mod tests {
         assert!(label.is_some());
         let output = out.output;
         assert!(output.contains("name: String::from(\"bar\"),"));
+        assert!(
+            output.contains("/// FIXME: Describe the purpose of this field."),
+            "output did not contain doc comment: {output}"
+        );
 
         // boolean default
         let mut out = RuleConfigOutput::new(false);
