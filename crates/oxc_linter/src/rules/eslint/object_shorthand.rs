@@ -1,50 +1,48 @@
 use oxc_ast::{
-    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
     AstKind,
+    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule};
 
-fn expected_all_properties_shorthanded(span0: Span) -> OxcDiagnostic {
+fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
-        .with_labels([span0.into()])
+        .with_label(span)
 }
 
-fn expected_literal_method_longform(span0: Span) -> OxcDiagnostic {
+fn expected_literal_method_longform(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint(object-shorthand): Expected longform method syntax for string literal keys.",
     )
-    .with_labels([span0.into()])
+    .with_label(span)
 }
 
-fn expected_property_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected property shorthand.")
-        .with_labels([span0.into()])
+fn expected_property_shorthand(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected property shorthand.").with_label(span)
 }
 
-fn expected_property_longform(span0: Span) -> OxcDiagnostic {
+fn expected_property_longform(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected longform property syntax.")
-        .with_labels([span0.into()])
+        .with_label(span)
 }
 
-fn expected_method_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(object-shorthand): Expected method shorthand.")
-        .with_labels([span0.into()])
+fn expected_method_shorthand(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected method shorthand.").with_label(span)
 }
 
-fn expected_method_longform(span0: Span) -> OxcDiagnostic {
+fn expected_method_longform(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected longform method syntax.")
-        .with_labels([span0.into()])
+        .with_label(span)
 }
 
-fn unexpected_mix(span0: Span) -> OxcDiagnostic {
+fn unexpected_mix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.",
     )
-    .with_labels([span0.into()])
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -98,19 +96,20 @@ declare_oxc_lint!(
     /// var methods = { a() {}, b() {} };
     /// ```
     ObjectShorthand,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc-project.github.io/docs/contribute/linter.html#rule-category> for details
+    eslint,
+    style,
+    fix
 );
 
 impl Rule for ObjectShorthand {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let obj1 = value.get(0);
         let obj2 = value.get(1);
 
         let shorthand_type =
             obj1.and_then(serde_json::Value::as_str).map(ShorthandType::from).unwrap_or_default();
 
-        Self(Box::new(ObjectShorthandConfig {
+        Ok(Self(Box::new(ObjectShorthandConfig {
             apply_to_methods: matches!(
                 shorthand_type,
                 ShorthandType::Methods | ShorthandType::Always
@@ -139,7 +138,7 @@ impl Rule for ObjectShorthand {
                 .and_then(|v| v.get("methodsIgnorePattern"))
                 .and_then(serde_json::Value::as_str)
                 .map(ToString::to_string),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -191,14 +190,13 @@ impl ObjectShorthand {
             return;
         }
 
-        if let Expression::FunctionExpression(func) = &property.value.without_parenthesized() {
+        if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
             // TODO: fixer
             ctx.diagnostic(expected_method_shorthand(func.span));
         }
 
         if self.avoid_explicit_return_arrows {
-            if let Expression::ArrowFunctionExpression(func) =
-                &property.value.without_parenthesized()
+            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
             {
                 if !func.expression {
                     ctx.diagnostic(expected_method_shorthand(func.span));
@@ -209,10 +207,10 @@ impl ObjectShorthand {
 
     fn check_shorthand_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
         if let Some(property_name) = property.key.name() {
-            ctx.diagnostic_with_fix(expected_property_longform(property.span), || {
-                Fix::new(
-                    property_name.to_string() + ": " + &property_name.to_string(),
+            ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+                fixer.replace(
                     property.span,
+                    property_name.to_string() + ": " + &property_name.to_string(),
                 )
             });
         }
@@ -223,21 +221,20 @@ impl ObjectShorthand {
             return;
         }
 
-        let Expression::Identifier(value_identifier) = &property.value.without_parenthesized()
-        else {
+        let Expression::Identifier(value_identifier) = &property.value.without_parentheses() else {
             return;
         };
 
         if let Some(property_name) = property.key.name() {
             if property_name == value_identifier.name {
-                if ctx.semantic().trivias().has_comments_between(Span::new(
+                if ctx.semantic().has_comments_between(Span::new(
                     property.key.span().start,
                     value_identifier.span.end,
                 )) {
                     ctx.diagnostic(expected_property_shorthand(property.span));
                 } else {
-                    ctx.diagnostic_with_fix(expected_property_shorthand(property.span), || {
-                        Fix::new(property_name.to_string(), property.span)
+                    ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+                        fixer.replace(property.span, property_name.to_string())
                     });
                 }
             }
@@ -459,23 +456,23 @@ fn test() {
             "var x = {y: z,
               x: x,
               a: b
-              // comment 
+              // comment
             }",
             "var x = {y: z,
               x,
               a: b
-              // comment 
+              // comment
             }",
             None,
         ),
         (
             "var x = {y: z,
               a: b,
-              // comment 
+              // comment
               f: function() {}}",
             "var x = {y: z,
               a: b,
-              // comment 
+              // comment
               f() {}}",
             None,
         ),
@@ -603,7 +600,9 @@ fn test() {
         ("({ a: async function*() {} })", "({ async *a() {} })", Some(json!(["always"]))),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -684,7 +683,7 @@ fn test_never() {
         ),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -772,14 +771,16 @@ fn test_ignore_constructors() {
         ),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, vec![]).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
+        .expect_fix(fix)
+        .test_and_snapshot();
 
     let pass = vec![
         ("var x = {ConstructorFunction: function(){}, a: b}", Some(json!(["never"]))),
         ("var x = {notConstructorFunction: function(){}, b: c}", Some(json!(["never"]))),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, vec![]).test();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![]).test();
 }
 
 #[test]
@@ -874,7 +875,9 @@ fn test_methods_ignore_pattern() {
         ),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, vec![]).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -912,7 +915,9 @@ fn test_avoid_quotes() {
         ),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, vec![]).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -1296,5 +1301,7 @@ fn test_avoid_explicit_return_arrows() {
         ),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, vec![]).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
