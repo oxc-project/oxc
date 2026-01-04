@@ -628,15 +628,24 @@ fn generate_impl_for_fieldless_enum(enum_def: &EnumDef, schema: &Schema) -> Toke
     // Use concrete lifetime 'a (not anonymous '_) since we return data with that lifetime
     let ty = enum_def.ty_with_lifetime(schema, false);
 
+    // Track which ESTree values we've seen to avoid duplicate match arms
+    // (e.g., CommentKind::SingleLineBlock and MultiLineBlock both map to "Block")
+    let mut seen_values = std::collections::HashSet::new();
+
     let match_arms = enum_def
         .all_variants(schema)
         .filter(|variant| !should_skip_enum_variant(variant))
-        .map(|variant| {
-            let variant_ident = variant.ident();
+        .filter_map(|variant| {
             let estree_value = get_fieldless_variant_value(enum_def, variant);
-            let estree_value_str = estree_value.as_ref();
-            quote! {
-                #estree_value_str => Ok(Self::#variant_ident),
+            // Only generate match arm for first variant with this ESTree value
+            if seen_values.insert(estree_value.clone()) {
+                let variant_ident = variant.ident();
+                let estree_value_str = estree_value.as_ref();
+                Some(quote! {
+                    #estree_value_str => Ok(Self::#variant_ident),
+                })
+            } else {
+                None
             }
         })
         .collect::<Vec<_>>();
