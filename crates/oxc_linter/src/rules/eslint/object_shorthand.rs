@@ -199,7 +199,64 @@ impl Rule for ObjectShorthand {
                         || self.avoid_quotes && is_property_key_string_literal(property))
                 {
                     // from { x() {} } to { x: function() {} }
-                    // TODO: implement
+
+                    //  function makeFunctionLongform(fixer, node) {
+                    // 	  const firstKeyToken = node.computed
+                    // 	  	? sourceCode.getTokens(node).find(token => token.value === "[")
+                    // 	  	: sourceCode.getFirstToken(node.key);
+                    // 	  const lastKeyToken = node.computed
+                    // 	  	? sourceCode
+                    // 	  			.getTokensBetween(node.key, node.value)
+                    // 	  			.find(token => token.value === "]")
+                    // 	  	: sourceCode.getLastToken(node.key);
+                    // 	  const keyText = sourceCode.text.slice(
+                    // 	  	firstKeyToken.range[0],
+                    // 	  	lastKeyToken.range[1],
+                    // 	  );
+                    // 	  let functionHeader = "function";
+
+                    // 	  if (node.value.async) {
+                    // 	  	functionHeader = `async ${functionHeader}`;
+                    // 	  }
+                    // 	  if (node.value.generator) {
+                    // 	  	functionHeader = `${functionHeader}*`;
+                    // 	  }
+
+                    // 	  return fixer.replaceTextRange(
+                    // 	  	[node.range[0], lastKeyToken.range[1]],
+                    // 	  	`${keyText}: ${functionHeader}`,
+                    // 	  );
+                    // }
+
+                    ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+                        let property_key_span = property.key.span();
+                        let key_text_range = if property.computed {
+                            let (Some(paren_start), Some(paren_end_offset)) = (
+                                ctx.find_prev_token_from(property_key_span.start, "["),
+                                ctx.find_next_token_from(property_key_span.end, "]"),
+                            ) else {
+                                return fixer.noop();
+                            };
+                            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+                        } else {
+                            property_key_span
+                        };
+                        let key_text = ctx.source_range(key_text_range);
+
+                        let Expression::FunctionExpression(func) =
+                            &property.value.without_parentheses()
+                        else {
+                            return fixer.noop();
+                        };
+                        let function_header = match (func.r#async, func.generator) {
+                            (true, true) => "async function*",
+                            (true, false) => "async function",
+                            (false, true) => "function*",
+                            (false, false) => "function",
+                        };
+
+                        fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
+                    });
                 } else if self.apply_never {
                     // from { x } to { x: x }
                     Self::check_shorthand_properties(&self, property, ctx);
@@ -255,13 +312,12 @@ impl ObjectShorthand {
                     return fixer.noop();
                 }
 
-                let key_prefix: CompactStr = match (func.r#async, func.generator) {
+                let key_prefix = match (func.r#async, func.generator) {
                     (true, true) => "async *",
                     (true, false) => "async ",
                     (false, true) => "*",
                     (false, false) => "",
-                }
-                .into();
+                };
                 let property_key_span = property.key.span();
                 let key_text = if property.computed {
                     let (Some(paren_start), Some(paren_end_offset)) = (
@@ -316,7 +372,7 @@ impl ObjectShorthand {
     }
 
     fn check_longform_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
-        if self.avoid_quotes {
+        if self.avoid_quotes && is_property_key_string_literal(property) {
             return;
         }
 
