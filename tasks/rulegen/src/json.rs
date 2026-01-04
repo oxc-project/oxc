@@ -12,11 +12,12 @@ pub fn convert_config_to_json_literal(object: &str) -> String {
         Cow::Owned(format!(r#""{ident}":"#))
     });
     let comment_matcher = regex!("//.*?\n");
-    let whitespace_matcher = regex!(r"(\t| )+");
+    let whitespace_matcher = regex!(r"(\t|\s)+");
     whitespace_matcher
         .replace_all(&comment_matcher.replace_all(&after_ident, ""), " ")
         .replace('\'', "\"")
         .replace('\n', " ")
+        .replace('\t', "  ")
 }
 
 #[cfg(test)]
