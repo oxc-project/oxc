@@ -776,23 +776,22 @@ mod test {
     #[cfg(not(miri))]
     #[test]
     fn overlong_source() {
-        // Build string in 16 KiB chunks for speed
-        let mut source = String::with_capacity(MAX_LEN + 1);
-        let line = "var x = 123456;\n";
-        let chunk = line.repeat(1024);
-        while source.len() < MAX_LEN + 1 - chunk.len() {
-            source.push_str(&chunk);
-        }
-        while source.len() < MAX_LEN + 1 - line.len() {
-            source.push_str(line);
-        }
-        while source.len() < MAX_LEN + 1 {
-            source.push('\n');
-        }
-        assert_eq!(source.len(), MAX_LEN + 1);
+        // Avoid allocating 4GB by creating a string that reports length > MAX_LEN
+        // without actually allocating that much memory. This works because:
+        // - Source::new() checks len() before parsing and substitutes "\0" if it exceeds MAX_LEN
+        // - The parser only calls .len() on source_text, never accesses the content when len() > MAX_LEN
+        let small_str = "x";
+        let len = MAX_LEN + 1;
+
+        // SAFETY: We create a string slice with a fake length. The parser only checks
+        // .len() and never accesses the content when length exceeds MAX_LEN, so this is safe.
+        let source: &str = unsafe {
+            std::str::from_utf8_unchecked(std::slice::from_raw_parts(small_str.as_ptr(), len))
+        };
+        assert!(source.len() > MAX_LEN);
 
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
+        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);
