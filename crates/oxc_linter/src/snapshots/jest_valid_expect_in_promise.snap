@@ -2,153 +2,1126 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
+    ╭─[valid_expect_in_promise.tsx:7:6]
+  6 │                 it('it1', () => {
+  7 │ ╭─▶               somePromise.then(() => {
+  8 │ │                   expect(someThing).toEqual(true);
+  9 │ ╰─▶               });
+ 10 │                 });
+    ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.finally(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:13]
+ 2 │                        it('it1', () => {
+ 3 │ ╭─▶                      somePromise['then'](() => {
+ 4 │ │                          expect(someThing).toEqual(true);
+ 5 │ ╰─▶                      });
+ 6 │                        });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               getSomeThing().getPromise().then(function() {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               Promise.resolve().then(function() {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               somePromise.catch(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     xtest('it1', function() {
+ 2 │ ╭─▶               somePromise.catch(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               somePromise.then(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function () {
+ 2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ │                 }, /*rejection*/ function () {
+ 5 │ │                   expect(someThing).toEqual(true);
+ 6 │ ╰─▶               })
+ 7 │                 })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function () {
+ 2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ │                 }, /*rejection*/ function () {
+ 5 │ │                   expect(someThing).toEqual(true);
+ 6 │ ╰─▶               })
+ 7 │                 })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', function () {
+ 2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
+ 3 │ │                 }, /*rejection*/ function () {
+ 4 │ │                   expect(someThing).toEqual(true)
+ 5 │ ╰─▶               })
  6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 somePromise().catch(err => {
- 4 │ │                       expect(err).toBeInstanceOf(Error);
- 5 │ ╰─▶                 });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('test function', () => {
+ 2 │ ╭─▶               Builder.getPromiseBuilder()
+ 3 │ │                   .get()
+ 4 │ │                   .build()
+ 5 │ ╰─▶                 .then(data => expect(data).toEqual('Hi'));
  6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 somePromise().finally(() => {
- 4 │ │                       expect(cleanup).toHaveBeenCalled();
- 5 │ ╰─▶                 });
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('test function', async () => {
+ 3 │ ╭─▶                       Builder.getPromiseBuilder()
+ 4 │ │                           .get()
+ 5 │ │                           .build()
+ 6 │ ╰─▶                         .then(data => expect(data).toEqual('Hi'));
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
  6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 Promise.all([
- 4 │ │                       somePromise().then(data => expect(data).toBe('foo'))
- 5 │ ╰─▶                 ]);
- 6 │                 });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => {})
+ 4 │ ╰─▶                 .then(() => expect(someThing).toEqual(value))
+ 5 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 Promise.race([
- 4 │ │                       somePromise().then(data => expect(data).toBe('foo'))
- 5 │ ╰─▶                 ]);
- 6 │                 });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => expect(someThing).toEqual(value))
+ 4 │ ╰─▶                 .then(() => {})
+ 5 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:33]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 const promise = somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
- 6 │                 });
-   ╰────
-  help: Return or await the promise to ensure the expects in its chain are called
-
-  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
- 6 │                     otherPromise().then(data => {
-   ╰────
-  help: Return or await the promise to ensure the expects in its chain are called
-
-  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:6:17]
- 5 │                     });
- 6 │ ╭─▶                 otherPromise().then(data => {
- 7 │ │                       expect(data).toBe('bar');
- 8 │ ╰─▶                 });
- 9 │                 });
-   ╰────
-  help: Return or await the promise to ensure the expects in its chain are called
-
-  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 somePromise()
- 4 │ │                       .then(data => data.json())
- 5 │ │                       .then(json => {
- 6 │ │                           expect(json).toHaveProperty('foo');
- 7 │ ╰─▶                     });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
  8 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', async () => {
- 3 │ ╭─▶                 somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ │                 })
+ 5 │ │                 .then(() => {
+ 6 │ │                   console.log('this is silly');
+ 7 │ ╰─▶               })
+ 8 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   // return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
+ 8 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
+ 8 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => 1)
+ 4 │ │                   .then(x => x + 1)
+ 5 │ │                   .catch(() => -1)
+ 6 │ ╰─▶                 .then(v => expect(v).toBe(2));
+ 7 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => 1)
+ 4 │ │                   .then(v => expect(v).toBe(2))
+ 5 │ │                   .then(x => x + 1)
+ 6 │ ╰─▶                 .catch(() => -1);
+ 7 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.finally(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
  6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:17]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 Promise.resolve().then(() => {
- 4 │ │                       expect(true).toBe(true);
- 5 │ ╰─▶                 });
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('invalid return', () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   const foo = "foo";
+ 4 │ │                   return expect(value).toBe('red');
+ 5 │ ╰─▶               });
  6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:33]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 const promise = somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
- 6 │                     promise.then(() => {
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     fit('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:6:17]
- 5 │                     });
- 6 │ ╭─▶                 promise.then(() => {
- 7 │ │                       expect(true).toBe(true);
- 8 │ ╰─▶                 });
- 9 │                 });
+   ╭─[valid_expect_in_promise.tsx:2:6]
+ 1 │     it.skip('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:33]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 const promise = somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
- 6 │                     return Promise.any([promise]);
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   promise;
    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
 
   ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
-   ╭─[valid_expect_in_promise.tsx:3:33]
- 2 │                 it('fails', () => {
- 3 │ ╭─▶                 const promise = somePromise().then(data => {
- 4 │ │                       expect(data).toBe('foo');
- 5 │ ╰─▶                 });
- 6 │                     return Promise.race([promise]);
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return;
    ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return 1;
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return [];
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return Promise.all([anotherPromise]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return {};
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return Promise.all([]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await 1;
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await [];
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await Promise.all([anotherPromise]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await {};
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await Promise.all([]);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               }), x = 1;
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:29]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const x = 1, promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:29]
+ 2 │                 test('later return', async () => {
+ 3 │ ╭─▶               const x = 1, promise = something().then(value => {
+ 4 │ │                   expect(value).toBe('red');
+ 5 │ ╰─▶               });
+ 6 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:6]
+ 2 │                   const somePromise = getThatPromise();
+ 3 │ ╭─▶               somePromise.then((data) => {
+ 4 │ │                   expect(data).toEqual('foo');
+ 5 │ ╰─▶               });
+ 6 │                   expect(somePromise).toBeDefined();
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:6]
+ 2 │                   let somePromise = getThatPromise();
+ 3 │ ╭─▶               somePromise.then((data) => {
+ 4 │ │                   expect(data).toEqual('foo');
+ 5 │ ╰─▶               });
+ 6 │                   expect(somePromise).toBeDefined();
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:24]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   somePromise = null;
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:24]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   somePromise = getPromise().then((data) => {
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:24]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   ({ somePromise } = {})
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:24]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   {
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:18]
+ 1 │     test('that we error on this destructuring', async () => {
+ 2 │ ╭─▶               [promise] = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     test('that we error on this', () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   log(promise);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     it('is valid', async () => {
+ 2 │ ╭─▶               const promise = loadNumber().then(number => {
+ 3 │ │                   expect(typeof number).toBe('number');
+ 4 │ │                   return number + 1;
+ 5 │ ╰─▶               });
+ 6 │                   expect(promise).toBeInstanceOf(Promise);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:2:22]
+ 1 │     it('is valid', async () => {
+ 2 │ ╭─▶               const promise = loadNumber().then(number => {
+ 3 │ │                   expect(typeof number).toBe('number');
+ 4 │ │                   return number + 1;
+ 5 │ ╰─▶               });
+ 6 │                   expect(anotherPromise).resolves.toBe(1);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:22]
+ 2 │                 promiseThatThis('is valid', async () => {
+ 3 │ ╭─▶               const promise = loadNumber().then(number => {
+ 4 │ │                   expect(typeof number).toBe('number');
+ 5 │ │                   return number + 1;
+ 6 │ ╰─▶               });
+ 7 │                   expect(anotherPromise).resolves.toBe(1);
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+    ╭─[valid_expect_in_promise.tsx:9:14]
+  8 │                         it('it1', () => {
+  9 │ ╭─▶                       somePromise.then(() => {
+ 10 │ │                           expect(someThing).toEqual(true);
+ 11 │ ╰─▶                       });
+ 12 │                         });
+    ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', () => {
+ 3 │ ╭─▶                       somePromise.finally(() => {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:13]
+ 2 │                        it('it1', () => {
+ 3 │ ╭─▶                      somePromise['then'](() => {
+ 4 │ │                          expect(someThing).toEqual(true);
+ 5 │ ╰─▶                      });
+ 6 │                        });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function() {
+ 3 │ ╭─▶                       getSomeThing().getPromise().then(function() {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function() {
+ 3 │ ╭─▶                       Promise.resolve().then(function() {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function() {
+ 3 │ ╭─▶                       somePromise.catch(function() {
+ 4 │ │                           expect(someThing).toEqual(true)
+ 5 │ ╰─▶                       })
+ 6 │                         })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         xtest('it1', function() {
+ 3 │ ╭─▶                       somePromise.catch(function() {
+ 4 │ │                           expect(someThing).toEqual(true)
+ 5 │ ╰─▶                       })
+ 6 │                         })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function() {
+ 3 │ ╭─▶                       somePromise.then(function() {
+ 4 │ │                           expect(someThing).toEqual(true)
+ 5 │ ╰─▶                       })
+ 6 │                         })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function () {
+ 3 │ ╭─▶                       Promise.resolve().then(/*fulfillment*/ function () {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ │                         }, /*rejection*/ function () {
+ 6 │ │                           expect(someThing).toEqual(true);
+ 7 │ ╰─▶                       })
+ 8 │                         })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function () {
+ 3 │ ╭─▶                       Promise.resolve().then(/*fulfillment*/ function () {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ │                         }, /*rejection*/ function () {
+ 6 │ │                           expect(someThing).toEqual(true);
+ 7 │ ╰─▶                       })
+ 8 │                         })
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', function () {
+ 3 │ ╭─▶                       Promise.resolve().then(/*fulfillment*/ function () {
+ 4 │ │                         }, /*rejection*/ function () {
+ 5 │ │                           expect(someThing).toEqual(true)
+ 6 │ ╰─▶                       })
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('test function', () => {
+ 3 │ ╭─▶                       Builder.getPromiseBuilder()
+ 4 │ │                           .get()
+ 5 │ │                           .build()
+ 6 │ ╰─▶                         .then(data => expect(data).toEqual('Hi'));
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('test function', async () => {
+ 3 │ ╭─▶                       Builder.getPromiseBuilder()
+ 4 │ │                           .get()
+ 5 │ │                           .build()
+ 6 │ ╰─▶                         .then(data => expect(data).toEqual('Hi'));
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           doSomeOperation();
+ 5 │ │                           expect(someThing).toEqual(true);
+ 6 │ ╰─▶                       })
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise
+ 4 │ │                           .then(() => {})
+ 5 │ ╰─▶                         .then(() => expect(someThing).toEqual(value))
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise
+ 4 │ │                           .then(() => expect(someThing).toEqual(value))
+ 5 │ ╰─▶                         .then(() => {})
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           return value;
+ 5 │ │                         })
+ 6 │ │                         .then(value => {
+ 7 │ │                           expect(someThing).toEqual(value);
+ 8 │ ╰─▶                       })
+ 9 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           expect(someThing).toEqual(true);
+ 5 │ │                         })
+ 6 │ │                         .then(() => {
+ 7 │ │                           console.log('this is silly');
+ 8 │ ╰─▶                       })
+ 9 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           // return value;
+ 5 │ │                         })
+ 6 │ │                         .then(value => {
+ 7 │ │                           expect(someThing).toEqual(value);
+ 8 │ ╰─▶                       })
+ 9 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           return value;
+ 5 │ │                         })
+ 6 │ │                         .then(value => {
+ 7 │ │                           expect(someThing).toEqual(value);
+ 8 │ ╰─▶                       })
+ 9 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise
+ 4 │ │                           .then(() => 1)
+ 5 │ │                           .then(x => x + 1)
+ 6 │ │                           .catch(() => -1)
+ 7 │ ╰─▶                         .then(v => expect(v).toBe(2));
+ 8 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('is a test', () => {
+ 3 │ ╭─▶                       somePromise
+ 4 │ │                           .then(() => 1)
+ 5 │ │                           .then(v => expect(v).toBe(2))
+ 6 │ │                           .then(x => x + 1)
+ 7 │ ╰─▶                         .catch(() => -1);
+ 8 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it('it1', () => {
+ 3 │ ╭─▶                       somePromise.finally(() => {
+ 4 │ │                           doSomeOperation();
+ 5 │ │                           expect(someThing).toEqual(true);
+ 6 │ ╰─▶                       })
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('invalid return', () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           const foo = "foo";
+ 5 │ │                           return expect(value).toBe('red');
+ 6 │ ╰─▶                       });
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         fit('it1', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           doSomeOperation();
+ 5 │ │                           expect(someThing).toEqual(true);
+ 6 │ ╰─▶                       })
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:14]
+ 2 │                         it.skip('it1', () => {
+ 3 │ ╭─▶                       somePromise.then(() => {
+ 4 │ │                           doSomeOperation();
+ 5 │ │                           expect(someThing).toEqual(true);
+ 6 │ ╰─▶                       })
+ 7 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       }), x = 1;
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:37]
+ 2 │                         test('later return', async () => {
+ 3 │ ╭─▶                       const x = 1, promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:5:37]
+ 4 │                         test('later return', async () => {
+ 5 │ ╭─▶                       const x = 1, promise = something().then(value => {
+ 6 │ │                           expect(value).toBe('red');
+ 7 │ ╰─▶                       });
+ 8 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:4:14]
+ 3 │                           const somePromise = getThatPromise();
+ 4 │ ╭─▶                       somePromise.then((data) => {
+ 5 │ │                           expect(data).toEqual('foo');
+ 6 │ ╰─▶                       });
+ 7 │                           expect(somePromise).toBeDefined();
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:4:14]
+ 3 │                           let somePromise = getThatPromise();
+ 4 │ ╭─▶                       somePromise.then((data) => {
+ 5 │ │                           expect(data).toEqual('foo');
+ 6 │ ╰─▶                       });
+ 7 │                           expect(somePromise).toBeDefined();
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:32]
+ 2 │                         test('promise test', async function () {
+ 3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
+ 4 │ │                           expect(data).toEqual('foo');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:32]
+ 2 │                         test('promise test', async function () {
+ 3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
+ 4 │ │                           expect(data).toEqual('foo');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:32]
+ 2 │                         test('promise test', async function () {
+ 3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
+ 4 │ │                           expect(data).toEqual('foo');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:32]
+ 2 │                         test('promise test', async function () {
+ 3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
+ 4 │ │                           expect(data).toEqual('foo');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:26]
+ 2 │                         test('that we error on this destructuring', async () => {
+ 3 │ ╭─▶                       [promise] = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │                         });
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         test('that we error on this', () => {
+ 3 │ ╭─▶                       const promise = something().then(value => {
+ 4 │ │                           expect(value).toBe('red');
+ 5 │ ╰─▶                       });
+ 6 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         it('is valid', async () => {
+ 3 │ ╭─▶                       const promise = loadNumber().then(number => {
+ 4 │ │                           expect(typeof number).toBe('number');
+ 5 │ │   
+ 6 │ │                           return number + 1;
+ 7 │ ╰─▶                       });
+ 8 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+   ╭─[valid_expect_in_promise.tsx:3:30]
+ 2 │                         it('is valid', async () => {
+ 3 │ ╭─▶                       const promise = loadNumber().then(number => {
+ 4 │ │                           expect(typeof number).toBe('number');
+ 5 │ │   
+ 6 │ │                           return number + 1;
+ 7 │ ╰─▶                       });
+ 8 │     
+   ╰────
+  help: Return or await the promise to ensure the expects in its chain are called
+
+  ⚠ eslint-plugin-jest(valid-expect-in-promise): Promise containing expect was not returned or awaited
+    ╭─[valid_expect_in_promise.tsx:5:30]
+  4 │                         promiseThatThis('is valid', async () => {
+  5 │ ╭─▶                       const promise = loadNumber().then(number => {
+  6 │ │                           expect(typeof number).toBe('number');
+  7 │ │   
+  8 │ │                           return number + 1;
+  9 │ ╰─▶                       });
+ 10 │     
+    ╰────
   help: Return or await the promise to ensure the expects in its chain are called
