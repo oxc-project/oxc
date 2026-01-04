@@ -891,12 +891,8 @@ impl RuleConfigOutput {
                         "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                     );
                 }
-                // Add a default in serde if it has defaults
-                if has_defaults {
-                    output.push_str("#[serde(rename_all = \"camelCase\", default)]\n");
-                } else {
-                    output.push_str("#[serde(rename_all = \"camelCase\")]\n");
-                }
+                // Add a default in serde.
+                output.push_str("#[serde(rename_all = \"camelCase\", default)]\n");
                 let _ = writeln!(output, "struct {struct_name} {{");
                 for (raw_key, key_snake, value_label, _) in &field_entries {
                     if key_snake.to_case(Case::Camel) != *raw_key {
