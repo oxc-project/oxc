@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
-use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
+use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule};
+use lazy_regex::{Captures, Lazy, Regex, RegexBuilder, lazy_regex};
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
@@ -10,8 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::StringCharAt;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-
-use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule};
+use schemars::JsonSchema;
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
@@ -53,8 +53,9 @@ fn unexpected_mix(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
 
-#[derive(Debug, Default, Clone)]
-pub struct ObjectShorthandConfig {
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectShorthandConfigJSON {
     apply_to_methods: bool,
     apply_to_properties: bool,
     apply_never: bool,
@@ -65,6 +66,37 @@ pub struct ObjectShorthandConfig {
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
     methods_ignore_pattern: Option<String>,
+}
+
+impl ObjectShorthandConfigJSON {
+    fn into_object_shorthand_config(self) -> ObjectShorthandConfig {
+        ObjectShorthandConfig {
+            apply_to_methods: self.apply_to_methods,
+            apply_to_properties: self.apply_to_properties,
+            apply_never: self.apply_never,
+            apply_consistent: self.apply_consistent,
+            apply_consistent_as_needed: self.apply_consistent_as_needed,
+            avoid_quotes: self.avoid_quotes,
+            ignore_constructors: self.ignore_constructors,
+            avoid_explicit_return_arrows: self.avoid_explicit_return_arrows,
+            methods_ignore_pattern: self
+                .methods_ignore_pattern
+                .and_then(|p| RegexBuilder::new(&format!(r"{p}")).build().ok()),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct ObjectShorthandConfig {
+    apply_to_methods: bool,
+    apply_to_properties: bool,
+    apply_never: bool,
+    apply_consistent: bool,
+    apply_consistent_as_needed: bool,
+    avoid_quotes: bool,
+    ignore_constructors: bool,
+    avoid_explicit_return_arrows: bool,
+    methods_ignore_pattern: Option<Regex>,
 }
 
 impl std::ops::Deref for ObjectShorthand {
@@ -103,7 +135,8 @@ declare_oxc_lint!(
     ObjectShorthand,
     eslint,
     style,
-    fix
+    fix,
+    config = ObjectShorthandConfigJSON
 );
 
 impl Rule for ObjectShorthand {
@@ -114,36 +147,42 @@ impl Rule for ObjectShorthand {
         let shorthand_type =
             obj1.and_then(serde_json::Value::as_str).map(ShorthandType::from).unwrap_or_default();
 
-        Ok(Self(Box::new(ObjectShorthandConfig {
-            apply_to_methods: matches!(
-                shorthand_type,
-                ShorthandType::Methods | ShorthandType::Always
-            ),
-            apply_to_properties: matches!(
-                shorthand_type,
-                ShorthandType::Properties | ShorthandType::Always
-            ),
-            apply_never: matches!(shorthand_type, ShorthandType::Never),
-            apply_consistent: matches!(shorthand_type, ShorthandType::Consistent),
-            apply_consistent_as_needed: matches!(shorthand_type, ShorthandType::ConsistentAsNeeded),
+        Ok(Self(Box::new(
+            ObjectShorthandConfigJSON {
+                apply_to_methods: matches!(
+                    shorthand_type,
+                    ShorthandType::Methods | ShorthandType::Always
+                ),
+                apply_to_properties: matches!(
+                    shorthand_type,
+                    ShorthandType::Properties | ShorthandType::Always
+                ),
+                apply_never: matches!(shorthand_type, ShorthandType::Never),
+                apply_consistent: matches!(shorthand_type, ShorthandType::Consistent),
+                apply_consistent_as_needed: matches!(
+                    shorthand_type,
+                    ShorthandType::ConsistentAsNeeded
+                ),
 
-            avoid_quotes: obj2
-                .and_then(|v| v.get("avoidQuotes"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            ignore_constructors: obj2
-                .and_then(|v| v.get("ignoreConstructors"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            avoid_explicit_return_arrows: obj2
-                .and_then(|v| v.get("avoidExplicitReturnArrows"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            methods_ignore_pattern: obj2
-                .and_then(|v| v.get("methodsIgnorePattern"))
-                .and_then(serde_json::Value::as_str)
-                .map(ToString::to_string),
-        })))
+                avoid_quotes: obj2
+                    .and_then(|v| v.get("avoidQuotes"))
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false),
+                ignore_constructors: obj2
+                    .and_then(|v| v.get("ignoreConstructors"))
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false),
+                avoid_explicit_return_arrows: obj2
+                    .and_then(|v| v.get("avoidExplicitReturnArrows"))
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false),
+                methods_ignore_pattern: obj2
+                    .and_then(|v| v.get("methodsIgnorePattern"))
+                    .and_then(serde_json::Value::as_str)
+                    .map(ToString::to_string),
+            }
+            .into_object_shorthand_config(),
+        )))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -194,7 +233,13 @@ impl ObjectShorthand {
         {
             return;
         }
-        // TODO: self.methods_ignore_pattern
+        if let (Some(pattern), Some(static_name)) =
+            (self.methods_ignore_pattern.as_ref(), property.key.static_name())
+        {
+            if pattern.is_match(static_name.as_ref()) {
+                return;
+            }
+        }
 
         if self.avoid_quotes && is_property_key_string_literal(property) {
             return;
