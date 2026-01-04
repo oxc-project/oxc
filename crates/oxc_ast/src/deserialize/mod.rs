@@ -1151,3 +1151,280 @@ mod tests {
         assert!(result.return_type.is_some());
     }
 }
+
+#[test]
+fn test_binding_property_shorthand() {
+    use crate::ast::js::Program;
+
+    let allocator = Allocator::default();
+    // ESTree representation of: const { a } = x;
+    let json = serde_json::json!({
+        "type": "Program",
+        "sourceType": "module",
+        "start": 0,
+        "end": 17,
+        "body": [{
+            "type": "VariableDeclaration",
+            "kind": "const",
+            "start": 0,
+            "end": 17,
+            "declarations": [{
+                "type": "VariableDeclarator",
+                "start": 6,
+                "end": 16,
+                "id": {
+                    "type": "ObjectPattern",
+                    "start": 6,
+                    "end": 11,
+                    "properties": [{
+                        "type": "Property",
+                        "start": 8,
+                        "end": 9,
+                        "key": {
+                            "type": "Identifier",
+                            "name": "a",
+                            "start": 8,
+                            "end": 9
+                        },
+                        "value": {
+                            "type": "Identifier",
+                            "name": "a",
+                            "start": 8,
+                            "end": 9
+                        },
+                        "kind": "init",
+                        "method": false,
+                        "shorthand": true,
+                        "computed": false
+                    }]
+                },
+                "init": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 14,
+                    "end": 15
+                }
+            }]
+        }]
+    });
+
+    let result: Result<Program, _> = FromESTree::from_estree(&json, &allocator);
+    assert!(result.is_ok(), "Failed to deserialize: {:?}", result.err());
+}
+
+#[test]
+fn test_binding_property_non_shorthand() {
+    use crate::ast::js::Program;
+
+    let allocator = Allocator::default();
+    // ESTree representation of: const { b: c } = x;
+    let json = serde_json::json!({
+        "type": "Program",
+        "sourceType": "module",
+        "start": 0,
+        "end": 20,
+        "body": [{
+            "type": "VariableDeclaration",
+            "kind": "const",
+            "start": 0,
+            "end": 20,
+            "declarations": [{
+                "type": "VariableDeclarator",
+                "start": 6,
+                "end": 19,
+                "id": {
+                    "type": "ObjectPattern",
+                    "start": 6,
+                    "end": 14,
+                    "properties": [{
+                        "type": "Property",
+                        "start": 8,
+                        "end": 12,
+                        "key": {
+                            "type": "Identifier",
+                            "name": "b",
+                            "start": 8,
+                            "end": 9
+                        },
+                        "value": {
+                            "type": "Identifier",
+                            "name": "c",
+                            "start": 11,
+                            "end": 12
+                        },
+                        "kind": "init",
+                        "method": false,
+                        "shorthand": false,
+                        "computed": false
+                    }]
+                },
+                "init": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 17,
+                    "end": 18
+                }
+            }]
+        }]
+    });
+
+    let result: Result<Program, _> = FromESTree::from_estree(&json, &allocator);
+    assert!(result.is_ok(), "Failed to deserialize: {:?}", result.err());
+}
+
+#[test]
+fn test_ts_property_signature() {
+    use crate::ast::js::Program;
+
+    let allocator = Allocator::default();
+    // ESTree representation of: type Foo = { bar: string };
+    let json = serde_json::json!({
+        "type": "Program",
+        "sourceType": "module",
+        "start": 0,
+        "end": 26,
+        "body": [{
+            "type": "TSTypeAliasDeclaration",
+            "start": 0,
+            "end": 26,
+            "declare": false,
+            "id": {
+                "type": "Identifier",
+                "name": "Foo",
+                "start": 5,
+                "end": 8
+            },
+            "typeAnnotation": {
+                "type": "TSTypeLiteral",
+                "start": 11,
+                "end": 26,
+                "members": [{
+                    "type": "TSPropertySignature",
+                    "start": 13,
+                    "end": 24,
+                    "computed": false,
+                    "optional": false,
+                    "readonly": false,
+                    "key": {
+                        "type": "Identifier",
+                        "name": "bar",
+                        "start": 13,
+                        "end": 16
+                    },
+                    "typeAnnotation": {
+                        "type": "TSTypeAnnotation",
+                        "start": 16,
+                        "end": 24,
+                        "typeAnnotation": {
+                            "type": "TSStringKeyword",
+                            "start": 18,
+                            "end": 24
+                        }
+                    }
+                }]
+            }
+        }]
+    });
+
+    let result: Result<Program, _> = FromESTree::from_estree(&json, &allocator);
+    assert!(result.is_ok(), "Failed to deserialize: {:?}", result.err());
+}
+
+/// Test ObjectPattern with RestElement - the rest element should be extracted
+/// from the properties array and placed in the `rest` field.
+/// This tests the `#[estree(append_to = properties)]` deserialization.
+#[test]
+fn test_object_pattern_with_rest_element() {
+    use crate::ast::js::Program;
+
+    let allocator = Allocator::default();
+    // ESTree representation of: const { a, ...rest } = x;
+    // Note: The RestElement is inside the properties array in ESTree,
+    // but oxc AST has it in a separate `rest` field.
+    let json = serde_json::json!({
+        "type": "Program",
+        "sourceType": "module",
+        "start": 0,
+        "end": 25,
+        "body": [{
+            "type": "VariableDeclaration",
+            "kind": "const",
+            "start": 0,
+            "end": 25,
+            "declarations": [{
+                "type": "VariableDeclarator",
+                "start": 6,
+                "end": 24,
+                "id": {
+                    "type": "ObjectPattern",
+                    "start": 6,
+                    "end": 19,
+                    "properties": [
+                        {
+                            "type": "Property",
+                            "start": 8,
+                            "end": 9,
+                            "key": {
+                                "type": "Identifier",
+                                "name": "a",
+                                "start": 8,
+                                "end": 9
+                            },
+                            "value": {
+                                "type": "Identifier",
+                                "name": "a",
+                                "start": 8,
+                                "end": 9
+                            },
+                            "kind": "init",
+                            "method": false,
+                            "shorthand": true,
+                            "computed": false
+                        },
+                        {
+                            "type": "RestElement",
+                            "start": 11,
+                            "end": 18,
+                            "argument": {
+                                "type": "Identifier",
+                                "name": "rest",
+                                "start": 14,
+                                "end": 18
+                            }
+                        }
+                    ]
+                },
+                "init": {
+                    "type": "Identifier",
+                    "name": "x",
+                    "start": 22,
+                    "end": 23
+                }
+            }]
+        }]
+    });
+
+    let result: Result<Program, _> = FromESTree::from_estree(&json, &allocator);
+    assert!(
+        result.is_ok(),
+        "Failed to deserialize ObjectPattern with RestElement: {:?}",
+        result.err()
+    );
+
+    // Also verify the structure is correct
+    let program = result.unwrap();
+    let stmt = &program.body[0];
+    if let crate::ast::js::Statement::VariableDeclaration(decl) = stmt {
+        let declarator = &decl.declarations[0];
+        if let crate::ast::js::BindingPattern::ObjectPattern(pattern) = &declarator.id {
+            // Should have 1 property (the shorthand 'a')
+            assert_eq!(pattern.properties.len(), 1, "Expected 1 property");
+            // Should have the rest element
+            assert!(pattern.rest.is_some(), "Expected rest element to be set");
+        } else {
+            panic!("Expected ObjectPattern");
+        }
+    } else {
+        panic!("Expected VariableDeclaration");
+    }
+}

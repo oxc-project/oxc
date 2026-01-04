@@ -64,7 +64,7 @@ bench = false
 # with only the crates it needs, to speed up the builds
 [dependencies]
 oxc_allocator = { workspace = true, optional = true }
-oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
+oxc_ast = { workspace = true, optional = true, features = ["serialize", "deserialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_formatter = { workspace = true, optional = true }

@@ -170,6 +170,12 @@ fn generate_field_deserialization(
         );
     }
 
+    // Check if this field is the source of an `append_to` (i.e., it's appended to another field).
+    // If so, its deserialization is handled by that other field, so we generate nothing here.
+    if is_appended_to_another_field(field, struct_def) {
+        return (quote! {}, false);
+    }
+
     // Skip fields marked with #[estree(skip)]
     if should_skip_field(field, schema) {
         return generate_default_field(field, schema);
@@ -202,6 +208,13 @@ fn generate_field_deserialization(
             },
             true, // allocator is passed to FromESTree
         );
+    }
+
+    // Check if this field has appended or prepended fields (e.g., `rest` appended to `properties`,
+    // or `directives` prepended to `body`).
+    // In ESTree, these are combined into a single array, but in oxc they're separate fields.
+    if field.estree.append_field_index.is_some() || field.estree.prepend_field_index.is_some() {
+        return generate_field_with_concat_deserialization(field, &estree_name, struct_def, schema);
     }
 
     // Determine if field is optional
@@ -250,6 +263,193 @@ fn generate_field_deserialization(
             },
             true, // allocator is passed to FromESTree
         )
+    }
+}
+
+/// Generate deserialization for a Vec field that has elements prepended or appended to it in ESTree.
+/// For example:
+/// - `ObjectPattern.properties` has `rest` appended, so the ESTree array contains both `Property`
+///   and `RestElement` nodes, but oxc separates them.
+/// - `Program.body` has `directives` prepended, so ESTree's `body` array starts with directives.
+/// Returns (TokenStream, uses_allocator bool).
+fn generate_field_with_concat_deserialization(
+    field: &FieldDef,
+    estree_name: &str,
+    struct_def: &StructDef,
+    schema: &Schema,
+) -> (TokenStream, bool) {
+    let field_ident = field.ident();
+    let estree_name_str = estree_name;
+
+    // Collect info about prepended and appended fields
+    let prepend_info = field.estree.prepend_field_index.map(|idx| {
+        let f = &struct_def.fields[idx];
+        let ty = f.type_def(schema);
+        let inner_ty = ty.innermost_type(schema);
+        let type_name = match inner_ty {
+            TypeDef::Struct(s) => s.estree.rename.as_deref().unwrap_or(s.name()).to_string(),
+            _ => inner_ty.name().to_string(),
+        };
+        (f.ident(), type_name, matches!(ty, TypeDef::Option(_)))
+    });
+
+    let append_info = field.estree.append_field_index.map(|idx| {
+        let f = &struct_def.fields[idx];
+        let ty = f.type_def(schema);
+        let inner_ty = ty.innermost_type(schema);
+        let type_name = match inner_ty {
+            TypeDef::Struct(s) => s.estree.rename.as_deref().unwrap_or(s.name()).to_string(),
+            _ => inner_ty.name().to_string(),
+        };
+        (f.ident(), type_name, matches!(ty, TypeDef::Option(_)))
+    });
+
+    // Build the output bindings
+    let mut output_bindings = vec![field_ident.clone()];
+    if let Some((ident, _, _)) = &prepend_info {
+        output_bindings.insert(0, ident.clone());
+    }
+    if let Some((ident, _, _)) = &append_info {
+        output_bindings.push(ident.clone());
+    }
+
+    // Generate the filtering logic
+    // For prepended elements, we need special handling for types like Directive
+    // which share the same ESTree type as regular statements. We use the presence
+    // of the "directive" field to distinguish them.
+    let prepend_check = prepend_info.as_ref().map(|(_, type_name, is_optional)| {
+        // Special case: Directive has ESTree type "ExpressionStatement" but has a "directive" field
+        let is_directive = type_name == "ExpressionStatement";
+        let check_condition = if is_directive {
+            // Check for presence of "directive" field to identify directives
+            quote! { elem.get("directive").is_some() }
+        } else {
+            quote! { elem_type == #type_name }
+        };
+
+        if *is_optional {
+            quote! {
+                if #check_condition {
+                    prepended_element = Some(ABox::new_in(
+                        FromESTree::from_estree(elem, allocator)?,
+                        allocator
+                    ));
+                    continue;
+                }
+            }
+        } else {
+            quote! {
+                if #check_condition {
+                    prepended_elements.push(FromESTree::from_estree(elem, allocator)?);
+                    continue;
+                }
+            }
+        }
+    });
+
+    let append_check = append_info.as_ref().map(|(_, type_name, is_optional)| {
+        if *is_optional {
+            quote! {
+                if elem_type == #type_name {
+                    appended_element = Some(ABox::new_in(
+                        FromESTree::from_estree(elem, allocator)?,
+                        allocator
+                    ));
+                    continue;
+                }
+            }
+        } else {
+            quote! {
+                if elem_type == #type_name {
+                    appended_elements.push(FromESTree::from_estree(elem, allocator)?);
+                    continue;
+                }
+            }
+        }
+    });
+
+    // Generate initializers for prepend/append collections
+    let prepend_init = prepend_info.as_ref().map(|(_, _, is_optional)| {
+        if *is_optional {
+            quote! { let mut prepended_element = None; }
+        } else {
+            quote! { let mut prepended_elements = AVec::new_in(allocator); }
+        }
+    });
+
+    let append_init = append_info.as_ref().map(|(_, _, is_optional)| {
+        if *is_optional {
+            quote! { let mut appended_element = None; }
+        } else {
+            quote! { let mut appended_elements = AVec::new_in(allocator); }
+        }
+    });
+
+    // Generate the final tuple based on what fields we have
+    let result_tuple = match (&prepend_info, &append_info) {
+        (Some((_, _, is_prep_opt)), Some((_, _, is_app_opt))) => {
+            let prep_val =
+                if *is_prep_opt { quote!(prepended_element) } else { quote!(prepended_elements) };
+            let app_val =
+                if *is_app_opt { quote!(appended_element) } else { quote!(appended_elements) };
+            quote! { (#prep_val, main_elements, #app_val) }
+        }
+        (Some((_, _, is_prep_opt)), None) => {
+            let prep_val =
+                if *is_prep_opt { quote!(prepended_element) } else { quote!(prepended_elements) };
+            quote! { (#prep_val, main_elements) }
+        }
+        (None, Some((_, _, is_app_opt))) => {
+            let app_val =
+                if *is_app_opt { quote!(appended_element) } else { quote!(appended_elements) };
+            quote! { (main_elements, #app_val) }
+        }
+        (None, None) => {
+            // Shouldn't happen, but handle it
+            quote! { main_elements }
+        }
+    };
+
+    (
+        quote! {
+            let (#(#output_bindings),*) = {
+                let arr = json.estree_field(#estree_name_str)?
+                    .as_array()
+                    .ok_or(DeserError::ExpectedArray)?;
+
+                #prepend_init
+                let mut main_elements = AVec::with_capacity_in(arr.len(), allocator);
+                #append_init
+
+                for elem in arr {
+                    let elem_type = elem.estree_type()?;
+                    #prepend_check
+                    #append_check
+                    // Regular element
+                    main_elements.push(FromESTree::from_estree(elem, allocator)?);
+                }
+
+                #result_tuple
+            };
+        },
+        true, // allocator is used
+    )
+}
+
+/// Check if a field is the source of an `append_to` attribute.
+/// This means this field's value is appended to another field in ESTree representation,
+/// and its deserialization is handled by that target field.
+fn is_appended_to_another_field(field: &FieldDef, struct_def: &StructDef) -> bool {
+    // A field is appended to another if any other field has this field's index in its
+    // append_field_index or prepend_field_index
+    let field_index = struct_def.fields.iter().position(|f| f.name() == field.name());
+    if let Some(field_index) = field_index {
+        struct_def.fields.iter().any(|other_field| {
+            other_field.estree.append_field_index == Some(field_index)
+                || other_field.estree.prepend_field_index == Some(field_index)
+        })
+    } else {
+        false
     }
 }
 
@@ -584,6 +784,7 @@ fn generate_disambiguation(
         "BinaryExpression" => generate_binary_expression_disambiguation(variants, schema),
         "TSModuleDeclaration" => generate_ts_module_declaration_disambiguation(variants, schema),
         "JSXIdentifier" => generate_jsx_identifier_disambiguation(variants, schema),
+        "Property" => generate_property_disambiguation(variants, schema),
         _ => {
             // Unknown disambiguation case - use first variant
             let (_, arm) = &variants[0];
@@ -805,6 +1006,57 @@ fn generate_jsx_identifier_disambiguation(
     }
 }
 
+/// Generate disambiguation for Property (AssignmentTargetPropertyIdentifier vs AssignmentTargetPropertyProperty,
+/// BindingProperty shorthand vs non-shorthand, ObjectProperty, etc.).
+/// These types all serialize to ESTree type "Property" but differ by `shorthand` field.
+fn generate_property_disambiguation(
+    variants: &[(&VariantDef, TokenStream)],
+    schema: &Schema,
+) -> TokenStream {
+    let mut shorthand_arm: Option<TokenStream> = None;
+    let mut non_shorthand_arm: Option<TokenStream> = None;
+    let mut object_property_arm: Option<TokenStream> = None;
+    let mut binding_property_arm: Option<TokenStream> = None;
+
+    for (variant, arm) in variants {
+        let inner_type = variant.field_type(schema);
+        let inner_name = inner_type.map(|t| t.innermost_type(schema).name()).unwrap_or("");
+
+        match inner_name {
+            // AssignmentTargetProperty variants
+            "AssignmentTargetPropertyIdentifier" => shorthand_arm = Some(arm.clone()),
+            "AssignmentTargetPropertyProperty" => non_shorthand_arm = Some(arm.clone()),
+            // Object/Binding property types
+            "ObjectProperty" => object_property_arm = Some(arm.clone()),
+            "BindingProperty" => binding_property_arm = Some(arm.clone()),
+            _ => {}
+        }
+    }
+
+    let fallback = variants[0].1.clone();
+
+    // Use shorthand for disambiguation between AssignmentTarget variants
+    if shorthand_arm.is_some() || non_shorthand_arm.is_some() {
+        let shorthand_arm = shorthand_arm.unwrap_or_else(|| fallback.clone());
+        let non_shorthand_arm = non_shorthand_arm.unwrap_or_else(|| fallback.clone());
+
+        return quote! {
+            // Disambiguate Property variants based on shorthand field
+            let is_shorthand = json.get("shorthand").and_then(|v| v.as_bool()).unwrap_or(false);
+
+            if is_shorthand {
+                #shorthand_arm
+            } else {
+                #non_shorthand_arm
+            }
+        };
+    }
+
+    // For ObjectProperty vs BindingProperty, we need context-based dispatch
+    // which should be handled by the parent enum. Fall back to first variant.
+    object_property_arm.or(binding_property_arm).unwrap_or(fallback)
+}
+
 /// Generate a match arm for an enum variant, returning (type_name, arm_body).
 /// Generate match arms for an enum variant.
 /// Returns a list of (type_name, arm_body) pairs because some types like Class
@@ -876,8 +1128,16 @@ fn get_estree_type_names_for_variant(
         "ClassDeclaration" => return vec!["ClassDeclaration".to_string()],
         "ClassExpression" => return vec!["ClassExpression".to_string()],
         // Function variants - use the variant name directly
-        "FunctionDeclaration" => return vec!["FunctionDeclaration".to_string()],
-        "FunctionExpression" => return vec!["FunctionExpression".to_string()],
+        // FunctionDeclaration also matches TSDeclareFunction since they share the same oxc struct
+        "FunctionDeclaration" => {
+            return vec!["FunctionDeclaration".to_string(), "TSDeclareFunction".to_string()];
+        }
+        "FunctionExpression" => {
+            return vec![
+                "FunctionExpression".to_string(),
+                "TSEmptyBodyFunctionExpression".to_string(),
+            ];
+        }
         // MethodDefinition variants in ClassElement enum
         "MethodDefinition" => {
             return vec!["MethodDefinition".to_string(), "TSAbstractMethodDefinition".to_string()];
