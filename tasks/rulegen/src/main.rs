@@ -1976,6 +1976,10 @@ fn generate_rule_runner_impl() -> Result<(), Box<dyn std::error::Error>> {
         return Err("Failed to run oxc_linter_codegen".into());
     }
 
+    println!("Formatting generated RuleRunner impl...");
+    // format the generated code
+    Command::new("cargo").args(["fmt", "--package", "oxc_linter"]).status()?;
+
     Ok(())
 }
 
