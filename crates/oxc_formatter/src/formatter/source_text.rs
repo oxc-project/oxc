@@ -348,14 +348,8 @@ const z = 3;
         let bar_start = source.find("bar").unwrap() as u32;
 
         // The node wrapped inside parentheses should not inherit the blank lines from within.
-        assert_eq!(
-            source_text.get_lines_before(Span::new(foo_start, foo_start + 3), &comments),
-            0
-        );
+        assert_eq!(source_text.get_lines_before(Span::new(foo_start, foo_start + 3), &comments), 0);
         // The node outside the parentheses should still see the two preceding blank lines.
-        assert_eq!(
-            source_text.get_lines_before(Span::new(bar_start, bar_start + 3), &comments),
-            2
-        );
+        assert_eq!(source_text.get_lines_before(Span::new(bar_start, bar_start + 3), &comments), 2);
     }
 }
