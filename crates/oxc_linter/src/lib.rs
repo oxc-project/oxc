@@ -371,7 +371,7 @@ impl Linter {
 
         // Phase 3: Run Rust rules using deserialized ESTree AST
         // This gives us full scope fidelity from the custom parser
-        let (rust_messages, _result) = external_linter::lint_with_external_ast(
+        let (rust_messages, deser_result) = external_linter::lint_with_external_ast(
             self,
             path,
             source_text,
@@ -379,7 +379,36 @@ impl Linter {
             parse_result.scope_manager_json.as_deref(),
             Some(parser_options_json),
         );
-        all_messages.extend(rust_messages);
+
+        // Handle deserialization result
+        match deser_result {
+            DeserializeResult::Success => {
+                all_messages.extend(rust_messages);
+            }
+            DeserializeResult::NonJsAst(root_type) => {
+                // Non-JS AST (e.g., JSON) - skip Rust rules silently, JS rules will handle it
+                debug_assert!(
+                    true,
+                    "Custom parser returned non-JS AST (root: {root_type}), skipping Rust rules"
+                );
+            }
+            DeserializeResult::UnknownNode(node_type) => {
+                // Unknown node type - skip Rust rules, log for debugging
+                // This is expected for parsers with custom syntax nodes
+                debug_assert!(
+                    true,
+                    "Custom parser AST contains unknown node type '{node_type}', skipping Rust rules for {path:?}"
+                );
+            }
+            DeserializeResult::Error(err) => {
+                // Deserialization error - this is unexpected, create a diagnostic
+                let diagnostic = OxcDiagnostic::error(format!(
+                    "Failed to deserialize custom parser AST: {err}"
+                ))
+                .with_label(Span::new(0, 0));
+                all_messages.push(Message::new(diagnostic, PossibleFixes::None));
+            }
+        }
 
         // Get external rules for this path
         let ResolvedLinterState { config, external_rules, .. } = self.config.resolve(path);

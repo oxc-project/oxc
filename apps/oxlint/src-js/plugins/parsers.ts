@@ -13,13 +13,18 @@ import { serializeScopeManagerFrom } from "./scope.ts";
 /**
  * Stringify an object to JSON, handling circular references by replacing them with null.
  * Many ESLint parsers return ASTs with parent pointers that create circular references.
+ *
+ * Note: Circular references are expected in ESLint parser ASTs (parent pointers) and are
+ * silently replaced with null. This is safe because:
+ * 1. The JS-side AST cache preserves the original AST with parent pointers for JS rules
+ * 2. The Rust-side deserializer rebuilds parent pointers during AST construction
  */
 function safeJsonStringify(obj: unknown): string {
   const seen = new WeakSet();
   return JSON.stringify(obj, (_key, value) => {
     if (typeof value === "object" && value !== null) {
       if (seen.has(value)) {
-        // Circular reference found, replace with null
+        // Circular reference found (typically parent pointers), replace with null
         return null;
       }
       seen.add(value);
@@ -84,10 +89,18 @@ interface CachedParseResult {
 }
 
 /**
+ * Maximum number of cached parse results before cleanup is triggered.
+ * This prevents unbounded memory growth if getAndClearCachedParseResult is not called.
+ */
+const PARSE_RESULT_CACHE_MAX_SIZE = 100;
+
+/**
  * Cache for parse results from parseForESLint().
  * Keyed by file path, stores the AST and scopeManager until lintFileWithCustomAst retrieves them.
  * This allows passing these objects between parseFile and lintFile without JSON serialization,
  * preserving parent pointers and scopeManager methods.
+ *
+ * Note: Entries are automatically cleaned up when the cache exceeds PARSE_RESULT_CACHE_MAX_SIZE.
  */
 const parseResultCache = new Map<string, CachedParseResult>();
 
@@ -100,6 +113,31 @@ export function getAndClearCachedParseResult(filePath: string): CachedParseResul
   const result = parseResultCache.get(filePath);
   parseResultCache.delete(filePath);
   return result;
+}
+
+/**
+ * Clear the entire parse result cache.
+ * Call this when starting a new lint session to free memory.
+ */
+export function clearParseResultCache(): void {
+  parseResultCache.clear();
+}
+
+/**
+ * Add a parse result to the cache, enforcing the max size limit.
+ * If the cache is full, the oldest entries are removed.
+ */
+function cacheParseResult(filePath: string, result: CachedParseResult): void {
+  // Clean up if cache is too large (oldest entries first since Map preserves insertion order)
+  if (parseResultCache.size >= PARSE_RESULT_CACHE_MAX_SIZE) {
+    const entriesToRemove = parseResultCache.size - PARSE_RESULT_CACHE_MAX_SIZE + 1;
+    const keys = parseResultCache.keys();
+    for (let i = 0; i < entriesToRemove; i++) {
+      const { value: key } = keys.next();
+      if (key) parseResultCache.delete(key);
+    }
+  }
+  parseResultCache.set(filePath, result);
 }
 
 /**
@@ -124,10 +162,10 @@ interface ParseFileResult {
  * Load a custom parser from a file URL.
  *
  * @param url - Absolute path of parser file as a `file://...` URL
- * @param parserOptionsJson - Parser options as JSON string
+ * @param _parserOptionsJson - Parser options as JSON string (reserved for future use)
  * @returns Parser details or error serialized to JSON string
  */
-export async function loadParser(url: string, parserOptionsJson: string): Promise<string> {
+export async function loadParser(url: string, _parserOptionsJson: string): Promise<string> {
   try {
     const imported = await import(url);
     // Handle both ES modules and CommonJS modules (where exports are under `default`)
@@ -220,7 +258,7 @@ export function parseFile(
     // This avoids JSON serialization issues:
     // - AST has parent pointers (circular references) that would be lost
     // - scopeManager has methods and circular references
-    parseResultCache.set(filePath, { ast, scopeManager });
+    cacheParseResult(filePath, { ast, scopeManager });
 
     // Serialize the scope manager for Rust consumption (Phase 3 ESTree deserialization).
     // This extracts scope, variable, and reference information into a flat JSON structure

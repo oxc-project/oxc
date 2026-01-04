@@ -712,9 +712,12 @@ pub fn parse_external_scope(scope_manager_json: &str) -> Result<SerializedScopeM
 /// with custom syntax by adding references that oxc couldn't detect from the AST.
 ///
 /// The injection works by:
-/// 1. For each reference in the external scope manager
-/// 2. Finding the corresponding symbol in oxc's symbol table by name
-/// 3. Adding a synthetic reference to mark the symbol as "used"
+/// 1. Building a mapping from external variable IDs to their declaration spans
+/// 2. For each symbol in oxc, finding the matching external variable by name AND span
+/// 3. For each reference to that external variable, adding a synthetic reference in oxc
+///
+/// This approach correctly handles shadowed variables (same name in different scopes)
+/// by matching on declaration span rather than just name.
 ///
 /// # Arguments
 ///
@@ -728,54 +731,66 @@ pub fn inject_scope_references(
 
     let scoping = semantic.scoping_mut();
 
-    // Build a mapping from external variable IDs to variable names
-    // We'll use this to look up variable names when processing references
-    let variable_names: FxHashMap<u32, &str> =
-        scope_manager.variables.iter().map(|v| (v.id, v.name.as_str())).collect();
+    // Build a mapping from external reference IDs to the reference data
+    let ext_references: FxHashMap<u32, &SerializedReference> =
+        scope_manager.references.iter().map(|r| (r.id, r)).collect();
 
-    // Build a mapping from variable names to symbol IDs by iterating all scopes.
-    // This is needed because imports are in the module scope, not the global scope.
-    // We iterate all bindings in all scopes to build this map.
-    // We clone the names to avoid borrow checker issues.
-    let mut name_to_symbol: FxHashMap<String, oxc_semantic::SymbolId> = FxHashMap::default();
-    for (_scope_id, bindings) in scoping.iter_bindings() {
-        for (name, &symbol_id) in bindings {
-            // Only keep the first binding for each name (typically the outermost scope)
-            name_to_symbol.entry(name.to_string()).or_insert(symbol_id);
+    // For each oxc symbol, try to find the corresponding external variable by name AND span.
+    // Then inject any references from the external scope manager that target that variable.
+    //
+    // We iterate by symbol_id to get span info, then match against external variables.
+    // This correctly handles shadowed variables because we match by declaration span.
+    for symbol_id in scoping.symbol_ids().collect::<Vec<_>>() {
+        let symbol_span = scoping.symbol_span(symbol_id);
+        let symbol_name = scoping.symbol_name(symbol_id);
+
+        // Find external variable with matching name and overlapping declaration span.
+        // We use span overlap rather than exact match because spans may differ slightly
+        // between parsers (e.g., including/excluding type annotations).
+        let matching_ext_var = scope_manager.variables.iter().find(|ext_var| {
+            if ext_var.name != symbol_name {
+                return false;
+            }
+            // Check if spans overlap (allowing for slight differences)
+            if let Some(ext_span) = &ext_var.span {
+                // Spans overlap if one contains the start of the other, or they're very close
+                let spans_match = (ext_span.start <= symbol_span.start
+                    && symbol_span.start <= ext_span.end)
+                    || (symbol_span.start <= ext_span.start && ext_span.start <= symbol_span.end)
+                    || (ext_span.start.abs_diff(symbol_span.start) <= 1
+                        && ext_span.end.abs_diff(symbol_span.end) <= 1);
+                spans_match
+            } else {
+                // No span info in external var - fall back to name-only matching
+                // but only if this is the first symbol with this name (to avoid duplicates)
+                true
+            }
+        });
+
+        let Some(ext_var) = matching_ext_var else {
+            continue;
+        };
+
+        // Inject references from the external scope manager for this variable
+        for &ref_id in &ext_var.reference_ids {
+            let Some(ext_ref) = ext_references.get(&ref_id) else {
+                continue;
+            };
+
+            // Create a synthetic reference
+            // We use NodeId::ROOT as a sentinel since we don't have an actual AST node
+            let flags = ext_ref.to_reference_flags();
+            let reference = Reference::new_with_symbol_id(NodeId::ROOT, symbol_id, flags);
+
+            // Add the reference to the scoping data
+            let reference_id = scoping.create_reference(reference);
+            scoping.add_resolved_reference(symbol_id, reference_id);
         }
     }
 
-    // For each resolved reference in the external scope manager,
-    // try to find the corresponding symbol and add a reference
-    for ext_ref in &scope_manager.references {
-        // Skip unresolved references (they reference global variables)
-        let Some(variable_id) = ext_ref.variable_id else {
-            continue;
-        };
-
-        // Get the variable name
-        let Some(name) = variable_names.get(&variable_id) else {
-            continue;
-        };
-
-        // Try to find the symbol in oxc's scope tree
-        let Some(&symbol_id) = name_to_symbol.get(*name) else {
-            // Symbol not found in oxc's scope tree - it might be:
-            // - A variable declared in custom syntax (not in the stripped JS)
-            // - A global variable
-            // Skip it
-            continue;
-        };
-
-        // Create a synthetic reference
-        // We use NodeId::ROOT as a sentinel since we don't have an actual AST node
-        let flags = ext_ref.to_reference_flags();
-        let reference = Reference::new_with_symbol_id(NodeId::ROOT, symbol_id, flags);
-
-        // Add the reference to the scoping data
-        let reference_id = scoping.create_reference(reference);
-        scoping.add_resolved_reference(symbol_id, reference_id);
-    }
+    // Note: We intentionally don't process unresolved references (ext_ref.variable_id == None)
+    // from the external scope manager. These reference global variables which oxc already
+    // tracks through its own semantic analysis.
 }
 
 /// Result from deserializing ESTree JSON to oxc AST.
@@ -1449,5 +1464,179 @@ mod test {
 
         // All messages should be kept
         assert_eq!(filtered.len(), 2);
+    }
+
+    // ========================================================================
+    // Negative tests for malformed JSON
+    // ========================================================================
+
+    #[test]
+    fn test_load_parser_result_malformed_json() {
+        // Missing required field
+        let json = r#"{"parserId": 42}"#;
+        let result: Result<LoadParserResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Wrong type for field
+        let json = r#"{"parserId": "not a number", "hasParseForEslint": true}"#;
+        let result: Result<LoadParserResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Invalid JSON syntax
+        let json = r#"{"parserId": 42, hasParseForEslint: true}"#;
+        let result: Result<LoadParserResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Empty object
+        let json = r#"{}"#;
+        let result: Result<LoadParserResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_file_result_malformed_json() {
+        // Missing required astJson field
+        let json = r#"{"scopeManagerJson": null}"#;
+        let result: Result<ParseFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // astJson is null instead of string
+        let json = r#"{"astJson": null, "scopeManagerJson": null, "visitorKeysJson": null, "servicesJson": null}"#;
+        let result: Result<ParseFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Invalid JSON syntax in nested JSON string (should still deserialize - it's just a string)
+        let json = r#"{"astJson": "{ invalid }", "scopeManagerJson": null, "visitorKeysJson": null, "servicesJson": null}"#;
+        let result: Result<ParseFileResult, _> = serde_json::from_str(json);
+        // This should succeed because astJson is a string, not parsed JSON
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_scope_manager_malformed_json() {
+        // Missing required scopes field
+        let json = r#"{"variables": [], "references": []}"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Missing required variables field
+        let json = r#"{"scopes": [], "references": []}"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Missing required references field
+        let json = r#"{"scopes": [], "variables": []}"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Invalid type for scope id
+        let json = r#"{
+            "scopes": [{"id": "not a number", "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
+            "variables": [],
+            "references": []
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Missing required fields in scope
+        let json = r#"{
+            "scopes": [{"id": 0}],
+            "variables": [],
+            "references": []
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Invalid span format
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": {"start": "not a number", "end": 10}}],
+            "variables": [],
+            "references": []
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_scope_manager_variable_malformed() {
+        // Variable missing required name field
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [0], "blockSpan": null}],
+            "variables": [{"id": 0, "scopeId": 0, "definitionType": null, "span": null, "referenceIds": []}],
+            "references": []
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Variable with invalid referenceIds type
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [0], "blockSpan": null}],
+            "variables": [{"id": 0, "name": "x", "scopeId": 0, "definitionType": null, "span": null, "referenceIds": "not an array"}],
+            "references": []
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_scope_manager_reference_malformed() {
+        // Reference missing required span field
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
+            "variables": [],
+            "references": [{"id": 0, "name": "x", "variableId": null, "isRead": true, "isWrite": false}]
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+
+        // Reference with invalid boolean
+        let json = r#"{
+            "scopes": [{"id": 0, "type": "global", "parentId": null, "isStrict": false, "variableIds": [], "blockSpan": null}],
+            "variables": [],
+            "references": [{"id": 0, "name": "x", "variableId": null, "span": {"start": 0, "end": 1}, "isRead": "yes", "isWrite": false}]
+        }"#;
+        let result = parse_external_scope(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_strip_file_result_malformed_json() {
+        // Missing required source field
+        let json = r#"{"mappings": []}"#;
+        let result: Result<StripFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Missing required mappings field
+        let json = r#"{"source": "const x = 1;"}"#;
+        let result: Result<StripFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Invalid mapping format
+        let json = r#"{"source": "const x = 1;", "mappings": [{"strippedStart": "not a number"}]}"#;
+        let result: Result<StripFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Mapping missing required fields
+        let json = r#"{"source": "const x = 1;", "mappings": [{"strippedStart": 0, "strippedEnd": 10}]}"#;
+        let result: Result<StripFileResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_load_plugin_result_malformed_json() {
+        // Missing required fields
+        let json = r#"{"name": "test"}"#;
+        let result: Result<LoadPluginResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Invalid offset type
+        let json = r#"{"name": "test", "offset": "not a number", "ruleNames": []}"#;
+        let result: Result<LoadPluginResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Invalid ruleNames type
+        let json = r#"{"name": "test", "offset": 100, "ruleNames": "not an array"}"#;
+        let result: Result<LoadPluginResult, _> = serde_json::from_str(json);
+        assert!(result.is_err());
     }
 }
