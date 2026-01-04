@@ -1797,7 +1797,7 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty());
+            assert!(ret.errors.is_empty(), "errors: {:?}", ret.errors);
 
             let mut state = State::new(&body);
             state.visit_program(&ret.program);
@@ -2109,6 +2109,32 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_parsing_configs() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("maxItems".to_string(), (RuleConfigElement::Integer, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "my_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("max_items: i32,"));
+    }
+
+    #[test]
+    fn test_parsing_more_configs() {
+        let mut out = RuleConfigOutput::new(false);
+        let mut hm = FxHashMap::default();
+        hm.insert("enabled".to_string(), (RuleConfigElement::Boolean, None));
+        hm.insert("threshold".to_string(), (RuleConfigElement::Number, None));
+        let element = RuleConfigElement::Object(hm);
+        let label = out.extract_output(&element, "another_config");
+        assert!(label.is_some());
+        let output = out.output;
+        assert!(output.contains("enabled: bool,"));
+        assert!(output.contains("threshold: f32,"));
+    }
+
+    #[test]
     fn test_enum_rename_all_kebab() {
         let mut out = RuleConfigOutput::new(false);
         let element = RuleConfigElement::Enum(vec![
@@ -2177,7 +2203,8 @@ mod tests {
         let label = out.extract_output(&element, "my_config");
         assert!(label.is_some());
         let output = out.output;
-        assert!(output.contains("#[serde(default)]"));
+        // match serde(rename_all = "camelCase", default)""
+        assert!(output.contains("#[serde(rename_all = \"camelCase\", default)]"));
         assert!(output.contains("impl Default for MyConfig"));
         assert!(output.contains("max_items: 2,"));
         assert!(!output.contains("derive(Debug, Default"));
