@@ -481,8 +481,12 @@ mod test {
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix =
-        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
+    const REVERSE_RANGE: Fix = Fix {
+        // SAFETY: unsafe span for testing purpose
+        span: unsafe { Span::new_unchecked(3, 0) },
+        content: Cow::Borrowed(" "),
+        message: None,
+    };
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
         Fixer::new(TEST_CODE, messages, Some(SourceType::default())).fix()
