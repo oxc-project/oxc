@@ -46,10 +46,15 @@
         "groups": {
           "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
           "items": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
+            "anyOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "markdownDescription": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
           "type": [
