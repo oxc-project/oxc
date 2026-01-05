@@ -188,7 +188,7 @@ impl Rule for CapitalizedComments {
             // For block comments, we need to check both raw and normalized content
             // to handle URLs in multiline comments with * markers
             let is_directive = if comment.is_block() {
-                is_directive_comment(content) || is_url(normalized.trim())
+                is_directive_comment(content) || is_url(normalized.trim_start())
             } else {
                 is_directive_comment(content)
             };
