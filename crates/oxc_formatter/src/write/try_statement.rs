@@ -20,14 +20,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
         let finalizer = self.finalizer();
         write!(f, ["try", space()]);
 
-        // Use `write` rather than `write!` in order to avoid printing leading comments for `block`.
-        block.write(f);
+        if f.comments().has_leading_own_line_comment(block.span.start) {
+            // Use `write` rather than `write!` in order to avoid printing leading own line comments for `block`.
+            block.write(f);
+        } else {
+            write!(f, block);
+        }
+
         if let Some(handler) = handler {
             write!(f, [space(), handler]);
         }
         if let Some(finalizer) = finalizer {
             write!(f, [space(), "finally", space()]);
-            finalizer.write(f);
+            if f.comments().has_leading_own_line_comment(finalizer.span.start) {
+                // Use `write` rather than `write!` in order to avoid printing leading own line comments for `finalizer`.
+                finalizer.write(f);
+            } else {
+                write!(f, finalizer);
+            }
         }
     }
 }
@@ -56,8 +66,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
 
         write!(f, ["catch", space(), self.param(), space()]);
 
-        // Use `write` rather than `write!` in order to avoid printing leading comments for `block`.
-        self.body().write(f);
+        let block = self.body();
+        if f.comments().has_leading_own_line_comment(block.span.start) {
+            // Use `write` rather than `write!` in order to avoid printing leading own line comments for `block`.
+            block.write(f);
+        } else {
+            write!(f, block);
+        }
     }
 }
 
