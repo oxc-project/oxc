@@ -947,10 +947,9 @@ impl fmt::Display for OperatorPosition {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum EmbeddedLanguageFormatting {
     /// Enable formatting for embedded languages.
-    Auto,
-    // Disable by default at alpha release, synced with `oxfmtrc.rs`
-    /// Disable formatting for embedded languages.
     #[default]
+    Auto,
+    /// Disable formatting for embedded languages.
     Off,
 }
 

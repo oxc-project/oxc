@@ -198,6 +198,7 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
+        builder.shutdown(root_uri);
         let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
@@ -229,7 +230,7 @@ impl Tool for ServerFormatter {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
-
+        builder.shutdown(root_uri);
         let new_formatter = builder.build_boxed(root_uri, options);
 
         ToolRestartChanges {

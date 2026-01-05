@@ -87,9 +87,9 @@ const VITEST_RULES_PATH: &str =
     "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/src/rules";
 
 const VUE_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules";
 const VUE_RULES_PATH: &str =
-    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules/";
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules";
 
 struct TestCase {
     source_text: String,

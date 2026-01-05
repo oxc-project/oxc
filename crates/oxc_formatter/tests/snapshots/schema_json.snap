@@ -183,8 +183,8 @@ expression: json
           "type": "null"
         }
       ],
-      "description": "Control whether to format embedded parts in the file. (Default: `\"off\"`)",
-      "markdownDescription": "Control whether to format embedded parts in the file. (Default: `\"off\"`)"
+      "description": "Control whether to format embedded parts in the file.\ne.g. JS-in-Vue, CSS-in-JS, etc. (Default: `\"auto\"`)",
+      "markdownDescription": "Control whether to format embedded parts in the file.\ne.g. JS-in-Vue, CSS-in-JS, etc. (Default: `\"auto\"`)"
     },
     "endOfLine": {
       "anyOf": [

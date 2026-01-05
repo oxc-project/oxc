@@ -94,7 +94,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@28a9d316db64b78a951f3f8587a5d08cc97ad8eb # v2.65.6
+        uses: taiki-e/install-action@cc33365ec7e3350bc47bf935f247582cc6f68344 # v2.65.12
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -260,7 +260,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@28a9d316db64b78a951f3f8587a5d08cc97ad8eb # v2.65.6
+        uses: taiki-e/install-action@cc33365ec7e3350bc47bf935f247582cc6f68344 # v2.65.12
         with:
           tool: cross # cross installs the latest rust toolchain
 

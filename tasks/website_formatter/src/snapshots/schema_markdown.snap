@@ -44,7 +44,8 @@ Print spaces between brackets in object literals. (Default: `true`)
 type: `string | null`
 
 
-Control whether to format embedded parts in the file. (Default: `"off"`)
+Control whether to format embedded parts in the file.
+e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
 
 
 ## endOfLine
