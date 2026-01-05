@@ -264,9 +264,9 @@ fn normalize_comment_text(content: &str) -> String {
             let trimmed = line.trim_start();
             // Remove leading * and ONE following space (if present)
             // This matches ESLint's behavior which only removes a single space
-            trimmed.strip_prefix('*').map_or(trimmed, |after_star| {
-                after_star.strip_prefix(' ').unwrap_or(after_star)
-            })
+            trimmed
+                .strip_prefix('*')
+                .map_or(trimmed, |after_star| after_star.strip_prefix(' ').unwrap_or(after_star))
         })
         .join("\n")
 }
