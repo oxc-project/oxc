@@ -351,6 +351,7 @@ pub(crate) mod jest {
     pub mod require_top_level_describe;
     pub mod valid_describe_callback;
     pub mod valid_expect;
+    pub mod valid_expect_in_promise;
     pub mod valid_title;
 }
 
@@ -952,6 +953,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::require_top_level_describe,
     jest::valid_describe_callback,
     jest::valid_expect,
+    jest::valid_expect_in_promise,
     jest::valid_title,
     jsdoc::check_access,
     jsdoc::check_property_names,
