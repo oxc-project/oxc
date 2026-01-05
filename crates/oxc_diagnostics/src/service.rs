@@ -227,14 +227,13 @@ impl DiagnosticService {
     }
 
     /// Write all bytes to the writer, retrying on `WouldBlock` and `Interrupted`.
-    /// Returns `Ok(true)` on success, `Ok(false)` if pipe is broken (consumer gone),
-    /// or `Err` on other I/O errors.
-    fn write_all_retry(writer: &mut dyn Write, mut buf: &[u8]) -> std::io::Result<bool> {
+    /// Silently returns `Ok(())` if the pipe is broken (consumer gone).
+    fn write_all_retry(writer: &mut dyn Write, mut buf: &[u8]) -> std::io::Result<()> {
         while !buf.is_empty() {
             match writer.write(buf) {
                 Ok(0) => {
                     // Writer cannot accept more bytes - treat as broken pipe
-                    return Ok(false);
+                    return Ok(());
                 }
                 Ok(n) => {
                     buf = &buf[n..];
@@ -247,25 +246,26 @@ impl DiagnosticService {
                     // Interrupted by signal - retry immediately
                 }
                 Err(e) if e.kind() == ErrorKind::BrokenPipe => {
-                    // Consumer closed the pipe
-                    return Ok(false);
+                    // Consumer closed the pipe - silently ignore
+                    return Ok(());
                 }
                 Err(e) => return Err(e),
             }
         }
-        Ok(true)
+        Ok(())
     }
 
     /// Flush the writer, retrying on `WouldBlock` and `Interrupted`.
-    fn flush_retry(writer: &mut dyn Write) -> std::io::Result<bool> {
+    /// Silently returns `Ok(())` if the pipe is broken (consumer gone).
+    fn flush_retry(writer: &mut dyn Write) -> std::io::Result<()> {
         loop {
             match writer.flush() {
-                Ok(()) => return Ok(true),
+                Ok(()) => return Ok(()),
                 Err(e) if e.kind() == ErrorKind::WouldBlock => {
                     thread::sleep(Duration::from_millis(1));
                 }
                 Err(e) if e.kind() == ErrorKind::Interrupted => {}
-                Err(e) if e.kind() == ErrorKind::BrokenPipe => return Ok(false),
+                Err(e) if e.kind() == ErrorKind::BrokenPipe => return Ok(()),
                 Err(e) => return Err(e),
             }
         }
@@ -488,7 +488,7 @@ mod tests {
 
         let result = DiagnosticService::write_all_retry(&mut writer, data);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert_eq!(writer.written, data);
         assert_eq!(writer.write_calls, 1);
     }
@@ -500,7 +500,7 @@ mod tests {
 
         let result = DiagnosticService::write_all_retry(&mut writer, data);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert_eq!(writer.written, data);
         assert_eq!(writer.write_calls, 4); // 3 WouldBlock + 1 success
     }
@@ -512,7 +512,8 @@ mod tests {
 
         let result = DiagnosticService::write_all_retry(&mut writer, data);
 
-        assert!(!result.unwrap()); // Returns Ok(false) for broken pipe
+        // Broken pipe is silently ignored, returns Ok(())
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -533,7 +534,7 @@ mod tests {
 
         let result = DiagnosticService::write_all_retry(&mut writer, data);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert_eq!(writer.written, data);
     }
 
@@ -544,7 +545,7 @@ mod tests {
 
         let result = DiagnosticService::write_all_retry(&mut writer, data);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert!(writer.written.is_empty());
         assert_eq!(writer.write_calls, 0); // No write calls for empty buffer
     }
@@ -555,7 +556,7 @@ mod tests {
 
         let result = DiagnosticService::flush_retry(&mut writer);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert_eq!(writer.flush_calls, 1);
     }
 
@@ -565,7 +566,7 @@ mod tests {
 
         let result = DiagnosticService::flush_retry(&mut writer);
 
-        assert!(result.unwrap());
+        assert!(result.is_ok());
         assert_eq!(writer.flush_calls, 3); // 2 WouldBlock + 1 success
     }
 
@@ -575,7 +576,8 @@ mod tests {
 
         let result = DiagnosticService::flush_retry(&mut writer);
 
-        assert!(!result.unwrap()); // Returns Ok(false) for broken pipe
+        // Broken pipe is silently ignored, returns Ok(())
+        assert!(result.is_ok());
     }
 
     #[test]
