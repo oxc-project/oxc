@@ -1,4 +1,3 @@
-// oxlint-disable no-await-in-loop
 import { join, relative } from "node:path";
 import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -23,11 +22,9 @@ export function runCli(cwd: string, args: string[]) {
 
 // Test function for running the CLI with various arguments
 export async function runAndSnapshot(cwd: string, testCases: string[][]): Promise<string> {
-  const snapshot = [];
-  for (const args of testCases) {
-    const result = await runCli(cwd, args);
-    snapshot.push(formatSnapshot(cwd, args, result));
-  }
+  // Run all CLI calls in parallel
+  const results = await Promise.all(testCases.map((args) => runCli(cwd, args)));
+  const snapshot = results.map((result, i) => formatSnapshot(cwd, testCases[i], result));
   return normalizeOutput(snapshot.join("\n"), cwd);
 }
 
@@ -42,27 +39,30 @@ export async function runWriteModeAndSnapshot(
   try {
     await fs.cp(fixtureDir, tempDir, { recursive: true });
 
-    const snapshot = [];
-    for (const file of files) {
-      const filePath = join(tempDir, file);
+    // Read all "before" contents in parallel
+    const beforeContents = await Promise.all(
+      files.map((file) => fs.readFile(join(tempDir, file), "utf8")),
+    );
 
-      const beforeContent = await fs.readFile(filePath, "utf8");
+    // Run CLI once with all files (instead of once per file)
+    await runCli(tempDir, [...args, ...files]);
 
-      await runCli(tempDir, [...args, file]); // Write by default
-      const afterContent = await fs.readFile(filePath, "utf8");
+    // Read all "after" contents in parallel
+    const afterContents = await Promise.all(
+      files.map((file) => fs.readFile(join(tempDir, file), "utf8")),
+    );
 
-      snapshot.push(
-        `
---- FILE -----------
+    // Build snapshot
+    const snapshot = files.map(
+      (file, i) =>
+        `--- FILE -----------
 ${file}
 --- BEFORE ---------
-${beforeContent}
+${beforeContents[i]}
 --- AFTER ----------
-${afterContent}
---------------------
-`.trim(),
-      );
-    }
+${afterContents[i]}
+--------------------`,
+    );
 
     return snapshot.join("\n\n");
   } finally {

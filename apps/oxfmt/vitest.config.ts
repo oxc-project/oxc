@@ -1,3 +1,4 @@
+import os from "node:os";
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -8,6 +9,8 @@ export default defineConfig({
       printBasicPrototype: false,
     },
     snapshotSerializers: [],
-    testTimeout: 10000,
+    // Limit workers to avoid resource contention
+    // - each test spawns CLI subprocesses with their own worker pools
+    maxWorkers: Math.floor(os.cpus().length / 2),
   },
 });
