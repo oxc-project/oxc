@@ -613,6 +613,8 @@ fn test() {
         ("// HTTPS://GITHUB.COM", Some(serde_json::json!(["never"]))),
         // URLs in different comment types should all be ignored
         ("// https://oxc.rs", None),
+        ("//  https://oxc.rs", None),
+        ("//   https://oxc.rs", None),
         ("/* https://oxc.rs */", None),
         (
             "/*
