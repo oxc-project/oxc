@@ -2,57 +2,70 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => { await doSomethingAsync(); }).rejects.toThrow();
-   ·              ─────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:25]
+ 2 │                       it('should be fixed', async () => {
+ 3 │ ╭─▶                     await expect(async () => {
+ 4 │ │                         await doSomethingAsync();
+ 5 │ ╰─▶                     }).rejects.toThrow();
+ 6 │                       })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => await doSomethingAsync()).rejects.toThrow();
-   ·              ────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:25]
+ 2 │                   it('should be fixed', async () => {
+ 3 │                     await expect(async () => await doSomethingAsync()).rejects.toThrow();
+   ·                                  ────────────────────────────────────
+ 4 │                   })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async function() { await doSomethingAsync(); }).rejects.toThrow();
-   ·              ──────────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:25]
+ 2 │                       it('should be fixed', async () => {
+ 3 │ ╭─▶                     await expect(async function () {
+ 4 │ │                         await doSomethingAsync();
+ 5 │ ╰─▶                     }).rejects.toThrow();
+ 6 │                       })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => await doSomethingAsync(1, 2)).rejects.toThrow();
-   ·              ────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:27]
+ 2 │                         it('should be fixed for async arrow function', async () => {
+ 3 │ ╭─▶                       await expect(async () => {
+ 4 │ │                           await doSomethingAsync(1, 2);
+ 5 │ ╰─▶                       }).rejects.toThrow();
+ 6 │                         })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => { await doSomethingAsync(); }).resolves.toBe(1);
-   ·              ─────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:27]
+ 2 │                         it('should be fixed for async normal function', async () => {
+ 3 │ ╭─▶                       await expect(async function () {
+ 4 │ │                           await doSomethingAsync(1, 2);
+ 5 │ ╰─▶                       }).rejects.toThrow();
+ 6 │                         })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => await Promise.all([a(), b()])).rejects.toThrow();
-   ·              ─────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:3:27]
+ 2 │                         it('should be fixed for Promise.all', async () => {
+ 3 │ ╭─▶                       await expect(async function () {
+ 4 │ │                           await Promise.all([doSomethingAsync(1, 2), doSomethingAsync()]);
+ 5 │ ╰─▶                       }).rejects.toThrow();
+ 6 │                         })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
   ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:56]
- 1 │ const a = async () => doSomethingAsync(); await expect(async () => { await a(); }).rejects.toThrow();
-   ·                                                        ──────────────────────────
-   ╰────
-  help: Remove the async wrapper and pass the promise directly to expect
-
-  ⚠ eslint-plugin-vitest(no-unneeded-async-expect-function): Unnecessary async function wrapper
-   ╭─[no_unneeded_async_expect_function.tsx:1:14]
- 1 │ await expect(async () => { await doSomethingAsync(); }).resolves.not.toThrow();
-   ·              ─────────────────────────────────────────
+   ╭─[no_unneeded_async_expect_function.tsx:4:27]
+ 3 │                           const a = async () => { await doSomethingAsync() };
+ 4 │ ╭─▶                       await expect(async () => {
+ 5 │ │                           await a();
+ 6 │ ╰─▶                       }).rejects.toThrow();
+ 7 │                         })
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect

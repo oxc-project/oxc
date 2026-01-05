@@ -394,6 +394,7 @@ fn test() {
         pass,
         fail,
     )
+    .with_vitest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
 }
