@@ -188,7 +188,7 @@ impl Rule for CapitalizedComments {
             // For block comments, we need to check both raw and normalized content
             // to handle URLs in multiline comments with * markers
             let is_directive = if comment.is_block() {
-                is_directive_comment(content) || is_url_comment(&normalized)
+                is_directive_comment(content) || is_url(normalized.trim())
             } else {
                 is_directive_comment(content)
             };
@@ -323,12 +323,6 @@ fn is_url(text: &str) -> bool {
                     .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '-' || c == '.')
         }
     })
-}
-
-/// Check if the comment content starts with a URL (after trimming whitespace)
-fn is_url_comment(content: &str) -> bool {
-    let trimmed = content.trim_start();
-    is_url(trimmed)
 }
 
 /// Check if a comment is inline (has code on the same line before AND after it)
