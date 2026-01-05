@@ -2966,8 +2966,10 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
+ "proc-macro2",
  "rustc-hash",
  "serde",
+ "syn",
 ]
 
 [[package]]

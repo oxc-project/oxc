@@ -3,6 +3,7 @@ use std::fmt::Write as _;
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
+    path::Path,
 };
 
 use convert_case::{Case, Casing};
@@ -1390,6 +1391,8 @@ fn main() {
     let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| {
         RuleKind::try_from(kind.as_str()).expect("Invalid `RuleKind`")
     });
+
+    let update_tests_only = std::env::args().any(|arg| arg == "--update-tests");
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
 
@@ -1582,17 +1585,24 @@ fn main() {
     }
 
     let rule_name = &context.kebab_rule_name;
-    let template = template::Template::with_context(&context);
-    if let Err(err) = template.render(rule_kind) {
-        eprintln!("failed to render {rule_name} rule template: {err}");
-    }
 
-    if let Err(err) = add_rules_entry(&context, rule_kind) {
-        eprintln!("failed to add {rule_name} to rules file: {err}");
-    }
+    if update_tests_only {
+        if let Err(err) = update_test_block(&context, rule_kind) {
+            eprintln!("failed to update test block for {rule_name}: {err}");
+        }
+    } else {
+        let template = template::Template::with_context(&context);
+        if let Err(err) = template.render(rule_kind) {
+            eprintln!("failed to render {rule_name} rule template: {err}");
+        }
 
-    if let Err(err) = generate_rule_runner_impl() {
-        eprintln!("failed to generate RuleRunner impl for {rule_name}: {err}");
+        if let Err(err) = add_rules_entry(&context, rule_kind) {
+            eprintln!("failed to add {rule_name} to rules file: {err}");
+        }
+
+        if let Err(err) = generate_rule_runner_impl() {
+            eprintln!("failed to generate RuleRunner impl for {rule_name}: {err}");
+        }
     }
 }
 
@@ -1611,6 +1621,187 @@ fn generate_rule_runner_impl() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+/// Updates only the test block in an existing rule file, preserving the rule implementation.
+fn update_test_block(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
+    use std::process::Command;
+
+    let path = get_rule_path(rule_kind);
+    let rule_file_path = path.join(format!("{}.rs", ctx.snake_rule_name));
+
+    if !rule_file_path.exists() {
+        return Err(format!(
+            "Rule file '{}' does not exist. Use rulegen without --update-tests to create it first.",
+            rule_file_path.display()
+        )
+        .into());
+    }
+
+    let existing_content = std::fs::read_to_string(&rule_file_path)?;
+
+    // Find the test function in the existing file using syn parser
+    let (test_start, test_end) = find_test_function_range(&existing_content)
+        .ok_or("Could not find '#[test] fn test()' in the existing rule file")?;
+
+    // Generate the new test block
+    let new_test_block = generate_test_block(ctx);
+
+    // Replace the old test block with the new one
+    let mut new_content = String::with_capacity(existing_content.len());
+    new_content.push_str(&existing_content[..test_start]);
+    new_content.push_str(&new_test_block);
+    new_content.push_str(&existing_content[test_end..]);
+
+    std::fs::write(&rule_file_path, new_content)?;
+    println!("Updated test block in {}", rule_file_path.display());
+
+    // Format the file
+    let res = Command::new("cargo")
+        .arg("fmt")
+        .arg("--")
+        .arg(&rule_file_path)
+        .spawn()
+        .map(|mut child| child.wait().expect("failed to format"));
+
+    match res {
+        Ok(exit_status) if exit_status.success() => println!("Formatted rule file"),
+        Ok(exit_status) => println!("Failed to format rule file: exited with {exit_status}"),
+        Err(e) => println!("Failed to format rule file: {e}"),
+    }
+
+    Ok(())
+}
+
+/// Returns the path to the rules directory for a given rule kind.
+fn get_rule_path(rule_kind: RuleKind) -> &'static Path {
+    match rule_kind {
+        RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
+        RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
+        RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
+        RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
+        RuleKind::Import => Path::new("crates/oxc_linter/src/rules/import"),
+        RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
+        RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
+        RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
+        RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
+        RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
+        RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
+        RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
+        RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
+        RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
+        RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
+    }
+}
+
+/// Finds the byte range (start, end) of the `#[test] fn test()` function in the content.
+/// Uses `syn` to properly parse the Rust source code.
+fn find_test_function_range(content: &str) -> Option<(usize, usize)> {
+    use syn::spanned::Spanned;
+
+    let file = syn::parse_file(content).ok()?;
+
+    for item in &file.items {
+        if let syn::Item::Fn(item_fn) = item {
+            // Check if function is named "test" and has #[test] attribute
+            if item_fn.sig.ident == "test" {
+                let has_test_attr = item_fn.attrs.iter().any(|attr| attr.path().is_ident("test"));
+                if has_test_attr {
+                    let span = item_fn.span();
+                    let start = span.start();
+                    let end = span.end();
+
+                    // Convert line/column to byte offset
+                    let start_offset = line_col_to_offset(content, start.line, start.column)?;
+                    let end_offset = line_col_to_offset(content, end.line, end.column)?;
+
+                    return Some((start_offset, end_offset));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Converts a 1-based line number and 0-based column to a byte offset.
+fn line_col_to_offset(content: &str, line: usize, column: usize) -> Option<usize> {
+    let mut current_line = 1;
+    let mut line_start = 0;
+
+    for (i, c) in content.char_indices() {
+        if current_line == line {
+            // Found the line, now advance by column (in bytes for the chars)
+            let line_content = &content[line_start..];
+            let col_offset: usize = line_content.chars().take(column).map(char::len_utf8).sum();
+            return Some(line_start + col_offset);
+        }
+        if c == '\n' {
+            current_line += 1;
+            line_start = i + 1;
+        }
+    }
+
+    // Handle last line
+    if current_line == line {
+        let line_content = &content[line_start..];
+        let col_offset: usize = line_content.chars().take(column).map(char::len_utf8).sum();
+        return Some(line_start + col_offset);
+    }
+
+    None
+}
+
+/// Generates the test block content from the context.
+fn generate_test_block(ctx: &Context) -> String {
+    let mut test_block = String::new();
+
+    test_block.push_str("#[test]\nfn test() {\n");
+    test_block.push_str("    use crate::tester::Tester;\n");
+
+    if ctx.has_filename {
+        test_block.push_str("    use std::path::PathBuf;\n");
+    }
+
+    test_block.push_str("\n    let pass = vec![\n");
+    if !ctx.pass_cases.is_empty() {
+        test_block.push_str("        ");
+        test_block.push_str(&ctx.pass_cases);
+        test_block.push('\n');
+    }
+    test_block.push_str("    ];\n");
+
+    test_block.push_str("\n    let fail = vec![\n");
+    if !ctx.fail_cases.is_empty() {
+        test_block.push_str("        ");
+        test_block.push_str(&ctx.fail_cases);
+        test_block.push('\n');
+    }
+    test_block.push_str("    ];\n\n");
+
+    if let Some(fix_cases) = &ctx.fix_cases
+        && !fix_cases.is_empty()
+    {
+        test_block.push_str("    let fix = vec![\n");
+        test_block.push_str("        ");
+        test_block.push_str(fix_cases);
+        test_block.push_str("\n    ];\n");
+        let _ = writeln!(
+            test_block,
+            "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();",
+            ctx.pascal_rule_name, ctx.pascal_rule_name
+        );
+    } else {
+        let _ = writeln!(
+            test_block,
+            "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).test_and_snapshot();",
+            ctx.pascal_rule_name, ctx.pascal_rule_name
+        );
+    }
+
+    test_block.push_str("}\n");
+
+    test_block
 }
 
 fn get_mod_name(rule_kind: RuleKind) -> String {
