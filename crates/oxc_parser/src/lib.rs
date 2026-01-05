@@ -418,7 +418,7 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            module_record_builder: ModuleRecordBuilder::new(allocator),
+            module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
     }
@@ -466,13 +466,11 @@ impl<'a> ParserImpl<'a> {
         }
         let (module_record, module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
-            errors.reserve(self.lexer.errors.len() + self.errors.len());
+            errors
+                .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
             errors.extend(self.lexer.errors);
             errors.extend(self.errors);
-            // Skip checking for exports in TypeScript {
-            if !self.source_type.is_typescript() {
-                errors.extend(module_record_errors);
-            }
+            errors.extend(module_record_errors);
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();

@@ -9,15 +9,17 @@ use crate::diagnostics;
 
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
+    source_type: SourceType,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
             allocator,
+            source_type,
             module_record: ModuleRecord::new(allocator),
             export_entries: Vec::new_in(allocator),
             exported_bindings_duplicated: Vec::new_in(allocator),
@@ -34,6 +36,11 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
+
+        // Skip checking for exports in TypeScript
+        if self.source_type.is_typescript() {
+            return errors;
+        }
 
         let module_record = &self.module_record;
 
