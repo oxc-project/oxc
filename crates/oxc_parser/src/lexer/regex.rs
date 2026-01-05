@@ -2,9 +2,9 @@ use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::diagnostics;
 
-use super::{Kind, Lexer, RegExpFlags, Token};
+use super::{Kind, Lexer, ParserConfig, RegExpFlags, Token};
 
-impl Lexer<'_> {
+impl<C: ParserConfig> Lexer<'_, C> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
     /// See Section 12:
     ///   The `InputElementRegExp` goal symbol is used in all syntactic grammar contexts

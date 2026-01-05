@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 use crate::{
-    ParserImpl, diagnostics,
+    ParserConfig, ParserImpl, diagnostics,
     lexer::{Kind, Token},
 };
 
@@ -317,7 +317,7 @@ impl std::fmt::Display for ModifierKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         if !self.at_modifier() {
             return Modifiers::empty();
@@ -522,8 +522,8 @@ impl<'a> ParserImpl<'a> {
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
             #[cold]
             #[inline(never)]
-            fn report<'a, F>(
-                parser: &mut ParserImpl<'a>,
+            fn report<'a, C: ParserConfig, F>(
+                parser: &mut ParserImpl<'a, C>,
                 modifiers: &Modifiers<'a>,
                 allowed: ModifierFlags,
                 strict: bool,
