@@ -117,7 +117,7 @@ import type { TailwindcssOptions } from "../index";
 let tailwindPlugin: typeof import("prettier-plugin-tailwindcss") | null = null;
 
 // Oxfmt to Prettier option name mapping (adds `tailwind` prefix)
-const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
   config: "tailwindConfig",
   stylesheet: "tailwindStylesheet",
   functions: "tailwindFunctions",
