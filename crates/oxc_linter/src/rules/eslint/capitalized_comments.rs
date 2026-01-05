@@ -627,6 +627,31 @@ fn test() {
 			 */",
             None,
         ),
+        // URLs with multiple leading spaces should also be ignored
+        (
+            "/*
+			 *  https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/**
+			 *  https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/*
+			 *   https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/**
+			 *   https://oxc.rs
+			 */",
+            None,
+        ),
         (
             "// Valid capitalized line comment
 			/* Valid capitalized block comment */
