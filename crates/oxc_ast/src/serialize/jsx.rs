@@ -85,3 +85,87 @@ impl ESTree for JSXElementThisExpression<'_> {
         JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
     }
 }
+
+// ----------------------------------------
+// FromESTreeConverter implementations
+// ----------------------------------------
+// These are gated by the `deserialize` feature since they depend on the deserialize module.
+
+#[cfg(feature = "deserialize")]
+mod from_estree_converters {
+    use crate::ast::{js, jsx};
+    use crate::deserialize::{
+        DeserError, DeserResult, ESTreeField, ESTreeType, FromESTree, FromESTreeConverter,
+        parse_span_or_empty,
+    };
+    use oxc_allocator::{Allocator, Box as ABox};
+
+    use super::{
+        JSXElementIdentifierReference, JSXElementOpeningElement, JSXElementThisExpression,
+    };
+
+    /// Deserialize `opening_element` field for `JSXElement`.
+    ///
+    /// ESTree provides JSXOpeningElement directly, we just deserialize it.
+    impl<'a> FromESTreeConverter<'a> for JSXElementOpeningElement<'a, '_> {
+        type Output = ABox<'a, jsx::JSXOpeningElement<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            let opening: jsx::JSXOpeningElement = FromESTree::from_estree(value, allocator)?;
+            Ok(ABox::new_in(opening, allocator))
+        }
+    }
+
+    /// Deserialize `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
+    ///
+    /// ESTree serializes as `JSXIdentifier`, we convert back to `IdentifierReference`.
+    impl<'a> FromESTreeConverter<'a> for JSXElementIdentifierReference<'a, '_> {
+        type Output = ABox<'a, js::IdentifierReference<'a>>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // ESTree gives us a JSXIdentifier with just name and span
+            let type_name = value.estree_type()?;
+            if type_name != "JSXIdentifier" {
+                return Err(DeserError::UnknownNodeType(type_name.to_string()));
+            }
+
+            let span = parse_span_or_empty(value);
+            let name_str =
+                value.estree_field("name")?.as_str().ok_or(DeserError::ExpectedString)?;
+            // Allocate the name string in the allocator to extend its lifetime
+            let name = oxc_span::Atom::from(allocator.alloc_str(name_str));
+
+            Ok(ABox::new_in(
+                js::IdentifierReference { span, name, reference_id: std::cell::Cell::default() },
+                allocator,
+            ))
+        }
+    }
+
+    /// Deserialize `ThisExpression` variant of `JSXElementName` and `JSXMemberExpressionObject`.
+    ///
+    /// ESTree serializes as `JSXIdentifier` with `name: "this"`, we convert back to `ThisExpression`.
+    impl<'a> FromESTreeConverter<'a> for JSXElementThisExpression<'_> {
+        type Output = ABox<'a, js::ThisExpression>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // ESTree gives us a JSXIdentifier with name "this"
+            let type_name = value.estree_type()?;
+            if type_name != "JSXIdentifier" {
+                return Err(DeserError::UnknownNodeType(type_name.to_string()));
+            }
+
+            let span = parse_span_or_empty(value);
+            Ok(ABox::new_in(js::ThisExpression { span }, allocator))
+        }
+    }
+}

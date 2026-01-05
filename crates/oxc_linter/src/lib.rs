@@ -21,6 +21,7 @@ mod config;
 mod context;
 mod disable_directives;
 mod external_linter;
+mod external_parser_store;
 mod external_plugin_store;
 mod fixer;
 mod frameworks;
@@ -60,9 +61,15 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        DeserializeResult, ExternalLinter, ExternalLinterLintFileCb,
+        ExternalLinterLintFileWithCustomAstCb, ExternalLinterLoadParserCb,
+        ExternalLinterLoadPluginCb, ExternalLinterParseFileCb, ExternalLinterSetupConfigsCb,
+        ExternalLinterStripFileCb, JsFix, LintFileResult, LoadParserResult, LoadPluginResult,
+        ParseFileResult, SerializedReference, SerializedScope, SerializedScopeManager,
+        SerializedVariable, SpanMapping, StripFileResult, StrippedSource, inject_scope_references,
+        lint_with_external_ast, parse_external_scope,
     },
+    external_parser_store::{ExternalParserId, ExternalParserStore},
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,
@@ -139,6 +146,364 @@ impl Linter {
     /// Return `true` if `Linter` has an external linter (JS plugins).
     pub fn has_external_linter(&self) -> bool {
         self.external_linter.is_some()
+    }
+
+    /// Check if a file should be parsed by a custom parser.
+    ///
+    /// Returns the parser info (parser_id, parser_options_json, has_parse_for_eslint) if the file
+    /// matches a custom parser pattern, or `None` if it should use the default oxc parser.
+    pub fn find_custom_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
+        self.config.find_custom_parser_for_path(path)
+    }
+
+    /// Parse a file using a custom parser.
+    ///
+    /// This calls the JS-side parser through the `parse_file` callback.
+    /// Returns `None` if no parse_file callback is registered.
+    ///
+    /// # Errors
+    /// Returns an error if the parser fails to parse the file.
+    pub fn parse_with_custom_parser(
+        &self,
+        parser_id: u32,
+        path: &Path,
+        source_text: &str,
+        parser_options_json: &str,
+    ) -> Option<Result<ParseFileResult, String>> {
+        let external_linter = self.external_linter.as_ref()?;
+        let parse_file = external_linter.parse_file.as_ref()?;
+
+        Some(parse_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        ))
+    }
+
+    /// Check if custom parser support is available.
+    ///
+    /// Returns true if both the parse_file callback is registered and there are
+    /// custom parsers configured in the parser store.
+    pub fn has_custom_parser_support(&self) -> bool {
+        self.external_linter.as_ref().is_some_and(|el| el.parse_file.is_some())
+            && !self.config.external_parser_store().is_empty()
+    }
+
+    /// Strip custom syntax from a file using a custom parser.
+    ///
+    /// This calls the JS-side parser through the `strip_file` callback.
+    /// Returns `None` if no strip_file callback is registered.
+    ///
+    /// # Errors
+    /// Returns an error if the parser fails to strip the file.
+    pub fn strip_with_custom_parser(
+        &self,
+        parser_id: u32,
+        path: &Path,
+        source_text: &str,
+        parser_options_json: &str,
+    ) -> Option<Result<Option<StripFileResult>, String>> {
+        let external_linter = self.external_linter.as_ref()?;
+        let strip_file = external_linter.strip_file.as_ref()?;
+
+        Some(strip_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        ))
+    }
+
+    /// Check if stripping support is available for custom parsers.
+    ///
+    /// Returns true if the strip_file callback is registered.
+    pub fn has_strip_support(&self) -> bool {
+        self.external_linter.as_ref().is_some_and(|el| el.strip_file.is_some())
+    }
+
+    /// Run only Rust rules on the given context, without external (JS) rules.
+    ///
+    /// This is used in Phase 2 of custom parser support where we parse the stripped
+    /// source with oxc and run Rust rules. JS rules are handled separately via Phase 1.
+    ///
+    /// Returns a tuple of (messages, Option<DisableDirectives>).
+    pub fn run_rust_rules_only<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        _allocator: &'a Allocator,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        let ResolvedLinterState { rules, config, .. } = self.config.resolve(path);
+
+        let ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+
+        let is_partial_loader_file = ctx_host
+            .file_extension()
+            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
+
+        // Filter and prepare rules
+        let semantic = ctx_host.semantic();
+        let rules: Vec<_> = rules
+            .iter()
+            .filter(|(rule, _)| {
+                if rule.is_tsgolint_rule() {
+                    return false;
+                }
+
+                // Skip if file doesn't contain relevant AST node types
+                if rule.run_info() == RuleRunFunctionsImplemented::Run
+                    && let Some(ast_types) = rule.types_info()
+                    && !semantic.nodes().contains_any(ast_types)
+                {
+                    return false;
+                }
+
+                rule.should_run(&ctx_host)
+            })
+            .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+            .collect();
+
+        let should_run_on_jest_node =
+            ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+
+        // Execute rules - using the simpler branch for typical file sizes
+        for (rule, ctx) in &rules {
+            let run_info = rule.run_info();
+
+            if run_info.is_run_once_implemented() {
+                rule.run_once(ctx);
+            }
+
+            if run_info.is_run_implemented() {
+                if let Some(ast_types) = rule.types_info() {
+                    for node in semantic.nodes() {
+                        if ast_types.has(node.kind().ty()) {
+                            rule.run(node, ctx);
+                        }
+                    }
+                } else {
+                    for node in semantic.nodes() {
+                        rule.run(node, ctx);
+                    }
+                }
+            }
+
+            if should_run_on_jest_node && run_info.is_run_on_jest_node_implemented() {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    rule.run_on_jest_node(&jest_node, ctx);
+                }
+            }
+        }
+
+        // Drop `rules` to release its `Rc` clones of `ctx_host`
+        drop(rules);
+
+        // Note: We intentionally skip external_rules here - those are handled by Phase 1
+
+        if let Some(severity) = self.options.report_unused_directive
+            && severity.is_warn_deny()
+            && is_partial_loader_file
+        {
+            ctx_host.report_unused_directives(severity.into());
+        }
+
+        let diagnostics = ctx_host.take_diagnostics();
+        // For stripped source (custom parser Phase 2), we don't need disable directives.
+        // Since rules keep Rc references, we can't unwrap, but that's fine - just return None.
+        let disable_directives = if is_partial_loader_file {
+            None
+        } else {
+            Rc::try_unwrap(ctx_host).ok().and_then(ContextHost::into_disable_directives)
+        };
+
+        (diagnostics, disable_directives)
+    }
+
+    /// Lint a file using a custom parser.
+    ///
+    /// This method is used for Phase 1 custom parser support where:
+    /// 1. The file is parsed by a custom JS parser (not oxc)
+    /// 2. Only JS rules are run (no Rust rules since we don't have oxc semantic)
+    ///
+    /// # Arguments
+    /// * `path` - Path to the file being linted
+    /// * `source_text` - The source code content
+    /// * `parser_id` - ID of the custom parser to use
+    /// * `parser_options_json` - Parser options as JSON string
+    ///
+    /// # Returns
+    /// A tuple of (messages, None) - disable directives are not supported for custom parser files
+    ///
+    /// # Errors
+    /// Returns an error if parsing or linting fails
+    pub fn run_with_custom_parser(
+        &self,
+        path: &Path,
+        source_text: &str,
+        parser_id: u32,
+        parser_options_json: &str,
+    ) -> Result<Vec<Message>, String> {
+        let external_linter = self.external_linter.as_ref().ok_or_else(|| {
+            "Cannot lint with custom parser: no external linter configured".to_string()
+        })?;
+
+        let parse_file = external_linter.parse_file.as_ref().ok_or_else(|| {
+            "Cannot lint with custom parser: parse_file callback not configured".to_string()
+        })?;
+
+        let lint_file_with_custom_ast =
+            external_linter.lint_file_with_custom_ast.as_ref().ok_or_else(|| {
+                "Cannot lint with custom parser: lint_file_with_custom_ast callback not configured"
+                    .to_string()
+            })?;
+
+        // Parse the file with the custom parser
+        let parse_result = parse_file(
+            parser_id,
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parser_options_json.to_string(),
+        )?;
+
+        // Collect all messages (Rust + JS rules)
+        let mut all_messages: Vec<Message> = Vec::new();
+
+        // Phase 3: Run Rust rules using deserialized ESTree AST
+        // This gives us full scope fidelity from the custom parser
+        let (rust_messages, deser_result) = external_linter::lint_with_external_ast(
+            self,
+            path,
+            source_text,
+            &parse_result.ast_json,
+            parse_result.scope_manager_json.as_deref(),
+            Some(parser_options_json),
+        );
+
+        // Handle deserialization result
+        match deser_result {
+            DeserializeResult::Success => {
+                all_messages.extend(rust_messages);
+            }
+            DeserializeResult::NonJsAst(root_type) => {
+                // Non-JS AST (e.g., JSON) - skip Rust rules silently, JS rules will handle it
+                debug_assert!(
+                    true,
+                    "Custom parser returned non-JS AST (root: {root_type}), skipping Rust rules"
+                );
+            }
+            DeserializeResult::UnknownNode(node_type) => {
+                // Unknown node type - skip Rust rules, log for debugging
+                // This is expected for parsers with custom syntax nodes
+                debug_assert!(
+                    true,
+                    "Custom parser AST contains unknown node type '{node_type}', skipping Rust rules for {path:?}"
+                );
+            }
+            DeserializeResult::Error(err) => {
+                // Deserialization error - this is unexpected, create a diagnostic
+                let diagnostic =
+                    OxcDiagnostic::error(format!("Failed to deserialize custom parser AST: {err}"))
+                        .with_label(Span::new(0, 0));
+                all_messages.push(Message::new(diagnostic, PossibleFixes::None));
+            }
+        }
+
+        // Get external rules for this path
+        let ResolvedLinterState { config, external_rules, .. } = self.config.resolve(path);
+
+        // If no external rules, return just Rust rule results
+        if external_rules.is_empty() {
+            return Ok(all_messages);
+        }
+
+        // Prepare settings JSON
+        let settings_json = config
+            .settings
+            .json
+            .as_ref()
+            .map_or_else(|| "{}".to_string(), |v| serde_json::to_string(v).unwrap_or_default());
+
+        // Prepare globals JSON from config
+        let globals_and_envs = GlobalsAndEnvs::from_config(&config);
+        let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
+            // Log error but continue with empty globals
+            debug_assert!(false, "Error serializing globals for custom parser file: {e}");
+            "{}".to_string()
+        });
+
+        // Get parser services JSON
+        let parser_services_json = parse_result.services_json.unwrap_or_else(|| "null".to_string());
+
+        // Call the JS linter with the custom AST
+        let rule_ids: Vec<u32> = external_rules.iter().map(|(r, _, _)| r.raw()).collect();
+        let options_ids: Vec<u32> = external_rules.iter().map(|(_, o, _)| o.raw()).collect();
+
+        let js_results = lint_file_with_custom_ast(
+            path.to_string_lossy().to_string(),
+            source_text.to_string(),
+            parse_result.ast_json,
+            rule_ids,
+            options_ids,
+            settings_json,
+            globals_json,
+            parser_services_json,
+        )?;
+
+        // Convert JS rule results to Messages
+        let js_messages = js_results.into_iter().map(|diagnostic| {
+            let span = Span::new(diagnostic.start, diagnostic.end);
+
+            // Check for sentinel value (u32::MAX) indicating a system error
+            // rather than a specific rule violation
+            if diagnostic.rule_index == u32::MAX {
+                return Message::new(
+                    OxcDiagnostic::warn(diagnostic.message).with_label(span),
+                    PossibleFixes::None,
+                );
+            }
+
+            let (external_rule_id, _options_id, severity) =
+                external_rules[diagnostic.rule_index as usize];
+            let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(external_rule_id);
+
+            // Convert fixes if present
+            let fix = if let Some(fixes) = diagnostic.fixes {
+                if fixes.len() == 1 {
+                    let fix = &fixes[0];
+                    PossibleFixes::Single(Fix::new(
+                        fix.text.clone(),
+                        Span::new(fix.range[0], fix.range[1]),
+                    ))
+                } else if fixes.is_empty() {
+                    PossibleFixes::None
+                } else {
+                    let fix_list: Vec<Fix> = fixes
+                        .into_iter()
+                        .map(|f| Fix::new(f.text, Span::new(f.range[0], f.range[1])))
+                        .collect();
+                    match CompositeFix::merge_fixes_fallible(fix_list, source_text) {
+                        Ok(fix) => PossibleFixes::Single(fix),
+                        Err(_) => PossibleFixes::None,
+                    }
+                }
+            } else {
+                PossibleFixes::None
+            };
+
+            Message::new(
+                OxcDiagnostic::error(diagnostic.message)
+                    .with_label(span)
+                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                    .with_severity(severity.into()),
+                fix,
+            )
+        });
+
+        // Combine Rust and JS rule messages
+        all_messages.extend(js_messages);
+
+        Ok(all_messages)
     }
 
     /// # Panics

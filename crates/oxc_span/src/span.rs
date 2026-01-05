@@ -10,8 +10,6 @@ use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
-use oxc_estree::ESTree;
-
 #[cfg(feature = "serialize")]
 use oxc_estree::ESTreeSpan;
 

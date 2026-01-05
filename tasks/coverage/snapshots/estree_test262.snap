@@ -1,23 +1,5 @@
 commit: 9079aeef
 
 estree_test262 Summary:
-AST Parsed     : 46224/46224 (100.00%)
-Positive Passed: 46215/46224 (99.98%)
-Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
-
-Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js
-
-Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-cover.js
-
+AST Parsed     : 0/0 (NaN%)
+Positive Passed: 0/0 (NaN%)

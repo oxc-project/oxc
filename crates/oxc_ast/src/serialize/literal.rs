@@ -267,3 +267,63 @@ impl TemplateElementValue<'_, '_> {
         state.end();
     }
 }
+
+// ----------------------------------------
+// FromESTreeConverter implementations
+// ----------------------------------------
+// These are gated by the `deserialize` feature since they depend on the deserialize module.
+
+#[cfg(feature = "deserialize")]
+mod from_estree_converters {
+    use crate::deserialize::{DeserError, DeserResult, FromESTreeConverter};
+    use oxc_allocator::Allocator;
+    use oxc_span::Atom;
+
+    use super::{BigIntLiteralValue, StringLiteralValue};
+
+    /// Deserialize `value` field for `StringLiteral`.
+    ///
+    /// ESTree provides the string directly as a JSON string.
+    /// We just extract it as an Atom.
+    impl<'a> FromESTreeConverter<'a> for StringLiteralValue<'a, '_> {
+        type Output = Atom<'a>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+            Ok(Atom::from(allocator.alloc_str(s)))
+        }
+    }
+
+    /// Deserialize `value` field for `BigIntLiteral`.
+    ///
+    /// ESTree provides bigint as a native BigInt, but in JSON it's serialized.
+    /// We just need to extract the string representation.
+    impl<'a> FromESTreeConverter<'a> for BigIntLiteralValue<'a, '_> {
+        type Output = Atom<'a>;
+
+        fn from_estree_converter(
+            value: &serde_json::Value,
+            allocator: &'a Allocator,
+        ) -> DeserResult<Self::Output> {
+            // BigInt may come as a string in JSON, or we might get null and need to look elsewhere
+            if value.is_null() {
+                // The bigint string is in the parent's `bigint` field, but we don't have access to it here.
+                // Return empty string as a fallback (the `bigint` field will have the value).
+                return Ok(Atom::from(""));
+            }
+            let s = match value {
+                serde_json::Value::String(s) => s.as_str(),
+                serde_json::Value::Number(n) => {
+                    // Allocate number as string
+                    let s = n.to_string();
+                    return Ok(Atom::from(allocator.alloc_str(&s)));
+                }
+                _ => return Err(DeserError::ExpectedString),
+            };
+            Ok(Atom::from(allocator.alloc_str(s)))
+        }
+    }
+}

@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
+use super::external_parsers::ExternalParserEntry;
 use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
@@ -107,8 +108,44 @@ pub struct OxlintOverride {
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
+    /// JS parser for files matching this override's patterns.
+    ///
+    /// The parser must implement the standard ESLint parser interface:
+    /// - `parse(code, options)` returning an ESTree-compatible AST, or
+    /// - `parseForESLint(code, options)` returning `{ ast, scopeManager?, visitorKeys?, services? }`
+    ///
+    /// Note: JS parsers are experimental and not subject to semver.
+    /// They are not supported in language server at present.
+    #[serde(rename = "jsParser", default, skip_serializing_if = "Option::is_none")]
+    pub js_parser: Option<String>,
+
+    /// Options to pass to the parser's parse/parseForESLint function.
+    #[serde(rename = "jsParserOptions", default, skip_serializing_if = "Option::is_none")]
+    pub js_parser_options: Option<serde_json::Value>,
+
     #[serde(default)]
     pub rules: OxlintRules,
+
+    /// Config directory for resolving relative paths (set by Oxlintrc after parsing)
+    #[serde(skip)]
+    pub config_dir: std::path::PathBuf,
+}
+
+impl OxlintOverride {
+    /// Returns true if this override specifies a custom parser
+    pub fn has_js_parser(&self) -> bool {
+        self.js_parser.is_some()
+    }
+
+    /// Convert to ExternalParserEntry if this override has a parser configured
+    pub fn to_parser_entry(&self) -> Option<ExternalParserEntry> {
+        self.js_parser.as_ref().map(|specifier| ExternalParserEntry {
+            config_dir: self.config_dir.clone(),
+            specifier: specifier.clone(),
+            patterns: self.files.patterns().to_vec(),
+            parser_options: self.js_parser_options.clone(),
+        })
+    }
 }
 
 /// A set of glob patterns.
@@ -143,6 +180,11 @@ impl GlobSet {
 
     pub fn is_match(&self, path: &str) -> bool {
         self.0.iter().any(|glob| fast_glob::glob_match(glob, path))
+    }
+
+    /// Returns the raw patterns (with `**/` prefix for non-path patterns)
+    pub fn patterns(&self) -> &[String] {
+        &self.0
     }
 }
 

@@ -3,12 +3,12 @@
 
 # stdout
 ```
-  x parser-services-plugin(check-parser-services): typeof context.sourceCode.parserServices: object
-   ,-[files/index.js:1:1]
- 1 | // Simple file to test parserServices access
-   : ^
- 2 | console.log("testing parserServices");
-   `----
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mparser-services-plugin(check-parser-services): typeof context.sourceCode.parserServices: object[0m
+   ╭─[[38;2;92;157;255;1mfiles/index.js[0m:1:1]
+ [2m1[0m │ // Simple file to test parserServices access
+   · [38;2;246;87;248m▲[0m
+ [2m2[0m │ console.log("testing parserServices");
+   ╰────
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file with 1 rules using X threads.

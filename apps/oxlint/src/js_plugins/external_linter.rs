@@ -9,13 +9,18 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, LoadPluginResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLintFileWithCustomAstCb,
+    ExternalLinterLoadParserCb, ExternalLinterLoadPluginCb, ExternalLinterParseFileCb,
+    ExternalLinterSetupConfigsCb, ExternalLinterStripFileCb, LintFileResult, LoadParserResult,
+    LoadPluginResult, ParseFileResult, StripFileResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsSetupConfigsCb},
+    run::{
+        JsLintFileCb, JsLintFileWithCustomAstCb, JsLoadParserCb, JsLoadPluginCb, JsParseFileCb,
+        JsSetupConfigsCb, JsStripFileCb,
+    },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -23,18 +28,67 @@ pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
+    parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_configs = wrap_setup_configs(setup_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
 
-    ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
+    let mut linter = ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file);
+
+    if let Some(load_parser) = load_parser {
+        linter = linter.with_load_parser(wrap_load_parser(load_parser));
+    }
+
+    if let Some(parse_file) = parse_file {
+        linter = linter.with_parse_file(wrap_parse_file(parse_file));
+    }
+
+    if let Some(lint_file_with_custom_ast) = lint_file_with_custom_ast {
+        linter = linter.with_lint_file_with_custom_ast(wrap_lint_file_with_custom_ast(
+            lint_file_with_custom_ast,
+        ));
+    }
+
+    if let Some(strip_file) = strip_file {
+        linter = linter.with_strip_file(wrap_strip_file(strip_file));
+    }
+
+    linter
 }
 
 /// Result returned by `loadPlugin` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LoadPluginReturnValue {
     Success(LoadPluginResult),
+    Failure(String),
+}
+
+/// Result returned by `loadParser` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadParserReturnValue {
+    Success(LoadParserResult),
+    Failure(String),
+}
+
+/// Result returned by `parseFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum ParseFileReturnValue {
+    Success(ParseFileResult),
+    Failure(String),
+}
+
+/// Result returned by `stripFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum StripFileReturnValue {
+    /// Stripping succeeded - contains the stripped source and mappings.
+    Success(StripFileResult),
+    /// The parser doesn't support stripping (Phase 2).
+    NotSupported,
+    /// Stripping failed with an error.
     Failure(String),
 }
 
@@ -70,6 +124,90 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             },
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
             Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        }
+    })
+}
+
+/// Wrap `loadParser` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
+    Box::new(move |parser_url, parser_options_json| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                cb.call_async(FnArgs::from((parser_url, parser_options_json)))
+                    .await?
+                    .into_future()
+                    .await
+            })
+        });
+
+        match res {
+            // `loadParser` returns JSON string if parser loaded successfully, or an error occurred
+            Ok(json) => match serde_json::from_str(&json) {
+                // Parser loaded successfully
+                Ok(LoadParserReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadParserReturnValue::Failure(err)) => Err(err),
+                // Invalid JSON - should be impossible, because we control serialization on JS side
+                Err(err) => {
+                    Err(format!("Failed to deserialize JSON returned by `loadParser`: {err}"))
+                }
+            },
+            // `loadParser` threw an error - should be impossible because `loadParser` is wrapped in try-catch
+            Err(err) => Err(format!("`loadParser` threw an error: {err}")),
+        }
+    })
+}
+
+/// Wrap `parseFile` JS callback as a normal Rust function.
+///
+/// The JS-side function is synchronous. Use an `mpsc::channel` to wait for the result
+/// from JS side, and block current thread until `parseFile` completes execution.
+fn wrap_parse_file(cb: JsParseFileCb) -> ExternalLinterParseFileCb {
+    Box::new(move |parser_id, file_path, source_text, parser_options_json| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            FnArgs::from((parser_id, file_path, source_text, parser_options_json)),
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                // Therefore, `rx` cannot be dropped before this call.
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `parseFile`");
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            match rx.recv() {
+                // `parseFile` returns JSON string
+                Ok(Ok(json)) => match serde_json::from_str(&json) {
+                    // Parsing succeeded
+                    Ok(ParseFileReturnValue::Success(result)) => Ok(result),
+                    // Error occurred on JS side (e.g., parse error)
+                    Ok(ParseFileReturnValue::Failure(err)) => Err(err),
+                    // Invalid JSON - should be impossible, because we control serialization on JS side
+                    Err(err) => {
+                        Err(format!("Failed to deserialize JSON returned by `parseFile`: {err}"))
+                    }
+                },
+                // `parseFile` threw an error - should be impossible because `parseFile` is wrapped in try-catch
+                Ok(Err(err)) => Err(format!("`parseFile` threw an error: {err}")),
+                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                // `tx.send()` always happens before `tx` is dropped.
+                Err(err) => Err(format!("`parseFile` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `parseFile` callback: {status:?}"))
         }
     })
 }
@@ -204,6 +342,120 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     )
 }
 
+/// Wrap `lintFileWithCustomAst` JS callback as a normal Rust function.
+///
+/// This is similar to `wrap_lint_file`, but accepts pre-parsed AST as JSON
+/// instead of a binary buffer. Used for files parsed by custom parsers.
+fn wrap_lint_file_with_custom_ast(
+    cb: JsLintFileWithCustomAstCb,
+) -> ExternalLinterLintFileWithCustomAstCb {
+    Box::new(
+        move |file_path: String,
+              source_text: String,
+              ast_json: String,
+              rule_ids: Vec<u32>,
+              options_ids: Vec<u32>,
+              settings_json: String,
+              globals_json: String,
+              parser_services_json: String| {
+            let (tx, rx) = channel();
+
+            // Send data to JS
+            let status = cb.call_with_return_value(
+                FnArgs::from((
+                    file_path,
+                    source_text,
+                    ast_json,
+                    rule_ids,
+                    options_ids,
+                    settings_json,
+                    globals_json,
+                    parser_services_json,
+                )),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |result, _env| {
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFileWithCustomAst`");
+                    Ok(())
+                },
+            );
+
+            if status == Status::Ok {
+                match rx.recv() {
+                    // `lintFileWithCustomAst` returns `null` if no diagnostics reported
+                    Ok(Ok(None)) => Ok(Vec::new()),
+                    // `lintFileWithCustomAst` returns JSON string if diagnostics reported, or an error occurred
+                    Ok(Ok(Some(json))) => {
+                        match serde_json::from_str(&json) {
+                            // Diagnostics reported
+                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            // Error occurred on JS side
+                            Ok(LintFileReturnValue::Failure(err)) => Err(err),
+                            // Invalid JSON - should be impossible, because we control serialization on JS side
+                            Err(err) => Err(format!(
+                                "Failed to deserialize JSON returned by `lintFileWithCustomAst`: {err}"
+                            )),
+                        }
+                    }
+                    // `lintFileWithCustomAst` threw an error
+                    Ok(Err(err)) => Err(format!("`lintFileWithCustomAst` threw an error: {err}")),
+                    // Sender "hung up"
+                    Err(err) => Err(format!("`lintFileWithCustomAst` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFileWithCustomAst` callback: {status:?}"))
+            }
+        },
+    )
+}
+
+/// Wrap `stripFile` JS callback as a normal Rust function.
+///
+/// This is called in Phase 2 to strip custom syntax from files before linting
+/// with Rust rules. Returns `None` if the parser doesn't support stripping.
+fn wrap_strip_file(cb: JsStripFileCb) -> ExternalLinterStripFileCb {
+    Box::new(move |parser_id, file_path, source_text, parser_options_json| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            FnArgs::from((parser_id, file_path, source_text, parser_options_json)),
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                let res = tx.send(result);
+                debug_assert!(res.is_ok(), "Failed to send result of `stripFile`");
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            match rx.recv() {
+                // `stripFile` returns `null` if the parser doesn't support stripping
+                Ok(Ok(None)) => Ok(None),
+                // `stripFile` returns JSON string with stripped source or error
+                Ok(Ok(Some(json))) => match serde_json::from_str(&json) {
+                    // Stripping succeeded
+                    Ok(StripFileReturnValue::Success(result)) => Ok(Some(result)),
+                    // Parser doesn't support stripping
+                    Ok(StripFileReturnValue::NotSupported) => Ok(None),
+                    // Error occurred on JS side
+                    Ok(StripFileReturnValue::Failure(err)) => Err(err),
+                    // Invalid JSON - should be impossible, because we control serialization on JS side
+                    Err(err) => {
+                        Err(format!("Failed to deserialize JSON returned by `stripFile`: {err}"))
+                    }
+                },
+                // `stripFile` threw an error
+                Ok(Err(err)) => Err(format!("`stripFile` threw an error: {err}")),
+                // Sender "hung up"
+                Err(err) => Err(format!("`stripFile` did not respond: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `stripFile` callback: {status:?}"))
+        }
+    })
+}
+
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
 /// create a `Uint8Array` referencing the `Allocator`'s memory.
 ///
@@ -280,4 +532,51 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_success() {
+        let json = r#"{"Success": {"source": "const x = 1;", "mappings": []}}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        match result {
+            StripFileReturnValue::Success(r) => {
+                assert_eq!(r.source, "const x = 1;");
+                assert!(r.mappings.is_empty());
+            }
+            _ => panic!("Expected Success variant"),
+        }
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_not_supported() {
+        // Rust serde unit variants can be deserialized from `{"Variant": null}`
+        let json = r#"{"NotSupported": null}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        assert!(matches!(result, StripFileReturnValue::NotSupported));
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_failure() {
+        let json = r#"{"Failure": "Parser error: invalid syntax"}"#;
+        let result: StripFileReturnValue = serde_json::from_str(json).unwrap();
+        match result {
+            StripFileReturnValue::Failure(err) => {
+                assert_eq!(err, "Parser error: invalid syntax");
+            }
+            _ => panic!("Expected Failure variant"),
+        }
+    }
+
+    #[test]
+    fn test_strip_file_return_value_deserialize_not_supported_wrong_format() {
+        // This is the wrong format - using `true` instead of `null` for unit variant
+        // This test documents what NOT to do, and ensures we catch it
+        let json = r#"{"NotSupported": true}"#;
+        let result: Result<StripFileReturnValue, _> = serde_json::from_str(json);
+        assert!(result.is_err(), "Unit variants must use null, not true");
+    }
 }

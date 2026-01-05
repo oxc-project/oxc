@@ -15,8 +15,8 @@ use tower_lsp_server::{
 };
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, FixKind,
-    LintIgnoreMatcher, LintOptions, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalParserStore,
+    ExternalPluginStore, FixKind, LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
 use oxc_language_server::{
@@ -79,9 +79,15 @@ impl ServerLinterBuilder {
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap_or_default();
+        let mut external_parser_store = ExternalParserStore::default();
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            &mut external_parser_store,
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -118,6 +124,7 @@ impl ServerLinterBuilder {
                 FxHashMap::default()
             },
             external_plugin_store,
+            external_parser_store,
         );
 
         let isolated_linter = IsolatedLintHandler::new(
@@ -251,11 +258,13 @@ impl ServerLinterBuilder {
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
             let mut external_plugin_store = ExternalPluginStore::new(false);
+            let mut external_parser_store = ExternalParserStore::default();
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
                 None,
                 &mut external_plugin_store,
+                &mut external_parser_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;

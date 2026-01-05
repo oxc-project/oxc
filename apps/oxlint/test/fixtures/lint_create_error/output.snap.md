@@ -3,10 +3,13 @@
 
 # stdout
 ```
-  x Error running JS plugin.
-  | File path: <fixture>/files/index.js
-  | Error: Whoops!
-  |     at Object.create (<fixture>/plugin.ts:10:15)
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mError running JS plugin.
+  [38;2;225;80;80;1m│[0m File path: <fixture>/files/index.js
+  [38;2;225;80;80;1m│[0m Error: Whoops!
+  [38;2;225;80;80;1m│[0m     at Object.create (file:///Users/pwagenet/Development/OSS/oxc3/apps/oxlint/test/fixtures/lint_create_error/plugin.ts:10:15)
+  [38;2;225;80;80;1m│[0m     at lintFileImpl (file:///Users/pwagenet/Development/OSS/oxc3/apps/oxlint/dist/lint.js:21352:99)
+  [38;2;225;80;80;1m│[0m     at lintFile (file:///Users/pwagenet/Development/OSS/oxc3/apps/oxlint/dist/lint.js:21328:3)
+  [38;2;225;80;80;1m│[0m     at lintFileWrapper (file:///Users/pwagenet/Development/OSS/oxc3/apps/oxlint/dist/cli.js:11:41)[0m
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file with 1 rules using X threads.

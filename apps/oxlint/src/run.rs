@@ -77,6 +77,106 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load a custom parser.
+#[napi]
+pub type JsLoadParserCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        // File URL to load parser from
+        String,
+        // Parser options as JSON string (may be "null" if no options)
+        String,
+    )>,
+    // Return value
+    Promise<String>, // `LoadParserResult`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to parse a file using a custom parser.
+///
+/// This is called when linting a file that matches a custom parser's patterns.
+/// The callback should invoke the parser's `parse()` or `parseForESLint()` method.
+///
+/// Note: This is synchronous. Custom parsers that need async operations should
+/// handle them internally using synchronous blocking.
+#[napi]
+pub type JsParseFileCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        // Parser ID to use (from LoadParserResult)
+        u32,
+        // Absolute path of file to parse
+        String,
+        // Source text content
+        String,
+        // Parser options as JSON string
+        String,
+    )>,
+    // Return value
+    String, // `ParseFileResult`, serialized to JSON (always returns a value)
+    // Arguments (repeated)
+    FnArgs<(u32, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to lint a file with a pre-parsed AST from a custom parser.
+///
+/// This is called for files parsed by custom parsers. The AST is already parsed
+/// and provided as a JSON string instead of a binary buffer.
+#[napi]
+pub type JsLintFileWithCustomAstCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        String,   // Absolute path of file to lint
+        String,   // Source text
+        String,   // AST as JSON string
+        Vec<u32>, // Array of rule IDs
+        Vec<u32>, // Array of options IDs
+        String,   // Settings for the file, as JSON string
+        String,   // Globals for the file, as JSON string
+        String,   // Parser services as JSON string (or "null")
+    )>,
+    // Return value
+    Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
+    // Arguments (repeated)
+    FnArgs<(String, String, String, Vec<u32>, Vec<u32>, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to strip custom syntax from a file.
+///
+/// This is called in Phase 2 to strip non-JS syntax from files matched by custom parsers.
+/// The stripped source can then be parsed by oxc and linted with Rust rules.
+#[napi]
+pub type JsStripFileCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        u32,    // Parser ID to use (from LoadParserResult)
+        String, // Absolute path of file to strip
+        String, // Source text content
+        String, // Parser options as JSON string
+    )>,
+    // Return value
+    Option<String>, // `StripFileResult` as JSON, or `None` if parser doesn't support stripping
+    // Arguments (repeated)
+    FnArgs<(u32, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -84,6 +184,10 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
+/// 5. `load_parser`: (Optional) Load a custom JS parser from a file path.
+/// 6. `parse_file`: (Optional) Parse a file using a custom JS parser.
+/// 7. `lint_file_with_custom_ast`: (Optional) Lint a file with a pre-parsed AST.
+/// 8. `strip_file`: (Optional) Strip custom syntax from a file for Rust rule linting.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -94,8 +198,24 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
+    parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file).await.report() == ExitCode::SUCCESS
+    lint_impl(
+        args,
+        load_plugin,
+        setup_configs,
+        lint_file,
+        load_parser,
+        parse_file,
+        lint_file_with_custom_ast,
+        strip_file,
+    )
+    .await
+    .report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -104,6 +224,10 @@ async fn lint_impl(
     load_plugin: JsLoadPluginCb,
     setup_configs: JsSetupConfigsCb,
     lint_file: JsLintFileCb,
+    load_parser: Option<JsLoadParserCb>,
+    parse_file: Option<JsParseFileCb>,
+    lint_file_with_custom_ast: Option<JsLintFileWithCustomAstCb>,
+    strip_file: Option<JsStripFileCb>,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -136,11 +260,26 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter =
-        Some(crate::js_plugins::create_external_linter(load_plugin, setup_configs, lint_file));
+    let external_linter = Some(crate::js_plugins::create_external_linter(
+        load_plugin,
+        setup_configs,
+        lint_file,
+        load_parser,
+        parse_file,
+        lint_file_with_custom_ast,
+        strip_file,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _) = (load_plugin, setup_configs, lint_file);
+        let (_, _, _, _, _, _, _) = (
+            load_plugin,
+            setup_configs,
+            lint_file,
+            load_parser,
+            parse_file,
+            lint_file_with_custom_ast,
+            strip_file,
+        );
         None
     };
 

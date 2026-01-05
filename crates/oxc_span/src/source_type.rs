@@ -7,9 +7,8 @@ use std::{
     str::FromStr,
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
-use oxc_estree::ESTree;
 
 use crate::ContentEq;
 

@@ -1,0 +1,236 @@
+//! FromESTree implementations for primitive types.
+
+use oxc_allocator::{Allocator, Box as ABox, Vec as AVec};
+use oxc_span::{Atom, CompactStr, Span};
+
+use super::{DeserError, DeserResult, FromESTree};
+
+// Primitive types
+
+impl<'a> FromESTree<'a> for bool {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_bool().ok_or(DeserError::ExpectedBool)
+    }
+}
+
+impl<'a> FromESTree<'a> for u8 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_u64().and_then(|n| u8::try_from(n).ok()).ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for u32 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_u64().and_then(|n| u32::try_from(n).ok()).ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for u64 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_u64().ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for i32 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_i64().and_then(|n| i32::try_from(n).ok()).ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for i64 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_i64().ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for f64 {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_f64().ok_or(DeserError::ExpectedNumber)
+    }
+}
+
+impl<'a> FromESTree<'a> for String {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        value.as_str().map(String::from).ok_or(DeserError::ExpectedString)
+    }
+}
+
+impl<'a> FromESTree<'a> for &'a str {
+    fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        Ok(allocator.alloc_str(s))
+    }
+}
+
+// Container types
+
+impl<'a, T: FromESTree<'a>> FromESTree<'a> for Option<T> {
+    fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+        if value.is_null() { Ok(None) } else { Ok(Some(T::from_estree(value, allocator)?)) }
+    }
+}
+
+impl<'a, T: FromESTree<'a>> FromESTree<'a> for ABox<'a, T> {
+    fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+        let inner = T::from_estree(value, allocator)?;
+        Ok(ABox::new_in(inner, allocator))
+    }
+}
+
+impl<'a, T: FromESTree<'a>> FromESTree<'a> for AVec<'a, T> {
+    fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+        let arr = value.as_array().ok_or(DeserError::ExpectedArray)?;
+        let mut vec = AVec::with_capacity_in(arr.len(), allocator);
+        for item in arr {
+            // Try to deserialize each element
+            // Unknown node types will either:
+            // - Return a placeholder (for Expression/Statement/etc. which handle this internally)
+            // - Return an error (which we propagate)
+            vec.push(T::from_estree(item, allocator)?);
+        }
+        Ok(vec)
+    }
+}
+
+// Span type
+impl<'a> FromESTree<'a> for Span {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        super::parse_span(value)
+    }
+}
+
+// Atom type
+impl<'a> FromESTree<'a> for Atom<'a> {
+    fn from_estree(value: &serde_json::Value, allocator: &'a Allocator) -> DeserResult<Self> {
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        Ok(Atom::from(allocator.alloc_str(s)))
+    }
+}
+
+// CompactStr type
+impl<'a> FromESTree<'a> for CompactStr {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        Ok(CompactStr::new(s))
+    }
+}
+
+// Unit type - used for empty fields
+impl<'a> FromESTree<'a> for () {
+    fn from_estree(_value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        Ok(())
+    }
+}
+
+// SourceType - parse from ESTree sourceType string
+impl<'a> FromESTree<'a> for oxc_span::SourceType {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "module" => Ok(oxc_span::SourceType::mjs()),
+            "script" => Ok(oxc_span::SourceType::cjs()),
+            _ => Err(DeserError::InvalidFieldValue("sourceType", s.to_string())),
+        }
+    }
+}
+
+// Operator types from oxc_syntax
+impl<'a> FromESTree<'a> for oxc_syntax::operator::UnaryOperator {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        use oxc_syntax::operator::UnaryOperator;
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "-" => Ok(UnaryOperator::UnaryNegation),
+            "+" => Ok(UnaryOperator::UnaryPlus),
+            "!" => Ok(UnaryOperator::LogicalNot),
+            "~" => Ok(UnaryOperator::BitwiseNot),
+            "typeof" => Ok(UnaryOperator::Typeof),
+            "void" => Ok(UnaryOperator::Void),
+            "delete" => Ok(UnaryOperator::Delete),
+            _ => Err(DeserError::InvalidFieldValue("UnaryOperator", s.to_string())),
+        }
+    }
+}
+
+impl<'a> FromESTree<'a> for oxc_syntax::operator::BinaryOperator {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        use oxc_syntax::operator::BinaryOperator;
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "==" => Ok(BinaryOperator::Equality),
+            "!=" => Ok(BinaryOperator::Inequality),
+            "===" => Ok(BinaryOperator::StrictEquality),
+            "!==" => Ok(BinaryOperator::StrictInequality),
+            "<" => Ok(BinaryOperator::LessThan),
+            "<=" => Ok(BinaryOperator::LessEqualThan),
+            ">" => Ok(BinaryOperator::GreaterThan),
+            ">=" => Ok(BinaryOperator::GreaterEqualThan),
+            "<<" => Ok(BinaryOperator::ShiftLeft),
+            ">>" => Ok(BinaryOperator::ShiftRight),
+            ">>>" => Ok(BinaryOperator::ShiftRightZeroFill),
+            "+" => Ok(BinaryOperator::Addition),
+            "-" => Ok(BinaryOperator::Subtraction),
+            "*" => Ok(BinaryOperator::Multiplication),
+            "/" => Ok(BinaryOperator::Division),
+            "%" => Ok(BinaryOperator::Remainder),
+            "|" => Ok(BinaryOperator::BitwiseOR),
+            "^" => Ok(BinaryOperator::BitwiseXOR),
+            "&" => Ok(BinaryOperator::BitwiseAnd),
+            "in" => Ok(BinaryOperator::In),
+            "instanceof" => Ok(BinaryOperator::Instanceof),
+            "**" => Ok(BinaryOperator::Exponential),
+            _ => Err(DeserError::InvalidFieldValue("BinaryOperator", s.to_string())),
+        }
+    }
+}
+
+impl<'a> FromESTree<'a> for oxc_syntax::operator::LogicalOperator {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        use oxc_syntax::operator::LogicalOperator;
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "||" => Ok(LogicalOperator::Or),
+            "&&" => Ok(LogicalOperator::And),
+            "??" => Ok(LogicalOperator::Coalesce),
+            _ => Err(DeserError::InvalidFieldValue("LogicalOperator", s.to_string())),
+        }
+    }
+}
+
+impl<'a> FromESTree<'a> for oxc_syntax::operator::UpdateOperator {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        use oxc_syntax::operator::UpdateOperator;
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "++" => Ok(UpdateOperator::Increment),
+            "--" => Ok(UpdateOperator::Decrement),
+            _ => Err(DeserError::InvalidFieldValue("UpdateOperator", s.to_string())),
+        }
+    }
+}
+
+impl<'a> FromESTree<'a> for oxc_syntax::operator::AssignmentOperator {
+    fn from_estree(value: &serde_json::Value, _allocator: &'a Allocator) -> DeserResult<Self> {
+        use oxc_syntax::operator::AssignmentOperator;
+        let s = value.as_str().ok_or(DeserError::ExpectedString)?;
+        match s {
+            "=" => Ok(AssignmentOperator::Assign),
+            "+=" => Ok(AssignmentOperator::Addition),
+            "-=" => Ok(AssignmentOperator::Subtraction),
+            "*=" => Ok(AssignmentOperator::Multiplication),
+            "/=" => Ok(AssignmentOperator::Division),
+            "%=" => Ok(AssignmentOperator::Remainder),
+            "<<=" => Ok(AssignmentOperator::ShiftLeft),
+            ">>=" => Ok(AssignmentOperator::ShiftRight),
+            ">>>=" => Ok(AssignmentOperator::ShiftRightZeroFill),
+            "|=" => Ok(AssignmentOperator::BitwiseOR),
+            "^=" => Ok(AssignmentOperator::BitwiseXOR),
+            "&=" => Ok(AssignmentOperator::BitwiseAnd),
+            "||=" => Ok(AssignmentOperator::LogicalOr),
+            "&&=" => Ok(AssignmentOperator::LogicalAnd),
+            "??=" => Ok(AssignmentOperator::LogicalNullish),
+            "**=" => Ok(AssignmentOperator::Exponential),
+            _ => Err(DeserError::InvalidFieldValue("AssignmentOperator", s.to_string())),
+        }
+    }
+}

@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny,
+    external_parser_store::ExternalParserStore,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -280,6 +281,7 @@ pub struct ConfigStore {
     base: Config,
     nested_configs: FxHashMap<PathBuf, Config>,
     external_plugin_store: Arc<ExternalPluginStore>,
+    external_parser_store: Arc<ExternalParserStore>,
 }
 
 impl ConfigStore {
@@ -287,11 +289,13 @@ impl ConfigStore {
         base_config: Config,
         nested_configs: FxHashMap<PathBuf, Config>,
         external_plugin_store: ExternalPluginStore,
+        external_parser_store: ExternalParserStore,
     ) -> Self {
         Self {
             base: base_config,
             nested_configs,
             external_plugin_store: Arc::new(external_plugin_store),
+            external_parser_store: Arc::new(external_parser_store),
         }
     }
 
@@ -359,6 +363,18 @@ impl ConfigStore {
     pub fn external_plugin_store(&self) -> &ExternalPluginStore {
         &self.external_plugin_store
     }
+
+    pub fn external_parser_store(&self) -> &ExternalParserStore {
+        &self.external_parser_store
+    }
+
+    /// Find a custom parser for the given file path.
+    ///
+    /// This is a convenience method that calls `external_parser_store().find_parser_for_path()`
+    /// with the appropriate config path for path relativization.
+    pub fn find_custom_parser_for_path(&self, path: &Path) -> Option<(u32, &str, bool)> {
+        self.external_parser_store.find_parser_for_path(path, self.base.base.config.path.as_deref())
+    }
 }
 
 #[cfg(test)]
@@ -371,7 +387,8 @@ mod test {
 
     use super::{ConfigStore, ExternalRuleId, ResolvedOxlintOverrides};
     use crate::{
-        AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
+        AllowWarnDeny, ExternalOptionsId, ExternalParserStore, ExternalPluginStore, LintPlugins,
+        RuleCategory, RuleEnum,
         config::{
             LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
@@ -417,6 +434,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
@@ -454,6 +472,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
@@ -491,6 +510,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -528,6 +548,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -565,6 +586,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert_eq!(store.number_of_rules(false), Some(1));
 
@@ -607,6 +629,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         assert_eq!(store.base.base.config.plugins, LintPlugins::IMPORT);
@@ -639,6 +662,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert!(!store.base.base.config.env.contains("React"));
 
@@ -662,6 +686,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert!(store.base.base.config.env.contains("es2024"));
 
@@ -685,6 +710,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert!(!store.base.base.config.globals.is_enabled("React"));
         assert!(!store.base.base.config.globals.is_enabled("Secret"));
@@ -729,6 +755,7 @@ mod test {
             ),
             FxHashMap::default(),
             external_plugin_store,
+            ExternalParserStore::default(),
         );
 
         // Bug: external rules were lost when overrides matched
@@ -760,6 +787,7 @@ mod test {
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
         assert!(store.base.base.config.globals.is_enabled("React"));
         assert!(store.base.base.config.globals.is_enabled("Secret"));
@@ -838,6 +866,7 @@ mod test {
             Config::new(base_rules, vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         // Resolve rules for a .tsx file
@@ -888,6 +917,7 @@ mod test {
             Config::new(vec![], vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         // For .tsx files, react rules should be enabled by categories since react wasn't in root
@@ -933,6 +963,7 @@ mod test {
             ),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         assert!(
@@ -999,6 +1030,7 @@ mod test {
             Config::new(base_rules, vec![], categories, base_config, overrides),
             FxHashMap::default(),
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         // For .tsx files, jsx-filename-extension should remain disabled
@@ -1036,8 +1068,12 @@ mod test {
             ResolvedOxlintOverrides::new(vec![]),
         );
 
-        let store =
-            ConfigStore::new(base.clone(), FxHashMap::default(), ExternalPluginStore::default());
+        let store = ConfigStore::new(
+            base.clone(),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+            ExternalParserStore::default(),
+        );
 
         let mut nested_configs = FxHashMap::default();
         // Add the base config to nested_configs, as that's how it actually works right now.
@@ -1056,6 +1092,7 @@ mod test {
             ),
             nested_configs,
             ExternalPluginStore::default(),
+            ExternalParserStore::default(),
         );
 
         // Should return only 1 rule when type-aware is disabled, and 2 when it's enabled.
@@ -1078,7 +1115,12 @@ mod test {
             ResolvedOxlintOverrides::new(vec![]),
         );
 
-        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        let store = ConfigStore::new(
+            base,
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+            ExternalParserStore::default(),
+        );
 
         // builtin (1) + external (1) = 2
         assert_eq!(store.number_of_rules(false), Some(2));
@@ -1126,7 +1168,8 @@ mod test {
             }]),
         );
 
-        let config_store = ConfigStore::new(base, FxHashMap::default(), store);
+        let config_store =
+            ConfigStore::new(base, FxHashMap::default(), store, ExternalParserStore::default());
         let resolved = config_store.resolve(&PathBuf::from_str("/root/a.js").unwrap());
 
         // Should prefer override (options B, severity error)

@@ -5,8 +5,8 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to load JS plugin: ./plugin.ts
-  |   Plugin alias 'eslint-plugin-invalid' is not valid. Must not start with 'eslint-plugin-', or be of form '@scope/eslint-plugin' or '@scope/eslint-plugin-name'.
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mFailed to load JS plugin: ./plugin.ts
+  [38;2;225;80;80;1m│[0m   Plugin alias 'eslint-plugin-invalid' is not valid. Must not start with 'eslint-plugin-', or be of form '@scope/eslint-plugin' or '@scope/eslint-plugin-name'.[0m
 ```
 
 # stderr

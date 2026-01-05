@@ -183,6 +183,9 @@ impl Oxlintrc {
         }
 
         for override_config in config.overrides.iter_mut() {
+            // Set config_dir for parser resolution
+            override_config.config_dir = config_dir.to_path_buf();
+
             if let Some(external_plugins) = &mut override_config.external_plugins {
                 *external_plugins = std::mem::take(external_plugins)
                     .into_iter()
@@ -510,5 +513,46 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_oxlintrc_override_js_parser() {
+        // Parser in override
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{"overrides": [
+                { "files": ["*.marko"], "jsParser": "@marko/compiler" },
+                { "files": ["*.custom"], "jsParser": "./custom-parser.js", "jsParserOptions": { "ecmaVersion": 2020 } }
+            ]}"#,
+        )
+        .unwrap();
+        assert_eq!(config.overrides.len(), 2);
+        assert_eq!(config.overrides[0].js_parser, Some("@marko/compiler".to_string()));
+        assert!(config.overrides[0].js_parser_options.is_none());
+        assert_eq!(config.overrides[1].js_parser, Some("./custom-parser.js".to_string()));
+        assert!(config.overrides[1].js_parser_options.is_some());
+
+        // No parser in override (normal override)
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{"overrides": [{ "files": ["*.ts"], "rules": {} }]}"#).unwrap();
+        assert_eq!(config.overrides.len(), 1);
+        assert!(config.overrides[0].js_parser.is_none());
+    }
+
+    #[test]
+    fn test_oxlintrc_override_to_parser_entry() {
+        use crate::config::overrides::OxlintOverride;
+
+        let override_config: OxlintOverride = serde_json::from_value(json!({
+            "files": ["*.marko", "*.mjs"],
+            "jsParser": "@marko/compiler",
+            "jsParserOptions": { "sourceType": "module" }
+        }))
+        .unwrap();
+
+        let entry = override_config.to_parser_entry().unwrap();
+        assert_eq!(entry.specifier, "@marko/compiler");
+        // GlobSet adds **/ prefix to patterns without /
+        assert_eq!(entry.patterns, vec!["**/*.marko", "**/*.mjs"]);
+        assert!(entry.parser_options.is_some());
     }
 }

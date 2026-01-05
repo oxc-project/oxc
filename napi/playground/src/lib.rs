@@ -35,8 +35,8 @@ use oxc_formatter::{
     default_internal_patterns, get_parse_options,
 };
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
-    ModuleRecord, Oxlintrc,
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalParserStore, ExternalPluginStore,
+    LintOptions, Linter, ModuleRecord, Oxlintrc,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 use oxc_transformer_plugins::{
@@ -392,6 +392,7 @@ impl Oxc {
             let mut external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
+            let mut external_parser_store = ExternalParserStore::default();
             let lint_config = if linter_options.config.is_some() {
                 let oxlintrc =
                     Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().clone())
@@ -401,6 +402,7 @@ impl Oxc {
                     oxlintrc,
                     None,
                     &mut external_plugin_store,
+                    &mut external_parser_store,
                 )
                 .unwrap_or_default();
                 config_builder.build(&mut external_plugin_store)
@@ -410,7 +412,12 @@ impl Oxc {
             let lint_config = lint_config.unwrap();
             let linter_ret = Linter::new(
                 LintOptions::default(),
-                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
+                ConfigStore::new(
+                    lint_config,
+                    FxHashMap::default(),
+                    external_plugin_store,
+                    external_parser_store,
+                ),
                 None,
             )
             .run(

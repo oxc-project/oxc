@@ -17,8 +17,8 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 
 use crate::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
-    Linter, Oxlintrc, RuleEnum,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalParserStore, LintPlugins, LintService,
+    LintServiceOptions, Linter, Oxlintrc, RuleEnum,
     external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
     options::LintOptions,
@@ -555,6 +555,7 @@ impl Tester {
         }
         let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default()).unwrap();
         let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_parser_store = ExternalParserStore::default();
         let linter = Linter::new(
             self.lint_options,
             ConfigStore::new(
@@ -566,6 +567,7 @@ impl Tester {
                             Oxlintrc::deserialize(v).unwrap(),
                             None,
                             &mut external_plugin_store,
+                            &mut external_parser_store,
                         )
                         .unwrap()
                     })
@@ -580,6 +582,7 @@ impl Tester {
                     .unwrap(),
                 FxHashMap::default(),
                 external_plugin_store,
+                external_parser_store,
             ),
             None,
         )

@@ -43,8 +43,22 @@
 
 #![warn(missing_docs)]
 
+// Allow `::oxc_ast::` paths to work from within this crate (needed for macro-generated assertions)
+extern crate self as oxc_ast;
+
 #[cfg(feature = "serialize")]
 mod serialize;
+
+#[cfg(feature = "deserialize")]
+pub mod deserialize;
+#[cfg(feature = "deserialize")]
+pub use deserialize::FromESTree;
+
+/// Placeholder for real `FromESTree` trait when `deserialize` feature not enabled.
+///
+/// Provided to support `#[generate_derive(FromESTree)]`, without enabling the feature.
+#[cfg(not(feature = "deserialize"))]
+pub trait FromESTree<'a> {}
 
 pub mod ast;
 mod ast_builder_impl;
@@ -64,6 +78,8 @@ mod generated {
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
+    #[cfg(feature = "deserialize")]
+    mod derive_from_estree;
     mod derive_get_address;
     mod derive_get_span;
     mod derive_get_span_mut;

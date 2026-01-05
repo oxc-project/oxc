@@ -50,6 +50,10 @@ harness = false
 name = "minifier"
 harness = false
 
+[[bench]]
+name = "linter_estree"
+harness = false
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -60,7 +64,7 @@ bench = false
 # with only the crates it needs, to speed up the builds
 [dependencies]
 oxc_allocator = { workspace = true, optional = true }
-oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
+oxc_ast = { workspace = true, optional = true, features = ["serialize", "deserialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_formatter = { workspace = true, optional = true }
@@ -112,11 +116,13 @@ compiler = [
 ]
 linter = [
   "dep:oxc_allocator",
+  "dep:oxc_ast",
   "dep:oxc_linter",
   "dep:oxc_parser",
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "dep:serde_json",
   "oxc_semantic/cfg",
 ]
 

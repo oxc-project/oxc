@@ -15,15 +15,15 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalParserStore,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, Oxlintrc, table::RuleTable,
 };
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
-    walk::Walk,
+    walk::{Extensions, Walk},
 };
 use oxc_linter::LintIgnoreMatcher;
 
@@ -164,7 +164,27 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
+        // Extract custom parser extensions from overrides that have a parser configured
+        let custom_parser_extensions: Vec<String> = {
+            let patterns: Vec<&str> = oxlintrc
+                .overrides
+                .iter()
+                .filter(|o| o.js_parser.is_some())
+                .flat_map(|o| o.files.patterns().iter().map(String::as_str))
+                .collect();
+            if patterns.is_empty() {
+                Vec::new()
+            } else {
+                extract_extensions_from_patterns(patterns)
+            }
+        };
+
         let walker = Walk::new(&paths, &ignore_options, override_builder);
+        let walker = if custom_parser_extensions.is_empty() {
+            walker
+        } else {
+            walker.with_extensions(Extensions::default().with_additional(custom_parser_extensions))
+        };
         let mut paths = walker.paths();
 
         // NAPI tests build `oxlint` with `testing` feature enabled.
@@ -179,6 +199,7 @@ impl CliRunner {
         }
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        let mut external_parser_store = ExternalParserStore::default();
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -195,6 +216,7 @@ impl CliRunner {
                 &paths,
                 external_linter,
                 &mut external_plugin_store,
+                &mut external_parser_store,
                 &mut nested_ignore_patterns,
             ) {
                 Ok(v) => v,
@@ -225,6 +247,7 @@ impl CliRunner {
             oxlintrc,
             external_linter,
             &mut external_plugin_store,
+            &mut external_parser_store,
         ) {
             Ok(builder) => builder,
             Err(e) => {
@@ -240,9 +263,10 @@ impl CliRunner {
         }
         .with_filters(&filters);
 
-        // If no external rules, discard `ExternalLinter`
+        // If no external rules AND no parsers, discard `ExternalLinter`
+        // Custom parsers need external linter even without JS plugins
         let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
+        if external_plugin_store.is_empty() && external_parser_store.is_empty() {
             external_linter = None;
         }
 
@@ -310,7 +334,12 @@ impl CliRunner {
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let config_store = ConfigStore::new(
+            lint_config,
+            nested_configs,
+            external_plugin_store,
+            external_parser_store,
+        );
 
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
@@ -534,6 +563,7 @@ impl CliRunner {
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        external_parser_store: &mut ExternalParserStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
@@ -585,6 +615,7 @@ impl CliRunner {
                 oxlintrc,
                 external_linter,
                 external_plugin_store,
+                external_parser_store,
             ) {
                 Ok(builder) => builder,
                 Err(e) => {
@@ -664,6 +695,28 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+/// Extract file extensions from custom parser patterns.
+///
+/// Patterns like `*.marko`, `*.custom`, `**/*.mdx` will extract `marko`, `custom`, `mdx`.
+fn extract_extensions_from_patterns<'a>(
+    patterns: impl IntoIterator<Item = &'a str>,
+) -> Vec<String> {
+    let mut extensions = Vec::new();
+    for pattern in patterns {
+        // Handle patterns like *.ext, **/*.ext, etc.
+        if let Some(ext_part) = pattern.rsplit('/').next()
+            && let Some(ext) = ext_part.strip_prefix("*.")
+            // Filter out any remaining glob characters
+            && !ext.contains('*')
+            && !ext.contains('?')
+            && !ext.contains('[')
+        {
+            extensions.push(ext.to_string());
+        }
+    }
+    extensions
 }
 
 #[cfg(test)]
