@@ -232,7 +232,7 @@ export function parseForESLint(
 
   return {
     ast,
-    // For Phase 1, we don't provide scope info
+    // Scope info not provided in this example
     scopeManager: undefined,
     // Standard ESTree visitor keys
     visitorKeys: {
@@ -252,7 +252,7 @@ export function parseForESLint(
 }
 
 /**
- * SpanMapping for Phase 2 stripping support.
+ * SpanMapping for stripping support.
  */
 interface SpanMapping {
   strippedStart: number;
@@ -277,7 +277,7 @@ interface StripResult {
 /**
  * Strip custom DSL syntax, converting to valid JavaScript.
  *
- * This enables Phase 2 support where Rust rules can run on the stripped source.
+ * This enables Rust rules to run on the stripped source.
  * The DSL is converted to JavaScript:
  * - `var <name>` -> `var <name>;`
  * - `log <expr>` -> `console.log(<expr>);`

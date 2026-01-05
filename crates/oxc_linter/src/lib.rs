@@ -224,8 +224,8 @@ impl Linter {
 
     /// Run only Rust rules on the given context, without external (JS) rules.
     ///
-    /// This is used in Phase 2 of custom parser support where we parse the stripped
-    /// source with oxc and run Rust rules. JS rules are handled separately via Phase 1.
+    /// This is used for custom parser support where we parse stripped source with oxc
+    /// and run Rust rules. JS rules are handled separately.
     ///
     /// Returns a tuple of (messages, Option<DisableDirectives>).
     pub fn run_rust_rules_only<'a>(
@@ -299,7 +299,7 @@ impl Linter {
         // Drop `rules` to release its `Rc` clones of `ctx_host`
         drop(rules);
 
-        // Note: We intentionally skip external_rules here - those are handled by Phase 1
+        // Note: We intentionally skip external_rules here - those are handled separately
 
         if let Some(severity) = self.options.report_unused_directive
             && severity.is_warn_deny()
@@ -309,7 +309,7 @@ impl Linter {
         }
 
         let diagnostics = ctx_host.take_diagnostics();
-        // For stripped source (custom parser Phase 2), we don't need disable directives.
+        // For stripped source (custom parser), we don't need disable directives.
         // Since rules keep Rc references, we can't unwrap, but that's fine - just return None.
         let disable_directives = if is_partial_loader_file {
             None
@@ -322,9 +322,10 @@ impl Linter {
 
     /// Lint a file using a custom parser.
     ///
-    /// This method is used for Phase 1 custom parser support where:
+    /// This method handles custom parser support:
     /// 1. The file is parsed by a custom JS parser (not oxc)
-    /// 2. Only JS rules are run (no Rust rules since we don't have oxc semantic)
+    /// 2. JS rules run using the parsed AST
+    /// 3. Rust rules run using the deserialized ESTree AST with scope injection
     ///
     /// # Arguments
     /// * `path` - Path to the file being linted
@@ -369,7 +370,7 @@ impl Linter {
         // Collect all messages (Rust + JS rules)
         let mut all_messages: Vec<Message> = Vec::new();
 
-        // Phase 3: Run Rust rules using deserialized ESTree AST
+        // Run Rust rules using deserialized ESTree AST
         // This gives us full scope fidelity from the custom parser
         let (rust_messages, deser_result) = external_linter::lint_with_external_ast(
             self,

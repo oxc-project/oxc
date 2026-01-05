@@ -156,7 +156,7 @@ pub type JsLintFileWithCustomAstCb = ThreadsafeFunction<
 
 /// JS callback to strip custom syntax from a file.
 ///
-/// This is called in Phase 2 to strip non-JS syntax from files matched by custom parsers.
+/// This strips non-JS syntax from files matched by custom parsers.
 /// The stripped source can then be parsed by oxc and linted with Rust rules.
 #[napi]
 pub type JsStripFileCb = ThreadsafeFunction<

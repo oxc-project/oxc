@@ -86,7 +86,7 @@ pub enum ParseFileReturnValue {
 pub enum StripFileReturnValue {
     /// Stripping succeeded - contains the stripped source and mappings.
     Success(StripFileResult),
-    /// The parser doesn't support stripping (Phase 2).
+    /// The parser doesn't support stripping.
     NotSupported,
     /// Stripping failed with an error.
     Failure(String),
@@ -411,8 +411,8 @@ fn wrap_lint_file_with_custom_ast(
 
 /// Wrap `stripFile` JS callback as a normal Rust function.
 ///
-/// This is called in Phase 2 to strip custom syntax from files before linting
-/// with Rust rules. Returns `None` if the parser doesn't support stripping.
+/// This strips custom syntax from files before linting with Rust rules.
+/// Returns `None` if the parser doesn't support stripping.
 fn wrap_strip_file(cb: JsStripFileCb) -> ExternalLinterStripFileCb {
     Box::new(move |parser_id, file_path, source_text, parser_options_json| {
         let (tx, rx) = channel();

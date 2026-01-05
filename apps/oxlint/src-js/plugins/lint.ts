@@ -360,19 +360,19 @@ export function lintFileWithCustomAst(
       parserServicesJson,
     );
   } catch (err) {
-    // For custom parser files in Phase 1, some rules may fail because they require
-    // scope information that isn't available. Instead of failing entirely, we add
-    // the error as a diagnostic and return any diagnostics collected before the error.
-    // This allows successful rules to report their findings even if one rule fails.
+    // Some rules may fail if they require scope information that isn't available.
+    // Instead of failing entirely, we add the error as a diagnostic and return
+    // any diagnostics collected before the error. This allows successful rules
+    // to report their findings even if one rule fails.
     //
-    // Common causes: Rules using eslint-utils ReferenceTracker, which requires scope
-    // info from parseForESLint() that isn't passed through in Phase 1.
+    // Common causes: Rules using eslint-utils ReferenceTracker, which requires
+    // scope info from parseForESLint().
     const errorMessage = getErrorMessage(err);
 
     // Add error as a diagnostic at position 0 (start of file)
     // ruleIndex u32::MAX (4294967295) indicates this is a system error, not from a specific rule
     diagnostics.push({
-      message: `Rule error (may require scope info not available in Phase 1): ${errorMessage}`,
+      message: `Rule error (may require scope info): ${errorMessage}`,
       start: 0,
       end: 0,
       ruleIndex: 4294967295, // u32::MAX sentinel value

@@ -1,6 +1,6 @@
 //! Benchmark comparing native oxc linting vs ESTree JSON deserialization path.
 //!
-//! This measures the overhead of the custom parser flow (Phase 3) where:
+//! This measures the overhead of the custom parser flow where:
 //! 1. Source is parsed externally to ESTree JSON
 //! 2. JSON is deserialized into oxc AST
 //! 3. Rust rules are run on the deserialized AST

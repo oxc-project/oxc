@@ -214,7 +214,7 @@ impl LintRunner {
         tx_error: DiagnosticSender,
         file_system: Option<&(dyn crate::RuntimeFileSystem + Sync + Send)>,
     ) -> Result<Self, String> {
-        // Phase 1: Regular linting (collects disable directives)
+        // Regular linting (collects disable directives)
         let default_fs = OsFileSystem;
         let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) =
             if let Some(fs) = file_system { fs } else { &default_fs };

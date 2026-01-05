@@ -1121,7 +1121,7 @@ impl Runtime {
     ) -> Option<Vec<Message>> {
         // Get the custom parser info for this file
         // Note: `_has_parse_for_eslint` indicates whether the parser implements `parseForESLint()`
-        // which returns scope info. This is captured for Phase 3 scope integration but unused in Phase 1.
+        // which returns scope info, enabling scope injection for Rust rules.
         let (parser_id, parser_options_json, _has_parse_for_eslint) =
             self.linter.find_custom_parser_for_path(path)?;
 
@@ -1145,13 +1145,10 @@ impl Runtime {
 
     /// Process a file that uses a custom parser.
     ///
-    /// This handles custom parser support in two phases:
-    /// - Phase 1: File is parsed by custom JS parser, only JS rules run
-    /// - Phase 2: File is stripped of custom syntax, Rust rules run on stripped source
-    ///
-    /// The flow is:
-    /// 1. Try to strip custom syntax (Phase 2) - if supported, run Rust rules
-    /// 2. Run JS rules via custom parser (Phase 1)
+    /// This handles custom parser support by:
+    /// 1. Parsing the file with the custom JS parser
+    /// 2. Running JS rules using the parsed AST
+    /// 3. Running Rust rules using deserialized ESTree AST with scope injection
     fn process_custom_parser_file(
         &self,
         _file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -1184,17 +1181,14 @@ impl Runtime {
         };
 
         // Run all rules (Rust + JS) via custom parser
-        // Phase 3 (ESTree deserialization) is now integrated into run_with_custom_parser,
-        // so we no longer need the Phase 2 stripping approach.
-        //
-        // Note: Phase 2 stripping is disabled since Phase 3 provides better scope fidelity.
-        // Phase 3 deserializes the ESTree AST directly and injects scope references from
-        // the custom parser's scope manager, fixing false positives in rules like no-unused-vars.
+        // ESTree deserialization is integrated into run_with_custom_parser, which
+        // deserializes the AST directly and injects scope references from the custom
+        // parser's scope manager, fixing false positives in rules like no-unused-vars.
 
         // Collect all messages
         let mut all_messages: Vec<Message> = Vec::new();
 
-        // Run Rust rules (Phase 3) + JS rules (Phase 1) via run_with_custom_parser
+        // Run Rust rules + JS rules via run_with_custom_parser
         match self.linter.run_with_custom_parser(path, source_text, parser_id, parser_options_json)
         {
             Ok(messages) => {

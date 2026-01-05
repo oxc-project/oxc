@@ -140,7 +140,7 @@ pub type ExternalLinterLintFileWithCustomAstCb = Box<
 
 /// Callback to strip custom syntax from a file, producing valid JavaScript.
 ///
-/// This is used in Phase 2 to enable Rust rules on files with custom syntax.
+/// This enables Rust rules on files with custom syntax.
 /// The custom parser strips out non-JS syntax (e.g., Marko template tags)
 /// and provides span mappings so diagnostics can be remapped to original positions.
 ///
@@ -204,7 +204,7 @@ pub struct ParseFileResult {
     /// This will be passed directly to JS rules for linting.
     pub ast_json: String,
     /// Optional scope manager information from `parseForESLint`.
-    /// This is used in Phase 3 to support scope-dependent Rust rules.
+    /// Used to support scope-dependent Rust rules via scope injection.
     /// Format follows ESLint's ScopeManager structure.
     pub scope_manager_json: Option<String>,
     /// Optional visitor keys from `parseForESLint`.
@@ -476,7 +476,7 @@ impl ExternalLinter {
 
     /// Set the callback for stripping custom syntax from files.
     ///
-    /// This callback is called in Phase 2 when a file matches a custom parser's patterns.
+    /// This callback is called when a file matches a custom parser's patterns.
     /// The parser strips non-JS syntax and provides span mappings so diagnostics can be
     /// remapped to original positions after linting with Rust rules.
     #[must_use]
@@ -541,7 +541,7 @@ impl Serialize for EnabledEnvs<'_> {
 }
 
 // ============================================================================
-// Serialized ScopeManager types for Phase 3 (ESTree deserialization)
+// Serialized ScopeManager types for ESTree deserialization
 // ============================================================================
 
 /// Serialized scope manager from custom parser's parseForESLint().
@@ -810,8 +810,7 @@ pub enum DeserializeResult {
 
 /// Lint a file using an externally-provided ESTree AST and scope manager.
 ///
-/// This is the Phase 3 entry point for custom parser support. Instead of re-parsing
-/// stripped source, this function:
+/// This is the entry point for custom parser support. This function:
 /// 1. Deserializes the ESTree JSON directly into an oxc AST
 /// 2. Builds semantic analysis from that AST
 /// 3. Injects external scope information if provided

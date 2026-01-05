@@ -260,9 +260,9 @@ export function parseFile(
     // - scopeManager has methods and circular references
     cacheParseResult(filePath, { ast, scopeManager });
 
-    // Serialize the scope manager for Rust consumption (Phase 3 ESTree deserialization).
+    // Serialize the scope manager for Rust consumption.
     // This extracts scope, variable, and reference information into a flat JSON structure
-    // that can be used by Rust to inject external scope data into the linter.
+    // that Rust uses to inject external scope data into the linter.
     const serializedScopeManager = serializeScopeManagerFrom(scopeManager);
 
     // We still serialize the AST to JSON for the Rust side, but the JS side will use
@@ -283,8 +283,8 @@ export function parseFile(
 /**
  * Parser interface for stripping custom syntax.
  *
- * If a parser implements this interface, it can be used for Phase 2 custom parser
- * support, where custom syntax is stripped and Rust rules can run on the result.
+ * If a parser implements this interface, custom syntax can be stripped
+ * and Rust rules can run on the result.
  */
 interface EslintParserWithStrip extends EslintParser {
   /**
@@ -339,8 +339,8 @@ interface StripFileResult {
 /**
  * Strip custom syntax from a file using a custom parser.
  *
- * This is used in Phase 2 to enable Rust rules on files with custom syntax.
- * The parser strips non-JS syntax and provides span mappings for diagnostic remapping.
+ * This enables Rust rules on files with custom syntax by stripping non-JS syntax
+ * and providing span mappings for diagnostic remapping.
  *
  * @param parserId - ID of the parser to use
  * @param filePath - Absolute path of file being stripped
