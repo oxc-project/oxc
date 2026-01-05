@@ -26,9 +26,13 @@ fn test() {
         // TODO: it.extend.* is not properly recognized by the parser yet
         // (r#"it.extend.skip("an it", ()  => expect(1).toBe(1))"#, None),
         (r#"it.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"it.only.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"it.skip.fails("a failing test", () => expect(1).toBe(1))"#, None),
         (r#"test("a test", () => expect(1).toBe(1))"#, None),
         (r#"test.skip("a skipped test", () => expect(1).toBe(1))"#, None),
         (r#"test.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"test.only.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"test.skip.fails("a failing test", () => expect(1).toBe(1))"#, None),
         ("const func = function(){ expect(1).toBe(1); };", None),
         ("const func = () => expect(1).toBe(1);", None),
         ("{}", None),
