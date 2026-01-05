@@ -83,10 +83,12 @@ impl PreferDescribeFunctionTitle {
             return;
         }
 
-        let imported_entries_iter =
-            ctx.module_record().import_entries.iter().map(|entry| entry.local_name.name.as_ref());
-
-        let imported_entries = FxHashSet::from_iter(imported_entries_iter);
+        let imported_entries = ctx
+            .module_record()
+            .import_entries
+            .iter()
+            .map(|entry| entry.local_name.name.as_ref())
+            .collect::<FxHashSet<_>>();
 
         let Some(title_arg) = call_expr.arguments.first() else {
             return;
@@ -107,7 +109,7 @@ impl PreferDescribeFunctionTitle {
                 ctx.diagnostic_with_fix(
                     prefer_describe_function_title_diagnostic(title_expression.span),
                     |fixer| {
-                        let variable = format!("{}", identifier.name.as_ref());
+                        let variable = identifier.name.to_string();
 
                         fixer.replace(title_expression.span, variable)
                     },
@@ -139,7 +141,7 @@ impl PreferDescribeFunctionTitle {
                         let span_without_quotes =
                             Span::new(string_title.span.start + 1, string_title.span.end - 1);
 
-                        let variable = format!("{}", ctx.source_range(span_without_quotes));
+                        let variable = ctx.source_range(span_without_quotes).to_string();
 
                         fixer.replace(string_title.span, variable)
                     },
