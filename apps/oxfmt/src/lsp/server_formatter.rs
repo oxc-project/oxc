@@ -253,25 +253,11 @@ impl Tool for ServerFormatter {
             return Ok(Vec::new());
         };
 
-        // Declaring Variable to satisfy borrow checker
-        let file_content;
-        let source_text = if let Some(content) = content {
-            content
-        } else {
-            #[cfg(not(all(test, windows)))]
-            {
-                file_content = std::fs::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read file: {e}"))?;
+        let source_text = match content {
+            Some(c) => c,
+            None => {
+                &std::fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
             }
-            #[cfg(all(test, windows))]
-            #[expect(clippy::disallowed_methods)] // no `cow_replace` in tests are fine
-            // On Windows, convert CRLF to LF for consistent formatting results
-            {
-                file_content = std::fs::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read file: {e}"))?
-                    .replace("\r\n", "\n");
-            }
-            &file_content
         };
 
         let allocator = Allocator::new();
