@@ -14,9 +14,8 @@ use crate::{
 };
 
 fn hoisted_apis_on_top_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    OxcDiagnostic::warn("Hoisted API can not be used in a runtime location in this file.")
+        .with_help("Move this hoisted API to the top of the file to better reflect its behavior.\nIf it's possible replace `vi.mock()` with `vi.doMock`, which is not hoisted.")
         .with_label(span)
 }
 
@@ -25,27 +24,79 @@ const HOISTED_APIS: [&str; 3] = ["mock", "hoisted", "unmock"];
 #[derive(Debug, Default, Clone)]
 pub struct HoistedApisOnTop;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Enforce hoisted APIs to be on top of the file.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// Some Vitest APIs are hoisted automatically during the transform process. Using this APIs
+    /// in look like runtime code can lead to unexpected results running tests.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// if (condition) {
+    ///  vi.mock('some-module', () => {})
+    /// }
+    /// ```
+    ///
+    /// ```js
+    /// if (condition) {
+    ///  vi.unmock('some-module', () => {})
+    /// }
+    /// ```
+    ///
+    /// ```js
+    /// if (condition) {
+    ///  vi.hoisted(() => {})
+    /// }
+    /// ```
+    ///
+    /// ```js
+    /// describe('suite', () => {
+    ///     it('test', async () => {
+    ///         vi.mock('some-module', () => {})
+    ///
+    ///         const sm = await import('some-module')
+    ///
+    ///   })
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// if (condition) {
+    ///  vi.doMock('some-module', () => {})
+    /// }
     /// ```
+    ///
+    /// ```js
+    /// vi.mock('some-module', () => {})
+    /// if (condition) {}
+    /// ```
+    /// ```js
+    /// vi.unmock('some-module', () => {})
+    /// if (condition) {}
+    /// ```
+    ///
+    /// ```js
+    /// vi.hoisted(() => {})
+    /// if (condition) {}
+    /// ```
+    ///
+    /// ```js
+    /// vi.mock('some-module', () => {})
+    ///
+    ///
+    /// describe('suite', () => {
+    ///   it('test', async () => {
+    ///     const sm = await import('some-module')
+    ///   })
+    /// })
+    /// ```
+    ///
     HoistedApisOnTop,
     vitest,
     correctness,
@@ -82,7 +133,9 @@ impl HoistedApisOnTop {
             return;
         }
 
-        let Some(member_name) = vitest_fn.members.first().and_then(|member| member.name()) else {
+        let Some(member_name) =
+            vitest_fn.members.first().and_then(KnownMemberExpressionProperty::name)
+        else {
             return;
         };
 
@@ -133,63 +186,29 @@ impl HoistedApisOnTop {
                 rule_fixes.push(fixer.replace(GetSpan::span(node), "undefined"));
             }
 
-            if ctx.module_record().import_entries.is_empty() {
-                let new_code = format!("{};\n", ctx.source_range(GetSpan::span(node)));
-
-                rule_fixes.push(fixer.insert_text_after(&Span::empty(0), new_code));
-            } else {
-                let Some(last_import) = ctx.module_record().import_entries.last() else {
-                    unreachable!()
-                };
-
+            if let Some(last_import) = ctx.module_record().import_entries.last() {
                 let new_code = format!("\n{};\n", ctx.source_range(GetSpan::span(node)));
 
                 rule_fixes.push(
                     fixer.insert_text_after(&Span::empty(last_import.statement_span.end), new_code),
                 );
+            } else {
+                let new_code = format!("{};\n", ctx.source_range(GetSpan::span(node)));
+
+                rule_fixes.push(fixer.insert_text_after(&Span::empty(0), new_code));
             }
 
-            rule_fixes.with_message("Moving hoisted methods")
+            rule_fixes.with_message("Moving hoisted methods to the top of the file")
         };
 
-        let suggestion_do_mock =
-            {
-                if member_name == "mock" {
-                    let mock_member = vitest_fn.members.first().unwrap();
-                    fixer.replace(mock_member.span, "doMock")
-                } else {
-                    let multi_fixer = fixer.for_multifix();
-                    let mut rule_fixes = multi_fixer.new_fix_with_capacity(2);
-
-                    if matches!(
-                        ctx.nodes().parent_node(node.id()).kind(),
-                        AstKind::ExpressionStatement(_)
-                    ) {
-                        rule_fixes.push(fixer.delete(node));
-                    } else {
-                        rule_fixes.push(fixer.replace(GetSpan::span(node), "undefined"));
-                    }
-
-                    if ctx.module_record().import_entries.is_empty() {
-                        let new_code = format!("{};\n", ctx.source_range(GetSpan::span(node)));
-
-                        rule_fixes.push(fixer.insert_text_after(&Span::empty(0), new_code));
-                    } else {
-                        let Some(last_import) = ctx.module_record().import_entries.last() else {
-                            unreachable!()
-                        };
-
-                        let new_code = format!("\n{};\n", ctx.source_range(GetSpan::span(node)));
-
-                        rule_fixes.push(fixer.insert_text_after(
-                            &Span::empty(last_import.statement_span.end),
-                            new_code,
-                        ));
-                    }
-
-                    rule_fixes.with_message("Moving hoisted methods")
-                }
-            };
+        let suggestion_do_mock = {
+            if member_name == "mock" {
+                let mock_member = vitest_fn.members.first().unwrap();
+                fixer.replace(mock_member.span, "doMock")
+            } else {
+                fixer.noop()
+            }
+        };
 
         ctx.diagnostic_with_suggestions(
             hoisted_apis_on_top_diagnostic(call_expr.span),
@@ -207,7 +226,7 @@ fn is_hoisted_api(member: &KnownMemberExpressionProperty) -> bool {
 }
 
 #[test]
-fn test() {
+fn test_mock() {
     use crate::tester::Tester;
 
     let pass = vec![
@@ -285,64 +304,6 @@ fn test() {
 			import foo from 'bar';
 
 			if (foo) {
-			  vi.hoisted();
-			}
-			    ",
-            (
-                "
-			import foo from 'bar';
-vi.hoisted();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
-                "
-			import foo from 'bar';
-vi.hoisted();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
-            ),
-        ),
-        (
-            "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.unmock();
-			}
-			    ",
-            (
-                "
-			import foo from 'bar';
-vi.unmock();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
-                "
-			import foo from 'bar';
-vi.unmock();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
-            ),
-        ),
-        (
-            "
-			import foo from 'bar';
-
-			if (foo) {
 			  vi.mock();
 			}
 			    ",
@@ -391,6 +352,104 @@ vi.mock(import('something'), () => bar);
 			import something from 'something';
 			    ",
             ),
+        ),
+    ];
+
+    Tester::new(HoistedApisOnTop::NAME, HoistedApisOnTop::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_hoisted() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "vi.mock()",
+        "
+			vi.hoisted();
+			import foo from 'bar';
+			    ",
+        "
+			import foo from 'bar';
+			vi.unmock(baz);
+			    ",
+        "const foo = await vi.hoisted(async () => {});",
+    ];
+
+    let fail = vec![
+        "
+			if (foo) {
+			  vi.mock('foo', () => {});
+			}
+			      ",
+        "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.hoisted();
+			}
+			    ",
+        "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.unmock();
+			}
+			    ",
+        "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.mock();
+			}
+			    ",
+        "
+			if (shouldMock) {
+			  vi.mock(import('something'), () => bar);
+			}
+
+			import something from 'something';
+			      ",
+    ];
+
+    let fix = vec![
+        (
+            "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.hoisted();
+			}
+			    ",
+            "
+			import foo from 'bar';
+vi.hoisted();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
+        ),
+        (
+            "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.unmock();
+			}
+			    ",
+            "
+			import foo from 'bar';
+vi.unmock();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
         ),
     ];
 
