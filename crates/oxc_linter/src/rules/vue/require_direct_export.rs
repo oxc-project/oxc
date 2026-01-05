@@ -10,14 +10,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::is_method_call,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn require_direct_export_diagnostic(span: Span) -> OxcDiagnostic {
@@ -40,8 +40,10 @@ fn missing_function_return_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function component must return a value.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct RequireDirectExport {
+    //  When set `true`, disallow functional component functions
     disallow_functional_component_function: bool,
 }
 
@@ -92,19 +94,6 @@ declare_oxc_lint!(
     /// export default (props) => h('div', props.msg)
     /// </script>
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// - `disallowFunctionalComponentFunction`: `boolean` (default: `false`) - disallow functional component functions.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///     "vue/require-direct-export": ["error", { "disallowFunctionalComponentFunction": true }]
-    ///   }
-    /// }
-    /// ```
     RequireDirectExport,
     vue,
     style,
@@ -113,13 +102,9 @@ declare_oxc_lint!(
 
 impl Rule for RequireDirectExport {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self {
-            disallow_functional_component_function: value
-                .get(0)
-                .and_then(|v| v.get("disallowFunctionalComponentFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        })
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
