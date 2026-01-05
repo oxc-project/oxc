@@ -101,22 +101,34 @@ impl IsolatedLintHandler {
         Self { runner, unused_directives_severity: lint_options.report_unused_directive }
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<DiagnosticReport>> {
-        let path = uri.to_file_path()?;
+    pub fn run_single(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Result<Vec<DiagnosticReport>, String> {
+        let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
         if !Self::should_lint_path(&path) {
-            return None;
+            return Ok(Vec::new());
         }
 
-        let source_text =
-            if let Some(content) = content { content } else { &read_to_string(&path).ok()? };
+        let source_text = if let Some(content) = content {
+            content
+        } else {
+            &read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
+        };
 
-        let mut diagnostics = self.lint_path(&path, uri, source_text);
+        let mut diagnostics = self.lint_path(&path, uri, source_text)?;
         diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
-        Some(diagnostics)
+        Ok(diagnostics)
     }
 
-    fn lint_path(&self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
+    fn lint_path(
+        &self,
+        path: &Path,
+        uri: &Uri,
+        source_text: &str,
+    ) -> Result<Vec<DiagnosticReport>, String> {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
@@ -125,7 +137,7 @@ impl IsolatedLintHandler {
 
         let mut messages: Vec<DiagnosticReport> = self
             .runner
-            .run_source(&[Arc::from(path.as_os_str())], &fs)
+            .run_source(&[Arc::from(path.as_os_str())], &fs)?
             .into_iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
@@ -141,7 +153,7 @@ impl IsolatedLintHandler {
             );
         }
 
-        messages
+        Ok(messages)
     }
 
     fn should_lint_path(path: &Path) -> bool {
