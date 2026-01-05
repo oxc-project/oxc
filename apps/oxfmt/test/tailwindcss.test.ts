@@ -892,3 +892,121 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.errors).toStrictEqual([]);
   });
 });
+
+describe("Tailwind CSS Sorting (Non-JS Files)", () => {
+  test("should sort Tailwind classes in HTML files", async () => {
+    const input = `<div class="p-4 flex bg-red-500 text-white">Hello</div>`;
+
+    const result = await format("test.html", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // After sorting, flex should come before p-4 (display before spacing)
+    expect(result.code).toContain('class="flex');
+    expect(result.code).not.toContain('class="p-4 flex');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should NOT sort Tailwind classes in HTML when experimentalTailwindcss is disabled", async () => {
+    const input = `<div class="p-4 flex bg-red-500 text-white">Hello</div>`;
+
+    const result = await format("test.html", input);
+
+    // Original order should be preserved
+    expect(result.code).toContain('class="p-4 flex bg-red-500 text-white"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort Tailwind classes in Vue SFC files", async () => {
+    const input = `<template>
+  <div class="p-4 flex bg-red-500 text-white">Hello</div>
+</template>`;
+
+    const result = await format("test.vue", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // After sorting, flex should come before p-4
+    expect(result.code).toContain('class="flex');
+    expect(result.code).not.toContain('class="p-4 flex');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort multiple class attributes in HTML", async () => {
+    const input = `<div class="p-4 flex">
+  <span class="text-white bg-red-500">Title</span>
+</div>`;
+
+    const result = await format("test.html", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Both class attributes should be sorted
+    expect(result.code).toContain('class="flex p-4"');
+    expect(result.code).toContain('class="bg-red-500 text-white"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should respect attributes option in HTML", async () => {
+    const input = `<div class="p-4 flex" data-classes="text-white bg-red-500">Hello</div>`;
+
+    // Without attributes option, only class should be sorted
+    const resultWithoutOption = await format("test.html", input, {
+      experimentalTailwindcss: {},
+    });
+    expect(resultWithoutOption.code).toContain('class="flex p-4"');
+    expect(resultWithoutOption.code).toContain('data-classes="text-white bg-red-500"'); // Not sorted
+
+    // With attributes option, data-classes should also be sorted
+    const resultWithOption = await format("test.html", input, {
+      experimentalTailwindcss: {
+        attributes: ["data-classes"],
+      },
+    });
+    expect(resultWithOption.code).toContain('class="flex p-4"');
+    expect(resultWithOption.code).toContain('data-classes="bg-red-500 text-white"'); // Sorted
+    expect(resultWithOption.errors).toStrictEqual([]);
+  });
+
+  test("should respect functions option in Vue SFC", async () => {
+    const input = `<template>
+  <div :class="clsx('p-4 flex')">Hello</div>
+</template>`;
+
+    // With functions option, clsx argument should be sorted
+    const result = await format("test.vue", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    expect(result.code).toContain("clsx('flex p-4')");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should remove duplicates in HTML by default", async () => {
+    const input = `<div class="flex p-4 flex p-4">Hello</div>`;
+
+    const result = await format("test.html", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // Duplicates should be removed
+    expect(result.code).toContain('class="flex p-4"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve duplicates in HTML when preserveDuplicates is true", async () => {
+    const input = `<div class="flex p-4 flex p-4">Hello</div>`;
+
+    const result = await format("test.html", input, {
+      experimentalTailwindcss: {
+        preserveDuplicates: true,
+      },
+    });
+
+    // Duplicates should be preserved
+    expect(result.code).toContain('class="flex flex p-4 p-4"');
+    expect(result.errors).toStrictEqual([]);
+  });
+});
