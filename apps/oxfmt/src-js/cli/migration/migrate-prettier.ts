@@ -93,8 +93,7 @@ export async function runMigratePrettier() {
     );
     oxfmtrc.printWidth = 80;
   }
-  // `embeddedLanguageFormatting` is not fully supported yet and default "off" in Oxfmt.
-  // Prettier default is "auto".
+  // `embeddedLanguageFormatting` is not fully supported for JS-in-XXX yet.
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
     console.error(`  - "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
   }

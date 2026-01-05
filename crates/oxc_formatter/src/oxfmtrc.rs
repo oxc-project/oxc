@@ -80,7 +80,8 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts in the file. (Default: `"off"`)
+    /// Control whether to format embedded parts in the file.
+    /// e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
