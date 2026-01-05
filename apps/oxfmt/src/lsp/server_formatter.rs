@@ -240,17 +240,19 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
-        // Formatter is disabled
-
-        let path = uri.to_file_path()?;
+    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+        let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
         if self.is_ignored(&path) {
             debug!("File is ignored: {}", path.display());
-            return None;
+            return Ok(Vec::new());
         }
 
-        let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
+        let Some(source_type) = get_supported_source_type(&path).map(enable_jsx_source_type) else {
+            debug!("Unsupported source type for formatting: {}", path.display());
+            return Ok(Vec::new());
+        };
+
         // Declaring Variable to satisfy borrow checker
         let file_content;
         let source_text = if let Some(content) = content {
@@ -258,13 +260,16 @@ impl Tool for ServerFormatter {
         } else {
             #[cfg(not(all(test, windows)))]
             {
-                file_content = std::fs::read_to_string(&path).ok()?;
+                file_content = std::fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file: {e}"))?;
             }
             #[cfg(all(test, windows))]
             #[expect(clippy::disallowed_methods)] // no `cow_replace` in tests are fine
             // On Windows, convert CRLF to LF for consistent formatting results
             {
-                file_content = std::fs::read_to_string(&path).ok()?.replace("\r\n", "\n");
+                file_content = std::fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file: {e}"))?
+                    .replace("\r\n", "\n");
             }
             &file_content
         };
@@ -275,14 +280,16 @@ impl Tool for ServerFormatter {
             .parse();
 
         if !ret.errors.is_empty() {
-            return None;
+            // Parser errors should not be returned to the user.
+            // The user probably wanted to format while typing incomplete code.
+            return Ok(Vec::new());
         }
 
         let code = Formatter::new(&allocator, self.options.clone()).build(&ret.program);
 
         // nothing has changed
         if code == *source_text {
-            return Some(vec![]);
+            return Ok(vec![]);
         }
 
         let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
@@ -290,7 +297,7 @@ impl Tool for ServerFormatter {
         let (start_line, start_character) = get_line_column(&rope, start, source_text);
         let (end_line, end_character) = get_line_column(&rope, end, source_text);
 
-        Some(vec![TextEdit::new(
+        Ok(vec![TextEdit::new(
             Range::new(
                 Position::new(start_line, start_character),
                 Position::new(end_line, end_character),
