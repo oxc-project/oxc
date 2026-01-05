@@ -616,6 +616,8 @@ fn test() {
         ("//  https://oxc.rs", None),
         ("//   https://oxc.rs", None),
         ("/* https://oxc.rs */", None),
+        ("/*  https://oxc.rs */", None),
+        ("/*   https://oxc.rs */", None),
         (
             "/*
 			 * https://oxc.rs
@@ -623,6 +625,8 @@ fn test() {
             None,
         ),
         ("/** https://oxc.rs */", None),
+        ("/**  https://oxc.rs */", None),
+        ("/**   https://oxc.rs */", None),
         (
             "/**
 			 * https://oxc.rs
