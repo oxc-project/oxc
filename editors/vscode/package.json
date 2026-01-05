@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "displayName": "Oxc",
-  "version": "1.36.0",
+  "version": "1.37.0",
   "description": "Oxlint and Oxfmt editor integration",
   "categories": [
     "Formatters",

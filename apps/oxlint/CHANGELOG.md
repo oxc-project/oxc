@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.37.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6154c8c linter/eslint-plugin-vitest: Implemented vitest/warn-todo rule (#17228) (Said Atrahouch)
+- 9e8ec78 linter/only-throw-error rule: Add `allowRethrowing` option for  (#17554) (camc314)
+- ee34716 linter/react: Implement no-will-update-set-state (#17530) (Kenzo Wada)
+- 3088e1d linter/react: Implement no-this-in-sfc (#17535) (Kenzo Wada)
+- 29a2868 linter/jsx-a11y: Implement no-static-element-interactions (#17538) (Kenzo Wada)
+
+### 🐛 Bug Fixes
+
+- a702f13 oxlint/lsp: Correct position for "disable for this file" with shebang (#17613) (Sysix)
+- 529901c linter: Include JS plugin rules when calculating total rule count (#17520) (connorshea)
+- 96ef2cc linter: Print total rule # when using a single nested config (#17517) (connorshea)
+- 9ad0f29 oxlint: Do not enable external plugin store when no external linter is passed (#17498) (Sysix)
+- 174375d oxfmt,oxlint: Disable mimalloc for 32-bit Arm targets (#17473) (Yaksh Bariya)
+- a38892a linter: Update no-unnecessary-template-expression docs and test case (#17453) (camc314)
+
 ## [1.36.0] - 2025-12-29
 
 ### 🚀 Features
