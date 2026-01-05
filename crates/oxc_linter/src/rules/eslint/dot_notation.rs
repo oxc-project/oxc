@@ -205,7 +205,7 @@ impl DotNotation {
             Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                 // Use cooked value (interpreted) to match ESLint behavior.
                 // cooked is None for invalid escape sequences in tagged templates.
-                lit.quasis.first().and_then(|q| q.value.cooked.as_ref().map(|s| s.as_str()))
+                lit.quasis.first().and_then(|q| q.value.cooked.as_ref().map(oxc_span::Atom::as_str))
             }
             Expression::NullLiteral(_) => Some("null"),
             Expression::BooleanLiteral(lit) => Some(if lit.value { "true" } else { "false" }),
@@ -320,10 +320,29 @@ impl DotNotation {
             ctx.diagnostic_with_fix(
                 use_bracket_notation_diagnostic(property_name, expr.span),
                 |fixer| {
+                    let source = ctx.source_text();
+                    let object_end = expr.object.span().end as usize;
+                    let property_start = expr.property.span().start as usize;
+
+                    // Find the text between object and property (includes whitespace and '.' or '?.')
+                    let text_between = &source[object_end..property_start];
+
+                    // Find where the '.' or '?.' operator is to preserve leading whitespace
+                    let dot_offset = if expr.optional {
+                        text_between.find("?.")
+                    } else {
+                        text_between.find('.')
+                    };
+
+                    // Preserve whitespace before the operator
+                    let whitespace_before =
+                        if let Some(offset) = dot_offset { &text_between[..offset] } else { "" };
+
                     let object_text = ctx.source_range(expr.object.span());
                     let operator = if expr.optional { "?." } else { "" };
 
-                    let fixed = format!("{object_text}{operator}[\"{property_name}\"]");
+                    let fixed =
+                        format!("{object_text}{whitespace_before}{operator}[\"{property_name}\"]");
                     fixer.replace(expr.span, fixed)
                 },
             );
@@ -462,11 +481,8 @@ fn test() {
         ("a.b['c'];", None),
         ("a['_dangle'];", Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }]))),
         ("a['SHOUT_CASE'];", Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }]))),
-        // Multiline SHOUT_CASE test
-        (
-            "a\n ['SHOUT_CASE'];",
-            Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
-        ),
+        // Multiline SHOUT_CASE test (no options - original ESLint test has no allowPattern)
+        ("a\n  ['SHOUT_CASE'];", None),
         // Multiple errors in same expression
         (
             "getResource()\n .then(function(){})\n [\"catch\"](function(){})\n .then(function(){})\n [\"catch\"](function(){});",
@@ -474,6 +490,8 @@ fn test() {
         ),
         // foo.while without comment
         ("foo.while;", Some(serde_json::json!([{ "allowKeywords": false }]))),
+        // Multiline foo.while (from ESLint original)
+        ("foo\n  .while;", Some(serde_json::json!([{ "allowKeywords": false }]))),
         ("foo[ /* comment */ 'bar' ]", None),
         ("foo[ 'bar' /* comment */ ]", None),
         ("foo[    'bar'    ];", None),
@@ -531,12 +549,8 @@ fn test() {
             "a.SHOUT_CASE;",
             Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
         ),
-        // Multiline SHOUT_CASE fix
-        (
-            "a\n ['SHOUT_CASE'];",
-            "a\n .SHOUT_CASE;",
-            Some(serde_json::json!([{ "allowPattern": "^[a-z]+(_[a-z]+)+$" }])),
-        ),
+        // Multiline SHOUT_CASE fix (no options - matches original ESLint test)
+        ("a\n  ['SHOUT_CASE'];", "a\n  .SHOUT_CASE;", None),
         // Multiple errors in same expression fix
         (
             "getResource()\n .then(function(){})\n [\"catch\"](function(){})\n .then(function(){})\n [\"catch\"](function(){});",
@@ -545,6 +559,12 @@ fn test() {
         ),
         // foo.while fix
         ("foo.while;", r#"foo["while"];"#, Some(serde_json::json!([{ "allowKeywords": false }]))),
+        // Multiline foo.while fix (from ESLint original)
+        (
+            "foo\n  .while;",
+            "foo\n  [\"while\"];",
+            Some(serde_json::json!([{ "allowKeywords": false }])),
+        ),
         ("foo[    'bar'    ];", "foo.bar;", None),
         ("foo[('bar')]", "foo.bar", None),
         ("foo[(null)]", "foo.null", None),

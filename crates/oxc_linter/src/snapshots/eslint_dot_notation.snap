@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(dot-notation): [SHOUT_CASE] is better written in dot notation
    ╭─[dot_notation.tsx:1:1]
  1 │ ╭─▶ a
- 2 │ ╰─▶  ['SHOUT_CASE'];
+ 2 │ ╰─▶   ['SHOUT_CASE'];
    ╰────
   help: Use `.SHOUT_CASE` instead of `["SHOUT_CASE"]`
 
@@ -101,6 +101,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[dot_notation.tsx:1:1]
  1 │ foo.while;
    · ─────────
+   ╰────
+  help: Use `["while"]` instead of `.while`
+
+  ⚠ eslint(dot-notation): .while is a reserved word
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ ╭─▶ foo
+ 2 │ ╰─▶   .while;
    ╰────
   help: Use `["while"]` instead of `.while`
 
