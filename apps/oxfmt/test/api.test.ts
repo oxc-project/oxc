@@ -75,7 +75,7 @@ describe("API Tests", () => {
 
   test("should preserve size-limit field with objects when sorting package.json", async () => {
     const pkgJSON = JSON.stringify({
-      "$schema": "https://json.schemastore.org/package.json",
+      $schema: "https://json.schemastore.org/package.json",
       name: "test",
       version: "1.0.0",
       "size-limit": [
