@@ -205,15 +205,23 @@ impl WorkspaceWorker {
     }
 
     /// Format a file with the current formatter
-    /// - If no file is not formattable or ignored, [`None`] is returned
+    /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
-    pub async fn format_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
+    /// - If a tool error occurs, an Err is returned
+    pub async fn format_file(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            if let Some(edits) = tool.run_format(uri, content) {
-                return Some(edits);
+            let edits = tool.run_format(uri, content)?;
+            // If no edits are made, continue to the next tool
+            if edits.is_empty() {
+                continue;
             }
+            return Ok(edits);
         }
-        None
+        Ok(Vec::new())
     }
 
     /// Shutdown the worker and return any necessary changes to be made after shutdown.
@@ -229,8 +237,9 @@ impl WorkspaceWorker {
         let uris_to_clear_diagnostics =
             self.published_diagnostics.lock().await.drain().collect::<Vec<Uri>>();
         let mut watchers_to_unregister = Vec::new();
-        for tool in self.tools.read().await.iter() {
-            tool.shutdown();
+        for (tool, builder) in self.tools.read().await.iter().zip(self.builders.iter()) {
+            builder.shutdown(&self.root_uri);
+
             watchers_to_unregister
                 .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
         }

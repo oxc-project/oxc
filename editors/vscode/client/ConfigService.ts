@@ -1,5 +1,12 @@
 import * as path from "node:path";
-import { ConfigurationChangeEvent, RelativePattern, Uri, workspace, WorkspaceFolder } from "vscode";
+import {
+  CancellationTokenSource,
+  ConfigurationChangeEvent,
+  RelativePattern,
+  Uri,
+  workspace,
+  WorkspaceFolder,
+} from "vscode";
 import { DiagnosticPullMode } from "vscode-languageclient";
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
@@ -111,7 +118,7 @@ export class ConfigService implements IDisposable {
 
   private async searchBinaryPath(
     settingsBinary: string | undefined,
-    defaultPattern: string,
+    defaultBinaryName: string,
   ): Promise<string | undefined> {
     const cwd = this.workspaceConfigs.keys().next().value;
     if (!cwd) {
@@ -119,14 +126,7 @@ export class ConfigService implements IDisposable {
     }
 
     if (!settingsBinary) {
-      // try to find the binary in node_modules/.bin, resolve to the first workspace folder
-      const files = await workspace.findFiles(
-        new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
-        null,
-        1,
-      );
-
-      return files.length > 0 ? files[0].fsPath : undefined;
+      return this.searchNodeModulesBin(cwd, defaultBinaryName);
     }
 
     if (!workspace.isTrusted) {
@@ -134,20 +134,108 @@ export class ConfigService implements IDisposable {
     }
 
     // validates the given path is safe to use
-    if (validateSafeBinaryPath(settingsBinary) === false) {
+    if (!validateSafeBinaryPath(settingsBinary)) {
       return undefined;
     }
 
     if (!path.isAbsolute(settingsBinary)) {
       // if the path is not absolute, resolve it to the first workspace folder
       settingsBinary = path.normalize(path.join(cwd, settingsBinary));
-      // strip the leading slash on Windows
-      if (process.platform === "win32" && settingsBinary.startsWith("\\")) {
-        settingsBinary = settingsBinary.slice(1);
+      settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
+    }
+
+    if (process.platform !== "win32" && settingsBinary.endsWith(".exe")) {
+      // on non-Windows, remove `.exe` extension if present
+      settingsBinary = settingsBinary.slice(0, -4);
+    }
+
+    try {
+      await workspace.fs.stat(Uri.file(settingsBinary));
+      return settingsBinary;
+    } catch {}
+
+    // on Windows, also check for `.exe` extension (bun uses `.exe` for its binaries)
+    if (process.platform === "win32") {
+      if (!settingsBinary.endsWith(".exe")) {
+        settingsBinary += ".exe";
+      }
+
+      try {
+        await workspace.fs.stat(Uri.file(settingsBinary));
+        return settingsBinary;
+      } catch {}
+    }
+
+    // no valid binary found
+    return undefined;
+  }
+
+  /**
+   * strip the leading slash on Windows
+   */
+  private removeWindowsLeadingSlash(path: string): string {
+    if (process.platform === "win32" && path.startsWith("\\")) {
+      return path.slice(1);
+    }
+    return path;
+  }
+
+  /**
+   * Search for the binary in the workspace's node_modules/.bin directory.
+   */
+  private async searchNodeModulesBin(
+    workspacePath: string,
+    binaryName: string,
+  ): Promise<string | undefined> {
+    // try to find the binary in workspace's node_modules/.bin.
+    //
+    // Performance: this is a fast check before searching with glob.
+    // glob on windows is very slow.
+    const binPath = this.removeWindowsLeadingSlash(
+      path.normalize(path.join(workspacePath, "node_modules", ".bin", binaryName)),
+    );
+    try {
+      await workspace.fs.stat(Uri.file(binPath));
+      return binPath;
+    } catch {
+      // not found, continue to glob search
+    }
+
+    // on Windows, also check for `.exe` extension
+    if (process.platform === "win32") {
+      const binPathExe = `${binPath}.exe`;
+      try {
+        await workspace.fs.stat(Uri.file(binPathExe));
+        return binPathExe;
+      } catch {
+        // not found, continue to glob search
       }
     }
 
-    return settingsBinary;
+    const cts = new CancellationTokenSource();
+    setTimeout(() => cts.cancel(), 10000); // cancel after 10 seconds
+
+    try {
+      // bun package manager uses `.exe` extension on Windows
+      // search for both with and without `.exe` extension
+      const extension = process.platform === "win32" ? "{,.exe}" : "";
+      // fallback: search with glob
+      // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
+      const files = await workspace.findFiles(
+        // search up to 3 levels deep for the binary path
+        new RelativePattern(
+          workspacePath,
+          `{*/,*/*,*/*/*}/node_modules/.bin/${binaryName}${extension}`,
+        ),
+        undefined,
+        1,
+        cts.token,
+      );
+
+      return files.length > 0 ? files[0].fsPath : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {

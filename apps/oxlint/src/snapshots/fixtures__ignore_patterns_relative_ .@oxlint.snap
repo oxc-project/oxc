@@ -21,7 +21,7 @@ working directory: fixtures/ignore_patterns_relative
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
@@ -46,7 +46,7 @@ working directory: fixtures/ignore_patterns_relative
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

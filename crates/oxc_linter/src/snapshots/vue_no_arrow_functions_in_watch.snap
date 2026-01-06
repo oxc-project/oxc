@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+   ╭─[no_arrow_functions_in_watch.tsx:5:19]
+ 4 │                     watch: {
+ 5 │                       foo: () => {}
+   ·                            ────────
+ 6 │                     },
+   ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+   ╭─[no_arrow_functions_in_watch.tsx:6:19]
+ 5 │                       foo() {},
+ 6 │                       bar: () => {}
+   ·                            ────────
+ 7 │                     }
+   ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+   ╭─[no_arrow_functions_in_watch.tsx:6:19]
+ 5 │                       foo: function() {},
+ 6 │                       bar: () => {}
+   ·                            ────────
+ 7 │                     }
+   ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+    ╭─[no_arrow_functions_in_watch.tsx:16:17]
+ 15 │                         watch: {
+ 16 │ ╭─▶                       a: (val, oldVal) => {
+ 17 │ │                           console.log('new: %s, old: %s', val, oldVal)
+ 18 │ ╰─▶                       },
+ 19 │                           b: 'someMethod',
+    ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+    ╭─[no_arrow_functions_in_watch.tsx:9:25]
+  8 │                       bar:{
+  9 │                         handler: () => {}
+    ·                                  ────────
+ 10 │                       }
+    ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+   ╭─[no_arrow_functions_in_watch.tsx:7:16]
+ 6 │                         'handle1',
+ 7 │                         (val, oldVal) => { /* ... */ },
+   ·                         ──────────────────────────────
+ 8 │                         {
+   ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.
+
+  ⚠ eslint-plugin-vue(no-arrow-functions-in-watch): You should not use an arrow function to define a watcher.
+    ╭─[no_arrow_functions_in_watch.tsx:9:27]
+  8 │                         {
+  9 │                           handler: (val, oldVal) => { /* ... */ },
+    ·                                    ──────────────────────────────
+ 10 │                         }
+    ╰────
+  help: Use a regular function or method shorthand instead of an arrow function.

@@ -4,8 +4,6 @@ use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 mod backend;
 mod capabilities;
 mod file_system;
-#[cfg(feature = "linter")]
-mod linter;
 mod options;
 #[cfg(test)]
 mod tests;
@@ -14,9 +12,7 @@ pub mod utils;
 mod worker;
 
 pub use crate::capabilities::Capabilities;
-#[cfg(feature = "linter")]
-pub use crate::linter::ServerLinterBuilder;
-pub use crate::tool::{Tool, ToolBuilder, ToolRestartChanges};
+pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 

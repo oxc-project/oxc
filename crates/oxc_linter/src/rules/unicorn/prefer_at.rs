@@ -84,10 +84,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferAt {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.as_array().and_then(|arr| arr.first().and_then(|v| v.as_object()));
 
-        Self(Box::new(PreferAtConfig {
+        Ok(Self(Box::new(PreferAtConfig {
             check_all_index_access: config
                 .and_then(|c| c.get("checkAllIndexAccess"))
                 .and_then(serde_json::Value::as_bool)
@@ -104,7 +104,7 @@ impl Rule for PreferAt {
                         .collect()
                 })
                 .unwrap_or_default(),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -653,6 +653,15 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
+        ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;const extraArgument = 6;string.charAt(offset + 9, extraArgument)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("array[unknown]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[-1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1.5]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1n]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fail = vec![
@@ -719,17 +728,17 @@ fn test() {
         ("_.last(new Array)", None),
         (
             "const foo = []
-			_.last([bar])",
+            _.last([bar])",
             None,
         ),
         (
             "const foo = []
-			_.last( new Array )",
+            _.last( new Array )",
             None,
         ),
         (
             "const foo = []
-			_.last( (( new Array )) )",
+            _.last( (( new Array )) )",
             None,
         ),
         ("if (foo) _.last([bar])", None),
@@ -740,6 +749,33 @@ fn test() {
             ),
         ),
         ("function foo() {return _.last(arguments)}", None),
+        // checkAllIndexAccess: true, generated dynamically so not picked up by rulegen.
+        // TODO: Fix these.
+        // ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "const offset = 5;array[offset + 9]",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        ("array[array.length - 1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // `charAt` doesn't care about value
+        // TODO: Implement charAt behavior with checkAllIndexAccess enabled.
+        // ("string.charAt(9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(5 + 9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "const offset = 5;string.charAt(offset + 9)",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        // ("string.charAt(unknown)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(-1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(1.5)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(1n)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "string.charAt(string.length - 1)",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        // ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fix = vec![

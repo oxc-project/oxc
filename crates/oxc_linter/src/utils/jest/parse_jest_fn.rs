@@ -106,12 +106,23 @@ pub fn parse_jest_fn_call<'a>(
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
-            return None;
-        }
-
-        if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
-            return None;
+        match (ctx.frameworks().is_jest(), ctx.frameworks().is_vitest()) {
+            (true, true) => {
+                if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (true, false) => {
+                if !is_valid_jest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (false, true) => {
+                if !is_valid_vitest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (false, false) => {}
         }
 
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
@@ -274,7 +285,7 @@ fn parse_jest_jest_fn_call<'a>(
 ) -> Option<ParsedJestFnCall<'a>> {
     let lowercase_name = name.cow_to_ascii_lowercase();
 
-    if !(lowercase_name == "jest" || lowercase_name == "vi") {
+    if !(lowercase_name == "jest" || lowercase_name == "vi" || lowercase_name == "vitest") {
         return None;
     }
 
@@ -609,6 +620,7 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["fit", "", "", ""],
     ["fit", "each", "", ""],
     ["fit", "failing", "", ""],
+    ["fit", "fails", "", ""],
     ["it", "", "", ""],
     ["it", "concurrent", "", ""],
     ["it", "concurrent", "each", ""],
@@ -616,12 +628,15 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["it", "concurrent", "skip", "each"],
     ["it", "each", "", ""],
     ["it", "failing", "", ""],
+    ["it", "fails", "", ""],
     ["it", "only", "", ""],
     ["it", "only", "each", ""],
     ["it", "only", "failing", ""],
+    ["it", "only", "fails", ""],
     ["it", "skip", "", ""],
     ["it", "skip", "each", ""],
     ["it", "skip", "failing", ""],
+    ["it", "skip", "fails", ""],
     ["it", "todo", "", ""],
     ["test", "", "", ""],
     ["test", "concurrent", "", ""],
@@ -630,19 +645,24 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["test", "concurrent", "skip", "each"],
     ["test", "each", "", ""],
     ["test", "failing", "", ""],
+    ["test", "fails", "", ""],
     ["test", "only", "", ""],
     ["test", "only", "each", ""],
     ["test", "only", "failing", ""],
+    ["test", "only", "fails", ""],
     ["test", "skip", "", ""],
     ["test", "skip", "each", ""],
     ["test", "skip", "failing", ""],
+    ["test", "skip", "fails", ""],
     ["test", "todo", "", ""],
     ["xdescribe", "", "", ""],
     ["xdescribe", "each", "", ""],
     ["xit", "", "", ""],
     ["xit", "each", "", ""],
     ["xit", "failing", "", ""],
+    ["xit", "fails", "", ""],
     ["xtest", "", "", ""],
     ["xtest", "each", "", ""],
     ["xtest", "failing", "", ""],
+    ["xtest", "fails", "", ""],
 ];

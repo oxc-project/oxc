@@ -14,7 +14,7 @@ declare global {
 
 export function runCli(cwd: string, args: string[]) {
   const cliPath = join(import.meta.dirname, "..", "dist", "cli.js");
-  return execa("node", [cliPath, ...args], {
+  return execa("node", [cliPath, ...args, "--threads=1"], {
     cwd,
     reject: false,
     timeout: 5000,

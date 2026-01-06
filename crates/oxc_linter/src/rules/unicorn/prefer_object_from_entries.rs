@@ -230,7 +230,7 @@ impl Rule for PreferObjectFromEntries {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config: PreferObjectFromEntriesConfig = value
             .as_array()
             .and_then(|arr| arr.first())
@@ -239,7 +239,7 @@ impl Rule for PreferObjectFromEntries {
             })
             .unwrap_or_default();
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 }
 

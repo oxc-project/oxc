@@ -42,13 +42,13 @@ Use `minifySync` for synchronous minification. Use `minify` for asynchronous min
 ### Example
 
 ```javascript
-import { minifySync } from 'oxc-minify';
+import { minifySync } from "oxc-minify";
 
-const filename = 'test.js';
+const filename = "test.js";
 const code = "const x = 'a' + 'b'; console.log(x);";
 const options = {
   compress: {
-    target: 'esnext',
+    target: "esnext",
   },
   mangle: {
     toplevel: false,

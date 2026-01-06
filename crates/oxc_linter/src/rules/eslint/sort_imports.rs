@@ -92,9 +92,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(config) = value.get(0) else {
-            return Self(Box::default());
+            return Ok(Self(Box::default()));
         };
 
         let ignore_case =
@@ -136,13 +136,13 @@ impl Rule for SortImports {
             })
             .unwrap_or_default();
 
-        Self(Box::new(SortImportsOptions {
+        Ok(Self(Box::new(SortImportsOptions {
             ignore_case,
             ignore_declaration_sort,
             ignore_member_sort,
             allow_separated_groups,
             member_syntax_sort_order,
-        }))
+        })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

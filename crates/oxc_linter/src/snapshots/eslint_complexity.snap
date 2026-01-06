@@ -1,0 +1,620 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {}
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo(x) {if (x > 10) {return 'x is greater than 10';} else if (x > 5) {return 'x is greater than 5';} else {return 'x is less than 5';}}
+   · ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:12]
+ 1 │ var func = function () {}
+   ·            ──────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:14]
+ 1 │ var obj = { a(x) {} }
+   ·              ──────
+   ╰────
+
+  ⚠ eslint(complexity): method `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class Test { a(x) {} }
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:9]
+ 1 │ var a = (x) => {if (true) {return x;}}
+   ·         ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {if (true) {return x;}}
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {if (true) {return x;} else {return x+1;}}
+   · ────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {if (true) {return x;} else if (false) {return x+1;} else {return 4;}}
+   · ────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {for(var i = 0; i < 5; i ++) {x ++;} return x;}
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(obj) {for(var i in obj) {obj[i] = 3;}}
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(obj) {for(var i of obj) {obj[i] = 3;}}
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {for(var i = 0; i < 5; i ++) {if(i % 2 === 0) {x ++;}} return x;}
+   · ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(obj) {if(obj){ for(var x in obj) {try {x.getThis();} catch (e) {x.getThat();}}} else {return false;}}
+   · ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {try {x.getThis();} catch (e) {x.getThat();}}
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {return x === 4 ? 3 : 5;}
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {return x === 4 ? 3 : (x === 3 ? 2 : 1);}
+   · ───────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {return x || 4;}
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {x && 4;}
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {x ?? 4;}
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {x ||= 4;}
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {x &&= 4;}
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {x ??= 4;}
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {switch(x){case 1: 1; break; case 2: 2; break; default: 3;}}
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {switch(x){case 1: 1; break; case 2: 2; break; default: if(x == 'foo') {5;};}}
+   · ────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {while(true) {'foo';}}
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {do {'foo';} while (true)}
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:17]
+ 1 │ function a(x) {(function() {while(true){'foo';}})(); (function() {while(true){'bar';}})();}
+   ·                 ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:55]
+ 1 │ function a(x) {(function() {while(true){'foo';}})(); (function() {while(true){'bar';}})();}
+   ·                                                       ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:17]
+ 1 │ function a(x) {(function() {while(true){'foo';}})(); (function() {'bar';})();}
+   ·                 ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:14]
+ 1 │ var obj = { a(x) { return x ? 0 : 1; } };
+   ·              ─────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:16]
+ 1 │ var obj = { a: function b(x) { return x ? 0 : 1; } };
+   ·                ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {switch(x){case 1: 1; break; case 2: 2; break; default: 3;}}
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {switch(x){case 1: 1; break; case 2: 2; break; default: if(x == 'foo') {5;};}}
+   · ────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { x; } c || d; }
+   · ──────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { x = c; } d || e; }
+   · ──────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { [x || y]; } }
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { [x || y] = c; } }
+   · ─────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { class C { [x || y]; } a || b; }
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { class C { [x || y] = a; } b || c; }
+   · ─────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { class C { [x || y]; [z || q]; } }
+   · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { class C { [x || y] = a; [z || q] = b; } }
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { x = c || d; } e || f; }
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:30]
+ 1 │ class C { x(){ a || b; } y = c || d || e; z() { f || g; } }
+   ·                              ───────────
+   ╰────
+
+  ⚠ eslint(complexity): method `y` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:24]
+ 1 │ class C { x = a || b; y() { c || d || e; } z = f || g; }
+   ·                        ───────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `y` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x; y() { c || d || e; } z; }
+   ·               ───────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = a || b; }
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:14]
+ 1 │ (class { x = a || b; })
+   ·              ──────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:22]
+ 1 │ class C { static x = a || b; }
+   ·                      ──────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:14]
+ 1 │ (class { x = a ? b : c; })
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = a || b || c; }
+   ·               ───────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:27]
+ 1 │ class C { x = a || b; y = b || c || d; z = e || f; }
+   ·                           ───────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = a || b || c; y = d || e; z = f || g || h; }
+   ·               ───────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:44]
+ 1 │ class C { x = a || b || c; y = d || e; z = f || g || h; }
+   ·                                            ───────────
+   ╰────
+
+  ⚠ eslint(complexity): method `x` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = () => a || b || c; }
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:16]
+ 1 │ class C { x = (() => a || b || c) || d; }
+   ·                ─────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `x` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = () => a || b || c; y = d || e; }
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `x` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = () => a || b || c; y = d || e || f; }
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:38]
+ 1 │ class C { x = () => a || b || c; y = d || e || f; }
+   ·                                      ───────────
+   ╰────
+
+  ⚠ eslint(complexity): method `x` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = function () { a || b }; y = function () { c || d }; }
+   ·               ──────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `y` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:43]
+ 1 │ class C { x = function () { a || b }; y = function () { c || d }; }
+   ·                                           ──────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = class { [y || z]; }; }
+   ·               ───────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = class { [y || z] = a; }; }
+   ·               ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:27]
+ 1 │ class C { x = class { y = a || b; }; }
+   ·                           ──────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { static {} } c || d; }
+   · ─────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `foo` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function foo () { a || b; class C { static { c || d; } } e || f; }
+   · ──────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b; }  }
+   ·           ──────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b || c; }  }
+   ·           ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b; c || d; }  }
+   ·           ──────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b; c || d; e || f; }  }
+   ·           ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b; c || d; { e || f; } }  }
+   ·           ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { if (a || b) c = d || e; } }
+   ·           ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { if (a || b) c = (d => e || f)() || (g => h || i)(); } }
+   ·           ──────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:26]
+ 1 │ class C { x(){ a || b; } static { c || d || e; } z() { f || g; } }
+   ·                          ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:23]
+ 1 │ class C { x = a || b; static { c || d || e; } y = f || g; }
+   ·                       ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:30]
+ 1 │ class C { static x = a || b; static { c || d || e; } static y = f || g; }
+   ·                              ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `static` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:36]
+ 1 │ class C { static { a || b; } static(){ c || d || e; } static { f || g; } }
+   ·                                    ──────────────────
+   ╰────
+
+  ⚠ eslint(complexity): static method `static` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:43]
+ 1 │ class C { static { a || b; } static static(){ c || d || e; } static { f || g; } }
+   ·                                           ──────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:41]
+ 1 │ class C { static { a || b; } static x = c || d || e; static { f || g; } }
+   ·                                         ───────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b || c || d; } static { e || f || g; } }
+   ·           ────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:35]
+ 1 │ class C { static { a || b || c; } static { d || e || f || g; } }
+   ·                                   ────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:11]
+ 1 │ class C { static { a || b || c || d; } static { e || f || g || h; } }
+   ·           ────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class static block has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:40]
+ 1 │ class C { static { a || b || c || d; } static { e || f || g || h; } }
+   ·                                        ────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): method `x` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:15]
+ 1 │ class C { x = () => a || b || c; y = f || g || h; }
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint(complexity): class field initializer has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:38]
+ 1 │ class C { x = () => a || b || c; y = f || g || h; }
+   ·                                      ───────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {}
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {}
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(x) {if (true) {return x;}}
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `b` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:18]
+ 1 │ const obj = { b: (a) => a?.b?.c, c: function (a) { return a?.b?.c; } };
+   ·                  ──────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `c` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:37]
+ 1 │ const obj = { b: (a) => a?.b?.c, c: function (a) { return a?.b?.c; } };
+   ·                                     ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c; }
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.['c']; }
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c; d || e; }
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c?.d; }
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.['c']?.['d']; }
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c?.['d']; }
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c.d?.e; }
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 2.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c?.(); }
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 4. Maximum allowed is 3.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { b?.c?.()?.(); }
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b = '') {}
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { const { c = '' } = b; }
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 2. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { const [ c = '' ] = b; }
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(complexity): function `a` has a complexity of 3. Maximum allowed is 1.
+   ╭─[complexity.tsx:1:1]
+ 1 │ function a(b) { const [ { c: d = '' } = {} ] = b; }
+   · ───────────────────────────────────────────────────
+   ╰────

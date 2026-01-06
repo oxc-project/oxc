@@ -101,9 +101,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortKeys {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(config_array) = value.as_array() else {
-            return Self::default();
+            return Ok(Self::default());
         };
 
         let sort_order = if config_array.is_empty() {
@@ -133,10 +133,10 @@ impl Rule for SortKeys {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(SortKeysConfig(
+        Ok(Self(Box::new(SortKeysConfig(
             sort_order,
             SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
-        )))
+        ))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -360,7 +360,9 @@ fn natural_sort(arr: &mut [String]) {
         loop {
             match (a_chars.next(), b_chars.next()) {
                 (Some(a_char), Some(b_char)) if a_char == b_char => {}
-                (Some(a_char), Some(b_char)) if a_char.is_numeric() && b_char.is_numeric() => {
+                (Some(a_char), Some(b_char))
+                    if a_char.is_ascii_digit() && b_char.is_ascii_digit() =>
+                {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
@@ -506,6 +508,7 @@ fn test() {
             "var obj = {'#':1, 'Z':2, À:3, è:4}",
             Some(serde_json::json!(["asc", { "natural": true }])),
         ),
+        ("var obj = {'a²': 1, 'b³': 2}", Some(serde_json::json!(["asc", { "natural": true }]))),
         (
             "var obj = {b_:1, a:2, b:3}",
             Some(serde_json::json!(["asc", { "natural": true, "minKeys": 4 }])),

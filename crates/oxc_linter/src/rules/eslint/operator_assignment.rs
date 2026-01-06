@@ -98,8 +98,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for OperatorAssignment {
-    fn from_configuration(value: Value) -> Self {
-        Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

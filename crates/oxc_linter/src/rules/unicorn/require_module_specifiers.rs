@@ -161,7 +161,7 @@ fn test() {
         r#"import {foo} from "foo""#,
         r#"import foo,{bar} from "foo""#,
         r#"import type foo from "foo""#,
-        r#"import type foo,{bar} from "foo""#,
+        // r#"import type foo,{bar} from "foo""#, ts error 1363
         r#"import foo,{type bar} from "foo""#,
         "const foo = 1;
 			export {foo};",
@@ -190,8 +190,9 @@ fn test() {
         r#"import foo,{}/* comment */from "foo";"#,
         r#"import type {} from "foo""#,
         r#"import type{}from"foo""#,
-        r#"import type foo, {} from "foo""#,
-        r#"import type foo,{}from "foo""#,
+        // Invalid TS (1363)
+        // r#"import type foo, {} from "foo""#,
+        // r#"import type foo,{}from "foo""#,
         "export {}",
         r#"export {} from "foo";"#,
         r#"export{}from"foo";"#,

@@ -93,7 +93,7 @@ pub struct Semantic<'a> {
     #[cfg(feature = "cfg")]
     cfg: Option<ControlFlowGraph>,
     #[cfg(not(feature = "cfg"))]
-    #[allow(unused)]
+    #[expect(unused)]
     cfg: (),
 }
 
@@ -194,6 +194,7 @@ impl<'a> Semantic<'a> {
     }
 
     #[cfg(not(feature = "cfg"))]
+    #[expect(clippy::unused_self)]
     pub fn cfg(&self) -> Option<&()> {
         None
     }

@@ -11,11 +11,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext,
-    frameworks::FrameworkOptions, rule::Rule,
+    AstNode,
+    ast_util::get_declaration_from_reference_id,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
@@ -25,7 +29,7 @@ fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct MaxProps {
     /// The maximum number of props allowed in a Vue Single File Component (SFC).
@@ -50,7 +54,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **incorrect** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -60,7 +64,7 @@ declare_oxc_lint!(
     /// </script>
     /// ```
     ///
-    /// Examples of **correct** code for this rule with the default `{ maxProps: 1 }` option:
+    /// Examples of **correct** code for this rule with the default `{ "maxProps": 1 }` option:
     /// ```js
     /// <script setup>
     /// defineProps({
@@ -75,15 +79,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxProps {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_configuration(value: Value) -> Self {
-        Self {
-            max_props: value
-                .get(0)
-                .and_then(|v| v.get("maxProps"))
-                .and_then(Value::as_u64)
-                .map_or(1, |n| n as usize),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -215,7 +215,7 @@ impl Eqeqeq {
 }
 
 impl Rule for Eqeqeq {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let first_arg = value.get(0).and_then(serde_json::Value::as_str);
 
         let null_type = value
@@ -227,7 +227,7 @@ impl Rule for Eqeqeq {
 
         let compare_type = first_arg.map(CompareType::from).unwrap_or_default();
 
-        Self { compare_type, null_type }
+        Ok(Self { compare_type, null_type })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -368,6 +368,27 @@ fn test() {
         ("null == null", Some(json!(["smart", {"null": "ignore"}]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/8773>
         ("href != null", Some(json!([{"null": "ignore"}]))),
+        ("a === b", Some(serde_json::json!(["always"]))),
+        ("typeof a == 'number'", Some(serde_json::json!(["smart"]))),
+        ("'string' != typeof a", Some(serde_json::json!(["smart"]))),
+        ("'hello' != 'world'", Some(serde_json::json!(["smart"]))),
+        ("2 == 3", Some(serde_json::json!(["smart"]))),
+        ("true == true", Some(serde_json::json!(["smart"]))),
+        ("null == a", Some(serde_json::json!(["smart"]))),
+        ("a == null", Some(serde_json::json!(["smart"]))),
+        // ("null == a", Some(serde_json::json!(["allow-null"]))),
+        // ("a == null", Some(serde_json::json!(["allow-null"]))),
+        ("a == null", Some(serde_json::json!(["always", { "null": "ignore" }]))),
+        ("a != null", Some(serde_json::json!(["always", { "null": "ignore" }]))),
+        ("a !== null", Some(serde_json::json!(["always", { "null": "ignore" }]))),
+        ("a === null", Some(serde_json::json!(["always", { "null": "always" }]))),
+        ("a !== null", Some(serde_json::json!(["always", { "null": "always" }]))),
+        ("null !== null", Some(serde_json::json!(["always", { "null": "always" }]))),
+        ("a == null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("a != null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null != null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("foo === /abc/u", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2015 },
+        ("foo === 1n", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2020 }
     ];
 
     let fail = vec![

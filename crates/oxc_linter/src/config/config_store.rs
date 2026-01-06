@@ -295,17 +295,21 @@ impl ConfigStore {
         }
     }
 
-    /// Returns the number of rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
+    /// Returns the total number of rules, inclusive of JS Plugin rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
-        if !self.nested_configs.is_empty() {
+        // If there are nested configs the number of rules may vary per-file, so return `None`.
+        // Note: this is `> 1` due to https://github.com/oxc-project/oxc/issues/16356
+        if self.nested_configs.len() > 1 {
             return None;
         }
-        let count = if type_aware_enabled {
+
+        let builtin_count = if type_aware_enabled {
             self.base.base.rules.len()
         } else {
             self.base.base.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()).count()
         };
-        Some(count)
+
+        Some(builtin_count + self.base.base.external_rules.len())
     }
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
@@ -903,7 +907,8 @@ mod test {
             AllowWarnDeny::Deny,
         )];
         let override_rule =
-            EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap());
+            EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
+                .unwrap();
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
             files: GlobSet::new(vec!["*.tsx"]),
@@ -1017,34 +1022,29 @@ mod test {
         let base_rules = vec![
             (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
             (
+                // This is a type-aware, tsgolint rule
                 RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
                 AllowWarnDeny::Deny,
             ),
         ];
 
-        let store = ConfigStore::new(
-            Config::new(
-                base_rules.clone(),
-                vec![],
-                OxlintCategories::default(),
-                base_config.clone(),
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-            FxHashMap::default(),
-            ExternalPluginStore::default(),
+        let base = Config::new(
+            base_rules.clone(),
+            vec![],
+            OxlintCategories::default(),
+            base_config.clone(),
+            ResolvedOxlintOverrides::new(vec![]),
         );
 
+        let store =
+            ConfigStore::new(base.clone(), FxHashMap::default(), ExternalPluginStore::default());
+
         let mut nested_configs = FxHashMap::default();
-        nested_configs.insert(
-            PathBuf::new(),
-            Config::new(
-                vec![],
-                vec![],
-                OxlintCategories::default(),
-                base_config.clone(),
-                ResolvedOxlintOverrides::new(vec![]),
-            ),
-        );
+        // Add the base config to nested_configs, as that's how it actually works right now.
+        // TODO: Can remove this addition of the base config when we fix https://github.com/oxc-project/oxc/issues/16356
+        nested_configs.insert(PathBuf::new(), base.clone());
+        // Then add another so we have more than just the base config here.
+        nested_configs.insert(PathBuf::from("nested"), base);
 
         let store_with_nested_configs = ConfigStore::new(
             Config::new(
@@ -1058,10 +1058,31 @@ mod test {
             ExternalPluginStore::default(),
         );
 
+        // Should return only 1 rule when type-aware is disabled, and 2 when it's enabled.
         assert_eq!(store.number_of_rules(false), Some(1));
         assert_eq!(store.number_of_rules(true), Some(2));
+        // Should return None when there are nested configs.
         assert_eq!(store_with_nested_configs.number_of_rules(false), None);
         assert_eq!(store_with_nested_configs.number_of_rules(true), None);
+    }
+
+    #[test]
+    fn test_number_of_rules_includes_external_rules() {
+        let base_config = LintConfig::default();
+        let base_rules = vec![(RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny)];
+        let base = Config::new(
+            base_rules,
+            vec![(ExternalRuleId::from_usize(1), ExternalOptionsId::NONE, AllowWarnDeny::Warn)],
+            OxlintCategories::default(),
+            base_config,
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+
+        // builtin (1) + external (1) = 2
+        assert_eq!(store.number_of_rules(false), Some(2));
+        assert_eq!(store.number_of_rules(true), Some(2));
     }
 
     #[test]

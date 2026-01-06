@@ -8,12 +8,11 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {
@@ -30,7 +29,7 @@ fn no_this_destructure_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoThisAlias(Box<NoThisAliasConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
@@ -79,24 +78,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAlias {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        let allowed_names: FxHashSet<CompactStr> = obj
-            .and_then(|v| v.get("allowedNames").or_else(|| v.get("allowNames")))
-            .and_then(Value::as_array)
-            .unwrap_or(&vec![])
-            .iter()
-            .filter_map(Value::as_str)
-            .map(CompactStr::from)
-            .collect();
-
-        Self(Box::new(NoThisAliasConfig {
-            allow_destructuring: obj
-                .and_then(|v| v.get("allowDestructuring"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-            allowed_names,
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

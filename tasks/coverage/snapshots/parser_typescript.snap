@@ -7241,7 +7241,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ───
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:1:8]
  1 │ export default class a {
    ·        ───────
@@ -19906,12 +19906,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ╰── Opened here
    ╰────
 
-  × Expected `from` but found `Identifier`
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts:1:13]
- 1 │ import type A from './a';
-   ·             ┬
-   ·             ╰── `from` expected
- 2 │ export type { A };
+ 1 │ import type A, { B, C } from './a';
+   ·             ─
    ╰────
 
   × Expected `,` or `}` but found `as`
@@ -24098,7 +24096,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     deleted() {
     ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:1:8]
  1 │ export default 12
    ·        ───────
