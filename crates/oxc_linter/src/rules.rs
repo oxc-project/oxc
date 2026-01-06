@@ -669,6 +669,7 @@ pub(crate) mod promise {
 pub(crate) mod vitest {
     pub mod consistent_test_filename;
     pub mod consistent_vitest_vi;
+    pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod no_unneeded_async_expect_function;
@@ -1337,6 +1338,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::consistent_test_filename,
     vitest::consistent_vitest_vi,
+    vitest::hoisted_apis_on_top,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::no_unneeded_async_expect_function,
