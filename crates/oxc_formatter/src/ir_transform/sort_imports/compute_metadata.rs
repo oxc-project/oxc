@@ -24,7 +24,7 @@ pub fn compute_import_metadata<'a>(
 
     let group_idx = group_matcher.compute_group_index(&ImportMetadata {
         source,
-        selectors: compute_selectors(metadata, is_style_import, is_subpath(source), path_kind),
+        selectors: compute_selectors(metadata, is_style_import, is_subpath(source), &path_kind),
         modifiers: compute_modifiers(metadata),
     });
 
@@ -63,7 +63,7 @@ fn compute_selectors(
     metadata: &ImportLineMetadata,
     is_style_import: bool,
     is_subpath: bool,
-    path_kind: ImportPathKind,
+    path_kind: &ImportPathKind,
 ) -> Vec<ImportSelector> {
     let mut selectors = vec![];
 
@@ -184,7 +184,7 @@ fn is_builtin(source: &str) -> bool {
     source.starts_with("node:") || source.starts_with("bun:") || NODE_BUILTINS.contains(source)
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, PartialEq, Eq, Default)]
 enum ImportPathKind {
     /// Node.js builtin module (e.g., `node:fs`, `fs`)
     Builtin,
