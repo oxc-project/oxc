@@ -31,15 +31,15 @@ impl ExternalCallbacks {
 
     /// Set the embedded formatter callback.
     #[must_use]
-    pub fn with_embedded_formatter(mut self, callback: EmbeddedFormatterCallback) -> Self {
-        self.embedded_formatter = Some(callback);
+    pub fn with_embedded_formatter(mut self, callback: Option<EmbeddedFormatterCallback>) -> Self {
+        self.embedded_formatter = callback;
         self
     }
 
     /// Set the Tailwind callback.
     #[must_use]
-    pub fn with_tailwind(mut self, callback: TailwindCallback) -> Self {
-        self.tailwind = Some(callback);
+    pub fn with_tailwind(mut self, callback: Option<TailwindCallback>) -> Self {
+        self.tailwind = callback;
         self
     }
 
